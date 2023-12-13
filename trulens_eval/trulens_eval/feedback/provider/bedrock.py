@@ -20,10 +20,7 @@ class Bedrock(LLMProvider):
     endpoint: BedrockEndpoint
 
     def __init__(
-        self,
-        *args,
-        model_id: str = "amazon.titan-tg1-large",
-        **kwargs
+        self, *args, model_id: str = "amazon.titan-tg1-large", **kwargs
     ):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -50,9 +47,7 @@ class Bedrock(LLMProvider):
 
         self_kwargs['model_id'] = model_id
 
-        self_kwargs['endpoint'] = BedrockEndpoint(
-             *args, **kwargs
-        )
+        self_kwargs['endpoint'] = BedrockEndpoint(*args, **kwargs)
 
         super().__init__(
             **self_kwargs
@@ -77,8 +72,8 @@ class Bedrock(LLMProvider):
 
         response = self.endpoint.client.invoke_model(body=body, modelId=modelId)
 
-        response_body = json.loads(
-            response.get('body').read()).get('results')[0]["outputText"]
+        response_body = json.loads(response.get('body').read()
+                                  ).get('results')[0]["outputText"]
         # text
 
         return response_body

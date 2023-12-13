@@ -19,7 +19,7 @@ from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.llama import WithFeedbackFilterNodes
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -234,13 +234,10 @@ class TruLlama(App):
     app: Union[BaseQueryEngine, BaseChatEngine]
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query),
-        const=True
+        default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
     )
 
     def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs):
-        super().update_forward_refs()
-
         # TruLlama specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
@@ -248,10 +245,8 @@ class TruLlama(App):
 
         super().__init__(**kwargs)
 
-        self.post_init()
-
     @classmethod
-    def select_source_nodes(cls) -> JSONPath:
+    def select_source_nodes(cls) -> Lens:
         """
         Get the path to the source nodes in the query output.
         """
@@ -501,3 +496,6 @@ class TruLlama(App):
         )
 
         return await self.awith_record(self.app.astream_chat, *args, **kwargs)
+
+
+TruLlama.model_rebuild()

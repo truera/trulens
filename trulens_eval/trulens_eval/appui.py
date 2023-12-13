@@ -12,7 +12,7 @@ from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.json import JSON_BASES
 from trulens_eval.utils.json import jsonify_for_ui
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 
 pp = PrettyPrinter()
 
@@ -25,13 +25,13 @@ class Selector(HasTraits):
     select = Unicode()
     jpath = traitlets.Any()
 
-    def __init__(self, select: Union[JSONPath, str], make_on_delete: Callable):
-        if isinstance(select, JSONPath):
+    def __init__(self, select: Union[Lens, str], make_on_delete: Callable):
+        if isinstance(select, Lens):
             self.select = str(select)
             self.jpath = select
         else:
             self.select = select
-            self.jpath = JSONPath.of_string(select)
+            self.jpath = Lens.of_string(select)
 
         self.w_edit = widgets.Text(value=select, layout=debug_style)
         self.w_delete = widgets.Button(
@@ -45,7 +45,7 @@ class Selector(HasTraits):
 
         def on_update_select(ev):
             try:
-                jpath = JSONPath.of_string(ev.new)
+                jpath = Lens.of_string(ev.new)
                 self.jpath = jpath
                 self.w_edit.layout.border = "0px solid black"
             except Exception:
@@ -110,7 +110,7 @@ class SelectorValue(HasTraits):
                         ret_html += f"<div>({inner_class.__name__} at 0x{inner_obj_id:x}): "  # as {type(inner_obj).__name__}): "
 
                         # if isinstance(inner_obj, pydantic.BaseModel):
-                        #    inner_obj = inner_obj.dict()
+                        #    inner_obj = inner_obj.model_dump()
 
                         if isinstance(inner_obj, JSON_BASES):
                             ret_html += str(inner_obj)[0:VALUE_MAX_CHARS]
@@ -223,8 +223,8 @@ class AppUI(traitlets.HasTraits):
         self,
         app: App,
         use_async: bool = False,
-        app_selectors: Optional[List[Union[str, JSONPath]]] = None,
-        record_selectors: Optional[List[Union[str, JSONPath]]] = None
+        app_selectors: Optional[List[Union[str, Lens]]] = None,
+        record_selectors: Optional[List[Union[str, Lens]]] = None
     ):
         self.use_async = use_async
 
@@ -351,7 +351,7 @@ class AppUI(traitlets.HasTraits):
         for _, sw in self.app_selections.items():
             sw.update()
 
-    def _add_app_selector(self, selector: Union[JSONPath, str]):
+    def _add_app_selector(self, selector: Union[Lens, str]):
         with self.display_stdout:
             sel = Selector(
                 select=selector,
@@ -371,7 +371,7 @@ class AppUI(traitlets.HasTraits):
     def add_app_selection(self, w):
         self._add_app_selector(self.app_selector.value)
 
-    def _add_record_selector(self, selector: Union[JSONPath, str]):
+    def _add_record_selector(self, selector: Union[Lens, str]):
         with self.display_stdout:
             sel = Selector(
                 select=selector,

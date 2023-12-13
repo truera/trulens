@@ -37,7 +37,7 @@ class Feedback(pydantic.BaseModel):
         ret = typ.__name__ + "\n"
 
         fields = list(
-            f for f in cls.__fields__ if f not in ["examples", "prompt"]
+            f for f in cls.model_fields if f not in ["examples", "prompt"]
         )
 
         onetab = make_retab("   ")
@@ -54,7 +54,7 @@ class Feedback(pydantic.BaseModel):
             ret += onetab(f"Subtype of {parent.__name__}.") + "\n"
 
             for f in list(fields):
-                if f in parent.__fields__:
+                if f in parent.model_fields:
                     fields.remove(f)
                     if safe_hasattr(cls, f):
                         ret += twotab(f"{f} = {getattr(cls, f)}") + "\n"
@@ -109,10 +109,12 @@ class GroundTruth(Semantics):
 
 supported_criteria = {
     # NOTE: typo in "response" below is intentional. Still in langchain as of Sept 26, 2023.
-    key.value: value.replace(" If so, response Y. If not, respond N.", ''
-                            )  # older version of langchain had this typo
-    .replace(" If so, respond Y. If not, respond N.", '')  # new one is fixed
-    if isinstance(value, str) else value
+    key.value:
+        value.replace(" If so, response Y. If not, respond N.", ''
+                     )  # older version of langchain had this typo
+        .replace(" If so, respond Y. If not, respond N.", ''
+                )  # new one is fixed
+        if isinstance(value, str) else value
     for key, value in _SUPPORTED_CRITERIA.items()
 }
 
@@ -565,13 +567,13 @@ class FeedbackOutputType(pydantic.BaseModel):
 
 
 class DigitalOutputType(FeedbackOutputType):
-    min_feedback = 1.0
-    max_feedback = 10.0
+    min_feedback: float = 1.0
+    max_feedback: float = 10.0
 
 
 class BinaryOutputType(FeedbackOutputType):
-    min_feedback = 0.0
-    max_feedback = 1.0
+    min_feedback: float = 0.0
+    max_feedback: float = 1.0
 
 
 class FeedbackOutput(pydantic.BaseModel):
@@ -683,7 +685,7 @@ class ClassificationModel(Model):
 
 
 class BinarySentimentModel(ClassificationModel):
-    output_type = BinaryOutputType(
+    output_type: FeedbackOutputType = BinaryOutputType(
         min_interpretation="negative", max_interpretation="positive"
     )
 

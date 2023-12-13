@@ -44,17 +44,17 @@ pp = pprint.PrettyPrinter()
 class Feedback(FeedbackDefinition):
     # Implementation, not serializable, note that FeedbackDefinition contains
     # `implementation` meant to serialize the below.
-    imp: Optional[ImpCallable] = pydantic.Field(exclude=True)
+    imp: Optional[ImpCallable] = pydantic.Field(None, exclude=True)
 
     # Aggregator method for feedback functions that produce more than one
     # result.
-    agg: Optional[AggCallable] = pydantic.Field(exclude=True)
+    agg: Optional[AggCallable] = pydantic.Field(None, exclude=True)
 
     # An optional name. Only will affect display tables
     supplied_name: Optional[str] = None
 
     # feedback direction
-    higher_is_better: Optional[bool] = pydantic.Field()
+    higher_is_better: Optional[bool] = None
 
     def __init__(
         self,
@@ -88,9 +88,10 @@ class Feedback(FeedbackDefinition):
                     kwargs['implementation'] = FunctionOrMethod.of_callable(
                         imp, loadable=True
                     )
-                except ImportError as e:
+
+                except Exception as e:
                     logger.warning(
-                        f"Feedback implementation {imp} cannot be serialized: {e}. "
+                        f"Feedback implementation {imp} cannot be serialized: {e} "
                         f"This may be ok unless you are using the deferred feedback mode."
                     )
 
@@ -100,8 +101,8 @@ class Feedback(FeedbackDefinition):
 
         else:
             if "implementation" in kwargs:
-                imp: ImpCallable = FunctionOrMethod.pick(
-                    **(kwargs['implementation'])
+                imp: ImpCallable = FunctionOrMethod.model_validate(
+                    kwargs['implementation']
                 ).load() if kwargs['implementation'] is not None else None
 
         # Similarly with agg and aggregator.
@@ -120,11 +121,15 @@ class Feedback(FeedbackDefinition):
                         f"If you are not using FeedbackMode.DEFERRED, you can safely ignore this warning. "
                         f"{e}"
                     )
-                    pass
+                    # These are for serialization to/from json and for db storage.
+                    kwargs['aggregator'] = FunctionOrMethod.of_callable(
+                        agg, loadable=False
+                    )
+
         else:
             if kwargs.get('aggregator') is not None:
-                agg: AggCallable = FunctionOrMethod.pick(
-                    **(kwargs['aggregator'])
+                agg: AggCallable = FunctionOrMethod.model_validate(
+                    kwargs['aggregator']
                 ).load()
             else:
                 # Default aggregator if neither serialized `aggregator` or
@@ -169,7 +174,8 @@ class Feedback(FeedbackDefinition):
         Returns a new Feedback object with this specification.
         """
 
-        ret = Feedback.parse_obj(self)
+        ret = Feedback.model_copy(self)
+
         ret._default_selectors()
 
         return ret
@@ -242,11 +248,12 @@ class Feedback(FeedbackDefinition):
 
         def prepare_feedback(row):
             record_json = row.record_json
-            record = Record(**record_json)
+            record = Record.model_validate(record_json)
 
             app_json = row.app_json
 
-            feedback = Feedback(**row.feedback_json)
+            feedback = Feedback.model_validate(row.feedback_json)
+
             return feedback, feedback.run_and_log(
                 record=record,
                 app=app_json,
@@ -334,8 +341,13 @@ class Feedback(FeedbackDefinition):
         imp_func = implementation.load()
         agg_func = aggregator.load()
 
-        return Feedback(
-            imp=imp_func, agg=agg_func, name=supplied_name, **f.dict()
+        return Feedback.model_validate(
+            dict(
+                imp=imp_func,
+                agg=agg_func,
+                name=supplied_name,
+                **f.model_dump()
+            )
         )
 
     def _next_unselected_arg_name(self):

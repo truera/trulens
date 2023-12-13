@@ -199,12 +199,10 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
-from asyncio import sleep
-import inspect
 from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Set, Union
+from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
 
@@ -215,7 +213,7 @@ from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
@@ -288,6 +286,10 @@ class TruCustomApp(App):
         Args:
             app (Any): Any class
     """
+
+    class Config:
+        arbitrary_types_allowed = True
+
     app: Any
 
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
@@ -298,7 +300,7 @@ class TruCustomApp(App):
     functions_to_instrument: ClassVar[Set[Callable]] = set([])
 
     main_method: Optional[Function] = None  # serialized version of the below
-    main_method_loaded: Optional[Callable] = Field(exclude=True)
+    main_method_loaded: Optional[Callable] = Field(None, exclude=True)
 
     # main_async_method: Optional[Union[Callable, Method]] = None # = Field(exclude=True)
 
@@ -326,7 +328,7 @@ class TruCustomApp(App):
 
             # TODO: ARGPARSE
             if isinstance(main_method, dict):
-                main_method = Function(**main_method)
+                main_method = Function.model_validate(main_method)
 
             if isinstance(main_method, Function):
                 main_method_loaded = main_method.load()
@@ -379,12 +381,12 @@ class TruCustomApp(App):
         # component as per serialized version of this app. If they are not,
         # placeholders are made in `app_extra_json` so that subsequent
         # serialization looks like the components exist.
-        json = self.dict()
+        json = self.model_dump()
 
         for m, path in methods_to_instrument.items():
             method_name = m.__name__
 
-            full_path = JSONPath().app + path
+            full_path = Lens().app + path
 
             self.instrument.instrument_method(
                 method_name=method_name, obj=m.__self__, query=full_path
@@ -449,9 +451,6 @@ class TruCustomApp(App):
                                     f"Placeholder for method {m.__name__}."
                             }
                         )
-
-        # DB stuff and checks:
-        self.post_init()
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
