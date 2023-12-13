@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-
 with OptionalImports(message=REQUIREMENT_BEDROCK):
     import boto3
     from botocore.client import ClientCreator
@@ -32,7 +31,6 @@ class BedrockCallback(EndpointCallback):
         super().handle_generation_chunk(response)
 
         # Example chunk:
-        
         """
         {'chunk': {
             'bytes': b'''{"outputText":"\\nHello! I am a computer program designed to assist you. How can I help you today?",
@@ -51,20 +49,20 @@ class BedrockCallback(EndpointCallback):
         chunk = response.get("chunk")
         if chunk is None:
             return
-        
+
         data = chunk.get("bytes")
         if data is None:
             return
-        
+
         import json
         data = json.loads(data.decode())
 
         metrics = data.get("amazon-bedrock-invocationMetrics")
         # Hopefully metrics are given only once at the last chunk so the below
         # adds are correct.
-        if metrics is None: 
+        if metrics is None:
             return
-        
+
         output_tokens = metrics.get('outputTokenCount')
         if output_tokens is not None:
             self.cost.n_completion_tokens += int(output_tokens)
@@ -92,7 +90,7 @@ class BedrockCallback(EndpointCallback):
  'body': <botocore.response.StreamingBody object at 0x2bb6ae250>,
  'contentType': 'application/json'}
  """
-        
+
         # NOTE(piotrm) langchain does not currently support cost tracking for
         # Bedrock. We can at least count successes and tokens visible in the
         # example output above.
@@ -108,12 +106,16 @@ class BedrockCallback(EndpointCallback):
 
                     headers = metadata.get("HTTPHeaders")
                     if headers is not None:
-                        output_tokens = headers.get('x-amzn-bedrock-output-token-count')
+                        output_tokens = headers.get(
+                            'x-amzn-bedrock-output-token-count'
+                        )
                         if output_tokens is not None:
                             self.cost.n_completion_tokens += int(output_tokens)
                             self.cost.n_tokens += int(output_tokens)
 
-                        input_tokens = headers.get('x-amzn-bedrock-input-token-count')
+                        input_tokens = headers.get(
+                            'x-amzn-bedrock-input-token-count'
+                        )
                         if input_tokens is not None:
                             self.cost.n_prompt_tokens += int(input_tokens)
                             self.cost.n_tokens += int(input_tokens)
@@ -136,7 +138,7 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
     region_name: str
 
     # class not statically known
-    client: Any = pydantic.Field(None, exclude=True) 
+    client: Any = pydantic.Field(None, exclude=True)
 
     def __new__(cls, *args, **kwargs):
         return super().__new__(cls, *args, name="bedrock", **kwargs)
@@ -161,7 +163,7 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
             return
 
         # For constructing BedrockClient below:
-        client_kwargs = {k: v for k, v in kwargs.items()} # copy
+        client_kwargs = {k: v for k, v in kwargs.items()}  # copy
         client_kwargs['region_name'] = region_name
 
         kwargs['region_name'] = region_name
@@ -181,32 +183,31 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
             self._instrument_class_wrapper(
                 ClientCreator,
                 wrapper_method_name="_create_api_method",
-                wrapped_method_filter=lambda f: f.__name__ in ["invoke_model", "invoke_model_with_response_stream"]
+                wrapped_method_filter=lambda f: f.__name__ in
+                ["invoke_model", "invoke_model_with_response_stream"]
             )
-        
+
         if 'client' in kwargs:
             # `self.client` should be already set by super().__init__.
-    
+
             if not safe_hasattr(self.client.invoke_model, INSTRUMENT):
                 # If they user instantiated the client before creating our
                 # endpoint, the above instrumentation will not have attached our
                 # instruments. Do it here instead:
                 self._instrument_class(type(self.client), "invoke_model")
-                self._instrument_class(type(self.client), "invoke_model_with_response_stream")
+                self._instrument_class(
+                    type(self.client), "invoke_model_with_response_stream"
+                )
 
         else:
             # This one will be instrumented by our hacks onto _create_api_method above:
 
             self.client = boto3.client(
-                service_name='bedrock-runtime',
-                **client_kwargs
+                service_name='bedrock-runtime', **client_kwargs
             )
 
     def handle_wrapped_call(
-        self, 
-        func: Callable, 
-        bindings: inspect.BoundArguments, 
-        response: Any,
+        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
 
@@ -215,7 +216,7 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
             if callback is not None:
                 callback.handle_generation(response=response)
 
-        elif func.__name__ == "invoke_model_with_response_stream":            
+        elif func.__name__ == "invoke_model_with_response_stream":
             self.global_callback.handle_generation(response=response)
             if callback is not None:
                 callback.handle_generation(response=response)
@@ -228,8 +229,10 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
                         callback.handle_generation_chunk(response=chunk)
 
             else:
-                logger.warning(f"No iterable body found in `invoke_model_with_response_stream` response.")
+                logger.warning(
+                    f"No iterable body found in `invoke_model_with_response_stream` response."
+                )
 
         else:
-            
+
             logger.warning(f"Unhandled wrapped call to {func.__name__}.")

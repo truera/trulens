@@ -1,11 +1,13 @@
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.utils.imports import REQUIREMENT_COHERE, OptionalImports
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_COHERE
 
 with OptionalImports(message=REQUIREMENT_COHERE):
     import cohere
     from cohere import Client
+
 
 def get_cohere_agent() -> Client:
     """

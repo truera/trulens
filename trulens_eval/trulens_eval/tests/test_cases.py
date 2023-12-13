@@ -215,7 +215,6 @@ def calculate_expected_score(normalized_metrics_lst, weights_lst):
     )
 
 
-
 def generate_summeval_groundedness_golden_set(file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
@@ -223,8 +222,7 @@ def generate_summeval_groundedness_golden_set(file_path):
     for item in data["rows"]:
         row = item["row"]
 
-        assert (
-            len(row["machine_summaries"]) == len(row["consistency"]))
+        assert (len(row["machine_summaries"]) == len(row["consistency"]))
 
         for i in range(len(row["machine_summaries"])):
             yield {
@@ -237,9 +235,10 @@ def generate_summeval_groundedness_golden_set(file_path):
                         [
                             row["consistency"][i] / 5,  # normalize to [0, 1]
                         ],
-                        [1.0] 
+                        [1.0]
                     )
             }
+
 
 def generate_summeval_answer_relevance_golden_set(file_path):
     with open(file_path, 'r') as f:
@@ -249,7 +248,8 @@ def generate_summeval_answer_relevance_golden_set(file_path):
         row = item["row"]
 
         assert (
-            len(row["machine_summaries"]) == len(row["relevance"]) == len(row["human_summaries"])
+            len(row["machine_summaries"]) == len(row["relevance"]) ==
+            len(row["human_summaries"])
         )
 
         for i in range(len(row["machine_summaries"])):
@@ -263,6 +263,6 @@ def generate_summeval_answer_relevance_golden_set(file_path):
                         [
                             row["relevance"][i] / 5,  # normalize to [0, 1]
                         ],
-                        [1.0] 
+                        [1.0]
                     )
             }

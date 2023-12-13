@@ -5,8 +5,8 @@ from typing import Iterable, List, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
@@ -171,8 +171,12 @@ else:
         input_array = evaluations_df['input'].to_numpy()
         output_array = evaluations_df['output'].to_numpy()
 
-        decoded_input = np.vectorize(lambda x: x.encode('utf-8').decode('unicode-escape'))(input_array)
-        decoded_output = np.vectorize(lambda x: x.encode('utf-8').decode('unicode-escape'))(output_array)
+        decoded_input = np.vectorize(
+            lambda x: x.encode('utf-8').decode('unicode-escape')
+        )(input_array)
+        decoded_output = np.vectorize(
+            lambda x: x.encode('utf-8').decode('unicode-escape')
+        )(output_array)
 
         evaluations_df['input'] = decoded_input
         evaluations_df['output'] = decoded_output

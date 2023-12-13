@@ -44,7 +44,6 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-
 with OptionalImports(message=REQUIREMENT_OPENAI):
     import openai as oai
 
@@ -88,7 +87,6 @@ class OpenAIClient(SerialModel):
                         f"If you are not using DEFERRED, you do not need to do anything. "
                         f"If you are using DEFERRED, try to specify this parameter through env variable or another mechanism."
                     )
-
 
         if client is None:
             if client_kwargs is None and client_cls is None:
@@ -152,6 +150,7 @@ class OpenAIClient(SerialModel):
 
 
 class OpenAICallback(EndpointCallback):
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -160,7 +159,8 @@ class OpenAICallback(EndpointCallback):
     )
 
     chunks: List[Generation] = pydantic.Field(
-        default_factory=list, exclude=True,
+        default_factory=list,
+        exclude=True,
     )
 
     def handle_generation_chunk(self, response: Any) -> None:
@@ -189,7 +189,8 @@ class OpenAICallback(EndpointCallback):
             ("n_completion_tokens", "completion_tokens"),
         ]:
             setattr(
-                self.cost, cost_field, getattr(self.langchain_handler, langchain_field)
+                self.cost, cost_field,
+                getattr(self.langchain_handler, langchain_field)
             )
 
 
@@ -273,8 +274,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             )
 
     def __init__(
-        self, 
-        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI, OpenAIClient]] = None, 
+        self,
+        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
+                               OpenAIClient]] = None,
         **kwargs
     ):
         """
@@ -286,19 +288,21 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             return
 
         self_kwargs = dict(
-            name="openai", # for SingletonPerName
-            callback_class = OpenAICallback,
-            obj = self # for WithClassInfo:
+            name="openai",  # for SingletonPerName
+            callback_class=OpenAICallback,
+            obj=self  # for WithClassInfo:
         )
 
         if client is None:
-            # Pass kwargs to client. 
+            # Pass kwargs to client.
             client = oai.OpenAI(**kwargs)
             self_kwargs['client'] = OpenAIClient(client=client)
 
         else:
             if len(kwargs) != 0:
-                logger.warning(f"Arguments {list(kwargs.keys())} are ignored as `client` was provided.")
+                logger.warning(
+                    f"Arguments {list(kwargs.keys())} are ignored as `client` was provided."
+                )
 
             # Convert openai client to our wrapper if needed.
             if not isinstance(client, OpenAIClient):
