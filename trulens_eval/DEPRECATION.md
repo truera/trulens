@@ -1,5 +1,15 @@
 # Deprecation Notes
 
+## Changes in 0.19.0
+
+- Migrated from pydantic v1 to v2 incurring various changes.
+- `ObjSerial` class removed. `Obj` now indicate whether they are loadable when
+  `init_bindings` is not None.
+- `SingletonPerName` field `instances` renamed to `_instances` due to possible
+  shadowing of `instances` field in subclassed models.
+- `WithClassInfo` field `__tru_class_info` renamed to `tru_class_info`
+  as pydantic does not allow underscore fields.
+
 ## Changes in 0.10.0
 
 ### Backwards compatible

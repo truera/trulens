@@ -134,7 +134,7 @@ class TestTruChain(JSONTestCase):
         # Check the record has the metadata when retrieved back from db.
         recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
-        rec = Record.parse_raw(recs.iloc[0].record_json)
+        rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
 
         # Check updating the record metadata in the db.
@@ -143,7 +143,7 @@ class TestTruChain(JSONTestCase):
         Tru().update_record(rec)
         recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
-        rec = Record.parse_raw(recs.iloc[0].record_json)
+        rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
 
@@ -153,7 +153,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, None)
         recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
-        rec = Record.parse_raw(recs.iloc[1].record_json)
+        rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, None)
 
         # Update it to add meta:
@@ -161,7 +161,7 @@ class TestTruChain(JSONTestCase):
         Tru().update_record(rec)
         recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
-        rec = Record.parse_raw(recs.iloc[1].record_json)
+        rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, new_meta)
 
     def test_record_metadata_json(self):
@@ -182,7 +182,7 @@ class TestTruChain(JSONTestCase):
         # Check the record has the metadata when retrieved back from db.
         recs, feedbacks = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
-        rec = Record.parse_raw(recs.iloc[0].record_json)
+        rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
 
         # Check updating the record metadata in the db.
@@ -192,7 +192,7 @@ class TestTruChain(JSONTestCase):
 
         recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
-        rec = Record.parse_raw(recs.iloc[0].record_json)
+        rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
 
@@ -278,8 +278,8 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(async_res, sync_res)
 
         self.assertJSONEqual(
-            async_record.dict(),
-            sync_record.dict(),
+            async_record.model_dump(),
+            sync_record.model_dump(),
             skips=set(
                 ["id", "name", "ts", "start_time", "end_time", "record_id"]
             )
@@ -317,8 +317,8 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(async_res, sync_res)
 
         self.assertJSONEqual(
-            async_record.dict(),
-            sync_record.dict(),
+            async_record.model_dump(),
+            sync_record.model_dump(),
             skips=set(
                 [
                     "id",

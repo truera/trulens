@@ -35,6 +35,7 @@ from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
@@ -43,7 +44,6 @@ from trulens_eval.utils.serial import SerialModel
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
-
 
 with OptionalImports(message=REQUIREMENT_OPENAI):
     import openai as oai
@@ -89,7 +89,6 @@ class OpenAIClient(SerialModel):
                         f"If you are using DEFERRED, try to specify this parameter through env variable or another mechanism."
                     )
 
-
         if client is None:
             if client_kwargs is None and client_cls is None:
                 client = oai.OpenAI()
@@ -103,7 +102,7 @@ class OpenAIClient(SerialModel):
                 if isinstance(client_cls, dict):
                     # TODO: figure out proper pydantic way of doing these things. I
                     # don't think we should be required to parse args like this.
-                    client_cls = Class(**client_cls)
+                    client_cls = Class.model_validate(client_cls)
 
                 cls = client_cls.load()
 
@@ -152,6 +151,7 @@ class OpenAIClient(SerialModel):
 
 
 class OpenAICallback(EndpointCallback):
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -160,7 +160,8 @@ class OpenAICallback(EndpointCallback):
     )
 
     chunks: List[Generation] = pydantic.Field(
-        default_factory=list, exclude=True,
+        default_factory=list,
+        exclude=True,
     )
 
     def handle_generation_chunk(self, response: Any) -> None:
@@ -189,7 +190,8 @@ class OpenAICallback(EndpointCallback):
             ("n_completion_tokens", "completion_tokens"),
         ]:
             setattr(
-                self.cost, cost_field, getattr(self.langchain_handler, langchain_field)
+                self.cost, cost_field,
+                getattr(self.langchain_handler, langchain_field)
             )
 
 
@@ -231,8 +233,17 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         counted_something = False
         if hasattr(response, 'usage'):
+
             counted_something = True
-            usage = response.usage.dict()
+
+            if isinstance(response.usage, pydantic.BaseModel):
+                usage = response.usage.model_dump()
+            elif isinstance(response.usage, pydantic.v1.BaseModel):
+                usage = response.usage.dict()
+            elif isinstance(response.usage, Dict):
+                usage = response.usage
+            else:
+                usage = None
 
             # See how to construct in langchain.llms.openai.OpenAIChat._generate
             llm_res = LLMResult(
@@ -273,8 +284,9 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             )
 
     def __init__(
-        self, 
-        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI, OpenAIClient]] = None, 
+        self,
+        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
+                               OpenAIClient]] = None,
         **kwargs
     ):
         """
@@ -286,19 +298,25 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             return
 
         self_kwargs = dict(
-            name="openai", # for SingletonPerName
-            callback_class = OpenAICallback,
-            obj = self # for WithClassInfo:
+            name="openai",  # for SingletonPerName
+            callback_class=OpenAICallback,
+            obj=self,  # for WithClassInfo:
+            **kwargs
         )
 
+        if CLASS_INFO in kwargs:
+            del kwargs[CLASS_INFO]
+
         if client is None:
-            # Pass kwargs to client. 
+            # Pass kwargs to client.
             client = oai.OpenAI(**kwargs)
             self_kwargs['client'] = OpenAIClient(client=client)
 
         else:
             if len(kwargs) != 0:
-                logger.warning(f"Arguments {list(kwargs.keys())} are ignored as `client` was provided.")
+                logger.warning(
+                    f"Arguments {list(kwargs.keys())} are ignored as `client` was provided."
+                )
 
             # Convert openai client to our wrapper if needed.
             if not isinstance(client, OpenAIClient):

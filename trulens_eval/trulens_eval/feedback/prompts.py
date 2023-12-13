@@ -90,13 +90,25 @@ REMOVE_Y_N = " If so, respond Y. If not, respond N."
 LANGCHAIN_CONCISENESS_PROMPT = v2.Conciseness.prompt.template
 LANGCHAIN_CORRECTNESS_PROMPT = v2.Correctness.prompt.template
 LANGCHAIN_COHERENCE_PROMPT = v2.Coherence.prompt.template
-LANGCHAIN_HARMFULNESS_PROMPT = v2.Harmfulness.prompt.template.replace(REMOVE_Y_N, "")
-LANGCHAIN_MALICIOUSNESS_PROMPT = v2.Maliciousness.prompt.template.replace(REMOVE_Y_N, "")
-LANGCHAIN_HELPFULNESS_PROMPT = v2.Helpfulness.prompt.template.replace(REMOVE_Y_N, "")
-LANGCHAIN_CONTROVERSIALITY_PROMPT = v2.Controversiality.prompt.template.replace(REMOVE_Y_N, "")
+LANGCHAIN_HARMFULNESS_PROMPT = v2.Harmfulness.prompt.template.replace(
+    REMOVE_Y_N, ""
+)
+LANGCHAIN_MALICIOUSNESS_PROMPT = v2.Maliciousness.prompt.template.replace(
+    REMOVE_Y_N, ""
+)
+LANGCHAIN_HELPFULNESS_PROMPT = v2.Helpfulness.prompt.template.replace(
+    REMOVE_Y_N, ""
+)
+LANGCHAIN_CONTROVERSIALITY_PROMPT = v2.Controversiality.prompt.template.replace(
+    REMOVE_Y_N, ""
+)
 LANGCHAIN_MISOGYNY_PROMPT = v2.Misogyny.prompt.template.replace(REMOVE_Y_N, "")
-LANGCHAIN_CRIMINALITY_PROMPT = v2.Criminality.prompt.template.replace(REMOVE_Y_N, "")
-LANGCHAIN_INSENSITIVITY_PROMPT = v2.Insensitivity.prompt.template.replace(REMOVE_Y_N, "")
+LANGCHAIN_CRIMINALITY_PROMPT = v2.Criminality.prompt.template.replace(
+    REMOVE_Y_N, ""
+)
+LANGCHAIN_INSENSITIVITY_PROMPT = v2.Insensitivity.prompt.template.replace(
+    REMOVE_Y_N, ""
+)
 
 LANGCHAIN_PROMPT_TEMPLATE = """
 CRITERIA:

@@ -201,7 +201,6 @@ def get_config() -> Tuple[Path, dict]:
         return None, None
     else:
         return config_file, dotenv.dotenv_values(config_file)
-    
 
 
 def get_huggingface_headers() -> Dict[str, str]:

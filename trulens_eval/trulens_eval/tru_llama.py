@@ -19,7 +19,7 @@ from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.llama import WithFeedbackFilterNodes
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.schema import BaseComponent
 
     # LLMs
-    from llama_index.llms.base import LLM  # subtype of BaseComponent
+    from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
 
     # misc
     from llama_index.indices.query.base import BaseQueryEngine
@@ -82,7 +82,7 @@ class LlamaInstrument(Instrument):
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
             BaseComponent,
-            LLM,
+            BaseLLM,
             BaseQueryEngine,
             BaseRetriever,
             BaseIndex,
@@ -112,13 +112,13 @@ class LlamaInstrument(Instrument):
             {
                 # LLM:
                 "complete":
-                    lambda o: isinstance(o, LLM),
+                    lambda o: isinstance(o, BaseLLM),
                 "stream_complete":
-                    lambda o: isinstance(o, LLM),
+                    lambda o: isinstance(o, BaseLLM),
                 "acomplete":
-                    lambda o: isinstance(o, LLM),
+                    lambda o: isinstance(o, BaseLLM),
                 "astream_complete":
-                    lambda o: isinstance(o, LLM),
+                    lambda o: isinstance(o, BaseLLM),
 
                 # BaseTool/AsyncBaseTool:
                 "__call__":
@@ -146,13 +146,13 @@ class LlamaInstrument(Instrument):
 
                 # BaseChatEngine/LLM:
                 "chat":
-                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
+                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
                 "achat":
-                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
+                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
                 "stream_chat":
-                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
+                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
                 "astream_achat":
-                    lambda o: isinstance(o, (LLM, BaseChatEngine)),
+                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
 
                 # BaseRetriever/BaseQueryEngine:
                 "retrieve":
@@ -234,13 +234,10 @@ class TruLlama(App):
     app: Union[BaseQueryEngine, BaseChatEngine]
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query),
-        const=True
+        default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
     )
 
     def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs):
-        super().update_forward_refs()
-
         # TruLlama specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
@@ -248,10 +245,8 @@ class TruLlama(App):
 
         super().__init__(**kwargs)
 
-        self.post_init()
-
     @classmethod
-    def select_source_nodes(cls) -> JSONPath:
+    def select_source_nodes(cls) -> Lens:
         """
         Get the path to the source nodes in the query output.
         """
@@ -501,3 +496,6 @@ class TruLlama(App):
         )
 
         return await self.awith_record(self.app.astream_chat, *args, **kwargs)
+
+
+TruLlama.model_rebuild()

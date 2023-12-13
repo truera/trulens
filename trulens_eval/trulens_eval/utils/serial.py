@@ -14,8 +14,8 @@ from copy import copy
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple,
-    TypeVar, Union
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence,
+    Sized, Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson
@@ -44,6 +44,20 @@ JSON_STRICT = Dict[str, JSON]
 mj = MerkleJson()
 
 
+def model_dump(obj: Union[pydantic.BaseModel, pydantic.v1.BaseModel]) -> dict:
+    """
+    Return the dict/model_dump of the given pydantic instance regardless of it
+    being v2 or v1.
+    """
+
+    if isinstance(obj, pydantic.BaseModel):
+        return obj.model_dump()
+    elif isinstance(obj, pydantic.v1.BaseModel):
+        return obj.dict()
+    else:
+        raise ValueError("Not a pydantic.BaseModel.")
+
+
 class SerialModel(pydantic.BaseModel):
     """
     Trulens-specific additions on top of pydantic models. Includes utilities to
@@ -51,22 +65,16 @@ class SerialModel(pydantic.BaseModel):
     """
 
     @classmethod
-    def validate(cls, obj: Any):
+    def model_validate(cls, obj, **kwargs):
         # import hierarchy circle here
         from trulens_eval.utils.pyschema import Class
         from trulens_eval.utils.pyschema import CLASS_INFO
         from trulens_eval.utils.pyschema import WithClassInfo
 
-        if isinstance(obj, Dict):
-            if CLASS_INFO in obj:
+        if isinstance(obj, Dict) and CLASS_INFO in obj:
+            return WithClassInfo.model_validate(obj)
 
-                cls = Class(**obj[CLASS_INFO])
-                del obj[CLASS_INFO]
-                model = cls.validate(obj=obj)
-
-                return WithClassInfo.of_model(model=model, cls=cls)
-
-        return super().validate(obj)
+        return super(SerialModel, cls).model_validate(obj, **kwargs)
 
     def update(self, **d):
         for k, v in d.items():
@@ -88,11 +96,7 @@ class SerialBytes(pydantic.BaseModel):
         super().__init__(data=data)
 
     @classmethod
-    def parse_obj(cls, obj):
-        return cls.validate(obj)
-
-    @classmethod
-    def validate(cls, obj):
+    def model_validate(cls, obj, **kwargs):
         import base64
 
         if isinstance(obj, Dict):
@@ -107,15 +111,15 @@ class SerialBytes(pydantic.BaseModel):
             raise ValueError(obj)
 
 
-# Lens, a container for selector/accessors/setters of data stored in a json
-# structure. Cannot make abstract since pydantic will try to initialize it.
-class Step(pydantic.BaseModel):  #, abc.ABC):
+# NOTE1: Lens, a container for selector/accessors/setters of data stored in a
+# json structure. Cannot make abstract since pydantic will try to initialize it.
+class Step(pydantic.BaseModel, Hashable):
     """
     A step in a selection path.
     """
 
     @classmethod
-    def validate(cls, obj):
+    def model_validate(cls, obj, **kwargs):
 
         if isinstance(obj, Step):
             return obj
@@ -143,14 +147,14 @@ class Step(pydantic.BaseModel):  #, abc.ABC):
             f"Do not know how to interpret {obj} as a `Lens` `Step`."
         )
 
-    # @abc.abstractmethod
+    # @abc.abstractmethod # NOTE1
     def get(self, obj: Any) -> Iterable[Any]:
         """
         Get the element of `obj`, indexed by `self`.
         """
         raise NotImplementedError()
 
-    # @abc.abstractmethod
+    # @abc.abstractmethod # NOTE1
     def set(self, obj: Any, val: Any) -> Any:
         """
         Set the value(s) indicated by self in `obj` to value `val`.
@@ -162,13 +166,16 @@ class Collect(Step):
     # Need something for `Step.validate` to tell that it is looking at Collect.
     collect: None = None
 
+    # Hashable requirement.
     def __hash__(self):
         return hash("collect")
 
+    # Step requirement.
     def get(self, obj: Any) -> Iterable[List[Any]]:
         # Needs to be handled in Lens class itself.
         raise NotImplementedError()
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         raise NotImplementedError()
 
@@ -177,7 +184,7 @@ class Collect(Step):
 
 
 class StepItemOrAttribute(Step):
-
+    # NOTE1
     def get_item_or_attribute(self):
         raise NotImplementedError()
 
@@ -185,12 +192,15 @@ class StepItemOrAttribute(Step):
 class GetAttribute(StepItemOrAttribute):
     attribute: str
 
+    # Hashable requirement.
     def __hash__(self):
         return hash(self.attribute)
 
+    # StepItemOrAttribute requirement
     def get_item_or_attribute(self):
         return self.attribute
 
+    # Step requirement
     def get(self, obj: Any) -> Iterable[Any]:
         if hasattr(obj, self.attribute):
             yield getattr(obj, self.attribute)
@@ -199,6 +209,7 @@ class GetAttribute(StepItemOrAttribute):
                 f"Object {obj} does not have attribute: {self.attribute}"
             )
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = Bunch()
@@ -221,9 +232,11 @@ class GetAttribute(StepItemOrAttribute):
 class GetIndex(Step):
     index: int
 
+    # Hashable requirement
     def __hash__(self):
         return hash(self.index)
 
+    # Step requirement
     def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             if len(obj) > self.index:
@@ -233,6 +246,7 @@ class GetIndex(Step):
         else:
             raise ValueError(f"Object {obj} is not a sequence.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = []
@@ -256,12 +270,15 @@ class GetIndex(Step):
 class GetItem(StepItemOrAttribute):
     item: str
 
+    # Hashable requirement
     def __hash__(self):
         return hash(self.item)
 
+    # StepItemOrAttribute requirement
     def get_item_or_attribute(self):
         return self.item
 
+    # Step requirement
     def get(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
             if self.item in obj:
@@ -271,6 +288,7 @@ class GetItem(StepItemOrAttribute):
         else:
             raise ValueError(f"Object {obj} is not a dictionary.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = dict()
@@ -296,12 +314,15 @@ class GetItemOrAttribute(StepItemOrAttribute):
 
     item_or_attribute: str  # distinct from "item" for deserialization
 
+    # Hashable requirement
     def __hash__(self):
         return hash(self.item_or_attribute)
 
+    # StepItemOrAttribute requirement
     def get_item_or_attribute(self):
         return self.item_or_attribute
 
+    # Step requirement
     def get(self, obj: Dict[str, T]) -> Iterable[T]:
         # Special handling of sequences. See NOTE above.
         if isinstance(obj, Sequence):
@@ -337,6 +358,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
                     f"Object {obj} does not have item or attribute {self.item_or_attribute}."
                 )
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = dict()
@@ -361,9 +383,11 @@ class GetSlice(Step):
     stop: Optional[int]
     step: Optional[int]
 
+    # Hashable requirement
     def __hash__(self):
         return hash((self.start, self.stop, self.step))
 
+    # Step requirement
     def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             lower, upper, step = slice(self.start, self.stop,
@@ -373,9 +397,8 @@ class GetSlice(Step):
         else:
             raise ValueError("Object is not a sequence.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
-        # raise NotImplementedError
-
         if obj is None:
             obj = []
 
@@ -406,14 +429,16 @@ class GetSlice(Step):
 
 
 class GetIndices(Step):
-    indices: Sequence[int]
+    indices: Tuple[int, ...]
 
+    # Hashable requirement
     def __hash__(self):
-        return hash(tuple(self.indices))
+        return hash(self.indices)
 
-    def __init__(self, indices):
+    def __init__(self, indices: Iterable[int]):
         super().__init__(indices=tuple(indices))
 
+    # Step requirement
     def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
             for i in self.indices:
@@ -421,9 +446,8 @@ class GetIndices(Step):
         else:
             raise ValueError("Object is not a sequence.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
-        # raise NotImplementedError
-
         if obj is None:
             obj = []
 
@@ -446,14 +470,16 @@ class GetIndices(Step):
 
 
 class GetItems(Step):
-    items: Sequence[str]
+    items: Tuple[str, ...]
 
+    # Hashable requirement
     def __hash__(self):
-        return hash(tuple(self.items))
+        return hash(self.items)
 
-    def __init__(self, items):
+    def __init__(self, items: Iterable[str]):
         super().__init__(items=tuple(items))
 
+    # Step requirement
     def get(self, obj: Dict[str, T]) -> Iterable[T]:
         if isinstance(obj, Dict):
             for i in self.items:
@@ -461,9 +487,8 @@ class GetItems(Step):
         else:
             raise ValueError("Object is not a dictionary.")
 
+    # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
-        # raise NotImplementedError
-
         if obj is None:
             obj = dict()
 
@@ -488,10 +513,13 @@ class ParseException(Exception):
         self.exp_ast = exp_ast
 
     def __str__(self):
-        return f"Failed to parse expression `{self.exp_string}` as a `Lens`.\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
+        return (
+            f"Failed to parse expression `{self.exp_string}` as a `Lens`."
+            f"\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
+        )
 
 
-class Lens(pydantic.BaseModel):
+class Lens(pydantic.BaseModel, Sized, Hashable):
     # Not using SerialModel as we have special handling of serialization to/from
     # strings for this class which interferes with SerialModel mechanisms.
     """
@@ -513,24 +541,29 @@ class Lens(pydantic.BaseModel):
 
     path: Tuple[Step, ...]
 
+    @pydantic.model_validator(mode='wrap')
     @classmethod
-    def validate(cls, obj):
+    def validate_from_string(cls, obj, handler):
+        # `mode="before"` validators currently cannot return something of a type
+        # different than obj. Might be a pydantic oversight/bug.
+
         if isinstance(obj, str):
             return Lens.of_string(obj)
         else:
-            return super().validate(obj)
+            return handler(obj)
 
-    def dump(self):  # might be called "model_dump" in pydantic v2
+    @pydantic.model_serializer
+    def dump_as_string(self, **kwargs):
         return str(self)
 
-    def __init__(self, path: Optional[Tuple[Step, ...]] = None):
+    def __init__(self, path: Optional[Iterable[Step]] = None):
         if path is None:
             path = ()
 
-        super().__init__(path=path)
+        super().__init__(path=tuple(path))
 
     @staticmethod
-    def of_string(s: str) -> 'Lens':
+    def of_string(s: str) -> Lens:
         """
         Convert a string representing a python expression into a Lens.
         """
@@ -726,21 +759,23 @@ class Lens(pydantic.BaseModel):
     def __repr__(self):
         return "Lens()" + ("".join(map(repr, self.path)))
 
+    # Hashable requirement
     def __hash__(self):
         return hash(self.path)
 
+    # Sized requirement
     def __len__(self):
         return len(self.path)
 
-    def __add__(self, other: Lens):
+    def __add__(self, other: 'Lens'):
         return Lens(path=self.path + other.path)
 
-    def is_immediate_prefix_of(self, other: Lens):
+    def is_immediate_prefix_of(self, other: 'Lens'):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(
             other.path
         )
 
-    def is_prefix_of(self, other: Lens):
+    def is_prefix_of(self, other: 'Lens'):
         p = self.path
         pother = other.path
 
@@ -852,12 +887,12 @@ class Lens(pydantic.BaseModel):
                 for last_selection in last_step.get(start_selection):
                     yield last_selection
 
-    def _append(self, step: Step) -> Lens:
+    def _append(self, step: Step) -> 'Lens':
         return Lens(path=self.path + (step,))
 
     def __getitem__(
-        self, item: int | str | slice | Sequence[int] | Sequence[str]
-    ) -> Lens:
+        self, item: Union[int, str, slice, Sequence[int], Sequence[str]]
+    ) -> 'Lens':
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
@@ -880,7 +915,7 @@ class Lens(pydantic.BaseModel):
 
         raise TypeError(f"Unhandled item type {type(item)}.")
 
-    def __getattr__(self, attr: str) -> Lens:
+    def __getattr__(self, attr: str) -> 'Lens':
         if attr == "_ipython_canary_method_should_not_exist_":
             # NOTE(piotrm): when displaying objects, ipython checks whether they
             # have overwritten __getattr__ by looking up this attribute. If it
@@ -894,6 +929,8 @@ class Lens(pydantic.BaseModel):
 
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
 
+
+Lens.model_rebuild()
 
 # TODO: Deprecate old name.
 JSONPath = Lens
@@ -938,7 +975,7 @@ def all_queries(obj: Any, query: Lens = None) -> Iterable[Lens]:
     elif isinstance(obj, pydantic.BaseModel):
         yield query
 
-        for k in obj.__fields__:
+        for k in obj.model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
             for res in all_queries(v, sub_query):
@@ -977,7 +1014,7 @@ def all_objects(obj: Any, query: Lens = None) -> Iterable[Tuple[Lens, Any]]:
         pass
 
     elif isinstance(obj, pydantic.BaseModel):
-        for k in obj.__fields__:
+        for k in obj.model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
             for res in all_objects(v, sub_query):

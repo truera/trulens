@@ -20,13 +20,16 @@ feature information about the encoded object types in the dictionary under the
 util.py:CLASS_INFO key.
 """
 
+from __future__ import annotations
+
+from concurrent.futures import Future
 from datetime import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
-    TypeVar, Union
+    Any, Callable, ClassVar, Dict, List, Optional, Sequence, Type,
+    TYPE_CHECKING, TypeVar, Union
 )
 
 import dill
@@ -43,7 +46,7 @@ from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
 from trulens_eval.utils.serial import SerialModel
 
@@ -74,7 +77,7 @@ class RecordAppCallMethod(SerialModel):
     Method information for the stacks inside `RecordAppCall`.
     """
 
-    path: JSONPath
+    path: Lens
     method: Method
 
 
@@ -105,7 +108,7 @@ class Cost(SerialModel):
 
     def __add__(self, other: 'Cost') -> 'Cost':
         kwargs = {}
-        for k in self.__fields__.keys():
+        for k in self.model_fields.keys():
             kwargs[k] = getattr(self, k) + getattr(other, k)
         return Cost(**kwargs)
 
@@ -138,14 +141,14 @@ class RecordAppCall(SerialModel):
     """
 
     # Call stack but only containing paths of instrumented apps/other objects.
-    stack: Sequence[RecordAppCallMethod]
+    stack: List[RecordAppCallMethod]
 
     # Arguments to the instrumented method.
     args: JSON
 
     # Returns of the instrumented method if successful. Sometimes this is a
     # dict, sometimes a sequence, and sometimes a base value.
-    rets: Optional[Any] = None
+    rets: Optional[JSON] = None
 
     # Error message if call raised exception.
     error: Optional[str] = None
@@ -159,10 +162,10 @@ class RecordAppCall(SerialModel):
     # Thread id.
     tid: int
 
-    def top(self):
+    def top(self) -> RecordAppCallMethod:
         return self.stack[-1]
 
-    def method(self):
+    def method(self) -> Method:
         return self.top().method
 
 
@@ -171,13 +174,17 @@ class Record(SerialModel):
     Each instrumented method call produces one of these "record" instances.
     """
 
-    record_id: RecordID
-    app_id: AppID
+    class Config:
+        # for `Future[FeedbackResult]` = `TFeedbackResultFuture`
+        arbitrary_types_allowed = True
+
+    record_id: RecordID  # str
+    app_id: AppID  # str
 
     cost: Optional[Cost] = None
     perf: Optional[Perf] = None
 
-    ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
+    ts: datetime = pydantic.Field(default_factory=datetime.now)
 
     tags: Optional[str] = ""
     meta: Optional[JSON] = None
@@ -189,13 +196,14 @@ class Record(SerialModel):
     # The collection of calls recorded. Note that these can be converted into a
     # json structure with the same paths as the app that generated this record
     # via `layout_calls_as_app`.
-    calls: Sequence[RecordAppCall] = []
+    calls: List[RecordAppCall] = []
 
     # Feedback results only filled for records that were just produced. Will not
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
-    feedback_results: Optional[List['Future[FeedbackResult]']
-                              ] = pydantic.Field(exclude=True)
+
+    feedback_results: Optional[List[TFeedbackResultFuture]] = \
+        pydantic.Field(None, exclude=True)
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
         # Fixed record_id for obj_id_of_id below.
@@ -222,7 +230,7 @@ class Record(SerialModel):
               would be in the AppDefinitionstructure.
         """
 
-        ret = Bunch(**self.dict())
+        ret = Bunch(**self.model_dump())
 
         for call in self.calls:
             # Info about the method call is at the top of the stack
@@ -243,11 +251,11 @@ class Record(SerialModel):
 
 class Select:
     """
-    Utilities for creating selectors using JSONPath/Lens and aliases/shortcuts.
+    Utilities for creating selectors using Lens and aliases/shortcuts.
     """
 
     # Typing for type hints.
-    Query: type = JSONPath
+    Query = Lens
 
     # Instance for constructing queries for record json like `Record.app.llm`.
     Record: Query = Query().__record__
@@ -257,21 +265,21 @@ class Select:
 
     # A App's main input and main output.
     # TODO: App input/output generalization.
-    RecordInput: Query = Record.main_input
-    RecordOutput: Query = Record.main_output
+    RecordInput: Query = Record.main_input  # type: ignore
+    RecordOutput: Query = Record.main_output  # type: ignore
 
-    RecordCalls: Query = Record.app
+    RecordCalls: Query = Record.app  # type: ignore
 
     @staticmethod
-    def for_record(query: Query) -> Query:
+    def for_record(query: Select.Query) -> Query:
         return Select.Query(path=Select.Record.path + query.path)
 
     @staticmethod
-    def for_app(query: Query) -> Query:
+    def for_app(query: Select.Query) -> Query:
         return Select.Query(path=Select.App.path + query.path)
 
     @staticmethod
-    def render_for_dashboard(query: Query) -> str:
+    def render_for_dashboard(query: Select.Query) -> str:
         """
         Render the given query for use in dashboard to help user specify
         feedback functions.
@@ -305,10 +313,6 @@ class Select:
             ret += repr(step)
 
         return f"{ret}"
-
-
-# To deprecate in 1.0.0:
-Query = Select
 
 
 class FeedbackResultStatus(Enum):
@@ -362,7 +366,7 @@ class FeedbackResult(SerialModel):
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
     # Last timestamp involved in the evaluation.
-    last_ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
+    last_ts: datetime = pydantic.Field(default_factory=datetime.now)
 
     # For deferred feedback evaluation, the status of the evaluation.
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
@@ -391,10 +395,16 @@ class FeedbackResult(SerialModel):
 
         if feedback_result_id is None:
             feedback_result_id = obj_id_of_obj(
-                self.dict(), prefix="feedback_result"
+                self.model_dump(), prefix="feedback_result"
             )
 
         self.feedback_result_id = feedback_result_id
+
+
+if TYPE_CHECKING:
+    TFeedbackResultFuture = Future[FeedbackResult]
+else:
+    TFeedbackResultFuture = Future
 
 
 class FeedbackDefinition(SerialModel, WithClassInfo):
@@ -415,7 +425,7 @@ class FeedbackDefinition(SerialModel, WithClassInfo):
 
     # Selectors, pointers into Records of where to get
     # arguments for `imp`.
-    selectors: Dict[str, JSONPath]
+    selectors: Dict[str, Lens]
 
     supplied_name: Optional[str] = None
 
@@ -424,12 +434,12 @@ class FeedbackDefinition(SerialModel, WithClassInfo):
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         implementation: Optional[Union[Function, Method]] = None,
         aggregator: Optional[Union[Function, Method]] = None,
-        selectors: Dict[str, JSONPath] = None,
+        selectors: Optional[Dict[str, Lens]] = None,
         supplied_name: Optional[str] = None,
         **kwargs
     ):
         """
-        - selectors: Optional[Dict[str, JSONPath]] -- mapping of implementation
+        - selectors: Optional[Dict[str, Lens]] -- mapping of implementation
           argument names to where to get them from a record.
 
         - feedback_definition_id: Optional[str] - unique identifier.
@@ -458,7 +468,7 @@ class FeedbackDefinition(SerialModel, WithClassInfo):
         if feedback_definition_id is None:
             if implementation is not None:
                 feedback_definition_id = obj_id_of_obj(
-                    self.dict(), prefix="feedback_definition"
+                    self.model_dump(), prefix="feedback_definition"
                 )
             else:
                 feedback_definition_id = "anonymous_feedback_definition"
@@ -490,12 +500,12 @@ class AppDefinition(SerialModel, WithClassInfo):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
 
-    class Config:
-        arbitrary_types_allowed = True
+    #class Config:
+    #    arbitrary_types_allowed = True
 
-    app_id: AppID
-    tags: Tags
-    metadata: Metadata  # TODO: rename to meta for consistency with other metas
+    app_id: AppID  # str
+    tags: Tags  # str
+    metadata: Metadata  # dict  # TODO: rename to meta for consistency with other metas
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
@@ -505,8 +515,10 @@ class AppDefinition(SerialModel, WithClassInfo):
     # if "withappthread" was set.
     feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
 
-    # Class of the main instrumented object.
-    root_class: Class  # TODO: make classvar
+    # Class of the main instrumented object. Ideally this would be a ClassVar
+    # but since we want to check this without instantiating the subclass of
+    # AppDefinition that would define it, we cannot use ClassVar.
+    root_class: Class
 
     # App's main method. To be filled in by subclass. Want to make this abstract
     # but this causes problems when trying to load an AppDefinition from json.
@@ -559,7 +571,7 @@ class AppDefinition(SerialModel, WithClassInfo):
         if initial_app_loader is None:
             assert serial_bytes_json is not None, "Cannot create new session without `initial_app_loader`."
 
-            serial_bytes = SerialBytes.parse_obj(serial_bytes_json)
+            serial_bytes = SerialBytes.model_validate(serial_bytes_json)
 
             app = dill.loads(serial_bytes.data)()
 
@@ -567,14 +579,14 @@ class AppDefinition(SerialModel, WithClassInfo):
             app = initial_app_loader()
             data = dill.dumps(initial_app_loader, recurse=True)
             serial_bytes = SerialBytes(data=data)
-            serial_bytes_json = serial_bytes.dict()
+            serial_bytes_json = serial_bytes.model_dump()
 
         app_definition_json['app'] = app
         app_definition_json['initial_app_loader_dump'] = serial_bytes_json
 
         cls: Type[App] = WithClassInfo.get_class(app_definition_json)
 
-        return cls.parse_obj(app_definition_json)
+        return cls.model_validate_json(app_definition_json)
 
     def jsonify_extra(self, content):
         # Called by jsonify for us to add any data we might want to add to the
@@ -607,7 +619,7 @@ class AppDefinition(SerialModel, WithClassInfo):
         super().__init__(**kwargs)
 
         if app_id is None:
-            app_id = obj_id_of_obj(obj=self.dict(), prefix="app")
+            app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
 
         self.app_id = app_id
 
@@ -689,7 +701,7 @@ class AppDefinition(SerialModel, WithClassInfo):
             return jsonify(self)
 
     @classmethod
-    def select_inputs(cls) -> JSONPath:
+    def select_inputs(cls) -> Lens:
         """
         Get the path to the main app's call inputs.
         """
@@ -700,7 +712,7 @@ class AppDefinition(SerialModel, WithClassInfo):
         ).args
 
     @classmethod
-    def select_outputs(cls) -> JSONPath:
+    def select_outputs(cls) -> Lens:
         """
         Get the path to the main app's call outputs.
         """
