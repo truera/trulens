@@ -10,13 +10,13 @@ It can be useful to think of the range of evaluations on two axis: Scalable and 
 
 In early development stages, we recommend starting with domain expert evaluations. These evaluations are often completed by the developers themselves and represent the core use cases your app is expected to complete. This allows you to deeply understand the performance of your app, but lacks scale.
 
-See this [example notebook](./groundtruth_evals.ipynb) to learn how to run ground truth evaluations with TruLens.
+See this [example notebook](https://www.trulens.org/trulens_eval/groundtruth_evals/) to learn how to run ground truth evaluations with TruLens.
 
 ## User Feedback (Human) Evaluations
 
 After you have completed early evaluations and have gained more confidence in your app, it is often useful to gather human feedback. This can often be in the form of binary (up/down) feedback provided by your users. This is more slightly scalable than ground truth evals, but struggles with variance and can still be expensive to collect.
 
-See this [example notebook](./human_feedback.ipynb) to learn how to log human feedback with TruLens.
+See this [example notebook](https://www.trulens.org/trulens_eval/human_feedback/) to learn how to log human feedback with TruLens.
 
 ## Traditional NLP Evaluations
 
@@ -34,4 +34,4 @@ Large Language Models can also provide meaningful and flexible feedback on LLM a
 
 Depending on the size and nature of the LLM, these evaluations can be quite expensive at scale.
 
-See this [example notebook](./quickstart.ipynb) to learn how to run LLM-based evaluations with TruLens.
+See this [example notebook](https://www.trulens.org/trulens_eval/quickstart/) to learn how to run LLM-based evaluations with TruLens.
