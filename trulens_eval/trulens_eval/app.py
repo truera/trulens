@@ -382,9 +382,7 @@ class RecordingContext():
         """
 
         with self.lock:
-            record = calls_to_record(
-                self.calls, self.record_metadata
-            )
+            record = calls_to_record(self.calls, self.record_metadata)
             self.calls = []
             self.records.append(record)
 
@@ -574,9 +572,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             return str(ret)
 
     # WithInstrumentCallbacks requirement
-    def _on_method_instrumented(
-        self, obj: object, func: Callable, path: Lens
-    ):
+    def _on_method_instrumented(self, obj: object, func: Callable, path: Lens):
         """
         Called by instrumentation system for every function requested to be
         instrumented by this app.
@@ -861,13 +857,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         res, _ = self.with_record(func, *args, **kwargs)
         return res
 
-    def with_record(
-        self,
-        func,
-        *args,
-        record_metadata: JSON = None,
-        **kwargs
-    ) -> Tuple[Any, Record]:
+    def with_record(self,
+                    func,
+                    *args,
+                    record_metadata: JSON = None,
+                    **kwargs) -> Tuple[Any, Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.

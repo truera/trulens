@@ -203,9 +203,9 @@ class Class(SerialModel):
         """
         if self.bases is None:
             return self
-        
+
         module_name = self.module.module_name
-        
+
         for base in self.bases[::-1]:
             if base.module.module_name == module_name:
                 return base
@@ -270,6 +270,7 @@ class Class(SerialModel):
 
         return False
 
+
 Class.update_forward_refs()
 
 
@@ -312,11 +313,13 @@ class Obj(SerialModel):
     # handling loops in JSON objects.
     id: int
 
-    # Loadable 
+    # Loadable
     init_bindings: Optional[Bindings] = None
 
     @staticmethod
-    def of_object(obj: object, cls: Optional[type] = None, loadable: bool = False) -> Obj:
+    def of_object(
+        obj: object, cls: Optional[type] = None, loadable: bool = False
+    ) -> Obj:
         if cls is None:
             cls = obj.__class__
 
@@ -371,8 +374,10 @@ class Obj(SerialModel):
 
     def load(self) -> object:
         if self.init_bindings is None:
-            raise RuntimeError("Cannot load object unless `init_bindings` are set.")
-        
+            raise RuntimeError(
+                "Cannot load object unless `init_bindings` are set."
+            )
+
         cls = self.cls.load()
 
         sig = _safe_init_sig(cls)
@@ -422,7 +427,9 @@ class FunctionOrMethod(SerialModel):
             elif 'cls' in obj:
                 return super(cls, Function).model_validate(obj=obj, **kwargs)
             else:
-                raise ValueError(f"Cannot tell what type of callable this encodes: {obj}")
+                raise ValueError(
+                    f"Cannot tell what type of callable this encodes: {obj}"
+                )
         else:
             return super().model_validate(obj)
 

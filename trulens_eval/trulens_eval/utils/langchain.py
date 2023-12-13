@@ -16,7 +16,8 @@ from trulens_eval.utils.containers import second
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.serial import JSON, model_dump
+from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import model_dump
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):

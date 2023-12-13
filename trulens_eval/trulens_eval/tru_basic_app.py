@@ -89,7 +89,8 @@ class TruBasicApp(App):
     app: TruWrapperApp
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruWrapperApp._call)
+        default_factory=lambda: FunctionOrMethod.
+        of_callable(TruWrapperApp._call)
     )
 
     def __init__(
@@ -119,7 +120,6 @@ class TruBasicApp(App):
         kwargs['instrument'] = TruBasicCallableInstrument(app=self)
 
         super().__init__(**kwargs)
-
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.

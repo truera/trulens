@@ -28,18 +28,19 @@ pp = PrettyPrinter()
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
 
-    from langchain.schema.document import Document
     from langchain.agents.agent import BaseMultiActionAgent
     from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
     from langchain.llms.base import BaseLLM
+    from langchain.load.serializable import \
+        Serializable  # this seems to be work in progress over at langchain
     from langchain.memory.chat_memory import BaseChatMemory
     from langchain.prompts.base import BasePromptTemplate
     from langchain.schema import BaseChatMessageHistory  # subclass of above
     from langchain.schema import BaseMemory  # no methods instrumented
     from langchain.schema import BaseRetriever
+    from langchain.schema.document import Document
     from langchain.schema.language_model import BaseLanguageModel
-    from langchain.load.serializable import Serializable # this seems to be work in progress over at langchain
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
 
@@ -171,12 +172,13 @@ class TruChain(App):
             app (Chain): A langchain application.
     """
 
-    app: Any # Chain
+    app: Any  # Chain
 
     # TODO: what if _acall is being used instead?
     root_callable: ClassVar[Any] = Field(
         default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call)
     )
+
     # FunctionOrMethod
 
     # Normally pydantic does not like positional args but chain here is

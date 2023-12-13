@@ -209,11 +209,12 @@ import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
+from typing import (
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
+)
 import weakref
 
 import pydantic
-
 
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback.provider.endpoint import Endpoint
@@ -245,9 +246,7 @@ class WithInstrumentCallbacks:
     """
 
     # Called during instrumentation.
-    def _on_method_instrumented(
-        self, obj: object, func: Callable, path: Lens
-    ):
+    def _on_method_instrumented(self, obj: object, func: Callable, path: Lens):
         """
         Called by instrumentation system for every function requested to be
         instrumented. Given are the object of the class in which `func` belongs
@@ -884,7 +883,9 @@ class Instrument(object):
 
         cls.__new__ = wrapped_new
 
-    def instrument_object(self, obj, query: Lens, done: Optional[Set[int]] = None):
+    def instrument_object(
+        self, obj, query: Lens, done: Optional[Set[int]] = None
+    ):
 
         done = done or set([])
 

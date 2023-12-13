@@ -32,7 +32,6 @@ from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
 
 logger = logging.getLogger(__name__)
@@ -44,13 +43,13 @@ mj = MerkleJson()
 
 # Add encoders for some types that pydantic cannot handle but we need.
 
-
 # httpx.URL needed for openai client.
 import httpx
 
 
 def encode_httpx_url(obj: httpx.URL):
     return str(obj)
+
 
 pydantic.v1.json.ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
 
@@ -61,8 +60,8 @@ from openai import Timeout
 def encode_openai_timeout(obj: Timeout):
     return obj.as_dict()
 
-pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
 
+pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
 
 
 def obj_id_of_obj(obj: dict, prefix="obj"):
@@ -243,7 +242,6 @@ def jsonify(
                 temp[k] = redact_value(v=v, k=k)
 
         content = temp
-
 
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.

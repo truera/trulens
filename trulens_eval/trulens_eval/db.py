@@ -196,7 +196,9 @@ class LocalSQLite(DB):
     TYPE_ENUM: ClassVar[str] = "TEXT"
     TYPE_JSON: ClassVar[str] = "TEXT"
 
-    TABLES: ClassVar[List[str]] = [TABLE_RECORDS, TABLE_FEEDBACKS, TABLE_FEEDBACK_DEFS, TABLE_APPS]
+    TABLES: ClassVar[List[str]] = [
+        TABLE_RECORDS, TABLE_FEEDBACKS, TABLE_FEEDBACK_DEFS, TABLE_APPS
+    ]
 
     def __init__(self, filename: Path, redact_keys: bool = False):
         """

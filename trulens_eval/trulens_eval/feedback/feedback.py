@@ -336,7 +336,12 @@ class Feedback(FeedbackDefinition):
         agg_func = aggregator.load()
 
         return Feedback.model_validate(
-            dict(imp=imp_func, agg=agg_func, name=supplied_name, **f.model_dump())
+            dict(
+                imp=imp_func,
+                agg=agg_func,
+                name=supplied_name,
+                **f.model_dump()
+            )
         )
 
     def _next_unselected_arg_name(self):

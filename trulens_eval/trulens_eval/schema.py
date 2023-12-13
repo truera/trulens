@@ -28,8 +28,8 @@ from enum import Enum
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    TYPE_CHECKING, Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
-    TypeVar, Union
+    Any, Callable, ClassVar, Dict, List, Mapping, Optional, Sequence, Type,
+    TYPE_CHECKING, TypeVar, Union
 )
 
 import dill
@@ -44,8 +44,9 @@ from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.serial import GetItemOrAttribute, Lens
+from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
 from trulens_eval.utils.serial import SerialModel
 
@@ -177,8 +178,8 @@ class Record(SerialModel):
         # for `Future[FeedbackResult]` = `TFeedbackResultFuture`
         arbitrary_types_allowed = True
 
-    record_id: RecordID # str
-    app_id: AppID # str
+    record_id: RecordID  # str
+    app_id: AppID  # str
 
     cost: Optional[Cost] = None
     perf: Optional[Perf] = None
@@ -264,10 +265,10 @@ class Select:
 
     # A App's main input and main output.
     # TODO: App input/output generalization.
-    RecordInput: Query = Record.main_input # type: ignore
-    RecordOutput: Query = Record.main_output # type: ignore
+    RecordInput: Query = Record.main_input  # type: ignore
+    RecordOutput: Query = Record.main_output  # type: ignore
 
-    RecordCalls: Query = Record.app # type: ignore
+    RecordCalls: Query = Record.app  # type: ignore
 
     @staticmethod
     def for_record(query: Select.Query) -> Query:
@@ -399,6 +400,7 @@ class FeedbackResult(SerialModel):
 
         self.feedback_result_id = feedback_result_id
 
+
 if TYPE_CHECKING:
     TFeedbackResultFuture = Future[FeedbackResult]
 else:
@@ -501,9 +503,9 @@ class AppDefinition(SerialModel, WithClassInfo):
     #class Config:
     #    arbitrary_types_allowed = True
 
-    app_id: AppID # str
-    tags: Tags # str
-    metadata: Metadata # dict  # TODO: rename to meta for consistency with other metas
+    app_id: AppID  # str
+    tags: Tags  # str
+    metadata: Metadata  # dict  # TODO: rename to meta for consistency with other metas
 
     # Feedback functions to evaluate on each record. Unlike the above, these are
     # meant to be serialized.
@@ -534,7 +536,6 @@ class AppDefinition(SerialModel, WithClassInfo):
     # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
     # whatever the user might want to see about the app.
     app_extra_json: JSON
-
 
     @staticmethod
     def continue_session(

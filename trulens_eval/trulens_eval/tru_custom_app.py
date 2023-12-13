@@ -454,7 +454,6 @@ class TruCustomApp(App):
                             }
                         )
 
-
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
         # app has but we do not wrap yet.

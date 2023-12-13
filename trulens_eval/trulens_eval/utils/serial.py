@@ -11,12 +11,11 @@ import ast
 from ast import dump
 from ast import parse
 from copy import copy
-import json
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, ForwardRef, Hashable, Iterable, List, Optional, Sequence, Set, Sized, Tuple,
-    TypeVar, Union
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
+    Sized, Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson
@@ -930,8 +929,8 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
 
-Lens.update_forward_refs()
 
+Lens.update_forward_refs()
 
 # TODO: Deprecate old name.
 JSONPath = Lens
