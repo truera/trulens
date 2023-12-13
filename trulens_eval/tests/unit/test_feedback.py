@@ -68,7 +68,7 @@ class TestFeedbackConstructors(TestCase):
                 self.assertEqual(res.result, target)
 
     def test_global_unsupported(self):
-        # Each of these should fail when trying to create a Feedback object.
+        # Each of these should fail when trying to serialize/deserialize.
 
         for imp, target in [
                 # (custom_feedback_function, 0.1),
@@ -84,8 +84,10 @@ class TestFeedbackConstructors(TestCase):
         ]:
 
             with self.subTest(imp=imp, taget=target):
-                with self.assertRaises(RuntimeError):
-                    f = Feedback(imp).on_default()
+                f = Feedback(imp).on_default()
+                with self.assertRaises(Exception):
+                    Feedback.model_validate(f.model_dump())
+
 
     def test_nonglobal_feedback_functions(self):
         # Set up the same feedback functions as in feedback.py but locally here.
@@ -115,11 +117,11 @@ class TestFeedbackConstructors(TestCase):
                 self.assertEqual(res.result, target)
 
                 # Serialize and deserialize the feedback function.
-                fs = jsonify(f)
+                fs = f.model_dump()
 
                 # This should fail:
-                with self.assertRaises(ImportError):
-                    fds = Feedback(**fs)
+                with self.assertRaises(Exception):
+                    fds = Feedback.model_validate(fs)
 
                 # OK to use with App as long as not deferred mode:
                 TruBasicApp(
@@ -137,7 +139,7 @@ class TestFeedbackConstructors(TestCase):
 
                 # Trying these feedbacks with an app with deferred mode should
                 # fail at app construction:
-                with self.assertRaises(ImportError):
+                with self.assertRaises(Exception):
                     TruBasicApp(
                         text_to_text=lambda t: f"returning {t}",
                         feedbacks=[f],

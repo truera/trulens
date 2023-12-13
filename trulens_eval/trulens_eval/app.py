@@ -5,20 +5,15 @@ Generalized root type for various libraries like llama_index and langchain .
 from abc import ABC
 from abc import abstractmethod
 from concurrent import futures
-from concurrent.futures import as_completed
 import contextvars
-import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, Type
-)
+from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
+                    Sequence, Set, Tuple, Type)
 
-import dill
 import pydantic
 from pydantic import Field
 
@@ -40,16 +35,14 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.pyschema import ObjSerial
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSON_BASES_T
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +61,7 @@ class ComponentView(ABC):
 
     def __init__(self, json: JSON):
         self.json = json
-        self.cls = Class.of_json(json)
+        self.cls = Class.of_class_info(json)
 
     @staticmethod
     def of_json(json: JSON) -> 'ComponentView':
@@ -76,7 +69,7 @@ class ComponentView(ABC):
         Sort the given json into the appropriate component view type.
         """
 
-        cls = Class.of_json(json)
+        cls = Class.of_class_info(json)
 
         if LangChainComponent.class_is(cls):
             return LangChainComponent.of_json(json)
@@ -115,9 +108,9 @@ class ComponentView(ABC):
 
     @staticmethod
     def innermost_base(
-        bases: Sequence[Class],
+        bases: Optional[Sequence[Class]] = None,
         among_modules=set(["langchain", "llama_index", "trulens_eval"])
-    ) -> str:
+    ) -> Optional[str]:
         """
         Given a sequence of classes, return the first one which comes from one
         of the `among_modules`. You can use this to determine where ultimately
@@ -125,6 +118,8 @@ class ComponentView(ABC):
         trulens_eval even in cases they extend each other's classes. Returns
         None if no module from `among_modules` is named in `bases`.
         """
+        if bases is None:
+            return None
 
         for base in bases:
             if "." in base.module.module_name:
@@ -173,6 +168,7 @@ class TrulensComponent(ComponentView):
     Components provided in trulens.
     """
 
+    @staticmethod
     def class_is(cls: Class) -> bool:
         if ComponentView.innermost_base(cls.bases) == "trulens_eval":
             return True
@@ -261,7 +257,7 @@ class CustomComponent(ComponentView):
 
     @staticmethod
     def component_of_json(json: JSON) -> 'CustomComponent':
-        cls = Class.of_json(json)
+        cls = Class.of_class_info(json)
 
         view = CustomComponent.constructor_of_class(cls)
 
@@ -279,7 +275,7 @@ class CustomComponent(ComponentView):
 
 def instrumented_component_views(
     obj: object
-) -> Iterable[Tuple[JSONPath, ComponentView]]:
+) -> Iterable[Tuple[Lens, ComponentView]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
     attribute/key. Returns triples with the accessor/selector, the Class object
@@ -287,7 +283,7 @@ def instrumented_component_views(
     """
 
     for q, o in all_objects(obj):
-        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.__fields__:
+        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.model_fields:
             yield q, ComponentView.of_json(json=o)
 
         if isinstance(o, Dict) and CLASS_INFO in o:
@@ -380,9 +376,7 @@ class RecordingContext():
         """
 
         with self.lock:
-            record = calls_to_record(
-                self.calls, record_metadata=self.record_metadata
-            )
+            record = calls_to_record(self.calls, self.record_metadata)
             self.calls = []
             self.records.append(record)
 
@@ -394,19 +388,23 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     Generalization of a wrapped model.
     """
 
+    class Config:
+        # Tru, DB, most of the types on the excluded fields.
+        arbitrary_types_allowed = True
+
     # Non-serialized fields here while the serialized ones are defined in
     # `schema.py:App`.
 
     # Feedback functions to evaluate on each record.
-    feedbacks: Sequence[Feedback] = Field(exclude=True)
+    feedbacks: List[Feedback] = Field(exclude=True, default_factory=list)
 
     # Database interfaces for models/records/feedbacks.
     # NOTE: Maybe move to schema.App .
-    tru: Optional[Tru] = Field(exclude=True)
+    tru: Optional[Tru] = Field(None, exclude=True)
 
     # Database interfaces for models/records/feedbacks.
     # NOTE: Maybe move to schema.AppDefinition .
-    db: Optional[DB] = Field(exclude=True)
+    db: Optional[DB] = Field(None, exclude=True)
 
     # The wrapped app.
     app: Any = Field(exclude=True)
@@ -416,25 +414,27 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     # app.
     instrument: Instrument = Field(exclude=True)
 
-    # Sequnces of records produced by the this class used as a context manager.
-    # Using a context var so that context managers can be nested.
-    recording_contexts: contextvars.ContextVar[Sequence[RecordingContext]
-                                              ] = Field(exclude=True)
+    # Sequnces of records produced by the this class used as a context manager
+    # are stpred om a RecordingContext. Using a context var so that context
+    # managers can be nested.
+    recording_contexts: contextvars.ContextVar[RecordingContext] \
+        = Field(exclude=True)
 
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
-    instrumented_methods: Dict[int, Dict[Callable, JSONPath]] = Field(
-        exclude=True, default_factory=dict
-    )
+    instrumented_methods: Dict[int, Dict[Callable, Lens]] = \
+        Field(exclude=True, default_factory=dict)
 
     def __init__(
         self,
         tru: Optional[Tru] = None,
-        feedbacks: Optional[Sequence[Feedback]] = None,
+        feedbacks: Optional[Iterable[Feedback]] = None,
         **kwargs
     ):
-
-        feedbacks = feedbacks or []
+        if feedbacks is not None:
+            feedbacks = list(feedbacks)
+        else:
+            feedbacks = []
 
         # for us:
         kwargs['tru'] = tru
@@ -454,10 +454,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             obj=self.app, query=Select.Query().app
         )
 
+        self.tru_post_init()
+
     def __hash__(self):
         return hash(id(self))
 
-    def post_init(self):
+    def tru_post_init(self):
         """
         Database-related initialization.
         """
@@ -496,7 +498,10 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
                 # constructor here.
-                f.implementation.load()
+                try:
+                    f.implementation.load()
+                except Exception as e:
+                    raise Exception(f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}")
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
@@ -564,9 +569,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             return str(ret)
 
     # WithInstrumentCallbacks requirement
-    def _on_method_instrumented(
-        self, obj: object, func: Callable, path: JSONPath
-    ):
+    def _on_method_instrumented(self, obj: object, func: Callable, path: Lens):
         """
         Called by instrumentation system for every function requested to be
         instrumented by this app.
@@ -599,7 +602,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     # WithInstrumentCallbacks requirement
     def _get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[int, Callable, JSONPath]]:
+    ) -> Iterable[Tuple[int, Callable, Lens]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -618,7 +621,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                     yield (_id, f, path)
 
     # WithInstrumentCallbacks requirement
-    def _get_method_path(self, obj: object, func: Callable) -> JSONPath:
+    def _get_method_path(self, obj: object, func: Callable) -> Lens:
         """
         Get the path of the instrumented function `method` relative to this app.
         """
@@ -683,7 +686,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             self, *args, instrument=self.instrument, **kwargs
         )
 
-    def dict(self):
+    def model_dump(self):
         # Same problem as in json.
         return jsonify(self, instrument=self.instrument)
 
@@ -724,7 +727,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         record call list. 
         """
 
-        def build_record(calls, record_metadata):
+        def build_record(calls: Iterable[RecordAppCall], record_metadata: JSON):
+            calls = list(calls)
+
             assert len(calls) > 0, "No information recorded in call."
 
             main_in = self.main_input(func, sig, bindings)
@@ -741,8 +746,6 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 tags=self.tags,
                 meta=jsonify(record_metadata)
             )
-
-        # tp = TP()
 
         # Finishing record needs to be done in a thread lock, done there:
         record = ctx.finish_record(build_record)
@@ -964,15 +967,15 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         if self.db is None:
             return
 
-    def instrumented(self,) -> Iterable[Tuple[JSONPath, ComponentView]]:
+    def instrumented(self,) -> Iterable[Tuple[Lens, ComponentView]]:
         """
         Enumerate instrumented components and their categories.
         """
 
-        for q, c in instrumented_component_views(self.dict()):
+        for q, c in instrumented_component_views(self.model_dump()):
             # Add the chain indicator so the resulting paths can be specified
             # for feedback selectors.
-            q = JSONPath(
+            q = Lens(
                 path=(GetItemOrAttribute(item_or_attribute="__app__"),) + q.path
             )
             yield q, c
@@ -1006,7 +1009,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         object_strings = []
 
         for t in self.instrumented():
-            path = JSONPath(t[0].path[1:])
+            path = Lens(t[0].path[1:])
             obj = next(iter(path.get(self)))
             object_strings.append(
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"

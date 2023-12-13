@@ -82,12 +82,15 @@ class TruBasicApp(App):
         Args:
             text_to_text (Callable): A text to text callable.
     """
+
+    class Config:
+        arbitrary_types_allowed = True
+
     app: TruWrapperApp
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.
-        of_callable(TruWrapperApp._call),
-        const=True
+        of_callable(TruWrapperApp._call)
     )
 
     def __init__(
@@ -106,7 +109,6 @@ class TruBasicApp(App):
         - More args in WithClassInfo
         """
 
-        super().update_forward_refs()
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
         else:
@@ -117,9 +119,6 @@ class TruBasicApp(App):
         kwargs['instrument'] = TruBasicCallableInstrument(app=self)
 
         super().__init__(**kwargs)
-
-        # Setup the DB-related things:
-        self.post_init()
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
@@ -165,3 +164,5 @@ class TruBasicApp(App):
         self._with_dep_message(method="call", is_async=False, with_record=True)
 
         return self.with_record(self.app._call, *args, **kwargs)
+
+TruBasicApp.model_rebuild()

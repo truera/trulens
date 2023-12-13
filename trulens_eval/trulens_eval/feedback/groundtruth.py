@@ -7,11 +7,12 @@ import pydantic
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.utils.generated import re_0_10_rating
-from trulens_eval.utils.imports import REQUIREMENT_BERT_SCORE, REQUIREMENT_EVALUATE, OptionalImports
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_BERT_SCORE
+from trulens_eval.utils.imports import REQUIREMENT_EVALUATE
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
-
 
 with OptionalImports(message=REQUIREMENT_BERT_SCORE):
     from bert_score import BERTScorer
@@ -80,7 +81,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth = FunctionOrMethod.of_callable(ground_truth)
         elif isinstance(ground_truth, Dict):
             # Serialized FunctionOrMethod?
-            ground_truth = FunctionOrMethod.pick(**ground_truth)
+            ground_truth = FunctionOrMethod.model_validate(ground_truth)
             ground_truth_imp = ground_truth.load()
         else:
             raise RuntimeError(
