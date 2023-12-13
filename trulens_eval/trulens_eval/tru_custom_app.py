@@ -302,7 +302,7 @@ class TruCustomApp(App):
     functions_to_instrument: ClassVar[Set[Callable]] = set([])
 
     main_method: Optional[Function] = None  # serialized version of the below
-    main_method_loaded: Optional[Callable] = Field(exclude=True)
+    main_method_loaded: Optional[Callable] = Field(None, exclude=True)
 
     # main_async_method: Optional[Union[Callable, Method]] = None # = Field(exclude=True)
 
@@ -330,7 +330,7 @@ class TruCustomApp(App):
 
             # TODO: ARGPARSE
             if isinstance(main_method, dict):
-                main_method = Function(**main_method)
+                main_method = Function.model_validate(main_method)
 
             if isinstance(main_method, Function):
                 main_method_loaded = main_method.load()

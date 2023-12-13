@@ -231,7 +231,7 @@ def jsonify(
         temp.update(
             {
                 k: recur(safe_getattr(obj, k))
-                for k, v in obj.__fields__.items()
+                for k, v in obj.model_fields.items()
                 if not v.field_info.exclude and recur_key(k)
             }
         )

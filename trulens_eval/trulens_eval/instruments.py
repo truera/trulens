@@ -981,7 +981,7 @@ class Instrument(object):
                 attrs = obj.model_fields.keys()
 
             if isinstance(obj, pydantic.v1.BaseModel):
-                attrs = obj.__fields__.keys()
+                attrs = obj.model_fields.keys()
 
             elif dataclasses.is_dataclass(type(obj)):
                 attrs = (f.name for f in dataclasses.fields(obj))
