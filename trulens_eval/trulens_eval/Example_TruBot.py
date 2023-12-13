@@ -13,7 +13,7 @@ import pinecone
 import streamlit as st
 
 from trulens_eval import feedback
-from trulens_eval import Query
+from trulens_eval import Select
 from trulens_eval import tru
 from trulens_eval import tru_chain
 from trulens_eval.db import Record

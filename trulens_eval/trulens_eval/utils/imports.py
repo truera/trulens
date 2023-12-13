@@ -5,18 +5,42 @@ Utilities for importing python modules and optional importing.
 import builtins
 import inspect
 import logging
+from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Iterable, Sequence, Union
+from typing import Dict, Sequence, Union
+
+import pkg_resources
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
+
+
+def requirements_of_file(path: Path) -> Dict[str, pkg_resources.Requirement]:
+    reqs = pkg_resources.parse_requirements(path.read_text())
+    mapping = {req.project_name: req for req in reqs}
+
+    return mapping
+
+
+required_packages = requirements_of_file(
+    Path(pkg_resources.resource_filename("trulens_eval", "requirements.txt"))
+)
+optional_packages = requirements_of_file(
+    Path(
+        pkg_resources.resource_filename(
+            "trulens_eval", "requirements.optional.txt"
+        )
+    )
+)
+
+all_packages = {**required_packages, **optional_packages}
+
 
 def format_missing_imports(
     packages: Union[str, Sequence[str]],
     purpose: str,
     throw: Union[bool, Exception] = False
 ) -> str:
-    
     """
     Format a message indicating the given `packages` are required for `purpose`.
     Throws an `ImportError` with the formatted message if `throw` flag is set.
@@ -27,39 +51,63 @@ def format_missing_imports(
     if isinstance(packages, str):
         packages = [packages]
 
+    requirements = []
+    for pkg in packages:
+        if pkg in all_packages:
+            requirements.append(str(all_packages[pkg]))
+        else:
+            print(f"WARNING: package {pkg} not present in requirements.")
+            requirements.append(pkg)
+
     msg = (
-        f"{','.join(packages)} is/are required for {purpose}. "
-        f"You should be able to install it/them with\n"
-        f"\tpip install {' '.join(packages)}"
+        f"{','.join(packages)} {'packages are' if len(packages) > 1 else 'package is'} required for {purpose}. "
+        f"You should be able to install {'them' if len(packages) > 1 else 'it'} with pip:\n"
+        f"  pip install '{' '.join(requirements)}'"
     )
 
     if isinstance(throw, Exception):
         print(msg)
         raise throw
-    
+
     elif isinstance(throw, bool):
         if throw:
             raise ImportError(msg)
-    
+
     return msg
 
 
-llama_version = "0.8.69"
 REQUIREMENT_LLAMA = format_missing_imports(
-    f"llama_index>={llama_version}",
-    purpose="instrumenting llama_index apps"
+    'llama-index', purpose="instrumenting llama_index apps"
 )
 
-langchain_version = "0.0.335"
 REQUIREMENT_LANGCHAIN = format_missing_imports(
-    f"langchain>={langchain_version}",
-    purpose="instrumenting langchain apps"
+    'langchain', purpose="instrumenting langchain apps"
 )
 
 REQUIREMENT_SKLEARN = format_missing_imports(
-    "scikit-learn",
-    purpose="using embedding vector distances"
+    "scikit-learn", purpose="using embedding vector distances"
 )
+
+REQUIREMENT_COHERE = format_missing_imports(
+    'cohere', purpose="using Cohere models"
+)
+
+REQUIREMENT_BEDROCK = format_missing_imports(
+    ['boto3', 'botocore'], purpose="using Bedrock models"
+)
+
+REQUIREMENT_OPENAI = format_missing_imports(
+    'openai', purpose="using OpenAI models"
+)
+
+REQUIREMENT_BERT_SCORE = format_missing_imports(
+    "bert-score", purpose="measuring BERT Score"
+)
+
+REQUIREMENT_EVALUATE = format_missing_imports(
+    "evaluate", purpose="using certain metrics"
+)
+
 
 class Dummy(object):
     """

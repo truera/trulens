@@ -26,8 +26,8 @@ class CATEGORY:
         threshold: float
         color: str
         icon: str
-        direction: Optional[str]
-        compare: Optional[Callable[[float, float], bool]]
+        direction: Optional[str] = None
+        compare: Optional[Callable[[float, float], bool]] = None
 
     class FeedbackDirection(NamedTuple):
         name: str
@@ -115,10 +115,11 @@ stmetricdelta_hidearrow = """
 valid_directions = ["HIGHER_IS_BETTER", "LOWER_IS_BETTER"]
 
 cellstyle_jscode = {
-    k: f"""function(params) {{
+    k:
+        f"""function(params) {{
         let v = parseFloat(params.value);
         """ + "\n".join(
-        f"""
+            f"""
         if (v {'>=' if k == "HIGHER_IS_BETTER" else '<='} {cat.threshold}) {{
             return {{
                 'color': 'black',
@@ -126,7 +127,7 @@ cellstyle_jscode = {
             }};
         }}
     """ for cat in map(operator.itemgetter(k), CATEGORY.ALL)
-    ) + f"""
+        ) + f"""
         // i.e. not a number
         return {{
             'color': 'black',

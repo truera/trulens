@@ -7,7 +7,6 @@ from typing import Type
 
 from trulens_eval import app
 from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.serial import JSON
 
 
 class Other(app.Other, app.TrulensComponent):
@@ -26,8 +25,8 @@ def constructor_of_class(cls: Class) -> Type[app.TrulensComponent]:
     raise TypeError(f"Unknown trulens component type with class {cls}")
 
 
-def component_of_json(json: JSON) -> app.TrulensComponent:
-    cls = Class.of_json(json)
+def component_of_json(json: dict) -> app.TrulensComponent:
+    cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)
 

@@ -11,7 +11,7 @@ from pprint import PrettyPrinter
 from queue import Queue
 from typing import (
     Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
-    TypeVar, Union
+    TypeVar
 )
 
 logger = logging.getLogger(__name__)
@@ -340,7 +340,7 @@ class SingletonPerName(Generic[T]):
     """
 
     # Hold singleton instances here.
-    instances: Dict[Hashable, SingletonPerName] = dict()
+    _instances: Dict[Hashable, SingletonPerName] = dict()
 
     def __new__(
         cls: Type[SingletonPerName[T]],
@@ -354,12 +354,12 @@ class SingletonPerName(Generic[T]):
 
         k = cls.__name__, name
 
-        if k not in cls.instances:
+        if k not in cls._instances:
             logger.debug(
                 f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
-            SingletonPerName.instances[k] = super().__new__(cls)
+            SingletonPerName._instances[k] = super().__new__(cls)
 
-        obj: cls = SingletonPerName.instances[k]
+        obj: cls = SingletonPerName._instances[k]
 
         return obj

@@ -7,7 +7,7 @@ from unittest import TestCase
 from pydantic import BaseModel
 
 from trulens_eval.utils.serial import JSON_BASES
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 
 
 class JSONTestCase(TestCase):
@@ -16,12 +16,12 @@ class JSONTestCase(TestCase):
         self,
         j1,
         j2,
-        path: JSONPath = None,
+        path: Lens = None,
         skips=None,
         numeric_places: int = 7
     ) -> None:
         skips = skips or set([])
-        path = path or JSONPath()
+        path = path or Lens()
 
         def recur(j1, j2, path):
             return self.assertJSONEqual(
@@ -70,7 +70,7 @@ class JSONTestCase(TestCase):
                 recur(getattr(j1, f.name), getattr(j2, f.name), path[f.name])
 
         elif isinstance(j1, BaseModel):
-            for f in j1.__fields__:
+            for f in j1.model_fields:
                 if f in skips:
                     continue
 

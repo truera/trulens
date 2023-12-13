@@ -78,39 +78,38 @@ TO PLACE
 
 """
 
-__version__ = "0.18.2"
+__version__ = "0.18.3"
 
 from trulens_eval.feedback import Bedrock
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
+from trulens_eval.feedback import Langchain
 from trulens_eval.feedback import LiteLLM
 from trulens_eval.feedback import OpenAI
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.schema import FeedbackMode
-from trulens_eval.schema import Query
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
 from trulens_eval.tru_basic_app import TruBasicApp
 from trulens_eval.tru_chain import TruChain
-from trulens_eval.tru_custom_app import instrument
 from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.tru_llama import TruLlama
 from trulens_eval.utils.threading import TP
 
 __all__ = [
-    'Tru',
-    'TruBasicApp',
-    'TruCustomApp',
-    'TruChain',
-    'TruLlama',
-    'Feedback',
-    'OpenAI',
-    'LiteLLM',
-    'Bedrock',
-    'Huggingface',
-    'FeedbackMode',
-    'Provider',
-    'Query',  # to deprecate in 0.3.0
-    'Select',
-    'TP'
+    "Tru",
+    "TruBasicApp",
+    "TruCustomApp",
+    "TruChain",
+    "TruLlama",
+    "Feedback",
+    "OpenAI",
+    "Langchain",
+    "LiteLLM",
+    "Bedrock",
+    "Huggingface",
+    "FeedbackMode",
+    "Provider",
+    "Select",
+    "TP",
 ]

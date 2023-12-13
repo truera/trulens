@@ -406,8 +406,8 @@ def _serialization_asserts(db) -> None:
                         # special implementation checks for serialized classes
                         if 'implementation' in test_json:
                             try:
-                                FunctionOrMethod.pick(
-                                    **(test_json['implementation'])
+                                FunctionOrMethod.model_validate(
+                                    test_json['implementation']
                                 ).load()
                             except ImportError:
                                 # Import error is not a migration problem.

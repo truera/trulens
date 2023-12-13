@@ -7,7 +7,7 @@ the involved classes will need to be adapted here. The important classes are:
 - `langchain.schema.LLMResult`
 - `langchain.callbacks.openai_info.OpenAICallbackHandler`
 
-# Changes in openai v1
+# Changes due to openai v1
 
 - Previously we instrumented classes `openai.*` and their methods `create` and
   `acreate`. Now we instrument classes `openai.resources.*` and their `create`
@@ -23,17 +23,19 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, ClassVar, List, Optional, Union
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
-import openai as oai
 import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
@@ -42,6 +44,9 @@ from trulens_eval.utils.serial import SerialModel
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+with OptionalImports(message=REQUIREMENT_OPENAI):
+    import openai as oai
 
 
 class OpenAIClient(SerialModel):
@@ -53,11 +58,15 @@ class OpenAIClient(SerialModel):
     it were an `openai.OpenAI` instance.
     """
 
+    # Parameters of the OpenAI client that will not be serialized because they
+    # contain secrets.
+    REDACTED_KEYS: ClassVar[List[str]] = ["api_key", "default_headers"]
+
     class Config:
         arbitrary_types_allowed = True
 
     # Deserialized representation.
-    client: oai.OpenAI = pydantic.Field(exclude=True)
+    client: Union[oai.OpenAI, oai.AzureOpenAI] = pydantic.Field(exclude=True)
 
     # Serialized representation.
     client_cls: Class
@@ -65,10 +74,21 @@ class OpenAIClient(SerialModel):
 
     def __init__(
         self,
-        client: Optional[oai.OpenAI | oai.AzureOpenAI] = None,
+        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI]] = None,
         client_cls: Optional[Class] = None,
         client_kwargs: Optional[dict] = None,
     ):
+        if client_kwargs is not None:
+            # Check if any of the keys which will be redacted when serializing
+            # were set and give the user a warning about it.
+            for rkey in OpenAIClient.REDACTED_KEYS:
+                if rkey in client_kwargs:
+                    logger.warning(
+                        f"OpenAI parameter {rkey} is not serialized for DEFERRED feedback mode. "
+                        f"If you are not using DEFERRED, you do not need to do anything. "
+                        f"If you are using DEFERRED, try to specify this parameter through env variable or another mechanism."
+                    )
+
         if client is None:
             if client_kwargs is None and client_cls is None:
                 client = oai.OpenAI()
@@ -82,7 +102,7 @@ class OpenAIClient(SerialModel):
                 if isinstance(client_cls, dict):
                     # TODO: figure out proper pydantic way of doing these things. I
                     # don't think we should be required to parse args like this.
-                    client_cls = Class(**client_cls)
+                    client_cls = Class.model_validate(client_cls)
 
                 cls = client_cls.load()
 
@@ -104,7 +124,7 @@ class OpenAIClient(SerialModel):
             sig = inspect.signature(client_class.__init__)
 
             for k, _ in sig.parameters.items():
-                if k in ['api_key', 'default_headers']:
+                if k in OpenAIClient.REDACTED_KEYS:
                     # Skip anything that might have the api_key in it.
                     # default_headers contains the api_key.
                     continue
@@ -131,6 +151,7 @@ class OpenAIClient(SerialModel):
 
 
 class OpenAICallback(EndpointCallback):
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -139,7 +160,8 @@ class OpenAICallback(EndpointCallback):
     )
 
     chunks: List[Generation] = pydantic.Field(
-        default_factory=list, exclude=True,
+        default_factory=list,
+        exclude=True,
     )
 
     def handle_generation_chunk(self, response: Any) -> None:
@@ -168,7 +190,8 @@ class OpenAICallback(EndpointCallback):
             ("n_completion_tokens", "completion_tokens"),
         ]:
             setattr(
-                self.cost, cost_field, getattr(self.langchain_handler, langchain_field)
+                self.cost, cost_field,
+                getattr(self.langchain_handler, langchain_field)
             )
 
 
@@ -210,8 +233,17 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         counted_something = False
         if hasattr(response, 'usage'):
+
             counted_something = True
-            usage = response.usage.dict()
+
+            if isinstance(response.usage, pydantic.BaseModel):
+                usage = response.usage.model_dump()
+            elif isinstance(response.usage, pydantic.v1.BaseModel):
+                usage = response.usage.dict()
+            elif isinstance(response.usage, Dict):
+                usage = response.usage
+            else:
+                usage = None
 
             # See how to construct in langchain.llms.openai.OpenAIChat._generate
             llm_res = LLMResult(
@@ -251,86 +283,56 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
                 + pp.pformat(response)
             )
 
-    def __init__(self, *args, **kwargs):
-        # NOTE: Large block of code below has been commented out due to changes
-        # in how openai parameters are set in openai v1. Our code may not be
-        # necessary but this needs investigation.
+    def __init__(
+        self,
+        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
+                               OpenAIClient]] = None,
+        **kwargs
+    ):
+        """
+        Passes `kwargs` to constructor of a new OpenAI client if `client` not provided.
+        """
 
-        # If any of these keys are in kwargs, copy over its value to the env
-        # variable named as the respective value in this dict. If value is None,
-        # don't copy to env. Regardless of env, set all of these as attributes
-        # to openai.
-
-        # # https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/switching-endpoints
-        # CONF_CLONE = dict(
-        #     api_key="OPENAI_API_KEY",
-        #     organization=None,
-        #     api_type=None,
-        #     api_base=None,
-        #     api_version=None
-        # )
-
-        # import os
-        # import openai
-
-        # # Initialize OpenAI client with api_key from environment variable
-        # # TODO: This will need to change if we allow users to pass in their own
-        # # openai client.
-        # for k, v in CONF_CLONE.items():
-        #     if k in kwargs:
-        #         print(f"{UNICODE_CHECK} Setting openai.{k} explicitly.")
-        #         setattr(openai, k, kwargs[k])
-
-        #         if v is not None:
-        #             print(f"{UNICODE_CHECK} Env. var. {v} set explicitly.")
-        #             os.environ[v] = kwargs[k]
-        #     else:
-        #         if v is not None:
-        #             # If no value were explicitly set, check if the user set up openai
-        #             # attributes themselves and if so, copy over the ones we use via
-        #             # environment vars, to its respective env var.
-
-        #             attr_val = getattr(openai, k, None)
-        #             if attr_val is not None and attr_val != os.environ.get(v):
-        #                 print(
-        #                     f"{UNICODE_CHECK} Env. var. {v} set from client.{k} ."
-        #                 )
-        #                 os.environ[v] = attr_val
-
-        if safe_hasattr(self, "name"):
+        if safe_hasattr(self, "name") and client is not None:
             # Already created with SingletonPerName mechanism
             return
 
-        # Will set up key to env but otherwise will not fail or print anything out.
-        # _check_key("OPENAI_API_KEY", silent=True, warn=True)
+        self_kwargs = dict(
+            name="openai",  # for SingletonPerName
+            callback_class=OpenAICallback,
+            obj=self,  # for WithClassInfo:
+            **kwargs
+        )
 
-        kwargs['name'] = "openai"
-        kwargs['callback_class'] = OpenAICallback
+        if CLASS_INFO in kwargs:
+            del kwargs[CLASS_INFO]
 
-        client = kwargs.get("client")
         if client is None:
-            kwargs['client'] = OpenAIClient()
+            # Pass kwargs to client.
+            client = oai.OpenAI(**kwargs)
+            self_kwargs['client'] = OpenAIClient(client=client)
 
         else:
-            # Convert openai client to our wrapper.
+            if len(kwargs) != 0:
+                logger.warning(
+                    f"Arguments {list(kwargs.keys())} are ignored as `client` was provided."
+                )
+
+            # Convert openai client to our wrapper if needed.
             if not isinstance(client, OpenAIClient):
-                assert isinstance(client, oai.OpenAI) or isinstance(
-                    client, oai.AzureOpenAI
-                ), "OpenAI client expected"
+                assert isinstance(client, (oai.OpenAI, oai.AzureOpenAI)), \
+                    "OpenAI client expected"
 
                 client = OpenAIClient(client=client)
 
-            kwargs['client'] = client
+            self_kwargs['client'] = client
 
-        # for WithClassInfo:
-        kwargs["obj"] = self
+        # for pydantic.BaseModel
+        super().__init__(**self_kwargs)
 
-        super().__init__(*args, **kwargs)
-
+        # Instrument various methods for usage/cost tracking.
         from openai import resources
         from openai.resources import chat
 
         self._instrument_module_members(resources, "create")
         self._instrument_module_members(chat, "create")
-        # resources includes AsyncChat
-        # note: acreate removed, new pattern is to use create from async client

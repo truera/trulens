@@ -1,11 +1,12 @@
 import logging
 from typing import Dict, Optional, Sequence
 
-from trulens_eval.feedback.provider.base import LLMProvider
-from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint, OpenAIClient
-from trulens_eval.feedback.provider.endpoint.base import Endpoint
-
 import openai as oai
+
+from trulens_eval.feedback.provider.base import LLMProvider
+from trulens_eval.feedback.provider.endpoint import OpenAIClient
+from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
+from trulens_eval.feedback.provider.endpoint.base import Endpoint
 
 logger = logging.getLogger(__name__)
 

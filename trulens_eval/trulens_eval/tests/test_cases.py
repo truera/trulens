@@ -215,7 +215,6 @@ def calculate_expected_score(normalized_metrics_lst, weights_lst):
     )
 
 
-
 def generate_summeval_groundedness_golden_set(file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
@@ -223,8 +222,7 @@ def generate_summeval_groundedness_golden_set(file_path):
     for item in data["rows"]:
         row = item["row"]
 
-        assert (
-            len(row["machine_summaries"]) == len(row["consistency"]))
+        assert (len(row["machine_summaries"]) == len(row["consistency"]))
 
         for i in range(len(row["machine_summaries"])):
             yield {
@@ -237,7 +235,7 @@ def generate_summeval_groundedness_golden_set(file_path):
                         [
                             row["consistency"][i] / 5,  # normalize to [0, 1]
                         ],
-                        [1.0] 
+                        [1.0]
                     )
             }
 
@@ -259,6 +257,14 @@ def generate_ms_marco_context_relevance_benchmark(file_path):
                 "query":
                     row["query"],
                 "response":
+                    row["machine_summaries"][i],
+                "expected_score":
+                    calculate_expected_score(
+                        [
+                            row["relevance"][i] / 5,  # normalize to [0, 1]
+                        ],
+                        [1.0]
+                    )
                     row["passages"]["passage_text"][i],
                 "relevant_idx": row["passages"]["is_selected"].index(1)
             }

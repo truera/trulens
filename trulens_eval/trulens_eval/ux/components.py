@@ -19,7 +19,7 @@ from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import is_noserio
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON_BASES
-from trulens_eval.utils.serial import JSONPath
+from trulens_eval.utils.serial import Lens
 
 
 def write_or_json(st, obj):
@@ -136,7 +136,7 @@ def draw_calls(record: Record, index: int) -> None:
         draw_call(call)
 
 
-def draw_prompt_info(query: JSONPath, component: ComponentView) -> None:
+def draw_prompt_info(query: Lens, component: ComponentView) -> None:
     prompt_details_json = jsonify(component.json, skip_specials=True)
 
     st.caption(f"Prompt details")
@@ -162,7 +162,7 @@ def draw_prompt_info(query: JSONPath, component: ComponentView) -> None:
                     st.write(value)
 
 
-def draw_llm_info(query: JSONPath, component: ComponentView) -> None:
+def draw_llm_info(query: Lens, component: ComponentView) -> None:
     llm_details_json = component.json
 
     st.subheader(f"*LLM Details*")
@@ -224,7 +224,7 @@ def draw_llm_info(query: JSONPath, component: ComponentView) -> None:
     st.table(df)
 
 
-def draw_agent_info(query: JSONPath, component: ComponentView) -> None:
+def draw_agent_info(query: Lens, component: ComponentView) -> None:
     # copy of draw_prompt_info
     # TODO: dedup
     prompt_details_json = jsonify(component.json, skip_specials=True)
@@ -252,7 +252,7 @@ def draw_agent_info(query: JSONPath, component: ComponentView) -> None:
                     st.write(value)
 
 
-def draw_tool_info(query: JSONPath, component: ComponentView) -> None:
+def draw_tool_info(query: Lens, component: ComponentView) -> None:
     # copy of draw_prompt_info
     # TODO: dedup
     prompt_details_json = jsonify(component.json, skip_specials=True)

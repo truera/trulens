@@ -16,7 +16,6 @@ from trulens_eval.utils.containers import second
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(message=REQUIREMENT_LLAMA):
@@ -109,8 +108,8 @@ def constructor_of_class(cls: Class) -> Type[app.LlamaIndexComponent]:
     raise TypeError(f"Unknown llama_index component type with class {cls}")
 
 
-def component_of_json(json: JSON) -> app.LlamaIndexComponent:
-    cls = Class.of_json(json)
+def component_of_json(json: dict) -> app.LlamaIndexComponent:
+    cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)
 

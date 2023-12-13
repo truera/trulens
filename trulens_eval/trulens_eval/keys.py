@@ -98,7 +98,6 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Optional, Set, Tuple, Union
 
-import cohere
 import dotenv
 
 from trulens_eval.utils.python import caller_frame
@@ -202,21 +201,6 @@ def get_config() -> Tuple[Path, dict]:
         return None, None
     else:
         return config_file, dotenv.dotenv_values(config_file)
-
-        # Put value in redaction list.
-        values_to_redact.add(v)
-
-
-def get_cohere_agent() -> cohere.Client:
-    """
-    Gete a singleton cohere agent. Sets its api key from env var COHERE_API_KEY.
-    """
-
-    global cohere_agent
-    if cohere_agent is None:
-        cohere.api_key = os.environ['CO_API_KEY']
-        cohere_agent = cohere.Client(cohere.api_key)
-    return cohere_agent
 
 
 def get_huggingface_headers() -> Dict[str, str]:
@@ -398,6 +382,8 @@ def check_keys(*keys: Tuple[str]) -> None:
     for k in keys:
         v = kvals.get(k)
         _check_key(k, v=v)
+
+        # Put value in redaction list.
         values_to_redact.add(v)
         os.environ[k] = v
 

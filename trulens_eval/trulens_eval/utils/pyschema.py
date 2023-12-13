@@ -10,13 +10,8 @@ Serializable representation | Python entity
 Class                       | (python) class
 Module                      | (python) module
 Obj                         | (python) object
-ObjSerial*                  | (python) object
 Function                    | (python) function
 Method                      | (python) method
-
-* ObjSerial differs from Obj in that it contains the information necessary to
-  reconstruct the object whereas Obj does not. This information is its
-  constructor arguments.
 """
 
 from __future__ import annotations
@@ -24,17 +19,17 @@ from __future__ import annotations
 import importlib
 import inspect
 import logging
+import dill
 from pprint import PrettyPrinter
 from types import ModuleType
 from typing import (
-    Any, Callable, ClassVar, Dict, Optional, Sequence, Tuple, Union
+    Any, Callable, Dict, Optional, Sequence, Tuple
 )
 
 import pydantic
 from pydantic import Field
 
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
@@ -65,7 +60,7 @@ def noserio(obj, **extra: Dict) -> dict:
     additional keyword arguments are included.
     """
 
-    inner = Obj.of_object(obj).dict()
+    inner = Obj.of_object(obj).model_dump()
     inner.update(extra)
 
     if isinstance(obj, Sequence):
@@ -102,7 +97,7 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
         # exception.
         is_prop = isinstance(v, property)
     except Exception as e:
-        return {ERROR: ObjSerial.of_object(e)}
+        return {ERROR: Obj.of_object(e)}
 
     if is_prop:
         if not get_prop:
@@ -113,7 +108,7 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
             return v
 
         except Exception as e:
-            return {ERROR: ObjSerial.of_object(e)}
+            return {ERROR: Obj.of_object(e)}
     else:
         return v
 
@@ -206,7 +201,11 @@ class Class(SerialModel):
         """
         Get the deepest base class in the same module as this class.
         """
+        if self.bases is None:
+            return self
+
         module_name = self.module.module_name
+
         for base in self.bases[::-1]:
             if base.module.module_name == module_name:
                 return base
@@ -217,6 +216,7 @@ class Class(SerialModel):
         try:
             cls = self.load()
         except Exception as e:
+            print(e)
             raise ImportError(
                 f"Class {self} is not importable. "
                 "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
@@ -233,9 +233,13 @@ class Class(SerialModel):
             bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
             if with_bases else None
         )
-        if loadable:
-            ret._check_importable()
 
+        if loadable:
+            if "<locals>" in repr(cls): # TODO: figure out a better way to check this
+                raise ImportError(f"Class {cls} is not globally importable.")
+
+            ret._check_importable()
+            
         return ret
 
     @staticmethod
@@ -247,10 +251,9 @@ class Class(SerialModel):
         )
 
     @staticmethod
-    def of_json(json: JSON):
+    def of_class_info(json: dict):
         assert CLASS_INFO in json, "Class info not in json."
-
-        return Class(**json[CLASS_INFO])
+        return Class.model_validate(json[CLASS_INFO])
 
     def load(self) -> type:  # class
         try:
@@ -272,6 +275,9 @@ class Class(SerialModel):
         return False
 
 
+Class.model_rebuild()
+
+
 # inspect.signature does not work on builtin type constructors but they are used
 # like this method. Use it to create a signature of a builtin constructor.
 def builtin_init_dummy(self, *args, **kwargs):
@@ -281,14 +287,28 @@ def builtin_init_dummy(self, *args, **kwargs):
 builtin_init_sig = inspect.signature(builtin_init_dummy)
 
 
+def _safe_init_sig(cls):
+    """
+    Get the signature of the constructor method of the given class `cls`. If it is
+    a builtin class, this typically raises an exeception in which case we return
+    a generic signature that seems typical of builtin constructors.
+    """
+
+    try:
+        return inspect.signature(cls)
+    except Exception as e:
+        return builtin_init_sig
+
+
 class Obj(SerialModel):
     # TODO: refactor this into something like WithClassInfo, perhaps
     # WithObjectInfo, and store required constructor inputs as attributes with
     # potentially a placeholder for additional arguments that are not
     # attributes, under a special key like "__tru_object_info".
     """
-    An object that may or may not be serializable. Do not use for base types
-    that don't have a class.
+    An object that may or may not be loadable from its serialized form. Do not
+    use for base types that don't have a class. Loadable if `init_bindings` is
+    not None.
     """
 
     cls: Class
@@ -297,45 +317,79 @@ class Obj(SerialModel):
     # handling loops in JSON objects.
     id: int
 
-    @classmethod
-    def validate(cls, d) -> 'Obj':
-        if isinstance(d, Obj):
-            return d
-        elif isinstance(d, ObjSerial):
-            return d
-        elif isinstance(d, Dict):
-            return Obj.pick(**d)
-        else:
-            raise RuntimeError(f"Unhandled Obj source of type {type(d)}.")
-
-    @staticmethod
-    def pick(**d):
-        if 'init_bindings' in d:
-            return ObjSerial(**d)
-        else:
-            return Obj(**d)
+    # Loadable
+    init_bindings: Optional[Bindings] = None
 
     @staticmethod
     def of_object(
-        obj: object,
-        cls: Optional[type] = None,
-        loadable: bool = False
-    ) -> Union['Obj', 'ObjSerial']:
-        if loadable:
-            return ObjSerial.of_object(obj=obj, cls=cls, loadable=loadable)
-
+        obj: object, cls: Optional[type] = None, loadable: bool = False
+    ) -> Obj:
         if cls is None:
             cls = obj.__class__
 
-        return Obj(cls=Class.of_class(cls), id=id(obj))
+        bindings = None
+
+        if loadable:
+            # Constructor arguments for some common types.
+            if isinstance(obj, pydantic.BaseModel):
+                # NOTE: avoids circular import:
+                from trulens_eval.utils.json import jsonify
+
+                init_args = ()
+                init_kwargs = obj.model_dump()
+                # init_kwargs = jsonify(obj)
+
+            elif isinstance(obj, Exception):
+                init_args = obj.args
+                init_kwargs = {}
+
+            else:
+                # For unknown types, check if the constructor for cls expect
+                # arguments and fail if so as we don't know where to get them. If
+                # there are none, create empty init bindings.
+
+                sig = _safe_init_sig(cls)
+                if len(sig.parameters) > 0:
+                    raise RuntimeError(
+                        f"Do not know how to get constructor arguments for object of type {cls.__name__}. "
+                        f"If you are defining a custom feedback function, define its implementation as a function or a method of a Provider subclass."
+                    )
+
+                init_args = ()
+                init_kwargs = {}
+
+            # TODO: dataclasses
+            # TODO: dataclasses_json
+
+            # NOTE: Something related to pydantic models incorrectly sets signature
+            # of cls so we need to check cls.__call__ instead.
+            # TODO: app serialization
+            #if isinstance(cls, type):
+            #    sig = _safe_init_sig(cls)
+            #else:
+            sig = _safe_init_sig(cls.__call__)
+
+            b = sig.bind(*init_args, **init_kwargs)
+            bindings = Bindings.of_bound_arguments(b)
+
+        cls_serial = Class.of_class(cls)
+
+        if loadable:
+            cls_serial._check_importable()
+            
+        return Obj(cls=cls_serial, id=id(obj), init_bindings=bindings)
 
     def load(self) -> object:
-        # Check that the object's class is importable before the other error is thrown.
-        self.cls._check_importable()
+        if self.init_bindings is None:
+            raise RuntimeError(
+                "Cannot load object unless `init_bindings` is set."
+            )
 
-        raise RuntimeError(
-            f"Trying to load an object without constructor arguments: {pp.pformat(self.dict())}."
-        )
+        cls = self.cls.load()
+        sig = _safe_init_sig(cls)
+        bindings = self.init_bindings.load(sig)
+
+        return cls(*bindings.args, **bindings.kwargs)
 
 
 class Bindings(SerialModel):
@@ -369,110 +423,21 @@ class Bindings(SerialModel):
         return sig.bind(*self.args, **self.kwargs)
 
 
-def _safe_init_sig(cls):
-    """
-    Get the signature of the constructor method of the given class `cls`. If it is
-    a builtin class, this typically raises an exeception in which case we return
-    a generic signature that seems typical of builtin constructors.
-    """
-
-    try:
-        return inspect.signature(cls)
-    except Exception as e:
-        return builtin_init_sig
-
-
-class ObjSerial(Obj):
-    """
-    Object that can be deserialized, or at least intended to be deserialized.
-    Stores additional information beyond the class that can be used to
-    deserialize it, the constructor bindings.
-    """
-
-    init_bindings: Bindings
-
-    @staticmethod
-    def of_object(obj: object, cls: Optional[type] = None) -> 'Obj':
-        if cls is None:
-            cls = obj.__class__
-
-        # Constructor arguments for some common types.
-        if isinstance(obj, pydantic.BaseModel):
-            # NOTE: avoids circular import:
-            from trulens_eval.utils.json import jsonify
-
-            init_args = ()
-            init_kwargs = obj.dict()
-            # init_kwargs = jsonify(obj)
-        elif isinstance(obj, Exception):
-            init_args = obj.args
-            init_kwargs = {}
-        else:
-            # For unknown types, check if the constructor for cls expect
-            # arguments and fail if so as we don't know where to get them. If
-            # there are none, create empty init bindings.
-
-            sig = _safe_init_sig(cls)
-            if len(sig.parameters) > 0:
-                raise RuntimeError(
-                    f"Do not know how to get constructor arguments for object of type {cls.__name__}. "
-                    f"If you are defining a custom feedback function, define its implementation as a function or a method of a Provider subclass."
-                )
-
-            init_args = ()
-            init_kwargs = {}
-
-        # TODO: dataclasses
-        # TODO: dataclasses_json
-
-        # NOTE: Something related to pydantic models incorrectly sets signature
-        # of cls so we need to check cls.__call__ instead.
-        # TODO: app serialization
-        #if isinstance(cls, type):
-        #    sig = _safe_init_sig(cls)
-        #else:
-        sig = _safe_init_sig(cls.__call__)
-
-        b = sig.bind(*init_args, **init_kwargs)
-        bindings = Bindings.of_bound_arguments(b)
-
-        cls_serial = Class.of_class(cls)
-        cls_serial._check_importable()
-
-        return ObjSerial(cls=cls_serial, id=id(obj), init_bindings=bindings)
-
-    def load(self) -> object:
-        cls = self.cls.load()
-
-        sig = _safe_init_sig(cls)
-        bindings = self.init_bindings.load(sig)
-
-        return cls(*bindings.args, **bindings.kwargs)
-
-
 class FunctionOrMethod(SerialModel):
 
-    @staticmethod
-    def pick(**kwargs):
-        # Temporary hack to deserialization of a class with more than one subclass.
-
-        if 'obj' in kwargs:
-            return Method(**kwargs)
-
-        elif 'cls' in kwargs:
-            return Function(**kwargs)
-
     @classmethod
-    def __get_validator__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, d) -> 'FunctionOrMethod':
-
-        if isinstance(d, Dict):
-            return FunctionOrMethod.pick(**d)
+    def model_validate(cls, obj, **kwargs):
+        if isinstance(obj, Dict):
+            if 'obj' in obj:
+                return super(cls, Method).model_validate(obj=obj, **kwargs)
+            elif 'cls' in obj:
+                return super(cls, Function).model_validate(obj=obj, **kwargs)
+            else:
+                raise ValueError(
+                    f"Cannot tell what type of callable this encodes: {obj}"
+                )
         else:
-            return d
+            return super().model_validate(obj)
 
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> 'FunctionOrMethod':
@@ -497,7 +462,8 @@ class Method(FunctionOrMethod):
     """
     A python method. A method belongs to some class in some module and must have
     a pre-bound self object. The location of the method is encoded in `obj`
-    alongside self. If obj is ObjSerial, this method should be deserializable.
+    alongside self. If obj is Obj with init_bindings, this method should be
+    deserializable.
     """
 
     obj: Obj
@@ -524,9 +490,9 @@ class Method(FunctionOrMethod):
                 # normal method, self is instance of cls
                 cls = obj.__class__
 
-        obj_json = (ObjSerial if loadable else Obj).of_object(obj, cls=cls)
-
-        return Method(obj=obj_json, name=meth.__name__)
+        obj_model = Obj.of_object(obj, cls=cls, loadable=loadable)
+    
+        return Method(obj=obj_model, name=meth.__name__)
 
     def load(self) -> Callable:
         obj = self.obj.load()
@@ -583,7 +549,7 @@ class Function(FunctionOrMethod):
 
 
 # Key of structure where class information is stored.
-CLASS_INFO = "__tru_class_info"
+CLASS_INFO = "tru_class_info"
 
 
 class WithClassInfo(pydantic.BaseModel):
@@ -594,9 +560,14 @@ class WithClassInfo(pydantic.BaseModel):
 
     # Using this odd key to not pollute attribute names in whatever class we mix
     # this into. Should be the same as CLASS_INFO.
-    __tru_class_info: Class = Field(exclude=False)
+    tru_class_info: Class = Field(exclude=False)
 
-    # class_info: Class
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        clsinfo = Class.model_validate(obj[CLASS_INFO])
+        clsloaded = clsinfo.load()
+
+        return super(cls, clsloaded).model_validate(obj)
 
     def __init__(
         self,
@@ -617,8 +588,8 @@ class WithClassInfo(pydantic.BaseModel):
         super().__init__(*args, **kwargs)
 
     @staticmethod
-    def get_class(obj_json: JSON):
-        return Class(**obj_json[CLASS_INFO]).load()
+    def get_class(obj_json: Dict):
+        return Class.model_validate(obj_json[CLASS_INFO]).load()
 
     @staticmethod
     def of_object(obj: object):
@@ -627,7 +598,3 @@ class WithClassInfo(pydantic.BaseModel):
     @staticmethod
     def of_class(cls: type):  # class
         return WithClassInfo(class_info=Class.of_class(cls))
-
-    @staticmethod
-    def of_model(model: pydantic.BaseModel, cls: Class):
-        return WithClassInfo(class_info=cls, **model.dict())

@@ -1,7 +1,7 @@
 from __future__ import annotations
+
 from collections import defaultdict
 from dataclasses import dataclass
-
 import inspect
 import logging
 from pprint import PrettyPrinter
@@ -11,14 +11,15 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
-                    Sequence, Tuple, Type, TypeVar, Union)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
+    Type, TypeVar
+)
 import warnings
 
 import pydantic
 import requests
 
-from trulens_eval.keys import ApiKeyError
 from trulens_eval.schema import Cost
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.python import get_first_local_in_call_stack
@@ -101,7 +102,6 @@ class Endpoint(SerialModel, SingletonPerName):
             class_name="BedrockEndpoint"
         )
     ]
-        
 
     # Dict of classe/module-methods that have been instrumented for cost
     # tracking along with the wrapper methods and the class that instrumented
@@ -152,9 +152,7 @@ class Endpoint(SerialModel, SingletonPerName):
 
     def __new__(cls, *args, name: Optional[str] = None, **kwargs):
         name = name or cls.__name__
-        return super().__new__(
-            cls, *args, name=name, **kwargs
-        )
+        return super().__new__(cls, *args, name=name, **kwargs)
 
     def __init__(self, *args, name: str, callback_class: Any, **kwargs):
         """
@@ -300,14 +298,20 @@ class Endpoint(SerialModel, SingletonPerName):
         """
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
-            print(wrapped_thing if wrapped_thing != object else "unknown dynamically generated class(es)")
+            print(
+                wrapped_thing if wrapped_thing !=
+                object else "unknown dynamically generated class(es)"
+            )
             for original, wrapped, endpoint in wrappers:
                 print(
                     f"\t`{original.__name__}` instrumented "
                     f"by {endpoint} at 0x{id(endpoint):x}"
                 )
 
-    def _instrument_class_wrapper(self, cls, wrapper_method_name: str, wrapped_method_filter: Callable[[Callable], bool]) -> None:
+    def _instrument_class_wrapper(
+        self, cls, wrapper_method_name: str,
+        wrapped_method_filter: Callable[[Callable], bool]
+    ) -> None:
         """
         Instrument a method `wrapper_method_name` which produces a method so
         that the produced method gets instrumented. Only instruments the
@@ -326,11 +330,11 @@ class Endpoint(SerialModel, SingletonPerName):
 
                 if wrapped_method_filter(produced_func):
 
-                    logger.debug(
-                        f"Instrumenting {produced_func.__name__}"
-                    )
+                    logger.debug(f"Instrumenting {produced_func.__name__}")
 
-                    instrumented_produced_func = self.wrap_function(produced_func)
+                    instrumented_produced_func = self.wrap_function(
+                        produced_func
+                    )
                     Endpoint.instrumented_methods[object].append(
                         (produced_func, instrumented_produced_func, type(self))
                     )
@@ -338,7 +342,9 @@ class Endpoint(SerialModel, SingletonPerName):
                 else:
                     return produced_func
 
-            Endpoint.instrumented_methods[cls].append((func, metawrap, type(self)))
+            Endpoint.instrumented_methods[cls].append(
+                (func, metawrap, type(self))
+            )
 
             setattr(cls, wrapper_method_name, metawrap)
 
@@ -372,7 +378,9 @@ class Endpoint(SerialModel, SingletonPerName):
         # the produced endpoints might be ones that were constructed earlier.
         for endpoint in Endpoint.ENDPOINT_SETUPS:
             if locals().get(endpoint.arg_flag):
-                mod = __import__(endpoint.module_name, fromlist=[endpoint.class_name])
+                mod = __import__(
+                    endpoint.module_name, fromlist=[endpoint.class_name]
+                )
                 cls = safe_getattr(mod, endpoint.class_name)
                 try:
                     e = cls()
@@ -406,7 +414,9 @@ class Endpoint(SerialModel, SingletonPerName):
         for endpoint in Endpoint.ENDPOINT_SETUPS:
             if locals().get(endpoint.arg_flag):
                 print(f"tracking {endpoint.class_name}")
-                mod = __import__(endpoint.module_name, fromlist=[endpoint.class_name])
+                mod = __import__(
+                    endpoint.module_name, fromlist=[endpoint.class_name]
+                )
                 cls = safe_getattr(mod, endpoint.class_name)
                 try:
                     e = cls()
