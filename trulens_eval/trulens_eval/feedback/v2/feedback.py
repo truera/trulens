@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from typing import ClassVar, List, Optional
 
-from cohere.responses.classify import Example
 from langchain import PromptTemplate
 from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
 import pydantic
@@ -11,12 +10,6 @@ from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.text import make_retab
 
 # Level 1 abstraction
-
-
-class WithExamples(pydantic.BaseModel):
-    examples: ClassVar[List[Example]]
-
-
 class WithPrompt(pydantic.BaseModel):
     prompt: ClassVar[PromptTemplate]
 
@@ -64,11 +57,6 @@ class Feedback(pydantic.BaseModel):
         if safe_hasattr(typ, "__doc__") and typ.__doc__ is not None:
             ret += "\nDocstring\n"
             ret += onetab(typ.__doc__) + "\n"
-
-        if issubclass(cls, WithExamples):
-            ret += "\nExamples:\n"
-            for e in cls.examples:
-                ret += onetab(str(e)) + "\n"
 
         if issubclass(cls, WithPrompt):
             ret += f"\nPrompt: of {cls.prompt.input_variables}\n"
@@ -304,54 +292,6 @@ the model provider.
         f"""Please classify the sentiment of the following text as 10 if positive or 0 if not positive. Respond only as a number from 0 to 10, nothing more."""
     )
 
-
-class BinarySentiment(Sentiment, WithExamples):
-    """
-    A discrete form of sentiment with only "positive" (1) and "negative" (0) classification.
-    """
-
-    # cohere.sentiment
-
-    # TODO: abstract examples type, make and move to BinarySentiment class
-    examples: ClassVar[List[Example]] = [
-        Example("The order came 5 days early", "1"),
-        Example("I just got a promotion at work and I\'m so excited!", "1"),
-        Example(
-            "My best friend surprised me with tickets to my favorite band's concert.",
-            "1"
-        ),
-        Example(
-            "I\'m so grateful for my family's support during a difficult time.",
-            "1"
-        ),
-        Example("It\'s kind of grungy, but the pumpkin pie slaps", "1"),
-        Example(
-            "I love spending time in nature and feeling connected to the earth.",
-            "1"
-        ),
-        Example("I had an amazing meal at the new restaurant in town", "1"),
-        Example("The pizza is good, but the staff is horrible to us", "0"),
-        Example("The package was damaged", "0"),
-        Example(
-            "I\'m feeling really sick and can\'t seem to shake it off", "0"
-        ),
-        Example(
-            "I got into a car accident and my car is completely totaled.", "0"
-        ),
-        Example(
-            "My boss gave me a bad performance review and I might get fired",
-            "0"
-        ),
-        Example(
-            "I got into a car accident and my car is completely totaled.", "0"
-        ),
-        Example(
-            "I\'m so disapointed in myself for not following through on my goals",
-            "0"
-        )
-    ]
-
-
 class Helpfulness(Semantics):
     # openai.helpfulness
     # openai.helpfulness_with_cot_reasons
@@ -457,31 +397,6 @@ class Maliciousness(Moderation, WithPrompt):
     # openai.maliciousness
     # openai.maliciousness_with_cot_reasons
     pass
-
-
-class Disinofmration(Moderation, WithExamples):
-    # cohere.not_disinformation
-
-    # TODO: abstract examples type and reverse class
-    examples: ClassVar[List[Example]] = [
-        Example(
-            "Bud Light Official SALES REPORT Just Released ′ 50% DROP In Sales ′ Total COLLAPSE ′ Bankruptcy?",
-            "0"
-        ),
-        Example(
-            "The Centers for Disease Control and Prevention quietly confirmed that at least 118,000 children and young adults have “died suddenly” in the U.S. since the COVID-19 vaccines rolled out,",
-            "0"
-        ),
-        Example(
-            "Silicon Valley Bank collapses, in biggest failure since financial crisis",
-            "1"
-        ),
-        Example(
-            "Biden admin says Alabama health officials didn’t address sewage system failures disproportionately affecting Black residents",
-            "1"
-        )
-    ]
-
 
 class Hate(Moderation):
     """
@@ -671,7 +586,7 @@ class ClassificationModel(Model):
 
     @staticmethod
     def of_prompt(
-        model: CompletionModel, prompt: str, examples: Optional[List[Example]]
+        model: CompletionModel, prompt: str
     ):
         # OpenAI completion with examples
         # Cohere completion with examples
