@@ -413,7 +413,6 @@ class Endpoint(SerialModel, SingletonPerName):
 
         for endpoint in Endpoint.ENDPOINT_SETUPS:
             if locals().get(endpoint.arg_flag):
-                print(f"tracking {endpoint.class_name}")
                 mod = __import__(
                     endpoint.module_name, fromlist=[endpoint.class_name]
                 )

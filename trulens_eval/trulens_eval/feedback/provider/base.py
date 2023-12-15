@@ -20,7 +20,7 @@ class Provider(SerialModel, WithClassInfo):
 
     endpoint: Optional[Endpoint] = None
 
-    def __init__(self, name: str = None, **kwargs):
+    def __init__(self, name: Optional[str] = None, **kwargs):
         # for WithClassInfo:
         kwargs['obj'] = self
 

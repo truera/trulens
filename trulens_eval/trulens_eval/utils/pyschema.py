@@ -19,13 +19,11 @@ from __future__ import annotations
 import importlib
 import inspect
 import logging
-import dill
 from pprint import PrettyPrinter
 from types import ModuleType
-from typing import (
-    Any, Callable, Dict, Optional, Sequence, Tuple
-)
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
+import dill
 import pydantic
 from pydantic import Field
 
@@ -153,7 +151,7 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
 
 
 class Module(SerialModel):
-    package_name: Optional[str]  # some modules are not in a package
+    package_name: Optional[str] = None # some modules are not in a package
     module_name: str
 
     def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':
@@ -189,7 +187,7 @@ class Class(SerialModel):
 
     module: Module
 
-    bases: Optional[Sequence[Class]]
+    bases: Optional[Sequence[Class]] = None
 
     def __repr__(self):
         return self.module.module_name + "." + self.name
@@ -387,7 +385,13 @@ class Obj(SerialModel):
 
         cls = self.cls.load()
         sig = _safe_init_sig(cls)
-        bindings = self.init_bindings.load(sig)
+
+        if CLASS_INFO in sig.parameters and CLASS_INFO not in self.init_bindings.kwargs:
+            extra_kwargs = {CLASS_INFO: self.cls}
+        else:
+            extra_kwargs = {}
+
+        bindings = self.init_bindings.load(sig, extra_kwargs=extra_kwargs)
 
         return cls(*bindings.args, **bindings.kwargs)
 
@@ -416,11 +420,11 @@ class Bindings(SerialModel):
         if 'provider' in self.kwargs:
             del self.kwargs['provider']
 
-    def load(self, sig: inspect.Signature):
+    def load(self, sig: inspect.Signature, extra_args=(), extra_kwargs={}):
 
         self._handle_providers_load()
 
-        return sig.bind(*self.args, **self.kwargs)
+        return sig.bind(*(self.args+extra_args), **self.kwargs, **extra_kwargs)
 
 
 class FunctionOrMethod(SerialModel):
@@ -564,10 +568,24 @@ class WithClassInfo(pydantic.BaseModel):
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
-        clsinfo = Class.model_validate(obj[CLASS_INFO])
-        clsloaded = clsinfo.load()
+        if isinstance(obj, dict) and CLASS_INFO in obj:
 
-        return super(cls, clsloaded).model_validate(obj)
+            clsinfo = Class.model_validate(obj[CLASS_INFO])
+            clsloaded = clsinfo.load()
+
+            # NOTE(piotrm): even though we have a more specific class than
+            # AppDefinition, we load it as AppDefinition due to serialization
+            # issues in the wrapped app. Keeping it as AppDefinition means `app`
+            # field is just json.
+            from trulens_eval.schema import AppDefinition
+            
+            if issubclass(clsloaded, AppDefinition):
+                return super(cls, AppDefinition).model_validate(obj)
+            else:
+                return super(cls, clsloaded).model_validate(obj)
+        
+        else:
+            return super().model_validate(obj)
 
     def __init__(
         self,
@@ -585,6 +603,7 @@ class WithClassInfo(pydantic.BaseModel):
             class_info = Class.of_class(cls, with_bases=True)
 
         kwargs[CLASS_INFO] = class_info
+
         super().__init__(*args, **kwargs)
 
     @staticmethod

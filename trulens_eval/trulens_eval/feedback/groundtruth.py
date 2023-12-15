@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     """Measures Agreement against a Ground Truth.
     """
-    ground_truth: Union[List[str], FunctionOrMethod]
+    ground_truth: Union[List[Dict], FunctionOrMethod]
     provider: Provider
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
