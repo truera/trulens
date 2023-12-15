@@ -115,7 +115,9 @@ def _sql_alchemy_serialization_asserts(db: "DB") -> None:
                                 elif attr_name == "calls_json":
                                     for record_app_call_json in test_json[
                                             'calls']:
-                                        FeedbackCall.model_validate(record_app_call_json)
+                                        FeedbackCall.model_validate(
+                                            record_app_call_json
+                                        )
                                 elif attr_name == "feedback_json":
                                     FeedbackDefinition.model_validate(test_json)
                                 elif attr_name == "app_json":

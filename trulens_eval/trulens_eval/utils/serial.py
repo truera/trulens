@@ -14,14 +14,13 @@ from copy import copy
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence,
-    Sized, Tuple, TypeVar, Union
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Sized,
+    Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
-
 
 from trulens_eval.utils.containers import iterable_peek
 
@@ -72,7 +71,7 @@ class SerialModel(pydantic.BaseModel):
 
     def model_dump(self, **kwargs):
         from trulens_eval.utils.json import jsonify
-        
+
         return jsonify(self, **kwargs)
 
     @classmethod
@@ -129,7 +128,7 @@ class Step(pydantic.BaseModel, Hashable):
     """
 
     def __hash__(self):
-         raise TypeError(f"Should never be called, self={self.model_dump()}")
+        raise TypeError(f"Should never be called, self={self.model_dump()}")
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
@@ -564,7 +563,9 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             ret = Lens.of_string(obj)
             return ret
         elif isinstance(obj, dict):
-            return handler(dict(path=(Step.model_validate(step) for step in obj['path'])))
+            return handler(
+                dict(path=(Step.model_validate(step) for step in obj['path']))
+            )
         else:
             return handler(obj)
 

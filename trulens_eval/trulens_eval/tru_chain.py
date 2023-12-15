@@ -347,4 +347,5 @@ class TruChain(App):
 
         return ret
 
+
 TruChain.model_rebuild()
