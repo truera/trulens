@@ -11,8 +11,10 @@ from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
-                    Sequence, Set, Tuple, Type)
+from typing import (
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
+    Tuple, Type
+)
 
 import pydantic
 from pydantic import Field
@@ -501,7 +503,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 try:
                     f.implementation.load()
                 except Exception as e:
-                    raise Exception(f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}")
+                    raise Exception(
+                        f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
+                    )
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
@@ -688,7 +692,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
     def model_dump(self, redact_keys: bool = False):
         # Same problem as in json.
-        return jsonify(self, instrument=self.instrument, redact_keys=redact_keys)
+        return jsonify(
+            self, instrument=self.instrument, redact_keys=redact_keys
+        )
 
     # For use as a context manager.
     def __enter__(self):

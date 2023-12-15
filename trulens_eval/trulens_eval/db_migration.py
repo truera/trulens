@@ -24,7 +24,6 @@ from trulens_eval.utils.pyschema import Module
 from trulens_eval.utils.pyschema import Obj
 
 logger = logging.getLogger(__name__)
-
 '''
 How to make a db migrations:
 
@@ -89,11 +88,11 @@ def _update_db_json_col(
 
 def jsonlike_map(fval=None, fkey=None, fkeyval=None):
     if fval is None:
-        fval = lambda x:x
+        fval = lambda x: x
     if fkey is None:
-        fkey = lambda x:x
+        fkey = lambda x: x
     if fkeyval is None:
-        fkeyval = lambda x,y: (x,y)
+        fkeyval = lambda x, y: (x, y)
 
     def walk(obj):
         if isinstance(obj, dict):
@@ -104,63 +103,69 @@ def jsonlike_map(fval=None, fkey=None, fkeyval=None):
                 k, v = fkeyval(k, v)
                 ret[k] = v
             return fval(ret)
-        
+
         if isinstance(obj, (list, tuple)):
             return fval(type(obj)(fval(walk(v)) for v in obj))
-        
+
         else:
             return fval(obj)
-        
+
     return walk
 
+
 def jsonlike_rename_key(old_key, new_key) -> Callable:
+
     def fkey(k):
         if k == old_key:
             logger.debug(f"key {old_key} -> {new_key}")
             return new_key
         else:
             return k
-        
+
     return jsonlike_map(fkey=fkey)
 
 
 def jsonlike_rename_value(old_val, new_val) -> Callable:
+
     def fval(v):
         if v == old_val:
             logger.debug(f"value {old_val} -> {new_val}")
             return new_val
         else:
             return v
-    
+
     return jsonlike_map(fval=fval)
-    
+
 
 class UnknownClass(pydantic.BaseModel):
+
     def unknown_method(self):
         """
         This is a placeholder put into the database in place of methods whose
         information was not recorded in earlier versions of trulens.
         """
 
+
 def migrate_0_9_0(db):
     rename_classinfo = jsonlike_rename_key("__tru_class_info", "tru_class_info")
     rename_objserial = jsonlike_rename_value("ObjSerial", "Obj")
 
     def migrate_misc(obj):
-        
+
         # Old Method format:
-        if isinstance(obj, dict) and "module_name" in obj and "method_name" in obj:
+        if isinstance(obj,
+                      dict) and "module_name" in obj and "method_name" in obj:
             logger.debug(f"migrating RecordAppCallMethod {obj}")
             # example: {'module_name': 'langchain.chains.llm', 'class_name': 'LLMChain', 'method_name': '_call'}
             return Method(
-                obj = Obj(
-                    cls = Class(
+                obj=Obj(
+                    cls=Class(
                         name=obj['class_name'],
                         module=Module(module_name=obj['module_name'])
                     ),
                     id=0
                 ),
-                name = obj['method_name']
+                name=obj['method_name']
             ).model_dump()
 
         else:
@@ -168,7 +173,9 @@ def migrate_0_9_0(db):
 
     dummy_methods = jsonlike_map(fval=migrate_misc)
 
-    all_migrate = lambda obj: dummy_methods(rename_classinfo(rename_objserial(obj)))
+    all_migrate = lambda obj: dummy_methods(
+        rename_classinfo(rename_objserial(obj))
+    )
 
     conn, c = db._connect()
     c.execute(
@@ -179,7 +186,7 @@ def migrate_0_9_0(db):
 
     for old_entry in tqdm(rows, desc="Migrating Records DB 0.9.0 to 0.19.0"):
         new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
-        
+
         _update_db_json_col(
             db=db,
             table=
@@ -188,13 +195,14 @@ def migrate_0_9_0(db):
             json_db_col_idx=json_db_col_idx,
             new_json=new_json
         )
-    
+
     c.execute(f"""SELECT * FROM feedback_defs""")
     rows = c.fetchall()
     json_db_col_idx = 1
-    for old_entry in tqdm(rows, desc="Migrating FeedbackDefs DB 0.9.0 to 0.19.0"):
+    for old_entry in tqdm(rows,
+                          desc="Migrating FeedbackDefs DB 0.9.0 to 0.19.0"):
         new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
-        
+
         if CLASS_INFO not in new_json:
             new_json[CLASS_INFO] = Class.of_class(Feedback).model_dump()
             logger.debug(f"adding '{CLASS_INFO}'")
@@ -238,6 +246,7 @@ def migrate_0_9_0(db):
         )
 
     conn.commit()
+
 
 def migrate_0_3_0(db):
     conn, c = db._connect()
@@ -593,7 +602,9 @@ def _serialization_asserts(db) -> None:
                             Perf.model_validate(test_json)
                         elif col_name == "calls_json":
                             for record_app_call_json in test_json['calls']:
-                                FeedbackCall.model_validate(record_app_call_json)
+                                FeedbackCall.model_validate(
+                                    record_app_call_json
+                                )
                         elif col_name == "feedback_json":
                             FeedbackDefinition.model_validate(test_json)
                         elif col_name == "app_json":
