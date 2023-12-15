@@ -570,10 +570,7 @@ class WithClassInfo(pydantic.BaseModel):
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
-        if isinstance(obj, dict):
-            if CLASS_INFO not in obj:
-                print(pp.pprint(obj))
-                raise ValueError(f"Object {obj} does not contain class information.")
+        if isinstance(obj, dict) and CLASS_INFO in obj:
 
             clsinfo = Class.model_validate(obj[CLASS_INFO])
             clsloaded = clsinfo.load()

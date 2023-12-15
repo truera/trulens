@@ -83,7 +83,7 @@ class SerialModel(pydantic.BaseModel):
         from trulens_eval.utils.pyschema import WithClassInfo
 
         if isinstance(obj, Dict) and CLASS_INFO in obj:
-            return WithClassInfo.model_validate(obj)
+            return WithClassInfo.model_validate(obj, **kwargs)
 
         return super(SerialModel, cls).model_validate(obj, **kwargs)
 
