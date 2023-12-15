@@ -33,7 +33,7 @@ class AppDefinition(Base):
         redact_keys: bool = False
     ) -> "AppDefinition":
         return cls(
-            app_id=obj.app_id, app_json=obj.model_dump(redact_keys=redact_keys)
+            app_id=obj.app_id, app_json=obj.model_dump_json(redact_keys=redact_keys)
         )
 
 

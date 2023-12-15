@@ -143,8 +143,6 @@ def migrate_0_9_0(db):
     rename_classinfo = jsonlike_rename_key("__tru_class_info", "tru_class_info")
     rename_objserial = jsonlike_rename_value("ObjSerial", "Obj")
 
-    unknown_method = Method.of_method(UnknownClass().unknown_method)
-
     def migrate_Method(obj):
         # Old Method format:
         if isinstance(obj, dict) and "module_name" in obj and "method_name" in obj:

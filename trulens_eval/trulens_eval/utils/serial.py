@@ -65,10 +65,15 @@ class SerialModel(pydantic.BaseModel):
     help serialization mostly.
     """
 
-    def model_dump(self, redact_keys: bool = False):
+    def model_dump_json(self, **kwargs):
+        from trulens_eval.utils.json import json_str_of_obj
+
+        return json_str_of_obj(self, **kwargs)
+
+    def model_dump(self, **kwargs):
         from trulens_eval.utils.json import jsonify
         
-        return jsonify(self, redact_keys=redact_keys)
+        return jsonify(self, **kwargs)
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
