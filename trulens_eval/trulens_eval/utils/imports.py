@@ -88,10 +88,6 @@ REQUIREMENT_SKLEARN = format_missing_imports(
     "scikit-learn", purpose="using embedding vector distances"
 )
 
-REQUIREMENT_COHERE = format_missing_imports(
-    'cohere', purpose="using Cohere models"
-)
-
 REQUIREMENT_BEDROCK = format_missing_imports(
     ['boto3', 'botocore'], purpose="using Bedrock models"
 )
