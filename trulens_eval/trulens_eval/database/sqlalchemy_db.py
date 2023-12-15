@@ -35,6 +35,7 @@ from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
+from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -418,11 +419,11 @@ class AppsExtractor:
 
                 for col in self.app_cols:
                     if col == "type":
-                        df[col] = str(
-                            schema.AppDefinition.model_validate_json(
-                                _app.app_json
-                            ).root_class
-                        )
+                        # Previous DBs did not contain entire app so we cannot
+                        # deserialize AppDefinition here unless we fix prior DBs
+                        # in migration. Because of this, loading just the
+                        # `root_class` here.
+                        df[col] = str(Class.model_validate(json.loads(_app.app_json).get('root_class')))
                     else:
                         df[col] = getattr(_app, col)
 
