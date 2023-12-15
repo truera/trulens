@@ -153,7 +153,7 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
 
 
 class Module(SerialModel):
-    package_name: Optional[str]  # some modules are not in a package
+    package_name: Optional[str] = None # some modules are not in a package
     module_name: str
 
     def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':
@@ -189,7 +189,7 @@ class Class(SerialModel):
 
     module: Module
 
-    bases: Optional[Sequence[Class]]
+    bases: Optional[Sequence[Class]] = None
 
     def __repr__(self):
         return self.module.module_name + "." + self.name

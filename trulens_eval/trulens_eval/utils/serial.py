@@ -22,6 +22,7 @@ from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
 
+
 from trulens_eval.utils.containers import iterable_peek
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,11 @@ class SerialModel(pydantic.BaseModel):
     Trulens-specific additions on top of pydantic models. Includes utilities to
     help serialization mostly.
     """
+
+    def model_dump(self, redact_keys: bool = False):
+        from trulens_eval.utils.json import jsonify
+        
+        return jsonify(self, redact_keys=redact_keys)
 
     @classmethod
     def model_validate(cls, obj, **kwargs):

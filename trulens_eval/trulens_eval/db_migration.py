@@ -3,9 +3,10 @@ import json
 import logging
 import shutil
 import traceback
-from typing import Callable, Iterable, List, Sequence
+from typing import Callable, List
 import uuid
 
+import pydantic
 from tqdm import tqdm
 
 from trulens_eval.schema import AppDefinition
@@ -14,7 +15,10 @@ from trulens_eval.schema import FeedbackCall
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
-from trulens_eval.utils.pyschema import CLASS_INFO, Class, FunctionOrMethod
+from trulens_eval.utils.pyschema import Class, Module, Obj
+from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.pyschema import Method
 
 logger = logging.getLogger(__name__)
 
@@ -79,46 +83,90 @@ def _update_db_json_col(
     migrate_record = tuple(migrate_record)
     db._insert_or_replace_vals(table=table, vals=migrate_record)
 
-def jsonlike_rename_key(old_key, new_key) -> Callable:
-    def ren(obj):
+
+def jsonlike_map(fval=None, fkey=None, fkeyval=None):
+    if fval is None:
+        fval = lambda x:x
+    if fkey is None:
+        fkey = lambda x:x
+    if fkeyval is None:
+        fkeyval = lambda x,y: (x,y)
+
+    def walk(obj):
         if isinstance(obj, dict):
             ret = {}
             for k, v in obj.items():
-                if k == old_key:
-                    logger.debug(f"key {old_key} -> {new_key}")
-                    k = new_key
-                ret[k] = ren(v)
-            return ret
+                k = fkey(k)
+                v = fval(walk(v))
+                k, v = fkeyval(k, v)
+                ret[k] = v
+            return fval(ret)
         
-        elif isinstance(obj, (list, tuple)):
-            cls = type(obj)
-            return cls(ren(v) for v in obj)
+        if isinstance(obj, (list, tuple)):
+            return fval(type(obj)(fval(walk(v)) for v in obj))
         
         else:
-            return obj
+            return fval(obj)
         
-    return ren
+    return walk
+
+def jsonlike_rename_key(old_key, new_key) -> Callable:
+    def fkey(k):
+        if k == old_key:
+            logger.debug(f"key {old_key} -> {new_key}")
+            return new_key
+        else:
+            return k
+        
+    return jsonlike_map(fkey=fkey)
 
 
 def jsonlike_rename_value(old_val, new_val) -> Callable:
-    def ren(obj):
-        if isinstance(obj, dict):
-            return {k: ren(v) for k, v in obj.items()}
-        elif isinstance(obj, (list, tuple)):
-            cls = type(obj)
-            return cls(ren(v) for v in obj)
-        elif old_val == obj:
+    def fval(v):
+        if v == old_val:
             logger.debug(f"value {old_val} -> {new_val}")
             return new_val
         else:
-            return obj
-        
-    return ren
+            return v
+    
+    return jsonlike_map(fval=fval)
+    
 
+class UnknownClass(pydantic.BaseModel):
+    def unknown_method(self):
+        """
+        This is a placeholder put into the database in place of methods whose
+        information was not recorded in earlier versions of trulens.
+        """
 
 def migrate_0_9_0(db):
     rename_classinfo = jsonlike_rename_key("__tru_class_info", "tru_class_info")
     rename_objserial = jsonlike_rename_value("ObjSerial", "Obj")
+
+    unknown_method = Method.of_method(UnknownClass().unknown_method)
+
+    def migrate_Method(obj):
+        # Old Method format:
+        if isinstance(obj, dict) and "module_name" in obj and "method_name" in obj:
+            logger.debug(f"migrating RecordAppCallMethod {obj}")
+            # example: {'module_name': 'langchain.chains.llm', 'class_name': 'LLMChain', 'method_name': '_call'}
+            return Method(
+                obj = Obj(
+                    cls = Class(
+                        name=obj['class_name'],
+                        module=Module(module_name=obj['module_name'])
+                    ),
+                    id=0
+                ),
+                name = obj['method_name']
+            ).model_dump()
+
+        else:
+            return obj
+
+    dummy_methods = jsonlike_map(fval=migrate_Method)
+
+    all_migrate = lambda obj: dummy_methods(rename_classinfo(rename_objserial(obj)))
 
     conn, c = db._connect()
     c.execute(
@@ -128,9 +176,8 @@ def migrate_0_9_0(db):
     json_db_col_idx = 4
 
     for old_entry in tqdm(rows, desc="Migrating Records DB 0.9.0 to 0.19.0"):
-        new_json = rename_objserial(rename_classinfo(
-            json.loads(old_entry[json_db_col_idx])
-        ))
+        new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
+        
         _update_db_json_col(
             db=db,
             table=
@@ -144,7 +191,7 @@ def migrate_0_9_0(db):
     rows = c.fetchall()
     json_db_col_idx = 1
     for old_entry in tqdm(rows, desc="Migrating FeedbackDefs DB 0.9.0 to 0.19.0"):
-        new_json = rename_objserial(rename_classinfo(json.loads(old_entry[json_db_col_idx])))
+        new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
         
         if CLASS_INFO not in new_json:
             new_json[CLASS_INFO] = Class.of_class(FeedbackDefinition).model_dump()
@@ -170,7 +217,7 @@ def migrate_0_9_0(db):
     rows = c.fetchall()
     json_db_col_idx = 1
     for old_entry in tqdm(rows, desc="Migrating Apps DB 0.9.0 to 0.19.0"):
-        new_json = rename_objserial(rename_classinfo(json.loads(old_entry[json_db_col_idx])))
+        new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
 
         if CLASS_INFO not in new_json:
             new_json[CLASS_INFO] = Class.of_class(FeedbackDefinition).model_dump()

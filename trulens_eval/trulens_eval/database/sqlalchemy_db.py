@@ -172,7 +172,7 @@ class SqlAlchemyDB(DB):
             if _app := session.query(orm.AppDefinition
                                     ).filter_by(app_id=app.app_id).first():
 
-                _app.app_json = app.json()
+                _app.app_json = app.model_dump_json()
             else:
                 _app = orm.AppDefinition.parse(
                     app, redact_keys=self.redact_keys
@@ -192,7 +192,7 @@ class SqlAlchemyDB(DB):
             if _fb_def := session.query(orm.FeedbackDefinition) \
                     .filter_by(feedback_definition_id=feedback_definition.feedback_definition_id) \
                     .first():
-                _fb_def.app_json = feedback_definition.json()
+                _fb_def.app_json = feedback_definition.model_dump_json()
             else:
                 _fb_def = orm.FeedbackDefinition.parse(
                     feedback_definition, redact_keys=self.redact_keys
