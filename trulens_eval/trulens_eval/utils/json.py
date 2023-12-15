@@ -10,9 +10,7 @@ import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import (
-    Any, Dict, Optional, Sequence, Set, TypeVar
-)
+from typing import Any, Dict, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
 import pydantic

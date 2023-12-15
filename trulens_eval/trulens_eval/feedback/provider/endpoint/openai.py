@@ -279,8 +279,8 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         if not counted_something:
             logger.warning(
-                f"Could not find usage information in openai response:\n"
-                + pp.pformat(response)
+                f"Could not find usage information in openai response:\n" +
+                pp.pformat(response)
             )
 
     def __init__(

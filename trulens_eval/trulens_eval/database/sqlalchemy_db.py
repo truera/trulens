@@ -299,9 +299,13 @@ class SqlAlchemyDB(DB):
             apps = (row[0] for row in session.execute(stmt))
             return AppsExtractor().get_df_and_cols(apps)
 
+
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
-no_perf = schema.Perf(start_time=datetime.min, end_time=datetime.min).model_dump()
+no_perf = schema.Perf(
+    start_time=datetime.min, end_time=datetime.min
+).model_dump()
+
 
 def _extract_feedback_results(
     results: Iterable[orm.FeedbackResult]
@@ -322,9 +326,11 @@ def _extract_feedback_results(
             _result.result,
             _result.multi_result,
             _result.cost_json,
-            json.loads(_result.record.perf_json) if _result.record.perf_json != MIGRATION_UNKNOWN_STR else no_perf,
+            json.loads(_result.record.perf_json)
+            if _result.record.perf_json != MIGRATION_UNKNOWN_STR else no_perf,
             json.loads(_result.calls_json)["calls"],
-            json.loads(_result.feedback_definition.feedback_json) if _result.feedback_definition is not None else None,
+            json.loads(_result.feedback_definition.feedback_json)
+            if _result.feedback_definition is not None else None,
             json.loads(_result.record.record_json),
             app_json,
             _type,
@@ -427,7 +433,11 @@ class AppsExtractor:
                         # deserialize AppDefinition here unless we fix prior DBs
                         # in migration. Because of this, loading just the
                         # `root_class` here.
-                        df[col] = str(Class.model_validate(json.loads(_app.app_json).get('root_class')))
+                        df[col] = str(
+                            Class.model_validate(
+                                json.loads(_app.app_json).get('root_class')
+                            )
+                        )
                     else:
                         df[col] = getattr(_app, col)
 
@@ -455,12 +465,8 @@ class AppsExtractor:
                     self.feedback_columns.add(_res.name)
 
             row = {
-                **{
-                    k: np.mean(v) for k, v in values.items()
-                },
-                **{
-                    k + "_calls": flatten(v) for k, v in calls.items()
-                },
+                **{k: np.mean(v) for k, v in values.items()},
+                **{k + "_calls": flatten(v) for k, v in calls.items()},
             }
 
             for col in self.rec_cols:

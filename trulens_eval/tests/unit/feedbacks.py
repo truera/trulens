@@ -1,4 +1,5 @@
 from typing import Optional
+
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 
@@ -72,6 +73,7 @@ def make_nonglobal_feedbacks():
     # incorrectly.
 
     class NG:  # "non-global"
+
         def NGcustom_feedback_function(t1: str) -> float:
             return 0.1
 
