@@ -263,7 +263,7 @@ class Tru(SingletonPerName):
         self.db.insert_app(app=app)
 
     def add_feedback(
-        self, feedback_result: FeedbackResult = None, **kwargs
+        self, feedback_result: Optional[FeedbackResult] = None, **kwargs
     ) -> None:
         """
         Add a single feedback result to the database.
