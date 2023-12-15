@@ -143,7 +143,8 @@ def migrate_0_9_0(db):
     rename_classinfo = jsonlike_rename_key("__tru_class_info", "tru_class_info")
     rename_objserial = jsonlike_rename_value("ObjSerial", "Obj")
 
-    def migrate_Method(obj):
+    def migrate_misc(obj):
+        
         # Old Method format:
         if isinstance(obj, dict) and "module_name" in obj and "method_name" in obj:
             logger.debug(f"migrating RecordAppCallMethod {obj}")
@@ -162,7 +163,7 @@ def migrate_0_9_0(db):
         else:
             return obj
 
-    dummy_methods = jsonlike_map(fval=migrate_Method)
+    dummy_methods = jsonlike_map(fval=migrate_misc)
 
     all_migrate = lambda obj: dummy_methods(rename_classinfo(rename_objserial(obj)))
 
@@ -218,8 +219,12 @@ def migrate_0_9_0(db):
         new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
 
         if CLASS_INFO not in new_json:
-            new_json[CLASS_INFO] = Class.of_class(FeedbackDefinition).model_dump()
-            logger.debug(f"adding {CLASS_INFO}")
+            new_json[CLASS_INFO] = Class.of_class(AppDefinition).model_dump()
+            logger.debug(f"adding `{CLASS_INFO}`")
+
+        if "app" not in new_json:
+            new_json['app'] = dict()
+            logger.debug(f"adding `app`")
 
         _update_db_json_col(
             db=db,
