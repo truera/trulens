@@ -586,7 +586,7 @@ class ClassificationModel(Model):
 
     @staticmethod
     def of_prompt(
-        model: CompletionModel, prompt: str, examples: Optional[List[Example]]
+        model: CompletionModel, prompt: str
     ):
         # OpenAI completion with examples
         # Cohere completion with examples
