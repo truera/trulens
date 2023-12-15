@@ -2785,9 +2785,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">trulens_eval</span> <span class="n">llama_index</span> <span class="n">llama_hub</span> <span class="n">llmsherpa</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">trulens_eval</span> <span class="n">llama_index</span><span class="o">==</span><span class="mf">0.9.10</span> <span class="n">llama_hub</span> <span class="n">llmsherpa</span> <span class="n">sentence</span><span class="o">-</span><span class="n">transformers</span> <span class="n">sentencepiece</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">!pip install trulens_eval llama_index llama_hub llmsherpa</div>
+<div class="clipboard-copy-txt" id="cell-1">!pip install trulens_eval llama_index==0.9.10 llama_hub llmsherpa sentence-transformers sentencepiece</div>
 </div>
 </div>
 </div>
@@ -2966,13 +2966,13 @@ harmless_evals = [
 <span class="c1"># LLM-based feedback functions</span>
 <span class="n">f_controversiality</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
     <span class="n">provider</span><span class="o">.</span><span class="n">controversiality_with_cot_reasons</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">"Criminality"</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"Controversiality"</span><span class="p">,</span>
     <span class="n">higher_is_better</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
 
 <span class="n">f_criminality</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
     <span class="n">provider</span><span class="o">.</span><span class="n">criminality_with_cot_reasons</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">"Controversiality"</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"Criminality"</span><span class="p">,</span>
     <span class="n">higher_is_better</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
         
@@ -3044,13 +3044,13 @@ hugs_provider = Huggingface()
 # LLM-based feedback functions
 f_controversiality = Feedback(
     provider.controversiality_with_cot_reasons,
-    name="Criminality",
+    name="Controversiality",
     higher_is_better=False,
     ).on_output()
 
 f_criminality = Feedback(
     provider.criminality_with_cot_reasons,
-    name="Controversiality",
+    name="Criminality",
     higher_is_better=False,
     ).on_output()
         

@@ -2670,8 +2670,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">163</span>
 <span class="normal">164</span>
 <span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruBasicApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">166</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruBasicApp</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiates a Basic app that makes little assumptions. Assumes input text and output text.</span>
 
 <span class="sd">        **Usage:**</span>
@@ -2699,12 +2698,15 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="sd">        Args:</span>
 <span class="sd">            text_to_text (Callable): A text to text callable.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+        <span class="n">arbitrary_types_allowed</span> <span class="o">=</span> <span class="kc">True</span>
+
     <span class="n">app</span><span class="p">:</span> <span class="n">TruWrapperApp</span>
 
     <span class="n">root_callable</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">FunctionOrMethod</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">FunctionOrMethod</span><span class="o">.</span>
-        <span class="n">of_callable</span><span class="p">(</span><span class="n">TruWrapperApp</span><span class="o">.</span><span class="n">_call</span><span class="p">),</span>
-        <span class="n">const</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">of_callable</span><span class="p">(</span><span class="n">TruWrapperApp</span><span class="o">.</span><span class="n">_call</span><span class="p">)</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -2723,7 +2725,6 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="sd">        - More args in WithClassInfo</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_forward_refs</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">text_to_text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">app</span> <span class="o">=</span> <span class="n">TruWrapperApp</span><span class="p">(</span><span class="n">text_to_text</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2734,9 +2735,6 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;instrument&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TruBasicCallableInstrument</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-        <span class="c1"># Setup the DB-related things:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">post_init</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">main_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">human</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="c1"># If available, a single text to a single text invocation of this app.</span>
@@ -2820,10 +2818,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 96</span>
 <span class="normal"> 97</span>
 <span class="normal"> 98</span>
 <span class="normal"> 99</span>
@@ -2848,8 +2843,7 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">118</span>
 <span class="normal">119</span>
 <span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">text_to_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TruWrapperApp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2865,7 +2859,6 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="sd">    - More args in WithClassInfo</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_forward_refs</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">text_to_text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">app</span> <span class="o">=</span> <span class="n">TruWrapperApp</span><span class="p">(</span><span class="n">text_to_text</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -2876,9 +2869,6 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;instrument&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">TruBasicCallableInstrument</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="c1"># Setup the DB-related things:</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">post_init</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
           </details>
   </div>
@@ -2927,7 +2917,8 @@ callable is expected to take in a single string.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_basic_app.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">155</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
+<span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
 <span class="normal">158</span>
@@ -2938,8 +2929,7 @@ callable is expected to take in a single string.</p>
 <span class="normal">163</span>
 <span class="normal">164</span>
 <span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">166</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run the callable with the given arguments. Note that the wrapped</span>
 <span class="sd">    callable is expected to take in a single string.</span>

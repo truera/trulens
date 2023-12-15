@@ -2885,12 +2885,7 @@ Args:
 <span class="normal">495</span>
 <span class="normal">496</span>
 <span class="normal">497</span>
-<span class="normal">498</span>
-<span class="normal">499</span>
-<span class="normal">500</span>
-<span class="normal">501</span>
-<span class="normal">502</span>
-<span class="normal">503</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="normal">498</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruLlama</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Instantiates the LLama Index Wrapper.</span>
 
@@ -2944,13 +2939,10 @@ Args:
     <span class="n">app</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseQueryEngine</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">]</span>
 
     <span class="n">root_callable</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">FunctionOrMethod</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">TruLlama</span><span class="o">.</span><span class="n">query</span><span class="p">),</span>
-        <span class="n">const</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">TruLlama</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseQueryEngine</span><span class="p">,</span> <span class="n">BaseChatEngine</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_forward_refs</span><span class="p">()</span>
-
         <span class="c1"># TruLlama specific:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;root_class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="n">of_object</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>  <span class="c1"># TODO: make class property</span>
@@ -2958,10 +2950,8 @@ Args:
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">post_init</span><span class="p">()</span>
-
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">select_source_nodes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">select_source_nodes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lens</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the path to the source nodes in the query output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -3246,7 +3236,12 @@ signature <code>sig</code> if it is to be called with the given bindings
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">260</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
 <span class="normal">261</span>
 <span class="normal">262</span>
 <span class="normal">263</span>
@@ -3260,12 +3255,7 @@ signature <code>sig</code> if it is to be called with the given bindings
 <span class="normal">271</span>
 <span class="normal">272</span>
 <span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
+<span class="normal">274</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -3311,7 +3301,12 @@ returned <code>ret</code>.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">281</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
 <span class="normal">282</span>
 <span class="normal">283</span>
 <span class="normal">284</span>
@@ -3324,12 +3319,7 @@ returned <code>ret</code>.</p>
 <span class="normal">291</span>
 <span class="normal">292</span>
 <span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span>
-<span class="normal">296</span>
-<span class="normal">297</span>
-<span class="normal">298</span>
-<span class="normal">299</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
+<span class="normal">294</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span><span class="p">,</span> <span class="n">ret</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -3376,13 +3366,13 @@ returned <code>ret</code>.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_llama.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">select_source_nodes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">select_source_nodes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lens</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the path to the source nodes in the query output.</span>
 <span class="sd">    &quot;&quot;&quot;</span>

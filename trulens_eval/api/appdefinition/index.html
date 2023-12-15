@@ -2390,17 +2390,7 @@
 
             <details class="quote">
               <summary>Source code in <code>trulens_eval/trulens_eval/schema.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">489</span>
-<span class="normal">490</span>
-<span class="normal">491</span>
-<span class="normal">492</span>
-<span class="normal">493</span>
-<span class="normal">494</span>
-<span class="normal">495</span>
-<span class="normal">496</span>
-<span class="normal">497</span>
-<span class="normal">498</span>
-<span class="normal">499</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">499</span>
 <span class="normal">500</span>
 <span class="normal">501</span>
 <span class="normal">502</span>
@@ -2612,16 +2602,28 @@
 <span class="normal">708</span>
 <span class="normal">709</span>
 <span class="normal">710</span>
-<span class="normal">711</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">AppDefinition</span><span class="p">(</span><span class="n">SerialModel</span><span class="p">,</span> <span class="n">WithClassInfo</span><span class="p">):</span>
+<span class="normal">711</span>
+<span class="normal">712</span>
+<span class="normal">713</span>
+<span class="normal">714</span>
+<span class="normal">715</span>
+<span class="normal">716</span>
+<span class="normal">717</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span>
+<span class="normal">722</span>
+<span class="normal">723</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">AppDefinition</span><span class="p">(</span><span class="n">SerialModel</span><span class="p">,</span> <span class="n">WithClassInfo</span><span class="p">):</span>
     <span class="c1"># Serialized fields here whereas app.py:App contains</span>
     <span class="c1"># non-serialized fields.</span>
 
-    <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
-        <span class="n">arbitrary_types_allowed</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1">#class Config:</span>
+    <span class="c1">#    arbitrary_types_allowed = True</span>
 
-    <span class="n">app_id</span><span class="p">:</span> <span class="n">AppID</span>
-    <span class="n">tags</span><span class="p">:</span> <span class="n">Tags</span>
-    <span class="n">metadata</span><span class="p">:</span> <span class="n">Metadata</span>  <span class="c1"># TODO: rename to meta for consistency with other metas</span>
+    <span class="n">app_id</span><span class="p">:</span> <span class="n">AppID</span>  <span class="c1"># str</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="n">Tags</span>  <span class="c1"># str</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Metadata</span>  <span class="c1"># dict  # TODO: rename to meta for consistency with other metas</span>
 
     <span class="c1"># Feedback functions to evaluate on each record. Unlike the above, these are</span>
     <span class="c1"># meant to be serialized.</span>
@@ -2631,8 +2633,10 @@
     <span class="c1"># if &quot;withappthread&quot; was set.</span>
     <span class="n">feedback_mode</span><span class="p">:</span> <span class="n">FeedbackMode</span> <span class="o">=</span> <span class="n">FeedbackMode</span><span class="o">.</span><span class="n">WITH_APP_THREAD</span>
 
-    <span class="c1"># Class of the main instrumented object.</span>
-    <span class="n">root_class</span><span class="p">:</span> <span class="n">Class</span>  <span class="c1"># TODO: make classvar</span>
+    <span class="c1"># Class of the main instrumented object. Ideally this would be a ClassVar</span>
+    <span class="c1"># but since we want to check this without instantiating the subclass of</span>
+    <span class="c1"># AppDefinition that would define it, we cannot use ClassVar.</span>
+    <span class="n">root_class</span><span class="p">:</span> <span class="n">Class</span>
 
     <span class="c1"># App&#39;s main method. To be filled in by subclass. Want to make this abstract</span>
     <span class="c1"># but this causes problems when trying to load an AppDefinition from json.</span>
@@ -2685,7 +2689,7 @@
         <span class="k">if</span> <span class="n">initial_app_loader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="n">serial_bytes_json</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Cannot create new session without `initial_app_loader`.&quot;</span>
 
-            <span class="n">serial_bytes</span> <span class="o">=</span> <span class="n">SerialBytes</span><span class="o">.</span><span class="n">parse_obj</span><span class="p">(</span><span class="n">serial_bytes_json</span><span class="p">)</span>
+            <span class="n">serial_bytes</span> <span class="o">=</span> <span class="n">SerialBytes</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">serial_bytes_json</span><span class="p">)</span>
 
             <span class="n">app</span> <span class="o">=</span> <span class="n">dill</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">serial_bytes</span><span class="o">.</span><span class="n">data</span><span class="p">)()</span>
 
@@ -2693,14 +2697,14 @@
             <span class="n">app</span> <span class="o">=</span> <span class="n">initial_app_loader</span><span class="p">()</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">dill</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">initial_app_loader</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">serial_bytes</span> <span class="o">=</span> <span class="n">SerialBytes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-            <span class="n">serial_bytes_json</span> <span class="o">=</span> <span class="n">serial_bytes</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
+            <span class="n">serial_bytes_json</span> <span class="o">=</span> <span class="n">serial_bytes</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 
         <span class="n">app_definition_json</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app</span>
         <span class="n">app_definition_json</span><span class="p">[</span><span class="s1">&#39;initial_app_loader_dump&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">serial_bytes_json</span>
 
         <span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">App</span><span class="p">]</span> <span class="o">=</span> <span class="n">WithClassInfo</span><span class="o">.</span><span class="n">get_class</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parse_obj</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">jsonify_extra</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
         <span class="c1"># Called by jsonify for us to add any data we might want to add to the</span>
@@ -2733,7 +2737,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">app_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">app_id</span> <span class="o">=</span> <span class="n">obj_id_of_obj</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dict</span><span class="p">(),</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">)</span>
+            <span class="n">app_id</span> <span class="o">=</span> <span class="n">obj_id_of_obj</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span> <span class="o">=</span> <span class="n">app_id</span>
 
@@ -2797,7 +2801,7 @@
 
         <span class="n">apps</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">get_apps</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
-            <span class="n">dump</span> <span class="o">=</span> <span class="n">app</span><span class="p">[</span><span class="s1">&#39;initial_app_loader_dump&#39;</span><span class="p">]</span>
+            <span class="n">dump</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;initial_app_loader_dump&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">dump</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">rets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
 
@@ -2815,7 +2819,7 @@
             <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">select_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">select_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lens</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the path to the main app&#39;s call inputs.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -2826,7 +2830,7 @@
         <span class="p">)</span><span class="o">.</span><span class="n">args</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">select_outputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">select_outputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lens</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the path to the main app&#39;s call outputs.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -2874,22 +2878,22 @@ blank memory).</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/schema.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">528</span>
-<span class="normal">529</span>
-<span class="normal">530</span>
-<span class="normal">531</span>
-<span class="normal">532</span>
-<span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span>
-<span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">540</span>
 <span class="normal">541</span>
 <span class="normal">542</span>
-<span class="normal">543</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">543</span>
+<span class="normal">544</span>
+<span class="normal">545</span>
+<span class="normal">546</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">continue_session</span><span class="p">(</span>
     <span class="n">app_definition_json</span><span class="p">:</span> <span class="n">JSON</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;AppDefinition&#39;</span><span class="p">:</span>
@@ -2934,19 +2938,7 @@ blank memory).</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/schema.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">658</span>
-<span class="normal">659</span>
-<span class="normal">660</span>
-<span class="normal">661</span>
-<span class="normal">662</span>
-<span class="normal">663</span>
-<span class="normal">664</span>
-<span class="normal">665</span>
-<span class="normal">666</span>
-<span class="normal">667</span>
-<span class="normal">668</span>
-<span class="normal">669</span>
-<span class="normal">670</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">670</span>
 <span class="normal">671</span>
 <span class="normal">672</span>
 <span class="normal">673</span>
@@ -2954,7 +2946,19 @@ blank memory).</p>
 <span class="normal">675</span>
 <span class="normal">676</span>
 <span class="normal">677</span>
-<span class="normal">678</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span>
+<span class="normal">681</span>
+<span class="normal">682</span>
+<span class="normal">683</span>
+<span class="normal">684</span>
+<span class="normal">685</span>
+<span class="normal">686</span>
+<span class="normal">687</span>
+<span class="normal">688</span>
+<span class="normal">689</span>
+<span class="normal">690</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">get_loadable_apps</span><span class="p">():</span>
     <span class="c1"># EXPERIMENTAL</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2970,7 +2974,7 @@ blank memory).</p>
 
     <span class="n">apps</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">get_apps</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
-        <span class="n">dump</span> <span class="o">=</span> <span class="n">app</span><span class="p">[</span><span class="s1">&#39;initial_app_loader_dump&#39;</span><span class="p">]</span>
+        <span class="n">dump</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;initial_app_loader_dump&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dump</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">rets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
 
@@ -3005,19 +3009,7 @@ blank memory).</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/schema.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">545</span>
-<span class="normal">546</span>
-<span class="normal">547</span>
-<span class="normal">548</span>
-<span class="normal">549</span>
-<span class="normal">550</span>
-<span class="normal">551</span>
-<span class="normal">552</span>
-<span class="normal">553</span>
-<span class="normal">554</span>
-<span class="normal">555</span>
-<span class="normal">556</span>
-<span class="normal">557</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">557</span>
 <span class="normal">558</span>
 <span class="normal">559</span>
 <span class="normal">560</span>
@@ -3037,7 +3029,19 @@ blank memory).</p>
 <span class="normal">574</span>
 <span class="normal">575</span>
 <span class="normal">576</span>
-<span class="normal">577</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span>
+<span class="normal">585</span>
+<span class="normal">586</span>
+<span class="normal">587</span>
+<span class="normal">588</span>
+<span class="normal">589</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">new_session</span><span class="p">(</span>
     <span class="n">app_definition_json</span><span class="p">:</span> <span class="n">JSON</span><span class="p">,</span>
     <span class="n">initial_app_loader</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -3054,7 +3058,7 @@ blank memory).</p>
     <span class="k">if</span> <span class="n">initial_app_loader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="n">serial_bytes_json</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Cannot create new session without `initial_app_loader`.&quot;</span>
 
-        <span class="n">serial_bytes</span> <span class="o">=</span> <span class="n">SerialBytes</span><span class="o">.</span><span class="n">parse_obj</span><span class="p">(</span><span class="n">serial_bytes_json</span><span class="p">)</span>
+        <span class="n">serial_bytes</span> <span class="o">=</span> <span class="n">SerialBytes</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">serial_bytes_json</span><span class="p">)</span>
 
         <span class="n">app</span> <span class="o">=</span> <span class="n">dill</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">serial_bytes</span><span class="o">.</span><span class="n">data</span><span class="p">)()</span>
 
@@ -3062,14 +3066,14 @@ blank memory).</p>
         <span class="n">app</span> <span class="o">=</span> <span class="n">initial_app_loader</span><span class="p">()</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">dill</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">initial_app_loader</span><span class="p">,</span> <span class="n">recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">serial_bytes</span> <span class="o">=</span> <span class="n">SerialBytes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-        <span class="n">serial_bytes_json</span> <span class="o">=</span> <span class="n">serial_bytes</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
+        <span class="n">serial_bytes_json</span> <span class="o">=</span> <span class="n">serial_bytes</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 
     <span class="n">app_definition_json</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app</span>
     <span class="n">app_definition_json</span><span class="p">[</span><span class="s1">&#39;initial_app_loader_dump&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">serial_bytes_json</span>
 
     <span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">App</span><span class="p">]</span> <span class="o">=</span> <span class="n">WithClassInfo</span><span class="o">.</span><span class="n">get_class</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parse_obj</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
   </div>
@@ -3098,17 +3102,17 @@ blank memory).</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/schema.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">691</span>
-<span class="normal">692</span>
-<span class="normal">693</span>
-<span class="normal">694</span>
-<span class="normal">695</span>
-<span class="normal">696</span>
-<span class="normal">697</span>
-<span class="normal">698</span>
-<span class="normal">699</span>
-<span class="normal">700</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">select_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span>
+<span class="normal">709</span>
+<span class="normal">710</span>
+<span class="normal">711</span>
+<span class="normal">712</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">select_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lens</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the path to the main app&#39;s call inputs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -3145,17 +3149,17 @@ blank memory).</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/schema.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">702</span>
-<span class="normal">703</span>
-<span class="normal">704</span>
-<span class="normal">705</span>
-<span class="normal">706</span>
-<span class="normal">707</span>
-<span class="normal">708</span>
-<span class="normal">709</span>
-<span class="normal">710</span>
-<span class="normal">711</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">select_outputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSONPath</span><span class="p">:</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">714</span>
+<span class="normal">715</span>
+<span class="normal">716</span>
+<span class="normal">717</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span>
+<span class="normal">722</span>
+<span class="normal">723</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">select_outputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lens</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the path to the main app&#39;s call outputs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>

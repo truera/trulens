@@ -2498,12 +2498,7 @@
 <span class="normal">76</span>
 <span class="normal">77</span>
 <span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Bedrock</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
+<span class="normal">79</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Bedrock</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
     <span class="c1"># LLMProvider requirement which we do not use:</span>
     <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Bedrock&quot;</span>
 
@@ -2511,10 +2506,7 @@
     <span class="n">endpoint</span><span class="p">:</span> <span class="n">BedrockEndpoint</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-        <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
         <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
         <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
@@ -2541,9 +2533,7 @@
 
         <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;model_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_id</span>
 
-        <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BedrockEndpoint</span><span class="p">(</span>
-             <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-        <span class="p">)</span>
+        <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BedrockEndpoint</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="o">**</span><span class="n">self_kwargs</span>
@@ -2568,8 +2558,8 @@
 
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">invoke_model</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">modelId</span><span class="o">=</span><span class="n">modelId</span><span class="p">)</span>
 
-        <span class="n">response_body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;results&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;outputText&quot;</span><span class="p">]</span>
+        <span class="n">response_body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                                  <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;results&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;outputText&quot;</span><span class="p">]</span>
         <span class="c1"># text</span>
 
         <span class="k">return</span> <span class="n">response_body</span>
@@ -2649,16 +2639,8 @@
 <span class="normal">51</span>
 <span class="normal">52</span>
 <span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span>
-    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span>
+<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
     <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
     <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
@@ -2685,9 +2667,7 @@
 
     <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;model_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_id</span>
 
-    <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BedrockEndpoint</span><span class="p">(</span>
-         <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-    <span class="p">)</span>
+    <span class="n">self_kwargs</span><span class="p">[</span><span class="s1">&#39;endpoint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BedrockEndpoint</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
         <span class="o">**</span><span class="n">self_kwargs</span>

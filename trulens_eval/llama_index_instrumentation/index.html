@@ -2953,12 +2953,12 @@ query_engine = index.as_query_engine()</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru_query_engine_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">)</span>
 
 <span class="k">with</span> <span class="n">tru_query_engine_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">llm_response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"What did the author do growing up?"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"What did the author do growing up?"</span><span class="p">))</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-2">tru_query_engine_recorder = TruLlama(query_engine)
 
 with tru_query_engine_recorder as recording:
-    llm_response = query_engine.query("What did the author do growing up?")</div>
+    print(query_engine.query("What did the author do growing up?"))</div>
 </div>
 </div>
 </div>
@@ -3117,7 +3117,8 @@ print(llm_response_async)</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">SimpleWebPageReader</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
+<span class="kn">from</span> <span class="nn">llama_index.readers.web</span> <span class="kn">import</span> <span class="n">SimpleWebPageReader</span>
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruLlama</span>
 
 <span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleWebPageReader</span><span class="p">(</span><span class="n">html_to_text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span>
@@ -3127,7 +3128,8 @@ print(llm_response_async)</div>
 
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">(</span><span class="n">streaming</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5">from llama_index import VectorStoreIndex, SimpleWebPageReader
+<div class="clipboard-copy-txt" id="cell-5">from llama_index import VectorStoreIndex
+from llama_index.readers.web import SimpleWebPageReader
 from trulens_eval import TruLlama
 
 documents = SimpleWebPageReader(html_to_text=True).load_data(

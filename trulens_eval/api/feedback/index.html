@@ -4253,13 +4253,15 @@
 <span class="normal">1062</span>
 <span class="normal">1063</span>
 <span class="normal">1064</span>
-<span class="normal">1065</span>
-<span class="normal">1066</span>
-<span class="normal">1067</span>
-<span class="normal">1068</span>
-<span class="normal">1069</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">LLMProvider</span><span class="p">(</span><span class="n">Provider</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="normal">1065</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">LLMProvider</span><span class="p">(</span><span class="n">Provider</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 
+    <span class="c1"># NOTE(piotrm): &quot;model_&quot; prefix for attributes is &quot;protected&quot; by pydantic v2</span>
+    <span class="c1"># by default. Need the below adjustment but this means we don&#39;t get any</span>
+    <span class="c1"># warnings if we try to override some internal pydantic name.</span>
     <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+        <span class="n">protected_namespaces</span> <span class="o">=</span> <span class="p">()</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
@@ -4672,18 +4674,20 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="n">re_0_10_rating</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span>
-            <span class="n">run_me</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_chat_completion</span><span class="p">(</span>
-                <span class="n">prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_PROMPT_TEMPLATE</span><span class="p">,</span>
-                    <span class="n">criteria</span><span class="o">=</span><span class="n">criteria</span><span class="p">,</span>
-                    <span class="n">submission</span><span class="o">=</span><span class="n">text</span>
-                    <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">run_me</span><span class="p">(</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_chat_completion</span><span class="p">(</span>
+                    <span class="n">prompt</span><span class="o">=</span><span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_PROMPT_TEMPLATE</span><span class="p">,</span>
+                        <span class="n">criteria</span><span class="o">=</span><span class="n">criteria</span><span class="p">,</span>
+                        <span class="n">submission</span><span class="o">=</span><span class="n">text</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
+            <span class="p">)</span>
         <span class="p">)</span> <span class="o">/</span> <span class="mf">10.0</span>
 
-    <span class="k">def</span> <span class="nf">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">criteria</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">criteria</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Uses chat completion model. A general function that completes a template</span>
 <span class="sd">        to evaluate different aspects of some text. Prompt credit to Langchain.</span>
@@ -4697,11 +4701,12 @@
 <span class="sd">            evaluation, and a string containing the reasons for the evaluation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">score</span><span class="p">,</span> <span class="n">reasons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">run_me</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_score_and_reasons_from_response</span><span class="p">(</span>
-            <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS</span><span class="p">,</span>
-                <span class="n">criteria</span><span class="o">=</span><span class="n">criteria</span><span class="p">,</span>
-                <span class="n">submission</span><span class="o">=</span><span class="n">text</span>
+        <span class="n">score</span><span class="p">,</span> <span class="n">reasons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">run_me</span><span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_score_and_reasons_from_response</span><span class="p">(</span>
+                <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS</span><span class="p">,</span>
+                    <span class="n">criteria</span><span class="o">=</span><span class="n">criteria</span><span class="p">,</span>
+                    <span class="n">submission</span><span class="o">=</span><span class="n">text</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -4729,7 +4734,7 @@
 <span class="sd">            float: A value between 0.0 (not concise) and 1.0 (concise).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">conciseness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
@@ -4755,7 +4760,7 @@
 <span class="sd">            and a string containing the reasons for the evaluation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">correctness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4778,7 +4783,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            flo&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">correctness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4802,7 +4807,7 @@
 <span class="sd">            float: A value between 0.0 (not correct) and 1.0 (correct).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">coherence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4825,7 +4830,7 @@
 <span class="sd">            float: A value between 0.0 (not coherent) and 1.0 (coherent).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_COHERENCE_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_COHERENCE_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">coherence_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4849,7 +4854,7 @@
 <span class="sd">            float: A value between 0.0 (not coherent) and 1.0 (coherent).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_COHERENCE_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_COHERENCE_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">harmfulness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4872,8 +4877,7 @@
 <span class="sd">            float: A value between 0.0 (not harmful) and 1.0 (harmful)&quot;.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HARMFULNESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HARMFULNESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">harmfulness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4894,8 +4898,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HARMFULNESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HARMFULNESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">maliciousness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4919,8 +4922,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MALICIOUSNESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MALICIOUSNESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">maliciousness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4944,8 +4946,7 @@
 <span class="sd">            float: A value between 0.0 (not malicious) and 1.0 (malicious).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MALICIOUSNESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MALICIOUSNESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">helpfulness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4968,8 +4969,7 @@
 <span class="sd">            float: A value between 0.0 (not helpful) and 1.0 (helpful).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">helpfulness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -4993,8 +4993,7 @@
 <span class="sd">            float: A value between 0.o (not helpful) and 1.0 (helpful).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">controversiality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -5019,8 +5018,7 @@
 <span class="sd">            (controversial).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONTROVERSIALITY_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONTROVERSIALITY_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">controversiality_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -5044,8 +5042,7 @@
 <span class="sd">            float: A value between 0.0 (not controversial) and 1.0 (controversial).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">misogyny</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -5068,8 +5065,7 @@
 <span class="sd">            float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MISOGYNY_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MISOGYNY_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">misogyny_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -5093,8 +5089,7 @@
 <span class="sd">            float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MISOGYNY_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MISOGYNY_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">criminality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -5118,8 +5113,7 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CRIMINALITY_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CRIMINALITY_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">criminality_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -5143,8 +5137,7 @@
 <span class="sd">            float: A value between 0.0 (not criminal) and 1.0 (criminal).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CRIMINALITY_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CRIMINALITY_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">insensitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -5167,8 +5160,7 @@
 <span class="sd">            float: A value between 0.0 (not insensitive) and 1.0 (insensitive).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_INSENSITIVITY_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_INSENSITIVITY_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">insensitivity_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -5192,8 +5184,7 @@
 <span class="sd">            float: A value between 0.0 (not insensitive) and 1.0 (insensitive).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-            <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_INSENSITIVITY_PROMPT</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_INSENSITIVITY_PROMPT</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_get_answer_agreement</span><span class="p">(</span>
@@ -5214,8 +5205,9 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">run_me</span><span class="p">(</span>
             <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_chat_completion</span><span class="p">(</span>
-                <span class="n">prompt</span><span class="o">=</span><span class="p">(</span><span class="n">prompts</span><span class="o">.</span><span class="n">AGREEMENT_SYSTEM_PROMPT</span> <span class="o">%</span>
-                        <span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">check_response</span><span class="p">))</span> <span class="o">+</span> <span class="n">response</span>
+                <span class="n">prompt</span><span class="o">=</span>
+                <span class="p">(</span><span class="n">prompts</span><span class="o">.</span><span class="n">AGREEMENT_SYSTEM_PROMPT</span> <span class="o">%</span>
+                 <span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">check_response</span><span class="p">))</span> <span class="o">+</span> <span class="n">response</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
@@ -5390,16 +5382,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">578</span>
-<span class="normal">579</span>
-<span class="normal">580</span>
-<span class="normal">581</span>
-<span class="normal">582</span>
-<span class="normal">583</span>
-<span class="normal">584</span>
-<span class="normal">585</span>
-<span class="normal">586</span>
-<span class="normal">587</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">587</span>
 <span class="normal">588</span>
 <span class="normal">589</span>
 <span class="normal">590</span>
@@ -5411,7 +5394,16 @@ Guide</a></p>
 <span class="normal">596</span>
 <span class="normal">597</span>
 <span class="normal">598</span>
-<span class="normal">599</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">coherence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">599</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">coherence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a</span>
 <span class="sd">    template to check the coherence of some text. Prompt credit to Langchain Eval.</span>
@@ -5431,7 +5423,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not coherent) and 1.0 (coherent).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_COHERENCE_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_COHERENCE_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -5518,16 +5510,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">601</span>
-<span class="normal">602</span>
-<span class="normal">603</span>
-<span class="normal">604</span>
-<span class="normal">605</span>
-<span class="normal">606</span>
-<span class="normal">607</span>
-<span class="normal">608</span>
-<span class="normal">609</span>
-<span class="normal">610</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">610</span>
 <span class="normal">611</span>
 <span class="normal">612</span>
 <span class="normal">613</span>
@@ -5540,7 +5523,16 @@ Guide</a></p>
 <span class="normal">620</span>
 <span class="normal">621</span>
 <span class="normal">622</span>
-<span class="normal">623</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">coherence_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">coherence_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the coherence of some text. Prompt credit to Langchain Eval. Also</span>
@@ -5561,7 +5553,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not coherent) and 1.0 (coherent).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_COHERENCE_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_COHERENCE_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -5661,16 +5653,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">480</span>
-<span class="normal">481</span>
-<span class="normal">482</span>
-<span class="normal">483</span>
-<span class="normal">484</span>
-<span class="normal">485</span>
-<span class="normal">486</span>
-<span class="normal">487</span>
-<span class="normal">488</span>
-<span class="normal">489</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">489</span>
 <span class="normal">490</span>
 <span class="normal">491</span>
 <span class="normal">492</span>
@@ -5684,7 +5667,16 @@ Guide</a></p>
 <span class="normal">500</span>
 <span class="normal">501</span>
 <span class="normal">502</span>
-<span class="normal">503</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conciseness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conciseness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the conciseness of some text. Prompt credit to Langchain Eval.</span>
@@ -5706,7 +5698,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not concise) and 1.0 (concise).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -5816,16 +5808,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">505</span>
-<span class="normal">506</span>
-<span class="normal">507</span>
-<span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
-<span class="normal">512</span>
-<span class="normal">513</span>
-<span class="normal">514</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">514</span>
 <span class="normal">515</span>
 <span class="normal">516</span>
 <span class="normal">517</span>
@@ -5840,7 +5823,16 @@ Guide</a></p>
 <span class="normal">526</span>
 <span class="normal">527</span>
 <span class="normal">528</span>
-<span class="normal">529</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conciseness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conciseness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the conciseness of some text. Prompt credit to Langchain Eval.</span>
@@ -5863,7 +5855,7 @@ Guide</a></p>
 <span class="sd">        and a string containing the reasons for the evaluation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -5960,10 +5952,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">770</span>
-<span class="normal">771</span>
-<span class="normal">772</span>
-<span class="normal">773</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">773</span>
 <span class="normal">774</span>
 <span class="normal">775</span>
 <span class="normal">776</span>
@@ -5984,7 +5973,9 @@ Guide</a></p>
 <span class="normal">791</span>
 <span class="normal">792</span>
 <span class="normal">793</span>
-<span class="normal">794</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">controversiality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">794</span>
+<span class="normal">795</span>
+<span class="normal">796</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">controversiality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the controversiality of some text. Prompt credit to Langchain</span>
@@ -6006,8 +5997,7 @@ Guide</a></p>
 <span class="sd">        (controversial).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONTROVERSIALITY_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONTROVERSIALITY_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -6094,9 +6084,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">796</span>
-<span class="normal">797</span>
-<span class="normal">798</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">798</span>
 <span class="normal">799</span>
 <span class="normal">800</span>
 <span class="normal">801</span>
@@ -6117,7 +6105,8 @@ Guide</a></p>
 <span class="normal">816</span>
 <span class="normal">817</span>
 <span class="normal">818</span>
-<span class="normal">819</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">controversiality_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">819</span>
+<span class="normal">820</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">controversiality_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the controversiality of some text. Prompt credit to Langchain</span>
@@ -6138,8 +6127,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not controversial) and 1.0 (controversial).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -6225,16 +6213,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">531</span>
-<span class="normal">532</span>
-<span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span>
-<span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">540</span>
 <span class="normal">541</span>
 <span class="normal">542</span>
 <span class="normal">543</span>
@@ -6246,7 +6225,16 @@ Guide</a></p>
 <span class="normal">549</span>
 <span class="normal">550</span>
 <span class="normal">551</span>
-<span class="normal">552</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">correctness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">correctness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the correctness of some text. Prompt credit to Langchain Eval.</span>
@@ -6266,7 +6254,7 @@ Guide</a></p>
 <span class="sd">    Returns:</span>
 <span class="sd">        flo&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -6353,16 +6341,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">554</span>
-<span class="normal">555</span>
-<span class="normal">556</span>
-<span class="normal">557</span>
-<span class="normal">558</span>
-<span class="normal">559</span>
-<span class="normal">560</span>
-<span class="normal">561</span>
-<span class="normal">562</span>
-<span class="normal">563</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">563</span>
 <span class="normal">564</span>
 <span class="normal">565</span>
 <span class="normal">566</span>
@@ -6375,7 +6354,16 @@ Guide</a></p>
 <span class="normal">573</span>
 <span class="normal">574</span>
 <span class="normal">575</span>
-<span class="normal">576</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">correctness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span>
+<span class="normal">585</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">correctness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the correctness of some text. Prompt credit to Langchain Eval.</span>
@@ -6396,7 +6384,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not correct) and 1.0 (correct).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CONCISENESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -6482,7 +6470,8 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">870</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">869</span>
+<span class="normal">870</span>
 <span class="normal">871</span>
 <span class="normal">872</span>
 <span class="normal">873</span>
@@ -6503,9 +6492,7 @@ Guide</a></p>
 <span class="normal">888</span>
 <span class="normal">889</span>
 <span class="normal">890</span>
-<span class="normal">891</span>
-<span class="normal">892</span>
-<span class="normal">893</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">criminality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">891</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">criminality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the criminality of some text. Prompt credit to Langchain Eval.</span>
@@ -6526,8 +6513,7 @@ Guide</a></p>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CRIMINALITY_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CRIMINALITY_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -6614,7 +6600,9 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">895</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">893</span>
+<span class="normal">894</span>
+<span class="normal">895</span>
 <span class="normal">896</span>
 <span class="normal">897</span>
 <span class="normal">898</span>
@@ -6634,10 +6622,7 @@ Guide</a></p>
 <span class="normal">912</span>
 <span class="normal">913</span>
 <span class="normal">914</span>
-<span class="normal">915</span>
-<span class="normal">916</span>
-<span class="normal">917</span>
-<span class="normal">918</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">criminality_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">915</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">criminality_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the criminality of some text. Prompt credit to Langchain Eval.</span>
@@ -6658,8 +6643,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not criminal) and 1.0 (criminal).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CRIMINALITY_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_CRIMINALITY_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -6745,16 +6729,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">625</span>
-<span class="normal">626</span>
-<span class="normal">627</span>
-<span class="normal">628</span>
-<span class="normal">629</span>
-<span class="normal">630</span>
-<span class="normal">631</span>
-<span class="normal">632</span>
-<span class="normal">633</span>
-<span class="normal">634</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">634</span>
 <span class="normal">635</span>
 <span class="normal">636</span>
 <span class="normal">637</span>
@@ -6767,7 +6742,15 @@ Guide</a></p>
 <span class="normal">644</span>
 <span class="normal">645</span>
 <span class="normal">646</span>
-<span class="normal">647</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">harmfulness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">harmfulness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the harmfulness of some text. Prompt credit to Langchain Eval.</span>
@@ -6787,8 +6770,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not harmful) and 1.0 (harmful)&quot;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HARMFULNESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HARMFULNESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -6823,15 +6805,7 @@ feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output() </p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">649</span>
-<span class="normal">650</span>
-<span class="normal">651</span>
-<span class="normal">652</span>
-<span class="normal">653</span>
-<span class="normal">654</span>
-<span class="normal">655</span>
-<span class="normal">656</span>
-<span class="normal">657</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">657</span>
 <span class="normal">658</span>
 <span class="normal">659</span>
 <span class="normal">660</span>
@@ -6843,7 +6817,14 @@ feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output() </p>
 <span class="normal">666</span>
 <span class="normal">667</span>
 <span class="normal">668</span>
-<span class="normal">669</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">harmfulness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span>
+<span class="normal">675</span>
+<span class="normal">676</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">harmfulness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the harmfulness of some text. Prompt credit to Langchain Eval.</span>
@@ -6861,8 +6842,7 @@ feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output() </p>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HARMFULNESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HARMFULNESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -6948,12 +6928,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">721</span>
-<span class="normal">722</span>
-<span class="normal">723</span>
-<span class="normal">724</span>
-<span class="normal">725</span>
-<span class="normal">726</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">726</span>
 <span class="normal">727</span>
 <span class="normal">728</span>
 <span class="normal">729</span>
@@ -6970,7 +6945,11 @@ Guide</a></p>
 <span class="normal">740</span>
 <span class="normal">741</span>
 <span class="normal">742</span>
-<span class="normal">743</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">helpfulness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">743</span>
+<span class="normal">744</span>
+<span class="normal">745</span>
+<span class="normal">746</span>
+<span class="normal">747</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">helpfulness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the helpfulness of some text. Prompt credit to Langchain Eval.</span>
@@ -6990,8 +6969,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not helpful) and 1.0 (helpful).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -7078,11 +7056,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">745</span>
-<span class="normal">746</span>
-<span class="normal">747</span>
-<span class="normal">748</span>
-<span class="normal">749</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">749</span>
 <span class="normal">750</span>
 <span class="normal">751</span>
 <span class="normal">752</span>
@@ -7101,7 +7075,10 @@ Guide</a></p>
 <span class="normal">765</span>
 <span class="normal">766</span>
 <span class="normal">767</span>
-<span class="normal">768</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">helpfulness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">768</span>
+<span class="normal">769</span>
+<span class="normal">770</span>
+<span class="normal">771</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">helpfulness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the helpfulness of some text. Prompt credit to Langchain Eval.</span>
@@ -7122,8 +7099,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.o (not helpful) and 1.0 (helpful).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_HELPFULNESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -7209,7 +7185,10 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">920</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">917</span>
+<span class="normal">918</span>
+<span class="normal">919</span>
+<span class="normal">920</span>
 <span class="normal">921</span>
 <span class="normal">922</span>
 <span class="normal">923</span>
@@ -7227,11 +7206,7 @@ Guide</a></p>
 <span class="normal">935</span>
 <span class="normal">936</span>
 <span class="normal">937</span>
-<span class="normal">938</span>
-<span class="normal">939</span>
-<span class="normal">940</span>
-<span class="normal">941</span>
-<span class="normal">942</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">insensitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">938</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">insensitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the insensitivity of some text. Prompt credit to Langchain Eval.</span>
@@ -7251,8 +7226,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not insensitive) and 1.0 (insensitive).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_INSENSITIVITY_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_INSENSITIVITY_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -7339,7 +7313,11 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">944</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">940</span>
+<span class="normal">941</span>
+<span class="normal">942</span>
+<span class="normal">943</span>
+<span class="normal">944</span>
 <span class="normal">945</span>
 <span class="normal">946</span>
 <span class="normal">947</span>
@@ -7357,12 +7335,7 @@ Guide</a></p>
 <span class="normal">959</span>
 <span class="normal">960</span>
 <span class="normal">961</span>
-<span class="normal">962</span>
-<span class="normal">963</span>
-<span class="normal">964</span>
-<span class="normal">965</span>
-<span class="normal">966</span>
-<span class="normal">967</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">insensitivity_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">962</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">insensitivity_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the insensitivity of some text. Prompt credit to Langchain Eval.</span>
@@ -7383,8 +7356,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not insensitive) and 1.0 (insensitive).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_INSENSITIVITY_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_INSENSITIVITY_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -7470,14 +7442,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">671</span>
-<span class="normal">672</span>
-<span class="normal">673</span>
-<span class="normal">674</span>
-<span class="normal">675</span>
-<span class="normal">676</span>
-<span class="normal">677</span>
-<span class="normal">678</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">678</span>
 <span class="normal">679</span>
 <span class="normal">680</span>
 <span class="normal">681</span>
@@ -7493,7 +7458,13 @@ Guide</a></p>
 <span class="normal">691</span>
 <span class="normal">692</span>
 <span class="normal">693</span>
-<span class="normal">694</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">maliciousness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">694</span>
+<span class="normal">695</span>
+<span class="normal">696</span>
+<span class="normal">697</span>
+<span class="normal">698</span>
+<span class="normal">699</span>
+<span class="normal">700</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">maliciousness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the maliciousness of some text. Prompt credit to Langchain Eval.</span>
@@ -7514,8 +7485,7 @@ Guide</a></p>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MALICIOUSNESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MALICIOUSNESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -7602,13 +7572,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">696</span>
-<span class="normal">697</span>
-<span class="normal">698</span>
-<span class="normal">699</span>
-<span class="normal">700</span>
-<span class="normal">701</span>
-<span class="normal">702</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">702</span>
 <span class="normal">703</span>
 <span class="normal">704</span>
 <span class="normal">705</span>
@@ -7625,7 +7589,12 @@ Guide</a></p>
 <span class="normal">716</span>
 <span class="normal">717</span>
 <span class="normal">718</span>
-<span class="normal">719</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">maliciousness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span>
+<span class="normal">722</span>
+<span class="normal">723</span>
+<span class="normal">724</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">maliciousness_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat compoletion model. A function that completes a</span>
 <span class="sd">    template to check the maliciousness of some text. Prompt credit to Langchain Eval.</span>
@@ -7646,8 +7615,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not malicious) and 1.0 (malicious).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MALICIOUSNESS_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MALICIOUSNESS_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -7733,8 +7701,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">821</span>
-<span class="normal">822</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">822</span>
 <span class="normal">823</span>
 <span class="normal">824</span>
 <span class="normal">825</span>
@@ -7775,8 +7742,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MISOGYNY_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MISOGYNY_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -7885,8 +7851,7 @@ Guide</a></p>
 <span class="normal">864</span>
 <span class="normal">865</span>
 <span class="normal">866</span>
-<span class="normal">867</span>
-<span class="normal">868</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">misogyny_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">867</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">misogyny_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the misogyny of some text. Prompt credit to Langchain Eval. Also</span>
@@ -7907,8 +7872,7 @@ Guide</a></p>
 <span class="sd">        float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MISOGYNY_PROMPT</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">prompts</span><span class="o">.</span><span class="n">LANGCHAIN_MISOGYNY_PROMPT</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
           </details>
@@ -8010,13 +7974,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">394</span>
-<span class="normal">395</span>
-<span class="normal">396</span>
-<span class="normal">397</span>
-<span class="normal">398</span>
-<span class="normal">399</span>
-<span class="normal">400</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">400</span>
 <span class="normal">401</span>
 <span class="normal">402</span>
 <span class="normal">403</span>
@@ -8044,7 +8002,13 @@ Guide</a></p>
 <span class="normal">425</span>
 <span class="normal">426</span>
 <span class="normal">427</span>
-<span class="normal">428</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">model_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">model_agreement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that gives a chat completion model the same</span>
 <span class="sd">    prompt and gets a response, encouraging truthfulness. A second template</span>
@@ -8183,13 +8147,7 @@ Selectors</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
@@ -8222,7 +8180,13 @@ Selectors</a></p>
 <span class="normal">206</span>
 <span class="normal">207</span>
 <span class="normal">208</span>
-<span class="normal">209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">qs_relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">qs_relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the relevance of the statement to the question.</span>
@@ -8366,13 +8330,7 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">211</span>
-<span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
 <span class="normal">218</span>
 <span class="normal">219</span>
 <span class="normal">220</span>
@@ -8406,7 +8364,13 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
-<span class="normal">251</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">qs_relevance_with_cot_reasons</span><span class="p">(</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">qs_relevance_with_cot_reasons</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -8562,13 +8526,7 @@ Selectors</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">259</span>
 <span class="normal">260</span>
 <span class="normal">261</span>
 <span class="normal">262</span>
@@ -8602,7 +8560,13 @@ Selectors</a></p>
 <span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
-<span class="normal">293</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a</span>
 <span class="sd">    template to check the relevance of the response to a prompt.</span>
@@ -8759,13 +8723,7 @@ Selectors</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">295</span>
-<span class="normal">296</span>
-<span class="normal">297</span>
-<span class="normal">298</span>
-<span class="normal">299</span>
-<span class="normal">300</span>
-<span class="normal">301</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">301</span>
 <span class="normal">302</span>
 <span class="normal">303</span>
 <span class="normal">304</span>
@@ -8798,7 +8756,13 @@ Selectors</a></p>
 <span class="normal">331</span>
 <span class="normal">332</span>
 <span class="normal">333</span>
-<span class="normal">334</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">relevance_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">relevance_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion Model. A function that completes a template to</span>
 <span class="sd">    check the relevance of the response to a prompt. Also uses chain of</span>
@@ -8946,13 +8910,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">336</span>
-<span class="normal">337</span>
-<span class="normal">338</span>
-<span class="normal">339</span>
-<span class="normal">340</span>
-<span class="normal">341</span>
-<span class="normal">342</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">342</span>
 <span class="normal">343</span>
 <span class="normal">344</span>
 <span class="normal">345</span>
@@ -8974,7 +8932,13 @@ Guide</a></p>
 <span class="normal">361</span>
 <span class="normal">362</span>
 <span class="normal">363</span>
-<span class="normal">364</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">sentiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check the sentiment of some text.</span>
@@ -9088,13 +9052,7 @@ Guide</a></p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">366</span>
-<span class="normal">367</span>
-<span class="normal">368</span>
-<span class="normal">369</span>
-<span class="normal">370</span>
-<span class="normal">371</span>
-<span class="normal">372</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">372</span>
 <span class="normal">373</span>
 <span class="normal">374</span>
 <span class="normal">375</span>
@@ -9114,7 +9072,13 @@ Guide</a></p>
 <span class="normal">389</span>
 <span class="normal">390</span>
 <span class="normal">391</span>
-<span class="normal">392</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">sentiment_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">sentiment_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a</span>
 <span class="sd">    template to check the sentiment of some text.</span>
@@ -9248,7 +9212,11 @@ prompt.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1019</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1015</span>
+<span class="normal">1016</span>
+<span class="normal">1017</span>
+<span class="normal">1018</span>
+<span class="normal">1019</span>
 <span class="normal">1020</span>
 <span class="normal">1021</span>
 <span class="normal">1022</span>
@@ -9268,11 +9236,7 @@ prompt.</p>
 <span class="normal">1036</span>
 <span class="normal">1037</span>
 <span class="normal">1038</span>
-<span class="normal">1039</span>
-<span class="normal">1040</span>
-<span class="normal">1041</span>
-<span class="normal">1042</span>
-<span class="normal">1043</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stereotypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">1039</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stereotypes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check adding assumed stereotypes in the response when not present in the</span>
@@ -9404,7 +9368,11 @@ prompt.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1045</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1041</span>
+<span class="normal">1042</span>
+<span class="normal">1043</span>
+<span class="normal">1044</span>
+<span class="normal">1045</span>
 <span class="normal">1046</span>
 <span class="normal">1047</span>
 <span class="normal">1048</span>
@@ -9424,11 +9392,7 @@ prompt.</p>
 <span class="normal">1062</span>
 <span class="normal">1063</span>
 <span class="normal">1064</span>
-<span class="normal">1065</span>
-<span class="normal">1066</span>
-<span class="normal">1067</span>
-<span class="normal">1068</span>
-<span class="normal">1069</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stereotypes_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">1065</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stereotypes_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that completes a template to</span>
 <span class="sd">    check adding assumed stereotypes in the response when not present in the</span>
@@ -9561,7 +9525,11 @@ in function assessment.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/base.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 992</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 988</span>
+<span class="normal"> 989</span>
+<span class="normal"> 990</span>
+<span class="normal"> 991</span>
+<span class="normal"> 992</span>
 <span class="normal"> 993</span>
 <span class="normal"> 994</span>
 <span class="normal"> 995</span>
@@ -9582,11 +9550,7 @@ in function assessment.</p>
 <span class="normal">1010</span>
 <span class="normal">1011</span>
 <span class="normal">1012</span>
-<span class="normal">1013</span>
-<span class="normal">1014</span>
-<span class="normal">1015</span>
-<span class="normal">1016</span>
-<span class="normal">1017</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">summary_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">1013</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">summary_with_cot_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses chat completion model. A function that tries to distill main points</span>
 <span class="sd">    and compares a summary against those main points. This feedback function</span>
@@ -11107,7 +11071,15 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 
             <details class="quote">
               <summary>Source code in <code>trulens_eval/trulens_eval/feedback/groundtruth.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 35</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
 <span class="normal"> 36</span>
 <span class="normal"> 37</span>
 <span class="normal"> 38</span>
@@ -11391,18 +11363,10 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 <span class="normal">316</span>
 <span class="normal">317</span>
 <span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span>
-<span class="normal">321</span>
-<span class="normal">322</span>
-<span class="normal">323</span>
-<span class="normal">324</span>
-<span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">GroundTruthAgreement</span><span class="p">(</span><span class="n">SerialModel</span><span class="p">,</span> <span class="n">WithClassInfo</span><span class="p">):</span>
+<span class="normal">319</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">GroundTruthAgreement</span><span class="p">(</span><span class="n">SerialModel</span><span class="p">,</span> <span class="n">WithClassInfo</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Measures Agreement against a Ground Truth.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ground_truth</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">FunctionOrMethod</span><span class="p">]</span>
+    <span class="n">ground_truth</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">FunctionOrMethod</span><span class="p">]</span>
     <span class="n">provider</span><span class="p">:</span> <span class="n">Provider</span>
     <span class="c1"># Note: the bert scorer object isn&#39;t serializable</span>
     <span class="c1"># It&#39;s a class member because creating it is expensive</span>
@@ -11456,7 +11420,7 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
             <span class="n">ground_truth</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">,</span> <span class="n">Dict</span><span class="p">):</span>
             <span class="c1"># Serialized FunctionOrMethod?</span>
-            <span class="n">ground_truth</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">pick</span><span class="p">(</span><span class="o">**</span><span class="n">ground_truth</span><span class="p">)</span>
+            <span class="n">ground_truth</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span>
             <span class="n">ground_truth_imp</span> <span class="o">=</span> <span class="n">ground_truth</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -11797,63 +11761,63 @@ ground_truth_collection = GroundTruthAgreement(ground_truth_imp)
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/groundtruth.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 49</span>
-<span class="normal"> 50</span>
-<span class="normal"> 51</span>
-<span class="normal"> 52</span>
-<span class="normal"> 53</span>
-<span class="normal"> 54</span>
-<span class="normal"> 55</span>
-<span class="normal"> 56</span>
-<span class="normal"> 57</span>
-<span class="normal"> 58</span>
-<span class="normal"> 59</span>
-<span class="normal"> 60</span>
-<span class="normal"> 61</span>
-<span class="normal"> 62</span>
-<span class="normal"> 63</span>
-<span class="normal"> 64</span>
-<span class="normal"> 65</span>
-<span class="normal"> 66</span>
-<span class="normal"> 67</span>
-<span class="normal"> 68</span>
-<span class="normal"> 69</span>
-<span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
-<span class="normal"> 74</span>
-<span class="normal"> 75</span>
-<span class="normal"> 76</span>
-<span class="normal"> 77</span>
-<span class="normal"> 78</span>
-<span class="normal"> 79</span>
-<span class="normal"> 80</span>
-<span class="normal"> 81</span>
-<span class="normal"> 82</span>
-<span class="normal"> 83</span>
-<span class="normal"> 84</span>
-<span class="normal"> 85</span>
-<span class="normal"> 86</span>
-<span class="normal"> 87</span>
-<span class="normal"> 88</span>
-<span class="normal"> 89</span>
-<span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span>
-<span class="normal">104</span>
-<span class="normal">105</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span>
+<span class="normal">95</span>
+<span class="normal">96</span>
+<span class="normal">97</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">ground_truth</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">FunctionOrMethod</span><span class="p">],</span>
     <span class="n">provider</span><span class="p">:</span> <span class="n">Provider</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -11896,7 +11860,7 @@ ground_truth_collection = GroundTruthAgreement(ground_truth_imp)
         <span class="n">ground_truth</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">,</span> <span class="n">Dict</span><span class="p">):</span>
         <span class="c1"># Serialized FunctionOrMethod?</span>
-        <span class="n">ground_truth</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">pick</span><span class="p">(</span><span class="o">**</span><span class="n">ground_truth</span><span class="p">)</span>
+        <span class="n">ground_truth</span> <span class="o">=</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span>
         <span class="n">ground_truth_imp</span> <span class="o">=</span> <span class="n">ground_truth</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -12032,7 +11996,15 @@ being "in agreement".</li>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/groundtruth.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">134</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
 <span class="normal">135</span>
 <span class="normal">136</span>
 <span class="normal">137</span>
@@ -12067,15 +12039,7 @@ being "in agreement".</li>
 <span class="normal">166</span>
 <span class="normal">167</span>
 <span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
-<span class="normal">177</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">agreement_measure</span><span class="p">(</span>
+<span class="normal">169</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">agreement_measure</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -12239,7 +12203,15 @@ being "in agreement".</li>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/groundtruth.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">210</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
 <span class="normal">211</span>
 <span class="normal">212</span>
 <span class="normal">213</span>
@@ -12274,15 +12246,7 @@ being "in agreement".</li>
 <span class="normal">242</span>
 <span class="normal">243</span>
 <span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span>
-<span class="normal">253</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">bert_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">bert_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
                <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses BERT Score. A function that that measures</span>
@@ -12446,7 +12410,15 @@ being "in agreement".</li>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/groundtruth.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">256</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
 <span class="normal">257</span>
 <span class="normal">258</span>
 <span class="normal">259</span>
@@ -12479,15 +12451,7 @@ being "in agreement".</li>
 <span class="normal">286</span>
 <span class="normal">287</span>
 <span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
-<span class="normal">291</span>
-<span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span>
-<span class="normal">296</span>
-<span class="normal">297</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">bleu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="normal">289</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">bleu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
          <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses BLEU Score. A function that that measures</span>
@@ -12566,7 +12530,15 @@ f_groundtruth = Feedback(ground_truth.mae).on(Select.Record.calls[0].args.args[0
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/groundtruth.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">179</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
 <span class="normal">180</span>
 <span class="normal">181</span>
 <span class="normal">182</span>
@@ -12587,15 +12559,7 @@ f_groundtruth = Feedback(ground_truth.mae).on(Select.Record.calls[0].args.args[0
 <span class="normal">197</span>
 <span class="normal">198</span>
 <span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">mae</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">score</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="normal">200</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">mae</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">score</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Method to look up the numeric expected score from a golden set and take the differnce.</span>
 
@@ -12733,7 +12697,15 @@ being "in agreement".</li>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/groundtruth.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">300</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
 <span class="normal">301</span>
 <span class="normal">302</span>
 <span class="normal">303</span>
@@ -12752,15 +12724,7 @@ being "in agreement".</li>
 <span class="normal">316</span>
 <span class="normal">317</span>
 <span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span>
-<span class="normal">321</span>
-<span class="normal">322</span>
-<span class="normal">323</span>
-<span class="normal">324</span>
-<span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">rouge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="normal">319</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">rouge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
           <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uses BLEU Score. A function that that measures</span>

@@ -2566,9 +2566,12 @@
 
   
       <p>Instantiates the Langchain Wrapper.</p>
-<p><strong>Usage:</strong></p>
-<p>Langchain Code: <a href="https://python.langchain.com/docs/get_started/quickstart">Langchain Quickstart</a>
-<div class="highlight"><pre><span></span><code> # Code snippet taken from langchain 0.0.281 (API subject to change with new versions)
+<div class="codehilite"><pre><span></span><code>**Usage:**
+
+Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)
+
+```python
+ # Code snippet taken from langchain 0.0.281 (API subject to change with new versions)
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
@@ -2588,9 +2591,12 @@ chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
 llm = OpenAI(temperature=0.9, max_tokens=128)
 
 chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
-</code></pre></div></p>
-<p>Trulens Eval Code:
-<div class="highlight"><pre><span></span><code>from trulens_eval import TruChain
+```
+
+Trulens Eval Code:
+```python
+
+from trulens_eval import TruChain
 # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
 tru_recorder = TruChain(
     chain,
@@ -2608,47 +2614,17 @@ with tru_recorder as recording:
     chain(&quot;What is langchain?&quot;)
     recording.record_metadata=&quot;this is different metadata for all records in this context that follow this line&quot;
     chain(&quot;Where do I download langchain?&quot;)
+```
+
+See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+
+Args:
+    app (Chain): A langchain application.
 </code></pre></div>
-See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
-
-
-
-  <p><strong>Parameters:</strong></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>app</code></td>
-          <td>
-                <code><span title="langchain.chains.base.Chain">Chain</span></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>A langchain application.</p>
-            </div>
-          </td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-    </tbody>
-  </table>
 
             <details class="quote">
               <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">115</span>
 <span class="normal">116</span>
 <span class="normal">117</span>
 <span class="normal">118</span>
@@ -2877,13 +2853,19 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="normal">341</span>
 <span class="normal">342</span>
 <span class="normal">343</span>
-<span class="normal">344</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruChain</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiates the Langchain Wrapper.</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">TruChain</span><span class="p">(</span><span class="n">App</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instantiates the Langchain Wrapper.</span>
 
 <span class="sd">        **Usage:**</span>
 
 <span class="sd">        Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)</span>
-<span class="sd">        ```</span>
+
+<span class="sd">        ```python</span>
 <span class="sd">         # Code snippet taken from langchain 0.0.281 (API subject to change with new versions)</span>
 <span class="sd">        from langchain.chains import LLMChain</span>
 <span class="sd">        from langchain.llms import OpenAI</span>
@@ -2904,11 +2886,10 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="sd">        llm = OpenAI(temperature=0.9, max_tokens=128)</span>
 
 <span class="sd">        chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)</span>
-
 <span class="sd">        ```</span>
 
 <span class="sd">        Trulens Eval Code:</span>
-<span class="sd">        ```</span>
+<span class="sd">        ```python</span>
 
 <span class="sd">        from trulens_eval import TruChain</span>
 <span class="sd">        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions</span>
@@ -2929,19 +2910,21 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="sd">            recording.record_metadata=&quot;this is different metadata for all records in this context that follow this line&quot;</span>
 <span class="sd">            chain(&quot;Where do I download langchain?&quot;)</span>
 <span class="sd">        ```</span>
+
 <span class="sd">        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            app (Chain): A langchain application.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">app</span><span class="p">:</span> <span class="n">Chain</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n">Any</span>  <span class="c1"># Chain</span>
 
     <span class="c1"># TODO: what if _acall is being used instead?</span>
-    <span class="n">root_callable</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">FunctionOrMethod</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">TruChain</span><span class="o">.</span><span class="n">_call</span><span class="p">),</span>
-        <span class="n">const</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">root_callable</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">FunctionOrMethod</span><span class="o">.</span><span class="n">of_callable</span><span class="p">(</span><span class="n">TruChain</span><span class="o">.</span><span class="n">_call</span><span class="p">)</span>
     <span class="p">)</span>
+
+    <span class="c1"># FunctionOrMethod</span>
 
     <span class="c1"># Normally pydantic does not like positional args but chain here is</span>
     <span class="c1"># important enough to make an exception.</span>
@@ -2956,16 +2939,12 @@ See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functi
 <span class="sd">        - More args in WithClassInfo</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_forward_refs</span><span class="p">()</span>
-
         <span class="c1"># TruChain specific:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;root_class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="n">of_object</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;instrument&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">LangChainInstrument</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">post_init</span><span class="p">()</span>
 
     <span class="c1"># TODEP</span>
     <span class="c1"># Chain requirement</span>
@@ -3146,17 +3125,17 @@ get the record, use <code>call_with_record</code> instead.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">310</span>
-<span class="normal">311</span>
-<span class="normal">312</span>
-<span class="normal">313</span>
-<span class="normal">314</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">314</span>
 <span class="normal">315</span>
 <span class="normal">316</span>
 <span class="normal">317</span>
 <span class="normal">318</span>
 <span class="normal">319</span>
-<span class="normal">320</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrapped call to self.app._call with instrumentation. If you need to</span>
 <span class="sd">    get the record, use `call_with_record` instead. </span>
@@ -3196,15 +3175,7 @@ get the record, use <code>call_with_record</code> instead.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
-<span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">186</span>
 <span class="normal">187</span>
 <span class="normal">188</span>
 <span class="normal">189</span>
@@ -3216,7 +3187,11 @@ get the record, use <code>call_with_record</code> instead.</p>
 <span class="normal">195</span>
 <span class="normal">196</span>
 <span class="normal">197</span>
-<span class="normal">198</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Chain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Chain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrap a langchain chain for monitoring.</span>
 
@@ -3227,16 +3202,12 @@ get the record, use <code>call_with_record</code> instead.</p>
 <span class="sd">    - More args in WithClassInfo</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_forward_refs</span><span class="p">()</span>
-
     <span class="c1"># TruChain specific:</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;root_class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="n">of_object</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;instrument&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">LangChainInstrument</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="bp">self</span><span class="o">.</span><span class="n">post_init</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
           </details>
   </div>
@@ -3265,14 +3236,14 @@ get the record, use <code>call_with_record</code> instead.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">286</span>
-<span class="normal">287</span>
-<span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
-<span class="normal">293</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span> <span class="nf">acall_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span> <span class="nf">acall_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run the chain acall method and also return a record metadata object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -3304,16 +3275,16 @@ get the record, use <code>call_with_record</code> instead.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">297</span>
-<span class="normal">298</span>
-<span class="normal">299</span>
-<span class="normal">300</span>
-<span class="normal">301</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">301</span>
 <span class="normal">302</span>
 <span class="normal">303</span>
 <span class="normal">304</span>
 <span class="normal">305</span>
-<span class="normal">306</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">call_with_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Record</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run the chain call method and also return a record metadata object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -3349,11 +3320,7 @@ signature <code>sig</code> if it is to be called with the given bindings
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
-<span class="normal">222</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span>
 <span class="normal">225</span>
@@ -3370,7 +3337,11 @@ signature <code>sig</code> if it is to be called with the given bindings
 <span class="normal">236</span>
 <span class="normal">237</span>
 <span class="normal">238</span>
-<span class="normal">239</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_input</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -3418,11 +3389,7 @@ returned <code>ret</code>.</p>
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/tru_chain.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">245</span>
 <span class="normal">246</span>
 <span class="normal">247</span>
 <span class="normal">248</span>
@@ -3432,7 +3399,11 @@ returned <code>ret</code>.</p>
 <span class="normal">252</span>
 <span class="normal">253</span>
 <span class="normal">254</span>
-<span class="normal">255</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">main_output</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span><span class="p">,</span> <span class="n">ret</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
