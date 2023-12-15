@@ -387,7 +387,13 @@ class Obj(SerialModel):
 
         cls = self.cls.load()
         sig = _safe_init_sig(cls)
-        bindings = self.init_bindings.load(sig)
+
+        if CLASS_INFO in sig.parameters:
+            extra_kwargs = {CLASS_INFO: self.cls}
+        else:
+            extra_kwargs = {}
+
+        bindings = self.init_bindings.load(sig, extra_kwargs=extra_kwargs)
 
         return cls(*bindings.args, **bindings.kwargs)
 
@@ -416,11 +422,11 @@ class Bindings(SerialModel):
         if 'provider' in self.kwargs:
             del self.kwargs['provider']
 
-    def load(self, sig: inspect.Signature):
+    def load(self, sig: inspect.Signature, extra_args=(), extra_kwargs={}):
 
         self._handle_providers_load()
 
-        return sig.bind(*self.args, **self.kwargs)
+        return sig.bind(*(self.args+extra_args), **self.kwargs, **extra_kwargs)
 
 
 class FunctionOrMethod(SerialModel):
@@ -564,10 +570,18 @@ class WithClassInfo(pydantic.BaseModel):
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
-        clsinfo = Class.model_validate(obj[CLASS_INFO])
-        clsloaded = clsinfo.load()
+        if isinstance(obj, dict):
+            if CLASS_INFO not in obj:
+                print(pp.pprint(obj))
+                raise ValueError(f"Object {obj} does not contain class information.")
 
-        return super(cls, clsloaded).model_validate(obj)
+            clsinfo = Class.model_validate(obj[CLASS_INFO])
+            clsloaded = clsinfo.load()
+
+            return super(cls, clsloaded).model_validate(obj)
+        
+        else:
+            return super().model_validate(obj)
 
     def __init__(
         self,
@@ -585,6 +599,7 @@ class WithClassInfo(pydantic.BaseModel):
             class_info = Class.of_class(cls, with_bases=True)
 
         kwargs[CLASS_INFO] = class_info
+
         super().__init__(*args, **kwargs)
 
     @staticmethod

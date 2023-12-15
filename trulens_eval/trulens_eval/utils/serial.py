@@ -118,13 +118,16 @@ class Step(pydantic.BaseModel, Hashable):
     A step in a selection path.
     """
 
+    def __hash__(self):
+         raise TypeError(f"Should never be called, self={self.model_dump()}")
+
     @classmethod
     def model_validate(cls, obj, **kwargs):
 
         if isinstance(obj, Step):
-            return obj
+            return super().model_validate(obj, **kwargs)
 
-        elif isinstance(obj, Dict):
+        elif isinstance(obj, dict):
 
             ATTRIBUTE_TYPE_MAP = {
                 'item': GetItem,
@@ -548,7 +551,13 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         # different than obj. Might be a pydantic oversight/bug.
 
         if isinstance(obj, str):
-            return Lens.of_string(obj)
+            ret = Lens.of_string(obj)
+            print(f"parsed string {obj} as {ret}")
+            return ret
+        elif isinstance(obj, dict):
+            # print(f"validating from object {obj}, handler={handler}")
+            return handler(dict(path=(Step.model_validate(step) for step in obj['path'])))
+            #return handler(obj)
         else:
             return handler(obj)
 

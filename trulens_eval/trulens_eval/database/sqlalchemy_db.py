@@ -319,7 +319,7 @@ def _extract_feedback_results(
             _result.cost_json,
             json.loads(_result.record.perf_json),
             json.loads(_result.calls_json)["calls"],
-            json.loads(_result.feedback_definition.feedback_json),
+            json.loads(_result.feedback_definition.feedback_json) if _result.feedback_definition is not None else None,
             json.loads(_result.record.record_json),
             app_json,
             _type,
