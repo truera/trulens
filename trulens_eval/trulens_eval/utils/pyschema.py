@@ -388,7 +388,7 @@ class Obj(SerialModel):
         cls = self.cls.load()
         sig = _safe_init_sig(cls)
 
-        if CLASS_INFO in sig.parameters:
+        if CLASS_INFO in sig.parameters and CLASS_INFO not in self.init_bindings.kwargs:
             extra_kwargs = {CLASS_INFO: self.cls}
         else:
             extra_kwargs = {}
