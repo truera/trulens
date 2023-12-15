@@ -686,9 +686,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             self, *args, instrument=self.instrument, **kwargs
         )
 
-    def model_dump(self):
+    def model_dump(self, redact_keys: bool = False):
         # Same problem as in json.
-        return jsonify(self, instrument=self.instrument)
+        return jsonify(self, instrument=self.instrument, redact_keys=redact_keys)
 
     # For use as a context manager.
     def __enter__(self):

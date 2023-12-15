@@ -382,7 +382,7 @@ class LocalSQLite(DB):
     # DB requirement
     def insert_app(self, app: AppDefinition) -> AppID:
         app_id = app.app_id
-        app_str = app.json()
+        app_str = app.model_dump_json()
 
         vals = (app_id, app_str)
         self._insert_or_replace_vals(table=self.TABLE_APPS, vals=vals)
@@ -399,7 +399,7 @@ class LocalSQLite(DB):
         """
 
         feedback_definition_id = feedback.feedback_definition_id
-        feedback_str = feedback.json()
+        feedback_str = feedback.model_dump_json()
         vals = (feedback_definition_id, feedback_str)
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACK_DEFS, vals=vals)

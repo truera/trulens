@@ -98,10 +98,16 @@ jobs:
           cd ./trulens_eval
           pip install pytest==7.0.1 pytest-azurepipelines
           pip install -r trulens_eval/requirements.optional.txt
+        displayName: Install optional deps
 
-          echo '::group::piplist'
+      - bash: |
+          source activate $(condaEnvFileSuffix)
           echo "$(pip list)"
-          echo '::endgroup::'
+        displayName: Pip list
+
+      - bash: |
+          source activate $(condaEnvFileSuffix)
+          cd ./trulens_eval
           
           python -m pytest $(testSubdirectory)
         displayName: Run notebook tests
