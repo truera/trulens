@@ -78,7 +78,6 @@ class SerialModel(pydantic.BaseModel):
     @classmethod
     def model_validate(cls, obj, **kwargs):
         # import hierarchy circle here
-        from trulens_eval.utils.pyschema import Class
         from trulens_eval.utils.pyschema import CLASS_INFO
         from trulens_eval.utils.pyschema import WithClassInfo
 

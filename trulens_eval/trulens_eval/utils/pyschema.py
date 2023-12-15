@@ -19,13 +19,11 @@ from __future__ import annotations
 import importlib
 import inspect
 import logging
-import dill
 from pprint import PrettyPrinter
 from types import ModuleType
-from typing import (
-    Any, Callable, Dict, Optional, Sequence, Tuple
-)
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
+import dill
 import pydantic
 from pydantic import Field
 
@@ -575,7 +573,16 @@ class WithClassInfo(pydantic.BaseModel):
             clsinfo = Class.model_validate(obj[CLASS_INFO])
             clsloaded = clsinfo.load()
 
-            return super(cls, clsloaded).model_validate(obj)
+            # NOTE(piotrm): even though we have a more specific class than
+            # AppDefinition, we load it as AppDefinition due to serialization
+            # issues in the wrapped app. Keeping it as AppDefinition means `app`
+            # field is just json.
+            from trulens_eval.schema import AppDefinition
+            
+            if issubclass(clsloaded, AppDefinition):
+                return super(cls, AppDefinition).model_validate(obj)
+            else:
+                return super(cls, clsloaded).model_validate(obj)
         
         else:
             return super().model_validate(obj)
