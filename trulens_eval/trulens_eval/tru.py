@@ -20,6 +20,7 @@ from trulens_eval.db import JSON
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
@@ -270,6 +271,10 @@ class Tru(SingletonPerName):
         """
 
         if feedback_result is None:
+            if 'result' in kwargs and 'status' not in kwargs:
+                # If result already present, set status to done.
+                kwargs['status'] = FeedbackResultStatus.DONE
+
             feedback_result = FeedbackResult(**kwargs)
         else:
             feedback_result.update(**kwargs)

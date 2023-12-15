@@ -279,7 +279,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         if not counted_something:
             logger.warning(
-                f"Unregonized openai response format. It did not have usage information nor categories:\n"
+                f"Could not find usage information in openai response:\n"
                 + pp.pformat(response)
             )
 
