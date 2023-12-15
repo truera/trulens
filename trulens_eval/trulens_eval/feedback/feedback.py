@@ -252,6 +252,14 @@ class Feedback(FeedbackDefinition):
 
             app_json = row.app_json
 
+            if row.get("feedback_json") is None:
+                logger.warning(
+                    "Cannot evaluate feedback without `feedback_json`. "
+                    "This might have come from an old database. \n"
+                    f"{row}"
+                )
+                return None, None
+
             feedback = Feedback.model_validate(row.feedback_json)
 
             return feedback, feedback.run_and_log(
