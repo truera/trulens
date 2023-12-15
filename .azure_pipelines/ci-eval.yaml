@@ -107,6 +107,8 @@ jobs:
 
       - bash: |
           source activate $(condaEnvFileSuffix)
+          cd ./trulens_eval
+          
           python -m pytest $(testSubdirectory)
         displayName: Run notebook tests
         env:
