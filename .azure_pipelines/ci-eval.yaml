@@ -101,10 +101,12 @@ jobs:
         displayName: Install optional deps
 
       - bash: |
+          source activate $(condaEnvFileSuffix)
           echo "$(pip list)"
         displayName: Pip list
 
       - bash: |
+          source activate $(condaEnvFileSuffix)
           python -m pytest $(testSubdirectory)
         displayName: Run notebook tests
         env:
