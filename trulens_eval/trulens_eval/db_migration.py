@@ -9,16 +9,19 @@ import uuid
 import pydantic
 from tqdm import tqdm
 
+from trulens_eval.feedback.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackCall
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
-from trulens_eval.utils.pyschema import Class, Module, Obj
+from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
+from trulens_eval.utils.pyschema import Module
+from trulens_eval.utils.pyschema import Obj
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +196,7 @@ def migrate_0_9_0(db):
         new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
         
         if CLASS_INFO not in new_json:
-            new_json[CLASS_INFO] = Class.of_class(FeedbackDefinition).model_dump()
+            new_json[CLASS_INFO] = Class.of_class(Feedback).model_dump()
             logger.debug(f"adding '{CLASS_INFO}'")
 
         if "initial_app_loader" not in new_json:
