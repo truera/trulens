@@ -174,7 +174,7 @@ def jsonify(
         return str(obj)
 
     if type(obj) in pydantic.v1.json.ENCODERS_BY_TYPE:
-        return obj
+        return pydantic.v1.json.ENCODERS_BY_TYPE[type(obj)](obj)
 
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = {k: v for k, v in dicted.items()}

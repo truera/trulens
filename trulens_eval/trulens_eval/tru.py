@@ -20,6 +20,7 @@ from trulens_eval.db import JSON
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
@@ -195,7 +196,7 @@ class Tru(SingletonPerName):
         self.db: DB
 
         if app is None:
-            app = AppDefinition.model_validate_json(self.db.get_app(app_id=app_id))
+            app = AppDefinition.model_validate(self.db.get_app(app_id=app_id))
             if app is None:
                 raise RuntimeError(
                     "App {app_id} not present in db. "
@@ -263,13 +264,17 @@ class Tru(SingletonPerName):
         self.db.insert_app(app=app)
 
     def add_feedback(
-        self, feedback_result: FeedbackResult = None, **kwargs
+        self, feedback_result: Optional[FeedbackResult] = None, **kwargs
     ) -> None:
         """
         Add a single feedback result to the database.
         """
 
         if feedback_result is None:
+            if 'result' in kwargs and 'status' not in kwargs:
+                # If result already present, set status to done.
+                kwargs['status'] = FeedbackResultStatus.DONE
+
             feedback_result = FeedbackResult(**kwargs)
         else:
             feedback_result.update(**kwargs)

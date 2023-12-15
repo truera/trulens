@@ -340,6 +340,7 @@ class TruCustomApp(App):
             else:
                 main_name = main_method.__name__
                 main_method_loaded = main_method
+                main_method = Function.of_function(main_method_loaded)
 
                 if not safe_hasattr(main_method_loaded, "__self__"):
                     raise ValueError(
@@ -352,6 +353,9 @@ class TruCustomApp(App):
 
                 cls = app_self.__class__
                 mod = cls.__module__
+
+            kwargs['main_method'] = main_method
+            kwargs['main_method_loaded'] = main_method_loaded
 
             instrument.include_modules.add(mod)
             instrument.include_classes.add(cls)

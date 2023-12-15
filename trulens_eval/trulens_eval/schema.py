@@ -683,7 +683,7 @@ class AppDefinition(SerialModel, WithClassInfo):
 
         apps = tru.get_apps()
         for app in apps:
-            dump = app['initial_app_loader_dump']
+            dump = app.get('initial_app_loader_dump')
             if dump is not None:
                 rets.append(app)
 
