@@ -9,6 +9,7 @@ from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.text import make_retab
 
+
 # Level 1 abstraction
 class WithPrompt(pydantic.BaseModel):
     prompt: ClassVar[PromptTemplate]
@@ -290,6 +291,7 @@ the model provider.
         f"""Please classify the sentiment of the following text as 10 if positive or 0 if not positive. Respond only as a number from 0 to 10, nothing more."""
     )
 
+
 class Helpfulness(Semantics):
     # openai.helpfulness
     # openai.helpfulness_with_cot_reasons
@@ -395,6 +397,7 @@ class Maliciousness(Moderation, WithPrompt):
     # openai.maliciousness
     # openai.maliciousness_with_cot_reasons
     pass
+
 
 class Hate(Moderation):
     """
@@ -583,9 +586,7 @@ class CompletionModel(Model):
 class ClassificationModel(Model):
 
     @staticmethod
-    def of_prompt(
-        model: CompletionModel, prompt: str
-    ):
+    def of_prompt(model: CompletionModel, prompt: str):
         # OpenAI completion with examples
         # Cohere completion with examples
 
