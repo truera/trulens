@@ -476,13 +476,20 @@ class Tru(SingletonPerName):
         Leaderboard.main()
 
     def run_dashboard(
-        self, force: bool = False, _dev: Optional[Path] = None
+        self, 
+        port: int = 8501,
+        address: str = "localhost",
+        force: bool = False,
+        _dev: Optional[Path] = None
     ) -> Process:
         """
         Run a streamlit dashboard to view logged results and apps.
 
         Args:
+            - port: int: port number to pass to streamlit through server.port.
 
+            - address: str: address to pass to streamlit through server.address.
+        
             - force: bool: Stop existing dashboard(s) first.
 
             - _dev: Optional[Path]: If given, run dashboard with the given
@@ -549,7 +556,11 @@ class Tru(SingletonPerName):
 
         proc = subprocess.Popen(
             [
-                "streamlit", "run", "--server.headless=True", leaderboard_path,
+                "streamlit", "run", 
+                "--server.headless=True", 
+                f"--server.port={port}",
+                f"--server.address={address}",
+                leaderboard_path,
                 "--", "--database-url",
                 self.db.engine.url.render_as_string(hide_password=False)
             ],
@@ -570,7 +581,7 @@ class Tru(SingletonPerName):
         IN_COLAB = 'google.colab' in sys.modules
         if IN_COLAB:
             tunnel_proc = subprocess.Popen(
-                ["npx", "localtunnel", "--port", "8501"],
+                ["npx", "localtunnel", "--port", str(port)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -620,14 +631,14 @@ class Tru(SingletonPerName):
                         line = line.replace(
                             "External URL: http://", "Submit this IP Address: "
                         )
-                        line = line.replace(":8501", "")
+                        line = line.replace(f":{port}", "")
                         if out is not None:
                             out.append_stdout(line)
                         else:
                             print(line)
                         Tru.dashboard_urls = line  # store the url when dashboard is started
                 else:
-                    if "Network URL: " in line:
+                    if "URL: " in line:
                         url = line.split(": ")[1]
                         url = url.rstrip()
                         print(f"Dashboard started at {url} .")
