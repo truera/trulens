@@ -18,7 +18,7 @@ from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
-with OptionalImports(message=REQUIREMENT_LLAMA):
+with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.indices.query.schema import QueryBundle
     from llama_index.indices.vector_store.retrievers import \
         VectorIndexRetriever

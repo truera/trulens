@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-with OptionalImports(message=REQUIREMENT_LLAMA):
-    import llama_index
+with OptionalImports(messages=REQUIREMENT_LLAMA):
+    # import llama_index
 
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.chat_engine.types import BaseChatEngine

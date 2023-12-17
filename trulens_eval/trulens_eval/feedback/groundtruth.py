@@ -14,10 +14,10 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
-with OptionalImports(message=REQUIREMENT_BERT_SCORE):
+with OptionalImports(messages=REQUIREMENT_BERT_SCORE):
     from bert_score import BERTScorer
 
-with OptionalImports(message=REQUIREMENT_EVALUATE):
+with OptionalImports(messages=REQUIREMENT_EVALUATE):
     import evaluate
 
 logger = logging.getLogger(__name__)
