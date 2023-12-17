@@ -8,7 +8,7 @@ import inspect
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Dict, Optional, Sequence, Type, Union
+from typing import Any, Dict, Optional, Sequence, Type, Union
 
 import pkg_resources
 
@@ -154,19 +154,24 @@ REQUIREMENT_EVALUATE = format_import_errors(
     "evaluate", purpose="using certain metrics"
 )
 
-
-class Dummy(object):
+# Try to pretend to be a type as well as an instance.
+class Dummy(type, object):
     """
     Class to pretend to be a module or some other imported object. Will raise an
     error if accessed in any way.
     """
 
+    def __new__(cls, name, **kwargs):
+        return type.__new__(cls, name, (object, ), {})
+
     def __init__(
         self,
+        name: str,
         message: str,
         exception_class: Type[Exception] = ModuleNotFoundError,
         importer=None
     ):
+        self.name = name
         self.message = message
         self.importer = importer
         self.exception_class = exception_class
@@ -174,13 +179,40 @@ class Dummy(object):
     def __call__(self, *args, **kwargs):
         raise self.exception_class(self.message)
 
+    def __instancecheck__(self, __instance: Any) -> bool:
+        return True
+    
+    def __subclasscheck__(self, __subclass: type) -> bool:
+        return True
+
     def __getattr__(self, name):
         # If in OptionalImport context, create a new dummy for the requested
         # attribute. Otherwise raise error.
 
-        if self.importer is not None and self.importer.importing:
-            return Dummy(message=self.message, importer=self.importer)
+        # Pretend to be object for generic attributes.
+        if hasattr(object, name):
+            return getattr(object, name)
 
+        # Prevent pydantic inspecting this object as if it were a type from
+        # triggering the exception message below.
+        if name in [
+            "__pydantic_generic_metadata__",
+            "__get_pydantic_core_schema__",
+            "__get_validators__",
+            "__get_pydantic_json_schema__",
+            "__modify_schema__",
+            "__origin__",
+            "__dataclass_fields__"
+        ]:
+            raise AttributeError()
+
+        # If we are still in an optional import block, continue making dummies
+        # inside this dummy.
+        if self.importer is not None and self.importer.importing:
+            return Dummy(name=self.name + "." + name, message=self.message, importer=self.importer)
+
+        # If we are no longer in optional imports context, raise the exception
+        # with the optional package message.
         raise self.exception_class(self.message)
 
 
@@ -241,7 +273,7 @@ class OptionalImports(object):
             if not module_name.startswith(trulens_name):
                 raise e
             logger.debug(f"Module not found {name}.")
-            return Dummy(message=self.messages.module_not_found, importer=self)
+            return Dummy(name=name, message=self.messages.module_not_found, importer=self)
         
         # NOTE(piotrm): This below seems to never be caught. It might be that a
         # different import method is being used once a module is found.
