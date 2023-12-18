@@ -28,6 +28,8 @@ pp = PrettyPrinter()
 with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
 
+    from langchain_core.runnables.base import RunnableSerializable
+
     from langchain.agents.agent import BaseMultiActionAgent
     from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
@@ -52,6 +54,7 @@ class LangChainInstrument(Instrument):
 
         # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
+            RunnableSerializable,
             Serializable,
             Document,
             Chain,
@@ -73,6 +76,10 @@ class LangChainInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
+            "invoke":
+                lambda o: isinstance(o, RunnableSerializable),
+            "ainvoke":
+                lambda o: isinstance(o, RunnableSerializable),
             "save_context":
                 lambda o: isinstance(o, BaseMemory),
             "clear":
