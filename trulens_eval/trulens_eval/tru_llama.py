@@ -262,7 +262,11 @@ class TruLlama(App):
 
         if 'str_or_query_bundle' in bindings.arguments:
             # llama_index specific
-            return bindings.arguments['str_or_query_bundle']
+            str_or_bundle = bindings.arguments['str_or_query_bundle']
+            if isinstance(str_or_bundle, QueryBundle):
+                return str_or_bundle.query_str
+            else:
+                return str_or_bundle
 
         elif 'message' in bindings.arguments:
             # llama_index specific
