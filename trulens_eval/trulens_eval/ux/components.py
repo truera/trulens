@@ -4,7 +4,6 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 import streamlit as st
-from streamlit_javascript import st_javascript
 
 from trulens_eval.app import ComponentView
 from trulens_eval.keys import REDACTED_VALUE
