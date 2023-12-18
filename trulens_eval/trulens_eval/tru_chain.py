@@ -28,6 +28,9 @@ pp = PrettyPrinter()
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
     # import langchain
+    from langchain_core.vectorstores import VectorStoreRetriever
+    from langchain_core.vectorstores import VectorStore
+    from langchain_core.retrievers import BaseRetriever
     
     from langchain_core.runnables.base import RunnableSerializable
 
@@ -51,10 +54,13 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
 class LangChainInstrument(Instrument):
 
     class Default:
-        MODULES = {"langchain."}
+        MODULES = {"langchain"}
 
         # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
+            VectorStoreRetriever,
+            VectorStore,
+            BaseRetriever,
             RunnableSerializable,
             Serializable,
             Document,
@@ -77,10 +83,32 @@ class LangChainInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
+            "as_retriever":
+                lambda o: isinstance(o, VectorStore),
+            "search":
+                lambda o: isinstance(o, VectorStore),
+            "asearch":
+                lambda o: isinstance(o, VectorStore),
+            "similarity_search":
+                lambda o: isinstance(o, VectorStore),
+            "asimilarity_search":
+                lambda o: isinstance(o, VectorStore),
+            "similarity_search_by_vector":
+                lambda o: isinstance(o, VectorStore),
+            "asimilarity_search_by_vector":
+                lambda o: isinstance(o, VectorStore),
+            "max_marginal_relevance_search":
+                lambda o: isinstance(o, VectorStore),
+            "amax_marginal_relevance_search":
+                lambda o: isinstance(o, VectorStore),
+            "max_marginal_relevance_search_by_vector":
+                lambda o: isinstance(o, VectorStore),
+            "amax_marginal_relevance_search_by_vector":
+                lambda o: isinstance(o, VectorStore),
             "invoke":
-                lambda o: isinstance(o, RunnableSerializable),
+                lambda o: isinstance(o, (RunnableSerializable, BaseRetriever)),
             "ainvoke":
-                lambda o: isinstance(o, RunnableSerializable),
+                lambda o: isinstance(o, (RunnableSerializable, BaseRetriever)),
             "save_context":
                 lambda o: isinstance(o, BaseMemory),
             "clear":
@@ -94,7 +122,9 @@ class LangChainInstrument(Instrument):
             "acall":
                 lambda o: isinstance(o, Chain),
             "_get_relevant_documents":
-                lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
+                lambda o: isinstance(o, (RunnableSerializable, BaseRetriever, VectorStoreRetriever)),
+            "_aget_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable, BaseRetriever, VectorStoreRetriever)),
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # the prompt calls might be too small to be interesting
