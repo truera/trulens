@@ -476,7 +476,7 @@ class Tru(SingletonPerName):
         Leaderboard.main()
 
     def run_dashboard(
-        self, 
+        self,
         port: int = 8501,
         address: str = "localhost",
         force: bool = False,
@@ -556,12 +556,9 @@ class Tru(SingletonPerName):
 
         proc = subprocess.Popen(
             [
-                "streamlit", "run", 
-                "--server.headless=True", 
-                f"--server.port={port}",
-                f"--server.address={address}",
-                leaderboard_path,
-                "--", "--database-url",
+                "streamlit", "run", "--server.headless=True",
+                f"--server.port={port}", f"--server.address={address}",
+                leaderboard_path, "--", "--database-url",
                 self.db.engine.url.render_as_string(hide_password=False)
             ],
             stdout=subprocess.PIPE,
@@ -581,7 +578,8 @@ class Tru(SingletonPerName):
         IN_COLAB = 'google.colab' in sys.modules
         if IN_COLAB:
             tunnel_proc = subprocess.Popen(
-                ["npx", "localtunnel", "--port", str(port)],
+                ["npx", "localtunnel", "--port",
+                 str(port)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
