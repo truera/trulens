@@ -28,9 +28,6 @@ pp = PrettyPrinter()
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
     # import langchain
-    from langchain_core.vectorstores import VectorStoreRetriever
-    from langchain_core.vectorstores import VectorStore
-    from langchain_core.retrievers import BaseRetriever
     
     from langchain_core.runnables.base import RunnableSerializable
 
@@ -58,9 +55,6 @@ class LangChainInstrument(Instrument):
 
         # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
-            VectorStoreRetriever,
-            VectorStore,
-            BaseRetriever,
             RunnableSerializable,
             Serializable,
             Document,
@@ -83,32 +77,10 @@ class LangChainInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
-            "as_retriever":
-                lambda o: isinstance(o, VectorStore),
-            "search":
-                lambda o: isinstance(o, VectorStore),
-            "asearch":
-                lambda o: isinstance(o, VectorStore),
-            "similarity_search":
-                lambda o: isinstance(o, VectorStore),
-            "asimilarity_search":
-                lambda o: isinstance(o, VectorStore),
-            "similarity_search_by_vector":
-                lambda o: isinstance(o, VectorStore),
-            "asimilarity_search_by_vector":
-                lambda o: isinstance(o, VectorStore),
-            "max_marginal_relevance_search":
-                lambda o: isinstance(o, VectorStore),
-            "amax_marginal_relevance_search":
-                lambda o: isinstance(o, VectorStore),
-            "max_marginal_relevance_search_by_vector":
-                lambda o: isinstance(o, VectorStore),
-            "amax_marginal_relevance_search_by_vector":
-                lambda o: isinstance(o, VectorStore),
             "invoke":
-                lambda o: isinstance(o, (RunnableSerializable, BaseRetriever)),
+                lambda o: isinstance(o, RunnableSerializable),
             "ainvoke":
-                lambda o: isinstance(o, (RunnableSerializable, BaseRetriever)),
+                lambda o: isinstance(o, RunnableSerializable),
             "save_context":
                 lambda o: isinstance(o, BaseMemory),
             "clear":
@@ -122,9 +94,9 @@ class LangChainInstrument(Instrument):
             "acall":
                 lambda o: isinstance(o, Chain),
             "_get_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable, BaseRetriever, VectorStoreRetriever)),
+                lambda o: isinstance(o, (RunnableSerializable)),
             "_aget_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable, BaseRetriever, VectorStoreRetriever)),
+                lambda o: isinstance(o, (RunnableSerializable)),
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # the prompt calls might be too small to be interesting
