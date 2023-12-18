@@ -51,7 +51,7 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
 class LangChainInstrument(Instrument):
 
     class Default:
-        MODULES = {"langchain."}
+        MODULES = {"langchain"}
 
         # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
@@ -94,7 +94,9 @@ class LangChainInstrument(Instrument):
             "acall":
                 lambda o: isinstance(o, Chain),
             "_get_relevant_documents":
-                lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
+                lambda o: isinstance(o, (RunnableSerializable)),
+            "_aget_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable)),
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # the prompt calls might be too small to be interesting
