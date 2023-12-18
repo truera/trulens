@@ -30,7 +30,8 @@ from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
 
-from trulens_eval.feedback.provider.endpoint.base import DEFAULT_RPM, Endpoint
+from trulens_eval.feedback.provider.endpoint.base import DEFAULT_RPM
+from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
@@ -300,7 +301,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         self_kwargs = dict(
             name="openai",  # for SingletonPerName
-            rpm=rpm, # for Endpoint
+            rpm=rpm,  # for Endpoint
             callback_class=OpenAICallback,
             obj=self,  # for WithClassInfo:
             **kwargs
