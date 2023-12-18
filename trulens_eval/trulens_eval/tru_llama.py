@@ -25,10 +25,10 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-with OptionalImports(message=REQUIREMENT_LLAMA):
-    import llama_index
+with OptionalImports(messages=REQUIREMENT_LLAMA):
+    # import llama_index
 
-    from llama_index.indices.query.base import BaseQueryEngine
+    from llama_index.indice.query.base import BaseQueryEngine
     from llama_index.chat_engine.types import BaseChatEngine
     from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
     from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
@@ -44,7 +44,6 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
 
     # misc
-    from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.indices.base_retriever import BaseRetriever
     from llama_index.indices.base import BaseIndex
     from llama_index.chat_engine.types import BaseChatEngine

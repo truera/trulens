@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-with OptionalImports(message=REQUIREMENT_BEDROCK):
+with OptionalImports(messages=REQUIREMENT_BEDROCK):
     import boto3
     from botocore.client import ClientCreator
 
