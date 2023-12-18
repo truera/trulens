@@ -2532,7 +2532,7 @@
 <p>See also: <a href="https://www.trulens.org/trulens_eval/api/feedback/">https://www.trulens.org/trulens_eval/api/feedback/</a></p>
 <h2 id="relevance">Relevance<a class="headerlink" href="#relevance" title="Permanent link">&para;</a></h2>
 <p>This evaluates the <em>relevance</em> of the LLM response to the given text by LLM prompting.</p>
-<p>Relevance is currently only available with OpenAI ChatCompletion API.</p>
+<p>Relevance is currently only available with LLM-based feedback functions.</p>
 <p>TruLens offers two particular flavors of relevance:</p>
 <ol>
 <li>
@@ -2559,18 +2559,18 @@
 </li>
 </ol>
 <h2 id="groundedness">Groundedness<a class="headerlink" href="#groundedness" title="Permanent link">&para;</a></h2>
-<p>Groundedness uses OpenAI LLMs or Huggingface NLI to attempt to check if an answer is grounded in its supplied contexts on a scale from 1 to 10. The information overlap or entailment between source and response is then measured, choosing the highest score between sources and then averaged and scaled from 0 to 1.</p>
+<p>Groundedness uses an LLM or Huggingface NLI to attempt to check if an answer is grounded in its supplied contexts on a scale from 1 to 10. The information overlap or entailment between source and response is then measured, choosing the highest score between sources and then averaged and scaled from 0 to 1.</p>
 <p>You can read about the performance of groundedness evaluations by viewing its <a href="../groundedness_smoke_tests/">smoke test results</a>.</p>
 <h2 id="sentiment">Sentiment<a class="headerlink" href="#sentiment" title="Permanent link">&para;</a></h2>
 <p>This evaluates the <em>positive sentiment</em> of either the prompt or response.</p>
-<p>Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as the model provider.</p>
+<p>Sentiment is currently available to use with LLM-based feedback functions or Huggingface (as a classification model) as the model provider.</p>
 <ul>
-<li>The OpenAI sentiment feedback function prompts a Chat Completion model to rate the sentiment from 1 to 10, and then scales the response down to 0-1.</li>
+<li>The LLM-based sentiment feedback function prompts a Chat Completion model to rate the sentiment from 0 to 10, and then scales the response down to 0-1.</li>
 <li>The HuggingFace sentiment feedback function returns a raw score from 0 to 1.</li>
 <li>The Cohere sentiment feedback function uses the classification endpoint and a small set of examples stored in <code>feedback_prompts.py</code> to return either a 0 or a 1.</li>
 </ul>
 <h2 id="model-agreement">Model Agreement<a class="headerlink" href="#model-agreement" title="Permanent link">&para;</a></h2>
-<p>Model agreement uses OpenAI to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the agreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.</p>
+<p>Model agreement uses an LLM to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the agreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.</p>
 <h2 id="language-match">Language Match<a class="headerlink" href="#language-match" title="Permanent link">&para;</a></h2>
 <p>This evaluates if the language of the prompt and response match.</p>
 <p>Language match is currently only available to use with HuggingFace as the model provider. This feedback function returns a score in the range from 0 to 1, where 1 indicates match and 0 indicates mismatch.</p>
@@ -2580,9 +2580,9 @@
 <h2 id="moderation">Moderation<a class="headerlink" href="#moderation" title="Permanent link">&para;</a></h2>
 <p>The OpenAI Moderation API is made available for use as feedback functions. This includes hate, hate/threatening, self-harm, sexual, sexual/minors, violence, and violence/graphic. Each is negated (ex: not_hate) so that a 0 would indicate that the moderation rule is violated. These feedback functions return a score in the range 0 to 1.</p>
 <h2 id="stereotypes">Stereotypes<a class="headerlink" href="#stereotypes" title="Permanent link">&para;</a></h2>
-<p>This evaluates stereotypes using OpenAI LLMs to check if gender or race were assumed with no prior indication. This is rated on a scale from 1 to 10 where 10 being no new gender or race assumptions. A two indicates gender or race assumption with no indication, and a one indicates gender or race changes with prior indication that is different.</p>
+<p>This evaluates stereotypes using an LLM to check if gender or race were assumed with no prior indication. This is rated on a scale from 1 to 10 where 10 being no new gender or race assumptions. A two indicates gender or race assumption with no indication, and a one indicates gender or race changes with prior indication that is different.</p>
 <h2 id="summarization">Summarization<a class="headerlink" href="#summarization" title="Permanent link">&para;</a></h2>
-<p>This evaluates summarization tasks using OpenAI LLMs to check how well a summarization hits upon main points. This is rated on a scale from 1 to 10 where 10 being all points are addressed. </p>
+<p>This evaluates summarization tasks using an LLM to check how well a summarization hits upon main points. This is rated on a scale from 1 to 10 where 10 being all points are addressed. </p>
 <h2 id="embeddings-distance">Embeddings Distance<a class="headerlink" href="#embeddings-distance" title="Permanent link">&para;</a></h2>
 <p>Given an embedder, as is typical in vector DBs, this evaluates the distance of the query and document embeddings. Currently supporting cosine distance, L1/Manhattan distance, and L2/Euclidean distance.</p>
 

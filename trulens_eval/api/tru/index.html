@@ -3325,7 +3325,18 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
 <span class="normal">673</span>
 <span class="normal">674</span>
 <span class="normal">675</span>
-<span class="normal">676</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Tru</span><span class="p">(</span><span class="n">SingletonPerName</span><span class="p">):</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span>
+<span class="normal">681</span>
+<span class="normal">682</span>
+<span class="normal">683</span>
+<span class="normal">684</span>
+<span class="normal">685</span>
+<span class="normal">686</span>
+<span class="normal">687</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Tru</span><span class="p">(</span><span class="n">SingletonPerName</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Tru is the main class that provides an entry points to trulens-eval. Tru lets you:</span>
 
@@ -3761,12 +3772,19 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
         <span class="n">Leaderboard</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8501</span><span class="p">,</span>
+        <span class="n">address</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+        <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Process</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run a streamlit dashboard to view logged results and apps.</span>
 
 <span class="sd">        Args:</span>
+<span class="sd">            - port: int: port number to pass to streamlit through server.port.</span>
+
+<span class="sd">            - address: str: address to pass to streamlit through server.address.</span>
 
 <span class="sd">            - force: bool: Stop existing dashboard(s) first.</span>
 
@@ -3834,7 +3852,11 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
 
         <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
             <span class="p">[</span>
-                <span class="s2">&quot;streamlit&quot;</span><span class="p">,</span> <span class="s2">&quot;run&quot;</span><span class="p">,</span> <span class="s2">&quot;--server.headless=True&quot;</span><span class="p">,</span> <span class="n">leaderboard_path</span><span class="p">,</span>
+                <span class="s2">&quot;streamlit&quot;</span><span class="p">,</span> <span class="s2">&quot;run&quot;</span><span class="p">,</span> 
+                <span class="s2">&quot;--server.headless=True&quot;</span><span class="p">,</span> 
+                <span class="sa">f</span><span class="s2">&quot;--server.port=</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;--server.address=</span><span class="si">{</span><span class="n">address</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">leaderboard_path</span><span class="p">,</span>
                 <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="s2">&quot;--database-url&quot;</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">render_as_string</span><span class="p">(</span><span class="n">hide_password</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="p">],</span>
@@ -3855,7 +3877,7 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
         <span class="n">IN_COLAB</span> <span class="o">=</span> <span class="s1">&#39;google.colab&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span>
         <span class="k">if</span> <span class="n">IN_COLAB</span><span class="p">:</span>
             <span class="n">tunnel_proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
-                <span class="p">[</span><span class="s2">&quot;npx&quot;</span><span class="p">,</span> <span class="s2">&quot;localtunnel&quot;</span><span class="p">,</span> <span class="s2">&quot;--port&quot;</span><span class="p">,</span> <span class="s2">&quot;8501&quot;</span><span class="p">],</span>
+                <span class="p">[</span><span class="s2">&quot;npx&quot;</span><span class="p">,</span> <span class="s2">&quot;localtunnel&quot;</span><span class="p">,</span> <span class="s2">&quot;--port&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">)],</span>
                 <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
                 <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
                 <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -3905,14 +3927,14 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
                         <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
                             <span class="s2">&quot;External URL: http://&quot;</span><span class="p">,</span> <span class="s2">&quot;Submit this IP Address: &quot;</span>
                         <span class="p">)</span>
-                        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:8501&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
                         <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                             <span class="n">out</span><span class="o">.</span><span class="n">append_stdout</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                         <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_urls</span> <span class="o">=</span> <span class="n">line</span>  <span class="c1"># store the url when dashboard is started</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="s2">&quot;Network URL: &quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">&quot;URL: &quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
                         <span class="n">url</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
                         <span class="n">url</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
                         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dashboard started at </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> .&quot;</span><span class="p">)</span>
@@ -4736,7 +4758,7 @@ changes in a database created with an older version of trulens_eval.</p>
 
 
 <h2 id="trulens_eval.trulens_eval.tru.Tru.run_dashboard" class="doc doc-heading">
-          <code class=" language-python"><span class="n">run_dashboard</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+          <code class=" language-python"><span class="n">run_dashboard</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">8501</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.tru.Tru.run_dashboard" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -4744,15 +4766,81 @@ changes in a database created with an older version of trulens_eval.</p>
   <div class="doc doc-contents ">
   
       <p>Run a streamlit dashboard to view logged results and apps.</p>
-<p>Args:</p>
-<div class="codehilite"><pre><span></span><code>- force: bool: Stop existing dashboard(s) first.
 
-- _dev: Optional[Path]: If given, run dashboard with the given
-  PYTHONPATH. This can be used to run the dashboard from outside of
-  its pip package installation folder.
-</code></pre></div>
 
-<p>Raises:</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>-</code></td>
+          <td>
+                <code>port</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>int: port number to pass to streamlit through server.port.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>-</code></td>
+          <td>
+                <code>address</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>str: address to pass to streamlit through server.address.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>-</code></td>
+          <td>
+                <code>force</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>bool: Stop existing dashboard(s) first.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>-</code></td>
+          <td>
+                <code>_dev</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Optional[Path]: If given, run dashboard with the given
+PYTHONPATH. This can be used to run the dashboard from outside of
+its pip package installation folder.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <p>Raises:</p>
 <div class="codehilite"><pre><span></span><code>- ValueError: Dashboard is already running.
 </code></pre></div>
 
@@ -4958,13 +5046,31 @@ changes in a database created with an older version of trulens_eval.</p>
 <span class="normal">671</span>
 <span class="normal">672</span>
 <span class="normal">673</span>
-<span class="normal">674</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="normal">674</span>
+<span class="normal">675</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span>
+<span class="normal">681</span>
+<span class="normal">682</span>
+<span class="normal">683</span>
+<span class="normal">684</span>
+<span class="normal">685</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_dashboard</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> 
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8501</span><span class="p">,</span>
+    <span class="n">address</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">_dev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Process</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run a streamlit dashboard to view logged results and apps.</span>
 
 <span class="sd">    Args:</span>
+<span class="sd">        - port: int: port number to pass to streamlit through server.port.</span>
+
+<span class="sd">        - address: str: address to pass to streamlit through server.address.</span>
 
 <span class="sd">        - force: bool: Stop existing dashboard(s) first.</span>
 
@@ -5032,7 +5138,11 @@ changes in a database created with an older version of trulens_eval.</p>
 
     <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
         <span class="p">[</span>
-            <span class="s2">&quot;streamlit&quot;</span><span class="p">,</span> <span class="s2">&quot;run&quot;</span><span class="p">,</span> <span class="s2">&quot;--server.headless=True&quot;</span><span class="p">,</span> <span class="n">leaderboard_path</span><span class="p">,</span>
+            <span class="s2">&quot;streamlit&quot;</span><span class="p">,</span> <span class="s2">&quot;run&quot;</span><span class="p">,</span> 
+            <span class="s2">&quot;--server.headless=True&quot;</span><span class="p">,</span> 
+            <span class="sa">f</span><span class="s2">&quot;--server.port=</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;--server.address=</span><span class="si">{</span><span class="n">address</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">leaderboard_path</span><span class="p">,</span>
             <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="s2">&quot;--database-url&quot;</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">render_as_string</span><span class="p">(</span><span class="n">hide_password</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="p">],</span>
@@ -5053,7 +5163,7 @@ changes in a database created with an older version of trulens_eval.</p>
     <span class="n">IN_COLAB</span> <span class="o">=</span> <span class="s1">&#39;google.colab&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span>
     <span class="k">if</span> <span class="n">IN_COLAB</span><span class="p">:</span>
         <span class="n">tunnel_proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
-            <span class="p">[</span><span class="s2">&quot;npx&quot;</span><span class="p">,</span> <span class="s2">&quot;localtunnel&quot;</span><span class="p">,</span> <span class="s2">&quot;--port&quot;</span><span class="p">,</span> <span class="s2">&quot;8501&quot;</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;npx&quot;</span><span class="p">,</span> <span class="s2">&quot;localtunnel&quot;</span><span class="p">,</span> <span class="s2">&quot;--port&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">)],</span>
             <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
             <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
             <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -5103,14 +5213,14 @@ changes in a database created with an older version of trulens_eval.</p>
                     <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
                         <span class="s2">&quot;External URL: http://&quot;</span><span class="p">,</span> <span class="s2">&quot;Submit this IP Address: &quot;</span>
                     <span class="p">)</span>
-                    <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:8501&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                    <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">out</span><span class="o">.</span><span class="n">append_stdout</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                     <span class="n">Tru</span><span class="o">.</span><span class="n">dashboard_urls</span> <span class="o">=</span> <span class="n">line</span>  <span class="c1"># store the url when dashboard is started</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="s2">&quot;Network URL: &quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;URL: &quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
                     <span class="n">url</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;: &quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
                     <span class="n">url</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
                     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dashboard started at </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> .&quot;</span><span class="p">)</span>
