@@ -25,9 +25,10 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
-
+    # import langchain
+    
     from langchain_core.runnables.base import RunnableSerializable
 
     from langchain.agents.agent import BaseMultiActionAgent
