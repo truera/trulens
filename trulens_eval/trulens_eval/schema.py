@@ -319,7 +319,7 @@ class Select:
             ret = "Select.RecordCalls"
             rest = query.path[2:]
 
-         elif query.path[0:3] == Select.RecordCall.path:
+        elif query.path[0:3] == Select.RecordCall.path:
             ret = "Select.RecordCall"
             rest = query.path[3:]
 
