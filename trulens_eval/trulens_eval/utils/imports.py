@@ -38,18 +38,20 @@ optional_packages = requirements_of_file(
 
 all_packages = {**required_packages, **optional_packages}
 
+
 def pin_spec(r: pkg_resources.Requirement) -> pkg_resources.Requirement:
     """
     Pin the requirement to the version assuming it is lower bounded by a
     version.
     """
-    
+
     spec = str(r)
     if ">=" not in spec:
         raise ValueError(f"Requirement {spec} is not lower-bounded.")
 
     spec = spec.replace(">=", "==")
     return pkg_resources.Requirement.parse(spec)
+
 
 @dataclass
 class ImportErrorMessages():
@@ -92,15 +94,17 @@ def format_import_errors(
     it_them = "it" if len(packages) == 1 else "them"
     this_these = "this" if len(packages) == 1 else "these"
 
-    msg = (f"""
+    msg = (
+        f"""
 {','.join(packages)} {pack_s} {is_are} required for {purpose}.
 You should be able to install {it_them} with pip:
 
     pip install '{' '.join(requirements)}
-""")
+"""
+    )
 
     msg_pinned = (
-f"""
+        f"""
 You have {packs} installed but we could not import the required
 components. There may be a version incompatibility. Please try installing {this_these}
 exact {pack_s} with pip: 
@@ -121,10 +125,8 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
         if throw:
             raise ImportError(msg)
 
-    return ImportErrorMessages(
-        module_not_found=msg,
-        import_error=msg_pinned
-    )
+    return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
+
 
 REQUIREMENT_LLAMA = format_import_errors(
     'llama-index', purpose="instrumenting llama_index apps"
@@ -154,6 +156,7 @@ REQUIREMENT_EVALUATE = format_import_errors(
     "evaluate", purpose="using certain metrics"
 )
 
+
 # Try to pretend to be a type as well as an instance.
 class Dummy(type, object):
     """
@@ -162,7 +165,7 @@ class Dummy(type, object):
     """
 
     def __new__(cls, name, **kwargs):
-        return type.__new__(cls, name, (object, ), {})
+        return type.__new__(cls, name, (object,), {})
 
     def __init__(
         self,
@@ -181,7 +184,7 @@ class Dummy(type, object):
 
     def __instancecheck__(self, __instance: Any) -> bool:
         return True
-    
+
     def __subclasscheck__(self, __subclass: type) -> bool:
         return True
 
@@ -195,21 +198,20 @@ class Dummy(type, object):
 
         # Prevent pydantic inspecting this object as if it were a type from
         # triggering the exception message below.
-        if name in [
-            "__pydantic_generic_metadata__",
-            "__get_pydantic_core_schema__",
-            "__get_validators__",
-            "__get_pydantic_json_schema__",
-            "__modify_schema__",
-            "__origin__",
-            "__dataclass_fields__"
-        ]:
+        if name in ["__pydantic_generic_metadata__",
+                    "__get_pydantic_core_schema__", "__get_validators__",
+                    "__get_pydantic_json_schema__", "__modify_schema__",
+                    "__origin__", "__dataclass_fields__"]:
             raise AttributeError()
 
         # If we are still in an optional import block, continue making dummies
         # inside this dummy.
         if self.importer is not None and self.importer.importing:
-            return Dummy(name=self.name + "." + name, message=self.message, importer=self.importer)
+            return Dummy(
+                name=self.name + "." + name,
+                message=self.message,
+                importer=self.importer
+            )
 
         # If we are no longer in optional imports context, raise the exception
         # with the optional package message.
@@ -273,8 +275,12 @@ class OptionalImports(object):
             if not module_name.startswith(trulens_name):
                 raise e
             logger.debug(f"Module not found {name}.")
-            return Dummy(name=name, message=self.messages.module_not_found, importer=self)
-        
+            return Dummy(
+                name=name,
+                message=self.messages.module_not_found,
+                importer=self
+            )
+
         # NOTE(piotrm): This below seems to never be caught. It might be that a
         # different import method is being used once a module is found.
         """
