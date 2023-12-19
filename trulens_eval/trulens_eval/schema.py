@@ -255,6 +255,7 @@ class Select:
     """
 
     # Typing for type hints.
+    # TODEP
     Query = Lens
 
     # Instance for constructing queries for record json like `Record.app.llm`.
@@ -269,6 +270,11 @@ class Select:
     RecordOutput: Query = Record.main_output  # type: ignore
 
     RecordCalls: Query = Record.app  # type: ignore
+
+    # The whole set of inputs/arguments to the first called / last method call.
+    RecordArgs: Query = Record.calls[-1].args
+    # The whole output of the first called / last returned method call.
+    RecordRets: Query = Record.calls[-1].rets
 
     @staticmethod
     def for_record(query: Select.Query) -> Query:
@@ -297,9 +303,18 @@ class Select:
         elif query.path[0:2] == Select.RecordOutput.path:
             ret = "Select.RecordOutput"
             rest = query.path[2:]
+
         elif query.path[0:2] == Select.RecordCalls.path:
             ret = "Select.RecordCalls"
             rest = query.path[2:]
+
+        elif query.path[0:4] == Select.RecordArgs.path:
+            ret = "Select.RecordArgs"
+            rest = query.path[4:]
+        elif query.path[0:4] == Select.RecordRets.path:
+            ret = "Select.RecordRets"
+            rest = query.path[4:]
+
         elif query.path[0] == Select.Record.path[0]:
             ret = "Select.Record"
             rest = query.path[1:]
