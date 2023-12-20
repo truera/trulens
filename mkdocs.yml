@@ -132,7 +132,7 @@ nav:
               - LLM Agents: trulens_eval/use_cases_agent.md
               - Dev to Prod: trulens_eval/use_cases_production.md
       - Contributing:
-          - 🤝 Contrbution Guidelines: trulens_eval/CONTRIBUTING.md
+          - 🤝 Contribution Guidelines: trulens_eval/CONTRIBUTING.md
 
   - Explain:
       - Getting Started:
