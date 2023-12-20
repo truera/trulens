@@ -21,12 +21,10 @@ def score_passages(df, feedback_func):
 
     return scores, true_relevance
 
-# Compute nDCG
 def compute_ndcg(scores, true_relevance):
     ndcg_values = [ndcg_score([true], [pred]) for true, pred in zip(true_relevance, scores)]
     return np.mean(ndcg_values)
 
-# Compute ECE
 def compute_ece(scores, true_relevance, n_bins=10):
     ece = 0
     for bin in np.linspace(0, 1, n_bins):
@@ -44,3 +42,10 @@ def compute_ece(scores, true_relevance, n_bins=10):
             ece += np.abs(bin_avg_confidence - bin_accuracy) * len(bin_scores) / sum(map(len, scores))
 
     return ece
+
+def precision_at_k(true_relevance, scores, k):
+    top_k_indices = np.argsort(scores)[-k:]
+    
+    # Calculate precision
+    true_positives = sum(np.take(true_relevance, top_k_indices))
+    return true_positives / k
