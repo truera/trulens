@@ -366,26 +366,25 @@ class AzureOpenAI(OpenAI):
     Has the same functionality as OpenAI out of the box feedback functions.
     """
 
-    def __init__(self, endpoint=None, deployment_name="gpt-35-turbo", **kwargs):
+    def __init__(self, deployment_name: str, endpoint=None, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """
         Wrapper to use Azure OpenAI. Please export the following env variables
 
-        - OPENAI_API_BASE
+        - AZURE_OPENAI_ENDPOINT
+        - AZURE_OPENAI_API_KEY
         - OPENAI_API_VERSION
-        - OPENAI_API_KEY
 
         **Usage:**
         ```python
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = AzureOpenAI(deployment_id="...")
+        from trulens_eval.feedback.provider.openai import AzureOpenAI
+        openai_provider = AzureOpenAI(deployment_name="...")
         ```
 
         Args:
             deployment_name (str, required): The name of the deployment.
-                Defaults to "gpt-35-turbo".
             endpoint (Endpoint): Internal Usage for DB serialization
         """
 
