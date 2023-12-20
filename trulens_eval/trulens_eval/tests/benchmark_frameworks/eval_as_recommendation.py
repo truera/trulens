@@ -25,8 +25,7 @@ def compute_ndcg(scores, true_relevance):
     ndcg_values = [ndcg_score([true], [pred]) for true, pred in zip(true_relevance, scores)]
     return np.mean(ndcg_values)
 
-def compute_ece(scores, true_relevance):
-    n_bins = len(scores)
+def compute_ece(scores, true_relevance, n_bins=10):
     ece = 0
     for bin in np.linspace(0, 1, n_bins):
         bin_scores = []
