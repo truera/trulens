@@ -22,7 +22,7 @@ Feedback functions are the backbone of TruLens, and evaluating unique LLM apps m
 
 ## 🤝 Add new feedback function providers.
 
-Feedback functions often rely on a model provider, such as OpenAI or HuggingFace. If you need a new model provider to utilize feedback functions for your use case, we'd love if you added a new provider class, e.g. Llama2.
+Feedback functions often rely on a model provider, such as OpenAI or HuggingFace. If you need a new model provider to utilize feedback functions for your use case, we'd love if you added a new provider class, e.g. Ollama.
 
 You can do so by creating a new provider module in this [folder](https://github.com/truera/trulens/blob/main/trulens_eval/trulens_eval/feedback/provider/).
 
