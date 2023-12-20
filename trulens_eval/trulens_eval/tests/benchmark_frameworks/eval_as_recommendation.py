@@ -43,7 +43,7 @@ def compute_ece(scores, true_relevance, n_bins=10):
 
     return ece
 
-def precision_at_k(true_relevance, scores, k):
+def precision_at_k(scores, true_relevance, k):
     top_k_indices = np.argsort(scores)[-k:]
     
     # Calculate precision
