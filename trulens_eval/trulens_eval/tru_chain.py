@@ -21,6 +21,9 @@ from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
 
+from trulens_eval.utils.serial import Lens
+from trulens_eval import Select
+
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
@@ -209,6 +212,13 @@ class TruChain(App):
         kwargs['instrument'] = LangChainInstrument(app=self)
 
         super().__init__(**kwargs)
+
+    @classmethod
+    def select_context(cls) -> Lens:
+        """
+        Get the path to the context in the query output.
+        """
+        return Select.RecordCalls.first.invoke.rets.context
 
     # TODEP
     # Chain requirement
