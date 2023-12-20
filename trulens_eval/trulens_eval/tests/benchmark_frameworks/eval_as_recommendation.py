@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import ndcg_score
 from typing import List
+import time
 
 def score_passages(df, feedback_func):
     grouped = df.groupby('query_id')
@@ -13,6 +14,7 @@ def score_passages(df, feedback_func):
         query_relevance = []
         for _, row in group.iterrows():
             score = feedback_func(row['query'], row['passage'])
+            time.sleep(0.5)
             query_scores.append(score)
             query_relevance.append(row['is_selected'])
         
