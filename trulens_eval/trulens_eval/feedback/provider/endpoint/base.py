@@ -299,8 +299,8 @@ class Endpoint(SerialModel, SingletonPerName):
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(
-                wrapped_thing if wrapped_thing !=
-                object else "unknown dynamically generated class(es)"
+                wrapped_thing if wrapped_thing != object else
+                "unknown dynamically generated class(es)"
             )
             for original, wrapped, endpoint in wrappers:
                 print(
@@ -413,7 +413,6 @@ class Endpoint(SerialModel, SingletonPerName):
 
         for endpoint in Endpoint.ENDPOINT_SETUPS:
             if locals().get(endpoint.arg_flag):
-                print(f"tracking {endpoint.class_name}")
                 mod = __import__(
                     endpoint.module_name, fromlist=[endpoint.class_name]
                 )

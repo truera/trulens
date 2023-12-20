@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
+    # import langchain
 
     from langchain.agents.agent import BaseMultiActionAgent
     from langchain.agents.agent import BaseSingleActionAgent
@@ -43,15 +44,17 @@ with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     from langchain.schema.language_model import BaseLanguageModel
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
+    from langchain_core.runnables.base import RunnableSerializable
 
 
 class LangChainInstrument(Instrument):
 
     class Default:
-        MODULES = {"langchain."}
+        MODULES = {"langchain"}
 
         # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
+            RunnableSerializable,
             Serializable,
             Document,
             Chain,
@@ -73,6 +76,10 @@ class LangChainInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
+            "invoke":
+                lambda o: isinstance(o, RunnableSerializable),
+            "ainvoke":
+                lambda o: isinstance(o, RunnableSerializable),
             "save_context":
                 lambda o: isinstance(o, BaseMemory),
             "clear":
@@ -86,7 +93,9 @@ class LangChainInstrument(Instrument):
             "acall":
                 lambda o: isinstance(o, Chain),
             "_get_relevant_documents":
-                lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
+                lambda o: isinstance(o, (RunnableSerializable)),
+            "_aget_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable)),
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # the prompt calls might be too small to be interesting
@@ -346,5 +355,6 @@ class TruChain(App):
         ret, _ = await self.awith_(self.app.acall, *args, **kwargs)
 
         return ret
+
 
 TruChain.model_rebuild()

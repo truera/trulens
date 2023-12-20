@@ -14,8 +14,8 @@ from copy import copy
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence,
-    Sized, Tuple, TypeVar, Union
+    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Sized,
+    Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson
@@ -64,15 +64,24 @@ class SerialModel(pydantic.BaseModel):
     help serialization mostly.
     """
 
+    def model_dump_json(self, **kwargs):
+        from trulens_eval.utils.json import json_str_of_obj
+
+        return json_str_of_obj(self, **kwargs)
+
+    def model_dump(self, **kwargs):
+        from trulens_eval.utils.json import jsonify
+
+        return jsonify(self, **kwargs)
+
     @classmethod
     def model_validate(cls, obj, **kwargs):
         # import hierarchy circle here
-        from trulens_eval.utils.pyschema import Class
         from trulens_eval.utils.pyschema import CLASS_INFO
         from trulens_eval.utils.pyschema import WithClassInfo
 
         if isinstance(obj, Dict) and CLASS_INFO in obj:
-            return WithClassInfo.model_validate(obj)
+            return WithClassInfo.model_validate(obj, **kwargs)
 
         return super(SerialModel, cls).model_validate(obj, **kwargs)
 
@@ -118,13 +127,16 @@ class Step(pydantic.BaseModel, Hashable):
     A step in a selection path.
     """
 
+    def __hash__(self):
+        raise TypeError(f"Should never be called, self={self.model_dump()}")
+
     @classmethod
     def model_validate(cls, obj, **kwargs):
 
         if isinstance(obj, Step):
-            return obj
+            return super().model_validate(obj, **kwargs)
 
-        elif isinstance(obj, Dict):
+        elif isinstance(obj, dict):
 
             ATTRIBUTE_TYPE_MAP = {
                 'item': GetItem,
@@ -548,7 +560,12 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         # different than obj. Might be a pydantic oversight/bug.
 
         if isinstance(obj, str):
-            return Lens.of_string(obj)
+            ret = Lens.of_string(obj)
+            return ret
+        elif isinstance(obj, dict):
+            return handler(
+                dict(path=(Step.model_validate(step) for step in obj['path']))
+            )
         else:
             return handler(obj)
 

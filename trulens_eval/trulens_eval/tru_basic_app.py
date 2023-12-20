@@ -165,4 +165,5 @@ class TruBasicApp(App):
 
         return self.with_record(self.app._call, *args, **kwargs)
 
+
 TruBasicApp.model_rebuild()

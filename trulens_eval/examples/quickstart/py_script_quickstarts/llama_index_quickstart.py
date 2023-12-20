@@ -16,7 +16,7 @@
 
 # In[ ]:
 
-# pip install trulens_eval==0.18.3 llama_index>=0.8.69 html2text>=2020.1.16
+# pip install trulens_eval==0.19.2 llama_index>=0.9.15post2 html2text>=2020.1.16
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
@@ -29,7 +29,7 @@ os.environ["OPENAI_API_KEY"] = "..."
 
 # ### Import from LlamaIndex and TruLens
 
-# In[ ]:
+# In[1]:
 
 from trulens_eval import Feedback
 from trulens_eval import Tru

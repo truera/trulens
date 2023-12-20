@@ -11,13 +11,13 @@
 
 # In[ ]:
 
-# ! pip install trulens_eval==0.18.3 chromadb==0.4.18 openai==1.3.7
+# ! pip install trulens_eval==0.19.2 chromadb==0.4.18 openai==1.3.7
 
 # In[ ]:
 
 import os
 
-os.environ["OPENAI_API_KEY"] = "sk-..."
+os.environ["OPENAI_API_KEY"] = "..."
 
 # ## Get Data
 #

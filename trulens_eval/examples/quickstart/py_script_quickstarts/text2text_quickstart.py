@@ -13,7 +13,7 @@
 
 # In[ ]:
 
-# ! pip install trulens_eval==0.18.3 openai==1.3.1
+# ! pip install trulens_eval==0.19.2 openai==1.3.1
 
 # In[ ]:
 

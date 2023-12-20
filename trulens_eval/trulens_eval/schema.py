@@ -255,6 +255,7 @@ class Select:
     """
 
     # Typing for type hints.
+    # TODEP
     Query = Lens
 
     # Instance for constructing queries for record json like `Record.app.llm`.
@@ -268,7 +269,16 @@ class Select:
     RecordInput: Query = Record.main_input  # type: ignore
     RecordOutput: Query = Record.main_output  # type: ignore
 
+    # The calls made by the wrapped app. Layed out by path into components. 
     RecordCalls: Query = Record.app  # type: ignore
+
+    # The first called method (last to return).
+    RecordCall: Query = Record.calls[-1]
+
+    # The whole set of inputs/arguments to the first called / last method call.
+    RecordArgs: Query = RecordCall.args
+    # The whole output of the first called / last returned method call.
+    RecordRets: Query = RecordCall.rets
 
     @staticmethod
     def for_record(query: Select.Query) -> Query:
@@ -297,9 +307,22 @@ class Select:
         elif query.path[0:2] == Select.RecordOutput.path:
             ret = "Select.RecordOutput"
             rest = query.path[2:]
+
+        elif query.path[0:4] == Select.RecordArgs.path:
+            ret = "Select.RecordArgs"
+            rest = query.path[4:]
+        elif query.path[0:4] == Select.RecordRets.path:
+            ret = "Select.RecordRets"
+            rest = query.path[4:]
+
         elif query.path[0:2] == Select.RecordCalls.path:
             ret = "Select.RecordCalls"
             rest = query.path[2:]
+
+        elif query.path[0:3] == Select.RecordCall.path:
+            ret = "Select.RecordCall"
+            rest = query.path[3:]
+
         elif query.path[0] == Select.Record.path[0]:
             ret = "Select.Record"
             rest = query.path[1:]
@@ -683,7 +706,7 @@ class AppDefinition(SerialModel, WithClassInfo):
 
         apps = tru.get_apps()
         for app in apps:
-            dump = app['initial_app_loader_dump']
+            dump = app.get('initial_app_loader_dump')
             if dump is not None:
                 rets.append(app)
 
