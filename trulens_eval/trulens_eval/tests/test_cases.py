@@ -239,32 +239,24 @@ def generate_summeval_groundedness_golden_set(file_path):
                     )
             }
 
+
 def generate_ms_marco_context_relevance_benchmark(file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
 
-    for item in data["rows"]:
-        row = item["row"]
+    for item in data['rows']:
+        row = item['row']
 
-        assert (
-            len(row["passages"]["is_selected"]) == len(row["passages"]["passage_text"]) 
-        )
+        assert len(row['passages']['is_selected']) == len(row['passages']['passage_text'])        
 
-        assert(sum(row["passages"]["is_selected"]) == 1)
-
-        for i in range(len(row["passages"]["passage_text"])):
+        if sum(row['passages']['is_selected']) != 1:
+              # currently we only consider sample with one passage marked as relevant (there are samples where zero passage_text is selected)
+            continue
+        for i, passage_text in enumerate(row['passages']['passage_text']):
             yield {
-                "query":
-                    row["query"],
-                "response":
-                    row["machine_summaries"][i],
-                "expected_score":
-                    calculate_expected_score(
-                        [
-                            row["relevance"][i] / 5,  # normalize to [0, 1]
-                        ],
-                        [1.0]
-                    )
-                    row["passages"]["passage_text"][i],
-                "relevant_idx": row["passages"]["is_selected"].index(1)
+                'query_id': row['query_id'],
+                'query': row['query'],
+                'passage': passage_text,
+                'is_selected': row['passages']['is_selected'][i],  # Binary relevance
+                'relevant_idx': row['passages']['is_selected'].index(1)  # Index of the relevant passage
             }
