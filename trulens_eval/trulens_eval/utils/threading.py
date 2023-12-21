@@ -43,7 +43,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
     MAX_THREADS: int = 128
 
     # How long to wait for any task before restarting it.
-    DEBUG_TIMEOUT: float = 600.0  # [seconds], None to disable
+    DEBUG_TIMEOUT: Optional[float] = 600.0  # [seconds], None to disable
 
     def __init__(self):
         if safe_hasattr(self, "thread_pool"):
