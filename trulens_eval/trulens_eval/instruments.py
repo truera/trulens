@@ -422,7 +422,10 @@ class Instrument(object):
 
         sig = safe_signature(func)
 
-        async def awrapper(*args, **kwargs):
+        def find_instrumented(f):
+            return id(f) in [id(tru_awrapper.__code__), id(tru_wrapper.__code__)]
+
+        async def tru_awrapper(*args, **kwargs):
             # TODO: figure out how to have less repetition between the async and
             # sync versions of this method.
 
@@ -430,13 +433,10 @@ class Instrument(object):
                 f"{query}: calling instrumented async method {func}"
             )  # DIFF
 
-            apps = getattr(awrapper, Instrument.APPS)  # DIFF
+            apps = getattr(tru_awrapper, Instrument.APPS)  # DIFF
 
             # If not within a root method, call the wrapped function without
             # any recording.
-
-            def find_instrumented(f):
-                return id(f) in [id(awrapper.__code__)]  # DIFF
 
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
@@ -613,19 +613,16 @@ class Instrument(object):
 
             return rets
 
-        def wrapper(*args, **kwargs):
+        def tru_wrapper(*args, **kwargs):
             # TODO: figure out how to have less repetition between the async and
             # sync versions of this method.
 
             logger.debug(f"{query}: calling instrumented method {func}")
 
-            apps = getattr(wrapper, Instrument.APPS)
+            apps = getattr(tru_wrapper, Instrument.APPS)
 
             # If not within a root method, call the wrapped function without
             # any recording.
-
-            def find_instrumented(f):
-                return id(f) in [id(wrapper.__code__), id(awrapper.__code__)]
 
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
@@ -794,9 +791,9 @@ class Instrument(object):
 
             return rets
 
-        w = wrapper
+        w = tru_wrapper
         if inspect.iscoroutinefunction(func):
-            w = awrapper
+            w = tru_awrapper
 
         # Indicate that the wrapper is an instrumented method so that we dont
         # further instrument it in another layer accidentally.
@@ -967,7 +964,12 @@ class Instrument(object):
                         )
                     )
 
-        if self.to_instrument_object(obj):
+        if self.to_instrument_object(obj) or isinstance(obj, (dict, list, tuple)):
+            vals = None
+            if isinstance(obj, dict):
+                attrs = obj.keys()
+                vals = obj.values()
+
             if isinstance(obj, pydantic.BaseModel):
                 # NOTE(piotrm): This will not include private fields like
                 # llama_index's LLMPredictor._llm which might be useful to
@@ -987,9 +989,11 @@ class Instrument(object):
                 # not so this section applies.
                 attrs = clean_attributes(obj, include_props=True).keys()
 
-            for k in attrs:
-                v = safe_getattr(obj, k, get_prop=True)
+            if vals is None:
+                vals = [safe_getattr(obj, k, get_prop=True) for k in attrs]
 
+            for k, v in zip(attrs, vals):
+                
                 if isinstance(v, (str, bool, int, float)):
                     pass
 

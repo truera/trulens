@@ -349,6 +349,15 @@ class Endpoint(SerialModel, SingletonPerName):
             setattr(cls, wrapper_method_name, metawrap)
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
+        if not safe_hasattr(mod, INSTRUMENT):
+            setattr(mod, INSTRUMENT, set())
+
+        already_instrumented = safe_getattr(mod, INSTRUMENT)
+
+        if method_name in already_instrumented:
+            logger.debug(f"module {mod} already instrumented for {method_name}")
+            return
+
         for m in dir(mod):
             logger.debug(
                 f"instrumenting module {mod} member {m} for method {method_name}"
@@ -356,6 +365,8 @@ class Endpoint(SerialModel, SingletonPerName):
             if safe_hasattr(mod, m):
                 obj = safe_getattr(mod, m)
                 self._instrument_class(obj, method_name=method_name)
+
+        already_instrumented.add(method_name)
 
     # TODO: CODEDUP
     @staticmethod
