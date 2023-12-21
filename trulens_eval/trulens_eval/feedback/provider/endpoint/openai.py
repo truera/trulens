@@ -23,7 +23,7 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, List, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
