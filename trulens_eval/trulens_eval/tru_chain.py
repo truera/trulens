@@ -247,8 +247,10 @@ class TruChain(App):
         
         if len(retrievers) > 1:
             raise ValueError(
-                "Found more than one `VectorStoreRetriever` in app:" + 
-                ("\n\t".join(map(lambda l, r: f"{type(r)} at {l}")))
+                "Found more than one `VectorStoreRetriever` in app:\n\t" + \
+                ("\n\t".join(map(
+                    lambda lr: f"{type(lr[1])} at {lr[0]}", 
+                    retrievers)))
             )
 
         return (Select.RecordCalls + retrievers[0][0]).get_relevant_documents.rets
