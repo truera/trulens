@@ -252,7 +252,10 @@ class TruLlama(App):
         return cls.select_outputs().source_nodes[:]
 
     @classmethod
-    def select_context(cls) -> Lens:
+    def select_context(
+        cls,
+        app: Optional[Union[BaseQueryEngine, BaseChatEngine]] = None
+    ) -> Lens:
         """
         Get the path to the context in the query output.
         """

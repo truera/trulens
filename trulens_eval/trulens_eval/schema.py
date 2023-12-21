@@ -281,6 +281,11 @@ class Select:
     RecordRets: Query = RecordCall.rets
 
     @staticmethod
+    def context(app: Optional[Any] = None) -> Lens:
+        from trulens_eval.app import App
+        return App.select_context(app)
+
+    @staticmethod
     def for_record(query: Select.Query) -> Query:
         return Select.Query(path=Select.Record.path + query.path)
 
