@@ -1,10 +1,10 @@
 from typing import Dict, Tuple, Union
 
-from llama_index import ServiceContext
 import numpy as np
 from pydantic import PrivateAttr
 
 from trulens_eval.utils.imports import REQUIREMENT_SKLEARN
+from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
@@ -27,6 +27,11 @@ class Embeddings(SerialModel, WithClassInfo):
             import sklearn
         except:
             raise ImportError(REQUIREMENT_SKLEARN)
+
+        try:
+            from llama_index import ServiceContext
+        except:
+            raise ImportError(REQUIREMENT_LLAMA)
 
         service_context = ServiceContext.from_defaults(embed_model=embed_model)
         self._embed_model = service_context.embed_model
