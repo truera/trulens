@@ -40,10 +40,10 @@ class TP(SingletonPerName['TP']):  # "thread processing"
     # Store here stacks of calls to various thread starting methods so that we
     # can retrieve the trace of calls that caused a thread to start.
 
-    MAX_THREADS = 128
+    MAX_THREADS: int = 128
 
     # How long to wait for any task before restarting it.
-    DEBUG_TIMEOUT = 600.0  # 5 minutes
+    DEBUG_TIMEOUT: float = 600.0  # [seconds], None to disable
 
     def __init__(self):
         if safe_hasattr(self, "thread_pool"):
