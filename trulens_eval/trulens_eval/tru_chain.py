@@ -243,11 +243,11 @@ class TruChain(App):
                 pass
         
         if len(retrievers) == 0:
-            raise ValueError("Cannot find any `VectorStoreRetriever` in app.")
+            raise ValueError("Cannot find any `BaseRetriever` in app.")
         
         if len(retrievers) > 1:
             raise ValueError(
-                "Found more than one `VectorStoreRetriever` in app:\n\t" + \
+                "Found more than one `BaseRetriever` in app:\n\t" + \
                 ("\n\t".join(map(
                     lambda lr: f"{type(lr[1])} at {lr[0]}", 
                     retrievers)))
