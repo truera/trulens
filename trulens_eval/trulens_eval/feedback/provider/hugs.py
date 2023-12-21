@@ -204,13 +204,17 @@ class Huggingface(Provider):
             prompt += '.'
         ctx_relevnace_string = prompt + '<eos>' + context
         payload = {"inputs": ctx_relevnace_string}
-        hf_response = self.endpoint.post(url=HUGS_CONTEXT_RELEVANCE_API_URL, payload=payload)
+        hf_response = self.endpoint.post(
+            url=HUGS_CONTEXT_RELEVANCE_API_URL, payload=payload
+        )
 
         for label in hf_response:
             if label['label'] == 'context_relevance':
                 return label['score']
 
-        raise RuntimeError("'context_relevance' not found in huggingface api response.")
+        raise RuntimeError(
+            "'context_relevance' not found in huggingface api response."
+        )
 
     # TODEP
     @_tci
