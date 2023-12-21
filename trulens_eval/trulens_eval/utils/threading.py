@@ -8,7 +8,7 @@ from concurrent.futures import TimeoutError
 from inspect import stack
 import logging
 import threading
-from typing import Callable, TypeVar
+from typing import Callable, Optional, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
@@ -72,9 +72,11 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         self,
         func: Callable[..., T],
         *args,
-        timeout: float = DEBUG_TIMEOUT,
+        timeout: Optional[float] = None,
         **kwargs
     ) -> T:
+        if timeout is None:
+            timeout = TP.DEBUG_TIMEOUT
 
         fut: 'Future[T]' = self.thread_pool.submit(func, *args, **kwargs)
 
@@ -100,9 +102,11 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         self,
         func: Callable[..., T],
         *args,
-        timeout: float = DEBUG_TIMEOUT,
+        timeout: Optional[float] = None,
         **kwargs
     ) -> 'Future[T]':
+        if timeout is None:
+            timeout = TP.DEBUG_TIMEOUT
 
         # TODO(piotrm): need deadlock fixes here. If submit or _submit was called
         # earlier in the stack, do not use a threadpool to evaluate this task
@@ -116,9 +120,11 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         self,
         func: Callable[..., T],
         *args,
-        timeout: float = DEBUG_TIMEOUT,
+        timeout: Optional[float] = None,
         **kwargs
     ) -> 'Future[T]':
+        if timeout is None:
+            timeout = TP.DEBUG_TIMEOUT
 
         # Submit a concurrent tasks to run `func` with the given `args` and
         # `kwargs` but stop with error if it ever takes too long. This is only
