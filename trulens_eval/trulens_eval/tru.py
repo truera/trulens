@@ -507,7 +507,7 @@ class Tru(SingletonPerName):
 
         IN_COLAB = 'google.colab' in sys.modules
         if IN_COLAB and address is not None:
-            raise ValueError("`server` argument cannot be used in colab.")
+            raise ValueError("`address` argument cannot be used in colab.")
 
         if force:
             self.stop_dashboard(force=force)
