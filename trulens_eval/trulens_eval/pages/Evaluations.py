@@ -384,7 +384,7 @@ else:
             match_query = None
 
             # Assumes record_json['perf']['start_time'] is always present
-            if val != record_json["perf"]["start_time"] and val != "":
+            if val != "":
                 match = None
                 for call in record.calls:
                     if call.perf.start_time.isoformat() == val:
