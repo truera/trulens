@@ -807,6 +807,13 @@ class Instrument(object):
         # instrumented app gets unloaded, it will be evicted from this set.
         setattr(w, Instrument.APPS, weakref.WeakSet([self.app]))
 
+        # Hack for llama_index trace_method not preserving wrapped method signature.
+        if "trace_method.<locals>.decorator.<locals>.wrapper" == func.__qualname__:
+            actual_func = func.__closure__[1].cell_contents
+            func_sig = inspect.signature(actual_func)
+            func.__signature__ = func_sig
+            func.__name__ = actual_func.__name__
+
         w.__name__ = func.__name__
 
         # NOTE(piotrm): This is important; langchain checks signatures to adjust
