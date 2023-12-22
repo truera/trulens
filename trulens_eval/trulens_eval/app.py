@@ -459,13 +459,12 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         self.tru_post_init()
 
     @classmethod
-    def select_context(
-        cls,
-        app: Optional[Any] = None
-    ) -> Lens:
+    def select_context(cls, app: Optional[Any] = None) -> Lens:
         if app is None:
-            raise ValueError("Could not determine context selection without `app` argument.")
-        
+            raise ValueError(
+                "Could not determine context selection without `app` argument."
+            )
+
         # Checking by module name so we don't have to try to import either
         # langchain or llama_index beforehand.
         if type(app).__module__.startswith("langchain"):
@@ -475,7 +474,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             from trulens_eval.tru_llama import TruLlama
             return TruLlama.select_context(app)
         else:
-            raise ValueError(f"Could not determine context from unrecognized `app` type {type(app)}.")
+            raise ValueError(
+                f"Could not determine context from unrecognized `app` type {type(app)}."
+            )
 
     def __hash__(self):
         return hash(id(self))

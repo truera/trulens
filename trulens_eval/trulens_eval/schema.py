@@ -269,7 +269,7 @@ class Select:
     RecordInput: Query = Record.main_input  # type: ignore
     RecordOutput: Query = Record.main_output  # type: ignore
 
-    # The calls made by the wrapped app. Layed out by path into components. 
+    # The calls made by the wrapped app. Layed out by path into components.
     RecordCalls: Query = Record.app  # type: ignore
 
     # The first called method (last to return).
