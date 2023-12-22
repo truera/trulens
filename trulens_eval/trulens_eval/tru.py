@@ -675,6 +675,7 @@ class Tru(SingletonPerName):
             wait_period = wait_period * 3
         if not started.wait(timeout=wait_period
                            ):  # This might not work on windows.
+            Tru.dashboard_proc = None
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."
