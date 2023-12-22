@@ -7,6 +7,7 @@ from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIClient
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.utils.pyschema import CLASS_INFO
 
 logger = logging.getLogger(__name__)
 
@@ -388,7 +389,11 @@ class AzureOpenAI(OpenAI):
             endpoint (Endpoint): Internal Usage for DB serialization
         """
 
-        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**kwargs))
+        client_args = dict(kwargs)
+        if CLASS_INFO in client_args:
+            del client_args[CLASS_INFO]
+
+        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_args))
         super().__init__(
             endpoint=endpoint, model_engine=deployment_name, **kwargs
         )  # need to include pydantic.BaseModel.__init__
