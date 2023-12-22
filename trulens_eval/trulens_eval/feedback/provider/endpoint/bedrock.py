@@ -1,7 +1,7 @@
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional
 
 import pydantic
 

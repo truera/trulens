@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from langchain.chat_models.base import BaseChatModel
 from langchain.llms.base import BaseLLM
