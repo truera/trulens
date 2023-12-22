@@ -24,8 +24,9 @@ with OptionalImports(messages=REQUIREMENT_BEDROCK):
 
 class BedrockCallback(EndpointCallback):
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response)

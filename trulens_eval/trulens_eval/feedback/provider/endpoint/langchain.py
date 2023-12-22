@@ -14,8 +14,9 @@ logger = logging.getLogger(__name__)
 
 class LangchainCallback(EndpointCallback):
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     def handle_classification(self, response: Dict) -> None:
         super().handle_classification(response)

@@ -1,7 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 import logging
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 import warnings
 
 from trulens_eval.feedback import prompts
@@ -15,8 +15,9 @@ logger = logging.getLogger(__name__)
 
 class Provider(SerialModel, WithClassInfo):
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     endpoint: Optional[Endpoint] = None
 
@@ -34,8 +35,9 @@ class LLMProvider(Provider, ABC):
     # warnings if we try to override some internal pydantic name.
     model_engine: str
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         protected_namespaces = ()
+    )
 
     def __init__(self, *args, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
