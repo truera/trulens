@@ -251,6 +251,16 @@ class TruLlama(App):
         """
         return cls.select_outputs().source_nodes[:]
 
+    @classmethod
+    def select_context(
+        cls,
+        app: Optional[Union[BaseQueryEngine, BaseChatEngine]] = None
+    ) -> Lens:
+        """
+        Get the path to the context in the query output.
+        """
+        return cls.select_outputs().source_nodes[:].node.text
+
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
