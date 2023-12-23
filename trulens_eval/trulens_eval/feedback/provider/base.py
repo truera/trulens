@@ -559,7 +559,7 @@ class LLMProvider(Provider, ABC):
         Returns:
             flo"""
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
         )
 
     def correctness_with_cot_reasons(self, text: str) -> float:
