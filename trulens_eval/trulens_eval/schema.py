@@ -174,9 +174,10 @@ class Record(SerialModel):
     Each instrumented method call produces one of these "record" instances.
     """
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         # for `Future[FeedbackResult]` = `TFeedbackResultFuture`
         arbitrary_types_allowed = True
+    )
 
     record_id: RecordID  # str
     app_id: AppID  # str
@@ -439,8 +440,9 @@ class FeedbackDefinition(SerialModel, WithClassInfo):
     # Serialized parts of a feedback function. The non-serialized parts are in
     # the feedback.py:Feedback class.
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     # Implementation serialization info.
     implementation: Optional[Union[Function, Method]] = None
@@ -527,9 +529,6 @@ class FeedbackMode(str, Enum):
 class AppDefinition(SerialModel, WithClassInfo):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
-
-    #class Config:
-    #    arbitrary_types_allowed = True
 
     app_id: AppID  # str
     tags: Tags  # str
