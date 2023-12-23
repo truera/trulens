@@ -53,7 +53,7 @@ jobs:
           set -e
           source activate $(condaEnvFileSuffix)
           which python
-          python -v
+          python --version
         displayName: Which Python
         
       - bash: |
