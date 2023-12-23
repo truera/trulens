@@ -25,6 +25,7 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
 HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
 HUGS_PII_DETECTION_API_URL = "https://api-inference.huggingface.co/models/bigcode/starpii"
+HUGS_HALLUCINATION_API_URL = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
 
 import functools
 from inspect import signature
@@ -436,47 +437,37 @@ class Huggingface(Provider):
         return score, reasons
 
     @_tci
-    def hallucination_evaluator(self, input1: str, input2: str) -> float:
+    def hallucination_evaluator(self, model_output: str, retrieved_text_chunks: str) -> float:
         """
-        Evaluates the hallucination score for a combined input of two statements.
+        Evaluates the hallucination score for a combined input of two statements as a float 0<x<1 representing a 
+        true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
+        less than 0.5 the statement is evaluated as a hallucination.
 
         **Usage:**
         ```python
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
-        score = huggingface_provider.hallucination_evaluator("The sky is blue.", "Apples are red.")
+        score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")
         ```
 
         Args:
-            input1 (str): First statement
-            input2 (str): Second statement
+            model_output (str): This is what an LLM returns based on the text chunks retrieved during RAG
+            retrieved_text_chunk (str): These are the text chunks you have retrieved during RAG
 
         Returns:
             float: Hallucination score
         """
-        api_url = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
-        api_token = os.getenv("HF_AUTH_TOKEN")
-        if not api_token:
-            raise ValueError("Please set the HF_AUTH_TOKEN environment variable.")
-
-        headers = {"Authorization": f"Bearer {api_token}"}
-        combined_input = f"{input1} [SEP] {input2}"
+        combined_input = f"{model_output} [SEP] {retrieved_text_chunks}"
         payload = {"inputs": combined_input}
 
-        response = requests.post(api_url, headers=headers, json=payload)
+        response = self.endpoint.post(HUGS_HALLUCINATION_API_URL, json=payload)
         if response.status_code != 200:
-            raise RuntimeError(f"Error in API request: {response.text}")
+            raise RuntimeError(f"Error in API request: {response.text} , please try again once the endpoint has restarted.")
 
         output = response.json()
         score = output[0][0]['score']
         return score
-
-# Example usage
-# huggingface_provider = Huggingface()
-# input1 = "The sky is blue."
-# input2 = "Apples are red."
-# print(huggingface_provider.hallucination_evaluator(input1, input2))
 
 class Dummy(Huggingface):
 
