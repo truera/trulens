@@ -2,7 +2,9 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import Any, ClassVar, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import (
+    Any, ClassVar, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import numpy as np
@@ -55,9 +57,7 @@ class SqlAlchemyDB(DB):
     engine: Engine = None
     Session: sessionmaker = None
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def __init__(self, redact_keys: bool = False, **kwargs):
         super().__init__(redact_keys=redact_keys, **kwargs)

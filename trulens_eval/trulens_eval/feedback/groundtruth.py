@@ -35,9 +35,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def __init__(
         self,

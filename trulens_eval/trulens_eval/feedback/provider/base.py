@@ -15,9 +15,7 @@ logger = logging.getLogger(__name__)
 
 class Provider(SerialModel, WithClassInfo):
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint] = None
 
@@ -35,9 +33,7 @@ class LLMProvider(Provider, ABC):
     # warnings if we try to override some internal pydantic name.
     model_engine: str
 
-    model_config: ClassVar[dict] = dict(
-        protected_namespaces = ()
-    )
+    model_config: ClassVar[dict] = dict(protected_namespaces=())
 
     def __init__(self, *args, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this

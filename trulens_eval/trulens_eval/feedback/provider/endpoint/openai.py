@@ -63,9 +63,7 @@ class OpenAIClient(SerialModel):
     # contain secrets.
     REDACTED_KEYS: ClassVar[List[str]] = ["api_key", "default_headers"]
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     # Deserialized representation.
     client: Union[oai.OpenAI, oai.AzureOpenAI] = pydantic.Field(exclude=True)
@@ -154,9 +152,7 @@ class OpenAIClient(SerialModel):
 
 class OpenAICallback(EndpointCallback):
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
         default_factory=OpenAICallbackHandler, exclude=True
