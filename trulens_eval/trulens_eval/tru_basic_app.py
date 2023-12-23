@@ -83,8 +83,9 @@ class TruBasicApp(App):
             text_to_text (Callable): A text to text callable.
     """
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     app: TruWrapperApp
 
@@ -164,5 +165,6 @@ class TruBasicApp(App):
         self._with_dep_message(method="call", is_async=False, with_record=True)
 
         return self.with_record(self.app._call, *args, **kwargs)
+
 
 TruBasicApp.model_rebuild()

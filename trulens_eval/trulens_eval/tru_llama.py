@@ -25,10 +25,10 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-with OptionalImports(message=REQUIREMENT_LLAMA):
-    import llama_index
+with OptionalImports(messages=REQUIREMENT_LLAMA):
+    # import llama_index
 
-    from llama_index.indices.query.base import BaseQueryEngine
+    from llama_index.indice.query.base import BaseQueryEngine
     from llama_index.chat_engine.types import BaseChatEngine
     from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
     from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
@@ -44,7 +44,6 @@ with OptionalImports(message=REQUIREMENT_LLAMA):
     from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
 
     # misc
-    from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.indices.base_retriever import BaseRetriever
     from llama_index.indices.base import BaseIndex
     from llama_index.chat_engine.types import BaseChatEngine
@@ -228,8 +227,9 @@ class TruLlama(App):
             app (BaseQueryEngine | BaseChatEngine): A llama index application.
     """
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     app: Union[BaseQueryEngine, BaseChatEngine]
 
@@ -252,6 +252,16 @@ class TruLlama(App):
         """
         return cls.select_outputs().source_nodes[:]
 
+    @classmethod
+    def select_context(
+        cls,
+        app: Optional[Union[BaseQueryEngine, BaseChatEngine]] = None
+    ) -> Lens:
+        """
+        Get the path to the context in the query output.
+        """
+        return cls.select_outputs().source_nodes[:].node.text
+
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
@@ -263,7 +273,11 @@ class TruLlama(App):
 
         if 'str_or_query_bundle' in bindings.arguments:
             # llama_index specific
-            return bindings.arguments['str_or_query_bundle']
+            str_or_bundle = bindings.arguments['str_or_query_bundle']
+            if isinstance(str_or_bundle, QueryBundle):
+                return str_or_bundle.query_str
+            else:
+                return str_or_bundle
 
         elif 'message' in bindings.arguments:
             # llama_index specific

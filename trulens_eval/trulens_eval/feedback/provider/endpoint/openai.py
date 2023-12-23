@@ -23,13 +23,14 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, List, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
 
 from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
 
+from trulens_eval.feedback.provider.endpoint.base import DEFAULT_RPM
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.utils.imports import OptionalImports
@@ -45,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-with OptionalImports(message=REQUIREMENT_OPENAI):
+with OptionalImports(messages=REQUIREMENT_OPENAI):
     import openai as oai
 
 
@@ -62,8 +63,9 @@ class OpenAIClient(SerialModel):
     # contain secrets.
     REDACTED_KEYS: ClassVar[List[str]] = ["api_key", "default_headers"]
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     # Deserialized representation.
     client: Union[oai.OpenAI, oai.AzureOpenAI] = pydantic.Field(exclude=True)
@@ -152,8 +154,9 @@ class OpenAIClient(SerialModel):
 
 class OpenAICallback(EndpointCallback):
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
         default_factory=OpenAICallbackHandler, exclude=True
@@ -279,12 +282,13 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         if not counted_something:
             logger.warning(
-                f"Unregonized openai response format. It did not have usage information nor categories:\n"
-                + pp.pformat(response)
+                f"Could not find usage information in openai response:\n" +
+                pp.pformat(response)
             )
 
     def __init__(
         self,
+        rpm: float = DEFAULT_RPM,
         client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
                                OpenAIClient]] = None,
         **kwargs
@@ -299,6 +303,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
 
         self_kwargs = dict(
             name="openai",  # for SingletonPerName
+            rpm=rpm,  # for Endpoint
             callback_class=OpenAICallback,
             obj=self,  # for WithClassInfo:
             **kwargs

@@ -56,13 +56,12 @@ df_results, feedback_cols = lms.get_records_and_feedback([])
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
     (
-        row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
-    ):
-        (
-            "HIGHER_IS_BETTER"
-            if row.feedback_json.get("higher_is_better", True) else
-            "LOWER_IS_BETTER"
-        ) for _, row in lms.get_feedback_defs().iterrows()
+        row.feedback_json.get("supplied_name", "") or
+        row.feedback_json["implementation"]["name"]
+    ): (
+        "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
+        else "LOWER_IS_BETTER"
+    ) for _, row in lms.get_feedback_defs().iterrows()
 }
 default_direction = "HIGHER_IS_BETTER"
 
@@ -385,7 +384,7 @@ else:
             match_query = None
 
             # Assumes record_json['perf']['start_time'] is always present
-            if val != record_json["perf"]["start_time"] and val != "":
+            if val != "":
                 match = None
                 for call in record.calls:
                     if call.perf.start_time.isoformat() == val:

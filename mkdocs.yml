@@ -35,7 +35,6 @@ markdown_extensions:
       base_path: docs
   - attr_list
 
-
 plugins:
   - mkdocs-jupyter
   - mkdocstrings:
@@ -106,8 +105,9 @@ nav:
                   - Groundedness: trulens_eval/groundedness_smoke_tests.ipynb
           - 📚 API Reference:
               - Feedback Functions: trulens_eval/api/feedback.md
-              - Providers: 
+              - Providers:
                   - OpenAI: trulens_eval/api/openai_provider.md
+                  - AzureOpenAI: trulens_eval/api/azureopenai_provider.md
                   - AWS Bedrock: trulens_eval/api/bedrock_provider.md
                   - HuggingFace: trulens_eval/api/huggingface_provider.md
                   - LiteLLM: trulens_eval/api/litellm_provider.md
@@ -125,14 +125,14 @@ nav:
               - TruChain: trulens_eval/api/truchain.md
               - TruLlama: trulens_eval/api/trullama.md
               - TruCustom: trulens_eval/api/trucustom.md
-      - Guides: 
+      - Guides:
           - 🔍 Use Cases:
               - Any LLM App: trulens_eval/use_cases_any.md
               - RAGs: trulens_eval/use_cases_rag.md
               - LLM Agents: trulens_eval/use_cases_agent.md
               - Dev to Prod: trulens_eval/use_cases_production.md
       - Contributing:
-          - 🤝 Contrbution Guidelines: trulens_eval/CONTRIBUTING.md
+          - 🤝 Contribution Guidelines: trulens_eval/CONTRIBUTING.md
 
   - Explain:
       - Getting Started:

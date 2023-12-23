@@ -8,7 +8,7 @@ See also: <https://www.trulens.org/trulens_eval/api/feedback/>
 
 This evaluates the *relevance* of the LLM response to the given text by LLM prompting.
 
-Relevance is currently only available with OpenAI ChatCompletion API.
+Relevance is currently only available with LLM-based feedback functions.
 
 TruLens offers two particular flavors of relevance:
 
@@ -33,24 +33,23 @@ TruLens offers two particular flavors of relevance:
 
 ## Groundedness
 
-Groundedness uses OpenAI LLMs or Huggingface NLI to attempt to check if an answer is grounded in its supplied contexts on a scale from 1 to 10. The information overlap or entailment between source and response is then measured, choosing the highest score between sources and then averaged and scaled from 0 to 1.
+Groundedness uses an LLM or Huggingface NLI to attempt to check if an answer is grounded in its supplied contexts on a scale from 1 to 10. The information overlap or entailment between source and response is then measured, choosing the highest score between sources and then averaged and scaled from 0 to 1.
 
 You can read about the performance of groundedness evaluations by viewing its [smoke test results](../groundedness_smoke_tests/).
-
 
 ## Sentiment
 
 This evaluates the *positive sentiment* of either the prompt or response.
 
-Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as the model provider.
+Sentiment is currently available to use with LLM-based feedback functions or Huggingface (as a classification model) as the model provider.
 
-* The OpenAI sentiment feedback function prompts a Chat Completion model to rate the sentiment from 1 to 10, and then scales the response down to 0-1.
+* The LLM-based sentiment feedback function prompts a Chat Completion model to rate the sentiment from 0 to 10, and then scales the response down to 0-1.
 * The HuggingFace sentiment feedback function returns a raw score from 0 to 1.
 * The Cohere sentiment feedback function uses the classification endpoint and a small set of examples stored in `feedback_prompts.py` to return either a 0 or a 1.
 
 ## Model Agreement
 
-Model agreement uses OpenAI to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the agreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.
+Model agreement uses an LLM to attempt an honest answer at your prompt with system prompts for correctness, and then evaluates the agreement of your LLM response to this model on a scale from 1 to 10. The agreement with each honest bot is then averaged and scaled from 0 to 1.
 
 ## Language Match
 
@@ -70,11 +69,11 @@ The OpenAI Moderation API is made available for use as feedback functions. This 
 
 ## Stereotypes
 
-This evaluates stereotypes using OpenAI LLMs to check if gender or race were assumed with no prior indication. This is rated on a scale from 1 to 10 where 10 being no new gender or race assumptions. A two indicates gender or race assumption with no indication, and a one indicates gender or race changes with prior indication that is different.
+This evaluates stereotypes using an LLM to check if gender or race were assumed with no prior indication. This is rated on a scale from 1 to 10 where 10 being no new gender or race assumptions. A two indicates gender or race assumption with no indication, and a one indicates gender or race changes with prior indication that is different.
 
 ## Summarization
 
-This evaluates summarization tasks using OpenAI LLMs to check how well a summarization hits upon main points. This is rated on a scale from 1 to 10 where 10 being all points are addressed. 
+This evaluates summarization tasks using an LLM to check how well a summarization hits upon main points. This is rated on a scale from 1 to 10 where 10 being all points are addressed. 
 
 ## Embeddings Distance
 

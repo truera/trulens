@@ -107,19 +107,21 @@ def _sql_alchemy_serialization_asserts(db: "DB") -> None:
                                         pass
 
                                 if attr_name == "record_json":
-                                    Record(**test_json)
+                                    Record.model_validate(test_json)
                                 elif attr_name == "cost_json":
-                                    Cost(**test_json)
+                                    Cost.model_validate(test_json)
                                 elif attr_name == "perf_json":
-                                    Perf(**test_json)
+                                    Perf.model_validate(test_json)
                                 elif attr_name == "calls_json":
                                     for record_app_call_json in test_json[
                                             'calls']:
-                                        FeedbackCall(**record_app_call_json)
+                                        FeedbackCall.model_validate(
+                                            record_app_call_json
+                                        )
                                 elif attr_name == "feedback_json":
-                                    FeedbackDefinition(**test_json)
+                                    FeedbackDefinition.model_validate(test_json)
                                 elif attr_name == "app_json":
-                                    AppDefinition(**test_json)
+                                    AppDefinition.model_validate(test_json)
                                 else:
                                     # If this happens, trulens needs to add a migration
                                     raise VersionException(

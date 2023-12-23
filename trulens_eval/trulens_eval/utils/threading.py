@@ -5,10 +5,11 @@ Multi-threading utilities.
 from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
+import contextvars
 from inspect import stack
 import logging
 import threading
-from typing import Callable, TypeVar
+from typing import Callable, Optional, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
@@ -28,22 +29,39 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
     invocation.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def submit(self, fn, /, *args, **kwargs):
         present_stack = stack()
+        present_context = contextvars.copy_context()
         return super().submit(
-            _future_target_wrapper, present_stack, fn, *args, **kwargs
+            _future_target_wrapper, present_stack, present_context, fn, *args, **kwargs
         )
 
+# Attempt other users of ThreadPoolExecutor to use our version.
+import concurrent
+
+concurrent.futures.ThreadPoolExecutor = ThreadPoolExecutor
+concurrent.futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
+
+# Hack to try to make langchain use our ThreadPoolExecutor as the above doesn't
+# seem to do the trick.
+try:
+    import langchain_core
+    langchain_core.runnables.config.ThreadPoolExecutor = ThreadPoolExecutor
+except Exception:
+    pass
 
 class TP(SingletonPerName['TP']):  # "thread processing"
 
     # Store here stacks of calls to various thread starting methods so that we
     # can retrieve the trace of calls that caused a thread to start.
 
-    MAX_THREADS = 128
+    MAX_THREADS: int = 128
 
     # How long to wait for any task before restarting it.
-    DEBUG_TIMEOUT = 600.0  # 5 minutes
+    DEBUG_TIMEOUT: Optional[float] = 600.0  # [seconds], None to disable
 
     def __init__(self):
         if safe_hasattr(self, "thread_pool"):
@@ -72,9 +90,11 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         self,
         func: Callable[..., T],
         *args,
-        timeout: float = DEBUG_TIMEOUT,
+        timeout: Optional[float] = None,
         **kwargs
     ) -> T:
+        if timeout is None:
+            timeout = TP.DEBUG_TIMEOUT
 
         fut: 'Future[T]' = self.thread_pool.submit(func, *args, **kwargs)
 
@@ -100,9 +120,11 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         self,
         func: Callable[..., T],
         *args,
-        timeout: float = DEBUG_TIMEOUT,
+        timeout: Optional[float] = None,
         **kwargs
     ) -> 'Future[T]':
+        if timeout is None:
+            timeout = TP.DEBUG_TIMEOUT
 
         # TODO(piotrm): need deadlock fixes here. If submit or _submit was called
         # earlier in the stack, do not use a threadpool to evaluate this task
@@ -116,9 +138,11 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         self,
         func: Callable[..., T],
         *args,
-        timeout: float = DEBUG_TIMEOUT,
+        timeout: Optional[float] = None,
         **kwargs
     ) -> 'Future[T]':
+        if timeout is None:
+            timeout = TP.DEBUG_TIMEOUT
 
         # Submit a concurrent tasks to run `func` with the given `args` and
         # `kwargs` but stop with error if it ever takes too long. This is only

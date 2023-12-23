@@ -16,7 +16,7 @@ The components of this specifications are:
 
 - **Provider classes** -- `feedback.OpenAI` contains feedback function
   implementations like `qs_relevance`. Other classes subtyping
-  `feedback.Provider` include `Huggingface` and `Cohere`.
+  `feedback.Provider` include `Huggingface`.
 
 - **Feedback implementations** -- `openai.qs_relevance` is a feedback function
   implementation. Feedback implementations are simple callables that can be run

@@ -88,7 +88,6 @@ class TestFeedbackConstructors(TestCase):
                 with self.assertRaises(Exception):
                     Feedback.model_validate(f.model_dump())
 
-
     def test_nonglobal_feedback_functions(self):
         # Set up the same feedback functions as in feedback.py but locally here.
         # This makes them non-globally-importable.

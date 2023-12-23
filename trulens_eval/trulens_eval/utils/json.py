@@ -10,9 +10,7 @@ import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import (
-    Any, Dict, Optional, Sequence, Set, TypeVar
-)
+from typing import Any, Dict, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
 import pydantic
@@ -174,7 +172,7 @@ def jsonify(
         return str(obj)
 
     if type(obj) in pydantic.v1.json.ENCODERS_BY_TYPE:
-        return obj
+        return pydantic.v1.json.ENCODERS_BY_TYPE[type(obj)](obj)
 
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = {k: v for k, v in dicted.items()}
@@ -316,7 +314,9 @@ def jsonify(
 
     # Add class information for objects that are to be instrumented, known as
     # "components".
-    if instrument.to_instrument_object(obj) or isinstance(obj, WithClassInfo):
+    if isinstance(content, dict) and not isinstance(obj, dict) and (
+        instrument.to_instrument_object(obj) or isinstance(obj, WithClassInfo)
+    ):
         content[CLASS_INFO] = Class.of_class(
             cls=obj.__class__, with_bases=True
         ).model_dump()

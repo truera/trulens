@@ -71,7 +71,12 @@ class Huggingface(Provider):
 
     endpoint: Endpoint
 
-    def __init__(self, name: Optional[str] = None, endpoint=None, **kwargs):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        endpoint: Optional[Endpoint] = None,
+        **kwargs
+    ):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.

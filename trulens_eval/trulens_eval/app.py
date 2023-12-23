@@ -11,8 +11,10 @@ from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (Any, Callable, Dict, Hashable, Iterable, List, Optional,
-                    Sequence, Set, Tuple, Type)
+from typing import (
+    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
+    Tuple, Type
+)
 
 import pydantic
 from pydantic import Field
@@ -388,9 +390,10 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     Generalization of a wrapped model.
     """
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         # Tru, DB, most of the types on the excluded fields.
         arbitrary_types_allowed = True
+    )
 
     # Non-serialized fields here while the serialized ones are defined in
     # `schema.py:App`.
@@ -456,6 +459,25 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         self.tru_post_init()
 
+    @classmethod
+    def select_context(
+        cls,
+        app: Optional[Any] = None
+    ) -> Lens:
+        if app is None:
+            raise ValueError("Could not determine context selection without `app` argument.")
+        
+        # Checking by module name so we don't have to try to import either
+        # langchain or llama_index beforehand.
+        if type(app).__module__.startswith("langchain"):
+            from trulens_eval.tru_chain import TruChain
+            return TruChain.select_context(app)
+        elif type(app).__module__.startswith("llama_index"):
+            from trulens_eval.tru_llama import TruLlama
+            return TruLlama.select_context(app)
+        else:
+            raise ValueError(f"Could not determine context from unrecognized `app` type {type(app)}.")
+
     def __hash__(self):
         return hash(id(self))
 
@@ -501,7 +523,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 try:
                     f.implementation.load()
                 except Exception as e:
-                    raise Exception(f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}")
+                    raise Exception(
+                        f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
+                    )
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
@@ -686,9 +710,11 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             self, *args, instrument=self.instrument, **kwargs
         )
 
-    def model_dump(self):
+    def model_dump(self, redact_keys: bool = False):
         # Same problem as in json.
-        return jsonify(self, instrument=self.instrument)
+        return jsonify(
+            self, instrument=self.instrument, redact_keys=redact_keys
+        )
 
     # For use as a context manager.
     def __enter__(self):

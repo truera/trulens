@@ -45,14 +45,18 @@ export default function RecordTableRowRecursive({
   const { startTime, timeTaken, endTime } = getStartAndEndTimesForNode(node);
 
   let selector = 'Select.App';
+
   if (node.path) selector += `.${node.path}`;
 
-  const isNodeSelected = selectedNode === node.raw?.perf.start_time;
+  const isRoot = !node.path;
+  const nodeStartTime = isRoot ? '' : node.raw?.perf.start_time;
+
+  const isNodeSelected = selectedNode === nodeStartTime;
 
   return (
     <>
       <TableRow
-        onClick={() => setSelectedNode(node.raw?.perf.start_time ?? undefined)}
+        onClick={() => setSelectedNode(nodeStartTime ?? undefined)}
         sx={{
           ...recordRowSx,
           background: isNodeSelected ? ({ palette }) => palette.primary.lighter : undefined,

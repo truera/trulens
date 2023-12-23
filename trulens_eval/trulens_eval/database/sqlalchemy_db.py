@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, ClassVar, Iterable, List, Optional, Sequence, Tuple, Union
 import warnings
 
 import numpy as np
@@ -35,6 +35,7 @@ from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import RecordID
+from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -54,8 +55,9 @@ class SqlAlchemyDB(DB):
     engine: Engine = None
     Session: sessionmaker = None
 
-    class Config:
-        arbitrary_types_allowed: bool = True
+    model_config: ClassVar[dict] = dict(
+        arbitrary_types_allowed = True
+    )
 
     def __init__(self, redact_keys: bool = False, **kwargs):
         super().__init__(redact_keys=redact_keys, **kwargs)
@@ -172,7 +174,7 @@ class SqlAlchemyDB(DB):
             if _app := session.query(orm.AppDefinition
                                     ).filter_by(app_id=app.app_id).first():
 
-                _app.app_json = app.json()
+                _app.app_json = app.model_dump_json()
             else:
                 _app = orm.AppDefinition.parse(
                     app, redact_keys=self.redact_keys
@@ -192,7 +194,7 @@ class SqlAlchemyDB(DB):
             if _fb_def := session.query(orm.FeedbackDefinition) \
                     .filter_by(feedback_definition_id=feedback_definition.feedback_definition_id) \
                     .first():
-                _fb_def.app_json = feedback_definition.json()
+                _fb_def.app_json = feedback_definition.model_dump_json()
             else:
                 _fb_def = orm.FeedbackDefinition.parse(
                     feedback_definition, redact_keys=self.redact_keys
@@ -299,13 +301,21 @@ class SqlAlchemyDB(DB):
             return AppsExtractor().get_df_and_cols(apps)
 
 
+# Use this Perf for missing Perfs.
+# TODO: Migrate the database instead.
+no_perf = schema.Perf(
+    start_time=datetime.min, end_time=datetime.min
+).model_dump()
+
+
 def _extract_feedback_results(
     results: Iterable[orm.FeedbackResult]
 ) -> pd.DataFrame:
 
     def _extract(_result: orm.FeedbackResult):
         app_json = json.loads(_result.record.app.app_json)
-        _type = schema.AppDefinition(**app_json).root_class
+        _type = schema.AppDefinition.model_validate(app_json).root_class
+
         return (
             _result.record_id,
             _result.feedback_result_id,
@@ -317,9 +327,11 @@ def _extract_feedback_results(
             _result.result,
             _result.multi_result,
             _result.cost_json,
-            json.loads(_result.record.perf_json),
+            json.loads(_result.record.perf_json)
+            if _result.record.perf_json != MIGRATION_UNKNOWN_STR else no_perf,
             json.loads(_result.calls_json)["calls"],
-            json.loads(_result.feedback_definition.feedback_json),
+            json.loads(_result.feedback_definition.feedback_json)
+            if _result.feedback_definition is not None else None,
             json.loads(_result.record.record_json),
             app_json,
             _type,
@@ -361,7 +373,7 @@ def _extract_latency(
         if isinstance(perf_json, str):
             perf_json = json.loads(perf_json)
         if isinstance(perf_json, dict):
-            perf_json = schema.Perf(**perf_json)
+            perf_json = schema.Perf.model_validate(perf_json)
         if isinstance(perf_json, schema.Perf):
             return perf_json.latency.seconds
         raise ValueError(f"Failed to parse perf_json: {perf_json}")
@@ -418,10 +430,14 @@ class AppsExtractor:
 
                 for col in self.app_cols:
                     if col == "type":
+                        # Previous DBs did not contain entire app so we cannot
+                        # deserialize AppDefinition here unless we fix prior DBs
+                        # in migration. Because of this, loading just the
+                        # `root_class` here.
                         df[col] = str(
-                            schema.AppDefinition.model_validate_json(
-                                _app.app_json
-                            ).root_class
+                            Class.model_validate(
+                                json.loads(_app.app_json).get('root_class')
+                            )
                         )
                     else:
                         df[col] = getattr(_app, col)
@@ -450,12 +466,8 @@ class AppsExtractor:
                     self.feedback_columns.add(_res.name)
 
             row = {
-                **{
-                    k: np.mean(v) for k, v in values.items()
-                },
-                **{
-                    k + "_calls": flatten(v) for k, v in calls.items()
-                },
+                **{k: np.mean(v) for k, v in values.items()},
+                **{k + "_calls": flatten(v) for k, v in calls.items()},
             }
 
             for col in self.rec_cols:

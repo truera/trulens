@@ -185,21 +185,22 @@ def stack_with_tasks() -> Sequence['frame']:
 
     ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_task_stack
 
-    logger.debug("Getting cross-Task stacks. Current stack:")
-    for f in ret:
-        logger.debug(f"\t{f}")
+    # Need a more verbose debug mode for these:
+    #logger.debug("Getting cross-Task stacks. Current stack:")
+    #for f in ret:
+    #    logger.debug(f"\t{f}")
 
     try:
         task_stack = get_task_stack(asyncio.current_task())
 
-        logger.debug(f"Merging in stack from {asyncio.current_task()}:")
-        for s in task_stack:
-            logger.debug(f"\t{s}")
+        #logger.debug(f"Merging in stack from {asyncio.current_task()}:")
+        #for s in task_stack:
+        #    logger.debug(f"\t{s}")
 
         temp = merge_stacks(ret, task_stack)
-        logger.debug(f"Complete stack:")
-        for f in temp:
-            logger.debug(f"\t{f}")
+        #logger.debug(f"Complete stack:")
+        #for f in temp:
+        #    logger.debug(f"\t{f}")
 
         return temp
 
@@ -207,7 +208,7 @@ def stack_with_tasks() -> Sequence['frame']:
         return ret
 
 
-def _future_target_wrapper(stack, func, *args, **kwargs):
+def _future_target_wrapper(stack, context, func, *args, **kwargs):
     """
     Wrapper for a function that is started by threads. This is needed to
     record the call stack prior to thread creation as in python threads do
@@ -219,6 +220,10 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
 
     # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack
+
+    for var, value in context.items():
+        logger.debug(f"Copying context var {var} to thread.")
+        var.set(value)
 
     return func(*args, **kwargs)
 
@@ -244,10 +249,13 @@ def get_all_local_in_call_stack(
     with async tasks. In those cases, the `skip` argument is more reliable.
     """
 
-    logger.debug(f"Looking for local '{key}' in the stack.")
+    # TODO: Need a more verbose mode for these:
+    # logger.debug(f"Looking for local '{key}' in the stack.")
 
     if skip is not None:
-        logger.debug(f"Will be skipping {skip}.")
+        pass
+        # TODO: verbose debug
+        # logger.debug(f"Will be skipping {skip}.")
 
     frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
     # NOTE: skipping offset frames is done below since the full stack may need
@@ -261,7 +269,8 @@ def get_all_local_in_call_stack(
     while not q.empty():
         f = q.get()
 
-        logger.debug(f"{f.f_code}")
+        # TODO: verbose debug
+        # logger.debug(f"{f.f_code}")
 
         if id(f.f_code) == id(_future_target_wrapper.__code__):
             logger.debug(

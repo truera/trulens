@@ -1,7 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 import logging
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 import warnings
 
 from trulens_eval.feedback import prompts
@@ -15,12 +15,13 @@ logger = logging.getLogger(__name__)
 
 class Provider(SerialModel, WithClassInfo):
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     endpoint: Optional[Endpoint] = None
 
-    def __init__(self, name: str = None, **kwargs):
+    def __init__(self, name: Optional[str] = None, **kwargs):
         # for WithClassInfo:
         kwargs['obj'] = self
 
@@ -34,8 +35,9 @@ class LLMProvider(Provider, ABC):
     # warnings if we try to override some internal pydantic name.
     model_engine: str
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         protected_namespaces = ()
+    )
 
     def __init__(self, *args, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
@@ -557,7 +559,7 @@ class LLMProvider(Provider, ABC):
         Returns:
             flo"""
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
         )
 
     def correctness_with_cot_reasons(self, text: str) -> float:
@@ -581,7 +583,7 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (not correct) and 1.0 (correct).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
         )
 
     def coherence(self, text: str) -> float:

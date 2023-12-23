@@ -408,8 +408,6 @@ class Instrument(object):
             existing_apps = getattr(func, Instrument.APPS)
             existing_apps.add(self.app)
 
-            # print(f"already instrumented for apps {list(existing_apps)}: {query}, path type is {type(query).__name__}, id={id(type(query))}")
-
             return func
 
             # TODO: How to consistently address calls to chains that appear more
@@ -418,15 +416,16 @@ class Instrument(object):
         else:
             # Notify the app instrumenting this method where it is located:
 
-            # print(f"instrumenting {query}, path type is {type(query).__name__}, id={id(type(query))}")
-
             self.app._on_method_instrumented(obj, func, path=query)
 
         logger.debug(f"\t\t\t{query}: instrumenting {method_name}={func}")
 
         sig = safe_signature(func)
 
-        async def awrapper(*args, **kwargs):
+        def find_instrumented(f):
+            return id(f) in [id(tru_awrapper.__code__), id(tru_wrapper.__code__)]
+
+        async def tru_awrapper(*args, **kwargs):
             # TODO: figure out how to have less repetition between the async and
             # sync versions of this method.
 
@@ -434,13 +433,10 @@ class Instrument(object):
                 f"{query}: calling instrumented async method {func}"
             )  # DIFF
 
-            apps = getattr(awrapper, Instrument.APPS)  # DIFF
+            apps = getattr(tru_awrapper, Instrument.APPS)  # DIFF
 
             # If not within a root method, call the wrapped function without
             # any recording.
-
-            def find_instrumented(f):
-                return id(f) in [id(awrapper.__code__)]  # DIFF
 
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
@@ -581,7 +577,7 @@ class Instrument(object):
                 perf=Perf(start_time=start_time, end_time=end_time),
                 pid=os.getpid(),
                 tid=th.get_native_id(),
-                rets=rets,
+                rets=jsonify(rets),
                 error=error_str if error is not None else None
             )
             # End of run wrapped block.
@@ -617,19 +613,16 @@ class Instrument(object):
 
             return rets
 
-        def wrapper(*args, **kwargs):
+        def tru_wrapper(*args, **kwargs):
             # TODO: figure out how to have less repetition between the async and
             # sync versions of this method.
 
             logger.debug(f"{query}: calling instrumented method {func}")
 
-            apps = getattr(wrapper, Instrument.APPS)
+            apps = getattr(tru_wrapper, Instrument.APPS)
 
             # If not within a root method, call the wrapped function without
             # any recording.
-
-            def find_instrumented(f):
-                return id(f) in [id(wrapper.__code__), id(awrapper.__code__)]
 
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
@@ -715,8 +708,6 @@ class Instrument(object):
                 else:
                     stack = ctx_stacks[ctx]
 
-                # print(f"creating frame info for path {path}, path type is {type(path).__name__}, id={id(type(path))}")
-
                 frame_ident = RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
@@ -764,7 +755,7 @@ class Instrument(object):
                 perf=Perf(start_time=start_time, end_time=end_time),
                 pid=os.getpid(),
                 tid=th.get_native_id(),
-                rets=rets,
+                rets=jsonify(rets),
                 error=error_str if error is not None else None
             )
             # End of run wrapped block.
@@ -800,9 +791,9 @@ class Instrument(object):
 
             return rets
 
-        w = wrapper
+        w = tru_wrapper
         if inspect.iscoroutinefunction(func):
-            w = awrapper
+            w = tru_awrapper
 
         # Indicate that the wrapper is an instrumented method so that we dont
         # further instrument it in another layer accidentally.
@@ -812,6 +803,13 @@ class Instrument(object):
         # instrumented method. Making this a weakref set so that if the
         # instrumented app gets unloaded, it will be evicted from this set.
         setattr(w, Instrument.APPS, weakref.WeakSet([self.app]))
+
+        # Hack for llama_index trace_method not preserving wrapped method signature.
+        if "trace_method.<locals>.decorator.<locals>.wrapper" == func.__qualname__:
+            actual_func = func.__closure__[1].cell_contents
+            func_sig = inspect.signature(actual_func)
+            func.__signature__ = func_sig
+            func.__name__ = actual_func.__name__
 
         w.__name__ = func.__name__
 
@@ -973,7 +971,12 @@ class Instrument(object):
                         )
                     )
 
-        if self.to_instrument_object(obj):
+        if self.to_instrument_object(obj) or isinstance(obj, (dict, list, tuple)):
+            vals = None
+            if isinstance(obj, dict):
+                attrs = obj.keys()
+                vals = obj.values()
+
             if isinstance(obj, pydantic.BaseModel):
                 # NOTE(piotrm): This will not include private fields like
                 # llama_index's LLMPredictor._llm which might be useful to
@@ -993,9 +996,11 @@ class Instrument(object):
                 # not so this section applies.
                 attrs = clean_attributes(obj, include_props=True).keys()
 
-            for k in attrs:
-                v = safe_getattr(obj, k, get_prop=True)
+            if vals is None:
+                vals = [safe_getattr(obj, k, get_prop=True) for k in attrs]
 
+            for k, v in zip(attrs, vals):
+                
                 if isinstance(v, (str, bool, int, float)):
                     pass
 

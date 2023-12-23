@@ -20,7 +20,7 @@ from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import model_dump
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
-with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     import langchain
     from langchain.schema import Document
     from langchain.vectorstores.base import VectorStoreRetriever

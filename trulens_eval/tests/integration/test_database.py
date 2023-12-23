@@ -149,12 +149,14 @@ class TestDbV2Migration(TestCase):
             self.assertTrue(DbRevisions.load(db.engine).in_sync)
 
             # check that database is usable and no data was lost
-            self.assertEqual(db.get_app(app.app_id), json.loads(app.json()))
+            self.assertEqual(
+                db.get_app(app.app_id), json.loads(app.model_dump_json())
+            )
             df_recs, fb_cols = db.get_records_and_feedback([app.app_id])
             self.assertTrue(
                 set(df_recs.columns).issuperset(set(AppsExtractor.app_cols))
             )
-            self.assertEqual(df_recs["record_json"][0], rec.json())
+            self.assertEqual(df_recs["record_json"][0], rec.model_dump_json())
             self.assertEqual(list(fb_cols), [fb.name])
 
             df_fb = db.get_feedback(record_id=rec.record_id)
@@ -163,7 +165,9 @@ class TestDbV2Migration(TestCase):
             df_defs = db.get_feedback_defs(
                 feedback_definition_id=fb.feedback_definition_id
             )
-            self.assertEqual(df_defs["feedback_json"][0], json.loads(fb.json()))
+            self.assertEqual(
+                df_defs["feedback_json"][0], json.loads(fb.model_dump_json())
+            )
 
 
 class MockFeedback(Provider):

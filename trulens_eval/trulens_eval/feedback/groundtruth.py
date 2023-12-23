@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
@@ -14,10 +14,10 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
-with OptionalImports(message=REQUIREMENT_BERT_SCORE):
+with OptionalImports(messages=REQUIREMENT_BERT_SCORE):
     from bert_score import BERTScorer
 
-with OptionalImports(message=REQUIREMENT_EVALUATE):
+with OptionalImports(messages=REQUIREMENT_EVALUATE):
     import evaluate
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class GroundTruthAgreement(SerialModel, WithClassInfo):
     """Measures Agreement against a Ground Truth.
     """
-    ground_truth: Union[List[str], FunctionOrMethod]
+    ground_truth: Union[List[Dict], FunctionOrMethod]
     provider: Provider
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
@@ -35,13 +35,14 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     def __init__(
         self,
         ground_truth: Union[List, Callable, FunctionOrMethod],
-        provider: Provider = None,
+        provider: Optional[Provider] = None,
         bert_scorer: Optional["BERTScorer"] = None
     ):
         """Measures Agreement against a Ground Truth. 

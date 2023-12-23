@@ -6,7 +6,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Tuple
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
@@ -14,20 +14,25 @@ from pydantic import Field
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
+from trulens_eval.schema import Select
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.serial import all_queries
+from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-with OptionalImports(message=REQUIREMENT_LANGCHAIN):
+with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
-
+    # import langchain
+    
     from langchain.agents.agent import BaseMultiActionAgent
     from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
@@ -43,15 +48,17 @@ with OptionalImports(message=REQUIREMENT_LANGCHAIN):
     from langchain.schema.language_model import BaseLanguageModel
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
+    from langchain_core.runnables.base import RunnableSerializable
 
 
 class LangChainInstrument(Instrument):
 
     class Default:
-        MODULES = {"langchain."}
+        MODULES = {"langchain"}
 
         # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
+            RunnableSerializable,
             Serializable,
             Document,
             Chain,
@@ -73,6 +80,10 @@ class LangChainInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes.
         METHODS = {
+            "invoke":
+                lambda o: isinstance(o, RunnableSerializable),
+            "ainvoke":
+                lambda o: isinstance(o, RunnableSerializable),
             "save_context":
                 lambda o: isinstance(o, BaseMemory),
             "clear":
@@ -86,7 +97,13 @@ class LangChainInstrument(Instrument):
             "acall":
                 lambda o: isinstance(o, Chain),
             "_get_relevant_documents":
-                lambda o: True,  # VectorStoreRetriever, langchain >= 0.230
+                lambda o: isinstance(o, (RunnableSerializable)),
+            "_aget_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable)),
+            "get_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable)),
+            "aget_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable)),
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # the prompt calls might be too small to be interesting
@@ -200,6 +217,43 @@ class TruChain(App):
         kwargs['instrument'] = LangChainInstrument(app=self)
 
         super().__init__(**kwargs)
+
+    @classmethod
+    def select_context(cls, app: Optional[Chain] = None) -> Lens:
+        """
+        Get the path to the context in the query output.
+        """
+        
+        if app is None:
+            raise ValueError(
+                "langchain app/chain is required to determine context for langchain apps. "
+                "Pass it in as the `app` argument"
+            )
+
+        retrievers = []
+
+        app_json = jsonify(app)
+        for lens in all_queries(app_json):
+            try:
+                comp = lens.get_sole_item(app)
+                if isinstance(comp, BaseRetriever):
+                    retrievers.append((lens, comp))
+                
+            except Exception:
+                pass
+        
+        if len(retrievers) == 0:
+            raise ValueError("Cannot find any `BaseRetriever` in app.")
+        
+        if len(retrievers) > 1:
+            raise ValueError(
+                "Found more than one `BaseRetriever` in app:\n\t" + \
+                ("\n\t".join(map(
+                    lambda lr: f"{type(lr[1])} at {lr[0]}", 
+                    retrievers)))
+            )
+
+        return (Select.RecordCalls + retrievers[0][0]).get_relevant_documents.rets
 
     # TODEP
     # Chain requirement
@@ -346,5 +400,6 @@ class TruChain(App):
         ret, _ = await self.awith_(self.app.acall, *args, **kwargs)
 
         return ret
+
 
 TruChain.model_rebuild()

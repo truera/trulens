@@ -20,6 +20,7 @@ from trulens_eval.db import JSON
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
@@ -195,7 +196,7 @@ class Tru(SingletonPerName):
         self.db: DB
 
         if app is None:
-            app = AppDefinition.model_validate_json(self.db.get_app(app_id=app_id))
+            app = AppDefinition.model_validate(self.db.get_app(app_id=app_id))
             if app is None:
                 raise RuntimeError(
                     "App {app_id} not present in db. "
@@ -263,13 +264,19 @@ class Tru(SingletonPerName):
         self.db.insert_app(app=app)
 
     def add_feedback(
-        self, feedback_result: FeedbackResult = None, **kwargs
+        self,
+        feedback_result: Optional[FeedbackResult] = None,
+        **kwargs
     ) -> None:
         """
         Add a single feedback result to the database.
         """
 
         if feedback_result is None:
+            if 'result' in kwargs and 'status' not in kwargs:
+                # If result already present, set status to done.
+                kwargs['status'] = FeedbackResultStatus.DONE
+
             feedback_result = FeedbackResult(**kwargs)
         else:
             feedback_result.update(**kwargs)
@@ -469,13 +476,20 @@ class Tru(SingletonPerName):
         Leaderboard.main()
 
     def run_dashboard(
-        self, force: bool = False, _dev: Optional[Path] = None
+        self,
+        port: Optional[int] = 8501,
+        address: Optional[str] = None,
+        force: bool = False,
+        _dev: Optional[Path] = None
     ) -> Process:
         """
         Run a streamlit dashboard to view logged results and apps.
 
         Args:
+            - port: int: port number to pass to streamlit through server.port.
 
+            - address: str: address to pass to streamlit through server.address.
+        
             - force: bool: Stop existing dashboard(s) first.
 
             - _dev: Optional[Path]: If given, run dashboard with the given
@@ -490,6 +504,10 @@ class Tru(SingletonPerName):
 
             - Process: Process containing streamlit dashboard.
         """
+
+        IN_COLAB = 'google.colab' in sys.modules
+        if IN_COLAB and address is not None:
+            raise ValueError("`address` argument cannot be used in colab.")
 
         if force:
             self.stop_dashboard(force=force)
@@ -540,12 +558,23 @@ class Tru(SingletonPerName):
             env_opts['env'] = os.environ
             env_opts['env']['PYTHONPATH'] = str(_dev)
 
+        args = [
+                "streamlit", "run", 
+                "--server.headless=True"
+        ]
+        if port is not None:
+            args.append(f"--server.port={port}")
+        if address is not None:
+            args.append(f"--server.address={address}")
+
+        args += [
+            leaderboard_path, 
+            "--", "--database-url",
+            self.db.engine.url.render_as_string(hide_password=False)
+        ]
+
         proc = subprocess.Popen(
-            [
-                "streamlit", "run", "--server.headless=True", leaderboard_path,
-                "--", "--database-url",
-                self.db.engine.url.render_as_string(hide_password=False)
-            ],
+            args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -560,10 +589,10 @@ class Tru(SingletonPerName):
             out_stdout = None
             out_stderr = None
 
-        IN_COLAB = 'google.colab' in sys.modules
         if IN_COLAB:
             tunnel_proc = subprocess.Popen(
-                ["npx", "localtunnel", "--port", "8501"],
+                ["npx", "localtunnel", "--port",
+                 str(port)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -613,7 +642,7 @@ class Tru(SingletonPerName):
                         line = line.replace(
                             "External URL: http://", "Submit this IP Address: "
                         )
-                        line = line.replace(":8501", "")
+                        line = line.replace(f":{port}", "")
                         if out is not None:
                             out.append_stdout(line)
                         else:
@@ -657,8 +686,10 @@ class Tru(SingletonPerName):
         if IN_COLAB:
             # Need more time to setup 2 processes tunnel and dashboard
             wait_period = wait_period * 3
-        if not started.wait(timeout=wait_period
-                           ):  # This might not work on windows.
+
+        # This might not work on windows.
+        if not started.wait(timeout=wait_period):
+            Tru.dashboard_proc = None
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."

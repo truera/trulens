@@ -67,8 +67,9 @@ class EndpointCallback(SerialModel):
 
 class Endpoint(SerialModel, SingletonPerName):
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     @dataclass
     class EndpointSetup():
@@ -299,8 +300,8 @@ class Endpoint(SerialModel, SingletonPerName):
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(
-                wrapped_thing if wrapped_thing !=
-                object else "unknown dynamically generated class(es)"
+                wrapped_thing if wrapped_thing != object else
+                "unknown dynamically generated class(es)"
             )
             for original, wrapped, endpoint in wrappers:
                 print(
@@ -349,6 +350,15 @@ class Endpoint(SerialModel, SingletonPerName):
             setattr(cls, wrapper_method_name, metawrap)
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
+        if not safe_hasattr(mod, INSTRUMENT):
+            setattr(mod, INSTRUMENT, set())
+
+        already_instrumented = safe_getattr(mod, INSTRUMENT)
+
+        if method_name in already_instrumented:
+            logger.debug(f"module {mod} already instrumented for {method_name}")
+            return
+
         for m in dir(mod):
             logger.debug(
                 f"instrumenting module {mod} member {m} for method {method_name}"
@@ -356,6 +366,8 @@ class Endpoint(SerialModel, SingletonPerName):
             if safe_hasattr(mod, m):
                 obj = safe_getattr(mod, m)
                 self._instrument_class(obj, method_name=method_name)
+
+        already_instrumented.add(method_name)
 
     # TODO: CODEDUP
     @staticmethod
@@ -413,7 +425,6 @@ class Endpoint(SerialModel, SingletonPerName):
 
         for endpoint in Endpoint.ENDPOINT_SETUPS:
             if locals().get(endpoint.arg_flag):
-                print(f"tracking {endpoint.class_name}")
                 mod = __import__(
                     endpoint.module_name, fromlist=[endpoint.class_name]
                 )
