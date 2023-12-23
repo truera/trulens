@@ -12,7 +12,7 @@ import logging
 from pprint import PrettyPrinter
 from threading import Lock
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
+    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
     Tuple, Type
 )
 
@@ -390,9 +390,10 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     Generalization of a wrapped model.
     """
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         # Tru, DB, most of the types on the excluded fields.
         arbitrary_types_allowed = True
+    )
 
     # Non-serialized fields here while the serialized ones are defined in
     # `schema.py:App`.

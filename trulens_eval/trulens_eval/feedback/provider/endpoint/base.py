@@ -67,8 +67,9 @@ class EndpointCallback(SerialModel):
 
 class Endpoint(SerialModel, SingletonPerName):
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     @dataclass
     class EndpointSetup():
