@@ -559,7 +559,7 @@ class LLMProvider(Provider, ABC):
         Returns:
             flo"""
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
         )
 
     def correctness_with_cot_reasons(self, text: str) -> float:
@@ -583,7 +583,7 @@ class LLMProvider(Provider, ABC):
             float: A value between 0.0 (not correct) and 1.0 (correct).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
         )
 
     def coherence(self, text: str) -> float:
