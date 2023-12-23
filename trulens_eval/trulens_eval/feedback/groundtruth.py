@@ -33,7 +33,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
     # It's a class member because creating it is expensive
     bert_scorer: object
 
-    ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
+    ground_truth_imp: Optional[Callable] = pydantic.Field(None, exclude=True)
 
     model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
