@@ -392,8 +392,16 @@ class Obj(SerialModel):
         else:
             extra_kwargs = {}
 
-        bindings = self.init_bindings.load(sig, extra_kwargs=extra_kwargs)
-
+        try:
+            bindings = self.init_bindings.load(sig, extra_kwargs=extra_kwargs)
+            
+        except Exception as e:
+            print(f"Error binding constructor args for object:")
+            print(f"\t{self}")
+            print(f"\targs={self.init_bindings.args}")
+            print(f"\tkwargs={self.init_bindings.kwargs}")
+            raise e
+        
         return cls(*bindings.args, **bindings.kwargs)
 
 
