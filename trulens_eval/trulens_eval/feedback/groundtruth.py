@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
@@ -35,13 +35,14 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     def __init__(
         self,
         ground_truth: Union[List, Callable, FunctionOrMethod],
-        provider: Provider = None,
+        provider: Optional[Provider] = None,
         bert_scorer: Optional["BERTScorer"] = None
     ):
         """Measures Agreement against a Ground Truth. 

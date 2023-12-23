@@ -1,6 +1,6 @@
 # Code in support of the Apps.py page.
 
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 import pydantic
 
@@ -10,8 +10,9 @@ from trulens_eval.utils.serial import JSON
 
 class ChatRecord(pydantic.BaseModel):
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     # Human input
     human: Optional[str] = None

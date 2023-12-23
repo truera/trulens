@@ -83,8 +83,9 @@ class TruBasicApp(App):
             text_to_text (Callable): A text to text callable.
     """
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
+    )
 
     app: TruWrapperApp
 
