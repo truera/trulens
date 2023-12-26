@@ -8,7 +8,7 @@ import inspect
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Any, Dict, Optional, Sequence, Type, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union
 
 import pkg_resources
 
@@ -99,7 +99,7 @@ def format_import_errors(
 {','.join(packages)} {pack_s} {is_are} required for {purpose}.
 You should be able to install {it_them} with pip:
 
-    pip install '{' '.join(requirements)}
+    pip install '{' '.join(requirements)}'
 """
     )
 
@@ -156,36 +156,165 @@ REQUIREMENT_EVALUATE = format_import_errors(
     "evaluate", purpose="using certain metrics"
 )
 
-
+class DummyMeta(type):
+    def __new__(cls, name, bases, namespace):
+        print(f"meta new: {cls} {name}")
+        if name != "Dummy":
+            def fake_init(self, *args, **kwargs):
+                raise ImportError(name)
+            namespace['__init__'] = fake_init
+        
+        return super().__new__(cls, name, bases, namespace)
+    
+    
 # Try to pretend to be a type as well as an instance.
-class Dummy(type, object):
+class Dummy(type):
     """
     Class to pretend to be a module or some other imported object. Will raise an
     error if accessed in any way.
     """
 
-    def __new__(cls, name, **kwargs):
-        return type.__new__(cls, name, (object,), {})
+    def __init_subclass__(cls, /, *args, **kwargs):
+        # super().__init_subclass__(**kwargs)
+        print("\ninit_subclass")
+        print(args)
+        print(kwargs)
+
+    @staticmethod
+    def __new__(cls, *args, **kwargs):
+        # If we pretended to be a type, we need to handle calls to creation of a
+        # new instance of that type, and raise an ImportError here.
+
+        #print("\nDummy.__new__")
+        #print(cls)
+        #print(args)
+        #print(kwargs)
+
+        if len(args) == 3 and len(kwargs) == 0:
+            # A class extended a dummy type. Keep producing dummies.
+            name, bases, namespace = args
+            # new_attrs = dict(__classcell__ = attrs['__classcell__'])
+            # fill the other attributes with dummies here?
+            # new_attrs['name'] = name
+            # new_attrs['importer'] = None
+            # new_attrs['message'] = None
+            # new_attrs['exception_class'] = ImportError
+            #def fake_init(*args, **kwargs):
+            #    raise ImportError(name)
+            #namespace['__init_subclass__'] = fake_init
+            #namespace['__init__'] = fake_init
+            #namespace['__call__'] = fake_init
+
+            dummy = None
+            
+            for base in bases:
+                if isinstance(base, Dummy):
+                    print("base is dummy")
+                    dummy = base
+            
+            assert dummy is not None
+            importer = dummy.importer
+            exception_class = dummy.exception_class
+            message = dummy.message
+
+            #namespace['importer'] = importer
+            #namespace['message'] = message
+            #namespace['exception_class'] = exception_class
+            #namespace['__init__'] = dummy.__call__
+            #for k, v in namespace.items():
+            #    print(f"\t{k}={v}")
+
+            #cls, name, bases, namespace,
+            obj = Dummy(
+                name=name,
+                importer=importer,
+                message=message,
+                exception_class=exception_class,
+                sub_bases=bases,
+                sub_cls=cls,
+                # sub_namespace=namespace,
+                #classcell = namespace.get('__classcell__')
+            )
+
+            obj.__class__ = Dummy
+
+            print(f"will return {obj}")
+
+            return obj
+
+        #if 'importer' not in kwargs:
+        #    raise ImportError(f"Dummy.__new__({cls},\n{args},\n{kwargs})")
+
+        importer = kwargs['importer']
+        name = kwargs['name']
+
+        #if not importer.importing:
+        #    raise ImportError(f"Dummy.__new__({cls},\n{args},\n{kwargs})")
+        
+        ns = dict()
+        sub_ns = kwargs.get('sub_namespace')
+        if sub_ns is not None:
+            ns = sub_ns
+    
+        sub_bases = kwargs.get('sub_bases')
+        bases = (object,)
+        if sub_bases is not None:
+            bases = sub_bases
+        
+        print("\t", bases)
+
+        return type.__new__(cls, name, bases, ns)
 
     def __init__(
         self,
         name: str,
         message: str,
         exception_class: Type[Exception] = ModuleNotFoundError,
-        importer=None
+        importer = None,
+        **kwargs
     ):
+        print(f"Dummy.__init__({name})")
+
         self.name = name
         self.message = message
         self.importer = importer
         self.exception_class = exception_class
+        self.__class__ = Dummy
 
     def __call__(self, *args, **kwargs):
+        print("\ncall")
+        print("\t", self)
+        print("\t", args)
+        print("\t", kwargs)
+        #if args[0] == Dummy:
+        #    self = args[0]
         raise self.exception_class(self.message)
-
+        #else:
+        #    print("call without self")
+            
+        """
+        print(f"self={self}")
+        print(f"name={self.name}")
+        print(f"importer={self.importer}")
+        print(f"message={self.message}")
+        print(f"exception_class={self.exception_class}")
+        """
+        
     def __instancecheck__(self, __instance: Any) -> bool:
         return True
 
+    @classmethod
+    def __subclasshook__(cls, __subclass) -> bool:
+        return True
+
     def __subclasscheck__(self, __subclass: type) -> bool:
+        return True
+
+    def __mro_entries__(self, bases) -> Tuple[type, ...]:
+        return (object, )
+                
+    def __typing_subst__(self, t):
+        print(self, t)
         return True
 
     def __getattr__(self, name):
@@ -210,8 +339,11 @@ class Dummy(type, object):
             return Dummy(
                 name=self.name + "." + name,
                 message=self.message,
-                importer=self.importer
+                importer=self.importer,
+                exception_class=self.exception_class
             )
+
+        print(name)
 
         # If we are no longer in optional imports context, raise the exception
         # with the optional package message.
@@ -278,7 +410,8 @@ class OptionalImports(object):
             return Dummy(
                 name=name,
                 message=self.messages.module_not_found,
-                importer=self
+                importer=self,
+                exception_class=ImportError
             )
 
         # NOTE(piotrm): This below seems to never be caught. It might be that a
