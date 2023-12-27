@@ -143,12 +143,9 @@ class LLMProvider(Provider, ABC):
         Returns:
             The score and reason metadata if available.
         """
-        llm_messages = [{"role": "system", "content": system_prompt}]
-        if user_prompt is not None:
-            llm_messages.append({"role": "user", "content": user_prompt})
-
+        llm_prompt = system_prompt + user_prompt if user_prompt else system_prompt
         response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(messages=llm_messages)
+            lambda: self._create_chat_completion(prompt=llm_prompt)
         )
         if "Supporting Evidence" in response:
             score = 0.0
