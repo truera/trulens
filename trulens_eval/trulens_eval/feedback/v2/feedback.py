@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import ClassVar, List, Optional
 
-from langchain import PromptTemplate
+from langchain.prompts import PromptTemplate
 from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
 import pydantic
 
