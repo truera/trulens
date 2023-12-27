@@ -11,6 +11,7 @@ from pydantic import Field
 from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import select
+from sqlalchemy.schema import MetaData
 from sqlalchemy.orm import sessionmaker
 
 from trulens_eval import schema
@@ -47,7 +48,11 @@ logger = logging.getLogger(__name__)
 
 @for_all_methods(
     run_before(lambda self, *args, **kwargs: check_db_revision(self.engine)),
-    _except=["migrate_database", "reload_engine"]
+    _except=[
+        "migrate_database",
+        "reload_engine",
+        "reset_database" # migrates database automatically
+    ]
 )
 class SqlAlchemyDB(DB):
     engine_params: dict = Field(default_factory=dict)
@@ -132,14 +137,11 @@ class SqlAlchemyDB(DB):
         logger.info("Your database does not need migration.")
 
     def reset_database(self):
-        deleted = 0
-        with self.Session.begin() as session:
-            deleted += session.query(AppDefinition).delete()
-            deleted += session.query(FeedbackDefinition).delete()
-            deleted += session.query(Record).delete()
-            deleted += session.query(FeedbackResult).delete()
+        meta = MetaData()
+        meta.reflect(bind=self.engine)
+        meta.drop_all(bind=self.engine)
 
-        logger.info(f"Deleted {deleted} rows.")
+        self.migrate_database()
 
     def insert_record(self, record: schema.Record) -> schema.RecordID:
         # TODO: thread safety

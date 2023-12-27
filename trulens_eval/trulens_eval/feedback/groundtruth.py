@@ -33,7 +33,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
     # It's a class member because creating it is expensive
     bert_scorer: object
 
-    ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
+    ground_truth_imp: Optional[Callable] = pydantic.Field(None, exclude=True)
 
     model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
@@ -43,7 +43,8 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
         self,
         ground_truth: Union[List, Callable, FunctionOrMethod],
         provider: Optional[Provider] = None,
-        bert_scorer: Optional["BERTScorer"] = None
+        bert_scorer: Optional["BERTScorer"] = None,
+        **kwargs
     ):
         """Measures Agreement against a Ground Truth. 
 
@@ -94,7 +95,8 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth_imp=ground_truth_imp,
             provider=provider,
             bert_scorer=bert_scorer,
-            obj=self  # for WithClassInfo
+            obj=self,  # for WithClassInfo
+            **kwargs
         )
 
     def _find_response(self, prompt: str) -> Optional[str]:
