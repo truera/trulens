@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 from tqdm.auto import tqdm
@@ -23,7 +23,7 @@ class Groundedness(SerialModel, WithClassInfo):
     """
     groundedness_provider: Provider
 
-    def __init__(self, groundedness_provider: Provider = None):
+    def __init__(self, groundedness_provider: Optional[Provider] = None, **kwargs):
         """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
         This class will use an LLM to find the relevant strings in a text. The groundedness_provider can 
         either be an LLM provider (such as OpenAI) or NLI with huggingface.
@@ -53,7 +53,8 @@ class Groundedness(SerialModel, WithClassInfo):
             groundedness_provider = OpenAI()
         super().__init__(
             groundedness_provider=groundedness_provider,
-            obj=self  # for WithClassInfo
+            obj=self,  # for WithClassInfo
+            **kwargs
         )
 
     def groundedness_measure(self, source: str, statement: str) -> float:
