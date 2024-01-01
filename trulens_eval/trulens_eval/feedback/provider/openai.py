@@ -428,17 +428,6 @@ class AzureOpenAI(OpenAI):
             **kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-        # Setting it here to not hit the warning in the super.__init__ .
-
-    """
-    def model_dump(self):
-        # Include deployment_name despite not being an attribute, it is an init
-        # arg though.
-        temp: dict = super().model_dump()
-        temp['deployment_name'] = self.model_engine
-        return temp
-    """
-    
     def _create_chat_completion(self, *args, **kwargs):
         """
         We need to pass `engine`
