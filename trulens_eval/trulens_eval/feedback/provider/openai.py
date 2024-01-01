@@ -2,6 +2,7 @@ import logging
 from typing import Dict, Optional, Sequence
 
 import openai as oai
+import pydantic
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIClient
@@ -10,6 +11,7 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.pyschema import CLASS_INFO
 
 logger = logging.getLogger(__name__)
+
 
 
 class OpenAI(LLMProvider):
@@ -367,37 +369,76 @@ class AzureOpenAI(OpenAI):
     Has the same functionality as OpenAI out of the box feedback functions.
     """
 
+    # Sent to our openai client wrapper but need to keep here as well so that it
+    # gets dumped when jsonifying.
+    deployment_name: str = pydantic.Field(alias="model_engine")
+
     def __init__(self, deployment_name: str, endpoint=None, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """
-        Wrapper to use Azure OpenAI. Please export the following env variables
+        Wrapper to use Azure OpenAI. Please export the following env variables.
+        These can be retrieved from https://oai.azure.com/ .
 
         - AZURE_OPENAI_ENDPOINT
         - AZURE_OPENAI_API_KEY
         - OPENAI_API_VERSION
 
+        Deployment name below is also found on the oai azure page.
+
         **Usage:**
         ```python
         from trulens_eval.feedback.provider.openai import AzureOpenAI
         openai_provider = AzureOpenAI(deployment_name="...")
+
+        openai_provider.relevance(
+            prompt="Where is Germany?",
+            response="Poland is in Europe."
+        ) # low relevance
         ```
 
         Args:
-            deployment_name (str, required): The name of the deployment.
-            endpoint (Endpoint): Internal Usage for DB serialization
+            - deployment_name (str, required): The name of the deployment.
+
+            - endpoint (Optional[Endpoint]): Internal Usage for DB
+              serialization.
         """
 
-        client_args = dict(kwargs)
-        if CLASS_INFO in client_args:
-            del client_args[CLASS_INFO]
+        # Make a dict of args to pass to AzureOpenAI client. Remove any we use
+        # for our needs. Note that model name / deployment name is not set in
+        # that client and instead is an argument to each chat request. We pass
+        # that through the super class's `_create_chat_completion`.
+        client_kwargs = dict(kwargs)
+        if CLASS_INFO in client_kwargs:
+            del client_kwargs[CLASS_INFO]
+        if "model_engine" in client_kwargs:
+            # delete from client args
+            del client_kwargs["model_engine"]
+        else:
+            # but include in provider args
+            kwargs['model_engine'] = deployment_name
 
-        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_args))
+        kwargs["client"] = OpenAIClient(
+            client=oai.AzureOpenAI(**client_kwargs)
+        )
+        
         super().__init__(
-            endpoint=endpoint, model_engine=deployment_name, **kwargs
+            endpoint = endpoint,
+            **kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+        # Setting it here to not hit the warning in the super.__init__ .
+
+    """
+    def model_dump(self):
+        # Include deployment_name despite not being an attribute, it is an init
+        # arg though.
+        temp: dict = super().model_dump()
+        temp['deployment_name'] = self.model_engine
+        return temp
+    """
+    
     def _create_chat_completion(self, *args, **kwargs):
         """
         We need to pass `engine`
