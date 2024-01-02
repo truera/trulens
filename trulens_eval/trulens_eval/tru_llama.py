@@ -28,7 +28,7 @@ pp = PrettyPrinter()
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     # import llama_index
 
-    from llama_index.indice.query.base import BaseQueryEngine
+    from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.chat_engine.types import BaseChatEngine
     from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
     from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
