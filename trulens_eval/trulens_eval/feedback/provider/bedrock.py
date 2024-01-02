@@ -69,6 +69,7 @@ class Bedrock(LLMProvider):
                 "temperature": 0,
                 "topP": 1
             }})
+        # TODO: make textGenerationConfig available for user
 
         modelId = self.model_id
 
