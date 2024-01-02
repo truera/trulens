@@ -1,12 +1,10 @@
 import json
 import logging
 import os
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Union, Tuple
 
-from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
-from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.generated import re_0_10_rating
 
 logger = logging.getLogger(__name__)
@@ -63,10 +61,14 @@ class Bedrock(LLMProvider):
         assert self.endpoint is not None
         assert prompt is not None, "Bedrock can only operate on `prompt`, not `messages`."
 
-        # NOTE(joshr): only tested with sso auth
         import json
 
-        body = json.dumps({"inputText": prompt})
+        body = json.dumps({"inputText": prompt, "textGenerationConfig": {
+                "maxTokenCount": 4096,
+                "stopSequences": [],
+                "temperature": 0,
+                "topP": 1
+            }})
 
         modelId = self.model_id
 
@@ -74,6 +76,49 @@ class Bedrock(LLMProvider):
 
         response_body = json.loads(response.get('body').read()
                                   ).get('results')[0]["outputText"]
-        # text
-
         return response_body
+    
+    # overwrite base to use prompt instead of messages
+    def _extract_score_and_reasons_from_response(
+        self,
+        system_prompt: str,
+        user_prompt: Optional[str] = None,
+        normalize: float = 10.0
+    ) -> Union[float, Tuple[float, Dict]]:
+        """
+        Extractor for LLM prompts. If CoT is used; it will look for
+        "Supporting Evidence" template. Otherwise, it will look for the typical
+        0-10 scoring.
+
+        Args:
+            system_prompt (str): A pre-formated system prompt
+
+        Returns:
+            The score and reason metadata if available.
+        """
+        response = self.endpoint.run_me(
+            lambda: self._create_chat_completion(prompt=(system_prompt + user_prompt if user_prompt else system_prompt))
+        )
+        if "Supporting Evidence" in response:
+            score = 0.0
+            supporting_evidence = None
+            criteria = None
+            for line in response.split('\n'):
+                if "Score" in line:
+                    score = re_0_10_rating(line) / normalize
+                if "Criteria" in line:
+                    parts = line.split(":")
+                    if len(parts) > 1:
+                        criteria = ":".join(parts[1:]).strip()
+                if "Supporting Evidence" in line:
+                    supporting_evidence = line[line.index("Supporting Evidence:") + len("Supporting Evidence:"):].strip()
+            reasons = {
+                'reason':
+                    (
+                        f"{'Criteria: ' + str(criteria)}\n"
+                        f"{'Supporting Evidence: ' + str(supporting_evidence)}"
+                    )
+            }
+            return score, reasons
+        else:
+            return re_0_10_rating(response) / normalize
