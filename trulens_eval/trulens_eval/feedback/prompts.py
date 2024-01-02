@@ -7,12 +7,12 @@ from trulens_eval.feedback.v2 import feedback as v2
 
 COT_REASONS_TEMPLATE = \
 """
-Please answer with this template:
+Please answer using the entire template below.
 
 TEMPLATE: 
+Score: <The score 0-10 based on the given criteria>
 Criteria: <Provide the criteria for this evaluation>
 Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
-Score: <The score 0-10 based on the given criteria>
 """
 
 LLM_GROUNDEDNESS = v2.Groundedness.prompt.template
