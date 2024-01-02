@@ -150,7 +150,6 @@ class LLMProvider(Provider, ABC):
         response = self.endpoint.run_me(
             lambda: self._create_chat_completion(messages=llm_messages)
         )
-        print(response)
         if "Supporting Evidence" in response:
             score = 0.0
             supporting_evidence = None
