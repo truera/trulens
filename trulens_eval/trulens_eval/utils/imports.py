@@ -171,7 +171,16 @@ class DummyMeta(type):
 class Dummy(type):
     """
     Class to pretend to be a module or some other imported object. Will raise an
-    error if accessed in any way.
+    error if accessed in most ways. Some ways in which it will NOT raise an
+    error is when being used as a class and extended. That is, in the example
+    where `Someclass` extends `SomeDummy` which is a `Dummy`, an exception will
+    not be raised but if an instance of `SomeClass` is to be created, then the
+    error will be raised.
+
+    ```python
+    class SomeClass(SomeDummy):
+        ...
+    ```
     """
 
     def __init_subclass__(cls, /, *args, **kwargs):
