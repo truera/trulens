@@ -45,7 +45,7 @@ echo "sed=$SED"
 # Fix nbmerge ids field invalid for ipynb
 $SED -i -e '/\"id\":/d' all_tools.ipynb
 
-for NOTEBOOK in ${ALL_NOTEBOOKS[@]} all_tools.ipynb
+for NOTEBOOK in ${NOTEBOOKS[@]}
 do
     echo "converting notebook $NOTEBOOK to script"
     jupyter nbconvert --to script --output-dir $OUT_DIR $NOTEBOOK
