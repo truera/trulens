@@ -133,7 +133,7 @@ class LLMProvider(Provider, ABC):
         normalize: float = 10.0
     ) -> Union[float, Tuple[float, Dict]]:
         """
-        Extractor for our LLM prompts. If CoT is used; it will look for
+        Extractor for LLM prompts. If CoT is used; it will look for
         "Supporting Evidence" template. Otherwise, it will look for the typical
         0-10 scoring.
 
@@ -152,7 +152,8 @@ class LLMProvider(Provider, ABC):
         )
         if "Supporting Evidence" in response:
             score = 0.0
-            supporting_evidence = ""
+            supporting_evidence = None
+            criteria = None
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_0_10_rating(line) / normalize
@@ -161,14 +162,12 @@ class LLMProvider(Provider, ABC):
                     if len(parts) > 1:
                         criteria = ":".join(parts[1:]).strip()
                 if "Supporting Evidence" in line:
-                    parts = line.split(":")
-                    if len(parts) > 1:
-                        supporting_evidence = ":".join(parts[1:]).strip()
+                    supporting_evidence = line[line.index("Supporting Evidence:") + len("Supporting Evidence:"):].strip()
             reasons = {
                 'reason':
                     (
-                        f"{'Criteria: ' + str(criteria) + ' ' if criteria else ''}\n"
-                        f"{'Supporting Evidence: ' + str(supporting_evidence) if supporting_evidence else ''}"
+                        f"{'Criteria: ' + str(criteria)}\n"
+                        f"{'Supporting Evidence: ' + str(supporting_evidence)}"
                     )
             }
             return score, reasons
