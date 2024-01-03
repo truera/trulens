@@ -11,25 +11,12 @@
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
-# In[ ]:
-
-
 # ! pip install trulens_eval==0.20.0 openai==1.3.7 langchain chromadb langchainhub bs4
-
-
-# In[ ]:
-
 
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
-
 # ### Import from LangChain and TruLens
-
-# In[ ]:
-
-
-from IPython.display import JSON
 
 # Imports main tools:
 from trulens_eval import TruChain, Feedback, Huggingface, Tru
@@ -48,11 +35,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough
 
-
 # ### Load documents
-
-# In[ ]:
-
 
 loader = WebBaseLoader(
     web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
@@ -64,11 +47,7 @@ loader = WebBaseLoader(
 )
 docs = loader.load()
 
-
 # ### Create Vector Store
-
-# In[ ]:
-
 
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 splits = text_splitter.split_documents(docs)
@@ -76,11 +55,7 @@ splits = text_splitter.split_documents(docs)
 vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings(
 ))
 
-
 # ### Create RAG
-
-# In[ ]:
-
 
 retriever = vectorstore.as_retriever()
 
@@ -97,19 +72,11 @@ rag_chain = (
     | StrOutputParser()
 )
 
-
 # ### Send your first request
-
-# In[ ]:
-
 
 rag_chain.invoke("What is Task Decomposition?")
 
-
 # ## Initialize Feedback Function(s)
-
-# In[ ]:
-
 
 from trulens_eval.feedback.provider import OpenAI
 import numpy as np
@@ -141,41 +108,25 @@ f_context_relevance = (
     .aggregate(np.mean)
     )
 
-
 # ## Instrument chain for logging with TruLens
-
-# In[ ]:
-
 
 tru_recorder = TruChain(rag_chain,
     app_id='Chain1_ChatApplication',
     feedbacks=[f_qa_relevance, f_context_relevance, f_groundedness])
 
-
-# In[ ]:
-
-
 with tru_recorder as recording:
     llm_response = rag_chain.invoke("What is Task Decomposition?")
 
-display(llm_response)
-
+print(llm_response)
 
 # ## Retrieve records and feedback
-
-# In[ ]:
-
 
 # The record of the ap invocation can be retrieved from the `recording`:
 
 rec = recording.get() # use .get if only one record
 # recs = recording.records # use .records if multiple
 
-display(rec)
-
-
-# In[ ]:
-
+print(rec)
 
 # The results of the feedback functions can be rertireved from the record. These
 # are `Future` instances (see `concurrent.futures`). You can use `as_completed`
@@ -189,32 +140,19 @@ for feedback_future in  as_completed(rec.feedback_results):
     feedback: Feedback
     feedbac_result: FeedbackResult
 
-    display(feedback.name, feedback_result.result)
-
-
-# In[ ]:
-
+    print(feedback.name, feedback_result.result)
 
 records, feedback = tru.get_records_and_feedback(app_ids=["Chain1_ChatApplication"])
 
 records.head()
 
-
-# In[ ]:
-
-
 tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])
 
-
 # ## Explore in a Dashboard
-
-# In[ ]:
-
 
 tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
-
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
