@@ -1,11 +1,12 @@
 import logging
 from typing import Dict, List, Optional
+import pydantic
 
 import numpy as np
 from tqdm.auto import tqdm
 
 from trulens_eval.feedback import prompts
-from trulens_eval.feedback.provider import Provider
+from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.bedrock import Bedrock
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.litellm import LiteLLM
@@ -18,18 +19,28 @@ from trulens_eval.utils.serial import SerialModel
 logger = logging.getLogger(__name__)
 
 
-class Groundedness(SerialModel, WithClassInfo):
-    """Measures Groundedness.
+class Groundedness(WithClassInfo, SerialModel):
     """
+    Measures Groundedness.
+    """
+
+    # @pydantic.validator()
     groundedness_provider: Provider
 
+    #@classmethod
+    #def model_validate(cls, obj, **kwargs):
+    #    print("Groundedness.model_validate")
+    #    return super().model_validate(obj, **kwargs)
+
     def __init__(self, groundedness_provider: Optional[Provider] = None, **kwargs):
-        """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
-        This class will use an LLM to find the relevant strings in a text. The groundedness_provider can 
+        """
+        Instantiates the groundedness providers. Currently the groundedness
+        functions work well with a summarizer. This class will use an LLM to
+        find the relevant strings in a text. The groundedness_provider can
         either be an LLM provider (such as OpenAI) or NLI with huggingface.
 
         Usage 1:
-        ```
+        ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
@@ -37,7 +48,7 @@ class Groundedness(SerialModel, WithClassInfo):
         ```
 
         Usage 2:
-        ```
+        ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
@@ -45,12 +56,19 @@ class Groundedness(SerialModel, WithClassInfo):
         ```
 
         Args:
-            groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
-            summarize_provider (Provider, optional): Internal Usage for DB serialization.
+            - groundedness_provider (Provider, optional): groundedness provider
+              options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
+            - summarize_provider (Provider, optional): Internal Usage for DB
+              serialization.
         """
 
+        print("Groundedness.__init__")
+        print(f"groundedness_provider={type(groundedness_provider)}")
+
         if groundedness_provider is None:
+            logger.warning("Provider not provided. Using OpenAI.")
             groundedness_provider = OpenAI()
+
         super().__init__(
             groundedness_provider=groundedness_provider,
             obj=self,  # for WithClassInfo

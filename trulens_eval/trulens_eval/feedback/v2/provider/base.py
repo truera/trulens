@@ -14,7 +14,7 @@ from trulens_eval.utils.serial import SerialModel
 # Level 4 feedback abstraction
 
 
-class Provider(SerialModel, WithClassInfo):
+class Provider(WithClassInfo, SerialModel):
 
     model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True

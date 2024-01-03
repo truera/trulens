@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODEP
-class GroundTruthAgreement(SerialModel, WithClassInfo):
+class GroundTruthAgreement(WithClassInfo, SerialModel):
     """Measures Agreement against a Ground Truth.
     """
     ground_truth: Union[List[Dict], FunctionOrMethod]

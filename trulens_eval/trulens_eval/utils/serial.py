@@ -74,16 +74,24 @@ class SerialModel(pydantic.BaseModel):
 
         return jsonify(self, **kwargs)
 
+    """
     @classmethod
     def model_validate(cls, obj, **kwargs):
         # import hierarchy circle here
         from trulens_eval.utils.pyschema import CLASS_INFO
         from trulens_eval.utils.pyschema import WithClassInfo
 
+        print(f"SerialModel.model_validate {cls}")
+        # pp.pprint(obj)
+
+        # If the model had the WithClassInfo mixin, and thus the CLASS_INFO
+        # attribute, we can find information about its specific class in that
+        # attribute. This decoding logic is in WithClassInfo.model_validate .
         if isinstance(obj, Dict) and CLASS_INFO in obj:
-            return WithClassInfo.model_validate(obj, **kwargs)
+            return WithClassInfo.load(obj, **kwargs)
 
         return super(SerialModel, cls).model_validate(obj, **kwargs)
+    """
 
     def update(self, **d):
         for k, v in d.items():

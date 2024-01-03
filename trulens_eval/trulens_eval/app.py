@@ -385,7 +385,7 @@ class RecordingContext():
         return record
 
 
-class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
+class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     """
     Generalization of a wrapped model.
     """

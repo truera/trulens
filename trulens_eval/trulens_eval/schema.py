@@ -436,7 +436,7 @@ else:
     TFeedbackResultFuture = Future
 
 
-class FeedbackDefinition(SerialModel, WithClassInfo):
+class FeedbackDefinition(WithClassInfo, SerialModel):
     # Serialized parts of a feedback function. The non-serialized parts are in
     # the feedback.py:Feedback class.
 
@@ -526,7 +526,7 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
-class AppDefinition(SerialModel, WithClassInfo):
+class AppDefinition(WithClassInfo, SerialModel):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
 

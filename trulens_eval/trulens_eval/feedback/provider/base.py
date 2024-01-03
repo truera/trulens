@@ -4,6 +4,8 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 import warnings
 
+import pydantic
+
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.generated import re_0_10_rating
@@ -13,7 +15,7 @@ from trulens_eval.utils.serial import SerialModel
 logger = logging.getLogger(__name__)
 
 
-class Provider(SerialModel, WithClassInfo):
+class Provider(WithClassInfo, SerialModel):
 
     model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed = True
@@ -27,8 +29,12 @@ class Provider(SerialModel, WithClassInfo):
 
         super().__init__(name=name, **kwargs)
 
+    #@classmethod
+    #def model_validate(cls, obj):
+    #    print("Provider.model_validate called")
+    #    return WithClassInfo.model_validate(obj)
 
-class LLMProvider(Provider, ABC):
+class LLMProvider(Provider):
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any
@@ -45,14 +51,13 @@ class LLMProvider(Provider, ABC):
         # down below. Adding it as None here as a temporary hack
 
         # TODO: why was self_kwargs required here independently of kwargs?
-        self_kwargs = dict()
-        self_kwargs.update(**kwargs)
+        self_kwargs = dict(kwargs)
 
         super().__init__(
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    @abstractmethod
+    #@abstractmethod
     def _create_chat_completion(
         self,
         prompt: Optional[str] = None,
@@ -66,6 +71,7 @@ class LLMProvider(Provider, ABC):
             str: Completion model response.
         """
         # text
+        raise NotImplementedError()
         pass
 
     def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
