@@ -36,8 +36,10 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         present_stack = stack()
         present_context = contextvars.copy_context()
         return super().submit(
-            _future_target_wrapper, present_stack, present_context, fn, *args, **kwargs
+            _future_target_wrapper, present_stack, present_context, fn, *args,
+            **kwargs
         )
+
 
 # Attempt other users of ThreadPoolExecutor to use our version.
 import concurrent
@@ -52,6 +54,7 @@ try:
     langchain_core.runnables.config.ThreadPoolExecutor = ThreadPoolExecutor
 except Exception:
     pass
+
 
 class TP(SingletonPerName['TP']):  # "thread processing"
 
