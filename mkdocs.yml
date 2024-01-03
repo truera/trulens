@@ -113,7 +113,7 @@ nav:
                   - LiteLLM: trulens_eval/api/litellm_provider.md
       - Tracking:
           - 🎺 Instrumentation:
-              - Overview: trulens_eval/basic_instrumentation.ipynb
+              - Overview: trulens_eval/trulens_instrumentation.ipynb
               - LangChain Integration: trulens_eval/langchain_instrumentation.ipynb
               - Llama-Index Integration: trulens_eval/llama_index_instrumentation.ipynb
           - 🚚 Logging:
