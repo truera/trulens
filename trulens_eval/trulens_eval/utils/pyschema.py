@@ -603,6 +603,7 @@ class WithClassInfo(pydantic.BaseModel):
     @pydantic.model_validator(mode='before')
     @staticmethod
     def load(obj, **kwargs):
+        
         if not isinstance(obj, dict):
             return obj
 
@@ -611,6 +612,8 @@ class WithClassInfo(pydantic.BaseModel):
 
         clsinfo = Class.model_validate(obj[CLASS_INFO])
         cls = clsinfo.load()
+
+        print("WithClassInfo", obj, cls)
 
         # NOTE(piotrm): even though we have a more specific class than
         # AppDefinition, we load it as AppDefinition due to serialization
@@ -641,42 +644,6 @@ class WithClassInfo(pydantic.BaseModel):
         # this:
         return validated
 
-    """
-    @classmethod
-    def model_validate(cls, obj, **kwargs):
-        print(f"WithClassInfo: validating {cls}")
-        # pp.pprint(obj)
-        if isinstance(obj, dict) and CLASS_INFO in obj:
-
-            clsinfo = Class.model_validate(obj[CLASS_INFO])
-            clsloaded = clsinfo.load()
-
-            print(f"clsinfo: {clsinfo}")
-            print(f"loaded class: {clsloaded}")
-
-            # NOTE(piotrm): even though we have a more specific class than
-            # AppDefinition, we load it as AppDefinition due to serialization
-            # issues in the wrapped app. Keeping it as AppDefinition means `app`
-            # field is just json.
-            from trulens_eval.schema import AppDefinition
-
-            if issubclass(clsloaded, AppDefinition):
-                return super(cls, AppDefinition).model_validate(obj)
-            else:
-                if clsloaded == cls:
-                    # If we don't check this, will get to infinite loop.
-                    print("loaded is same as calling")
-                    return super().model_validate(obj)
-
-                print("calling", super(SerialModel, clsloaded).model_validate)
-                return super(cls, clsloaded).model_validate(obj)
-
-        else:
-            raise ValueError("No class info present in object.")
-        
-            # return super().model_validate(obj)
-    """
-
     def __init__(
         self,
         *args,
@@ -685,6 +652,9 @@ class WithClassInfo(pydantic.BaseModel):
         cls: Optional[type] = None,
         **kwargs
     ):
+        if obj is None:
+            obj = self
+
         if obj is not None:
             cls = type(obj)
 

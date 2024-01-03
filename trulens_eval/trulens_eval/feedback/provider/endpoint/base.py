@@ -175,7 +175,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         kwargs['callback_name'] = f"callback_{name}"
         kwargs['pace_thread'] = Thread()  # temporary
         kwargs['pace_thread'].daemon = True
-        super(SerialModel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         def keep_pace():
             while True:

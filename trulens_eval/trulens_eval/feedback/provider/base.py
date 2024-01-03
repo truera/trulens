@@ -25,7 +25,7 @@ class Provider(WithClassInfo, SerialModel):
 
     def __init__(self, name: Optional[str] = None, **kwargs):
         # for WithClassInfo:
-        kwargs['obj'] = self
+        # kwargs['obj'] = self
 
         super().__init__(name=name, **kwargs)
 

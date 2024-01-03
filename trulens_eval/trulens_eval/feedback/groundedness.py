@@ -71,7 +71,7 @@ class Groundedness(WithClassInfo, SerialModel):
 
         super().__init__(
             groundedness_provider=groundedness_provider,
-            obj=self,  # for WithClassInfo
+            # obj=self,  # for WithClassInfo
             **kwargs
         )
 
