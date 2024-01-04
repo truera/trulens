@@ -481,9 +481,6 @@ class FeedbackDefinition(WithClassInfo, SerialModel):
 
         selectors = selectors or dict()
 
-        # for WithClassInfo:
-        kwargs['obj'] = self
-
         super().__init__(
             feedback_definition_id="temporary",
             selectors=selectors,
@@ -637,9 +634,6 @@ class AppDefinition(WithClassInfo, SerialModel):
         kwargs['tags'] = ""
         kwargs['metadata'] = {}
         kwargs['app_extra_json'] = app_extra_json or dict()
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(**kwargs)
 

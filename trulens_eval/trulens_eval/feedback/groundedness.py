@@ -56,16 +56,12 @@ class Groundedness(WithClassInfo, SerialModel):
               serialization.
         """
 
-        print("Groundedness.__init__")
-        print(f"groundedness_provider={type(groundedness_provider)}")
-
         if groundedness_provider is None:
             logger.warning("Provider not provided. Using OpenAI.")
             groundedness_provider = OpenAI()
 
         super().__init__(
             groundedness_provider=groundedness_provider,
-            # obj=self,  # for WithClassInfo
             **kwargs
         )
 

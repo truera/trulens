@@ -301,7 +301,6 @@ class OpenAIEndpoint(Endpoint):
         self_kwargs = dict(
             name=name,  # for SingletonPerName
             rpm=rpm,  # for Endpoint
-            obj=self,  # for WithClassInfo:
             **kwargs
         )
 

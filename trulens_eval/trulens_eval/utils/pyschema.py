@@ -613,8 +613,6 @@ class WithClassInfo(pydantic.BaseModel):
         clsinfo = Class.model_validate(obj[CLASS_INFO])
         cls = clsinfo.load()
 
-        print("WithClassInfo", obj, cls)
-
         # NOTE(piotrm): even though we have a more specific class than
         # AppDefinition, we load it as AppDefinition due to serialization
         # issues in the wrapped app. Keeping it as AppDefinition means `app`
@@ -652,6 +650,9 @@ class WithClassInfo(pydantic.BaseModel):
         cls: Optional[type] = None,
         **kwargs
     ):
+        if obj is not None:
+            logger.warning("obj should not be provided", DeprecationWarning)
+
         if obj is None:
             obj = self
 

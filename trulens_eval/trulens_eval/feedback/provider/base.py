@@ -22,15 +22,7 @@ class Provider(WithClassInfo, SerialModel):
     endpoint: Optional[Endpoint] = None
 
     def __init__(self, name: Optional[str] = None, **kwargs):
-        # for WithClassInfo:
-        # kwargs['obj'] = self
-
         super().__init__(name=name, **kwargs)
-
-    #@classmethod
-    #def model_validate(cls, obj):
-    #    print("Provider.model_validate called")
-    #    return WithClassInfo.model_validate(obj)
 
 class LLMProvider(Provider):
 

@@ -31,7 +31,7 @@ class HuggingfaceCallback(EndpointCallback):
                 self.cost.n_classes += len(item)
 
 
-class HuggingfaceEndpoint(Endpoint, WithClassInfo):
+class HuggingfaceEndpoint(Endpoint):
     """
     Huggingface. Instruments the requests.post method for requests to
     "https://api-inference.huggingface.co".
@@ -74,9 +74,6 @@ class HuggingfaceEndpoint(Endpoint, WithClassInfo):
         # print anything even if key not set.
         if _check_key("HUGGINGFACE_API_KEY", silent=True, warn=True):
             kwargs['post_headers'] = get_huggingface_headers()
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)
 

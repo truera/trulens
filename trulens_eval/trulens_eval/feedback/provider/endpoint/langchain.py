@@ -23,7 +23,7 @@ class LangchainCallback(EndpointCallback):
         super().handle_generation(response)
 
 
-class LangchainEndpoint(Endpoint, WithClassInfo):
+class LangchainEndpoint(Endpoint):
     """
     Langchain endpoint.
     """

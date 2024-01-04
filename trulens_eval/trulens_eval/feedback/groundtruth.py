@@ -93,7 +93,6 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ground_truth_imp=ground_truth_imp,
             provider=provider,
             bert_scorer=bert_scorer,
-            obj=self,  # for WithClassInfo
             **kwargs
         )
 

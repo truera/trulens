@@ -32,7 +32,7 @@ class Embeddings(WithClassInfo, SerialModel):
 
         service_context = ServiceContext.from_defaults(embed_model=embed_model)
         self._embed_model = service_context.embed_model
-        super().__init__(obj=self)
+        super().__init__()
 
     def cosine_distance(
         self, query: str, document: str
