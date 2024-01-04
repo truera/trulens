@@ -24,11 +24,13 @@ logger = logging.getLogger(__name__)
 
 
 # TODEP
-class GroundTruthAgreement(SerialModel, WithClassInfo):
-    """Measures Agreement against a Ground Truth.
+class GroundTruthAgreement(WithClassInfo, SerialModel):
+    """
+    Measures Agreement against a Ground Truth.
     """
     ground_truth: Union[List[Dict], FunctionOrMethod]
     provider: Provider
+    
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
     bert_scorer: object
@@ -93,7 +95,6 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth_imp=ground_truth_imp,
             provider=provider,
             bert_scorer=bert_scorer,
-            obj=self,  # for WithClassInfo
             **kwargs
         )
 
