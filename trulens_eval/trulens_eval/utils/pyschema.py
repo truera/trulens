@@ -394,7 +394,7 @@ class Obj(SerialModel):
 
         try:
             bindings = self.init_bindings.load(sig, extra_kwargs=extra_kwargs)
-            
+
         except Exception as e:
             msg = f"Error binding constructor args for object:\n"
             msg += str(e) + "\n"
@@ -402,7 +402,7 @@ class Obj(SerialModel):
             msg += f"\targs={self.init_bindings.args}\n"
             msg += f"\tkwargs={self.init_bindings.kwargs}\n"
             raise type(e)(msg)
-        
+
         return cls(*bindings.args, **bindings.kwargs)
 
 

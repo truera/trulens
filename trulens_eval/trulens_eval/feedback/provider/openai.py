@@ -13,7 +13,6 @@ from trulens_eval.utils.pyschema import CLASS_INFO
 logger = logging.getLogger(__name__)
 
 
-
 class OpenAI(LLMProvider):
     """
     Out of the box feedback functions calling OpenAI APIs.
@@ -419,13 +418,10 @@ class AzureOpenAI(OpenAI):
             # but include in provider args
             kwargs['model_engine'] = deployment_name
 
-        kwargs["client"] = OpenAIClient(
-            client=oai.AzureOpenAI(**client_kwargs)
-        )
-        
+        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
+
         super().__init__(
-            endpoint = endpoint,
-            **kwargs
+            endpoint=endpoint, **kwargs
         )  # need to include pydantic.BaseModel.__init__
 
     def _create_chat_completion(self, *args, **kwargs):
