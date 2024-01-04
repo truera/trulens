@@ -19,8 +19,8 @@ class Langchain(LLMProvider):
     def __init__(
         self,
         chain: Union[BaseLLM, BaseChatModel],
-        model_engine: str = "",
         *args,
+        model_engine: str = "",
         **kwargs
     ):
         """
@@ -38,10 +38,10 @@ class Langchain(LLMProvider):
         Args:
             chain (Union[BaseLLM, BaseChatModel]): Langchain LLMs or chat models
         """
-        self_kwargs = kwargs.copy()
+        self_kwargs = dict(kwargs)
         self_kwargs["model_engine"] = model_engine or type(chain).__name__
         self_kwargs["endpoint"] = LangchainEndpoint(
-            *args, chain=chain, **kwargs.copy()
+            *args, chain=chain, **kwargs
         )
 
         super().__init__(**self_kwargs)
