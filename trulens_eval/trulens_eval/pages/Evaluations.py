@@ -344,7 +344,11 @@ else:
                             # NOTE(piotrm for garett): converting feedback
                             # function inputs to strings here as other
                             # structures get rendered as [object Object] in the
-                            # javascript downstream.
+                            # javascript downstream. If the first input/column
+                            # is a list, the DataFrame.from_records does create
+                            # multiple rows, one for each element, but if the
+                            # second or other column is a list, it will not do
+                            # this.
                             for c in call:
                                 args = c['args']
                                 for k, v in args.items():
