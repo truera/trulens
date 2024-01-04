@@ -57,6 +57,5 @@ class LangchainEndpoint(Endpoint):
         kwargs["chain"] = chain
         kwargs["name"] = "langchain"
         kwargs["callback_class"] = LangchainCallback
-        kwargs["obj"] = self
 
         super().__init__(*args, **kwargs)
