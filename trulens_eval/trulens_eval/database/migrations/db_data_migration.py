@@ -148,7 +148,11 @@ def data_migrate(db: "DB", from_version: str):
         sql_alchemy_from_version
     )
     to_compat_version = None
-    fail_advice = f"Please open a ticket on trulens github page including this error message. The migration completed so you can still proceed; but stability is not guaranteed. If needed, you can `tru.reset_database()`"
+    fail_advice = (
+        f"Please open a ticket on trulens github page including this error message. "
+        f"The migration completed so you can still proceed; but stability is not guaranteed. "
+        f"If needed, you can `tru.reset_database()`"
+    )
 
     try:
         while from_compat_version in sqlalchemy_upgrade_paths:
@@ -163,7 +167,8 @@ def data_migrate(db: "DB", from_version: str):
         tb = traceback.format_exc()
         current_revision = DbRevisions.load(db.engine).current
         raise VersionException(
-            f"Migration failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
+            f"Migration failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. "
+            f"The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
         )
     try:
         _sql_alchemy_serialization_asserts(db)
@@ -172,5 +177,6 @@ def data_migrate(db: "DB", from_version: str):
         tb = traceback.format_exc()
         current_revision = DbRevisions.load(db.engine).current
         raise VersionException(
-            f"Validation failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
+            f"Validation failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. "
+            f"The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
         )

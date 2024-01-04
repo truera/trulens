@@ -305,6 +305,8 @@ class Huggingface(Provider):
         for label in hf_response:
             if label['label'] == 'entailment':
                 return label['score']
+            
+        return -1
 
     def pii_detection(self, text: str) -> float:
         """
