@@ -287,9 +287,7 @@ class TruCustomApp(App):
             app (Any): Any class
     """
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     app: Any
 

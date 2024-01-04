@@ -338,11 +338,9 @@ class Tru(SingletonPerName):
 
         return leaderboard
 
-    def start_evaluator(
-        self,
-        restart=False,
-        fork=False
-    ) -> Union[Process, Thread]:
+    def start_evaluator(self,
+                        restart=False,
+                        fork=False) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
         """
@@ -560,18 +558,14 @@ class Tru(SingletonPerName):
             env_opts['env'] = os.environ
             env_opts['env']['PYTHONPATH'] = str(_dev)
 
-        args = [
-                "streamlit", "run", 
-                "--server.headless=True"
-        ]
+        args = ["streamlit", "run", "--server.headless=True"]
         if port is not None:
             args.append(f"--server.port={port}")
         if address is not None:
             args.append(f"--server.address={address}")
 
         args += [
-            leaderboard_path, 
-            "--", "--database-url",
+            leaderboard_path, "--", "--database-url",
             self.db.engine.url.render_as_string(hide_password=False)
         ]
 

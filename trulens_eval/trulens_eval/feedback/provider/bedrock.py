@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Dict, Optional, Sequence, Union, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
@@ -63,12 +63,18 @@ class Bedrock(LLMProvider):
 
         import json
 
-        body = json.dumps({"inputText": prompt, "textGenerationConfig": {
-                "maxTokenCount": 4096,
-                "stopSequences": [],
-                "temperature": 0,
-                "topP": 1
-            }})
+        body = json.dumps(
+            {
+                "inputText": prompt,
+                "textGenerationConfig":
+                    {
+                        "maxTokenCount": 4096,
+                        "stopSequences": [],
+                        "temperature": 0,
+                        "topP": 1
+                    }
+            }
+        )
         # TODO: make textGenerationConfig available for user
 
         modelId = self.model_id
@@ -78,7 +84,7 @@ class Bedrock(LLMProvider):
         response_body = json.loads(response.get('body').read()
                                   ).get('results')[0]["outputText"]
         return response_body
-    
+
     # overwrite base to use prompt instead of messages
     def _extract_score_and_reasons_from_response(
         self,
@@ -98,7 +104,10 @@ class Bedrock(LLMProvider):
             The score and reason metadata if available.
         """
         response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(prompt=(system_prompt + user_prompt if user_prompt else system_prompt))
+            lambda: self._create_chat_completion(
+                prompt=
+                (system_prompt + user_prompt if user_prompt else system_prompt)
+            )
         )
         if "Supporting Evidence" in response:
             score = 0.0
@@ -112,7 +121,9 @@ class Bedrock(LLMProvider):
                     if len(parts) > 1:
                         criteria = ":".join(parts[1:]).strip()
                 if "Supporting Evidence" in line:
-                    supporting_evidence = line[line.index("Supporting Evidence:") + len("Supporting Evidence:"):].strip()
+                    supporting_evidence = line[
+                        line.index("Supporting Evidence:") +
+                        len("Supporting Evidence:"):].strip()
             reasons = {
                 'reason':
                     (
