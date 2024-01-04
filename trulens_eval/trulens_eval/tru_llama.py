@@ -16,7 +16,7 @@ from trulens_eval.schema import Record
 from trulens_eval.utils.containers import dict_set_with
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
-from trulens_eval.utils.llama import WithFeedbackFilterNodes
+
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import Lens
@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
-    # import llama_index
+    import llama_index
+
+    from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
     from llama_index.indices.query.base import BaseQueryEngine
     from llama_index.chat_engine.types import BaseChatEngine
@@ -68,8 +70,9 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.tools.types import BaseTool
     from llama_index.tools.types import AsyncBaseTool  # subtype of BaseTool
 
-from trulens_eval.tru_chain import LangChainInstrument
+OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
 
+from trulens_eval.tru_chain import LangChainInstrument
 
 class LlamaInstrument(Instrument):
 
