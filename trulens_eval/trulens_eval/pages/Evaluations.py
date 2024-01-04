@@ -317,7 +317,6 @@ else:
                 for fcol in feedback_cols:
                     feedback_name = fcol
                     feedback_result = row[fcol]
-                    print(feedback_result)
 
                     if MULTI_CALL_NAME_DELIMITER in fcol:
                         fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
@@ -342,6 +341,7 @@ else:
                             df = pd.DataFrame.from_records(
                                 [call[i]["args"] for i in range(len(call))]
                             )
+                            
                             df["result"] = pd.DataFrame(
                                 [
                                     float(call[i]["ret"])
