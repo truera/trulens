@@ -600,7 +600,7 @@ class WithClassInfo(pydantic.BaseModel):
     # parent class.
     @pydantic.model_validator(mode='before')
     @staticmethod
-    def load(obj, **kwargs):
+    def load(obj, *args, **kwargs):
         
         if not isinstance(obj, dict):
             return obj
