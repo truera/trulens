@@ -2,7 +2,7 @@ from concurrent.futures import Future
 from concurrent.futures import wait
 import logging
 from multiprocessing.pool import AsyncResult
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
@@ -175,7 +175,7 @@ class Huggingface(Provider):
         return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
     @_tci
-    def context_relevance(self, prompt: str, context: str | list) -> float:
+    def context_relevance(self, prompt: str, context: Union[str, list]) -> float:
         """
         Uses Huggingface's truera/context_relevance model, a
         model that uses computes the relevance of a given context to the prompt. 
