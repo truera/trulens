@@ -1,7 +1,7 @@
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional
 
 import pydantic
 
@@ -24,8 +24,7 @@ with OptionalImports(messages=REQUIREMENT_BEDROCK):
 
 class BedrockCallback(EndpointCallback):
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response)

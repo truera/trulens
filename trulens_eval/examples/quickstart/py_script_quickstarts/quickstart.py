@@ -9,11 +9,7 @@
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
 
-# In[ ]:
-
-# ! pip install trulens_eval==0.19.2 chromadb==0.4.18 openai==1.3.7
-
-# In[ ]:
+# ! pip install trulens_eval==0.20.0 chromadb==0.4.18 openai==1.3.7
 
 import os
 
@@ -22,8 +18,6 @@ os.environ["OPENAI_API_KEY"] = "..."
 # ## Get Data
 #
 # In this case, we'll just initialize some simple text in the notebook.
-
-# In[ ]:
 
 university_info = """
 The University of Washington, founded in 1861 in Seattle, is a public research university
@@ -37,8 +31,6 @@ including one of the largest library systems in the world.
 #
 # Create a chromadb vector store in memory.
 
-# In[ ]:
-
 from openai import OpenAI
 
 oai_client = OpenAI()
@@ -46,8 +38,6 @@ oai_client = OpenAI()
 oai_client.embeddings.create(
     model="text-embedding-ada-002", input=university_info
 )
-
-# In[ ]:
 
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
@@ -64,22 +54,16 @@ vector_store = chroma_client.get_or_create_collection(
 
 # Add the university_info to the embedding database.
 
-# In[ ]:
-
 vector_store.add("uni_info", documents=university_info)
 
 # ## Build RAG from scratch
 #
 # Build a custom RAG from scratch, and add TruLens custom instrumentation.
 
-# In[ ]:
-
 from trulens_eval import Tru
 from trulens_eval.tru_custom_app import instrument
 
 tru = Tru()
-
-# In[ ]:
 
 
 class RAG_from_scratch:
@@ -127,8 +111,6 @@ rag = RAG_from_scratch()
 #
 # Here we'll use groundedness, answer relevance and context relevance to detect hallucination.
 
-# In[ ]:
-
 import numpy as np
 
 from trulens_eval import Feedback
@@ -168,8 +150,6 @@ f_context_relevance = (
 # ## Construct the app
 # Wrap the custom RAG with TruCustomApp, add list of feedbacks for eval
 
-# In[ ]:
-
 from trulens_eval import TruCustomApp
 
 tru_rag = TruCustomApp(
@@ -181,15 +161,9 @@ tru_rag = TruCustomApp(
 # ## Run the app
 # Use `tru_rag` as a context manager for the custom RAG-from-scratch app.
 
-# In[ ]:
-
 with tru_rag as recording:
     rag.query("When was the University of Washington founded?")
 
-# In[ ]:
-
 tru.get_leaderboard(app_ids=["RAG v1"])
-
-# In[ ]:
 
 tru.run_dashboard()

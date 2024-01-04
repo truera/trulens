@@ -78,7 +78,7 @@ TO PLACE
 
 """
 
-__version__ = "0.19.2"
+__version__ = "0.20.0"
 
 from trulens_eval.feedback import Bedrock
 from trulens_eval.feedback import Feedback
@@ -93,8 +93,13 @@ from trulens_eval.tru import Tru
 from trulens_eval.tru_basic_app import TruBasicApp
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_custom_app import TruCustomApp
-from trulens_eval.tru_llama import TruLlama
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.threading import TP
+
+with OptionalImports(messages=REQUIREMENT_LLAMA):
+    from trulens_eval.tru_llama import TruLlama
+
 
 __all__ = [
     "Tru",

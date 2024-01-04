@@ -1,8 +1,8 @@
 from abc import abstractmethod
 from typing import ClassVar, List, Optional
 
-from langchain import PromptTemplate
 from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
+from langchain.prompts import PromptTemplate
 import pydantic
 
 from trulens_eval.utils.generated import re_0_10_rating

@@ -5,6 +5,7 @@ Multi-threading utilities.
 from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
+import contextvars
 from inspect import stack
 import logging
 import threading
@@ -28,11 +29,31 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
     invocation.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def submit(self, fn, /, *args, **kwargs):
         present_stack = stack()
+        present_context = contextvars.copy_context()
         return super().submit(
-            _future_target_wrapper, present_stack, fn, *args, **kwargs
+            _future_target_wrapper, present_stack, present_context, fn, *args,
+            **kwargs
         )
+
+
+# Attempt other users of ThreadPoolExecutor to use our version.
+import concurrent
+
+concurrent.futures.ThreadPoolExecutor = ThreadPoolExecutor
+concurrent.futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
+
+# Hack to try to make langchain use our ThreadPoolExecutor as the above doesn't
+# seem to do the trick.
+try:
+    import langchain_core
+    langchain_core.runnables.config.ThreadPoolExecutor = ThreadPoolExecutor
+except Exception:
+    pass
 
 
 class TP(SingletonPerName['TP']):  # "thread processing"

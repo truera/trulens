@@ -6,7 +6,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Tuple
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
@@ -14,12 +14,16 @@ from pydantic import Field
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
+from trulens_eval.schema import Select
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.serial import all_queries
+from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +99,10 @@ class LangChainInstrument(Instrument):
             "_get_relevant_documents":
                 lambda o: isinstance(o, (RunnableSerializable)),
             "_aget_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable)),
+            "get_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable)),
+            "aget_relevant_documents":
                 lambda o: isinstance(o, (RunnableSerializable)),
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
@@ -209,6 +217,45 @@ class TruChain(App):
         kwargs['instrument'] = LangChainInstrument(app=self)
 
         super().__init__(**kwargs)
+
+    @classmethod
+    def select_context(cls, app: Optional[Chain] = None) -> Lens:
+        """
+        Get the path to the context in the query output.
+        """
+
+        if app is None:
+            raise ValueError(
+                "langchain app/chain is required to determine context for langchain apps. "
+                "Pass it in as the `app` argument"
+            )
+
+        retrievers = []
+
+        app_json = jsonify(app)
+        for lens in all_queries(app_json):
+            try:
+                comp = lens.get_sole_item(app)
+                if isinstance(comp, BaseRetriever):
+                    retrievers.append((lens, comp))
+
+            except Exception:
+                pass
+
+        if len(retrievers) == 0:
+            raise ValueError("Cannot find any `BaseRetriever` in app.")
+
+        if len(retrievers) > 1:
+            raise ValueError(
+                "Found more than one `BaseRetriever` in app:\n\t" + \
+                ("\n\t".join(map(
+                    lambda lr: f"{type(lr[1])} at {lr[0]}",
+                    retrievers)))
+            )
+
+        return (
+            Select.RecordCalls + retrievers[0][0]
+        ).get_relevant_documents.rets
 
     # TODEP
     # Chain requirement

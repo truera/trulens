@@ -2,7 +2,9 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import Any, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import (
+    Any, ClassVar, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import numpy as np
@@ -12,6 +14,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.schema import MetaData
 
 from trulens_eval import schema
 from trulens_eval.database import orm
@@ -47,7 +50,11 @@ logger = logging.getLogger(__name__)
 
 @for_all_methods(
     run_before(lambda self, *args, **kwargs: check_db_revision(self.engine)),
-    _except=["migrate_database", "reload_engine"]
+    _except=[
+        "migrate_database",
+        "reload_engine",
+        "reset_database"  # migrates database automatically
+    ]
 )
 class SqlAlchemyDB(DB):
     engine_params: dict = Field(default_factory=dict)
@@ -55,8 +62,7 @@ class SqlAlchemyDB(DB):
     engine: Engine = None
     Session: sessionmaker = None
 
-    class Config:
-        arbitrary_types_allowed: bool = True
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def __init__(self, redact_keys: bool = False, **kwargs):
         super().__init__(redact_keys=redact_keys, **kwargs)
@@ -131,14 +137,11 @@ class SqlAlchemyDB(DB):
         logger.info("Your database does not need migration.")
 
     def reset_database(self):
-        deleted = 0
-        with self.Session.begin() as session:
-            deleted += session.query(AppDefinition).delete()
-            deleted += session.query(FeedbackDefinition).delete()
-            deleted += session.query(Record).delete()
-            deleted += session.query(FeedbackResult).delete()
+        meta = MetaData()
+        meta.reflect(bind=self.engine)
+        meta.drop_all(bind=self.engine)
 
-        logger.info(f"Deleted {deleted} rows.")
+        self.migrate_database()
 
     def insert_record(self, record: schema.Record) -> schema.RecordID:
         # TODO: thread safety

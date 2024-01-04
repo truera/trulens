@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
@@ -33,16 +33,16 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
     # It's a class member because creating it is expensive
     bert_scorer: object
 
-    ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
+    ground_truth_imp: Optional[Callable] = pydantic.Field(None, exclude=True)
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def __init__(
         self,
         ground_truth: Union[List, Callable, FunctionOrMethod],
-        provider: Provider = None,
-        bert_scorer: Optional["BERTScorer"] = None
+        provider: Optional[Provider] = None,
+        bert_scorer: Optional["BERTScorer"] = None,
+        **kwargs
     ):
         """Measures Agreement against a Ground Truth. 
 
@@ -93,7 +93,8 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth_imp=ground_truth_imp,
             provider=provider,
             bert_scorer=bert_scorer,
-            obj=self  # for WithClassInfo
+            obj=self,  # for WithClassInfo
+            **kwargs
         )
 
     def _find_response(self, prompt: str) -> Optional[str]:
