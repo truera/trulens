@@ -645,7 +645,7 @@ class WithClassInfo(pydantic.BaseModel):
         cls: Optional[type] = None,
         **kwargs
     ):
-        if True: # obj is not None:
+        if obj is not None:
             warnings.warn(
                 "`obj` does not need to be provided to WithClassInfo any more",
                 DeprecationWarning
