@@ -65,11 +65,6 @@ def _tci(func):  # "typecheck inputs"
                     raise TypeError(
                         f"{pident} must be of type `{annotation_name}` but was `{type(v).__name__}` instead."
                     )
-                
-                if not isinstance(v, annot.annotation):
-                    raise TypeError(
-                        f"{pident} must be of type `{annot.annotation.__name__}` but was `{type(v).__name__}` instead."
-                    )
                 if annot.annotation is str:
                     if len(v) == 0:
                         raise ValueError(f"{pident} must be non-empty.")
