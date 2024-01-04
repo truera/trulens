@@ -336,13 +336,13 @@ class TruChain(App):
     async def main_acall(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
+        out = await self._acall(human)
+
         if safe_hasattr(self.app, "output_keys"):
             out_key = self.app.output_keys[0]
-            out = await self._acall(human)
             return out[out_key]
         else:
             logger.warning("Unsure what the main output string may be.")
-            out = await self._acall(human)
             return str(out)
 
     def __getattr__(self, __name: str) -> Any:
