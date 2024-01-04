@@ -1,11 +1,12 @@
 import logging
 from typing import Dict, List, Optional
+import pydantic
 
 import numpy as np
 from tqdm.auto import tqdm
 
 from trulens_eval.feedback import prompts
-from trulens_eval.feedback.provider import Provider
+from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.bedrock import Bedrock
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.litellm import LiteLLM
@@ -18,20 +19,22 @@ from trulens_eval.utils.serial import SerialModel
 logger = logging.getLogger(__name__)
 
 
-class Groundedness(SerialModel, WithClassInfo):
-    """Measures Groundedness.
+class Groundedness(WithClassInfo, SerialModel):
     """
+    Measures Groundedness.
+    """
+
     groundedness_provider: Provider
 
-    def __init__(
-        self, groundedness_provider: Optional[Provider] = None, **kwargs
-    ):
-        """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
-        This class will use an LLM to find the relevant strings in a text. The groundedness_provider can 
+    def __init__(self, groundedness_provider: Optional[Provider] = None, **kwargs):
+        """
+        Instantiates the groundedness providers. Currently the groundedness
+        functions work well with a summarizer. This class will use an LLM to
+        find the relevant strings in a text. The groundedness_provider can
         either be an LLM provider (such as OpenAI) or NLI with huggingface.
 
         Usage 1:
-        ```
+        ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
@@ -39,7 +42,7 @@ class Groundedness(SerialModel, WithClassInfo):
         ```
 
         Usage 2:
-        ```
+        ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
@@ -47,15 +50,18 @@ class Groundedness(SerialModel, WithClassInfo):
         ```
 
         Args:
-            groundedness_provider (Provider, optional): groundedness provider options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
-            summarize_provider (Provider, optional): Internal Usage for DB serialization.
+            - groundedness_provider (Provider, optional): groundedness provider
+              options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
+            - summarize_provider (Provider, optional): Internal Usage for DB
+              serialization.
         """
 
         if groundedness_provider is None:
+            logger.warning("Provider not provided. Using OpenAI.")
             groundedness_provider = OpenAI()
+
         super().__init__(
             groundedness_provider=groundedness_provider,
-            obj=self,  # for WithClassInfo
             **kwargs
         )
 
@@ -64,26 +70,27 @@ class Groundedness(SerialModel, WithClassInfo):
         This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step` 
 
         Usage on RAG Contexts:
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.openai import OpenAI
         grounded = feedback.Groundedness(groundedness_provider=OpenAI())
 
-
         f_groundedness = feedback.Feedback(grounded.groundedness_measure).on(
             Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
         ).on_output().aggregate(grounded.grounded_statements_aggregator)
         ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
+        The `on(...)` selector can be changed. See [Feedback Function Guide :
+        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             source (str): The source that should support the statement
             statement (str): The statement to check groundedness
 
         Returns:
-            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+            float: A measure between 0 and 1, where 1 means each sentence is
+            grounded in the source.
         """
         logger.warning(
             "Feedback function `groundedness_measure` was renamed to `groundedness_measure_with_cot_reasons`. The new functionality of `groundedness_measure` function will no longer emit reasons as a lower cost option. It may have reduced accuracy due to not using Chain of Thought reasoning in the scoring."
@@ -120,7 +127,8 @@ class Groundedness(SerialModel, WithClassInfo):
     def groundedness_measure_with_cot_reasons(
         self, source: str, statement: str
     ) -> float:
-        """A measure to track if the source material supports each sentence in the statement. 
+        """
+        A measure to track if the source material supports each sentence in the statement. 
         This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step`.
         Also uses chain of thought methodology and emits the reasons.
 
@@ -222,7 +230,6 @@ class Groundedness(SerialModel, WithClassInfo):
         self, source_statements_multi_output: List[Dict]
     ) -> float:
         """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
-
 
         Args:
             source_statements_multi_output (List[Dict]): A list of scores. Each list index is a context. The Dict is a per statement score.

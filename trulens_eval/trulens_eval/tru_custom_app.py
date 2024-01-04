@@ -459,8 +459,6 @@ class TruCustomApp(App):
         # A message for cases where a user calls something that the wrapped
         # app has but we do not wrap yet.
 
-        print(__name)
-
         if safe_hasattr(self.app, __name):
             return RuntimeError(
                 f"TruCustomApp has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",

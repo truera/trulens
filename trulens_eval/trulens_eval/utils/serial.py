@@ -74,16 +74,8 @@ class SerialModel(pydantic.BaseModel):
 
         return jsonify(self, **kwargs)
 
-    @classmethod
-    def model_validate(cls, obj, **kwargs):
-        # import hierarchy circle here
-        from trulens_eval.utils.pyschema import CLASS_INFO
-        from trulens_eval.utils.pyschema import WithClassInfo
-
-        if isinstance(obj, Dict) and CLASS_INFO in obj:
-            return WithClassInfo.model_validate(obj, **kwargs)
-
-        return super(SerialModel, cls).model_validate(obj, **kwargs)
+    # NOTE(piotrm): regaring model_validate: custom deserialization is done in
+    # WithClassInfo class but only for classes that mix it in.
 
     def update(self, **d):
         for k, v in d.items():

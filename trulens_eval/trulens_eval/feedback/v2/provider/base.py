@@ -14,16 +14,13 @@ from trulens_eval.utils.serial import SerialModel
 # Level 4 feedback abstraction
 
 
-class Provider(SerialModel, WithClassInfo):
+class Provider(WithClassInfo, SerialModel):
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint]
 
-    def __init__(self, name: str = None, **kwargs):
-        # for WithClassInfo:
-        kwargs['obj'] = self
-
+    def __init__(self, *args, name: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
 
     @abstractmethod
