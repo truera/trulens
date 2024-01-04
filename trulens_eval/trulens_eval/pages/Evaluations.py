@@ -16,6 +16,9 @@ import streamlit as st
 from ux.add_logo import add_logo_and_style_overrides
 from ux.styles import CATEGORY
 
+from pprint import PrettyPrinter
+pp = PrettyPrinter()
+
 from trulens_eval import Tru
 from trulens_eval.app import Agent
 from trulens_eval.app import ComponentView
@@ -338,8 +341,18 @@ else:
                             return [f"background-color: {cat.color}"] * len(s)
 
                         if call is not None and len(call) > 0:
+                            # NOTE(piotrm for garett): converting feedback
+                            # function inputs to strings here as other
+                            # structures get rendered as [object Object] in the
+                            # javascript downstream.
+                            for c in call:
+                                args = c['args']
+                                for k, v in args.items():
+                                    if not isinstance(v, str):
+                                        args[k] = pp.pformat(v)
+
                             df = pd.DataFrame.from_records(
-                                [call[i]["args"] for i in range(len(call))]
+                                call[i]['args'] for i in range(len(call))
                             )
                             
                             df["result"] = pd.DataFrame(
@@ -364,8 +377,10 @@ else:
                         else:
                             st.text("No feedback details.")
 
-                    with st.expander(f"{feedback_name} = {feedback_result}",
-                                     expanded=True):
+                    with st.expander(
+                        f"{feedback_name} = {feedback_result}",
+                        expanded=True
+                    ):
                         display_feedback_call(feedback_calls)
 
             record_str = selected_rows["record_json"][0]
