@@ -100,7 +100,6 @@ from trulens_eval.utils.threading import TP
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     from trulens_eval.tru_llama import TruLlama
 
-
 __all__ = [
     "Tru",
     "TruBasicApp",

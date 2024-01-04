@@ -165,7 +165,8 @@ class Dummy(type, object):
     """
 
     def __new__(cls, name, *args, **kwargs):
-        if len(args) >= 2 and isinstance(args[1], dict) and "__classcell__" in args[1]:
+        if len(args) >= 2 and isinstance(args[1],
+                                         dict) and "__classcell__" in args[1]:
             # (used as type)
             return type.__new__(cls, name, args[0], args[1])
         else:
@@ -210,7 +211,8 @@ class Dummy(type, object):
 
         # If we are still in an optional import block, continue making dummies
         # inside this dummy.
-        if self.importer is not None and (self.importer.importing and not self.importer.fail):
+        if self.importer is not None and (self.importer.importing and
+                                          not self.importer.fail):
             return Dummy(
                 name=self.name + "." + name,
                 message=self.message,
@@ -342,5 +344,5 @@ class OptionalImports(object):
         # Will re-raise exception unless True is returned.
         if self.fail:
             raise exc_value
-        
+
         return True
