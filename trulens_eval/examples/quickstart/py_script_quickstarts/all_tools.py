@@ -564,11 +564,9 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 # ! pip install trulens_eval==0.20.0 openai==1.3.7
 
 import os
-from pathlib import Path
-import sys
 
 from trulens_eval import Tru
-from trulens_eval import TruChain
+from trulens_eval import TruCustomApp
 
 tru = Tru()
 
@@ -609,8 +607,6 @@ class APP:
 llm_app = APP()
 
 # add trulens as a context manager for llm_app
-from trulens_eval import TruCustomApp
-
 tru_app = TruCustomApp(llm_app, app_id='LLM App v1')
 
 # ## Run the app
@@ -618,10 +614,8 @@ tru_app = TruCustomApp(llm_app, app_id='LLM App v1')
 with tru_app as recording:
     llm_app.completion("Give me 10 names for a colorful sock company")
 
-# ## Get the `record_id` that you will log human feedback to.
-
-records, feedback = tru.get_records_and_feedback(app_ids=["LLM App v1"])
-record_id = records.record_id[0]
+# Get the record to add the feedback to.
+record = recording.get()
 
 # ## Create a mechamism for recording human feedback.
 #
@@ -655,7 +649,7 @@ HBox([thumbs_up_button, thumbs_down_button])
 # add the human feedback to a particular app and record
 tru.add_feedback(
     name="Human Feedack",
-    record_id=record_id,
+    record_id=record.record_id,
     app_id=tru_app.app_id,
     result=human_feedback
 )
