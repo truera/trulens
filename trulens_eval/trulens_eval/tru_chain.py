@@ -337,7 +337,7 @@ class TruChain(App):
         # If available, a single text to a single text invocation of this app.
 
         if safe_hasattr(self.app, "output_keys"):
-            out_key = self.app.aoutput_keys[0]
+            out_key = self.app.output_keys[0]
             return (await self._acall(human))[out_key]
         else:
             logger.warning("Unsure what the main output string may be.")
