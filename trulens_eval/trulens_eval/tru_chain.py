@@ -267,13 +267,19 @@ class TruChain(App):
     # Chain requirement
     @property
     def input_keys(self) -> List[str]:
-        return self.app.input_keys
+        if safe_hasattr(self.app, "input_keys"):
+            return self.app.input_keys
+        else:
+            raise TypeError("App does not have input_keys.")
 
     # TODEP
     # Chain requirement
     @property
     def output_keys(self) -> List[str]:
-        return self.app.output_keys
+        if safe_hasattr(self.app, "output_keys"):
+            return self.app.output_keys
+        else:
+            raise TypeError("App does not have output_keys.")
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
@@ -284,7 +290,10 @@ class TruChain(App):
         `bindings`.
         """
 
-        if 'inputs' in bindings.arguments:
+        if 'inputs' in bindings.arguments \
+            and safe_hasattr(self.app, "input_keys") \
+            and safe_hasattr(self.app, "prep_inputs"):
+        
             # langchain specific:
             ins = self.app.prep_inputs(bindings.arguments['inputs'])
 
@@ -317,16 +326,22 @@ class TruChain(App):
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        out_key = self.app.output_keys[0]
-
-        return self.app(human)[out_key]
+        if safe_hasattr(self.app, "output_keys"):
+            out_key = self.app.output_keys[0]
+            return self.app(human)[out_key]
+        else:
+            logger.warning("Unsure what the main output string may be.")
+            return str(self.app(human))
 
     async def main_acall(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        out_key = self.app.output_keys[0]
-
-        return await self._acall(human)[out_key]
+        if safe_hasattr(self.app, "output_keys"):
+            out_key = self.app.aoutput_keys[0]
+            return (await self._acall(human))[out_key]
+        else:
+            logger.warning("Unsure what the main output string may be.")
+            return str(await self._acall(human))
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
