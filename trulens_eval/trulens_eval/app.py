@@ -415,13 +415,13 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     # Instrumentation class. This is needed for serialization as it tells us
     # which objects we want to be included in the json representation of this
     # app.
-    instrument: Instrument = Field(exclude=True)
+    instrument: Instrument = Field(None, exclude=True)
 
     # Sequnces of records produced by the this class used as a context manager
     # are stpred om a RecordingContext. Using a context var so that context
     # managers can be nested.
     recording_contexts: contextvars.ContextVar[RecordingContext] \
-        = Field(exclude=True)
+        = Field(None, exclude=True)
 
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
@@ -446,12 +446,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             "recording_contexts"
         )
 
-        # Cannot use this to set app. AppDefinition has app as JSON type.
-        # TODO: Figure out a better design to avoid this.
         super().__init__(**kwargs)
 
         app = kwargs['app']
         self.app = app
+
+        assert self.instrument is not None, "App class cannot be instantiated. Use one of the subclasses."
 
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app

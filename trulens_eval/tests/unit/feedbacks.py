@@ -73,7 +73,7 @@ def make_nonglobal_feedbacks():
     # incorrectly.
 
     class NG:  # "non-global"
-
+        @staticmethod
         def NGcustom_feedback_function(t1: str) -> float:
             return 0.1
 

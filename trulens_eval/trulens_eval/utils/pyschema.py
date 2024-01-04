@@ -22,11 +22,9 @@ import logging
 from pprint import PrettyPrinter
 from types import ModuleType
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+import warnings
 
-import dill
 import pydantic
-from pydantic import Field
-from pydantic_core import PydanticUndefined
 
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import SerialModel
@@ -611,16 +609,13 @@ class WithClassInfo(pydantic.BaseModel):
             raise ValueError("No class info present in object.")
 
         clsinfo = Class.model_validate(obj[CLASS_INFO])
-        cls = clsinfo.load()
-
-        # NOTE(piotrm): even though we have a more specific class than
-        # AppDefinition, we load it as AppDefinition due to serialization
-        # issues in the wrapped app. Keeping it as AppDefinition means `app`
-        # field is just json.
-        from trulens_eval.schema import AppDefinition
-        if issubclass(cls, AppDefinition):
-            cls = AppDefinition
-                
+        try:
+            # If class cannot be loaded, usually because it is not importable,
+            # return obj as is.
+            cls = clsinfo.load()
+        except RuntimeError:
+            return obj
+        
         validated = dict()
         for k, finfo in cls.model_fields.items():
             typ = finfo.annotation
@@ -650,8 +645,11 @@ class WithClassInfo(pydantic.BaseModel):
         cls: Optional[type] = None,
         **kwargs
     ):
-        if obj is not None:
-            logger.warning("obj should not be provided", DeprecationWarning)
+        if True: # obj is not None:
+            warnings.warn(
+                "`obj` does not need to be provided to WithClassInfo any more",
+                DeprecationWarning
+            )
 
         if obj is None:
             obj = self
