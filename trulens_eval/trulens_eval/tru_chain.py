@@ -307,7 +307,7 @@ class TruChain(App):
         returned `ret`.
         """
 
-        if isinstance(ret, Dict):
+        if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
             # langchain specific:
             if self.app.output_keys[0] in ret:
                 return ret[self.app.output_keys[0]]
