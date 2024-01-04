@@ -287,9 +287,7 @@ class TruCustomApp(App):
             app (Any): Any class
     """
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     app: Any
 
@@ -460,8 +458,6 @@ class TruCustomApp(App):
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
         # app has but we do not wrap yet.
-
-        print(__name)
 
         if safe_hasattr(self.app, __name):
             return RuntimeError(

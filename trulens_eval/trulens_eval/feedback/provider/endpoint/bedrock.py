@@ -24,9 +24,7 @@ with OptionalImports(messages=REQUIREMENT_BEDROCK):
 
 class BedrockCallback(EndpointCallback):
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response)
@@ -131,7 +129,7 @@ class BedrockCallback(EndpointCallback):
             )
 
 
-class BedrockEndpoint(Endpoint, WithClassInfo):
+class BedrockEndpoint(Endpoint):
     """
     Bedrock endpoint. Instruments "completion" methods in bedrock.* classes.
     """
@@ -172,9 +170,6 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
         # for Endpoint, SingletonPerName:
         kwargs['name'] = name
         kwargs['callback_class'] = BedrockCallback
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)
 

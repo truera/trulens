@@ -14,9 +14,7 @@ pp = pprint.PrettyPrinter()
 
 class LiteLLMCallback(EndpointCallback):
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: Dict) -> None:
         super().handle_classification(response)
@@ -25,7 +23,7 @@ class LiteLLMCallback(EndpointCallback):
         super().handle_generation(response)
 
 
-class LiteLLMEndpoint(Endpoint, WithClassInfo):
+class LiteLLMEndpoint(Endpoint):
     """
     LiteLLM endpoint. Instruments "completion" methods in litellm.* classes.
     """
@@ -63,8 +61,5 @@ class LiteLLMEndpoint(Endpoint, WithClassInfo):
 
         kwargs['name'] = "litellm"
         kwargs['callback_class'] = LiteLLMCallback
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)

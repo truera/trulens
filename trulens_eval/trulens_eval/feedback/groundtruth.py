@@ -24,20 +24,20 @@ logger = logging.getLogger(__name__)
 
 
 # TODEP
-class GroundTruthAgreement(SerialModel, WithClassInfo):
-    """Measures Agreement against a Ground Truth.
+class GroundTruthAgreement(WithClassInfo, SerialModel):
+    """
+    Measures Agreement against a Ground Truth.
     """
     ground_truth: Union[List[Dict], FunctionOrMethod]
     provider: Provider
+    
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
     bert_scorer: object
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(None, exclude=True)
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def __init__(
         self,
@@ -95,7 +95,6 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth_imp=ground_truth_imp,
             provider=provider,
             bert_scorer=bert_scorer,
-            obj=self,  # for WithClassInfo
             **kwargs
         )
 

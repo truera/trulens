@@ -21,7 +21,7 @@ import pydantic
 import requests
 
 from trulens_eval.schema import Cost
-from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils.pyschema import WithClassInfo, safe_getattr
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import safe_hasattr
@@ -65,11 +65,9 @@ class EndpointCallback(SerialModel):
         self.handle(response)
 
 
-class Endpoint(SerialModel, SingletonPerName):
+class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     @dataclass
     class EndpointSetup():
@@ -155,14 +153,19 @@ class Endpoint(SerialModel, SingletonPerName):
         name = name or cls.__name__
         return super().__new__(cls, *args, name=name, **kwargs)
 
-    def __init__(self, *args, name: str, callback_class: Any, **kwargs):
+    def __init__(self, *args, name: str, callback_class: Any = None, **kwargs):
         """
         API usage, pacing, and utilities for API endpoints.
+
+        - `callback_class` should be set by subclass.
         """
 
         if safe_hasattr(self, "rpm"):
             # already initialized via the SingletonPerName mechanism
             return
+
+        if callback_class is None:
+            raise ValueError("Endpoint has to be extended by class that can set `callback_class`.")
 
         kwargs['name'] = name
         kwargs['callback_class'] = callback_class
@@ -170,7 +173,7 @@ class Endpoint(SerialModel, SingletonPerName):
         kwargs['callback_name'] = f"callback_{name}"
         kwargs['pace_thread'] = Thread()  # temporary
         kwargs['pace_thread'].daemon = True
-        super(SerialModel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         def keep_pace():
             while True:

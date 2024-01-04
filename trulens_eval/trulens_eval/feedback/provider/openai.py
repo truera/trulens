@@ -13,7 +13,6 @@ from trulens_eval.utils.pyschema import CLASS_INFO
 logger = logging.getLogger(__name__)
 
 
-
 class OpenAI(LLMProvider):
     """
     Out of the box feedback functions calling OpenAI APIs.
@@ -21,7 +20,9 @@ class OpenAI(LLMProvider):
 
     # model_engine: str # LLMProvider
 
-    endpoint: Endpoint
+    # Endpoint cannot presently be serialized but is constructed in __init__
+    # below so it is ok.
+    endpoint: Endpoint = pydantic.Field(exclude=True)
 
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
@@ -32,21 +33,20 @@ class OpenAI(LLMProvider):
         """
         Create an OpenAI Provider with out of the box feedback functions.
 
-        **Usage:**
-        ```python
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-        ```
+        **Usage:** ```python from trulens_eval.feedback.provider.openai import
+        OpenAI openai_provider = OpenAI() ```
 
         Args:
             model_engine (str): The OpenAI completion model. Defaults to
-                `gpt-3.5-turbo`
-            endpoint (Endpoint): Internal Usage for DB serialization
+              `gpt-3.5-turbo`
+            endpoint (Endpoint): Internal Usage for DB serialization. This
+              argument is intentionally ignored.
         """
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
         self_kwargs['model_engine'] = model_engine
+
         self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
 
         super().__init__(
@@ -365,8 +365,9 @@ class OpenAI(LLMProvider):
 
 
 class AzureOpenAI(OpenAI):
-    """Out of the box feedback functions calling AzureOpenAI APIs.
-    Has the same functionality as OpenAI out of the box feedback functions.
+    """
+    Out of the box feedback functions calling AzureOpenAI APIs. Has the same
+    functionality as OpenAI out of the box feedback functions.
     """
 
     # Sent to our openai client wrapper but need to keep here as well so that it
@@ -402,7 +403,7 @@ class AzureOpenAI(OpenAI):
             - deployment_name (str, required): The name of the deployment.
 
             - endpoint (Optional[Endpoint]): Internal Usage for DB
-              serialization.
+              serialization. This argument is intentionally ignored.
         """
 
         # Make a dict of args to pass to AzureOpenAI client. Remove any we use
@@ -419,12 +420,10 @@ class AzureOpenAI(OpenAI):
             # but include in provider args
             kwargs['model_engine'] = deployment_name
 
-        kwargs["client"] = OpenAIClient(
-            client=oai.AzureOpenAI(**client_kwargs)
-        )
-        
+        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
+
         super().__init__(
-            endpoint = endpoint,
+            endpoint=None,
             **kwargs
         )  # need to include pydantic.BaseModel.__init__
 

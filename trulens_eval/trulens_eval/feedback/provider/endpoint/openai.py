@@ -63,9 +63,7 @@ class OpenAIClient(SerialModel):
     # contain secrets.
     REDACTED_KEYS: ClassVar[List[str]] = ["api_key", "default_headers"]
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     # Deserialized representation.
     client: Union[oai.OpenAI, oai.AzureOpenAI] = pydantic.Field(exclude=True)
@@ -154,9 +152,7 @@ class OpenAIClient(SerialModel):
 
 class OpenAICallback(EndpointCallback):
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
         default_factory=OpenAICallbackHandler, exclude=True
@@ -198,7 +194,7 @@ class OpenAICallback(EndpointCallback):
             )
 
 
-class OpenAIEndpoint(Endpoint, WithClassInfo):
+class OpenAIEndpoint(Endpoint):
     """
     OpenAI endpoint. Instruments "create" methods in openai client.
     """
@@ -289,6 +285,7 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
     def __init__(
         self,
         rpm: float = DEFAULT_RPM,
+        name: str = "openai",
         client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
                                OpenAIClient]] = None,
         **kwargs
@@ -302,12 +299,12 @@ class OpenAIEndpoint(Endpoint, WithClassInfo):
             return
 
         self_kwargs = dict(
-            name="openai",  # for SingletonPerName
+            name=name,  # for SingletonPerName
             rpm=rpm,  # for Endpoint
-            callback_class=OpenAICallback,
-            obj=self,  # for WithClassInfo:
             **kwargs
         )
+
+        self_kwargs['callback_class'] = OpenAICallback
 
         if CLASS_INFO in kwargs:
             del kwargs[CLASS_INFO]

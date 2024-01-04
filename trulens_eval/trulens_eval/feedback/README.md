@@ -320,7 +320,7 @@ The other non-excluded fields accessible outside of the wrapped app are listed
 in the `AppDefinition` class in `schema.py`:
 
 ```python
-class AppDefinition(SerialModel, WithClassInfo, ABC):
+class AppDefinition(WithClassInfo, SerialModel, ABC):
     ...
 
     app_id: AppID

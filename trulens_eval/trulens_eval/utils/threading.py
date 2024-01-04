@@ -36,8 +36,10 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         present_stack = stack()
         present_context = contextvars.copy_context()
         return super().submit(
-            _future_target_wrapper, present_stack, present_context, fn, *args, **kwargs
+            _future_target_wrapper, present_stack, present_context, fn, *args,
+            **kwargs
         )
+
 
 # Attempt other users of ThreadPoolExecutor to use our version.
 import concurrent
@@ -50,8 +52,20 @@ concurrent.futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 try:
     import langchain_core
     langchain_core.runnables.config.ThreadPoolExecutor = ThreadPoolExecutor
+
+    # Newer langchain_core uses ContextThreadPoolExecutor extending
+    # ThreadPoolExecutor. We cannot reliable override
+    # concurrent.futures.ThreadPoolExecutor before langchain_core is loaded so
+    # lets just retrofit the base class afterwards:
+    from langchain_core.runnables.config import ContextThreadPoolExecutor
+    ContextThreadPoolExecutor.__bases__ = (ThreadPoolExecutor, )
+
+    # TODO: ContextThreadPoolExecutor already maintains context so we no longer
+    # need to do it for them but we still need to maintain call stack.
+
 except Exception:
     pass
+
 
 class TP(SingletonPerName['TP']):  # "thread processing"
 
