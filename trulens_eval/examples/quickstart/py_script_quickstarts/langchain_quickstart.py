@@ -132,7 +132,7 @@ print(llm_response)
 
 # ## Retrieve records and feedback
 
-# The record of the ap invocation can be retrieved from the `recording`:
+# The record of the app invocation can be retrieved from the `recording`:
 
 rec = recording.get()  # use .get if only one record
 # recs = recording.records # use .records if multiple
