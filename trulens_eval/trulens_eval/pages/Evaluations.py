@@ -352,7 +352,7 @@ else:
                                         args[k] = pp.pformat(v)
 
                             df = pd.DataFrame.from_records(
-                                call[i]['args'] for i in range(len(call))
+                                c['args'] for c in call
                             )
                             
                             df["result"] = pd.DataFrame(
