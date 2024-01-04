@@ -15,8 +15,7 @@ with OptionalImports(messages=REQUIREMENT_SKLEARN):
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index import ServiceContext
 
-
-class Embeddings(SerialModel, WithClassInfo):
+class Embeddings(WithClassInfo, SerialModel):
     """Embedding related feedback function implementations.
     """
     _embed_model: 'Embedder' = PrivateAttr()
@@ -33,7 +32,7 @@ class Embeddings(SerialModel, WithClassInfo):
 
         service_context = ServiceContext.from_defaults(embed_model=embed_model)
         self._embed_model = service_context.embed_model
-        super().__init__(obj=self)
+        super().__init__()
 
     def cosine_distance(
         self, query: str, document: str

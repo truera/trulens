@@ -23,7 +23,7 @@ class LiteLLMCallback(EndpointCallback):
         super().handle_generation(response)
 
 
-class LiteLLMEndpoint(Endpoint, WithClassInfo):
+class LiteLLMEndpoint(Endpoint):
     """
     LiteLLM endpoint. Instruments "completion" methods in litellm.* classes.
     """
@@ -61,8 +61,5 @@ class LiteLLMEndpoint(Endpoint, WithClassInfo):
 
         kwargs['name'] = "litellm"
         kwargs['callback_class'] = LiteLLMCallback
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)

@@ -129,7 +129,7 @@ class BedrockCallback(EndpointCallback):
             )
 
 
-class BedrockEndpoint(Endpoint, WithClassInfo):
+class BedrockEndpoint(Endpoint):
     """
     Bedrock endpoint. Instruments "completion" methods in bedrock.* classes.
     """
@@ -170,9 +170,6 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
         # for Endpoint, SingletonPerName:
         kwargs['name'] = name
         kwargs['callback_class'] = BedrockCallback
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)
 
