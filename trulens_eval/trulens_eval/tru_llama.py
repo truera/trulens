@@ -16,7 +16,7 @@ from trulens_eval.schema import Record
 from trulens_eval.utils.containers import dict_set_with
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
-from trulens_eval.utils.llama import WithFeedbackFilterNodes
+
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import Lens
@@ -25,51 +25,55 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
-    # import llama_index
+import llama_index
 
-    from llama_index.indices.query.base import BaseQueryEngine
-    from llama_index.chat_engine.types import BaseChatEngine
-    from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
-    from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
-    from llama_index.indices.query.schema import QueryBundle, QueryType
+from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
-    # Need to `from ... import ...` for the below as referring to some of these
-    # later in this file by full path does not work due to lack of intermediate
-    # modules in the path.
+from llama_index.indices.query.base import BaseQueryEngine
+from llama_index.chat_engine.types import BaseChatEngine
+from llama_index.chat_engine.types import AgentChatResponse, StreamingAgentChatResponse
+from llama_index.response.schema import Response, StreamingResponse, RESPONSE_TYPE
+from llama_index.indices.query.schema import QueryBundle, QueryType
 
-    from llama_index.schema import BaseComponent
+# Need to `from ... import ...` for the below as referring to some of these
+# later in this file by full path does not work due to lack of intermediate
+# modules in the path.
 
-    # LLMs
-    from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
+from llama_index.schema import BaseComponent
 
-    # misc
-    from llama_index.indices.base_retriever import BaseRetriever
-    from llama_index.indices.base import BaseIndex
-    from llama_index.chat_engine.types import BaseChatEngine
-    from llama_index.prompts.base import Prompt
-    from llama_index.question_gen.types import BaseQuestionGenerator
-    from llama_index.response_synthesizers.base import BaseSynthesizer
-    from llama_index.response_synthesizers.refine import Refine
-    from llama_index.llm_predictor import LLMPredictor
-    from llama_index.llm_predictor.base import LLMMetadata
-    from llama_index.llm_predictor.base import BaseLLMPredictor
-    from llama_index.vector_stores.types import VectorStore
-    from llama_index.indices.service_context import ServiceContext
-    from llama_index.indices.prompt_helper import PromptHelper
-    from llama_index.embeddings.base import BaseEmbedding
-    from llama_index.node_parser.interface import NodeParser
+# LLMs
+from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
 
-    # memory
-    from llama_index.memory import BaseMemory
+# misc
+from llama_index.indices.base_retriever import BaseRetriever
+from llama_index.indices.base import BaseIndex
+from llama_index.chat_engine.types import BaseChatEngine
+from llama_index.prompts.base import Prompt
+from llama_index.question_gen.types import BaseQuestionGenerator
+from llama_index.response_synthesizers.base import BaseSynthesizer
+from llama_index.response_synthesizers.refine import Refine
+from llama_index.llm_predictor import LLMPredictor
+from llama_index.llm_predictor.base import LLMMetadata
+from llama_index.llm_predictor.base import BaseLLMPredictor
+from llama_index.vector_stores.types import VectorStore
+from llama_index.indices.service_context import ServiceContext
+from llama_index.indices.prompt_helper import PromptHelper
+from llama_index.embeddings.base import BaseEmbedding
+from llama_index.node_parser.interface import NodeParser
 
-    # agents
-    from llama_index.tools.types import ToolMetadata  # all of the readable info regarding tools is in this class
-    from llama_index.tools.types import BaseTool
-    from llama_index.tools.types import AsyncBaseTool  # subtype of BaseTool
+# memory
+from llama_index.memory import BaseMemory
+
+# agents
+from llama_index.tools.types import ToolMetadata  # all of the readable info regarding tools is in this class
+from llama_index.tools.types import BaseTool
+from llama_index.tools.types import AsyncBaseTool  # subtype of BaseTool
+
+# Fail outside of optional imports contexts so that anything that follows gets
+# to be a dummy which will cause failures if used.
+OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
 
 from trulens_eval.tru_chain import LangChainInstrument
-
 
 class LlamaInstrument(Instrument):
 

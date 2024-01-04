@@ -18,12 +18,15 @@ from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
-    from llama_index.indices.query.schema import QueryBundle
-    from llama_index.indices.vector_store.retrievers import \
-        VectorIndexRetriever
-    from llama_index.schema import NodeWithScore
 
+import llama_index
+
+from llama_index.indices.query.schema import QueryBundle
+from llama_index.indices.vector_store.retrievers import \
+    VectorIndexRetriever
+from llama_index.schema import NodeWithScore
+
+OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
 
 class Prompt(app.Prompt, app.LlamaIndexComponent):
 
@@ -115,7 +118,6 @@ def component_of_json(json: dict) -> app.LlamaIndexComponent:
 
     return view(json)
 
-
 class WithFeedbackFilterNodes(VectorIndexRetriever):
     feedback: Feedback
     threshold: float
@@ -126,10 +128,10 @@ class WithFeedbackFilterNodes(VectorIndexRetriever):
         on a feedback function before returning them.
 
         - feedback: Feedback - use this feedback function to score each
-          document.
+        document.
         
         - threshold: float - and keep documents only if their feedback value is
-          at least this threshold.
+        at least this threshold.
         """
 
         super().__init__(*args, **kwargs)
