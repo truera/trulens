@@ -338,10 +338,12 @@ class TruChain(App):
 
         if safe_hasattr(self.app, "output_keys"):
             out_key = self.app.output_keys[0]
-            return (await self._acall(human))[out_key]
+            out = await self._acall(human)
+            return out[out_key]
         else:
             logger.warning("Unsure what the main output string may be.")
-            return str(await self._acall(human))
+            out = await self._acall(human)
+            return str(out)
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
