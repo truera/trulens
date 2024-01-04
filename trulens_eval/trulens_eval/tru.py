@@ -338,9 +338,11 @@ class Tru(SingletonPerName):
 
         return leaderboard
 
-    def start_evaluator(self,
-                        restart=False,
-                        fork=False) -> Union[Process, Thread]:
+    def start_evaluator(
+        self,
+        restart=False,
+        fork=False
+    ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
         """
