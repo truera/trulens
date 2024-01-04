@@ -175,7 +175,7 @@ class Huggingface(Provider):
         return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
     @_tci
-    def context_relevance(self, prompt: str, context: str) -> float:
+    def context_relevance(self, prompt: str, context: str | list) -> float:
         """
         Uses Huggingface's truera/context_relevance model, a
         model that uses computes the relevance of a given context to the prompt. 
@@ -202,8 +202,11 @@ class Huggingface(Provider):
 
         if prompt[len(prompt) - 1] != '.':
             prompt += '.'
-        ctx_relevnace_string = prompt + '<eos>' + context
-        payload = {"inputs": ctx_relevnace_string}
+        if isinstance(context, list):
+            context = ' '.join(context).strip()
+            
+        ctx_relevance_string = prompt + '<eos>' + context
+        payload = {"inputs": ctx_relevance_string}
         hf_response = self.endpoint.post(
             url=HUGS_CONTEXT_RELEVANCE_API_URL, payload=payload
         )
