@@ -12,6 +12,7 @@ merkle-json        >= 1.0.0
 
 # Langchain
 langchain          >= 0.0.354 # required for cost tracking even outside of langchain
+langchain-core     >= 0.1.6   # required by langchain but here so we can reliably pin/lower bound
 typing-inspect     >= 0.8.0   # fixes bug with langchain on python < 3.9 
 typing_extensions  >= 4.5.0   # fixes big with langchain on python < 3.9
 
