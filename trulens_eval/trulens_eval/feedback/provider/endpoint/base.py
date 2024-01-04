@@ -954,7 +954,6 @@ class DummyEndpoint(Endpoint):
     overloaded_prob: float
 
     def __new__(cls, *args, **kwargs):
-
         return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
 
     def __init__(
