@@ -1,4 +1,6 @@
-# This is pre-sqlalchemy db migration. This file should not need changes. It is here for backwards compatibility of oldest trulens-eval versions.
+# This is pre-sqlalchemy db migration. This file should not need changes. It is
+# here for backwards compatibility of oldest trulens-eval versions.
+
 import json
 import logging
 import shutil
@@ -65,7 +67,9 @@ class VersionException(Exception):
 
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
-migration_versions: List[str] = ["0.19.0", "0.9.0", "0.3.0", "0.2.0", "0.1.2"]
+migration_versions: List[str] = [
+    "0.21.0", "0.19.0", "0.9.0", "0.3.0", "0.2.0", "0.1.2"
+]
 
 
 def _update_db_json_col(
@@ -144,6 +148,64 @@ class UnknownClass(pydantic.BaseModel):
         This is a placeholder put into the database in place of methods whose
         information was not recorded in earlier versions of trulens.
         """
+
+def migrate_0_19_0(db):
+    conn, c = db._connect()
+
+    """
+    c.execute(
+        f"SELECT * FROM records"
+    )  # Use hardcode names as versions could go through name change
+    rows = c.fetchall()
+    json_db_col_idx = 4
+
+    for old_entry in tqdm(rows, desc="Migrating Records DB 0.19.0 to 0.21.0"):
+        new_json = ...
+
+        _update_db_json_col(
+            db=db,
+            table=
+            "records",  # Use hardcode names as versions could go through name change
+            old_entry=old_entry,
+            json_db_col_idx=json_db_col_idx,
+            new_json=new_json
+        )
+
+    c.execute(f"SELECT * FROM feedback_defs")
+    rows = c.fetchall()
+    json_db_col_idx = 1
+    for old_entry in tqdm(rows,
+                          desc="Migrating FeedbackDefs DB 0.19.0 to 0.21.0"):
+        new_json = ...
+
+        _update_db_json_col(
+            db=db,
+            table="feedback_defs",
+            old_entry=old_entry,
+            json_db_col_idx=json_db_col_idx,
+            new_json=new_json
+        )
+    """
+        
+    c.execute(f"SELECT * FROM apps")
+    rows = c.fetchall()
+    json_db_col_idx = 1
+    for old_entry in tqdm(rows, desc="Migrating Apps DB 0.19.0 to 0.21.0"):
+        new_json = old_entry[json_db_col_idx]
+
+        if 'chain' in new_json and new_json.get('app') is None:
+            new_json['app'] = new_json['chain']
+            print(f"adding `app` from `chain` to {new_json['appId']}")
+
+        _update_db_json_col(
+            db=db,
+            table="apps",
+            old_entry=old_entry,
+            json_db_col_idx=json_db_col_idx,
+            new_json=new_json
+        )
+
+    conn.commit()
 
 
 def migrate_0_9_0(db):
@@ -413,7 +475,8 @@ upgrade_paths = {
     "0.1.2": ("0.2.0", migrate_0_1_2),
     "0.2.0": ("0.3.0", migrate_0_2_0),
     "0.3.0": ("0.9.0", migrate_0_3_0),
-    "0.9.0": ("0.19.0", migrate_0_9_0)
+    "0.9.0": ("0.19.0", migrate_0_9_0),
+    "0.19.0": ("0.21.0", migrate_0_19_0)
 }
 
 
