@@ -227,9 +227,7 @@ class TruLlama(App):
             app (BaseQueryEngine | BaseChatEngine): A llama index application.
     """
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     app: Union[BaseQueryEngine, BaseChatEngine]
 

@@ -32,7 +32,7 @@ pp = PrettyPrinter()
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
     # import langchain
-    
+
     from langchain.agents.agent import BaseMultiActionAgent
     from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
@@ -223,7 +223,7 @@ class TruChain(App):
         """
         Get the path to the context in the query output.
         """
-        
+
         if app is None:
             raise ValueError(
                 "langchain app/chain is required to determine context for langchain apps. "
@@ -238,22 +238,24 @@ class TruChain(App):
                 comp = lens.get_sole_item(app)
                 if isinstance(comp, BaseRetriever):
                     retrievers.append((lens, comp))
-                
+
             except Exception:
                 pass
-        
+
         if len(retrievers) == 0:
             raise ValueError("Cannot find any `BaseRetriever` in app.")
-        
+
         if len(retrievers) > 1:
             raise ValueError(
                 "Found more than one `BaseRetriever` in app:\n\t" + \
                 ("\n\t".join(map(
-                    lambda lr: f"{type(lr[1])} at {lr[0]}", 
+                    lambda lr: f"{type(lr[1])} at {lr[0]}",
                     retrievers)))
             )
 
-        return (Select.RecordCalls + retrievers[0][0]).get_relevant_documents.rets
+        return (
+            Select.RecordCalls + retrievers[0][0]
+        ).get_relevant_documents.rets
 
     # TODEP
     # Chain requirement

@@ -23,7 +23,9 @@ class Groundedness(SerialModel, WithClassInfo):
     """
     groundedness_provider: Provider
 
-    def __init__(self, groundedness_provider: Optional[Provider] = None, **kwargs):
+    def __init__(
+        self, groundedness_provider: Optional[Provider] = None, **kwargs
+    ):
         """Instantiates the groundedness providers. Currently the groundedness functions work well with a summarizer.
         This class will use an LLM to find the relevant strings in a text. The groundedness_provider can 
         either be an LLM provider (such as OpenAI) or NLI with huggingface.
