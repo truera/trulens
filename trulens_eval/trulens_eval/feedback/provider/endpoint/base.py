@@ -21,7 +21,8 @@ import pydantic
 import requests
 
 from trulens_eval.schema import Cost
-from trulens_eval.utils.pyschema import WithClassInfo, safe_getattr
+from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import safe_hasattr
@@ -165,7 +166,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             return
 
         if callback_class is None:
-            raise ValueError("Endpoint has to be extended by class that can set `callback_class`.")
+            raise ValueError(
+                "Endpoint has to be extended by class that can set `callback_class`."
+            )
 
         kwargs['name'] = name
         kwargs['callback_class'] = callback_class
