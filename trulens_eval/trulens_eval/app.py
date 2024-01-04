@@ -12,8 +12,8 @@ import logging
 from pprint import PrettyPrinter
 from threading import Lock
 from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, Type
+    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
+    Set, Tuple, Type
 )
 
 import pydantic
@@ -392,7 +392,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     model_config: ClassVar[dict] = dict(
         # Tru, DB, most of the types on the excluded fields.
-        arbitrary_types_allowed = True
+        arbitrary_types_allowed=True
     )
 
     # Non-serialized fields here while the serialized ones are defined in
@@ -460,13 +460,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         self.tru_post_init()
 
     @classmethod
-    def select_context(
-        cls,
-        app: Optional[Any] = None
-    ) -> Lens:
+    def select_context(cls, app: Optional[Any] = None) -> Lens:
         if app is None:
-            raise ValueError("Could not determine context selection without `app` argument.")
-        
+            raise ValueError(
+                "Could not determine context selection without `app` argument."
+            )
+
         # Checking by module name so we don't have to try to import either
         # langchain or llama_index beforehand.
         if type(app).__module__.startswith("langchain"):
@@ -476,7 +475,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             from trulens_eval.tru_llama import TruLlama
             return TruLlama.select_context(app)
         else:
-            raise ValueError(f"Could not determine context from unrecognized `app` type {type(app)}.")
+            raise ValueError(
+                f"Could not determine context from unrecognized `app` type {type(app)}."
+            )
 
     def __hash__(self):
         return hash(id(self))

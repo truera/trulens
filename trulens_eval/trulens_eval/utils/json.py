@@ -314,9 +314,9 @@ def jsonify(
 
     # Add class information for objects that are to be instrumented, known as
     # "components".
-    if isinstance(content, dict) and not isinstance(obj, dict) and (
-        instrument.to_instrument_object(obj) or isinstance(obj, WithClassInfo)
-    ):
+    if isinstance(content, dict) and not isinstance(
+            obj, dict) and (instrument.to_instrument_object(obj) or
+                            isinstance(obj, WithClassInfo)):
         content[CLASS_INFO] = Class.of_class(
             cls=obj.__class__, with_bases=True
         ).model_dump()

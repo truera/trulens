@@ -1,3 +1,9 @@
+<!---
+start of trulens_eval/gh_top_intro.md
+NOTE: This content is from trulens_eval/gh_top_intro.md and is merged into
+README.md . If you are editing README.md, your changes will be overwritten.
+-->
+
 ![PyPI - Version](https://img.shields.io/pypi/v/trulens_eval?label=trulens_eval&link=https%3A%2F%2Fpypi.org%2Fproject%2Ftrulens-eval%2F)
 ![Azure DevOps builds (job)](https://img.shields.io/azure-devops/build/truera/5a27f3d2-132d-40fc-9b0c-81abd1182f41/9)
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
@@ -85,6 +91,15 @@ Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.
 Interested in contributing? See our [contribution
 guide](https://www.trulens.org/trulens_eval/CONTRIBUTING/) for more details.
 
+<!---
+end of trulens_eval/gh_top_intro.md
+-->
+
+<!---
+start of trulens_explain/gh_top_intro.md
+NOTE: This content is from trulens_explain/gh_top_intro.md and is merged into
+README.md . If you are editing README.md, your changes will be overwritten.
+-->
 
 ## TruLens-Explain
 
@@ -144,3 +159,7 @@ notebooks:
 
 For more information, see [TruLens-Explain
 Documentation](https://www.trulens.org/trulens_explain/quickstart/).
+
+<!---
+end of trulens_explain/gh_top_intro.md
+-->

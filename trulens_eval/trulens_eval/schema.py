@@ -176,7 +176,7 @@ class Record(SerialModel):
 
     model_config: ClassVar[dict] = dict(
         # for `Future[FeedbackResult]` = `TFeedbackResultFuture`
-        arbitrary_types_allowed = True
+        arbitrary_types_allowed=True
     )
 
     record_id: RecordID  # str
@@ -270,7 +270,7 @@ class Select:
     RecordInput: Query = Record.main_input  # type: ignore
     RecordOutput: Query = Record.main_output  # type: ignore
 
-    # The calls made by the wrapped app. Layed out by path into components. 
+    # The calls made by the wrapped app. Layed out by path into components.
     RecordCalls: Query = Record.app  # type: ignore
 
     # The first called method (last to return).
@@ -440,9 +440,7 @@ class FeedbackDefinition(WithClassInfo, SerialModel):
     # Serialized parts of a feedback function. The non-serialized parts are in
     # the feedback.py:Feedback class.
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     # Implementation serialization info.
     implementation: Optional[Union[Function, Method]] = None

@@ -423,7 +423,10 @@ class Instrument(object):
         sig = safe_signature(func)
 
         def find_instrumented(f):
-            return id(f) in [id(tru_awrapper.__code__), id(tru_wrapper.__code__)]
+            return id(f) in [
+                id(tru_awrapper.__code__),
+                id(tru_wrapper.__code__)
+            ]
 
         async def tru_awrapper(*args, **kwargs):
             # TODO: figure out how to have less repetition between the async and
@@ -971,7 +974,8 @@ class Instrument(object):
                         )
                     )
 
-        if self.to_instrument_object(obj) or isinstance(obj, (dict, list, tuple)):
+        if self.to_instrument_object(obj) or isinstance(obj,
+                                                        (dict, list, tuple)):
             vals = None
             if isinstance(obj, dict):
                 attrs = obj.keys()
@@ -1000,7 +1004,7 @@ class Instrument(object):
                 vals = [safe_getattr(obj, k, get_prop=True) for k in attrs]
 
             for k, v in zip(attrs, vals):
-                
+
                 if isinstance(v, (str, bool, int, float)):
                     pass
 

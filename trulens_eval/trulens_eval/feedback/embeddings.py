@@ -29,7 +29,7 @@ class Embeddings(WithClassInfo, SerialModel):
         Args:
             embed_model ('Embedder'): Supported embedders taken from llama-index: https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
         """
-        
+
         service_context = ServiceContext.from_defaults(embed_model=embed_model)
         self._embed_model = service_context.embed_model
         super().__init__(obj=self)

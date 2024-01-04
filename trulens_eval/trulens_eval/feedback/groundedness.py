@@ -24,13 +24,7 @@ class Groundedness(WithClassInfo, SerialModel):
     Measures Groundedness.
     """
 
-    # @pydantic.validator()
     groundedness_provider: Provider
-
-    #@classmethod
-    #def model_validate(cls, obj, **kwargs):
-    #    print("Groundedness.model_validate")
-    #    return super().model_validate(obj, **kwargs)
 
     def __init__(self, groundedness_provider: Optional[Provider] = None, **kwargs):
         """
@@ -80,26 +74,27 @@ class Groundedness(WithClassInfo, SerialModel):
         This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step` 
 
         Usage on RAG Contexts:
-        ```
+        ```python
         from trulens_eval import Feedback
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.openai import OpenAI
         grounded = feedback.Groundedness(groundedness_provider=OpenAI())
 
-
         f_groundedness = feedback.Feedback(grounded.groundedness_measure).on(
             Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
         ).on_output().aggregate(grounded.grounded_statements_aggregator)
         ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
+        The `on(...)` selector can be changed. See [Feedback Function Guide :
+        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             source (str): The source that should support the statement
             statement (str): The statement to check groundedness
 
         Returns:
-            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+            float: A measure between 0 and 1, where 1 means each sentence is
+            grounded in the source.
         """
         logger.warning(
             "Feedback function `groundedness_measure` was renamed to `groundedness_measure_with_cot_reasons`. The new functionality of `groundedness_measure` function will no longer emit reasons as a lower cost option. It may have reduced accuracy due to not using Chain of Thought reasoning in the scoring."
@@ -136,7 +131,8 @@ class Groundedness(WithClassInfo, SerialModel):
     def groundedness_measure_with_cot_reasons(
         self, source: str, statement: str
     ) -> float:
-        """A measure to track if the source material supports each sentence in the statement. 
+        """
+        A measure to track if the source material supports each sentence in the statement. 
         This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step`.
         Also uses chain of thought methodology and emits the reasons.
 
@@ -238,7 +234,6 @@ class Groundedness(WithClassInfo, SerialModel):
         self, source_statements_multi_output: List[Dict]
     ) -> float:
         """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
-
 
         Args:
             source_statements_multi_output (List[Dict]): A list of scores. Each list index is a context. The Dict is a per statement score.
