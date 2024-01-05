@@ -20,9 +20,6 @@ class Bedrock(LLMProvider):
     def __init__(
         self, *args, model_id: str = "amazon.titan-tg1-large", **kwargs
     ):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
-        # constructor if we don't include it explicitly, even though we set it
-        # down below. Adding it as None here as a temporary hack.
         """
         A set of AWS Feedback Functions.
 

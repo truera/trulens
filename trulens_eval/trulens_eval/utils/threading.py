@@ -41,13 +41,13 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         )
 
 
-# Attempt other users of ThreadPoolExecutor to use our version.
+# HACK002: Attempt other users of ThreadPoolExecutor to use our version.
 import concurrent
 
 concurrent.futures.ThreadPoolExecutor = ThreadPoolExecutor
 concurrent.futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 
-# Hack to try to make langchain use our ThreadPoolExecutor as the above doesn't
+# HACK003: Hack to try to make langchain use our ThreadPoolExecutor as the above doesn't
 # seem to do the trick.
 try:
     import langchain_core

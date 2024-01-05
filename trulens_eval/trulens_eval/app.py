@@ -600,6 +600,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         instrumented by this app.
         """
 
+        from langchain_core.runnables.base import RunnableSequence
+
+        if func.__name__ == "invoke" and isinstance(obj, RunnableSequence):
+            print(f"instrumenting {id(obj):x} {type(obj)} {func} at {path}")
+
         if id(obj) in self.instrumented_methods:
 
             funcs = self.instrumented_methods[id(obj)]

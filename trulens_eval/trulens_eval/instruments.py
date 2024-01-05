@@ -212,7 +212,7 @@ import traceback
 from typing import (
     Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
 )
-import weakref
+# import weakref
 
 import pydantic
 
@@ -394,7 +394,7 @@ class Instrument(object):
         ), "Function expected but method received."
 
         if safe_hasattr(func, Instrument.INSTRUMENT):
-            logger.debug(f"\t\t\t{query}: {func} is already instrumented")
+            print(f"\t\t\t{query}: {func} is already instrumented")
 
             # Notify the app instrumenting this method where it is located. Note
             # we store the method being instrumented in the attribute
@@ -406,7 +406,8 @@ class Instrument(object):
             # instrumented, to the list of apps expecting to be notified of
             # calls.
             existing_apps = getattr(func, Instrument.APPS)
-            existing_apps.add(self.app)
+            # existing_apps.add(self.app) # if weakref
+            existing_apps.append(self.app)
 
             return func
 
@@ -805,9 +806,10 @@ class Instrument(object):
         # Create a new set of apps expecting to be notified about calls to the
         # instrumented method. Making this a weakref set so that if the
         # instrumented app gets unloaded, it will be evicted from this set.
-        setattr(w, Instrument.APPS, weakref.WeakSet([self.app]))
+        #setattr(w, Instrument.APPS, weakref.WeakSet([self.app]))
+        setattr(w, Instrument.APPS, [self.app])
 
-        # Hack for llama_index trace_method not preserving wrapped method signature.
+        # HACK001: Hack for llama_index trace_method not preserving wrapped method signature.
         if "trace_method.<locals>.decorator.<locals>.wrapper" == func.__qualname__:
             actual_func = func.__closure__[1].cell_contents
             func_sig = inspect.signature(actual_func)

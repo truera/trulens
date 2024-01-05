@@ -34,10 +34,6 @@ class LLMProvider(Provider):
     model_config: ClassVar[dict] = dict(protected_namespaces=())
 
     def __init__(self, *args, **kwargs):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
-        # constructor if we don't include it explicitly, even though we set it
-        # down below. Adding it as None here as a temporary hack
-
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict(kwargs)
 
