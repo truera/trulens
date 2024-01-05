@@ -17,7 +17,7 @@ class LiteLLM(LLMProvider):
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
     ):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """

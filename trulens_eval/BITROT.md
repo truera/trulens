@@ -8,14 +8,27 @@ meantime and a resource for hard-to-debug issues when they arise.
 In notes below, "HACK###" can be used to find places in the code where the hack
 lives.
 
+## stack inspecting
+
+See `instruments.py` docstring for discussion why these are done.
+
+- We inspect the call stack in process of tracking method invocation. It may be
+  possible to replace this with `contextvars`. 
+
 ## Method overriding
 
-(This one may not be possible to remedy) trulens_eval overrides a lot of methods
-from other libraries when it wishes to track their usage.
+See `instruments.py` docstring for discussion why these are done.
+
+- We override and wrap methods from other libraries to track their invocation or
+  API use. Overriding for tracking invocation is done in the base
+  `instruments.py:Instrument` class while for tracking costs are in the base
+  `Endpoint` class.
 
 ## thread overriding
 
-- "HACK002" -- We override `ThreadPoolExecutor`` in concurrent.futures.
+See `instruments.py` docstring for discussion why these are done.
+
+- "HACK002" -- We override `ThreadPoolExecutor` in concurrent.futures.
 
 ### llama-index
 
@@ -25,15 +38,25 @@ from other libraries when it wishes to track their usage.
 ### langchain
 
 - "HACK003" -- We override the base class of
-  `langchain_core.runnables.config.ContextThreadPoolExecutor`
+  `langchain_core.runnables.config.ContextThreadPoolExecutor` so it uses our
+  thread starter.
 
 ### pydantic
 
-- endpoint extra args
-- model_validate implementation in WithClassInfo
-- 
+- "HACK006" -- `endpoint` needs to be an kwargs with default value to some
+  `__init__` because pydantic overrides signature.
+
+- "HACK005" -- `model_validate` inside `WithClassInfo` is implemented in
+  decorated method because pydantic doesn't call it otherwise.
+
+- We dump attributes marked to be excluded by pydantic except our own classes.
+  This is because some objects are of interest despite being marked to exclude.
+  Example: `RetrievalQA.retriever` in langchain.
 
 ### other
 
 - "HACK004" -- Outdated, need investigation whether it can be removed.
 
+- async/sync code duplication -- Many of our methods are almost identical
+  duplicates due to supporting both async and synced versions. Having trouble
+  with a working approach to de-duplicated the identical code.
