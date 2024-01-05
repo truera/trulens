@@ -5,6 +5,8 @@ from typing import Iterable, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
+from pprint import PrettyPrinter
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -16,7 +18,6 @@ import streamlit as st
 from ux.add_logo import add_logo_and_style_overrides
 from ux.styles import CATEGORY
 
-from pprint import PrettyPrinter
 pp = PrettyPrinter()
 
 from trulens_eval import Tru
@@ -358,7 +359,7 @@ else:
                             df = pd.DataFrame.from_records(
                                 c['args'] for c in call
                             )
-                            
+
                             df["result"] = pd.DataFrame(
                                 [
                                     float(call[i]["ret"])
@@ -381,10 +382,8 @@ else:
                         else:
                             st.text("No feedback details.")
 
-                    with st.expander(
-                        f"{feedback_name} = {feedback_result}",
-                        expanded=True
-                    ):
+                    with st.expander(f"{feedback_name} = {feedback_result}",
+                                     expanded=True):
                         display_feedback_call(feedback_calls)
 
             record_str = selected_rows["record_json"][0]

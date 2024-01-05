@@ -15,6 +15,7 @@ with OptionalImports(messages=REQUIREMENT_SKLEARN):
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index import ServiceContext
 
+
 class Embeddings(WithClassInfo, SerialModel):
     """Embedding related feedback function implementations.
     """

@@ -1,8 +1,8 @@
 import logging
 from typing import Dict, List, Optional
-import pydantic
 
 import numpy as np
+import pydantic
 from tqdm.auto import tqdm
 
 from trulens_eval.feedback import prompts
@@ -26,7 +26,9 @@ class Groundedness(WithClassInfo, SerialModel):
 
     groundedness_provider: Provider
 
-    def __init__(self, groundedness_provider: Optional[Provider] = None, **kwargs):
+    def __init__(
+        self, groundedness_provider: Optional[Provider] = None, **kwargs
+    ):
         """
         Instantiates the groundedness providers. Currently the groundedness
         functions work well with a summarizer. This class will use an LLM to
@@ -60,10 +62,7 @@ class Groundedness(WithClassInfo, SerialModel):
             logger.warning("Provider not provided. Using OpenAI.")
             groundedness_provider = OpenAI()
 
-        super().__init__(
-            groundedness_provider=groundedness_provider,
-            **kwargs
-        )
+        super().__init__(groundedness_provider=groundedness_provider, **kwargs)
 
     def groundedness_measure(self, source: str, statement: str) -> float:
         """A measure to track if the source material supports each sentence in the statement. 

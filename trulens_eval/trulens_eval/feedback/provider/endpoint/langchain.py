@@ -32,7 +32,7 @@ class LangchainEndpoint(Endpoint):
     # Cannot validate BaseLLM / BaseChatModel as they are pydantic v1 and there
     # is some bug involving their use within pydantic v2.
     # https://github.com/langchain-ai/langchain/issues/10112
-    chain: Any # Union[BaseLLM, BaseChatModel]
+    chain: Any  # Union[BaseLLM, BaseChatModel]
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="langchain")
@@ -55,7 +55,7 @@ class LangchainEndpoint(Endpoint):
 
         if not (isinstance(chain, BaseLLM) or isinstance(chain, BaseChatModel)):
             raise ValueError(
-                f"`chain` must be of type {BaseLLM.__name__} or {BaseChatModel.__name__}. " 
+                f"`chain` must be of type {BaseLLM.__name__} or {BaseChatModel.__name__}. "
                 f"If you are using DEFERRED mode, this may be due to our inability to serialize `chain`."
             )
 
