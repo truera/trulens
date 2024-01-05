@@ -600,8 +600,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         instrumented by this app.
         """
 
+        # DEBUGGING HERE; do not accept a PR if this code is still here
         from langchain_core.runnables.base import RunnableSequence
-
         if func.__name__ == "invoke" and isinstance(obj, RunnableSequence):
             print(f"instrumenting {id(obj):x} {type(obj)} {func} at {path}")
 
