@@ -24,6 +24,7 @@ class Provider(WithClassInfo, SerialModel):
     def __init__(self, name: Optional[str] = None, **kwargs):
         super().__init__(name=name, **kwargs)
 
+
 class LLMProvider(Provider):
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2

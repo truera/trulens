@@ -423,8 +423,7 @@ class AzureOpenAI(OpenAI):
         kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
 
         super().__init__(
-            endpoint=None,
-            **kwargs
+            endpoint=None, **kwargs
         )  # need to include pydantic.BaseModel.__init__
 
     def _create_chat_completion(self, *args, **kwargs):

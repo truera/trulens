@@ -575,7 +575,7 @@ class AppDefinition(WithClassInfo, SerialModel):
         kwargs['tags'] = ""
         kwargs['metadata'] = {}
         kwargs['app_extra_json'] = app_extra_json or dict()
-        
+
         super().__init__(**kwargs)
 
         if app_id is None:
@@ -626,7 +626,6 @@ class AppDefinition(WithClassInfo, SerialModel):
                     f"Could not serialize app loader. "
                     f"Some trulens features may not be available: {e}"
                 )
-
 
     @staticmethod
     def continue_session(
