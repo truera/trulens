@@ -30,7 +30,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     """
     ground_truth: Union[List[Dict], FunctionOrMethod]
     provider: Provider
-    
+
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
     bert_scorer: object

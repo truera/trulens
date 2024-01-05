@@ -2,7 +2,7 @@ from concurrent.futures import Future
 from concurrent.futures import wait
 import logging
 from multiprocessing.pool import AsyncResult
-from typing import Dict, Optional, Tuple, Union, get_args, get_origin
+from typing import Dict, get_args, get_origin, Optional, Tuple, Union
 
 import numpy as np
 
@@ -49,11 +49,13 @@ def _tci(func):  # "typecheck inputs"
             if annot is not None:
                 pident = f"Input `{param}` to `{func.__name__}`"
                 v = bindings.arguments[param]
-    
+
                 typ_origin = get_origin(annot.annotation)
                 if typ_origin == Union:
                     annotation = get_args(annot.annotation)
-                    annotation_name = "(" + ", ".join(a.__name__ for a in annotation) + ")"
+                    annotation_name = "(" + ", ".join(
+                        a.__name__ for a in annotation
+                    ) + ")"
                 elif typ_origin:
                     annotation = typ_origin
                     annotation_name = annotation.__name__
