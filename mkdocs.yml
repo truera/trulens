@@ -111,6 +111,7 @@ nav:
                   - AWS Bedrock: trulens_eval/api/bedrock_provider.md
                   - HuggingFace: trulens_eval/api/huggingface_provider.md
                   - LiteLLM: trulens_eval/api/litellm_provider.md
+                  - Langchain: trulens_eval/api/langchain_provider.md
       - Tracking:
           - 🎺 Instrumentation:
               - Overview: trulens_eval/trulens_instrumentation.ipynb
