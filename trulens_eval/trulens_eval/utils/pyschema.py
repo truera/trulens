@@ -626,9 +626,8 @@ class WithClassInfo(pydantic.BaseModel):
             if k in obj:
                 val = obj[k]
 
-            if isinstance(typ, type) \
-            and issubclass(typ, WithClassInfo) \
-            and isinstance(val, dict) and CLASS_INFO in val:
+            if isinstance(val, dict) and CLASS_INFO in val \
+            and inspect.isclass(typ) and issubclass(typ, WithClassInfo):
                 subcls = Class.model_validate(val[CLASS_INFO]).load()
                 val = subcls.model_validate(val)
 

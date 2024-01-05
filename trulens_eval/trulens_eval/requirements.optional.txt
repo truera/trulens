@@ -45,7 +45,8 @@ slack-bolt >= 1.18.0
 slack-sdk  >= 3.21.3
 
 # UI
-ipywidgets >= 8.0.6 # for some example notebooks
+ipython    >= 8.19.0    # for notebooks
+ipywidgets >= 8.0.6     # for some example notebooks
 
 # Chunking/parsing
 sentencepiece  >= 0.1.97

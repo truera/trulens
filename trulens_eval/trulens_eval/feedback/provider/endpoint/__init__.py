@@ -4,8 +4,11 @@ from trulens_eval.feedback.provider.endpoint.bedrock import BedrockEndpoint
 from trulens_eval.feedback.provider.endpoint.hugs import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.langchain import LangchainEndpoint
 from trulens_eval.feedback.provider.endpoint.litellm import LiteLLMEndpoint
-from trulens_eval.feedback.provider.endpoint.openai import OpenAIClient
-from trulens_eval.feedback.provider.endpoint.openai import OpenAIEndpoint
+from trulens_eval.utils.imports import REQUIREMENT_OPENAI, OptionalImports
+
+with OptionalImports(messages=REQUIREMENT_OPENAI):
+    from trulens_eval.feedback.provider.endpoint.openai import OpenAIClient
+    from trulens_eval.feedback.provider.endpoint.openai import OpenAIEndpoint
 
 __all__ = [
     "Endpoint",

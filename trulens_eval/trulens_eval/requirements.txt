@@ -2,6 +2,7 @@ numpy              >= 1.23.5
 frozendict         >= 2.3.8
 munch              >= 3.0.0
 dill               >= 0.3.7
+tqdm               >= 4.66.1    # groundedness.py
 
 # Secrets/env management
 python-dotenv      >= 1.0.0
