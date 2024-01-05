@@ -115,7 +115,8 @@ def jsonify(
     dicted: Optional[Dict[int, JSON]] = None,
     instrument: Optional['Instrument'] = None,
     skip_specials: bool = False,
-    redact_keys: bool = False
+    redact_keys: bool = False,
+    include_excluded: bool = True
 ) -> JSON:
     """
     Convert the given object into types that can be serialized in json.
@@ -136,6 +137,9 @@ def jsonify(
 
         - redact_keys: bool (default is False) -- if set, will redact secrets
           from the output. Secrets are detremined by `keys.py:redact_value` .
+
+        - include_excluded: bool (default is True) -- include fields that are
+          annotated to be excluded by pydantic.
 
     Returns:
 
@@ -229,7 +233,7 @@ def jsonify(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
-                if not v.field_info.exclude and recur_key(k)
+                if (include_excluded or not v.field_info.exclude) and recur_key(k)
             }
         )
 
@@ -252,7 +256,7 @@ def jsonify(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.model_fields.items()
-                if not v.exclude and recur_key(k)
+                if (include_excluded or not v.exclude) and recur_key(k)
             }
         )
 
