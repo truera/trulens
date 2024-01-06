@@ -365,7 +365,7 @@ class Obj(SerialModel):
             #if isinstance(cls, type):
             #    sig = _safe_init_sig(cls)
             #else:
-                
+
             sig = _safe_init_sig(cls.__call__)
 
             b = sig.bind(*init_args, **init_kwargs)
@@ -389,7 +389,7 @@ class Obj(SerialModel):
         if issubclass(cls, pydantic.BaseModel):
             # For pydantic Models, use model_validate to reconstruct object:
             return cls.model_validate(self.init_bindings.kwargs)
-        
+
         else:
 
             sig = _safe_init_sig(cls)
@@ -400,8 +400,10 @@ class Obj(SerialModel):
                 extra_kwargs = {}
 
             try:
-                bindings = self.init_bindings.load(sig, extra_kwargs=extra_kwargs)
-                
+                bindings = self.init_bindings.load(
+                    sig, extra_kwargs=extra_kwargs
+                )
+
             except Exception as e:
                 msg = f"Error binding constructor args for object:\n"
                 msg += str(e) + "\n"
@@ -409,7 +411,7 @@ class Obj(SerialModel):
                 msg += f"\targs={self.init_bindings.args}\n"
                 msg += f"\tkwargs={self.init_bindings.kwargs}\n"
                 raise type(e)(msg)
-        
+
             return cls(*bindings.args, **bindings.kwargs)
 
 
@@ -587,7 +589,7 @@ class WithClassInfo(pydantic.BaseModel):
 
     # Using this odd key to not pollute attribute names in whatever class we mix
     # this into. Should be the same as CLASS_INFO.
-    tru_class_info: Class # = Field(None, exclude=False)
+    tru_class_info: Class  # = Field(None, exclude=False)
 
     # NOTE(piotrm): HACK005: for some reason, model_validate is not called for
     # nested models but the method decorated as such below is called. We use
@@ -601,7 +603,7 @@ class WithClassInfo(pydantic.BaseModel):
     @pydantic.model_validator(mode='before')
     @staticmethod
     def load(obj, *args, **kwargs):
-        
+
         if not isinstance(obj, dict):
             return obj
 
@@ -615,7 +617,7 @@ class WithClassInfo(pydantic.BaseModel):
             cls = clsinfo.load()
         except RuntimeError:
             return obj
-        
+
         validated = dict()
         for k, finfo in cls.model_fields.items():
             typ = finfo.annotation
@@ -629,9 +631,9 @@ class WithClassInfo(pydantic.BaseModel):
             and isinstance(val, dict) and CLASS_INFO in val:
                 subcls = Class.model_validate(val[CLASS_INFO]).load()
                 val = subcls.model_validate(val)
-    
+
             validated[k] = val
-            
+
         # Note that the rest of the validation/conversions for things which are
         # not serialized WithClassInfo will be done by pydantic after we return
         # this:

@@ -11,7 +11,7 @@
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
-# ! pip install trulens_eval==0.20.0 openai==1.3.7 langchain chromadb langchainhub bs4
+# ! pip install trulens_eval==0.20.1 openai==1.3.7 langchain chromadb langchainhub bs4
 
 import os
 

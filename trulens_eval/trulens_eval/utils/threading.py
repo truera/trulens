@@ -58,7 +58,7 @@ try:
     # concurrent.futures.ThreadPoolExecutor before langchain_core is loaded so
     # lets just retrofit the base class afterwards:
     from langchain_core.runnables.config import ContextThreadPoolExecutor
-    ContextThreadPoolExecutor.__bases__ = (ThreadPoolExecutor, )
+    ContextThreadPoolExecutor.__bases__ = (ThreadPoolExecutor,)
 
     # TODO: ContextThreadPoolExecutor already maintains context so we no longer
     # need to do it for them but we still need to maintain call stack.

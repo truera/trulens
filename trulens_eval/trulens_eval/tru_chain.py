@@ -293,7 +293,7 @@ class TruChain(App):
         if 'inputs' in bindings.arguments \
             and safe_hasattr(self.app, "input_keys") \
             and safe_hasattr(self.app, "prep_inputs"):
-        
+
             # langchain specific:
             ins = self.app.prep_inputs(bindings.arguments['inputs'])
 
