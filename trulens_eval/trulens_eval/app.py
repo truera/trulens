@@ -460,7 +460,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         self.tru_post_init()
 
     def __del__(self):
-        print(f"app {self.app_id} at {id(self):x} is being unloaded")
+        # Can use to do things when this object is being garbage collected.
+        pass
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> Lens:
