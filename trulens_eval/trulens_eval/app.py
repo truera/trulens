@@ -459,6 +459,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         self.tru_post_init()
 
+    def __del__(self):
+        print(f"app {self.app_id} at {id(self):x} is being unloaded")
+
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> Lens:
         if app is None:
@@ -599,11 +602,6 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         Called by instrumentation system for every function requested to be
         instrumented by this app.
         """
-
-        # DEBUGGING HERE; do not accept a PR if this code is still here
-        from langchain_core.runnables.base import RunnableSequence
-        if func.__name__ == "invoke" and isinstance(obj, RunnableSequence):
-            print(f"instrumenting {id(obj):x} {type(obj)} {func} at {path}")
 
         if id(obj) in self.instrumented_methods:
 
