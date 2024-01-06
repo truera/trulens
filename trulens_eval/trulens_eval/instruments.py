@@ -394,7 +394,7 @@ class Instrument(object):
         ), "Function expected but method received."
 
         if safe_hasattr(func, Instrument.INSTRUMENT):
-            logger.debug(f"\t\t\t{query}: {func} is already instrumented:")
+            logger.debug(f"\t\t\t{query}: {func} is already instrumented")
             
             # Notify the app instrumenting this method where it is located. Note
             # we store the method being instrumented in the attribute
