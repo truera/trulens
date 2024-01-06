@@ -809,7 +809,6 @@ class Instrument(object):
         # instrumented method. Making this a weakref set so that if the
         # recorder/app gets garbage collected, it will be evicted from this set.
         setattr(w, Instrument.APPS, weakref.WeakSet([self.app]))
-        #setattr(w, Instrument.APPS, [self.app])
 
         # HACK001: Hack for llama_index trace_method not preserving wrapped method signature.
         if "trace_method.<locals>.decorator.<locals>.wrapper" == func.__qualname__:
