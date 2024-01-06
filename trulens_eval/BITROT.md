@@ -32,8 +32,8 @@ See `instruments.py` docstring for discussion why these are done.
 
 ### llama-index
 
-- "HACK001" -- `trace_method` decorator does not preserve function signatures;
-  we hack it so that it does. 
+- "HACK001" -- `trace_method` decorator in llama_index does not preserve
+  function signatures; we hack it so that it does. 
 
 ### langchain
 
@@ -43,8 +43,9 @@ See `instruments.py` docstring for discussion why these are done.
 
 ### pydantic
 
-- "HACK006" -- `endpoint` needs to be an kwargs with default value to some
-  `__init__` because pydantic overrides signature.
+- "HACK006" -- `endpoint` needs to be added as a keyword arg with default value
+  in some `__init__` because pydantic overrides signature without default value
+  otherwise.
 
 - "HACK005" -- `model_validate` inside `WithClassInfo` is implemented in
   decorated method because pydantic doesn't call it otherwise.
