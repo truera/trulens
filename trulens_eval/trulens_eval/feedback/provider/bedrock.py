@@ -18,7 +18,10 @@ class Bedrock(LLMProvider):
     endpoint: BedrockEndpoint
 
     def __init__(
-        self, *args, model_id: str = "amazon.titan-tg1-large", **kwargs
+            # rajib76: changed the default model id to the cheaper model
+            # titan-tg1-large is no longer available
+            self, *args, model_id: str = "amazon.titan-text-lite-v1", **kwargs
+        # self, *args, model_id: str = "amazon.titan-tg1-large", **kwargs
     ):
         """
         A set of AWS Feedback Functions.
