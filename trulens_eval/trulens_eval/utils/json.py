@@ -28,7 +28,7 @@ from trulens_eval.utils.pyschema import noserio
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSON, SerialModel
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
@@ -113,7 +113,8 @@ def jsonify(
     dicted: Optional[Dict[int, JSON]] = None,
     instrument: Optional['Instrument'] = None,
     skip_specials: bool = False,
-    redact_keys: bool = False
+    redact_keys: bool = False,
+    include_excluded: bool = True
 ) -> JSON:
     """
     Convert the given object into types that can be serialized in json.
@@ -135,20 +136,31 @@ def jsonify(
         - redact_keys: bool (default is False) -- if set, will redact secrets
           from the output. Secrets are detremined by `keys.py:redact_value` .
 
+        - include_excluded: bool (default is True) -- include fields that are
+          annotated to be excluded by pydantic.
+
     Returns:
 
         JSON | Sequence[JSON]
     """
+    skip_excluded = not include_excluded
+    # Hack so that our models do not get exludes dumped which causes many
+    # problems. Another variable set here so we can recurse with the original
+    # include_excluded .
+    if isinstance(obj, SerialModel):
+        skip_excluded = True
 
     from trulens_eval.instruments import Instrument
 
-    instrument = instrument or Instrument()
+    if instrument is None:
+        instrument = Instrument()
+
     dicted = dicted or dict()
 
     if skip_specials:
-        recur_key = lambda k: k not in ALL_SPECIAL_KEYS
+        recur_key = lambda k: isinstance(k, JSON_BASES) and k not in ALL_SPECIAL_KEYS
     else:
-        recur_key = lambda k: True
+        recur_key = lambda k: isinstance(k, JSON_BASES) and True
 
     if id(obj) in dicted:
         if skip_specials:
@@ -173,14 +185,15 @@ def jsonify(
         return pydantic.v1.json.ENCODERS_BY_TYPE[type(obj)](obj)
 
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
-    new_dicted = {k: v for k, v in dicted.items()}
+    new_dicted = dict(dicted)
 
     recur = lambda o: jsonify(
         obj=o,
         dicted=new_dicted,
         instrument=instrument,
         skip_specials=skip_specials,
-        redact_keys=redact_keys
+        redact_keys=redact_keys,
+        include_excluded=include_excluded
     )
 
     content = None
@@ -227,7 +240,7 @@ def jsonify(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
-                if not v.field_info.exclude and recur_key(k)
+                if (not skip_excluded or not v.field_info.exclude) and recur_key(k)
             }
         )
 
@@ -250,7 +263,7 @@ def jsonify(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.model_fields.items()
-                if not v.exclude and recur_key(k)
+                if (not skip_excluded or not v.exclude) and recur_key(k)
             }
         )
 
