@@ -38,16 +38,19 @@ from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import safe_getattr
-from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import SerialModel
+
+# optional package
+import openai as oai
+
+# check it is not a dummy:
+OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(oai)
+
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
-
-with OptionalImports(messages=REQUIREMENT_OPENAI):
-    import openai as oai
 
 
 class OpenAIClient(SerialModel):

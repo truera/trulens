@@ -16,6 +16,8 @@ from merkle_json import MerkleJson
 import pydantic
 
 from trulens_eval.keys import redact_value
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import CIRCLE
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
@@ -40,25 +42,21 @@ mj = MerkleJson()
 
 # Add encoders for some types that pydantic cannot handle but we need.
 
-# httpx.URL needed for openai client.
-import httpx
+with OptionalImports(messages=REQUIREMENT_OPENAI):
+    # httpx.URL needed for openai client.
+    import httpx
+    # Another thing we need for openai client.
+    from openai import Timeout
 
+    def encode_httpx_url(obj: httpx.URL):
+        return str(obj)
 
-def encode_httpx_url(obj: httpx.URL):
-    return str(obj)
+    pydantic.v1.json.ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
 
+    def encode_openai_timeout(obj: Timeout):
+        return obj.as_dict()
 
-pydantic.v1.json.ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
-
-# Another thing we need for openai client.
-from openai import Timeout
-
-
-def encode_openai_timeout(obj: Timeout):
-    return obj.as_dict()
-
-
-pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
+    pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
 
 
 def obj_id_of_obj(obj: dict, prefix="obj"):
