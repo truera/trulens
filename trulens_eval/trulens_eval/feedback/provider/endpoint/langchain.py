@@ -4,11 +4,9 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from langchain.chat_models.base import BaseChatModel
 from langchain.llms.base import BaseLLM
-import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.utils.pyschema import WithClassInfo
 
 logger = logging.getLogger(__name__)
 
