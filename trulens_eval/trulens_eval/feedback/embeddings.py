@@ -1,15 +1,22 @@
 from typing import Dict, Tuple, Union
 
-from llama_index import ServiceContext
 import numpy as np
 from pydantic import PrivateAttr
 
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.imports import REQUIREMENT_SKLEARN
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
+with OptionalImports(messages=REQUIREMENT_SKLEARN):
+    import sklearn
 
-class Embeddings(SerialModel, WithClassInfo):
+with OptionalImports(messages=REQUIREMENT_LLAMA):
+    from llama_index import ServiceContext
+
+
+class Embeddings(WithClassInfo, SerialModel):
     """Embedding related feedback function implementations.
     """
     _embed_model: 'Embedder' = PrivateAttr()
@@ -23,14 +30,10 @@ class Embeddings(SerialModel, WithClassInfo):
         Args:
             embed_model ('Embedder'): Supported embedders taken from llama-index: https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
         """
-        try:
-            import sklearn
-        except:
-            raise ImportError(REQUIREMENT_SKLEARN)
 
         service_context = ServiceContext.from_defaults(embed_model=embed_model)
         self._embed_model = service_context.embed_model
-        super().__init__(obj=self)
+        super().__init__()
 
     def cosine_distance(
         self, query: str, document: str

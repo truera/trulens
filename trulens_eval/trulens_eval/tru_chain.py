@@ -6,7 +6,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Tuple
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
@@ -14,12 +14,16 @@ from pydantic import Field
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
+from trulens_eval.schema import Select
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.serial import all_queries
+from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +99,10 @@ class LangChainInstrument(Instrument):
             "_get_relevant_documents":
                 lambda o: isinstance(o, (RunnableSerializable)),
             "_aget_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable)),
+            "get_relevant_documents":
+                lambda o: isinstance(o, (RunnableSerializable)),
+            "aget_relevant_documents":
                 lambda o: isinstance(o, (RunnableSerializable)),
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
@@ -210,6 +218,45 @@ class TruChain(App):
 
         super().__init__(**kwargs)
 
+    @classmethod
+    def select_context(cls, app: Optional[Chain] = None) -> Lens:
+        """
+        Get the path to the context in the query output.
+        """
+
+        if app is None:
+            raise ValueError(
+                "langchain app/chain is required to determine context for langchain apps. "
+                "Pass it in as the `app` argument"
+            )
+
+        retrievers = []
+
+        app_json = jsonify(app)
+        for lens in all_queries(app_json):
+            try:
+                comp = lens.get_sole_item(app)
+                if isinstance(comp, BaseRetriever):
+                    retrievers.append((lens, comp))
+
+            except Exception:
+                pass
+
+        if len(retrievers) == 0:
+            raise ValueError("Cannot find any `BaseRetriever` in app.")
+
+        if len(retrievers) > 1:
+            raise ValueError(
+                "Found more than one `BaseRetriever` in app:\n\t" + \
+                ("\n\t".join(map(
+                    lambda lr: f"{type(lr[1])} at {lr[0]}",
+                    retrievers)))
+            )
+
+        return (
+            Select.RecordCalls + retrievers[0][0]
+        ).get_relevant_documents.rets
+
     # TODEP
     # Chain requirement
     @property
@@ -220,13 +267,19 @@ class TruChain(App):
     # Chain requirement
     @property
     def input_keys(self) -> List[str]:
-        return self.app.input_keys
+        if safe_hasattr(self.app, "input_keys"):
+            return self.app.input_keys
+        else:
+            raise TypeError("App does not have input_keys.")
 
     # TODEP
     # Chain requirement
     @property
     def output_keys(self) -> List[str]:
-        return self.app.output_keys
+        if safe_hasattr(self.app, "output_keys"):
+            return self.app.output_keys
+        else:
+            raise TypeError("App does not have output_keys.")
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
@@ -237,7 +290,10 @@ class TruChain(App):
         `bindings`.
         """
 
-        if 'inputs' in bindings.arguments:
+        if 'inputs' in bindings.arguments \
+            and safe_hasattr(self.app, "input_keys") \
+            and safe_hasattr(self.app, "prep_inputs"):
+
             # langchain specific:
             ins = self.app.prep_inputs(bindings.arguments['inputs'])
 
@@ -260,7 +316,7 @@ class TruChain(App):
         returned `ret`.
         """
 
-        if isinstance(ret, Dict):
+        if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
             # langchain specific:
             if self.app.output_keys[0] in ret:
                 return ret[self.app.output_keys[0]]
@@ -270,16 +326,24 @@ class TruChain(App):
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        out_key = self.app.output_keys[0]
-
-        return self.app(human)[out_key]
+        if safe_hasattr(self.app, "output_keys"):
+            out_key = self.app.output_keys[0]
+            return self.app(human)[out_key]
+        else:
+            logger.warning("Unsure what the main output string may be.")
+            return str(self.app(human))
 
     async def main_acall(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        out_key = self.app.output_keys[0]
+        out = await self._acall(human)
 
-        return await self._acall(human)[out_key]
+        if safe_hasattr(self.app, "output_keys"):
+            out_key = self.app.output_keys[0]
+            return out[out_key]
+        else:
+            logger.warning("Unsure what the main output string may be.")
+            return str(out)
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Iterable, Optional
+from typing import ClassVar, Iterable, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.trulens_eval.feedback.base import ClassificationModel
@@ -14,17 +14,13 @@ from trulens_eval.utils.serial import SerialModel
 # Level 4 feedback abstraction
 
 
-class Provider(SerialModel, WithClassInfo):
+class Provider(WithClassInfo, SerialModel):
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint]
 
-    def __init__(self, name: str = None, **kwargs):
-        # for WithClassInfo:
-        kwargs['obj'] = self
-
+    def __init__(self, *args, name: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
 
     @abstractmethod

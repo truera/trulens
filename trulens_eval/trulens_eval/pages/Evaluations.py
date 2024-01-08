@@ -5,6 +5,8 @@ from typing import Iterable, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
+from pprint import PrettyPrinter
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -15,6 +17,8 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from ux.add_logo import add_logo_and_style_overrides
 from ux.styles import CATEGORY
+
+pp = PrettyPrinter()
 
 from trulens_eval import Tru
 from trulens_eval.app import Agent
@@ -317,7 +321,6 @@ else:
                 for fcol in feedback_cols:
                     feedback_name = fcol
                     feedback_result = row[fcol]
-                    print(feedback_result)
 
                     if MULTI_CALL_NAME_DELIMITER in fcol:
                         fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
@@ -339,9 +342,24 @@ else:
                             return [f"background-color: {cat.color}"] * len(s)
 
                         if call is not None and len(call) > 0:
+                            # NOTE(piotrm for garett): converting feedback
+                            # function inputs to strings here as other
+                            # structures get rendered as [object Object] in the
+                            # javascript downstream. If the first input/column
+                            # is a list, the DataFrame.from_records does create
+                            # multiple rows, one for each element, but if the
+                            # second or other column is a list, it will not do
+                            # this.
+                            for c in call:
+                                args = c['args']
+                                for k, v in args.items():
+                                    if not isinstance(v, str):
+                                        args[k] = pp.pformat(v)
+
                             df = pd.DataFrame.from_records(
-                                [call[i]["args"] for i in range(len(call))]
+                                c['args'] for c in call
                             )
+
                             df["result"] = pd.DataFrame(
                                 [
                                     float(call[i]["ret"])
@@ -384,7 +402,7 @@ else:
             match_query = None
 
             # Assumes record_json['perf']['start_time'] is always present
-            if val != record_json["perf"]["start_time"] and val != "":
+            if val != "":
                 match = None
                 for call in record.calls:
                     if call.perf.start_time.isoformat() == val:

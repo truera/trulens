@@ -523,8 +523,6 @@ def _check_needs_migration(version: str, warn=False) -> None:
     """
     compat_version = _get_compatibility_version(version)
 
-    print("compat_version=", compat_version)
-
     if migration_versions.index(compat_version) > 0:
 
         if _upgrade_possible(compat_version):
@@ -629,13 +627,16 @@ def migrate(db) -> None:
     Args:
         db (DB): the db object
     """
-    # NOTE TO DEVELOPER: If this method fails: It's likely you made a db breaking change.
-    # Follow these steps to add a compatibility change
+    # NOTE TO DEVELOPER: If this method fails: It's likely you made a db
+    # breaking change. Follow these steps to add a compatibility change
     # - Update the __init__ version to the next one (if not already)
     # - In this file: add that version to `migration_versions` variable`
-    # - Add the migration step in `upgrade_paths` of the form `from_version`:(`to_version_you_just_created`, `migration_function`)
-    # - AFTER YOU PASS TESTS - add your newest db into `release_dbs/<version_you_just_created>/default.sqlite`
-    #   - This is created by running the all_tools and llama_quickstart from a fresh db (you can `rm -rf` the sqlite file )
+    # - Add the migration step in `upgrade_paths` of the form
+    #   `from_version`:(`to_version_you_just_created`, `migration_function`)
+    # - AFTER YOU PASS TESTS - add your newest db into
+    #   `release_dbs/<version_you_just_created>/default.sqlite`
+    #   - This is created by running the all_tools and llama_quickstart from a
+    #     fresh db (you can `rm -rf` the sqlite file )
     #   - TODO: automate this step
     original_db_file = db.filename
     global saved_db_locations

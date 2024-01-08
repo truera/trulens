@@ -12,8 +12,8 @@ import logging
 from pprint import PrettyPrinter
 from threading import Lock
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, Type
+    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
+    Set, Tuple, Type
 )
 
 import pydantic
@@ -385,14 +385,15 @@ class RecordingContext():
         return record
 
 
-class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
+class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     """
     Generalization of a wrapped model.
     """
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         # Tru, DB, most of the types on the excluded fields.
-        arbitrary_types_allowed = True
+        arbitrary_types_allowed=True
+    )
 
     # Non-serialized fields here while the serialized ones are defined in
     # `schema.py:App`.
@@ -414,13 +415,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     # Instrumentation class. This is needed for serialization as it tells us
     # which objects we want to be included in the json representation of this
     # app.
-    instrument: Instrument = Field(exclude=True)
+    instrument: Instrument = Field(None, exclude=True)
 
     # Sequnces of records produced by the this class used as a context manager
     # are stpred om a RecordingContext. Using a context var so that context
     # managers can be nested.
     recording_contexts: contextvars.ContextVar[RecordingContext] \
-        = Field(exclude=True)
+        = Field(None, exclude=True)
 
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
@@ -445,18 +446,38 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             "recording_contexts"
         )
 
-        # Cannot use this to set app. AppDefinition has app as JSON type.
-        # TODO: Figure out a better design to avoid this.
         super().__init__(**kwargs)
 
         app = kwargs['app']
         self.app = app
+
+        assert self.instrument is not None, "App class cannot be instantiated. Use one of the subclasses."
 
         self.instrument.instrument_object(
             obj=self.app, query=Select.Query().app
         )
 
         self.tru_post_init()
+
+    @classmethod
+    def select_context(cls, app: Optional[Any] = None) -> Lens:
+        if app is None:
+            raise ValueError(
+                "Could not determine context selection without `app` argument."
+            )
+
+        # Checking by module name so we don't have to try to import either
+        # langchain or llama_index beforehand.
+        if type(app).__module__.startswith("langchain"):
+            from trulens_eval.tru_chain import TruChain
+            return TruChain.select_context(app)
+        elif type(app).__module__.startswith("llama_index"):
+            from trulens_eval.tru_llama import TruLlama
+            return TruLlama.select_context(app)
+        else:
+            raise ValueError(
+                f"Could not determine context from unrecognized `app` type {type(app)}."
+            )
 
     def __hash__(self):
         return hash(id(self))

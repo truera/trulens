@@ -2,11 +2,13 @@ import logging
 from typing import Dict, Optional, Sequence
 
 import openai as oai
+import pydantic
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIClient
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.utils.pyschema import CLASS_INFO
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,9 @@ class OpenAI(LLMProvider):
 
     # model_engine: str # LLMProvider
 
-    endpoint: Endpoint
+    # Endpoint cannot presently be serialized but is constructed in __init__
+    # below so it is ok.
+    endpoint: Endpoint = pydantic.Field(exclude=True)
 
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
@@ -29,21 +33,20 @@ class OpenAI(LLMProvider):
         """
         Create an OpenAI Provider with out of the box feedback functions.
 
-        **Usage:**
-        ```python
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
-        ```
+        **Usage:** ```python from trulens_eval.feedback.provider.openai import
+        OpenAI openai_provider = OpenAI() ```
 
         Args:
             model_engine (str): The OpenAI completion model. Defaults to
-                `gpt-3.5-turbo`
-            endpoint (Endpoint): Internal Usage for DB serialization
+              `gpt-3.5-turbo`
+            endpoint (Endpoint): Internal Usage for DB serialization. This
+              argument is intentionally ignored.
         """
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
         self_kwargs['model_engine'] = model_engine
+
         self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
 
         super().__init__(
@@ -362,35 +365,65 @@ class OpenAI(LLMProvider):
 
 
 class AzureOpenAI(OpenAI):
-    """Out of the box feedback functions calling AzureOpenAI APIs.
-    Has the same functionality as OpenAI out of the box feedback functions.
     """
+    Out of the box feedback functions calling AzureOpenAI APIs. Has the same
+    functionality as OpenAI out of the box feedback functions.
+    """
+
+    # Sent to our openai client wrapper but need to keep here as well so that it
+    # gets dumped when jsonifying.
+    deployment_name: str = pydantic.Field(alias="model_engine")
 
     def __init__(self, deployment_name: str, endpoint=None, **kwargs):
         # NOTE(piotrm): pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """
-        Wrapper to use Azure OpenAI. Please export the following env variables
+        Wrapper to use Azure OpenAI. Please export the following env variables.
+        These can be retrieved from https://oai.azure.com/ .
 
         - AZURE_OPENAI_ENDPOINT
         - AZURE_OPENAI_API_KEY
         - OPENAI_API_VERSION
 
+        Deployment name below is also found on the oai azure page.
+
         **Usage:**
         ```python
         from trulens_eval.feedback.provider.openai import AzureOpenAI
         openai_provider = AzureOpenAI(deployment_name="...")
+
+        openai_provider.relevance(
+            prompt="Where is Germany?",
+            response="Poland is in Europe."
+        ) # low relevance
         ```
 
         Args:
-            deployment_name (str, required): The name of the deployment.
-            endpoint (Endpoint): Internal Usage for DB serialization
+            - deployment_name (str, required): The name of the deployment.
+
+            - endpoint (Optional[Endpoint]): Internal Usage for DB
+              serialization. This argument is intentionally ignored.
         """
 
-        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**kwargs))
+        # Make a dict of args to pass to AzureOpenAI client. Remove any we use
+        # for our needs. Note that model name / deployment name is not set in
+        # that client and instead is an argument to each chat request. We pass
+        # that through the super class's `_create_chat_completion`.
+        client_kwargs = dict(kwargs)
+        if CLASS_INFO in client_kwargs:
+            del client_kwargs[CLASS_INFO]
+        if "model_engine" in client_kwargs:
+            # delete from client args
+            del client_kwargs["model_engine"]
+        else:
+            # but include in provider args
+            kwargs['model_engine'] = deployment_name
+
+        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
+
         super().__init__(
-            endpoint=endpoint, model_engine=deployment_name, **kwargs
+            endpoint=None, **kwargs
         )  # need to include pydantic.BaseModel.__init__
 
     def _create_chat_completion(self, *args, **kwargs):

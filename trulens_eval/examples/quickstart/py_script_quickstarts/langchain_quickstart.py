@@ -11,21 +11,13 @@
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
-# In[ ]:
-
-# ! pip install trulens_eval==0.19.2 openai==1.3.7 langchain chromadb langchainhub bs4
-
-# In[ ]:
+# ! pip install trulens_eval==0.20.1 openai==1.3.7 langchain chromadb langchainhub bs4
 
 import os
 
-os.environ["OPENAI_API_KEY"] = "..."
+os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # ### Import from LangChain and TruLens
-
-# In[ ]:
-
-from IPython.display import JSON
 
 # Imports main tools:
 from trulens_eval import Feedback
@@ -50,8 +42,6 @@ from langchain_core.runnables import RunnablePassthrough
 
 # ### Load documents
 
-# In[ ]:
-
 loader = WebBaseLoader(
     web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
     bs_kwargs=dict(
@@ -64,8 +54,6 @@ docs = loader.load()
 
 # ### Create Vector Store
 
-# In[ ]:
-
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000, chunk_overlap=200
 )
@@ -76,8 +64,6 @@ vectorstore = Chroma.from_documents(
 )
 
 # ### Create RAG
-
-# In[ ]:
 
 retriever = vectorstore.as_retriever()
 
@@ -98,43 +84,40 @@ rag_chain = (
 
 # ### Send your first request
 
-# In[ ]:
-
 rag_chain.invoke("What is Task Decomposition?")
 
 # ## Initialize Feedback Function(s)
 
-# In[ ]:
-
 import numpy as np
 
-from trulens_eval import Select
 from trulens_eval.feedback.provider import OpenAI
 
 # Initialize provider class
 openai = OpenAI()
+
+# select context to be used in feedback. the location of context is app specific.
+from trulens_eval.app import App
+
+context = App.select_context(rag_chain)
+
 from trulens_eval.feedback import Groundedness
 
 grounded = Groundedness(groundedness_provider=OpenAI())
 # Define a groundedness feedback function
 f_groundedness = (
-    Feedback(grounded.groundedness_measure_with_cot_reasons).on(
-        Select.RecordCalls.first.invoke.rets.context
-    ).on_output().aggregate(grounded.grounded_statements_aggregator)
+    Feedback(grounded.groundedness_measure_with_cot_reasons
+            ).on(context.collect())  # collect context chunks into a list
+    .on_output().aggregate(grounded.grounded_statements_aggregator)
 )
 
 # Question/answer relevance between overall question and answer.
 f_qa_relevance = Feedback(openai.relevance).on_input_output()
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(openai.qs_relevance).on(
-        Select.RecordCalls.first.invoke.args.input
-    ).on(Select.RecordCalls.first.invoke.rets.context).aggregate(np.mean)
+    Feedback(openai.qs_relevance).on_input().on(context).aggregate(np.mean)
 )
 
 # ## Instrument chain for logging with TruLens
-
-# In[ ]:
 
 tru_recorder = TruChain(
     rag_chain,
@@ -142,29 +125,19 @@ tru_recorder = TruChain(
     feedbacks=[f_qa_relevance, f_context_relevance, f_groundedness]
 )
 
-# In[ ]:
-
 with tru_recorder as recording:
     llm_response = rag_chain.invoke("What is Task Decomposition?")
 
-display(llm_response)
-
-# In[ ]:
-
-tru.run_dashboard()
+print(llm_response)
 
 # ## Retrieve records and feedback
 
-# In[ ]:
-
-# The record of the ap invocation can be retrieved from the `recording`:
+# The record of the app invocation can be retrieved from the `recording`:
 
 rec = recording.get()  # use .get if only one record
 # recs = recording.records # use .records if multiple
 
-display(rec)
-
-# In[ ]:
+print(rec)
 
 # The results of the feedback functions can be rertireved from the record. These
 # are `Future` instances (see `concurrent.futures`). You can use `as_completed`
@@ -178,11 +151,17 @@ for feedback_future in as_completed(rec.feedback_results):
     feedback: Feedback
     feedbac_result: FeedbackResult
 
-    display(feedback.name, feedback_result.result)
+    print(feedback.name, feedback_result.result)
+
+records, feedback = tru.get_records_and_feedback(
+    app_ids=["Chain1_ChatApplication"]
+)
+
+records.head()
+
+tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])
 
 # ## Explore in a Dashboard
-
-# In[ ]:
 
 tru.run_dashboard()  # open a local streamlit app to explore
 
@@ -191,10 +170,3 @@ tru.run_dashboard()  # open a local streamlit app to explore
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
-
-# ## Or view results directly in your notebook
-
-# In[ ]:
-
-tru.get_records_and_feedback(app_ids=[]
-                            )[0]  # pass an empty list of app_ids to get all

@@ -22,10 +22,9 @@ import logging
 from pprint import PrettyPrinter
 from types import ModuleType
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
+import warnings
 
-import dill
 import pydantic
-from pydantic import Field
 
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import SerialModel
@@ -227,7 +226,7 @@ class Class(SerialModel):
     ) -> 'Class':
         ret = Class(
             name=cls.__name__,
-            module=Module.of_module_name(cls.__module__, loadable=loadable),
+            module=Module.of_module_name(object_module(cls), loadable=loadable),
             bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
             if with_bases else None
         )
@@ -366,6 +365,7 @@ class Obj(SerialModel):
             #if isinstance(cls, type):
             #    sig = _safe_init_sig(cls)
             #else:
+
             sig = _safe_init_sig(cls.__call__)
 
             b = sig.bind(*init_args, **init_kwargs)
@@ -385,16 +385,34 @@ class Obj(SerialModel):
             )
 
         cls = self.cls.load()
-        sig = _safe_init_sig(cls)
 
-        if CLASS_INFO in sig.parameters and CLASS_INFO not in self.init_bindings.kwargs:
-            extra_kwargs = {CLASS_INFO: self.cls}
+        if issubclass(cls, pydantic.BaseModel):
+            # For pydantic Models, use model_validate to reconstruct object:
+            return cls.model_validate(self.init_bindings.kwargs)
+
         else:
-            extra_kwargs = {}
 
-        bindings = self.init_bindings.load(sig, extra_kwargs=extra_kwargs)
+            sig = _safe_init_sig(cls)
 
-        return cls(*bindings.args, **bindings.kwargs)
+            if CLASS_INFO in sig.parameters and CLASS_INFO not in self.init_bindings.kwargs:
+                extra_kwargs = {CLASS_INFO: self.cls}
+            else:
+                extra_kwargs = {}
+
+            try:
+                bindings = self.init_bindings.load(
+                    sig, extra_kwargs=extra_kwargs
+                )
+
+            except Exception as e:
+                msg = f"Error binding constructor args for object:\n"
+                msg += str(e) + "\n"
+                msg += f"\tobj={self}\n"
+                msg += f"\targs={self.init_bindings.args}\n"
+                msg += f"\tkwargs={self.init_bindings.kwargs}\n"
+                raise type(e)(msg)
+
+            return cls(*bindings.args, **bindings.kwargs)
 
 
 class Bindings(SerialModel):
@@ -414,6 +432,7 @@ class Bindings(SerialModel):
         ## But should not be a user supplied input kwarg.
         # `groundedness_provider` and `provider` explanation
         ## The rest of the providers need to be instantiated, but are currently in circular dependency if done from util.py
+
         if 'summarize_provider' in self.kwargs:
             del self.kwargs['summarize_provider']
         if 'groundedness_provider' in self.kwargs:
@@ -423,7 +442,10 @@ class Bindings(SerialModel):
 
     def load(self, sig: inspect.Signature, extra_args=(), extra_kwargs={}):
 
-        self._handle_providers_load()
+        # Disabling this hack as we now have different providers that may need
+        # to be selected from (i.e. OpenAI vs AzureOpenAI).
+
+        # self._handle_providers_load()
 
         return sig.bind(
             *(self.args + extra_args), **self.kwargs, **extra_kwargs
@@ -506,6 +528,12 @@ class Method(FunctionOrMethod):
         return getattr(obj, self.name)
 
 
+def object_module(obj):
+    if safe_hasattr(obj, "__module__"):
+        return getattr(obj, "__module__")
+    else:
+        return "builtins"
+
 class Function(FunctionOrMethod):
     """
     A python function. Could be a static method inside a class (not instance of
@@ -529,7 +557,7 @@ class Function(FunctionOrMethod):
     ) -> 'Function':  # actually: class
 
         if module is None:
-            module = Module.of_module_name(func.__module__, loadable=loadable)
+            module = Module.of_module_name(object_module(func), loadable=loadable)
 
         if cls is not None:
             cls = Class.of_class(cls, loadable=loadable)
@@ -567,28 +595,55 @@ class WithClassInfo(pydantic.BaseModel):
 
     # Using this odd key to not pollute attribute names in whatever class we mix
     # this into. Should be the same as CLASS_INFO.
-    tru_class_info: Class = Field(exclude=False)
+    tru_class_info: Class  # = Field(None, exclude=False)
 
-    @classmethod
-    def model_validate(cls, obj, **kwargs):
-        if isinstance(obj, dict) and CLASS_INFO in obj:
+    # NOTE(piotrm): for some reason, model_validate is not called for nested
+    # models but the method decorated as such below is called. We use this to
+    # load an object which includes our class information instead of using
+    # pydantic for this loading as it would always load the object as per its
+    # declared field. For example, `Provider` includes `endpoint: Endpoint` but
+    # we want to load one of the `Endpoint` subclasses. We add the subclass
+    # information using `WithClassInfo` meaning we can then use this method
+    # below to load the subclass. Pydantic would only give us `Endpoint`, the
+    # parent class.
+    @pydantic.model_validator(mode='before')
+    @staticmethod
+    def load(obj, *args, **kwargs):
 
-            clsinfo = Class.model_validate(obj[CLASS_INFO])
-            clsloaded = clsinfo.load()
+        if not isinstance(obj, dict):
+            return obj
 
-            # NOTE(piotrm): even though we have a more specific class than
-            # AppDefinition, we load it as AppDefinition due to serialization
-            # issues in the wrapped app. Keeping it as AppDefinition means `app`
-            # field is just json.
-            from trulens_eval.schema import AppDefinition
+        if CLASS_INFO not in obj:
+            raise ValueError("No class info present in object.")
 
-            if issubclass(clsloaded, AppDefinition):
-                return super(cls, AppDefinition).model_validate(obj)
-            else:
-                return super(cls, clsloaded).model_validate(obj)
+        clsinfo = Class.model_validate(obj[CLASS_INFO])
+        try:
+            # If class cannot be loaded, usually because it is not importable,
+            # return obj as is.
+            cls = clsinfo.load()
+        except RuntimeError:
+            return obj
 
-        else:
-            return super().model_validate(obj)
+        validated = dict()
+        for k, finfo in cls.model_fields.items():
+            typ = finfo.annotation
+            val = finfo.get_default(call_default_factory=True)
+
+            if k in obj:
+                val = obj[k]
+
+            if isinstance(typ, type) \
+            and issubclass(typ, WithClassInfo) \
+            and isinstance(val, dict) and CLASS_INFO in val:
+                subcls = Class.model_validate(val[CLASS_INFO]).load()
+                val = subcls.model_validate(val)
+
+            validated[k] = val
+
+        # Note that the rest of the validation/conversions for things which are
+        # not serialized WithClassInfo will be done by pydantic after we return
+        # this:
+        return validated
 
     def __init__(
         self,
@@ -598,6 +653,15 @@ class WithClassInfo(pydantic.BaseModel):
         cls: Optional[type] = None,
         **kwargs
     ):
+        if obj is not None:
+            warnings.warn(
+                "`obj` does not need to be provided to WithClassInfo any more",
+                DeprecationWarning
+            )
+
+        if obj is None:
+            obj = self
+
         if obj is not None:
             cls = type(obj)
 

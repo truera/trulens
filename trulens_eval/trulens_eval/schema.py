@@ -174,9 +174,10 @@ class Record(SerialModel):
     Each instrumented method call produces one of these "record" instances.
     """
 
-    class Config:
+    model_config: ClassVar[dict] = dict(
         # for `Future[FeedbackResult]` = `TFeedbackResultFuture`
-        arbitrary_types_allowed = True
+        arbitrary_types_allowed=True
+    )
 
     record_id: RecordID  # str
     app_id: AppID  # str
@@ -269,7 +270,7 @@ class Select:
     RecordInput: Query = Record.main_input  # type: ignore
     RecordOutput: Query = Record.main_output  # type: ignore
 
-    # The calls made by the wrapped app. Layed out by path into components. 
+    # The calls made by the wrapped app. Layed out by path into components.
     RecordCalls: Query = Record.app  # type: ignore
 
     # The first called method (last to return).
@@ -279,6 +280,11 @@ class Select:
     RecordArgs: Query = RecordCall.args
     # The whole output of the first called / last returned method call.
     RecordRets: Query = RecordCall.rets
+
+    @staticmethod
+    def context(app: Optional[Any] = None) -> Lens:
+        from trulens_eval.app import App
+        return App.select_context(app)
 
     @staticmethod
     def for_record(query: Select.Query) -> Query:
@@ -430,12 +436,11 @@ else:
     TFeedbackResultFuture = Future
 
 
-class FeedbackDefinition(SerialModel, WithClassInfo):
+class FeedbackDefinition(WithClassInfo, SerialModel):
     # Serialized parts of a feedback function. The non-serialized parts are in
     # the feedback.py:Feedback class.
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     # Implementation serialization info.
     implementation: Optional[Union[Function, Method]] = None
@@ -475,9 +480,6 @@ class FeedbackDefinition(SerialModel, WithClassInfo):
         """
 
         selectors = selectors or dict()
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(
             feedback_definition_id="temporary",
@@ -519,12 +521,9 @@ class FeedbackMode(str, Enum):
     DEFERRED = "deferred"
 
 
-class AppDefinition(SerialModel, WithClassInfo):
+class AppDefinition(WithClassInfo, SerialModel):
     # Serialized fields here whereas app.py:App contains
     # non-serialized fields.
-
-    #class Config:
-    #    arbitrary_types_allowed = True
 
     app_id: AppID  # str
     tags: Tags  # str
@@ -559,6 +558,74 @@ class AppDefinition(SerialModel, WithClassInfo):
     # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
     # whatever the user might want to see about the app.
     app_extra_json: JSON
+
+    def __init__(
+        self,
+        app_id: Optional[AppID] = None,
+        tags: Optional[Tags] = None,
+        metadata: Optional[Metadata] = None,
+        feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
+        app_extra_json: JSON = None,
+        **kwargs
+    ):
+
+        # for us:
+        kwargs['app_id'] = "temporary"  # will be adjusted below
+        kwargs['feedback_mode'] = feedback_mode
+        kwargs['tags'] = ""
+        kwargs['metadata'] = {}
+        kwargs['app_extra_json'] = app_extra_json or dict()
+
+        super().__init__(**kwargs)
+
+        if app_id is None:
+            app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
+
+        self.app_id = app_id
+
+        if tags is None:
+            tags = "-"  # Set tags to a "-" if None is provided
+        self.tags = tags
+
+        if metadata is None:
+            metadata = {}
+        self.metadata = metadata
+
+        # EXPERIMENTAL
+        if 'initial_app_loader' in kwargs:
+            try:
+                dump = dill.dumps(kwargs['initial_app_loader'], recurse=True)
+
+                if len(dump) > MAX_DILL_SIZE:
+                    logger.warning(
+                        f"`initial_app_loader` dump is too big ({humanize.naturalsize(len(dump))} > {humanize.naturaldate(MAX_DILL_SIZE)} bytes). "
+                        "If you are loading large objects, include the loading logic inside `initial_app_loader`."
+                    )
+                else:
+                    self.initial_app_loader_dump = SerialBytes(data=dump)
+
+                    # This is an older serialization approach that saved things
+                    # in local files instead of the DB. Leaving here for now as
+                    # serialization of large apps might make this necessary
+                    # again.
+                    """
+                    path_json = Path.cwd() / f"{app_id}.json"
+                    path_dill = Path.cwd() / f"{app_id}.dill"
+
+                    with path_json.open("w") as fh:
+                        fh.write(json_str_of_obj(self))
+
+                    with path_dill.open("wb") as fh:
+                        fh.write(dump)
+
+                    print(f"Wrote loadable app to {path_json} and {path_dill}.")
+                    """
+
+            except Exception as e:
+                logger.warning(
+                    f"Could not serialize app loader. "
+                    f"Some trulens features may not be available: {e}"
+                )
 
     @staticmethod
     def continue_session(
@@ -618,77 +685,6 @@ class AppDefinition(SerialModel, WithClassInfo):
             content['app'].update(self.app_extra_json)
 
         return content
-
-    def __init__(
-        self,
-        app_id: Optional[AppID] = None,
-        tags: Optional[Tags] = None,
-        metadata: Optional[Metadata] = None,
-        feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
-        app_extra_json: JSON = None,
-        **kwargs
-    ):
-
-        # for us:
-        kwargs['app_id'] = "temporary"  # will be adjusted below
-        kwargs['feedback_mode'] = feedback_mode
-        kwargs['tags'] = ""
-        kwargs['metadata'] = {}
-        kwargs['app_extra_json'] = app_extra_json or dict()
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
-
-        super().__init__(**kwargs)
-
-        if app_id is None:
-            app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
-
-        self.app_id = app_id
-
-        if tags is None:
-            tags = "-"  # Set tags to a "-" if None is provided
-        self.tags = tags
-
-        if metadata is None:
-            metadata = {}
-        self.metadata = metadata
-
-        # EXPERIMENTAL
-        if 'initial_app_loader' in kwargs:
-            try:
-                dump = dill.dumps(kwargs['initial_app_loader'], recurse=True)
-
-                if len(dump) > MAX_DILL_SIZE:
-                    logger.warning(
-                        f"`initial_app_loader` dump is too big ({humanize.naturalsize(len(dump))} > {humanize.naturaldate(MAX_DILL_SIZE)} bytes). "
-                        "If you are loading large objects, include the loading logic inside `initial_app_loader`."
-                    )
-                else:
-                    self.initial_app_loader_dump = SerialBytes(data=dump)
-
-                    # This is an older serialization approach that saved things
-                    # in local files instead of the DB. Leaving here for now as
-                    # serialization of large apps might make this necessary
-                    # again.
-                    """
-                    path_json = Path.cwd() / f"{app_id}.json"
-                    path_dill = Path.cwd() / f"{app_id}.dill"
-
-                    with path_json.open("w") as fh:
-                        fh.write(json_str_of_obj(self))
-
-                    with path_dill.open("wb") as fh:
-                        fh.write(dump)
-
-                    print(f"Wrote loadable app to {path_json} and {path_dill}.")
-                    """
-
-            except Exception as e:
-                logger.warning(
-                    f"Could not serialize app loader. "
-                    f"Some trulens features may not be available: {e}"
-                )
 
     @staticmethod
     def get_loadable_apps():

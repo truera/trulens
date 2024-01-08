@@ -1,9 +1,10 @@
 import inspect
 import logging
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from langchain.chat_models.base import BaseChatModel
 from langchain.llms.base import BaseLLM
+import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
@@ -14,8 +15,7 @@ logger = logging.getLogger(__name__)
 
 class LangchainCallback(EndpointCallback):
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: Dict) -> None:
         super().handle_classification(response)
@@ -24,12 +24,15 @@ class LangchainCallback(EndpointCallback):
         super().handle_generation(response)
 
 
-class LangchainEndpoint(Endpoint, WithClassInfo):
+class LangchainEndpoint(Endpoint):
     """
     Langchain endpoint.
     """
 
-    chain: Union[BaseLLM, BaseChatModel]
+    # Cannot validate BaseLLM / BaseChatModel as they are pydantic v1 and there
+    # is some bug involving their use within pydantic v2.
+    # https://github.com/langchain-ai/langchain/issues/10112
+    chain: Any  # Union[BaseLLM, BaseChatModel]
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="langchain")
@@ -52,12 +55,12 @@ class LangchainEndpoint(Endpoint, WithClassInfo):
 
         if not (isinstance(chain, BaseLLM) or isinstance(chain, BaseChatModel)):
             raise ValueError(
-                f"`chain` must be of type {BaseLLM.__name__} or {BaseChatModel.__name__}"
+                f"`chain` must be of type {BaseLLM.__name__} or {BaseChatModel.__name__}. "
+                f"If you are using DEFERRED mode, this may be due to our inability to serialize `chain`."
             )
 
         kwargs["chain"] = chain
         kwargs["name"] = "langchain"
         kwargs["callback_class"] = LangchainCallback
-        kwargs["obj"] = self
 
         super().__init__(*args, **kwargs)

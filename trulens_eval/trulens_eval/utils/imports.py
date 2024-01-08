@@ -164,8 +164,13 @@ class Dummy(type, object):
     error if accessed in any way.
     """
 
-    def __new__(cls, name, **kwargs):
-        return type.__new__(cls, name, (object,), {})
+    def __new__(cls, name, *args, **kwargs):
+        if len(args) >= 2 and isinstance(args[1],
+                                         dict) and "__classcell__" in args[1]:
+            # (used as type)
+            return type.__new__(cls, name, args[0], args[1])
+        else:
+            return type.__new__(cls, name, (object,), {})
 
     def __init__(
         self,
@@ -206,15 +211,16 @@ class Dummy(type, object):
 
         # If we are still in an optional import block, continue making dummies
         # inside this dummy.
-        if self.importer is not None and self.importer.importing:
+        if self.importer is not None and (self.importer.importing and
+                                          not self.importer.fail):
             return Dummy(
                 name=self.name + "." + name,
                 message=self.message,
                 importer=self.importer
             )
 
-        # If we are no longer in optional imports context, raise the exception
-        # with the optional package message.
+        # If we are no longer in optional imports context or context said to
+        # fail anyway, raise the exception with the optional package message.
         raise self.exception_class(self.message)
 
 
@@ -237,9 +243,23 @@ class OptionalImports(object):
     specified message (unless llama_index is installed of course).
     """
 
-    def __init__(self, messages: ImportErrorMessages):
+    def assert_installed(self, mod):
+        """
+        Check that the given module `mod` is not a dummy. If it is, show the
+        optional requirement message.
+        """
+        if isinstance(mod, Dummy):
+            raise ModuleNotFoundError(self.messages.module_not_found)
+
+    def __init__(self, messages: ImportErrorMessages, fail: bool = False):
+        """
+        Create an optional imports context manager class. Will keep module not
+        found or import errors quiet inside context unless fail is True.
+        """
+
         self.messages = messages
         self.importing = False
+        self.fail = fail
         self.imp = builtins.__import__
 
     def __import__(self, name, globals=None, locals=None, fromlist=(), level=0):
@@ -272,7 +292,7 @@ class OptionalImports(object):
             # otherwise we don't want to intercept the error as some modules
             # rely on import failures for various things.
             module_name = inspect.currentframe().f_back.f_globals["__name__"]
-            if not module_name.startswith(trulens_name):
+            if self.fail or not module_name.startswith(trulens_name):
                 raise e
             logger.debug(f"Module not found {name}.")
             return Dummy(
@@ -310,16 +330,19 @@ class OptionalImports(object):
         if exc_value is None:
             return None
 
-        # Print the appropriate message.
+        # Re-raise appropriate exception.
 
         if isinstance(exc_value, ModuleNotFoundError):
-            print(exc_value)
-            print(self.messages.module_not_found)
+            exc_value = ModuleNotFoundError(self.messages.module_not_found)
+
         elif isinstance(exc_value, ImportError):
-            print(exc_value)
-            print(self.messages.import_error)
+            exc_value = ImportError(self.messages.import_error)
+
         else:
-            print(exc_value)
+            raise exc_value
 
         # Will re-raise exception unless True is returned.
-        return None
+        if self.fail:
+            raise exc_value
+
+        return True

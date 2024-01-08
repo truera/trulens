@@ -11,11 +11,7 @@
 # ### Add API keys
 # For this quickstart you will need an OpenAI Key.
 
-# In[ ]:
-
-# ! pip install trulens_eval==0.19.2 openai==1.3.1
-
-# In[ ]:
+# ! pip install trulens_eval==0.20.1 openai==1.3.1
 
 import os
 
@@ -23,9 +19,6 @@ os.environ["OPENAI_API_KEY"] = "..."
 
 # ### Import from TruLens
 
-# In[ ]:
-
-from IPython.display import JSON
 # Create openai client
 from openai import OpenAI
 
@@ -42,8 +35,6 @@ tru.reset_database()
 # ### Create Simple Text to Text Application
 #
 # This example uses a bare bones OpenAI LLM, and a non-LLM just for demonstration purposes.
-
-# In[ ]:
 
 
 def llm_standalone(prompt):
@@ -65,15 +56,11 @@ def llm_standalone(prompt):
 
 # ### Send your first request
 
-# In[ ]:
-
 prompt_input = "How good is language AI?"
 prompt_output = llm_standalone(prompt_input)
 prompt_output
 
 # ## Initialize Feedback Function(s)
-
-# In[ ]:
 
 # Initialize OpenAI-based feedback function collection class:
 fopenai = fOpenAI()
@@ -83,22 +70,16 @@ f_relevance = Feedback(fopenai.relevance).on_input_output()
 
 # ## Instrument the callable for logging with TruLens
 
-# In[ ]:
-
 from trulens_eval import TruBasicApp
 
 tru_llm_standalone_recorder = TruBasicApp(
     llm_standalone, app_id="Happy Bot", feedbacks=[f_relevance]
 )
 
-# In[ ]:
-
 with tru_llm_standalone_recorder as recording:
     tru_llm_standalone_recorder.app(prompt_input)
 
 # ## Explore in a Dashboard
-
-# In[ ]:
 
 tru.run_dashboard()  # open a local streamlit app to explore
 
@@ -107,8 +88,6 @@ tru.run_dashboard()  # open a local streamlit app to explore
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
 # ## Or view results directly in your notebook
-
-# In[ ]:
 
 tru.get_records_and_feedback(app_ids=[]
                             )[0]  # pass an empty list of app_ids to get all

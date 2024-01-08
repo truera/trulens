@@ -1,13 +1,11 @@
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, ClassVar, Dict, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.keys import _check_key
 from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +14,7 @@ pp = pprint.PrettyPrinter()
 
 class LiteLLMCallback(EndpointCallback):
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: Dict) -> None:
         super().handle_classification(response)
@@ -26,7 +23,7 @@ class LiteLLMCallback(EndpointCallback):
         super().handle_generation(response)
 
 
-class LiteLLMEndpoint(Endpoint, WithClassInfo):
+class LiteLLMEndpoint(Endpoint):
     """
     LiteLLM endpoint. Instruments "completion" methods in litellm.* classes.
     """
@@ -64,8 +61,5 @@ class LiteLLMEndpoint(Endpoint, WithClassInfo):
 
         kwargs['name'] = "litellm"
         kwargs['callback_class'] = LiteLLMCallback
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)

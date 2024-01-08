@@ -22,6 +22,7 @@ import requests
 
 from trulens_eval.schema import Cost
 from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import safe_hasattr
@@ -65,10 +66,9 @@ class EndpointCallback(SerialModel):
         self.handle(response)
 
 
-class Endpoint(SerialModel, SingletonPerName):
+class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     @dataclass
     class EndpointSetup():
@@ -154,14 +154,21 @@ class Endpoint(SerialModel, SingletonPerName):
         name = name or cls.__name__
         return super().__new__(cls, *args, name=name, **kwargs)
 
-    def __init__(self, *args, name: str, callback_class: Any, **kwargs):
+    def __init__(self, *args, name: str, callback_class: Any = None, **kwargs):
         """
         API usage, pacing, and utilities for API endpoints.
+
+        - `callback_class` should be set by subclass.
         """
 
         if safe_hasattr(self, "rpm"):
             # already initialized via the SingletonPerName mechanism
             return
+
+        if callback_class is None:
+            raise ValueError(
+                "Endpoint has to be extended by class that can set `callback_class`."
+            )
 
         kwargs['name'] = name
         kwargs['callback_class'] = callback_class
@@ -169,7 +176,7 @@ class Endpoint(SerialModel, SingletonPerName):
         kwargs['callback_name'] = f"callback_{name}"
         kwargs['pace_thread'] = Thread()  # temporary
         kwargs['pace_thread'].daemon = True
-        super(SerialModel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         def keep_pace():
             while True:
@@ -349,6 +356,15 @@ class Endpoint(SerialModel, SingletonPerName):
             setattr(cls, wrapper_method_name, metawrap)
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
+        if not safe_hasattr(mod, INSTRUMENT):
+            setattr(mod, INSTRUMENT, set())
+
+        already_instrumented = safe_getattr(mod, INSTRUMENT)
+
+        if method_name in already_instrumented:
+            logger.debug(f"module {mod} already instrumented for {method_name}")
+            return
+
         for m in dir(mod):
             logger.debug(
                 f"instrumenting module {mod} member {m} for method {method_name}"
@@ -356,6 +372,8 @@ class Endpoint(SerialModel, SingletonPerName):
             if safe_hasattr(mod, m):
                 obj = safe_getattr(mod, m)
                 self._instrument_class(obj, method_name=method_name)
+
+        already_instrumented.add(method_name)
 
     # TODO: CODEDUP
     @staticmethod
@@ -939,7 +957,6 @@ class DummyEndpoint(Endpoint):
     overloaded_prob: float
 
     def __new__(cls, *args, **kwargs):
-
         return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
 
     def __init__(

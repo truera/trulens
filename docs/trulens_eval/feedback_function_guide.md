@@ -298,7 +298,7 @@ class Record(SerialModel):
 For an App:
 
 ```python
-class AppDefinition(SerialModel, WithClassInfo, ABC):
+class AppDefinition(WithClassInfo, SerialModel, ABC):
     ...
 
     app_id: AppID
