@@ -226,7 +226,7 @@ class Class(SerialModel):
     ) -> 'Class':
         ret = Class(
             name=cls.__name__,
-            module=Module.of_module_name(cls.__module__, loadable=loadable),
+            module=Module.of_module_name(object_module(cls), loadable=loadable),
             bases=list(map(lambda base: Class.of_class(cls=base), cls.__mro__))
             if with_bases else None
         )
@@ -528,6 +528,12 @@ class Method(FunctionOrMethod):
         return getattr(obj, self.name)
 
 
+def object_module(obj):
+    if safe_hasattr(obj, "__module__"):
+        return getattr(obj, "__module__")
+    else:
+        return "builtins"
+
 class Function(FunctionOrMethod):
     """
     A python function. Could be a static method inside a class (not instance of
@@ -551,7 +557,7 @@ class Function(FunctionOrMethod):
     ) -> 'Function':  # actually: class
 
         if module is None:
-            module = Module.of_module_name(func.__module__, loadable=loadable)
+            module = Module.of_module_name(object_module(func), loadable=loadable)
 
         if cls is not None:
             cls = Class.of_class(cls, loadable=loadable)

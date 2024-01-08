@@ -58,9 +58,9 @@ class TestFeedbackConstructors(TestCase):
                 self.assertEqual(res.result, target)
 
                 # Serialize and deserialize the feedback function.
-                fs = jsonify(f)
+                fs = f.model_dump()
 
-                fds = Feedback(**fs)
+                fds = Feedback.model_validate(fs)
 
                 # Run it again.
                 res = fds.run(record=self.record, app=self.app)
