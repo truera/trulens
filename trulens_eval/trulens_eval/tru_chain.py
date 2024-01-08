@@ -239,7 +239,7 @@ class TruChain(App):
                 if isinstance(comp, BaseRetriever):
                     retrievers.append((lens, comp))
 
-            except Exception:
+            except Exception as e:
                 pass
 
         if len(retrievers) == 0:
