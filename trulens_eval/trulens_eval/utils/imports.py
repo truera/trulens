@@ -140,6 +140,10 @@ REQUIREMENT_SKLEARN = format_import_errors(
     "scikit-learn", purpose="using embedding vector distances"
 )
 
+REQUIREMENT_LITELLM = format_import_errors(
+    ['litellm'], purpose="using LiteLLM models"
+)
+
 REQUIREMENT_BEDROCK = format_import_errors(
     ['boto3', 'botocore'], purpose="using Bedrock models"
 )

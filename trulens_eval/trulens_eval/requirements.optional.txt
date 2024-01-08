@@ -22,8 +22,8 @@ httpx  >= 0.23.3 # for openai client serialization
 boto3    >= 1.33.6
 botocore >= 1.33.6
 
-# Models: huggingface
-requests >= 2.31.0
+# Models API
+litellm     >= 1.11.1
 
 # Local models
 transformers  >= 4.10.0

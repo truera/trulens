@@ -1,6 +1,4 @@
-import json
 import logging
-import os
 from typing import Dict, Optional, Sequence, Tuple, Union
 
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -9,6 +7,8 @@ from trulens_eval.utils.generated import re_0_10_rating
 
 logger = logging.getLogger(__name__)
 
+# if using optional packages, check they are installed with this:
+# OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(...)
 
 class Bedrock(LLMProvider):
     # LLMProvider requirement which we do not use:
