@@ -459,6 +459,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         self.tru_post_init()
 
+    def __del__(self):
+        # Can use to do things when this object is being garbage collected.
+        pass
+
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> Lens:
         if app is None:
