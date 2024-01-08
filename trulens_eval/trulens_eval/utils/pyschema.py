@@ -424,7 +424,7 @@ class Bindings(SerialModel):
         return Bindings(args=b.args, kwargs=b.kwargs)
 
     def _handle_providers_load(self):
-        # A Hack: reason below
+        # HACK004: A Hack: reason below
         # This was introduced with the feedback functions Groundedness and GroundTruthAgreement.
 
         # `summarize_provider` explanation:
@@ -597,12 +597,12 @@ class WithClassInfo(pydantic.BaseModel):
     # this into. Should be the same as CLASS_INFO.
     tru_class_info: Class  # = Field(None, exclude=False)
 
-    # NOTE(piotrm): for some reason, model_validate is not called for nested
-    # models but the method decorated as such below is called. We use this to
-    # load an object which includes our class information instead of using
-    # pydantic for this loading as it would always load the object as per its
-    # declared field. For example, `Provider` includes `endpoint: Endpoint` but
-    # we want to load one of the `Endpoint` subclasses. We add the subclass
+    # NOTE(piotrm): HACK005: for some reason, model_validate is not called for
+    # nested models but the method decorated as such below is called. We use
+    # this to load an object which includes our class information instead of
+    # using pydantic for this loading as it would always load the object as per
+    # its declared field. For example, `Provider` includes `endpoint: Endpoint`
+    # but we want to load one of the `Endpoint` subclasses. We add the subclass
     # information using `WithClassInfo` meaning we can then use this method
     # below to load the subclass. Pydantic would only give us `Endpoint`, the
     # parent class.
