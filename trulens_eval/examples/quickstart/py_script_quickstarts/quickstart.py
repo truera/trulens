@@ -9,7 +9,7 @@
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
 
-# ! pip install trulens_eval==0.20.1 chromadb==0.4.18 openai==1.3.7
+# ! pip install trulens_eval==0.20.2 chromadb==0.4.18 openai==1.3.7
 
 import os
 
