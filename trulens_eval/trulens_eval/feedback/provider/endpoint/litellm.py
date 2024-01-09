@@ -6,7 +6,6 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 
-
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()

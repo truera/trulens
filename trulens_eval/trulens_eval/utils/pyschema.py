@@ -534,6 +534,7 @@ def object_module(obj):
     else:
         return "builtins"
 
+
 class Function(FunctionOrMethod):
     """
     A python function. Could be a static method inside a class (not instance of
@@ -557,7 +558,9 @@ class Function(FunctionOrMethod):
     ) -> 'Function':  # actually: class
 
         if module is None:
-            module = Module.of_module_name(object_module(func), loadable=loadable)
+            module = Module.of_module_name(
+                object_module(func), loadable=loadable
+            )
 
         if cls is not None:
             cls = Class.of_class(cls, loadable=loadable)
