@@ -78,7 +78,7 @@ TO PLACE
 
 """
 
-__version__ = "0.20.1"
+__version__ = "0.20.2"
 
 from trulens_eval.feedback import Bedrock
 from trulens_eval.feedback import Feedback
