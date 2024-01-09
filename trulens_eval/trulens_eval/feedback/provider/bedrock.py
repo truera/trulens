@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 # if using optional packages, check they are installed with this:
 # OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(...)
 
+
 class Bedrock(LLMProvider):
     # LLMProvider requirement which we do not use:
     model_engine: str = "Bedrock"
@@ -18,9 +19,12 @@ class Bedrock(LLMProvider):
     endpoint: BedrockEndpoint
 
     def __init__(
-            # rajib76: changed the default model id to the cheaper model
-            # titan-tg1-large is no longer available
-            self, *args, model_id: str = "amazon.titan-text-lite-v1", **kwargs
+        # rajib76: changed the default model id to the cheaper model
+        # titan-tg1-large is no longer available
+        self,
+        *args,
+        model_id: str = "amazon.titan-text-lite-v1",
+        **kwargs
         # self, *args, model_id: str = "amazon.titan-tg1-large", **kwargs
     ):
         """
