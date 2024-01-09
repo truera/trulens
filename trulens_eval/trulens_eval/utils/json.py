@@ -28,10 +28,11 @@ from trulens_eval.utils.pyschema import noserio
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON, SerialModel
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
+from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -158,7 +159,9 @@ def jsonify(
     dicted = dicted or dict()
 
     if skip_specials:
-        recur_key = lambda k: isinstance(k, JSON_BASES) and k not in ALL_SPECIAL_KEYS
+        recur_key = lambda k: isinstance(
+            k, JSON_BASES
+        ) and k not in ALL_SPECIAL_KEYS
     else:
         recur_key = lambda k: isinstance(k, JSON_BASES) and True
 
@@ -240,7 +243,8 @@ def jsonify(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
-                if (not skip_excluded or not v.field_info.exclude) and recur_key(k)
+                if (not skip_excluded or not v.field_info.exclude) and
+                recur_key(k)
             }
         )
 
