@@ -3081,7 +3081,7 @@ Args:
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="n">BaseRetriever</span><span class="p">):</span>
                     <span class="n">retrievers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">lens</span><span class="p">,</span> <span class="n">comp</span><span class="p">))</span>
 
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="k">pass</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">retrievers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -3680,7 +3680,7 @@ returned <code>ret</code>.</p>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="n">BaseRetriever</span><span class="p">):</span>
                 <span class="n">retrievers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">lens</span><span class="p">,</span> <span class="n">comp</span><span class="p">))</span>
 
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">pass</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">retrievers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>

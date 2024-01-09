@@ -2478,8 +2478,7 @@
 
             <details class="quote">
               <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/bedrock.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 13</span>
-<span class="normal"> 14</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 14</span>
 <span class="normal"> 15</span>
 <span class="normal"> 16</span>
 <span class="normal"> 17</span>
@@ -2601,7 +2600,11 @@
 <span class="normal">133</span>
 <span class="normal">134</span>
 <span class="normal">135</span>
-<span class="normal">136</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Bedrock</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Bedrock</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
     <span class="c1"># LLMProvider requirement which we do not use:</span>
     <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Bedrock&quot;</span>
 
@@ -2609,11 +2612,14 @@
     <span class="n">endpoint</span><span class="p">:</span> <span class="n">BedrockEndpoint</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="c1"># rajib76: changed the default model id to the cheaper model</span>
+        <span class="c1"># titan-tg1-large is no longer available</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-text-lite-v1&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+        <span class="c1"># self, *args, model_id: str = &quot;amazon.titan-tg1-large&quot;, **kwargs</span>
     <span class="p">):</span>
-        <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
-        <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
-        <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A set of AWS Feedback Functions.</span>
 
@@ -2747,7 +2753,7 @@
 
 
 <h2 id="trulens_eval.trulens_eval.feedback.provider.bedrock.Bedrock.__init__" class="doc doc-heading">
-          <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="s1">&#39;amazon.titan-tg1-large&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+          <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="s1">&#39;amazon.titan-text-lite-v1&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.feedback.provider.bedrock.Bedrock.__init__" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -2769,8 +2775,7 @@
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/bedrock.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
-<span class="normal">21</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
 <span class="normal">24</span>
@@ -2801,12 +2806,19 @@
 <span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
-<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-tg1-large&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="c1"># rajib76: changed the default model id to the cheaper model</span>
+    <span class="c1"># titan-tg1-large is no longer available</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-text-lite-v1&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
+    <span class="c1"># self, *args, model_id: str = &quot;amazon.titan-tg1-large&quot;, **kwargs</span>
 <span class="p">):</span>
-    <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
-    <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
-    <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A set of AWS Feedback Functions.</span>
 

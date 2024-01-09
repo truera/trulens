@@ -2931,7 +2931,7 @@
         <span class="n">endpoint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Endpoint</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
-        <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
+        <span class="c1"># NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this</span>
         <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
         <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -3400,7 +3400,7 @@
     <span class="n">endpoint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Endpoint</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
-    <span class="c1"># NOTE(piotrm): pydantic adds endpoint to the signature of this</span>
+    <span class="c1"># NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this</span>
     <span class="c1"># constructor if we don&#39;t include it explicitly, even though we set it</span>
     <span class="c1"># down below. Adding it as None here as a temporary hack.</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
