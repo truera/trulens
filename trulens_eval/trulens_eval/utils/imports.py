@@ -99,7 +99,7 @@ def format_import_errors(
 {','.join(packages)} {pack_s} {is_are} required for {purpose}.
 You should be able to install {it_them} with pip:
 
-    pip install '{' '.join(requirements)}
+    pip install {' '.join(map(lambda a: f'"{a}"', requirements))}
 """
     )
 
@@ -109,7 +109,7 @@ You have {packs} installed but we could not import the required
 components. There may be a version incompatibility. Please try installing {this_these}
 exact {pack_s} with pip: 
 
-  pip install '{' '.join(requirements_pinned)}'
+  pip install {' '.join(map(lambda a: f'"{a}"', requirements_pinned))}
 
 Alternatively, if you do not need {packs}, uninstall {it_them}:
 
@@ -140,6 +140,10 @@ REQUIREMENT_SKLEARN = format_import_errors(
     "scikit-learn", purpose="using embedding vector distances"
 )
 
+REQUIREMENT_LITELLM = format_import_errors(
+    ['litellm'], purpose="using LiteLLM models"
+)
+
 REQUIREMENT_BEDROCK = format_import_errors(
     ['boto3', 'botocore'], purpose="using Bedrock models"
 )
@@ -154,6 +158,10 @@ REQUIREMENT_BERT_SCORE = format_import_errors(
 
 REQUIREMENT_EVALUATE = format_import_errors(
     "evaluate", purpose="using certain metrics"
+)
+
+REQUIREMENT_NOTEBOOK = format_import_errors(
+    ["ipython", "ipywidgets"], purpose="using trulens_eval in a notebook"
 )
 
 

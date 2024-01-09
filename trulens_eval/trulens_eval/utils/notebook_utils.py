@@ -1,6 +1,14 @@
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_NOTEBOOK
+
+with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
+    from IPython import get_ipython
+    from IPython.display import display
+    from ipywidgets import widgets
+
+
 def is_notebook() -> bool:
     try:
-        from IPython import get_ipython
         shell = get_ipython().__class__.__name__
         if shell == 'ZMQInteractiveShell':
             return True  # Jupyter notebook or qtconsole
@@ -8,16 +16,15 @@ def is_notebook() -> bool:
             return False  # Terminal running IPython
         else:
             return False  # Other type (?)
-    except NameError:
+    except Exception:
         return False
 
 
 def setup_widget_stdout_stderr():
-    from ipywidgets import widgets
+
     out_stdout = widgets.Output()
     out_stderr = widgets.Output()
 
-    from IPython.display import display
     acc = widgets.Accordion(
         children=[
             widgets.VBox(
@@ -30,5 +37,6 @@ def setup_widget_stdout_stderr():
         open=True
     )
     acc.set_title(0, "Dashboard log")
+
     display(acc)
     return out_stdout, out_stderr

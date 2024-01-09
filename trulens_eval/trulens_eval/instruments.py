@@ -400,13 +400,14 @@ class Instrument(object):
             # we store the method being instrumented in the attribute
             # Instrument.INSTRUMENT of the wrapped variant.
             original_func = getattr(func, Instrument.INSTRUMENT)
+
             self.app._on_method_instrumented(obj, original_func, path=query)
 
             # Add self.app, the app requesting this method to be
             # instrumented, to the list of apps expecting to be notified of
             # calls.
             existing_apps = getattr(func, Instrument.APPS)
-            existing_apps.add(self.app)
+            existing_apps.add(self.app)  # weakref set
 
             return func
 
@@ -511,7 +512,8 @@ class Instrument(object):
 
             # First prepare the stacks for each context.
             for ctx in contexts:
-                # Get record and app that has instrumented this method.
+                # Get app that has instrumented this method.
+                app = ctx.app
 
                 # The path to this method according to the app.
                 path = app._get_method_path(
@@ -690,7 +692,8 @@ class Instrument(object):
             # in `stacks` via id of the (unique) list `record`.
 
             for ctx in contexts:
-                # Get record and app that has instrumented this method.
+                # Get app that has instrumented this method.
+                app = ctx.app
 
                 # The path to this method according to the app.
                 path = app._get_method_path(
@@ -804,10 +807,11 @@ class Instrument(object):
 
         # Create a new set of apps expecting to be notified about calls to the
         # instrumented method. Making this a weakref set so that if the
-        # instrumented app gets unloaded, it will be evicted from this set.
+        # recorder/app gets garbage collected, it will be evicted from this set.
         setattr(w, Instrument.APPS, weakref.WeakSet([self.app]))
 
-        # Hack for llama_index trace_method not preserving wrapped method signature.
+        # HACK001: Hack for llama_index trace_method not preserving wrapped
+        # method signature.
         if "trace_method.<locals>.decorator.<locals>.wrapper" == func.__qualname__:
             actual_func = func.__closure__[1].cell_contents
             func_sig = inspect.signature(actual_func)

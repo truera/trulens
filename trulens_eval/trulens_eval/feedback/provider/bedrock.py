@@ -1,6 +1,4 @@
-import json
 import logging
-import os
 from typing import Dict, Optional, Sequence, Tuple, Union
 
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -8,6 +6,9 @@ from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
 from trulens_eval.utils.generated import re_0_10_rating
 
 logger = logging.getLogger(__name__)
+
+# if using optional packages, check they are installed with this:
+# OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(...)
 
 
 class Bedrock(LLMProvider):
@@ -18,14 +19,14 @@ class Bedrock(LLMProvider):
     endpoint: BedrockEndpoint
 
     def __init__(
-            # rajib76: changed the default model id to the cheaper model
-            # titan-tg1-large is no longer available
-            self, *args, model_id: str = "amazon.titan-text-lite-v1", **kwargs
+        # rajib76: changed the default model id to the cheaper model
+        # titan-tg1-large is no longer available
+        self,
+        *args,
+        model_id: str = "amazon.titan-text-lite-v1",
+        **kwargs
         # self, *args, model_id: str = "amazon.titan-tg1-large", **kwargs
     ):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
-        # constructor if we don't include it explicitly, even though we set it
-        # down below. Adding it as None here as a temporary hack.
         """
         A set of AWS Feedback Functions.
 
