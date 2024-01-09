@@ -395,7 +395,7 @@ class Instrument(object):
 
         if safe_hasattr(func, Instrument.INSTRUMENT):
             logger.debug(f"\t\t\t{query}: {func} is already instrumented")
-            
+
             # Notify the app instrumenting this method where it is located. Note
             # we store the method being instrumented in the attribute
             # Instrument.INSTRUMENT of the wrapped variant.
@@ -407,7 +407,7 @@ class Instrument(object):
             # instrumented, to the list of apps expecting to be notified of
             # calls.
             existing_apps = getattr(func, Instrument.APPS)
-            existing_apps.add(self.app) # weakref set
+            existing_apps.add(self.app)  # weakref set
 
             return func
 

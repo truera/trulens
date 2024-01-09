@@ -1,11 +1,11 @@
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_NOTEBOOK
 
-
 with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
     from IPython import get_ipython
     from IPython.display import display
     from ipywidgets import widgets
+
 
 def is_notebook() -> bool:
     try:
@@ -21,7 +21,7 @@ def is_notebook() -> bool:
 
 
 def setup_widget_stdout_stderr():
-    
+
     out_stdout = widgets.Output()
     out_stderr = widgets.Output()
 
@@ -37,6 +37,6 @@ def setup_widget_stdout_stderr():
         open=True
     )
     acc.set_title(0, "Dashboard log")
-    
+
     display(acc)
     return out_stdout, out_stderr

@@ -1,6 +1,8 @@
 import logging
 from typing import Dict, Optional, Sequence
 
+# optional package
+import openai as oai
 import pydantic
 
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -11,12 +13,8 @@ from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import CLASS_INFO
 
-# optional package
-import openai as oai
-
 # check that the optional imports are not dummies:
 OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(oai)
-
 
 logger = logging.getLogger(__name__)
 
