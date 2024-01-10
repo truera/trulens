@@ -24,43 +24,44 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-import llama_index
-from llama_index.chat_engine.types import AgentChatResponse
-from llama_index.chat_engine.types import BaseChatEngine
-from llama_index.chat_engine.types import StreamingAgentChatResponse
-from llama_index.embeddings.base import BaseEmbedding
-from llama_index.indices.base import BaseIndex
-# misc
-from llama_index.indices.base_retriever import BaseRetriever
-from llama_index.indices.prompt_helper import PromptHelper
-from llama_index.indices.query.base import BaseQueryEngine
-from llama_index.indices.query.schema import QueryBundle
-from llama_index.indices.query.schema import QueryType
-from llama_index.indices.service_context import ServiceContext
-from llama_index.llm_predictor import LLMPredictor
-from llama_index.llm_predictor.base import BaseLLMPredictor
-from llama_index.llm_predictor.base import LLMMetadata
-# LLMs
-from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
-# memory
-from llama_index.memory import BaseMemory
-from llama_index.node_parser.interface import NodeParser
-from llama_index.prompts.base import Prompt
-from llama_index.question_gen.types import BaseQuestionGenerator
-from llama_index.response.schema import Response
-from llama_index.response.schema import RESPONSE_TYPE
-from llama_index.response.schema import StreamingResponse
-from llama_index.response_synthesizers.base import BaseSynthesizer
-from llama_index.response_synthesizers.refine import Refine
-from llama_index.schema import BaseComponent
-# agents
-from llama_index.tools.types import AsyncBaseTool  # subtype of BaseTool
-from llama_index.tools.types import BaseTool
-from llama_index.tools.types import \
-    ToolMetadata  # all of the readable info regarding tools is in this class
-from llama_index.vector_stores.types import VectorStore
+with OptionalImports(messages=REQUIREMENT_LLAMA):
+    import llama_index
+    from llama_index.chat_engine.types import AgentChatResponse
+    from llama_index.chat_engine.types import BaseChatEngine
+    from llama_index.chat_engine.types import StreamingAgentChatResponse
+    from llama_index.embeddings.base import BaseEmbedding
+    from llama_index.indices.base import BaseIndex
+    # misc
+    from llama_index.indices.base_retriever import BaseRetriever
+    from llama_index.indices.prompt_helper import PromptHelper
+    from llama_index.indices.query.base import BaseQueryEngine
+    from llama_index.indices.query.schema import QueryBundle
+    from llama_index.indices.query.schema import QueryType
+    from llama_index.indices.service_context import ServiceContext
+    from llama_index.llm_predictor import LLMPredictor
+    from llama_index.llm_predictor.base import BaseLLMPredictor
+    from llama_index.llm_predictor.base import LLMMetadata
+    # LLMs
+    from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
+    # memory
+    from llama_index.memory import BaseMemory
+    from llama_index.node_parser.interface import NodeParser
+    from llama_index.prompts.base import Prompt
+    from llama_index.question_gen.types import BaseQuestionGenerator
+    from llama_index.response.schema import Response
+    from llama_index.response.schema import RESPONSE_TYPE
+    from llama_index.response.schema import StreamingResponse
+    from llama_index.response_synthesizers.base import BaseSynthesizer
+    from llama_index.response_synthesizers.refine import Refine
+    from llama_index.schema import BaseComponent
+    # agents
+    from llama_index.tools.types import AsyncBaseTool  # subtype of BaseTool
+    from llama_index.tools.types import BaseTool
+    from llama_index.tools.types import \
+        ToolMetadata  # all of the readable info regarding tools is in this class
+    from llama_index.vector_stores.types import VectorStore
 
-from trulens_eval.utils.llama import WithFeedbackFilterNodes
+    from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
 # Need to `from ... import ...` for the below as referring to some of these
 # later in this file by full path does not work due to lack of intermediate
