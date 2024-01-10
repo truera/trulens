@@ -199,7 +199,7 @@ class Tru(SingletonPerName):
             app = AppDefinition.model_validate(self.db.get_app(app_id=app_id))
             if app is None:
                 raise RuntimeError(
-                    "App {app_id} not present in db. "
+                    f"App {app_id} not present in db. "
                     "Either add it with `tru.add_app` or provide `app_json` to `tru.run_feedback_functions`."
                 )
 
@@ -208,7 +208,7 @@ class Tru(SingletonPerName):
 
             if self.db.get_app(app_id=app.app_id) is None:
                 logger.warning(
-                    "App {app_id} was not present in database. Adding it."
+                    f"App {app_id} was not present in database. Adding it."
                 )
                 self.add_app(app=app)
 
