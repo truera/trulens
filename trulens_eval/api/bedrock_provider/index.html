@@ -2602,9 +2602,7 @@
 <span class="normal">135</span>
 <span class="normal">136</span>
 <span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Bedrock</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
+<span class="normal">138</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Bedrock</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
     <span class="c1"># LLMProvider requirement which we do not use:</span>
     <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Bedrock&quot;</span>
 
@@ -2612,13 +2610,11 @@
     <span class="n">endpoint</span><span class="p">:</span> <span class="n">BedrockEndpoint</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="c1"># rajib76: changed the default model id to the cheaper model</span>
-        <span class="c1"># titan-tg1-large is no longer available</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-        <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-text-lite-v1&quot;</span><span class="p">,</span>
+        <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-text-express-v1&quot;</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span>
-        <span class="c1"># self, *args, model_id: str = &quot;amazon.titan-tg1-large&quot;, **kwargs</span>
+        <span class="c1"># self, *args, model_id: str = &quot;amazon.titan-text-express-v1&quot;, **kwargs</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A set of AWS Feedback Functions.</span>
@@ -2626,7 +2622,7 @@
 <span class="sd">        Parameters:</span>
 
 <span class="sd">        - model_id (str, optional): The specific model id. Defaults to</span>
-<span class="sd">          &quot;amazon.titan-tg1-large&quot;.</span>
+<span class="sd">          &quot;amazon.titan-text-express-v1&quot;.</span>
 
 <span class="sd">        - All other args/kwargs passed to BedrockEndpoint and subsequently</span>
 <span class="sd">          to boto3 client constructor.</span>
@@ -2753,7 +2749,7 @@
 
 
 <h2 id="trulens_eval.trulens_eval.feedback.provider.bedrock.Bedrock.__init__" class="doc doc-heading">
-          <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="s1">&#39;amazon.titan-text-lite-v1&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+          <code class=" language-python"><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">model_id</span><span class="o">=</span><span class="s1">&#39;amazon.titan-text-express-v1&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 <a href="#trulens_eval.trulens_eval.feedback.provider.bedrock.Bedrock.__init__" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -2765,7 +2761,7 @@
 <ul>
 <li>
 <p>model_id (str, optional): The specific model id. Defaults to
-  "amazon.titan-tg1-large".</p>
+  "amazon.titan-text-express-v1".</p>
 </li>
 <li>
 <p>All other args/kwargs passed to BedrockEndpoint and subsequently
@@ -2808,16 +2804,12 @@
 <span class="normal">51</span>
 <span class="normal">52</span>
 <span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-    <span class="c1"># rajib76: changed the default model id to the cheaper model</span>
-    <span class="c1"># titan-tg1-large is no longer available</span>
+<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-text-lite-v1&quot;</span><span class="p">,</span>
+    <span class="n">model_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amazon.titan-text-express-v1&quot;</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span>
-    <span class="c1"># self, *args, model_id: str = &quot;amazon.titan-tg1-large&quot;, **kwargs</span>
+    <span class="c1"># self, *args, model_id: str = &quot;amazon.titan-text-express-v1&quot;, **kwargs</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A set of AWS Feedback Functions.</span>
@@ -2825,7 +2817,7 @@
 <span class="sd">    Parameters:</span>
 
 <span class="sd">    - model_id (str, optional): The specific model id. Defaults to</span>
-<span class="sd">      &quot;amazon.titan-tg1-large&quot;.</span>
+<span class="sd">      &quot;amazon.titan-text-express-v1&quot;.</span>
 
 <span class="sd">    - All other args/kwargs passed to BedrockEndpoint and subsequently</span>
 <span class="sd">      to boto3 client constructor.</span>

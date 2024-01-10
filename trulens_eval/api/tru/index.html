@@ -3548,7 +3548,7 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
             <span class="n">app</span> <span class="o">=</span> <span class="n">AppDefinition</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_id</span><span class="o">=</span><span class="n">app_id</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="s2">&quot;App </span><span class="si">{app_id}</span><span class="s2"> not present in db. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;App </span><span class="si">{</span><span class="n">app_id</span><span class="si">}</span><span class="s2"> not present in db. &quot;</span>
                     <span class="s2">&quot;Either add it with `tru.add_app` or provide `app_json` to `tru.run_feedback_functions`.&quot;</span>
                 <span class="p">)</span>
 
@@ -3557,7 +3557,7 @@ Data can be logged to a SQLAlchemy-compatible referred to by <code>database_url<
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">get_app</span><span class="p">(</span><span class="n">app_id</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">app_id</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">&quot;App </span><span class="si">{app_id}</span><span class="s2"> was not present in database. Adding it.&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;App </span><span class="si">{</span><span class="n">app_id</span><span class="si">}</span><span class="s2"> was not present in database. Adding it.&quot;</span>
                 <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">add_app</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
 
