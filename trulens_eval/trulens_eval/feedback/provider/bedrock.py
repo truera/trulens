@@ -19,13 +19,11 @@ class Bedrock(LLMProvider):
     endpoint: BedrockEndpoint
 
     def __init__(
-        # rajib76: changed the default model id to the cheaper model
-        # titan-tg1-large is no longer available
         self,
         *args,
-        model_id: str = "amazon.titan-text-lite-v1",
+        model_id: str = "amazon.titan-text-express-v1",
         **kwargs
-        # self, *args, model_id: str = "amazon.titan-tg1-large", **kwargs
+        # self, *args, model_id: str = "amazon.titan-text-express-v1", **kwargs
     ):
         """
         A set of AWS Feedback Functions.
@@ -33,7 +31,7 @@ class Bedrock(LLMProvider):
         Parameters:
 
         - model_id (str, optional): The specific model id. Defaults to
-          "amazon.titan-tg1-large".
+          "amazon.titan-text-express-v1".
 
         - All other args/kwargs passed to BedrockEndpoint and subsequently
           to boto3 client constructor.
