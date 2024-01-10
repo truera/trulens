@@ -1,3 +1,8 @@
+<!---
+start of docs/trulens_eval/intro.md
+NOTE: This content is from docs/trulens_eval/intro.md and is merged into
+trulens_eval/README.md . If you are editing README.md, your changes will be overwritten.
+-->
 # Welcome to TruLens-Eval!
 
 ![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
@@ -47,3 +52,6 @@ Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.
 
 Interested in contributing? See our [contribution
 guide](https://www.trulens.org/trulens_eval/CONTRIBUTING/) for more details.
+<!---
+end of docs/trulens_eval/intro.md
+-->
