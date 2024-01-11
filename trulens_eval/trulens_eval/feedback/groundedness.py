@@ -25,7 +25,6 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
 with OptionalImports(messages=REQUIREMENT_LITELLM):
     from trulens_eval.feedback.provider.litellm import LiteLLM
 
-
 logger = logging.getLogger(__name__)
 
 

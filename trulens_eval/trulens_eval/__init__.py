@@ -109,7 +109,6 @@ with OptionalImports(messages=REQUIREMENT_LITELLM):
 with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback import OpenAI
 
-
 __all__ = [
     "Tru",
     "TruBasicApp",

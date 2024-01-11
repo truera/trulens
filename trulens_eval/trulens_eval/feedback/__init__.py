@@ -35,7 +35,6 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import AzureOpenAI
     from trulens_eval.feedback.provider.openai import OpenAI
 
-
 __all__ = [
     "Feedback",
     "Embeddings",
