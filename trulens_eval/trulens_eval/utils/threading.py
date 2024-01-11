@@ -2,6 +2,7 @@
 Multi-threading utilities.
 """
 
+import asyncio
 from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
@@ -9,18 +10,74 @@ import contextvars
 from inspect import stack
 import logging
 import threading
-from typing import Callable, Optional, TypeVar
+from threading import current_thread
+from threading import Thread as fThread
+from typing import Awaitable, Callable, Optional, TypeVar
 
-from trulens_eval.utils.python import _future_target_wrapper
+from trulens_eval.utils.python import T, Thunk, _future_target_wrapper
 from trulens_eval.utils.python import code_line
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
-
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
+
+class Thread(fThread):
+    """
+    Thread that wraps target with our stack/context tracking.
+    """
+
+    def __init__(self, group=None, target=None, args=(), kwargs={}, daemon=None):
+        present_stack = stack()
+        present_context = contextvars.copy_context()
+
+        super().__init__(
+            group=group,
+            target=_future_target_wrapper,
+            args=(present_stack, present_context, target, *args),
+            kwargs=kwargs, 
+            daemon=daemon
+        )
+
+
+async def desync(thunk: Thunk[T]) -> T: # effectively Awaitable[T]
+    """
+    Create an async of the given sync thunk.
+    """
+    # Note: the "async" in front of the "def" is enough for python to create a
+    # coroutine from this method meaning it produces an awaitable if it gets
+    # called.
+
+    return thunk()
+
+def sync(thunk: Thunk[Awaitable[T]]) -> T:
+    """
+    Run the awaitable synchronosouly. Will block until it completes.
+    """
+    # TODO: don't create a new thread if not in an existing loop.
+
+    def run_in_new_loop():
+        th: Thread = current_thread()
+        th.ret = None
+        th.error = None
+        try:
+            loop = asyncio.new_event_loop()
+            th.ret = loop.run_until_complete(thunk())
+        except Exception as e:
+            th.error = e
+
+    thread = Thread(
+        target=run_in_new_loop
+    )
+
+    thread.start()
+    thread.join()
+    
+    if thread.error is not None:
+        raise thread.error
+    else:
+        return thread.ret
 
 
 class ThreadPoolExecutor(fThreadPoolExecutor):

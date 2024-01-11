@@ -11,10 +11,8 @@ from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
-    Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
+                    Sequence, Tuple, Type, TypeVar)
 import warnings
 
 import pydantic
@@ -31,6 +29,8 @@ from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
+from trulens_eval.utils.threading import desync
+from trulens_eval.utils.threading import sync
 
 logger = logging.getLogger(__name__)
 
@@ -375,55 +375,24 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         already_instrumented.add(method_name)
 
-    # TODO: CODEDUP
     @staticmethod
     def track_all_costs(
         thunk: Thunk[T],
-        with_openai: bool = True,
-        with_hugs: bool = True,
-        with_litellm: bool = True,
-        with_bedrock: bool = True,
+        *args, **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
         """
 
-        endpoints = []
+        return sync(lambda: Endpoint.atrack_all_costs(
+            lambda: desync(thunk),
+            *args, **kwargs
+        ))
 
-        # Create each of the supported endpoints. This will also instrument
-        # methods if not already. Note that due to SingletonPerName mechanism,
-        # the produced endpoints might be ones that were constructed earlier.
-        for endpoint in Endpoint.ENDPOINT_SETUPS:
-            if locals().get(endpoint.arg_flag):
-                try:
-                    mod = __import__(
-                        endpoint.module_name, fromlist=[endpoint.class_name]
-                    )
-                    cls = safe_getattr(mod, endpoint.class_name)
-                except Exception:
-                    # If endpoint uses optional packages, either module not
-                    # found error, or we will have a dummy which will fail at
-                    # getattr.
-                    continue
-
-                try:
-                    e = cls()
-                    endpoints.append(e)
-
-                except Exception as e:
-                    logger.debug(
-                        f"Could not initiallize endpoint {cls.__name__}. "
-                        "Possibly missing key(s). "
-                        f"trulens_eval will not track costs/usage of this endpoint. {e}"
-                    )
-
-        return Endpoint._track_costs(thunk, with_endpoints=endpoints)
-
-    # TODO: CODEDUP
     @staticmethod
     async def atrack_all_costs(
-        thunk: Thunk[Awaitable],
+        thunk: Thunk[Awaitable[T]],
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
@@ -465,42 +434,28 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     @staticmethod
     def track_all_costs_tally(
         thunk: Thunk[T],
-        with_openai: bool = True,
-        with_hugs: bool = True,
-        with_litellm: bool = True,
-        with_bedrock: bool = True
+        *args, **kwargs
     ) -> Tuple[T, Cost]:
-        # TODO: dedup async/sync
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
         """
 
-        result, cbs = Endpoint.track_all_costs(
-            thunk,
-            with_openai=with_openai,
-            with_hugs=with_hugs,
-            with_litellm=with_litellm,
-            with_bedrock=with_bedrock
+        return sync(
+            lambda: Endpoint.atrack_all_costs_tally(
+                lambda: desync(thunk),
+                *args, **kwargs
+            )
         )
-
-        if len(cbs) == 0:
-            # Otherwise sum returns "0" below.
-            costs = Cost()
-        else:
-            costs = sum(cb.cost for cb in cbs)
-
-        return result, costs
 
     @staticmethod
     async def atrack_all_costs_tally(
-        thunk: Thunk[Awaitable],
+        thunk: Thunk[Awaitable[T]],
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
     ) -> Tuple[T, Cost]:
-        # TODO: dedup async/sync
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
@@ -525,72 +480,23 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     @staticmethod
     def _track_costs(
         thunk: Thunk[T],
-        with_endpoints: Sequence['Endpoint'] = None,
+        *args, **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Root of all cost tracking methods. Runs the given `thunk`, tracking
         costs using each of the provided endpoints' callbacks.
         """
 
-        logger.debug("Starting to track costs.")
-
-        # Check to see if this call is within another _track_costs call:
-        endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-            get_first_local_in_call_stack(
-                key="endpoints",
-                func=Endpoint.__find_tracker,
-                offset=1
+        return sync(
+            lambda: Endpoint._atrack_costs(
+                lambda: desync(thunk),
+                *args, **kwargs
             )
-
-        if endpoints is None:
-            # If not, lets start a new collection of endpoints here along with
-            # the callbacks for each. See type above.
-
-            endpoints = dict()
-
-        else:
-            # We copy the dict here so that the outer call to _track_costs will
-            # have their own version unaffacted by our additions below. Once
-            # this frame returns, the outer frame will have its own endpoints
-            # again and any wrapped method will get that smaller set of
-            # endpoints.
-
-            # TODO: check if deep copy is needed given we are storing lists in
-            # the values and don't want to affect the existing ones here.
-            endpoints = endpoints.copy()
-
-        # Collect any new endpoints requested of us.
-        with_endpoints = with_endpoints or []
-
-        # Keep track of the new callback objects we create here for returning
-        # later.
-        callbacks = []
-
-        # Create the callbacks for the new requested endpoints only. Existing
-        # endpoints from other frames will keep their callbacks.
-        for endpoint in with_endpoints:
-            callback_class = endpoint.callback_class
-            callback = callback_class()
-
-            if callback_class not in endpoints:
-                endpoints[callback_class] = []
-
-            # And add them to the endpoints dict. This will be retrieved from
-            # locals of this frame later in the wrapped methods.
-            endpoints[callback_class].append((endpoint, callback))
-
-            callbacks.append(callback)
-
-        # Call the thunk.
-        result: T = thunk()
-
-        # Return result and only the callbacks created here. Outer thunks might
-        # return others.
-        return result, callbacks
+        )
 
     @staticmethod
     async def _atrack_costs(
-        thunk: Thunk[Awaitable],
+        thunk: Thunk[Awaitable[T]],
         with_endpoints: Sequence['Endpoint'] = None,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
