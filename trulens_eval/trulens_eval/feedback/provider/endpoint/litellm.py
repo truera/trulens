@@ -5,7 +5,6 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.utils.pyschema import WithClassInfo
 
 logger = logging.getLogger(__name__)
 

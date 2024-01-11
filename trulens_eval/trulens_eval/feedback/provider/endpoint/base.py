@@ -396,10 +396,17 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # the produced endpoints might be ones that were constructed earlier.
         for endpoint in Endpoint.ENDPOINT_SETUPS:
             if locals().get(endpoint.arg_flag):
-                mod = __import__(
-                    endpoint.module_name, fromlist=[endpoint.class_name]
-                )
-                cls = safe_getattr(mod, endpoint.class_name)
+                try:
+                    mod = __import__(
+                        endpoint.module_name, fromlist=[endpoint.class_name]
+                    )
+                    cls = safe_getattr(mod, endpoint.class_name)
+                except Exception:
+                    # If endpoint uses optional packages, either module not
+                    # found error, or we will have a dummy which will fail at
+                    # getattr.
+                    continue
+
                 try:
                     e = cls()
                     endpoints.append(e)
@@ -431,10 +438,17 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         for endpoint in Endpoint.ENDPOINT_SETUPS:
             if locals().get(endpoint.arg_flag):
-                mod = __import__(
-                    endpoint.module_name, fromlist=[endpoint.class_name]
-                )
-                cls = safe_getattr(mod, endpoint.class_name)
+                try:
+                    mod = __import__(
+                        endpoint.module_name, fromlist=[endpoint.class_name]
+                    )
+                    cls = safe_getattr(mod, endpoint.class_name)
+                except Exception:
+                    # If endpoint uses optional packages, either module not
+                    # found error, or we will have a dummy which will fail at
+                    # getattr.
+                    continue
+
                 try:
                     e = cls()
                     endpoints.append(e)

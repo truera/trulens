@@ -16,6 +16,8 @@ from merkle_json import MerkleJson
 import pydantic
 
 from trulens_eval.keys import redact_value
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import CIRCLE
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
@@ -26,10 +28,11 @@ from trulens_eval.utils.pyschema import noserio
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON, SerialModel
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
+from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -40,25 +43,21 @@ mj = MerkleJson()
 
 # Add encoders for some types that pydantic cannot handle but we need.
 
-# httpx.URL needed for openai client.
-import httpx
+with OptionalImports(messages=REQUIREMENT_OPENAI):
+    # httpx.URL needed for openai client.
+    import httpx
+    # Another thing we need for openai client.
+    from openai import Timeout
 
+    def encode_httpx_url(obj: httpx.URL):
+        return str(obj)
 
-def encode_httpx_url(obj: httpx.URL):
-    return str(obj)
+    pydantic.v1.json.ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
 
+    def encode_openai_timeout(obj: Timeout):
+        return obj.as_dict()
 
-pydantic.v1.json.ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
-
-# Another thing we need for openai client.
-from openai import Timeout
-
-
-def encode_openai_timeout(obj: Timeout):
-    return obj.as_dict()
-
-
-pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
+    pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
 
 
 def obj_id_of_obj(obj: dict, prefix="obj"):
@@ -160,7 +159,9 @@ def jsonify(
     dicted = dicted or dict()
 
     if skip_specials:
-        recur_key = lambda k: isinstance(k, JSON_BASES) and k not in ALL_SPECIAL_KEYS
+        recur_key = lambda k: isinstance(
+            k, JSON_BASES
+        ) and k not in ALL_SPECIAL_KEYS
     else:
         recur_key = lambda k: isinstance(k, JSON_BASES) and True
 
@@ -242,7 +243,8 @@ def jsonify(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
-                if (not skip_excluded or not v.field_info.exclude) and recur_key(k)
+                if (not skip_excluded or not v.field_info.exclude) and
+                recur_key(k)
             }
         )
 

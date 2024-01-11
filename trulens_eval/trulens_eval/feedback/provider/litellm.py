@@ -1,9 +1,18 @@
 import logging
 from typing import Dict, Optional, Sequence
 
+# optional package
+import litellm
+from litellm import completion
+
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import LiteLLMEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LITELLM
+
+# check that the optional imports are not dummies:
+OptionalImports(messages=REQUIREMENT_LITELLM).assert_installed(litellm)
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +26,7 @@ class LiteLLM(LLMProvider):
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
     ):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """
@@ -51,7 +60,6 @@ class LiteLLM(LLMProvider):
         **kwargs
     ) -> str:
 
-        from litellm import completion
         if prompt is not None:
             comp = completion(
                 model=self.model_engine,

@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, Optional, Sequence
 
+# optional package
 import openai as oai
 import pydantic
 
@@ -8,7 +9,12 @@ from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIClient
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import CLASS_INFO
+
+# check that the optional imports are not dummies:
+OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(oai)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +33,7 @@ class OpenAI(LLMProvider):
     def __init__(
         self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
     ):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """
@@ -375,7 +381,7 @@ class AzureOpenAI(OpenAI):
     deployment_name: str = pydantic.Field(alias="model_engine")
 
     def __init__(self, deployment_name: str, endpoint=None, **kwargs):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """
