@@ -124,10 +124,6 @@ class TruBasicApp(App):
 
         return self.app._call(human)
 
-    async def main_acall(self, human: str) -> str:
-        # If available, a single text to a single text invocation of this app.
-        raise NotImplementedError()
-
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:

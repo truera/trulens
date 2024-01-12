@@ -8,7 +8,7 @@ meantime and a resource for hard-to-debug issues when they arise.
 In notes below, "HACK###" can be used to find places in the code where the hack
 lives.
 
-## stack inspecting
+## Stack inspecting
 
 See `instruments.py` docstring for discussion why these are done.
 
@@ -28,13 +28,16 @@ See `instruments.py` docstring for discussion why these are done.
 
 See `instruments.py` docstring for discussion why these are done.
 
-- "HACK002" -- We override `ThreadPoolExecutor` in concurrent.futures.
+- "HACK002" -- We override `ThreadPoolExecutor` in `concurrent.futures`.
+  
+- "HACK007" -- We override `Thread` in `threading`.
 
 ### llama-index
 
-- "HACK001" -- `trace_method` decorator in llama_index does not preserve
-  function signatures; we hack it so that it does. 
-
+~~- "HACK001" -- `trace_method` decorator in llama_index does not preserve
+  function signatures; we hack it so that it does.~~ Fixed as of llama_index
+  0.9.26 or near there.
+  
 ### langchain
 
 - "HACK003" -- We override the base class of
@@ -61,3 +64,5 @@ See `instruments.py` docstring for discussion why these are done.
 - async/sync code duplication -- Many of our methods are almost identical
   duplicates due to supporting both async and synced versions. Having trouble
   with a working approach to de-duplicated the identical code.
+
+  Resolving this is a work in progress. See `utils/async.py`.

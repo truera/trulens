@@ -19,6 +19,9 @@ import pydantic
 import requests
 
 from trulens_eval.schema import Cost
+from trulens_eval.utils.asynchro import desync
+from trulens_eval.utils.asynchro import sync
+from trulens_eval.utils.asynchro import ThunkMaybeAwaitable
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import get_first_local_in_call_stack
@@ -29,8 +32,6 @@ from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
-from trulens_eval.utils.threading import desync
-from trulens_eval.utils.threading import sync
 
 logger = logging.getLogger(__name__)
 
@@ -377,7 +378,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def track_all_costs(
-        thunk: Thunk[T],
+        thunk: ThunkMaybeAwaitable[T],
         *args, **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -385,14 +386,15 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         execution of thunk.
         """
 
-        return sync(lambda: Endpoint.atrack_all_costs(
-            lambda: desync(thunk),
-            *args, **kwargs
+        return sync(
+            lambda: Endpoint.atrack_all_costs(
+                thunk,
+                *args, **kwargs
         ))
 
     @staticmethod
     async def atrack_all_costs(
-        thunk: Thunk[Awaitable[T]],
+        thunk: ThunkMaybeAwaitable[T],
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
@@ -433,7 +435,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def track_all_costs_tally(
-        thunk: Thunk[T],
+        thunk: ThunkMaybeAwaitable[T],
         *args, **kwargs
     ) -> Tuple[T, Cost]:
         """
@@ -443,14 +445,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         return sync(
             lambda: Endpoint.atrack_all_costs_tally(
-                lambda: desync(thunk),
+                thunk,
                 *args, **kwargs
             )
         )
 
     @staticmethod
     async def atrack_all_costs_tally(
-        thunk: Thunk[Awaitable[T]],
+        thunk: ThunkMaybeAwaitable[T],
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
@@ -479,7 +481,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def _track_costs(
-        thunk: Thunk[T],
+        thunk: ThunkMaybeAwaitable[T],
         *args, **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -489,14 +491,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         return sync(
             lambda: Endpoint._atrack_costs(
-                lambda: desync(thunk),
+                thunk,
                 *args, **kwargs
             )
         )
 
     @staticmethod
     async def _atrack_costs(
-        thunk: Thunk[Awaitable[T]],
+        thunk: ThunkMaybeAwaitable[T],
         with_endpoints: Sequence['Endpoint'] = None,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -552,13 +554,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             callbacks.append(callback)
 
         # Call the thunk.
-        result: T = await thunk()
+        result: T = await desync(thunk)
 
         # Return result and only the callbacks created here. Outer thunks might
         # return others.
         return result, callbacks
 
-    def track_cost(self, thunk: Thunk[T]) -> Tuple[T, EndpointCallback]:
+    def track_cost(self, thunk: ThunkMaybeAwaitable[T]) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.
         Returns the thunk's result alongside the EndpointCallback object that
@@ -577,7 +579,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         ]
 
     def handle_wrapped_call(
-        self, bindings: inspect.BoundArguments, response: Any,
+        self,
+        bindings: inspect.BoundArguments,
+        response: Any,
         callback: Optional[EndpointCallback]
     ) -> None:
         """
