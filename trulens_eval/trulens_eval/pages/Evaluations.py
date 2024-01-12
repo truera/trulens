@@ -134,6 +134,14 @@ def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
         delta_color="inverse",
     )
 
+        # Define a function to extract record metadata from each row
+def extract_metadata(row):
+    try:
+        record_json = json.loads(row['record_json'])
+        return str(record_json["meta"])
+    except json.JSONDecodeError:
+        return None
+
 if df_results.empty:
     st.write("No records yet...")
 
@@ -182,9 +190,8 @@ else:
         evaluations_df['input'] = decoded_input
         evaluations_df['output'] = decoded_output
 
-        # Extract record metadata from record_json and add it as a new column
-        record_metadata = str(json.loads(evaluations_df['record_json'][0])["meta"])
-        evaluations_df['record_metadata'] = record_metadata
+        # Apply the function to each row and create a new column 'record_metadata'
+        evaluations_df['record_metadata'] = evaluations_df.apply(extract_metadata, axis=1)
 
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
