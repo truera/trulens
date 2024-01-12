@@ -198,14 +198,12 @@ else:
 
         gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
         gb.configure_column("input", header_name="User Input")
-        gb.configure_column(
-            "output",
-            header_name="Response",
-        )
+        gb.configure_column("output", header_name="Response")
+        
         gb.configure_column("total_tokens", header_name="Total Tokens (#)")
         gb.configure_column("total_cost", header_name="Total Cost (USD)")
         gb.configure_column("latency", header_name="Latency (Seconds)")
-        gb.configure_column("tags", header_name="Tags")
+        gb.configure_column("tags", header_name="Application Tag")
         gb.configure_column("ts", header_name="Time Stamp", sort="desc")
 
         non_feedback_cols = [
@@ -279,6 +277,7 @@ else:
             prompt = selected_rows["input"][0]
             response = selected_rows["output"][0]
             details = selected_rows["app_json"][0]
+            record_json = selected_rows["record_json"][0]
 
             app_json = json.loads(
                 details
@@ -307,12 +306,16 @@ else:
             feedback_tab, metadata_tab = st.tabs(["Feedback", "Metadata"])
 
             with metadata_tab:
-                metadata = app_json.get("metadata")
-                if metadata:
-                    with st.expander("Metadata"):
-                        st.markdown(draw_metadata(metadata))
-                else:
-                    st.write("No metadata found")
+                metadata_dict = json.loads(record_json)["meta"]
+                metadata_cols = list(metadata_dict.keys())
+    
+                metadata_cols = st.columns(len(metadata_cols))
+
+                for i, (key, value) in enumerate(metadata_dict.items()):
+                    metadata_cols[i].metric(
+                        label=key,
+                        value=value,
+                    )
 
             with feedback_tab:
                 if len(feedback_cols) == 0:
