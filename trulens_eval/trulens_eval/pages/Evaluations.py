@@ -106,7 +106,6 @@ def render_component(query, component, header=True):
         with st.expander("Unhandled Component Details:"):
             st.json(jsonify_for_ui(component.json))
 
-
 # Renders record level metrics (e.g. total tokens, cost, latency) compared to the average when appropriate
 def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
     app_specific_df = app_df[app_df["app_id"] == selected_rows["app_id"][0]]
@@ -135,7 +134,6 @@ def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
         delta=delta_latency,
         delta_color="inverse",
     )
-
 
 if df_results.empty:
     st.write("No records yet...")
@@ -308,15 +306,18 @@ else:
 
             with metadata_tab:
                 metadata_dict = json.loads(record_json)["meta"]
-                metadata_cols = list(metadata_dict.keys())
+                if not metadata_dict:
+                    st.write("No record metadata available.")
+                else:
+                    metadata_cols = list(metadata_dict.keys())
     
-                metadata_cols = st.columns(len(metadata_cols))
+                    metadata_cols = st.columns(len(metadata_cols))
 
-                for i, (key, value) in enumerate(metadata_dict.items()):
-                    metadata_cols[i].metric(
-                        label=key,
-                        value=value,
-                    )
+                    for i, (key, value) in enumerate(metadata_dict.items()):
+                        metadata_cols[i].metric(
+                            label=key,
+                            value=value,
+                        )
 
             with feedback_tab:
                 if len(feedback_cols) == 0:
