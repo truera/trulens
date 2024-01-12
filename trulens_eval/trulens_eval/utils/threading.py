@@ -34,7 +34,8 @@ class Thread(fThread):
         present_stack = stack()
         present_context = contextvars.copy_context()
 
-        super().__init__(
+        fThread.__init__(
+            self,
             name=name,
             group=group,
             target=_future_target_wrapper,
