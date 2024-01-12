@@ -69,7 +69,6 @@ feedback_directions = {
 }
 default_direction = "HIGHER_IS_BETTER"
 
-
 def render_component(query, component, header=True):
     # Draw the accessor/path within the wrapped app of the component.
     if header:
@@ -183,6 +182,10 @@ else:
         evaluations_df['input'] = decoded_input
         evaluations_df['output'] = decoded_output
 
+        # Extract record metadata from record_json and add it as a new column
+        record_metadata = str(json.loads(evaluations_df['record_json'][0])["meta"])
+        evaluations_df['record_metadata'] = record_metadata
+
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         gb.configure_column("type", header_name="App Type")
@@ -197,7 +200,8 @@ else:
         gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
         gb.configure_column("input", header_name="User Input")
         gb.configure_column("output", header_name="Response")
-        
+        gb.configure_column("record_metadata", header_name="Record Metadata")
+
         gb.configure_column("total_tokens", header_name="Total Tokens (#)")
         gb.configure_column("total_cost", header_name="Total Cost (USD)")
         gb.configure_column("latency", header_name="Latency (Seconds)")
@@ -213,8 +217,8 @@ else:
             "record_json",
             "latency",
             "tags",
+            "record_metadata",
             "record_id",
-            "app_id",
             "cost_json",
             "app_json",
             "input",
@@ -277,6 +281,7 @@ else:
             response = selected_rows["output"][0]
             details = selected_rows["app_json"][0]
             record_json = selected_rows["record_json"][0]
+            record_metadata = selected_rows["record_metadata"][0]
 
             app_json = json.loads(
                 details
@@ -305,9 +310,9 @@ else:
             feedback_tab, metadata_tab = st.tabs(["Feedback", "Metadata"])
 
             with metadata_tab:
-                metadata_dict = json.loads(record_json)["meta"]
-                if not metadata_dict:
-                    st.write("No record metadata available.")
+                metadata_dict = json.loads(record_json).get("meta", None)
+                if metadata_dict is None:
+                    st.write("No record metadata available")
                 else:
                     metadata_cols = list(metadata_dict.keys())
     
