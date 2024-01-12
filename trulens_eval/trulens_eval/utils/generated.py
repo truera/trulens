@@ -4,8 +4,10 @@ Utilities for dealing with LLM-generated text.
 
 import logging
 import re
-from pydantic import BaseModel, field_validator, ValidationError
 
+from pydantic import BaseModel
+from pydantic import field_validator
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ class Rating(BaseModel):
         if not (0 <= v <= 10):
             raise ValueError('Rating must be between 0 and 10')
         return v
+
 
 # for extracting the 0-10 rating, we are assuming the score will
 # always be the last part of the generated text from LLM - hence we are matching for the last
