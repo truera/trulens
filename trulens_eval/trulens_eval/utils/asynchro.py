@@ -10,13 +10,9 @@ def" instead of "def" and typically start with the letter "a" in their name with
 the rest matching their synchronous version. Example:
 
 ```python
-    @staticmethod
-    def track_all_costs(
-    ...
+    @staticmethod def track_all_costs( ...
 
-    @staticmethod
-    async def atrack_all_costs(
-    ...
+    @staticmethod async def atrack_all_costs( ...
 ```
 
 Due to how python handles such functions and how they are executed, it is
@@ -25,7 +21,9 @@ functions are executed by an async loop (see
 [https://docs.python.org/3/library/asyncio-eventloop.html](Event Loop)). Python
 prevents any threads from having more than one running loop meaning one may not
 be able to create one to run some async code if one has already been
-created/running in the thread.
+created/running in the thread. The method `sync` here, used to convert an async
+computation into a sync computation, needs to create a new thread. The impact of
+this, whether overhead, or record info, is uncertain.
 
 """
 
@@ -33,7 +31,7 @@ import asyncio
 import inspect
 import logging
 from threading import current_thread
-from typing import Awaitable, Union
+from typing import Awaitable, Callable, TypeVar, Union
 
 from trulens_eval.utils.python import T
 from trulens_eval.utils.python import Thunk
@@ -41,9 +39,24 @@ from trulens_eval.utils.threading import Thread
 
 logger = logging.getLogger(__name__)
 
+A = TypeVar("A")
+B = TypeVar("B")
+
+# Awaitable or not. May be checked with inspect.isawaitable . 
 MaybeAwaitable = Union[T, Awaitable[T]]
 
-ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
+# Function or coroutine function. May be checked with
+# inspect.iscoroutinefunction .
+CallableMaybeAwaitable = Union[
+    Callable[[A], B],
+    Callable[[A], Awaitable[B]]
+]
+
+# Thunk or coroutine thunk. May be checked with inspect.iscoroutinefunction .
+ThunkMaybeAwaitable = Union[
+    Thunk[T],
+    Thunk[Awaitable[T]]
+]
 
 async def desync(thunk: ThunkMaybeAwaitable[T]) -> T: # effectively Awaitable[T]
     """
@@ -69,7 +82,7 @@ def sync(thunk: ThunkMaybeAwaitable[T]) -> T:
     """
     # TODO: don't create a new thread if not in an existing loop.
 
-    result_or_awaitable: Union[T, Awaitable[T]] = thunk()
+    result_or_awaitable: MaybeAwaitable[T] = thunk()
 
     if inspect.isawaitable(result_or_awaitable):
         result_or_awaitable: Awaitable[T]

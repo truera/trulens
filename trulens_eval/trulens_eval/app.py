@@ -11,8 +11,8 @@ from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
-                    Iterable, List, Optional, Sequence, Set, Tuple, Type)
+from typing import (Any, Callable, ClassVar, Dict, Hashable, Iterable, List,
+                    Optional, Sequence, Set, Tuple, Type)
 
 import pydantic
 from pydantic import Field
@@ -30,8 +30,8 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
+from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.asynchro import desync
-from trulens_eval.utils.asynchro import MaybeAwaitable
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
@@ -46,7 +46,6 @@ from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSON_BASES_T
 from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 
@@ -846,7 +845,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     async def awith_(
         self,
-        func: Callable[..., MaybeAwaitable[T]],
+        func: CallableMaybeAwaitable[..., T],
         *args, **kwargs
     ) -> T:
         """
@@ -863,7 +862,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     async def awith_record(
         self,
-        func: Callable[..., MaybeAwaitable[T]],
+        func: CallableMaybeAwaitable[..., T],
         *args,
         record_metadata: JSON = None,
         **kwargs
@@ -888,7 +887,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     def with_(
         self,
-        func: Callable[..., MaybeAwaitable[T]],
+        func: CallableMaybeAwaitable[..., T],
         *args,
         **kwargs
     ) -> T:
@@ -906,7 +905,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     def with_record(
         self,
-        func: Callable[..., MaybeAwaitable[T]],
+        func: CallableMaybeAwaitable[..., T],
         *args,
         record_metadata: JSON = None,
         **kwargs
@@ -925,7 +924,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             )
         )
 
-    def _with_dep_message(self, method, is_async=False, with_record=False):
+    def _with_dep_message(
+        self,
+        method,
+        is_async: bool = False,
+        with_record: bool = False
+    ):
         # Deprecation message for the various methods that pass through to
         # wrapped app while recording.
 
