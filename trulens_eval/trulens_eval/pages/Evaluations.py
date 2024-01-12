@@ -214,6 +214,7 @@ else:
             "total_cost",
             "record_json",
             "latency",
+            "tags",
             "record_id",
             "app_id",
             "cost_json",
