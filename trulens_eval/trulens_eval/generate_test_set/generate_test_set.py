@@ -59,7 +59,7 @@ class GenerateTestSet:
         I don't have any fingers and ned help. Take the following themes, and turn them into a python list of the exact format: {theme_format}.
 
         Themes: {themes}
-        
+
         Python list:
         """
         )
@@ -96,6 +96,13 @@ class GenerateTestSet:
         
         Returns:
         dict: A dictionary containing the test set.
+
+        Usage example:
+
+        # Instantiate GenerateTestSet with your app callable, in this case: rag_chain.invoke
+        test = GenerateTestSet(app_callable = rag_chain.invoke)
+        # Generate the test set of a specified breadth and depth
+        test_set = test.generate_test_set(test_breadth = 3, test_depth = 2)
         """
         logger.info("Generating test set...")
         themes = self._generate_themes(test_breadth = test_breadth)
