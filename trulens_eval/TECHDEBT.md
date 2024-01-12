@@ -24,7 +24,11 @@ See `instruments.py` docstring for discussion why these are done.
   `instruments.py:Instrument` class while for tracking costs are in the base
   `Endpoint` class.
 
-## thread overriding
+- "HACK009" -- Cannot reliably determine whether a function referred to by an
+  object that implements `__call__` has been instrumented. Hacks to avoid
+  warnings about lack of instrumentation.
+
+## Thread overriding
 
 See `instruments.py` docstring for discussion why these are done.
 
@@ -57,7 +61,7 @@ See `instruments.py` docstring for discussion why these are done.
   This is because some objects are of interest despite being marked to exclude.
   Example: `RetrievalQA.retriever` in langchain.
 
-### other
+### Other
 
 - "HACK004" -- Outdated, need investigation whether it can be removed.
 

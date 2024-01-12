@@ -828,7 +828,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         if not safe_hasattr(func, Instrument.INSTRUMENT):
             if Instrument.INSTRUMENT in dir(func):
-                # TODO: Need to figure out the __call__ accesses by class
+                # HACK009: Need to figure out the __call__ accesses by class
                 # name/object name with relation to this check for
                 # instrumentation because we keep hitting spurious warnings
                 # here. This is a temporary workaround.
