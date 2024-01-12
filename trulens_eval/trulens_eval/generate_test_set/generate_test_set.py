@@ -105,9 +105,16 @@ class GenerateTestSet:
         test_set = test.generate_test_set(test_breadth = 3, test_depth = 2)
         """
         logger.info("Generating test set...")
-        themes = self._generate_themes(test_breadth = test_breadth)
-        test_categories = self._format_themes(themes = themes, test_breadth = test_breadth)
-        test_set = {}
-        for test_category in test_categories:
-            test_set[test_category] = self._generate_test_prompts(test_category, test_depth)
-        return test_set
+        retry_count = 0
+        while retry_count < 3:
+            try:
+                themes = self._generate_themes(test_breadth = test_breadth)
+                test_categories = self._format_themes(themes = themes, test_breadth = test_breadth)
+                test_set = {}
+                for test_category in test_categories:
+                    test_set[test_category] = self._generate_test_prompts(test_category, test_depth)
+                return test_set
+            except Exception as e:
+                logger.error(f"Error generating test set: {e}")
+                retry_count += 1
+        raise Exception("Failed to generate test set after 3 attempts")
