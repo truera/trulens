@@ -538,7 +538,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         if self.__class__.main_acall is not App.main_acall:
             # Use the async version if available.
-            return sync(lambda: self.main_acall(human))
+            return sync(self.main_acall, human)
         
         raise NotImplementedError()
 
@@ -548,7 +548,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if self.__class__.main_call is not App.main_call:
             logger.warning("Using synchronous version of main call.")
             # Use the sync version if available.
-            return await desync(lambda: self.main_call(human))
+            return await desync(self.main_call, human)
 
         raise NotImplementedError()
 
@@ -876,7 +876,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         with self as ctx:
             ctx.record_metadata = record_metadata
-            ret = await desync(lambda: func(*args, **kwargs))
+            ret = await desync(func, *args, **kwargs)
 
         assert len(ctx.records) > 0, (
             f"Did not create any records. "
@@ -899,9 +899,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         or the `App` as a context mananger instead.
         """
 
-        return sync(
-            lambda: self.awith_(func, *args, **kwargs)
-        )
+        return sync(self.awith_, func, *args, **kwargs)
 
     def with_record(
         self,
@@ -916,12 +914,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         """
 
         return sync(
-            lambda: self.awith_record(
-                func,
-                *args,
-                record_metadata=record_metadata,
-                **kwargs
-            )
+            self.awith_record,
+            func,
+            *args,
+            record_metadata=record_metadata,
+            **kwargs
         )
 
     def _with_dep_message(

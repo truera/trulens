@@ -10,9 +10,13 @@ def" instead of "def" and typically start with the letter "a" in their name with
 the rest matching their synchronous version. Example:
 
 ```python
-    @staticmethod def track_all_costs( ...
+    @staticmethod
+    def track_all_costs(
+        ...
 
-    @staticmethod async def atrack_all_costs( ...
+    @staticmethod
+    async def atrack_all_costs(
+        ...
 ```
 
 Due to how python handles such functions and how they are executed, it is
@@ -58,42 +62,58 @@ ThunkMaybeAwaitable = Union[
     Thunk[Awaitable[T]]
 ]
 
-async def desync(thunk: ThunkMaybeAwaitable[T]) -> T: # effectively Awaitable[T]
+async def desync(
+    func: CallableMaybeAwaitable[..., T],
+    *args, **kwargs
+) -> T: # effectively Awaitable[T]
     """
-    Create an async of the given sync thunk.
+    Run the given function asynchronously with the given args. If it is not
+    asynchronous, will run in thread.
     """
-    # Note: the "async" in front of the "def" is enough for python to create a
-    # coroutine from this method meaning it produces an awaitable if it gets
-    # called.
 
-    # Need to do something better here. This will cause our async methods to
-    # block.
-    result_or_awaitable = thunk()
-
-    if inspect.isawaitable(result_or_awaitable):
-        return await result_or_awaitable
+    if inspect.iscoroutinefunction(func):
+        return await func(*args, **kwargs)
     else:
-        return result_or_awaitable
+        return await asyncio.to_thread(func, *args, **kwargs)
 
-def sync(thunk: ThunkMaybeAwaitable[T]) -> T:
+def sync(
+    func: CallableMaybeAwaitable[..., T],
+    *args, **kwargs
+) -> T:
     """
-    Get result of thunk. If it is awaitable, will block until it is finished.
-    Runs in a new thread in such cases.
+    Get result of calling function on the given args. If it is awaitable, will
+    block until it is finished. Runs in a new thread in such cases.
     """
-    # TODO: don't create a new thread if not in an existing loop.
 
-    result_or_awaitable: MaybeAwaitable[T] = thunk()
+    if inspect.iscoroutinefunction(func):
+        awaitable: Awaitable[T] = func(*args, **kwargs)
 
-    if inspect.isawaitable(result_or_awaitable):
-        result_or_awaitable: Awaitable[T]
+        assert inspect.isawaitable(awaitable)
+
+        # Check if there is a running loop.
+        try:
+            asyncio.get_running_loop()
+            in_loop = True
+        except Exception:
+            in_loop = False
+
+        if not in_loop:
+            # If not, we can create one here and run it until completion.
+            loop = asyncio.new_event_loop()
+            return loop.run_until_complete(awaitable)
+        
+        # Otherwise we cannot create a new one in this thread so we create a
+        # new thread to run the awaitable until completion.
 
         def run_in_new_loop():
             th: Thread = current_thread()
+            # Attach return value and possibly exception to thread object so we
+            # can retrieve from the starter of the thread.
             th.ret = None
             th.error = None
             try:
                 loop = asyncio.new_event_loop()
-                th.ret = loop.run_until_complete(result_or_awaitable)
+                th.ret = loop.run_until_complete(awaitable)
             except Exception as e:
                 th.error = e
 
@@ -101,15 +121,16 @@ def sync(thunk: ThunkMaybeAwaitable[T]) -> T:
             target=run_in_new_loop
         )
 
+        # Start thread and wait for it to finish.
         thread.start()
         thread.join()
-        
+
+        # Get the return or error, return the return or raise the error.
         if thread.error is not None:
             raise thread.error
         else:
             return thread.ret
 
     else:
-        result_or_awaitable: T
-
-        return result_or_awaitable
+        # Not a coroutine function, so do not need to sync anything.
+        return func(*args, **kwargs)

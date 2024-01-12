@@ -388,10 +388,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """
 
         return sync(
-            lambda: Endpoint.atrack_all_costs(
-                thunk,
-                *args, **kwargs
-        ))
+            Endpoint.atrack_all_costs,
+            thunk,
+            *args, **kwargs
+        )
 
     @staticmethod
     async def atrack_all_costs(
@@ -445,10 +445,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """
 
         return sync(
-            lambda: Endpoint.atrack_all_costs_tally(
-                thunk,
-                *args, **kwargs
-            )
+            Endpoint.atrack_all_costs_tally,
+            thunk,
+            *args, **kwargs
         )
 
     @staticmethod
@@ -491,10 +490,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """
 
         return sync(
-            lambda: Endpoint._atrack_costs(
-                thunk,
-                *args, **kwargs
-            )
+            Endpoint._atrack_costs,
+            thunk,
+            *args, **kwargs
         )
 
     @staticmethod
@@ -699,7 +697,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             )
 
             # Get the result of the wrapped function:
-            responses: AsyncGeneratorType = await desync(lambda: func(*args, **kwargs))
+            responses: AsyncGeneratorType = await desync(func, *args, **kwargs)
 
             return _agenwrapper_part_two(responses, *args, **kwargs)
 
@@ -712,7 +710,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             )
 
             # Get the result of the wrapped function:
-            response_or_generator = await desync(lambda: func(*args, **kwargs))
+            response_or_generator = await desync(func, *args, **kwargs)
 
             # Check that it is an async generator first. Sometimes we cannot
             # tell statically (via inspect) that a function will produce a
@@ -771,7 +769,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            return sync(lambda: awrapper(*args, **kwargs))
+            return sync(awrapper, *args, **kwargs)
 
         for w in [wrapper, awrapper]:
             # Set our tracking attribute to tell whether something is already

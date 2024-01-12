@@ -472,7 +472,7 @@ class Instrument(object):
                     f"{query}: no record found or requested, not recording."
                 )
 
-                return await desync(lambda: func(*args, **kwargs))
+                return await desync(func, *args, **kwargs)
 
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack. As
@@ -622,7 +622,7 @@ class Instrument(object):
 
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
-            return sync(lambda: tru_awrapper(*args, **kwargs))
+            return sync(tru_awrapper, *args, **kwargs)
 
         # Create a new set of apps expecting to be notified about calls to the
         # instrumented method. Making this a weakref set so that if the
