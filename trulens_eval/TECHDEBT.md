@@ -34,7 +34,7 @@ See `instruments.py` docstring for discussion why these are done.
 
 ### llama-index
 
-~~- "HACK001" -- `trace_method` decorator in llama_index does not preserve
+- ~~"HACK001" -- `trace_method` decorator in llama_index does not preserve
   function signatures; we hack it so that it does.~~ Fixed as of llama_index
   0.9.26 or near there.
   
@@ -61,8 +61,11 @@ See `instruments.py` docstring for discussion why these are done.
 
 - "HACK004" -- Outdated, need investigation whether it can be removed.
 
-- async/sync code duplication -- Many of our methods are almost identical
+- ~~async/sync code duplication -- Many of our methods are almost identical
   duplicates due to supporting both async and synced versions. Having trouble
-  with a working approach to de-duplicated the identical code.
+  with a working approach to de-duplicated the identical code.~~ Fixed. See
+  `utils/asynchro.py`.
 
-  Resolving this is a work in progress. See `utils/async.py`.
+- "HACK008" -- async generator -- Some special handling is used for tracking
+  costs when async generators are involved. See
+  `feedback/provider/endpoint/base.py`.

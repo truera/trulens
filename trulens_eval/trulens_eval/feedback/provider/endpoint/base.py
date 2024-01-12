@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
+import functools
 import inspect
 import logging
 from pprint import PrettyPrinter
@@ -415,9 +416,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     )
                     cls = safe_getattr(mod, endpoint.class_name)
                 except Exception:
-                    # If endpoint uses optional packages, either module not
-                    # found error, or we will have a dummy which will fail at
-                    # getattr.
+                    # If endpoint uses optional packages, will get either module
+                    # not found error, or we will have a dummy which will fail
+                    # at getattr. Skip either way.
                     continue
 
                 try:
@@ -499,7 +500,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     @staticmethod
     async def _atrack_costs(
         thunk: ThunkMaybeAwaitable[T],
-        with_endpoints: Sequence['Endpoint'] = None,
+        with_endpoints: Optional[Sequence[Endpoint]] = None,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Root of all cost tracking methods. Runs the given `thunk`, tracking
@@ -635,7 +636,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
 
-        # TODO: DEDUP
+        # HACK008: Special handling of an async generator. Why do we need this?
         async def _agenwrapper_part_two(
             responses: AsyncGeneratorType, *args, **kwargs
         ):
@@ -691,24 +692,27 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                             callback=callback
                         )
 
+        # HACK008: Special handling of an async generator. Why do we need this?
         async def agenwrapper(*args, **kwargs):
             logger.debug(
                 f"Calling async generator wrapped {func.__name__} for {self.name}."
             )
 
             # Get the result of the wrapped function:
-            responses: AsyncGeneratorType = await func(*args, **kwargs)
+            responses: AsyncGeneratorType = await desync(lambda: func(*args, **kwargs))
 
             return _agenwrapper_part_two(responses, *args, **kwargs)
 
-        # TODO: DEDUP async/sync code duplication
+        @functools.wraps(func)
         async def awrapper(*args, **kwargs):
             logger.debug(
-                f"Calling async wrapped {func.__name__} for {self.name}."
+                f"Calling wrapped {func.__name__} for {self.name}, "
+                f"iscoroutinefunction={inspect.iscoroutinefunction(func)}, "
+                f"isasyncgenfunction={inspect.isasyncgenfunction(func)}"
             )
 
             # Get the result of the wrapped function:
-            response_or_generator = await func(*args, **kwargs)
+            response_or_generator = await desync(lambda: func(*args, **kwargs))
 
             # Check that it is an async generator first. Sometimes we cannot
             # tell statically (via inspect) that a function will produce a
@@ -765,55 +769,15 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             return response
 
-        # TODO: DEDUP
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            logger.debug(f"Calling wrapped {func.__name__} for {self.name}.")
+            return sync(lambda: awrapper(*args, **kwargs))
 
-            # Get the result of the wrapped function:
-            response: Any = func(*args, **kwargs)
-
-            bindings = inspect.signature(func).bind(*args, **kwargs)
-
-            # Get all of the callback classes suitable for handling this call.
-            # Note that we stored this in the INSTRUMENT attribute of the
-            # wrapper method.
-            registered_callback_classes = getattr(wrapper, INSTRUMENT)
-
-            # Look up the endpoints that are expecting to be notified and the
-            # callback tracking the tally. See Endpoint._track_costs for
-            # definition.
-            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-                get_first_local_in_call_stack(
-                    key="endpoints",
-                    func=self.__find_tracker,
-                    offset=0
-                )
-
-            # If wrapped method was not called from within _track_costs, we will
-            # get None here and do nothing but return wrapped function's
-            # response.
-            if endpoints is None:
-                return response
-
-            for callback_class in registered_callback_classes:
-                logger.debug(f"Handling callback_class: {callback_class}.")
-                if callback_class not in endpoints:
-                    logger.warning(
-                        f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
-                        " but there are no endpoints waiting to receive the result."
-                    )
-                    continue
-
-                for endpoint, callback in endpoints[callback_class]:
-
-                    endpoint.handle_wrapped_call(
-                        func=func,
-                        bindings=bindings,
-                        response=response,
-                        callback=callback
-                    )
-
-            return response
+        for w in [wrapper, awrapper]:
+            # Set our tracking attribute to tell whether something is already
+            # instrumented onto both the sync and async version since either one
+            # could be returned from this method.
+            setattr(w, INSTRUMENT, [self.callback_class])
 
         # Determine which of the wrapper variants to return and to annotate.
 
@@ -838,19 +802,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # annotate both the async and async generator wrappers.
             w = awrapper
             w2 = _agenwrapper_part_two
-
         else:
             w = wrapper
             w2 = None
 
-        setattr(w, INSTRUMENT, [self.callback_class])
-        w.__doc__ = func.__doc__
-        w.__name__ = func.__name__
-        w.__signature__ = inspect.signature(func)
-
         if w2 is not None:
-            # This attribute is internally by _agenwrapper_completion hence we
-            # need this.
+            # This attribute is used internally by _agenwrapper_completion hence
+            # we need this.
             setattr(w2, INSTRUMENT, [self.callback_class])
 
         logger.debug(f"Instrumenting {func.__name__} for {self.name} .")
