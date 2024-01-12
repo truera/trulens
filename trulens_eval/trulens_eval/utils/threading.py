@@ -44,7 +44,7 @@ class Thread(fThread):
             daemon=daemon
         )
 
-# HACK007: Attempt other users of Thread to use our version instead.
+# HACK007: Attempt to force other users of Thread to use our version instead.
 import threading
 
 threading.Thread = Thread
