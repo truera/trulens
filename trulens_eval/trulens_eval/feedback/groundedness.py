@@ -126,7 +126,7 @@ class Groundedness(WithClassInfo, SerialModel):
         """
         A measure to track if the source material supports each sentence in the statement using an NLI model.
 
-        The NLI model will process the entire statement at once using a natural language inference model, and will use the entire source. This method works best for testing simple hypothesis.
+        First the response will be split into statements using a sentence tokenizer.The NLI model will process each statement using a natural language inference model, and will use the entire source.
 
         Usage on RAG Contexts:
         ```
@@ -224,21 +224,19 @@ class Groundedness(WithClassInfo, SerialModel):
                 score = self.groundedness_provider._groundedness_doc_in_out(
                     premise=source, hypothesis=hypothesis
                 )
-                plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
-                if len(hypothesis) > plausible_junk_char_min:
-                    supporting_premise = self.groundedness_provider._find_relevant_string(
+                supporting_premise = self.groundedness_provider._find_relevant_string(
                         source, hypothesis
                     )
-                    score = self.groundedness_provider._summarized_groundedness(
+                score = self.groundedness_provider._summarized_groundedness(
                         premise=supporting_premise, hypothesis=hypothesis
                     )
-                    reason = reason + str.format(
+                reason = reason + str.format(
                         prompts.GROUNDEDNESS_REASON_TEMPLATE,
                         statement_sentence=hypothesis,
                         supporting_evidence=supporting_premise,
                         score=score * 10,
                     )
-                    groundedness_scores[f"statement_{i}"] = score
+                groundedness_scores[f"statement_{i}"] = score
         return groundedness_scores, {"reason": reason}
 
     def grounded_statements_aggregator(
