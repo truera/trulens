@@ -8,6 +8,7 @@ from nltk.tokenize import sent_tokenize
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
+from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.imports import OptionalImports
@@ -106,8 +107,9 @@ class Groundedness(WithClassInfo, SerialModel):
             Tuple[float, dict]: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
         groundedness_scores = {}
-        if isinstance(self.groundedness_provider,
-                      (AzureOpenAI, OpenAI, LiteLLM, Bedrock)):
+        if not isinstance(self.groundedness_provider, LLMProvider):
+            raise AssertionError("Only LLM providers are supported for groundedness_measure_with_cot_reasons.")
+        else:
             reason = self.groundedness_provider._groundedness_doc_in_out(
                 source, statement
             )
@@ -117,9 +119,6 @@ class Groundedness(WithClassInfo, SerialModel):
                     groundedness_scores[f"statement_{i}"
                                        ] = re_0_10_rating(line) / 10
                     i += 1
-        else:
-            raise Exception("Only LLM providers are supported for groundedness_measure_with_cot_reasons.")
-        
         return groundedness_scores, {"reasons": reason}
 
     def groundedness_measure_with_nli(self, source: str, statement: str
@@ -153,7 +152,9 @@ class Groundedness(WithClassInfo, SerialModel):
             str: 
         """
         groundedness_scores = {}
-        if isinstance(self.groundedness_provider, Huggingface):
+        if not isinstance(self.groundedness_provider, Huggingface):
+            raise AssertionError("Only Huggingface provider is supported for groundedness_measure_with_nli")
+        else:
             reason = ""
             if isinstance(source, list):
                 source = ' '.join(map(str, source))
@@ -171,10 +172,7 @@ class Groundedness(WithClassInfo, SerialModel):
                             score=score * 10,
                         )
                 groundedness_scores[f"statement_{i}"] = score
-
-            else:
-                raise Exception("Only Huggingface provider is supported for groundedness_measure_with_nli.")
-            return groundedness_scores, {"reason": reason}
+        return groundedness_scores, {"reason": reason}
 
     def groundedness_measure(self, source: str, statement: str
     ) -> Tuple[float, dict]:
@@ -215,29 +213,32 @@ class Groundedness(WithClassInfo, SerialModel):
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
         groundedness_scores = {}
-        reason = ""
-        hypotheses = sent_tokenize(statement)
-        for i, hypothesis in enumerate(
-            tqdm(hypotheses,
-                desc="Groundendess per statement in source")):
-            score = self.groundedness_provider._groundedness_doc_in_out(
-                premise=source, hypothesis=hypothesis
-            )
-            plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
-            if len(hypothesis) > plausible_junk_char_min:
-                supporting_premise = self.groundedness_provider._find_relevant_string(
-                    source, hypothesis
+        if not isinstance(self.groundedness_provider, LLMProvider):
+            raise AssertionError("Only LLM providers are supported for groundedness_measure_with_cot_reasons.")
+        else:
+            reason = ""
+            hypotheses = sent_tokenize(statement)
+            for i, hypothesis in enumerate(
+                tqdm(hypotheses,
+                    desc="Groundendess per statement in source")):
+                score = self.groundedness_provider._groundedness_doc_in_out(
+                    premise=source, hypothesis=hypothesis
                 )
-                score = self.groundedness_provider._summarized_groundedness(
-                    premise=supporting_premise, hypothesis=hypothesis
-                )
-                reason = reason + str.format(
-                    prompts.GROUNDEDNESS_REASON_TEMPLATE,
-                    statement_sentence=hypothesis,
-                    supporting_evidence=supporting_premise,
-                    score=score * 10,
-                )
-                groundedness_scores[f"statement_{i}"] = score
+                plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
+                if len(hypothesis) > plausible_junk_char_min:
+                    supporting_premise = self.groundedness_provider._find_relevant_string(
+                        source, hypothesis
+                    )
+                    score = self.groundedness_provider._summarized_groundedness(
+                        premise=supporting_premise, hypothesis=hypothesis
+                    )
+                    reason = reason + str.format(
+                        prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                        statement_sentence=hypothesis,
+                        supporting_evidence=supporting_premise,
+                        score=score * 10,
+                    )
+                    groundedness_scores[f"statement_{i}"] = score
         return groundedness_scores, {"reason": reason}
 
     def grounded_statements_aggregator(
