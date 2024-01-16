@@ -338,7 +338,7 @@ else:
                 for fcol in feedback_cols:
                     feedback_name = fcol
                     feedback_result = row[fcol]
-
+                    
                     if MULTI_CALL_NAME_DELIMITER in fcol:
                         fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
                     feedback_calls = row[f"{fcol}_calls"]
@@ -392,7 +392,7 @@ else:
 
                             st.dataframe(
                                 df.style.apply(highlight, axis=1).format(
-                                    "{:.2}", subset=["result"]
+                                    "{:.2f}", subset=["result"]
                                 )
                             )
 
