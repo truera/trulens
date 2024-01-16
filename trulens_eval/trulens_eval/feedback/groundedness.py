@@ -1,11 +1,14 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from tqdm.auto import tqdm
 
+from nltk.tokenize import sent_tokenize
+
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
+from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.imports import OptionalImports
@@ -73,72 +76,13 @@ class Groundedness(WithClassInfo, SerialModel):
 
         super().__init__(groundedness_provider=groundedness_provider, **kwargs)
 
-    def groundedness_measure(self, source: str, statement: str) -> float:
-        """A measure to track if the source material supports each sentence in the statement. 
-        This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step` 
-
-        Usage on RAG Contexts:
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback import Groundedness
-        from trulens_eval.feedback.provider.openai import OpenAI
-        grounded = feedback.Groundedness(groundedness_provider=OpenAI())
-
-        f_groundedness = feedback.Feedback(grounded.groundedness_measure).on(
-            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
-        ).on_output().aggregate(grounded.grounded_statements_aggregator)
-        ```
-
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
-        Args:
-            source (str): The source that should support the statement
-            statement (str): The statement to check groundedness
-
-        Returns:
-            float: A measure between 0 and 1, where 1 means each sentence is
-            grounded in the source.
-        """
-        logger.warning(
-            "Feedback function `groundedness_measure` was renamed to `groundedness_measure_with_cot_reasons`. The new functionality of `groundedness_measure` function will no longer emit reasons as a lower cost option. It may have reduced accuracy due to not using Chain of Thought reasoning in the scoring."
-        )
-
-        groundedness_scores = {}
-        if isinstance(self.groundedness_provider,
-                      (AzureOpenAI, OpenAI, LiteLLM, Bedrock)):
-            groundedness_scores[f"full_doc_score"] = re_0_10_rating(
-                self.groundedness_provider.
-                _groundedness_doc_in_out(source, statement)
-            ) / 10
-            reason = "Reasons not supplied for non chain of thought function"
-        elif isinstance(self.groundedness_provider, Huggingface):
-            reason = ""
-            for i, hypothesis in enumerate(
-                    tqdm(statement.split("."),
-                         desc="Groundendess per statement in source")):
-                plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
-                if len(hypothesis) > plausible_junk_char_min:
-                    score = self.groundedness_provider._doc_groundedness(
-                        premise=source, hypothesis=hypothesis
-                    )
-                    reason = reason + str.format(
-                        prompts.GROUNDEDNESS_REASON_TEMPLATE,
-                        statement_sentence=hypothesis,
-                        supporting_evidence="[Doc NLI Used full source]",
-                        score=score * 10,
-                    )
-                    groundedness_scores[f"statement_{i}"] = score
-
-        return groundedness_scores, {"reason": reason}
-
     def groundedness_measure_with_cot_reasons(
         self, source: str, statement: str
-    ) -> float:
+    ) -> Tuple[float, dict]:
         """
-        A measure to track if the source material supports each sentence in the statement. 
-        This groundedness measure is faster; but less accurate than `groundedness_measure_with_summarize_step`.
-        Also uses chain of thought methodology and emits the reasons.
+        A measure to track if the source material supports each sentence in the statement using an LLM provider.
+
+        The LLM will process the entire statement at once, using chain of thought methodology to emit the reasons. 
 
         Usage on RAG Contexts:
         ```
@@ -160,27 +104,83 @@ class Groundedness(WithClassInfo, SerialModel):
             statement (str): The statement to check groundedness
 
         Returns:
-            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+            Tuple[float, dict]: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
         groundedness_scores = {}
-        if isinstance(self.groundedness_provider,
-                      (AzureOpenAI, OpenAI, LiteLLM, Bedrock)):
-            plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
-            if len(statement) > plausible_junk_char_min:
-                reason = self.groundedness_provider._groundedness_doc_in_out(
-                    source, statement
-                )
+        if not isinstance(self.groundedness_provider, LLMProvider):
+            raise AssertionError("Only LLM providers are supported for groundedness_measure_with_cot_reasons.")
+        else:
+            reason = self.groundedness_provider._groundedness_doc_in_out(
+                source, statement
+            )
             i = 0
             for line in reason.split('\n'):
                 if "Score" in line:
                     groundedness_scores[f"statement_{i}"
                                        ] = re_0_10_rating(line) / 10
                     i += 1
-            return groundedness_scores, {"reason": reason}
-        elif isinstance(self.groundedness_provider, Huggingface):
-            raise Exception(
-                "Chain of Thought reasoning is only applicable to OpenAI groundedness providers. Instantiate `Groundedness(groundedness_provider=OpenAI())` or use `groundedness_measure` feedback function."
-            )
+        return groundedness_scores, {"reasons": reason}
+
+    def groundedness_measure_with_nli(self, source: str, statement: str
+    ) -> Tuple[float, dict]:
+        """
+        A measure to track if the source material supports each sentence in the statement using an NLI model.
+
+        First the response will be split into statements using a sentence tokenizer.The NLI model will process each statement using a natural language inference model, and will use the entire source.
+
+        Usage on RAG Contexts:
+        ```
+        from trulens_eval import Feedback
+        from trulens_eval.feedback import Groundedness
+        from trulens_eval.feedback.provider.hugs = Huggingface
+        grounded = feedback.Groundedness(groundedness_provider=Huggingface())
+
+
+        f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_nli).on(
+            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
+        ).on_output().aggregate(grounded.grounded_statements_aggregator)
+        ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+
+        Args:
+            source (str): The source that should support the statement
+            statement (str): The statement to check groundedness
+
+        Returns:
+            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+            str: 
+        """
+        groundedness_scores = {}
+        if not isinstance(self.groundedness_provider, Huggingface):
+            raise AssertionError("Only Huggingface provider is supported for groundedness_measure_with_nli")
+        else:
+            reason = ""
+            if isinstance(source, list):
+                source = ' '.join(map(str, source))
+            hypotheses = sent_tokenize(statement)
+            for i, hypothesis in enumerate(
+                tqdm(hypotheses,
+                    desc="Groundendess per statement in source")):
+                score = self.groundedness_provider._doc_groundedness(
+                    premise=source, hypothesis=hypothesis
+                )
+                reason = reason + str.format(
+                            prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                            statement_sentence=hypothesis,
+                            supporting_evidence="[Doc NLI Used full source]",
+                            score=score * 10,
+                        )
+                groundedness_scores[f"statement_{i}"] = score
+        return groundedness_scores, {"reason": reason}
+
+    def groundedness_measure(self, source: str, statement: str
+    ) -> Tuple[float, dict]:
+        """
+        Groundedness measure is deprecated in place of the chain-of-thought version. Defaulting to groundedness_measure_with_cot_reasons.
+        """
+        logger.warning("groundedness_measure is deprecated, please use groundedness_measure_with_cot_reasons or groundedness_measure_with_nli instead.")
+        return self.groundedness_measure_with_cot_reasons(source, statement)
 
     def groundedness_measure_with_summarize_step(
         self, source: str, statement: str
@@ -213,24 +213,29 @@ class Groundedness(WithClassInfo, SerialModel):
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
         groundedness_scores = {}
-        reason = ""
-        for i, hypothesis in enumerate(
-                tqdm(statement.split("."),
-                     desc="Groundendess per statement in source")):
-            plausible_junk_char_min = 4  # very likely "sentences" under 4 characters are punctuation, spaces, etc
-            if len(hypothesis) > plausible_junk_char_min:
+        if not isinstance(self.groundedness_provider, LLMProvider):
+            raise AssertionError("Only LLM providers are supported for groundedness_measure_with_cot_reasons.")
+        else:
+            reason = ""
+            hypotheses = sent_tokenize(statement)
+            for i, hypothesis in enumerate(
+                tqdm(hypotheses,
+                    desc="Groundendess per statement in source")):
+                score = self.groundedness_provider._groundedness_doc_in_out(
+                    premise=source, hypothesis=hypothesis
+                )
                 supporting_premise = self.groundedness_provider._find_relevant_string(
-                    source, hypothesis
-                )
+                        source, hypothesis
+                    )
                 score = self.groundedness_provider._summarized_groundedness(
-                    premise=supporting_premise, hypothesis=hypothesis
-                )
+                        premise=supporting_premise, hypothesis=hypothesis
+                    )
                 reason = reason + str.format(
-                    prompts.GROUNDEDNESS_REASON_TEMPLATE,
-                    statement_sentence=hypothesis,
-                    supporting_evidence=supporting_premise,
-                    score=score * 10,
-                )
+                        prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                        statement_sentence=hypothesis,
+                        supporting_evidence=supporting_premise,
+                        score=score * 10,
+                    )
                 groundedness_scores[f"statement_{i}"] = score
         return groundedness_scores, {"reason": reason}
 
