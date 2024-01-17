@@ -11,8 +11,10 @@ from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (Any, Callable, ClassVar, Dict, Hashable, Iterable, List,
-                    Optional, Sequence, Set, Tuple, Type)
+from typing import (
+    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
+    Set, Tuple, Type
+)
 
 import pydantic
 from pydantic import Field
@@ -539,7 +541,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if self.__class__.main_acall is not App.main_acall:
             # Use the async version if available.
             return sync(self.main_acall, human)
-        
+
         raise NotImplementedError()
 
     async def main_acall(self, human: str) -> str:
@@ -605,7 +607,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         else:
             logger.warning(
-                f"Unsure what the main output string is for the call to {callable_name(func)}."
+                f"Unsure what the main output string is for the call to {callable_name(func)} with return type {type(ret)}."
             )
             return str(ret)
 
@@ -844,9 +846,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             )
 
     async def awith_(
-        self,
-        func: CallableMaybeAwaitable[..., T],
-        *args, **kwargs
+        self, func: CallableMaybeAwaitable[..., T], *args, **kwargs
     ) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
@@ -885,12 +885,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         return ret, ctx.get()
 
-    def with_(
-        self,
-        func: CallableMaybeAwaitable[..., T],
-        *args,
-        **kwargs
-    ) -> T:
+    def with_(self, func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
         """
         Call the given `func` with the given `*args` and `**kwargs` while
         recording, producing `func` results. The record of the computation is
@@ -922,10 +917,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         )
 
     def _with_dep_message(
-        self,
-        method,
-        is_async: bool = False,
-        with_record: bool = False
+        self, method, is_async: bool = False, with_record: bool = False
     ):
         # Deprecation message for the various methods that pass through to
         # wrapped app while recording.
@@ -965,10 +957,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 """
         )
 
-    def _add_future_feedback(
-        self,
-        future: 'Future[Feedback, FeedbackResult]'
-    ):
+    def _add_future_feedback(self, future: 'Future[Feedback, FeedbackResult]'):
         _, res = future.result()
         self.tru.add_feedback(res)
 

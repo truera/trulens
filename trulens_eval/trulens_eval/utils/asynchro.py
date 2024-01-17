@@ -46,46 +46,49 @@ logger = logging.getLogger(__name__)
 A = TypeVar("A")
 B = TypeVar("B")
 
-# Awaitable or not. May be checked with inspect.isawaitable . 
+# Awaitable or not. May be checked with inspect.isawaitable .
 MaybeAwaitable = Union[T, Awaitable[T]]
 
 # Function or coroutine function. May be checked with
 # inspect.iscoroutinefunction .
-CallableMaybeAwaitable = Union[
-    Callable[[A], B],
-    Callable[[A], Awaitable[B]]
-]
+CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]
 
 # Thunk or coroutine thunk. May be checked with inspect.iscoroutinefunction .
-ThunkMaybeAwaitable = Union[
-    Thunk[T],
-    Thunk[Awaitable[T]]
-]
+ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
+
 
 async def desync(
-    func: CallableMaybeAwaitable[..., T],
-    *args, **kwargs
-) -> T: # effectively Awaitable[T]
+    func: CallableMaybeAwaitable[..., T], *args, **kwargs
+) -> T:  # effectively Awaitable[T]:
     """
     Run the given function asynchronously with the given args. If it is not
-    asynchronous, will run in thread.
+    asynchronous, will run in thread. Note: this has to be marked async since in
+    some cases we cannot tell ahead of time that `func` is asynchronous so we
+    may end up running it to produce a coroutine object which we then need to
+    run asynchronously.
     """
 
     if inspect.iscoroutinefunction(func):
         return await func(*args, **kwargs)
-    else:
-        return await asyncio.to_thread(func, *args, **kwargs)
 
-def sync(
-    func: CallableMaybeAwaitable[..., T],
-    *args, **kwargs
-) -> T:
+    else:
+        res = await asyncio.to_thread(func, *args, **kwargs)
+
+        # Might actually have been a coroutine after all.
+        if inspect.iscoroutine(res):
+            return await res
+        else:
+            return res
+
+
+def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
     """
     Get result of calling function on the given args. If it is awaitable, will
     block until it is finished. Runs in a new thread in such cases.
     """
 
     if inspect.iscoroutinefunction(func):
+        func: Callable[..., Awaitable[T]]
         awaitable: Awaitable[T] = func(*args, **kwargs)
 
         assert inspect.isawaitable(awaitable)
@@ -101,7 +104,7 @@ def sync(
             # If not, we can create one here and run it until completion.
             loop = asyncio.new_event_loop()
             return loop.run_until_complete(awaitable)
-        
+
         # Otherwise we cannot create a new one in this thread so we create a
         # new thread to run the awaitable until completion.
 
@@ -117,9 +120,7 @@ def sync(
             except Exception as e:
                 th.error = e
 
-        thread = Thread(
-            target=run_in_new_loop
-        )
+        thread = Thread(target=run_in_new_loop)
 
         # Start thread and wait for it to finish.
         thread.start()
@@ -132,5 +133,8 @@ def sync(
             return thread.ret
 
     else:
-        # Not a coroutine function, so do not need to sync anything.
+        func: Callable[..., T]
+        # Not a coroutine function, so do not need to sync anything. TODO: What
+        # if the inspect above fails?
+
         return func(*args, **kwargs)

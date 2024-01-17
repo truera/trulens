@@ -210,8 +210,9 @@ import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple)
+from typing import (
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
+)
 import weakref
 
 import pydantic
@@ -430,13 +431,13 @@ class Instrument(object):
             # relevant locals are in the async version. We thus don't look for
             # sync tru_wrapper calls in the stack.
             return id(f) == id(tru_awrapper.__code__)
-                
+
         @functools.wraps(func)
         async def tru_awrapper(*args, **kwargs):
-    
             logger.debug(
                 f"{query}: calling instrumented method {func} of type {type(func)}, "
-                f"iscoroutine={inspect.iscoroutinefunction(func)}"
+                f"iscoroutinefunction={inspect.iscoroutinefunction(func)}, "
+                f"isasyncgeneratorfunction={inspect.isasyncgenfunction(func)}"
             )
 
             apps = getattr(tru_awrapper, Instrument.APPS)  # DIFF
@@ -556,7 +557,7 @@ class Instrument(object):
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
                 rets, cost = await Endpoint.atrack_all_costs_tally(
-                    lambda: func(*bindings.args, **bindings.kwargs)
+                    lambda: desync(func, *args, **kwargs)
                 )
 
             except BaseException as e:
@@ -622,13 +623,19 @@ class Instrument(object):
 
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
+            logger.debug(
+                f"{query}: calling instrumented sync method {func} of type {type(func)}, "
+                f"iscoroutinefunction={inspect.iscoroutinefunction(func)}, "
+                f"isasyncgeneratorfunction={inspect.isasyncgenfunction(func)}"
+            )
+
             return sync(tru_awrapper, *args, **kwargs)
 
         # Create a new set of apps expecting to be notified about calls to the
         # instrumented method. Making this a weakref set so that if the
         # recorder/app gets garbage collected, it will be evicted from this set.
-        apps = weakref.WeakSet([self.app])    
-        
+        apps = weakref.WeakSet([self.app])
+
         for w in [tru_wrapper, tru_awrapper]:
             # Indicate that the wrapper is an instrumented method so that we dont
             # further instrument it in another layer accidentally.
@@ -644,7 +651,6 @@ class Instrument(object):
             return tru_awrapper
         else:
             return tru_wrapper
-
 
     def instrument_method(self, method_name: str, obj: Any, query: Lens):
         cls = type(obj)
