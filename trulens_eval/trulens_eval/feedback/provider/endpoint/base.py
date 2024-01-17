@@ -676,7 +676,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # tell statically (via inspect) that a function will produce a
             # generator.
             if inspect.isasyncgen(response_or_generator):
-                print(f"is asyncgen")
                 return _agenwrapper_part_two(
                     response_or_generator, *args, **kwargs
                 )
