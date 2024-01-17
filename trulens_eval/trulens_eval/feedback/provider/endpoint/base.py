@@ -586,81 +586,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 return func
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
-
-        # HACK008: Special handling of an async generator. Why do we need this?
-        async def _agenwrapper_part_two(
-            responses: AsyncGeneratorType, *args, **kwargs
-        ):
-            print( # DEBUG
-                f"endpoint agenwrapperpart2: calling instrumented method {func} of type {type(func)}, "
-                f"iscoroutinefunction={inspect.iscoroutinefunction(func)}, "
-                f"isasyncgeneratorfunction={inspect.isasyncgenfunction(func)}"
-            )
-
-            bindings = inspect.signature(func).bind(*args, **kwargs)
-
-            # Get all of the callback classes suitable for handling this call.
-            # Note that we stored this in the INSTRUMENT attribute of the
-            # wrapper method.
-            registered_callback_classes = getattr(
-                _agenwrapper_part_two, INSTRUMENT
-            )
-
-            # Look up the endpoints that are expecting to be notified and the
-            # callback tracking the tally. See Endpoint._atrack_costs for
-            # definition.
-            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-                get_first_local_in_call_stack(
-                    key="endpoints",
-                    func=self.__find_tracker,
-                    offset=0
-                )
-
-            # If wrapped method was not called from within _atrack_costs, we
-            # will get None here and do nothing but return wrapped function's
-            # response.
-
-            if endpoints is None:
-                logger.debug("No endpoints found.")
-                # Still need to yield the responses below.
-
-            async for response in responses:
-                yield response
-
-                if endpoints is None:
-                    continue
-
-                for callback_class in registered_callback_classes:
-                    logger.debug(f"Handling callback_class: {callback_class}.")
-                    if callback_class not in endpoints:
-                        logger.warning(
-                            f"Callback class {callback_class.__name__} is registered for handling {func.__name__}"
-                            " but there are no endpoints waiting to receive the result."
-                        )
-                        continue
-
-                    for endpoint, callback in endpoints[callback_class]:
-                        logger.debug(f"Handling endpoint {endpoint}.")
-                        endpoint.handle_wrapped_call(
-                            func=func,
-                            bindings=bindings,
-                            response=response,
-                            callback=callback
-                        )
-
-        # HACK008: Special handling of an async generator. Why do we need this?
-        async def agenwrapper(*args, **kwargs):
-            logger.debug(
-                f"Calling async generator wrapped {func.__name__} for {self.name}, "
-                f"iscoroutinefunction={inspect.iscoroutinefunction(func)}, "
-                f"isasyncgeneratorfunction={inspect.isasyncgenfunction(func)}"
-            )
-
-            # Get the result of the wrapped function:
-            responses: AsyncGeneratorType = await desync(func, *args, **kwargs)
-
-            return _agenwrapper_part_two(responses, *args, **kwargs)
-
         @functools.wraps(func)
         async def awrapper(*args, **kwargs):
             logger.debug(
@@ -670,18 +595,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             )
 
             # Get the result of the wrapped function:
-            response_or_generator = await desync(func, *args, **kwargs)
-
-            # Check that it is an async generator first. Sometimes we cannot
-            # tell statically (via inspect) that a function will produce a
-            # generator.
-            if inspect.isasyncgen(response_or_generator):
-                return _agenwrapper_part_two(
-                    response_or_generator, *args, **kwargs
-                )
-
-            # Otherwise this is not an async generator.
-            response = response_or_generator
+            response = await desync(func, *args, **kwargs)
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
@@ -755,24 +669,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         if safe_hasattr(func, "__wrapped__"):
             effective_func = safe_getattr(func, "__wrapped__")
 
-        if inspect.isasyncgenfunction(effective_func):
-            # This is not always accurate hence.
-            w = agenwrapper
-            w2 = _agenwrapper_part_two
-
         if inspect.iscoroutinefunction(effective_func):
-            # An async coroutine can actually be an async generator so we
-            # annotate both the async and async generator wrappers.
             w = awrapper
-            w2 = _agenwrapper_part_two
         else:
             w = wrapper
-            w2 = None
-
-        if w2 is not None:
-            # This attribute is used internally by _agenwrapper_completion hence
-            # we need this.
-            setattr(w2, INSTRUMENT, [self.callback_class])
 
         logger.debug(f"Instrumenting {func.__name__} for {self.name} .")
 

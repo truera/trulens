@@ -70,6 +70,9 @@ See `instruments.py` docstring for discussion why these are done.
   with a working approach to de-duplicated the identical code.~~ Fixed. See
   `utils/asynchro.py`.
 
-- "HACK008" -- async generator -- Some special handling is used for tracking
+- ~~"HACK008" -- async generator -- Some special handling is used for tracking
   costs when async generators are involved. See
-  `feedback/provider/endpoint/base.py`.
+  `feedback/provider/endpoint/base.py`.~~ Fixed in endpoint code.
+
+- "HACK010" -- cannot tell whether something is a coroutine and need additional
+  checks in `sync`/`desync`.

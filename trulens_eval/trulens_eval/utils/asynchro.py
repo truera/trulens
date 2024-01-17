@@ -29,6 +29,12 @@ created/running in the thread. The method `sync` here, used to convert an async
 computation into a sync computation, needs to create a new thread. The impact of
 this, whether overhead, or record info, is uncertain.
 
+### What should be Sync/Async?
+
+Try to have all internals be async but for users we may expose sync versions via
+the `sync` method. If internals are async and don't need exposure, don't need to
+provide a synced version.
+
 """
 
 import asyncio
@@ -74,7 +80,7 @@ async def desync(
     else:
         res = await asyncio.to_thread(func, *args, **kwargs)
 
-        # Might actually have been a coroutine after all.
+        # HACK010: Might actually have been a coroutine after all.
         if inspect.iscoroutine(res):
             return await res
         else:
@@ -91,6 +97,7 @@ def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
         func: Callable[..., Awaitable[T]]
         awaitable: Awaitable[T] = func(*args, **kwargs)
 
+        # HACK010: Debugging here to make sure it is awaitable.
         assert inspect.isawaitable(awaitable)
 
         # Check if there is a running loop.
@@ -134,7 +141,9 @@ def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
 
     else:
         func: Callable[..., T]
-        # Not a coroutine function, so do not need to sync anything. TODO: What
-        # if the inspect above fails?
+        # Not a coroutine function, so do not need to sync anything.
+        
+        # HACK010: TODO: What if the inspect fails here too? We do some checks
+        # in desync but not here.
 
         return func(*args, **kwargs)
