@@ -935,9 +935,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if iscall:
             app_callable = f"app"
 
-        raise DeprecationWarning(
+        raise AttributeError(
             f"""
-`{old_method}` will be deprecated soon; To record results of your app's execution, use one of these options to invoke your app:
+`{old_method}` is deprecated; To record results of your app's execution, use one of these options to invoke your app:
     (1) Use the `{"a" if is_async else ""}with_{"record" if with_record else ""}` method:
         ```python
         app # your app
