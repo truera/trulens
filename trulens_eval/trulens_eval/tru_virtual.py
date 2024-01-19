@@ -177,14 +177,17 @@ class TruVirtual(App):
 
         super().__init__(app=app, **kwargs)
 
-    def add_record(self, record: Record):
+    def add_record(self, record: Record) -> Record:
         """
         Add the given record to the database and evaluate any pre-specified
         feedbacks on it.
         """
 
         record.app_id = self.app_id
-        self._handle_record(record)
+        
+        record.feedback_results = self._handle_record(record)
+
+        return record
 
 
 TruVirtual.model_rebuild()
