@@ -422,7 +422,35 @@ class FeedbackCall(SerialModel):
 class FeedbackResult(SerialModel):
     """
     Feedback results for a single `Feedback` instance. This might involve
-    multiple feedback function calls.
+    multiple feedback function calls. Typically you should not be constructing
+    these objects yourself except for the cases where you'd like to log human
+    feedback.
+
+    Attributes:
+
+    - `feedback_result_id: str`: Unique identifier for this result.
+
+    - `record_id: str`: Record over which the feedback was evaluated.
+
+    - `feedback_definition_id: str`: The `Feedback` / `FeedbackDefinition` which
+      was evaluated to get this result.
+
+    - `last_ts: datetime`: Last timestamp involved in the evaluation.
+
+    - `status: FeedbackResultStatus`: For deferred feedback evaluation, the
+      status of the evaluation.
+
+    - `cost: Cost`: Cost of the evaluation.
+
+    - `name: str`: Given name of the feedback.
+
+    - `calls: List[FeedbackCall]`: Individual feedback function invocations.
+
+    - `result: float`: Final result, potentially aggregating multiple calls.
+
+    - `error: str`: Error information if there was an error.
+
+    - `multi_result: str`: TODO: doc
     """
 
     feedback_result_id: FeedbackResultID
@@ -446,7 +474,7 @@ class FeedbackResult(SerialModel):
     name: str
 
     # Individual feedback function invocations.
-    calls: Sequence[FeedbackCall] = []
+    calls: List[FeedbackCall] = []
 
     # Final result, potentially aggregating multiple calls.
     result: Optional[float] = None

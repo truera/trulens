@@ -222,7 +222,8 @@ virtual = TruVirtual(app=dict(
     def add_record(self, record: Record) -> Record:
         """
         Add the given record to the database and evaluate any pre-specified
-        feedbacks on it.
+        feedbacks on it. The class `VirtualRecord` may be useful for creating
+        records for virtual models.
         """
 
         record.app_id = self.app_id
