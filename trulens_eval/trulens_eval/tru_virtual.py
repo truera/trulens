@@ -34,34 +34,60 @@ pp = PrettyPrinter()
 
 
 class VirtualApp(dict):
-    # Virtual apps will refer to this class as the wrapped app.
+    """
+    A dictionary meant to represent the components of a virtual app. `TruVirtual`
+    will refer to this class as the wrapped app. All calls will be under `VirtualApp.root` 
+    """
 
     def root(self):
         # All virtual calls will have this on top of the stack as if their app
         # was called using this as the main/root method.
         pass
 
-    def call(self):
-        # All virtual calls specified by user will refer to this method.
-        pass
 
-
-# Create some pyschema instances to refer to things that are either in the virtual app.
+# Create some pyschema instances to refer to things that are either in the
+# virtual app.
 virtual_module = Module(
     package_name="trulens_eval", module_name="trulens_eval.tru_virtual"
 )
 virtual_class = Class(module=virtual_module, name="VirtualApp")
 virtual_object = Obj(cls=virtual_class, id=0)
 virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name="root")
+
+# Method name will be replaced by the last attribute in the selector provided by
+# user:
 virtual_method_call = Method(
     cls=virtual_class,
     obj=virtual_object,
     name=
-    "method_name_not_set"  # this will be replaced by the last attribute in the selector provided by user
+    "method_name_not_set"  
 )
 
 
 class VirtualRecord(Record):
+    """
+    Utility class for creating `Record`s using selectors. In the example below,
+    `Select.RecordCalls.retriever` refers to a presumed component of some
+    virtual model which is assumed to have called the method `get_context`. The
+    inputs and outputs of that call are specified in as the value with the
+    selector as key. Other than `calls`, other arguments are the same as for
+    `Record` but empty values are filled for arguments that are not provided but
+    are otherwise required.
+
+    ```python
+VirtualRecord(
+    main_input="Where is Germany?", main_output="Germany is in Europe", calls=
+        {
+            Select.RecordCalls.retriever.get_context: dict(
+                args=["Where is Germany?"], rets=["Germany is a country located
+                in Europe."]
+            ), Select.RecordCalls.some_other_component.do_something: dict(
+                args=["Some other inputs."], rets=["Some other output."]
+            )
+        }
+    )
+    ```
+    """
 
     def __init__(self, calls: Dict[Lens, Dict], **kwargs):
         root_call = RecordAppCallMethod(path=Lens(), method=virtual_method_root)
@@ -142,6 +168,22 @@ class VirtualRecord(Record):
 
 class TruVirtual(App):
     """
+    Recorder for virtual apps. Virtual apps are data only in that they cannot be
+    executed but for whom previously-computed results can be added using
+    `add_record`. The `VirtualRecord` class may be useful for creating records
+    for this.
+
+    You can store any information you would like by passing in a
+    dictionry to TruVirtual (later). This may involve an index of components or
+    versions, or anything else. You can refer to these values for evaluating feedback.
+
+    ```python
+virtual = TruVirtual(app=dict(
+    retriever=dict(
+        configkey1="anything else you want to store about the app or its components"
+    ),
+    some_other_component="can be put into the app dictionary"
+))
     """
 
     app: VirtualApp = Field(default_factory=VirtualApp)
