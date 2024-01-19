@@ -194,8 +194,6 @@ virtual = TruVirtual(app=dict(
 
     instrument: Optional[Instrument] = None
 
-    # Normally pydantic does not like positional args but chain here is
-    # important enough to make an exception.
     def __init__(self, app: Optional[JSON] = None, **kwargs):
         """
         Virtual app for logging existing app results.
