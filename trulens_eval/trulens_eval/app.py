@@ -415,7 +415,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     # Instrumentation class. This is needed for serialization as it tells us
     # which objects we want to be included in the json representation of this
     # app.
-    instrument: Instrument = Field(None, exclude=True)
+    instrument: Optional[Instrument] = Field(None, exclude=True)
 
     # Sequnces of records produced by the this class used as a context manager
     # are stpred om a RecordingContext. Using a context var so that context
@@ -451,11 +451,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         app = kwargs['app']
         self.app = app
 
-        assert self.instrument is not None, "App class cannot be instantiated. Use one of the subclasses."
-
-        self.instrument.instrument_object(
-            obj=self.app, query=Select.Query().app
-        )
+        if self.instrument is not None:
+            self.instrument.instrument_object(
+                obj=self.app, query=Select.Query().app
+            )
+        else:
+            pass
 
         self.tru_post_init()
 
