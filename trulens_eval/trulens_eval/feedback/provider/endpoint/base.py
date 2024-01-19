@@ -27,7 +27,8 @@ from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.asynchro import ThunkMaybeAwaitable
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.python import get_first_local_in_call_stack, is_really_coroutinefunction
+from trulens_eval.utils.python import get_first_local_in_call_stack
+from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName

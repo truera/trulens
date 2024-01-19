@@ -210,8 +210,9 @@ import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
-                    Tuple)
+from typing import (
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
+)
 import weakref
 
 import pydantic

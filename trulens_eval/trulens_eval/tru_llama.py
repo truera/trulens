@@ -355,7 +355,7 @@ class TruLlama(App):
 
     async def main_acall(self, human: str):
         # If available, a single text to a single text invocation of this app.
-    
+
         if isinstance(self.app, BaseQueryEngine):
             ret = await self.app.aquery(human)
         elif isinstance(self.app, BaseChatEngine):

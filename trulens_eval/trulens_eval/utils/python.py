@@ -9,17 +9,16 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from queue import Queue
-from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
-                    Sequence, Type, TypeVar)
+from typing import (
+    Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
+    TypeVar
+)
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
 Thunk = Callable[[], T]
-
-
-
 
 # Reflection utilities.
 
@@ -36,10 +35,11 @@ def is_really_coroutinefunction(func) -> bool:
 
     if inspect.iscoroutinefunction(func):
         return True
-    
-    if hasattr(func, "__wrapped__") and inspect.iscoroutinefunction(func.__wrapped__):
+
+    if hasattr(func, "__wrapped__") and inspect.iscoroutinefunction(
+            func.__wrapped__):
         return True
-    
+
     return False
 
 
