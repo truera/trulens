@@ -43,7 +43,7 @@ import logging
 from threading import current_thread
 from typing import Awaitable, Callable, TypeVar, Union
 
-from trulens_eval.utils.python import T
+from trulens_eval.utils.python import T, is_really_coroutinefunction
 from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.threading import Thread
 
@@ -56,10 +56,10 @@ B = TypeVar("B")
 MaybeAwaitable = Union[T, Awaitable[T]]
 
 # Function or coroutine function. May be checked with
-# inspect.iscoroutinefunction .
+# is_really_coroutinefunction .
 CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]
 
-# Thunk or coroutine thunk. May be checked with inspect.iscoroutinefunction .
+# Thunk or coroutine thunk. May be checked with is_really_coroutinefunction .
 ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
 
 
@@ -74,7 +74,7 @@ async def desync(
     run asynchronously.
     """
 
-    if inspect.iscoroutinefunction(func):
+    if is_really_coroutinefunction(func):
         return await func(*args, **kwargs)
 
     else:
@@ -93,7 +93,7 @@ def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
     block until it is finished. Runs in a new thread in such cases.
     """
 
-    if inspect.iscoroutinefunction(func):
+    if is_really_coroutinefunction(func):
         func: Callable[..., Awaitable[T]]
         awaitable: Awaitable[T] = func(*args, **kwargs)
 

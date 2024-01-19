@@ -27,7 +27,7 @@ from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.asynchro import ThunkMaybeAwaitable
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.python import get_first_local_in_call_stack
+from trulens_eval.utils.python import get_first_local_in_call_stack, is_really_coroutinefunction
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
@@ -590,7 +590,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         async def awrapper(*args, **kwargs):
             logger.debug(
                 f"Calling wrapped async {func.__name__} for {self.name}, "
-                f"iscoroutinefunction={inspect.iscoroutinefunction(func)}, "
+                f"iscoroutinefunction={is_really_coroutinefunction(func)}, "
                 f"isasyncgenfunction={inspect.isasyncgenfunction(func)}"
             )
 
@@ -645,7 +645,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         def wrapper(*args, **kwargs):
             logger.debug(
                 f"Calling instrumented sync method {func} of type {type(func)}, "
-                f"iscoroutinefunction={inspect.iscoroutinefunction(func)}, "
+                f"iscoroutinefunction={is_really_coroutinefunction(func)}, "
                 f"isasyncgeneratorfunction={inspect.isasyncgenfunction(func)}"
             )
             return sync(awrapper, *args, **kwargs)
@@ -658,18 +658,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         # Determine which of the wrapper variants to return and to annotate.
 
-        # NOTE(piotrm): inspect checkers for async functions do not work on
-        # openai clients, perhaps because they use @typing.overload. Because of
-        # that, we detect them by checking __wrapped__ attribute instead. Note
-        # that the inspect docs suggest they should be able to handle wrapped
-        # functions but perhaps they handle different type of wrapping?
-        # See https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction .
-
-        effective_func = func
-        if safe_hasattr(func, "__wrapped__"):
-            effective_func = safe_getattr(func, "__wrapped__")
-
-        if inspect.iscoroutinefunction(effective_func):
+        if is_really_coroutinefunction(func):
             w = awrapper
         else:
             w = wrapper

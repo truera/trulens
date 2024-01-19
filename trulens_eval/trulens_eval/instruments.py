@@ -210,9 +210,8 @@ import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
-)
+from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
+                    Tuple)
 import weakref
 
 import pydantic
@@ -225,7 +224,8 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
 from trulens_eval.schema import Select
-from trulens_eval.utils.asynchro import desync, sync
+from trulens_eval.utils.asynchro import desync
+from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import clean_attributes
@@ -233,6 +233,7 @@ from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import get_first_local_in_call_stack
+from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import safe_signature
 from trulens_eval.utils.serial import Lens
@@ -436,7 +437,7 @@ class Instrument(object):
         async def tru_awrapper(*args, **kwargs):
             logger.debug(
                 f"{query}: calling instrumented method {func} of type {type(func)}, "
-                f"iscoroutinefunction={inspect.iscoroutinefunction(func)}, "
+                f"iscoroutinefunction={is_really_coroutinefunction(func)}, "
                 f"isasyncgeneratorfunction={inspect.isasyncgenfunction(func)}"
             )
 
@@ -625,7 +626,7 @@ class Instrument(object):
         def tru_wrapper(*args, **kwargs):
             logger.debug(
                 f"{query}: calling instrumented sync method {func} of type {type(func)}, "
-                f"iscoroutinefunction={inspect.iscoroutinefunction(func)}, "
+                f"iscoroutinefunction={is_really_coroutinefunction(func)}, "
                 f"isasyncgeneratorfunction={inspect.isasyncgenfunction(func)}"
             )
 
@@ -647,7 +648,7 @@ class Instrument(object):
             # method and one of the two is returned below.
 
         # Return either the sync version or async depending on the type of func.
-        if inspect.iscoroutinefunction(func):
+        if is_really_coroutinefunction(func):
             return tru_awrapper
         else:
             return tru_wrapper
