@@ -62,7 +62,8 @@ class Tru(SingletonPerName):
 
     def Chain(__tru_self, chain, **kwargs):
         """
-        Create a TruChain with database managed by self.
+        Create a langchain app recorder (`TruChain`) with database managed by
+        self.
         """
 
         from trulens_eval.tru_chain import TruChain
@@ -71,7 +72,8 @@ class Tru(SingletonPerName):
 
     def Llama(self, engine, **kwargs):
         """
-        Create a llama_index engine with database managed by self.
+        Create a llama_index app recorder (`TruLlama`) with database managed by
+        self.
         """
 
         from trulens_eval.tru_llama import TruLlama
@@ -79,14 +81,34 @@ class Tru(SingletonPerName):
         return TruLlama(tru=self, app=engine, **kwargs)
 
     def Basic(self, text_to_text, **kwargs):
+        """
+        Create a basic app recorder (`TruBasicApp`) with database managed by
+        self.
+        """
+
         from trulens_eval.tru_basic_app import TruBasicApp
 
         return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
 
     def Custom(self, app, **kwargs):
+        """
+        Create a custom app recorder (`TruCustomApp`) with database managed by
+        self.
+        """
+
         from trulens_eval.tru_custom_app import TruCustomApp
 
         return TruCustomApp(tru=self, app=app, **kwargs)
+
+    def Virtual(self, app, **kwargs):
+        """
+        Create a virtual app recorder (`TruVirtualApp`) with database managed by
+        self.
+        """
+
+        from trulens_eval.tru_virtual import TruVirtual
+
+        return TruVirtual(tru=self, app=app, **kwargs)
 
     def __init__(
         self,
