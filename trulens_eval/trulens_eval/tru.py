@@ -120,17 +120,22 @@ class Tru(SingletonPerName):
         TruLens instrumentation, logging, and feedback functions for apps.
 
         Args:
-           database_url: SQLAlchemy database URL. Defaults to a local
-                                SQLite database file at 'default.sqlite'
-                                See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
-                                on SQLAlchemy database URLs.
-           database_file: (Deprecated) Path to a local SQLite database file
-           database_redact_keys: whether to redact secret keys in data to be written to database.
+           - database_url: SQLAlchemy database URL. Defaults to a local
+                SQLite database file at 'default.sqlite' See [this
+                article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
+                on SQLAlchemy database URLs.
+
+           - database_file: (Deprecated) Path to a local SQLite database file
+
+           - database_redact_keys: whether to redact secret keys in data to be
+             written to database.
         """
         if safe_hasattr(self, "db"):
             if database_url is not None or database_file is not None:
                 logger.warning(
-                    f"Tru was already initialized. Cannot change database_url={database_url} or database_file={database_file} ."
+                    f"Tru was already initialized. "
+                    f"Cannot change database_url={database_url} "
+                    f"or database_file={database_file} ."
                 )
 
             # Already initialized by SingletonByName mechanism.
@@ -141,7 +146,8 @@ class Tru(SingletonPerName):
 
         if database_file:
             warnings.warn(
-                "`database_file` is deprecated, use `database_url` instead as in `database_url='sqlite:///filename'.",
+                ("`database_file` is deprecated, "
+                "use `database_url` instead as in `database_url='sqlite:///filename'."),
                 DeprecationWarning,
                 stacklevel=2
             )
