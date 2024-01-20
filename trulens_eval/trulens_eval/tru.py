@@ -1,18 +1,27 @@
+from collections import defaultdict
 from concurrent.futures import as_completed
+from concurrent.futures import Future
 from concurrent.futures import wait
+from datetime import datetime
+from datetime import timedelta
 import logging
 from multiprocessing import Process
 import os
 from pathlib import Path
+from pprint import PrettyPrinter
 import subprocess
 import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import Callable, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import (Callable, Dict, Iterable, List, Optional, Sequence, Tuple,
+                    Union)
 import warnings
 
+import humanize
+import pandas
 import pkg_resources
+from tqdm.auto import tqdm
 
 from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
 from trulens_eval.db import DB
@@ -33,12 +42,16 @@ from trulens_eval.utils.text import UNICODE_STOP
 from trulens_eval.utils.text import UNICODE_YIELD
 from trulens_eval.utils.threading import TP
 
+pp = PrettyPrinter()
+
 logger = logging.getLogger(__name__)
 
 # How long to wait (seconds) for streamlit to print out url when starting the
 # dashboard.
 DASHBOARD_START_TIMEOUT = 30
 
+def humanize_seconds(seconds: float):
+    return humanize.naturaldelta(timedelta(seconds=seconds))
 
 class Tru(SingletonPerName):
     """
@@ -54,12 +67,25 @@ class Tru(SingletonPerName):
     """
     DEFAULT_DATABASE_FILE = "default.sqlite"
 
+    # How long to time before restarting a feedback function that has already
+    # started (but may have stalled or failed in a bad way that did not record the
+    # failure.)
+    RETRY_RUNNING_SECONDS: float = 60.0
+
+    # How long to wait to retry a failed feedback function run.
+    RETRY_FAILED_SECONDS: float = 5 * 60.0
+
+    # Max number of futures to wait for when evaluating deferred feedback
+    # functions.
+    DEFERRED_NUM_RUNS: int = 32
+
     # Process or Thread of the deferred feedback function evaluator.
     evaluator_proc = None
 
     # Process of the dashboard app.
     dashboard_proc = None
 
+    
     def Chain(__tru_self, chain, **kwargs):
         """
         Create a TruChain with database managed by self.
@@ -338,11 +364,30 @@ class Tru(SingletonPerName):
 
         return leaderboard
 
-    def start_evaluator(self,
-                        restart=False,
-                        fork=False) -> Union[Process, Thread]:
+    def start_evaluator(
+        self,
+        restart: bool = False,
+        fork: bool = False
+    ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
+
+        Constants that govern behaviour:
+
+        - `Tru.RETRY_RUNNING_SECONDS: float` -- How long to
+          time before restarting a feedback that was started but never failed
+          (or failed without recording that fact).
+
+        - `Tru.RETRY_FAILED_SECONDS: float` -- How long to wait to retry a
+          failed feedback.
+
+        - `Tru.DEFERRED_NUM_RUNS: int` -- Max number of futures to wait for at
+          any time.
+
+        - `TP.MAX_THREADS: int` -- Max number of threads to use. This should be
+          greater than `Tru.DEFERRED_NUM_RUNS`.
+
+        - 
         """
 
         assert not fork, "Fork mode not yet implemented."
@@ -361,22 +406,137 @@ class Tru(SingletonPerName):
         def runloop():
             assert self.evaluator_stop is not None
 
+            print(
+                f"Will keep max of "
+                f"{self.DEFERRED_NUM_RUNS} feedback(s) running.")
+            print(
+                f"Tasks are spread among max of "
+                f"{TP.MAX_THREADS} thread(s).")
+            print(
+                f"Will rerun running feedbacks after "
+                f"{humanize_seconds(self.RETRY_RUNNING_SECONDS)}."
+            )
+            print(
+                f"Will rerun failed feedbacks after "
+                f"{humanize_seconds(self.RETRY_FAILED_SECONDS)}."
+            )
+
+            total = 0
+
+            # Show the overall counts from the database, not just what has been looked at so far.
+            tqdm_status = tqdm(desc="Feedback Status", initial=0, unit="feedbacks")
+
+            # Show the status of the results so far.
+            tqdm_total = tqdm(desc="Done Runs", initial=0, unit="runs")
+
+            # Show what is being waited for right now.
+            tqdm_waiting = tqdm(desc="Waiting for Runs", initial=0, unit="runs")
+
+            runs_stats = defaultdict(int)
+
+            futures: Dict[Future[FeedbackResult], pandas.Series] = dict()
+
             while fork or not self.evaluator_stop.is_set():
-                futures = Feedback.evaluate_deferred(tru=self)
+
+                if len(futures) < self.DEFERRED_NUM_RUNS:
+                    # Get some new evals to run if some already completed by now.
+                    new_futures: List[Tuple[pandas.Series, Future[FeedbackResult]]] = \
+                        Feedback.evaluate_deferred(
+                            tru=self,
+                            limit=self.DEFERRED_NUM_RUNS-len(futures),
+                            shuffle=True
+                        )
+
+                    # Will likely get some of the same ones that already have running.
+                    for row, fut in new_futures:
+
+                        if fut in futures:
+                            # If the future is already in our set, check whether
+                            # its status has changed and if so, note it in the
+                            # runs_stats.
+                            if futures[fut].status != row.status:
+                                runs_stats[row.status.name] += 1
+
+                        futures[fut] = row
+                        total += 1
+
+                        # TODO: REMOVE
+                        # print(row.status, datetime.fromtimestamp(row.last_ts))
+
+                    tqdm_total.total = total
+                    tqdm_total.refresh()
+
+                tqdm_waiting.total = self.DEFERRED_NUM_RUNS
+                tqdm_waiting.n = len(futures)
+                tqdm_waiting.refresh()
+
+                # Note whether we have waited for some futures in this
+                # iteration. Will control some extra wait time if there is no
+                # work.
+                did_wait = False
 
                 if len(futures) > 0:
-                    print(
-                        f"{UNICODE_YIELD}{UNICODE_YIELD}{UNICODE_YIELD} Started {len(futures)} deferred feedback functions."
-                    )
-                    wait(futures)
-                    print(
-                        f"{UNICODE_CHECK}{UNICODE_CHECK}{UNICODE_CHECK} Finished evaluating deferred feedback functions."
-                    )
+                    did_wait = True
 
-                if fork:
-                    sleep(10)
-                else:
-                    self.evaluator_stop.wait(10)
+                    futures_copy = list(futures.keys())
+
+                    try:
+                        for fut in as_completed(futures_copy, timeout=10):
+                            del futures[fut]
+
+                            tqdm_waiting.update(-1)
+                            tqdm_total.update(1)
+
+                            feedback_result = fut.result()
+                            runs_stats[feedback_result.status.name] += 1
+
+                    except TimeoutError:
+                        pass
+
+                tqdm_total.set_postfix(
+                    {name: count for name, count in runs_stats.items()}
+                )
+
+                queue_stats = self.db.get_feedback_count_by_status()
+
+                queue_done = queue_stats.get(FeedbackResultStatus.DONE) or 0
+                queue_total = sum(queue_stats.values())
+
+                tqdm_status.n = queue_done
+                tqdm_status.total = queue_total
+                tqdm_status.set_postfix(
+                    {status.name: count for status, count in queue_stats.items()}
+                )
+
+                # Check if any of the running futures should be stopped.
+                futures_copy = list(futures.keys())
+                for fut in futures_copy:
+                    row = futures[fut]
+
+                    if fut.running():
+                        # Not checking status here as this will be not yet be set
+                        # correctly. The computation in the future update the
+                        # database but this object is outdated.
+                        
+                        elapsed = datetime.now().timestamp() - row.last_ts
+                        if elapsed > self.RETRY_RUNNING_SECONDS:
+                            fut.cancel()
+
+                            # TODO: REMOVE
+                            # print("cancelling:", row.status, datetime.fromtimestamp(row.last_ts), elapsed)
+
+                            # Not an actual status, but would be nice to
+                            # indicate cancellations in run stats:
+                            runs_stats["CANCELLED"] += 1
+
+                            del futures[fut]
+
+                if not did_wait:
+                    # Nothing to run/is running, wait a bit.
+                    if fork:
+                        sleep(10)
+                    else:
+                        self.evaluator_stop.wait(10)
 
             print("Evaluator stopped.")
 
@@ -392,6 +552,8 @@ class Tru(SingletonPerName):
         proc.start()
 
         return proc
+
+    run_evaluator = start_evaluator
 
     def stop_evaluator(self):
         """

@@ -7,6 +7,7 @@ import logging
 from pprint import PrettyPrinter
 from queue import Queue
 import random
+import sys
 from threading import Thread
 from time import sleep
 from types import AsyncGeneratorType
@@ -970,6 +971,9 @@ class DummyEndpoint(Endpoint):
     # How often to produce the overloaded message.
     overloaded_prob: float
 
+    # How much data in bytes to allocate when making requests.
+    alloc: int
+
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
 
@@ -980,6 +984,7 @@ class DummyEndpoint(Endpoint):
         freeze_prob: float = 1 / 100,
         overloaded_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
+        alloc: int = 1024 * 1024,
         rpm: float = DEFAULT_RPM * 10,
         **kwargs
     ):
@@ -1018,6 +1023,9 @@ class DummyEndpoint(Endpoint):
             url, json=payload, timeout=timeout, headers=self.post_headers
         )
         """
+
+        # allocate some data to pretend we are doing hard work
+        temporary = [0x42] * self.alloc
 
         r = random.random()
         j: Optional[JSON] = None
@@ -1097,5 +1105,8 @@ class DummyEndpoint(Endpoint):
         assert isinstance(
             j, Sequence
         ) and len(j) > 0, f"Post did not return a sequence: {j}"
+
+        # Use `temporary`` to make sure it doesn't get compiled away.
+        logger.debug(f"I have allocated {sys.getsizeof(temporary)} bytes.")
 
         return j[0]

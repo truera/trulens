@@ -1,15 +1,21 @@
-from time import sleep
+import time
+import sys
 
 from trulens_eval.tru_custom_app import instrument
 
 
 class CustomLLM:
 
-    def __init__(self, model: str = "derp"):
+    def __init__(self, model: str = "derp", delay: float = 0.01, alloc: int = 1024 * 1024):
         self.model = model
+        self.delay = delay
+        self.alloc = alloc
 
     @instrument
     def generate(self, prompt: str):
-        sleep(0.01)
+        if self.delay > 0.0:
+            time.sleep(self.delay)
 
-        return "herp " + prompt[::-1] + " derp"
+        temporary = [0x42] * self.alloc
+
+        return "herp " + prompt[::-1] + f" derp and {sys.getsizeof(temporary)} bytes"

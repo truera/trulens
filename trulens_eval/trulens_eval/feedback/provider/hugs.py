@@ -459,6 +459,7 @@ class Dummy(Huggingface):
         loading_prob: float = 1 / 100,
         freeze_prob: float = 1 / 100,
         overloaded_prob: float = 1 / 100,
+        alloc: int = 1024 * 1024,
         rpm: float = 600,
         **kwargs
     ):
