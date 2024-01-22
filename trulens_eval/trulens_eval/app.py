@@ -32,19 +32,22 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
+from trulens_eval.utils.asynchro import CallableMaybeAwaitable
+from trulens_eval.utils.asynchro import desync
+from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.python import T
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSON_BASES_T
 from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 
@@ -535,10 +538,21 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
+
+        if self.__class__.main_acall is not App.main_acall:
+            # Use the async version if available.
+            return sync(self.main_acall, human)
+
         raise NotImplementedError()
 
     async def main_acall(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
+
+        if self.__class__.main_call is not App.main_call:
+            logger.warning("Using synchronous version of main call.")
+            # Use the sync version if available.
+            return await desync(self.main_call, human)
+
         raise NotImplementedError()
 
     def main_input(
@@ -594,7 +608,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         else:
             logger.warning(
-                f"Unsure what the main output string is for the call to {callable_name(func)}."
+                f"Unsure what the main output string is for the call to {callable_name(func)} with return type {type(ret)}."
             )
             return str(ret)
 
@@ -817,7 +831,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         if not safe_hasattr(func, Instrument.INSTRUMENT):
             if Instrument.INSTRUMENT in dir(func):
-                # TODO: Need to figure out the __call__ accesses by class
+                # HACK009: Need to figure out the __call__ accesses by class
                 # name/object name with relation to this check for
                 # instrumentation because we keep hitting spurious warnings
                 # here. This is a temporary workaround.
@@ -832,7 +846,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 f"`{self.__class__.__name__}` method `print_instrumented` may be used to see methods that have been instrumented. "
             )
 
-    async def awith_(self, func, *args, **kwargs) -> Any:
+    async def awith_(
+        self, func: CallableMaybeAwaitable[..., T], *args, **kwargs
+    ) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
         recording, producing `func` results. The record of the computation is
@@ -841,56 +857,17 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         or the `App` as a context mananger instead.
         """
 
-        self._check_instrumented(func)
-
         res, _ = await self.awith_record(func, *args, **kwargs)
 
         return res
 
     async def awith_record(
         self,
-        func,
+        func: CallableMaybeAwaitable[..., T],
         *args,
         record_metadata: JSON = None,
         **kwargs
-    ) -> Tuple[Any, Record]:
-        """
-        Call the given async `func` with the given `*args` and `**kwargs`,
-        producing its results as well as a record of the execution.
-        """
-
-        self._check_instrumented(func)
-
-        with self as ctx:
-            ctx.record_metadata = record_metadata
-            ret = await func(*args, **kwargs)
-
-        assert len(ctx.records) > 0, (
-            f"Did not create any records. "
-            f"This means that no instrumented methods were invoked in the process of calling {func}."
-        )
-
-        return ret, ctx.get()
-
-    def with_(self, func, *args, **kwargs) -> Any:
-        """
-        Call the given `func` with the given `*args` and `**kwargs` while
-        recording, producing `func` results. The record of the computation is
-        available through other means like the database or dashboard.  If you
-        need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context mananger instead.
-        """
-
-        self._check_instrumented(func)
-
-        res, _ = self.with_record(func, *args, **kwargs)
-        return res
-
-    def with_record(self,
-                    func,
-                    *args,
-                    record_metadata: JSON = None,
-                    **kwargs) -> Tuple[Any, Record]:
+    ) -> Tuple[T, Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
@@ -900,7 +877,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         with self as ctx:
             ctx.record_metadata = record_metadata
-            ret = func(*args, **kwargs)
+            ret = await desync(func, *args, **kwargs)
 
         assert len(ctx.records) > 0, (
             f"Did not create any records. "
@@ -909,7 +886,40 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         return ret, ctx.get()
 
-    def _with_dep_message(self, method, is_async=False, with_record=False):
+    def with_(self, func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
+        """
+        Call the given `func` with the given `*args` and `**kwargs` while
+        recording, producing `func` results. The record of the computation is
+        available through other means like the database or dashboard.  If you
+        need a record of this execution immediately, you can use `awith_record`
+        or the `App` as a context mananger instead.
+        """
+
+        return sync(self.awith_, func, *args, **kwargs)
+
+    def with_record(
+        self,
+        func: CallableMaybeAwaitable[..., T],
+        *args,
+        record_metadata: JSON = None,
+        **kwargs
+    ) -> Tuple[T, Record]:
+        """
+        Call the given `func` with the given `*args` and `**kwargs`, producing
+        its results as well as a record of the execution.
+        """
+
+        return sync(
+            self.awith_record,
+            func,
+            *args,
+            record_metadata=record_metadata,
+            **kwargs
+        )
+
+    def _with_dep_message(
+        self, method, is_async: bool = False, with_record: bool = False
+    ):
         # Deprecation message for the various methods that pass through to
         # wrapped app while recording.
 
@@ -999,7 +1009,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if self.db is None:
             return
 
-    def instrumented(self,) -> Iterable[Tuple[Lens, ComponentView]]:
+    def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
         """
         Enumerate instrumented components and their categories.
         """

@@ -24,6 +24,7 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSON
@@ -538,7 +539,8 @@ class Feedback(FeedbackDefinition):
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost = Endpoint.track_all_costs_tally(
+                    result_and_meta, part_cost = sync(
+                        Endpoint.atrack_all_costs_tally,
                         lambda: self.imp(**ins)
                     )
                     cost += part_cost
