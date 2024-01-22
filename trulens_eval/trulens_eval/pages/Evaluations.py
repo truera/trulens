@@ -134,13 +134,19 @@ def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
         delta_color="inverse",
     )
 
-        # Define a function to extract record metadata from each row
+# Define a function to extract record metadata from each row
 def extract_metadata(row):
-    try:
-        record_json = json.loads(row['record_json'])
-        return str(record_json["meta"])
-    except json.JSONDecodeError:
-        return None
+    """
+    Extract metadata from the record_json and return the metadata as a string.
+
+    Args:
+        row: The row containing the record_json.
+
+    Returns:
+        str: The metadata extracted from the record_json.
+    """
+    record_data = json.loads(row['record_json'])
+    return str(record_data["meta"])
 
 if df_results.empty:
     st.write("No records yet...")
