@@ -4,17 +4,18 @@
 Log existing results with trulens_eval and run evals against them.
 """
 
+from concurrent import futures
 from datetime import datetime
 import logging
 from pprint import PrettyPrinter
 import time
-from typing import Any, ClassVar, Dict, Optional
+from typing import Any, ClassVar, Dict, Optional, Union
 
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost
+from trulens_eval.schema import Cost, FeedbackMode
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
@@ -25,7 +26,7 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import Module
 from trulens_eval.utils.pyschema import Obj
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSON, GetAttribute, GetItemOrAttribute
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,27 @@ class VirtualApp(dict):
     A dictionary meant to represent the components of a virtual app. `TruVirtual`
     will refer to this class as the wrapped app. All calls will be under `VirtualApp.root` 
     """
+
+    def __setitem__(self, __name: Union[str, Lens], __value: Any) -> None:
+        """
+        Allow setitem to work on Lenses instead of just strings. Uses Lens.set
+        if a lens is given.
+        """
+
+        if isinstance(__name, str):
+            return super().__setitem__(__name, __value)
+        
+        # Chop off __app__ or __record__ prefix if there.
+        __name = Select.dequalify(__name)
+
+        # Chop off "app" prefix if there.
+        if isinstance(__name.path[0], GetItemOrAttribute) \
+            and __name.path[0].get_item_or_attribute() == "app":
+            __name = Lens(path=__name.path[1:])
+
+        # Does not mutate so need to use dict.update .
+        temp = __name.set(self, __value)
+        self.update(temp)
 
     def root(self):
         # All virtual calls will have this on top of the stack as if their app
@@ -171,19 +193,53 @@ class TruVirtual(App):
     Recorder for virtual apps. Virtual apps are data only in that they cannot be
     executed but for whom previously-computed results can be added using
     `add_record`. The `VirtualRecord` class may be useful for creating records
-    for this.
+    for this. Fields used by non-virtual apps can be specified here, notably:
+    
+        - `app_id: str` -- Unique identifier for the app.
 
-    You can store any information you would like by passing in a
-    dictionry to TruVirtual (later). This may involve an index of components or
-    versions, or anything else. You can refer to these values for evaluating feedback.
+        - `tags: List[str]` -- List of tags.
+
+        - `metadata: Dict[Any, Any]` -- Open-ended metadata.
+
+        - `app_extra_json: JSON` -- Additional json structured information to include in the recorded app structure.
+
+        - `feedbacks: List[Feedback]` -- Which feedback functions to run when a record is ingested.
+
+        - `feedback_mode: FeedbackMode` -- How to run feedback functions when a record is ingested.
+
+        - `app: JSON` -- See below.
+
+    # The `app` field.
+
+    You can store any information you would like by passing in a dictionry to
+    TruVirtual in the `app` field. This may involve an index of components or
+    versions, or anything else. You can refer to these values for evaluating
+    feedback.
+
+    You can use `VirtualApp` to create the `app` structure or a plain
+    dictionary. Using `VirtualApp` lets you use Selectors to define components:
 
     ```python
-virtual = TruVirtual(app=dict(
-    retriever=dict(
-        configkey1="anything else you want to store about the app or its components"
+virtual_app = VirtualApp()
+virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
+    ```
+
+    # Example
+
+    ```python
+
+virtual_app = dict(
+    llm=dict(
+        modelname="some llm component model name"
     ),
-    some_other_component="can be put into the app dictionary"
-))
+    template="information about the template I used in my app",
+    debug="all of these fields are completely optional"
+)
+
+virtual = TruVirtual(
+    app_id="my_virtual_app",
+    app=virtual_app
+)
     """
 
     app: VirtualApp = Field(default_factory=VirtualApp)
@@ -217,19 +273,29 @@ virtual = TruVirtual(app=dict(
 
         super().__init__(app=app, **kwargs)
 
-    def add_record(self, record: Record) -> Record:
+    def add_record(self, record: Record, feedback_mode: Optional[FeedbackMode] = None) -> Record:
         """
         Add the given record to the database and evaluate any pre-specified
         feedbacks on it. The class `VirtualRecord` may be useful for creating
-        records for virtual models.
+        records for virtual models. If `feedback_mode` is specified, will use
+        that mode for this record only.
         """
+
+        if feedback_mode is None:
+            feedback_mode = self.feedback_mode
 
         record.app_id = self.app_id
         
-        record.feedback_results = self._handle_record(record)
+        # Creates feedback futures.
+        record.feedback_results = self._handle_record(record, feedback_mode=feedback_mode)
+
+        # Wait for results if mode is WITH_APP.
+        if feedback_mode == FeedbackMode.WITH_APP and record.feedback_results is not None:
+            futs = record.feedback_results
+            futures.wait(futs)
 
         return record
-
+    
 
 TruVirtual.model_rebuild()
 

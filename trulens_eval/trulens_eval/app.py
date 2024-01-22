@@ -953,12 +953,16 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         self.tru.add_feedback(res)
 
     def _handle_record(
-        self, record: Record
+        self, record: Record, feedback_mode: Optional[FeedbackMode] = None
     ) -> Optional[List['Future[Tuple[Feedback, FeedbackResult]]']]:
         """
         Write out record-related info to database if set and schedule feedback
-        functions to be evaluated.
+        functions to be evaluated. If feedback_mode is provided, will use that
+        mode instead of the one provided to constructor.
         """
+
+        if feedback_mode is None:
+            feedback_mode = self.feedback_mode
 
         if self.tru is None or self.feedback_mode is None:
             return None
@@ -973,7 +977,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             return []
 
         # Add empty (to run) feedback to db.
-        if self.feedback_mode == FeedbackMode.DEFERRED:
+        if feedback_mode == FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 self.db.insert_feedback(
                     FeedbackResult(
@@ -985,8 +989,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
             return None
 
-        elif self.feedback_mode in [FeedbackMode.WITH_APP,
-                                    FeedbackMode.WITH_APP_THREAD]:
+        elif feedback_mode in [
+            FeedbackMode.WITH_APP,
+            FeedbackMode.WITH_APP_THREAD
+        ]:
 
             return self.tru._submit_feedback_functions(
                 record=record,
