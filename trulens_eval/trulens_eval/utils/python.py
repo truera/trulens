@@ -23,6 +23,26 @@ Thunk = Callable[[], T]
 # Reflection utilities.
 
 
+def is_really_coroutinefunction(func) -> bool:
+    # NOTE(piotrm): inspect checkers for async functions do not work on openai
+    # clients, perhaps because they use @typing.overload. Because of that, we
+    # detect them by checking __wrapped__ attribute instead. Note that the
+    # inspect docs suggest they should be able to handle wrapped functions but
+    # perhaps they handle different type of wrapping? See
+    # https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction
+    # . Another place they do not work is the decorator langchain uses to mark
+    # deprecated functions.
+
+    if inspect.iscoroutinefunction(func):
+        return True
+
+    if hasattr(func, "__wrapped__") and inspect.iscoroutinefunction(
+            func.__wrapped__):
+        return True
+
+    return False
+
+
 def safe_signature(func_or_obj: Any):
     try:
         assert isinstance(

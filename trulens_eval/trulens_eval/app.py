@@ -916,6 +916,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             **kwargs
         )
 
+
     def _throw_dep_message(
         self, method, is_async: bool = False, with_record: bool = False
     ):
