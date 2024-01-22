@@ -11,7 +11,7 @@ evaluate     >= 0.4.0  # same
 langchainhub >= 0.1.14 # example notebooks
 
 # Apps: LlamaIndex
-llama-index >= v0.9.14.post3
+llama-index >= v0.9.26
 html2text   >= 2020.1.16 # for llama_index example using SimpleWebPageReader
 
 # Models: openai
