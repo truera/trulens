@@ -86,6 +86,28 @@ class GenerateTestSet:
         """))
         return test_prompts
 
+    def _generate_test_prompts_fewshot(self, test_category: str, test_depth: int, examples: list) -> list:
+        """
+        Generate test prompts for a given category with few shot examples provided.
+        
+        Parameters:
+        test_category (str): The category for which to generate test prompts.
+        test_depth (int): The depth of the test prompts.
+        examples (list): A list of examples
+        
+        Returns:
+        list: A list of test prompts.
+        """
+        logger.info("Generating test prompts...")
+        # generate questions for a given category
+        test_prompts = literal_eval(self.app_callable(f"""
+        Provide {test_depth} questions on {test_category} that are answerable by the provided context.
+        Questions should be similar in style to the following examples: {examples}
+        Return only a python list in the following format:
+        ["<question 2>", "<question 1>", ...]
+        """))
+        return test_prompts
+
     def generate_test_set(self, test_breadth: int, test_depth: int) -> dict:
         """
         Generate a test set.
