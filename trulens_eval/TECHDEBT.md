@@ -8,7 +8,7 @@ meantime and a resource for hard-to-debug issues when they arise.
 In notes below, "HACK###" can be used to find places in the code where the hack
 lives.
 
-## stack inspecting
+## Stack inspecting
 
 See `instruments.py` docstring for discussion why these are done.
 
@@ -24,17 +24,24 @@ See `instruments.py` docstring for discussion why these are done.
   `instruments.py:Instrument` class while for tracking costs are in the base
   `Endpoint` class.
 
-## thread overriding
+- "HACK009" -- Cannot reliably determine whether a function referred to by an
+  object that implements `__call__` has been instrumented. Hacks to avoid
+  warnings about lack of instrumentation.
+
+## Thread overriding
 
 See `instruments.py` docstring for discussion why these are done.
 
-- "HACK002" -- We override `ThreadPoolExecutor` in concurrent.futures.
+- "HACK002" -- We override `ThreadPoolExecutor` in `concurrent.futures`.
+  
+- "HACK007" -- We override `Thread` in `threading`.
 
 ### llama-index
 
-- "HACK001" -- `trace_method` decorator in llama_index does not preserve
-  function signatures; we hack it so that it does. 
-
+- ~~"HACK001" -- `trace_method` decorator in llama_index does not preserve
+  function signatures; we hack it so that it does.~~ Fixed as of llama_index
+  0.9.26 or near there.
+  
 ### langchain
 
 - "HACK003" -- We override the base class of
@@ -54,10 +61,18 @@ See `instruments.py` docstring for discussion why these are done.
   This is because some objects are of interest despite being marked to exclude.
   Example: `RetrievalQA.retriever` in langchain.
 
-### other
+### Other
 
 - "HACK004" -- Outdated, need investigation whether it can be removed.
 
-- async/sync code duplication -- Many of our methods are almost identical
+- ~~async/sync code duplication -- Many of our methods are almost identical
   duplicates due to supporting both async and synced versions. Having trouble
-  with a working approach to de-duplicated the identical code.
+  with a working approach to de-duplicated the identical code.~~ Fixed. See
+  `utils/asynchro.py`.
+
+- ~~"HACK008" -- async generator -- Some special handling is used for tracking
+  costs when async generators are involved. See
+  `feedback/provider/endpoint/base.py`.~~ Fixed in endpoint code.
+
+- "HACK010" -- cannot tell whether something is a coroutine and need additional
+  checks in `sync`/`desync`.

@@ -15,6 +15,7 @@ from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.json import jsonify
