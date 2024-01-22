@@ -69,7 +69,6 @@ feedback_directions = {
 }
 default_direction = "HIGHER_IS_BETTER"
 
-
 def render_component(query, component, header=True):
     # Draw the accessor/path within the wrapped app of the component.
     if header:
@@ -106,7 +105,6 @@ def render_component(query, component, header=True):
         with st.expander("Unhandled Component Details:"):
             st.json(jsonify_for_ui(component.json))
 
-
 # Renders record level metrics (e.g. total tokens, cost, latency) compared to the average when appropriate
 def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
     app_specific_df = app_df[app_df["app_id"] == selected_rows["app_id"][0]]
@@ -136,6 +134,19 @@ def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
         delta_color="inverse",
     )
 
+# Define a function to extract record metadata from each row
+def extract_metadata(row):
+    """
+    Extract metadata from the record_json and return the metadata as a string.
+
+    Args:
+        row: The row containing the record_json.
+
+    Returns:
+        str: The metadata extracted from the record_json.
+    """
+    record_data = json.loads(row['record_json'])
+    return str(record_data["meta"])
 
 if df_results.empty:
     st.write("No records yet...")
@@ -185,6 +196,9 @@ else:
         evaluations_df['input'] = decoded_input
         evaluations_df['output'] = decoded_output
 
+        # Apply the function to each row and create a new column 'record_metadata'
+        evaluations_df['record_metadata'] = evaluations_df.apply(extract_metadata, axis=1)
+
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         gb.configure_column("type", header_name="App Type")
@@ -198,14 +212,13 @@ else:
 
         gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
         gb.configure_column("input", header_name="User Input")
-        gb.configure_column(
-            "output",
-            header_name="Response",
-        )
+        gb.configure_column("output", header_name="Response")
+        gb.configure_column("record_metadata", header_name="Record Metadata")
+
         gb.configure_column("total_tokens", header_name="Total Tokens (#)")
         gb.configure_column("total_cost", header_name="Total Cost (USD)")
         gb.configure_column("latency", header_name="Latency (Seconds)")
-        gb.configure_column("tags", header_name="Tags")
+        gb.configure_column("tags", header_name="Application Tag")
         gb.configure_column("ts", header_name="Time Stamp", sort="desc")
 
         non_feedback_cols = [
@@ -216,8 +229,9 @@ else:
             "total_cost",
             "record_json",
             "latency",
+            "tags",
+            "record_metadata",
             "record_id",
-            "app_id",
             "cost_json",
             "app_json",
             "input",
@@ -279,6 +293,8 @@ else:
             prompt = selected_rows["input"][0]
             response = selected_rows["output"][0]
             details = selected_rows["app_json"][0]
+            record_json = selected_rows["record_json"][0]
+            record_metadata = selected_rows["record_metadata"][0]
 
             app_json = json.loads(
                 details
@@ -307,12 +323,19 @@ else:
             feedback_tab, metadata_tab = st.tabs(["Feedback", "Metadata"])
 
             with metadata_tab:
-                metadata = app_json.get("metadata")
-                if metadata:
-                    with st.expander("Metadata"):
-                        st.markdown(draw_metadata(metadata))
+                metadata_dict = json.loads(record_json).get("meta", None)
+                if metadata_dict is None:
+                    st.write("No record metadata available")
                 else:
-                    st.write("No metadata found")
+                    metadata_cols = list(metadata_dict.keys())
+    
+                    metadata_cols = st.columns(len(metadata_cols))
+
+                    for i, (key, value) in enumerate(metadata_dict.items()):
+                        metadata_cols[i].metric(
+                            label=key,
+                            value=value,
+                        )
 
             with feedback_tab:
                 if len(feedback_cols) == 0:
