@@ -250,7 +250,8 @@ class Feedback(FeedbackDefinition):
         FeedbackResult as well as the Future which will contain the actual
         result.
         
-        - `limit: Optional[int]` -- indices maximum number of evals to start.
+        - `limit: Optional[int]` -- indicates the maximum number of evals to
+          start.
 
         - `shuffle: bool` -- shuffles the order of the feedbacks to evaluate.
         
