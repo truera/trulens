@@ -1,6 +1,8 @@
 """
-Multi-threading utilities.
+# Threading Utilities
+
 """
+
 
 from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
@@ -9,19 +11,43 @@ import contextvars
 from inspect import stack
 import logging
 import threading
-from typing import Callable, Optional, TypeVar
+from threading import Thread as fThread
+from typing import Callable, Optional
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
+from trulens_eval.utils.python import T
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
-
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
+
+class Thread(fThread):
+    """
+    Thread that wraps target with our stack/context tracking.
+    """
+
+    def __init__(self, name=None, group=None, target=None, args=(), kwargs={}, daemon=None):
+        present_stack = stack()
+        present_context = contextvars.copy_context()
+
+        fThread.__init__(
+            self,
+            name=name,
+            group=group,
+            target=_future_target_wrapper,
+            args=(present_stack, present_context, target, *args),
+            kwargs=kwargs, 
+            daemon=daemon
+        )
+
+# HACK007: Attempt to force other users of Thread to use our version instead.
+import threading
+
+threading.Thread = Thread
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
     """
@@ -41,7 +67,8 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         )
 
 
-# HACK002: Attempt other users of ThreadPoolExecutor to use our version.
+# HACK002: Attempt to make other users of ThreadPoolExecutor use our version
+# instead. TODO: this may be redundant with the thread override above.
 import concurrent
 
 concurrent.futures.ThreadPoolExecutor = ThreadPoolExecutor

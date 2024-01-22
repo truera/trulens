@@ -330,6 +330,9 @@ class TruLlama(App):
 
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
+        # Note that we are ultimately calling a different langchain method here
+        # than in the `main_acall` method so we don't reuse the async version
+        # here in case langchain does something special between them.
 
         if isinstance(self.app, BaseQueryEngine):
             ret = self.app.query(human)
