@@ -12,7 +12,7 @@ otherwise you might get circular import errors.
 
 - all UI/dashboard components
 
-- `tru_chain.py` `tru_custom_app.py`
+- `tru_chain.py` `tru_custom_app.py` `tru_virtual.py`
 
 - `tru_llama.py` (note: llama_index uses langchain internally for some things)
 
@@ -90,6 +90,7 @@ from trulens_eval.tru import Tru
 from trulens_eval.tru_basic_app import TruBasicApp
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_custom_app import TruCustomApp
+from trulens_eval.tru_virtual import TruVirtual
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
@@ -115,6 +116,7 @@ __all__ = [
     "TruCustomApp",
     "TruChain",
     "TruLlama",
+    "TruVirtual",
     "Feedback",
     "OpenAI",
     "Langchain",
