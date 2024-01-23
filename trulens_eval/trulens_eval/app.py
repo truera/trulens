@@ -917,13 +917,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             **kwargs
         )
 
-    def _with_dep_message(
+
+    def _throw_dep_message(
         self, method, is_async: bool = False, with_record: bool = False
     ):
-        # Deprecation message for the various methods that pass through to
+        # Raises a deprecation message for the various methods that pass through to
         # wrapped app while recording.
-
-        # TODO: enable dep message in 0.12.0
 
         cname = self.__class__.__name__
 
@@ -938,9 +937,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if iscall:
             app_callable = f"app"
 
-        print(
+        raise AttributeError(
             f"""
-`{old_method}` will be deprecated soon; To record results of your app's execution, use one of these options to invoke your app:
+`{old_method}` is deprecated; To record results of your app's execution, use one of these options to invoke your app:
     (1) Use the `{"a" if is_async else ""}with_{"record" if with_record else ""}` method:
         ```python
         app # your app
