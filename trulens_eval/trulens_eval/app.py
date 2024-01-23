@@ -418,7 +418,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     # Instrumentation class. This is needed for serialization as it tells us
     # which objects we want to be included in the json representation of this
     # app.
-    instrument: Instrument = Field(None, exclude=True)
+    instrument: Optional[Instrument] = Field(None, exclude=True)
 
     # Sequnces of records produced by the this class used as a context manager
     # are stpred om a RecordingContext. Using a context var so that context
@@ -454,11 +454,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         app = kwargs['app']
         self.app = app
 
-        assert self.instrument is not None, "App class cannot be instantiated. Use one of the subclasses."
-
-        self.instrument.instrument_object(
-            obj=self.app, query=Select.Query().app
-        )
+        if self.instrument is not None:
+            self.instrument.instrument_object(
+                obj=self.app, query=Select.Query().app
+            )
+        else:
+            pass
 
         self.tru_post_init()
 
@@ -961,12 +962,16 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         self.tru.add_feedback(res)
 
     def _handle_record(
-        self, record: Record
+        self, record: Record, feedback_mode: Optional[FeedbackMode] = None
     ) -> Optional[List['Future[Tuple[Feedback, FeedbackResult]]']]:
         """
         Write out record-related info to database if set and schedule feedback
-        functions to be evaluated.
+        functions to be evaluated. If feedback_mode is provided, will use that
+        mode instead of the one provided to constructor.
         """
+
+        if feedback_mode is None:
+            feedback_mode = self.feedback_mode
 
         if self.tru is None or self.feedback_mode is None:
             return None
@@ -981,7 +986,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             return []
 
         # Add empty (to run) feedback to db.
-        if self.feedback_mode == FeedbackMode.DEFERRED:
+        if feedback_mode == FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 self.db.insert_feedback(
                     FeedbackResult(
@@ -993,8 +998,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
             return None
 
-        elif self.feedback_mode in [FeedbackMode.WITH_APP,
-                                    FeedbackMode.WITH_APP_THREAD]:
+        elif feedback_mode in [
+            FeedbackMode.WITH_APP,
+            FeedbackMode.WITH_APP_THREAD
+        ]:
 
             return self.tru._submit_feedback_functions(
                 record=record,

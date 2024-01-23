@@ -2,9 +2,8 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import (
-    Any, ClassVar, Iterable, List, Optional, Sequence, Tuple, Union
-)
+from typing import (Any, ClassVar, Iterable, List, Optional, Sequence, Tuple,
+                    Union)
 import warnings
 
 import numpy as np
@@ -37,6 +36,7 @@ from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
+from trulens_eval.schema import Perf
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.serial import JSON
@@ -372,12 +372,19 @@ def _extract_latency(
     def _extract(perf_json: Union[str, dict, schema.Perf]) -> int:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
+        
         if isinstance(perf_json, str):
             perf_json = json.loads(perf_json)
+
         if isinstance(perf_json, dict):
             perf_json = schema.Perf.model_validate(perf_json)
+
         if isinstance(perf_json, schema.Perf):
             return perf_json.latency.seconds
+        
+        if perf_json is None:
+            return 0
+
         raise ValueError(f"Failed to parse perf_json: {perf_json}")
 
     return pd.Series(data=(_extract(p) for p in series))
@@ -388,7 +395,10 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
     def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
-        cost = schema.Cost(**_cost_json)
+        if _cost_json is not None:
+            cost = schema.Cost(**_cost_json)
+        else:
+            cost = schema.Cost()
         return cost.n_tokens, cost.cost
 
     return pd.DataFrame(
