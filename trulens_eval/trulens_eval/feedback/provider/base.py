@@ -1008,13 +1008,13 @@ class LLMProvider(Provider):
         )
         return self._extract_score_and_reasons_from_response(system_prompt)
 
-    def summarization_with_cot_reasons(self, source: str, statement: str
-    ) -> Tuple[float, dict]:
+    def summarization_with_cot_reasons(self, source: str, summary: str
+    ) -> float:
         """
         Summarization is deprecated in place of comprehensiveness. Defaulting to comprehensiveness_with_cot_reasons.
         """
         logger.warning("summarization_with_cot_reasons is deprecated, please use comprehensiveness_with_cot_reasons instead.")
-        return self.groundedness_measure_with_cot_reasons(source, statement)
+        return self.comprehensiveness_with_cot_reasons(source, summary)
 
     def stereotypes(self, prompt: str, response: str) -> float:
         """
