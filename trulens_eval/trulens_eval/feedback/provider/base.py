@@ -979,7 +979,7 @@ class LLMProvider(Provider):
             )
         )
 
-    def summary_with_cot_reasons(self, source: str, summary: str) -> float:
+    def comprehensiveness_with_cot_reasons(self, source: str, summary: str) -> float:
         """
         Uses chat completion model. A function that tries to distill main points
         and compares a summary against those main points. This feedback function
@@ -988,7 +988,7 @@ class LLMProvider(Provider):
 
         **Usage:**
         ```python
-        feedback = Feedback(provider.summary_with_cot_reasons).on_input_output()
+        feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
         ```
 
         Args:
@@ -1001,10 +1001,20 @@ class LLMProvider(Provider):
         """
 
         system_prompt = str.format(
-            prompts.SUMMARIZATION_PROMPT, source=source, summary=summary
+            prompts.COMPREHENSIVENESS_PROMPT, source=source, summary=summary
         )
-
+        system_prompt = system_prompt.replace(
+            "COMPREHENSIVENESS:", prompts.COT_REASONS_TEMPLATE
+        )
         return self._extract_score_and_reasons_from_response(system_prompt)
+
+    def summarization_with_cot_reasons(self, source: str, summary: str
+    ) -> float:
+        """
+        Summarization is deprecated in place of comprehensiveness. Defaulting to comprehensiveness_with_cot_reasons.
+        """
+        logger.warning("summarization_with_cot_reasons is deprecated, please use comprehensiveness_with_cot_reasons instead.")
+        return self.comprehensiveness_with_cot_reasons(source, summary)
 
     def stereotypes(self, prompt: str, response: str) -> float:
         """

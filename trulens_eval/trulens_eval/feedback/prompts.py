@@ -121,7 +121,7 @@ LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS = LANGCHAIN_PROMPT_TEMPLATE + COT_REA
 
 STEREOTYPES_PROMPT = v2.Stereotypes.prompt.template
 
-SUMMARIZATION_PROMPT = """
+COMPREHENSIVENESS_PROMPT = """
 You are a helper for summarization tasks. You will do two steps. You must do both steps, and most importantly, you must add a score.
 
 STEP 1 - Most Important Points:
@@ -131,20 +131,10 @@ For the given SOURCE What are the most important points?
 
 please answer with this template:
 
-(Step 1)
 Important Points: <Outline the important points>
 
 Step 2 - Compare:
 (DO NOT SKIP THIS STEP!)
-
-For a SUMMARY How well does this summary address the above main points?
-
-please answer with this template:
-
-(Step 2)
-Supporting Evidence: <For each of the Important Points, explain if the SUMMARY does or does not mention it.>
-Score: <Give a score from 0 to 10 on if the SUMMARY addresses every single one of the main points. A score of 0 is no points were mentioned. A score of 5 is half the points were mentioned. a score of 10 is all points were mentioned.>
-
 
 /START SUMMARY/ 
 {summary}
@@ -152,5 +142,11 @@ Score: <Give a score from 0 to 10 on if the SUMMARY addresses every single one o
 
 /START SOURCE/ 
 {source}
-/END SOURCE/ 
+/END SOURCE/
+
+For a SUMMARY How well does this summary address the above main points?
+
+please answer with this template:
+
+COMPREHENSIVENESS:
 """
