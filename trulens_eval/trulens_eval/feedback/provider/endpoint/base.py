@@ -10,7 +10,6 @@ from queue import Queue
 import random
 from threading import Thread
 from time import sleep
-from types import AsyncGeneratorType
 from types import ModuleType
 from typing import (
     Any, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,

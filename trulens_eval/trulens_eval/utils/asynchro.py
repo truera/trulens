@@ -143,7 +143,6 @@ def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
     else:
         func: Callable[..., T]
         # Not a coroutine function, so do not need to sync anything.
-
         # HACK010: TODO: What if the inspect fails here too? We do some checks
         # in desync but not here.
 
