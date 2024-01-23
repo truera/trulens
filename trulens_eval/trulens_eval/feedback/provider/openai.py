@@ -247,7 +247,7 @@ class OpenAI(LLMProvider):
 
         openai_response = self._moderation(text)
 
-        return float(oopenai_response.category_scores.sexual_minors)
+        return float(openai_response.category_scores.sexual_minors)
 
     # TODEP
     def moderation_violence(self, text: str) -> float:
