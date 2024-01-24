@@ -136,6 +136,10 @@ REQUIREMENT_LANGCHAIN = format_import_errors(
     'langchain', purpose="instrumenting langchain apps"
 )
 
+REQUIREMENT_RAILS = format_import_errors(
+    "nemoguardrails", purpose="instrumenting nemo guardrails apps"
+)
+
 REQUIREMENT_SKLEARN = format_import_errors(
     "scikit-learn", purpose="using embedding vector distances"
 )

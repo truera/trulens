@@ -96,19 +96,26 @@ from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
+from trulens_eval.utils.imports import REQUIREMENT_RAILS
 from trulens_eval.utils.threading import TP
 
+# Optional feedback providers.
 with OptionalImports(messages=REQUIREMENT_BEDROCK):
     from trulens_eval.feedback import Bedrock
-
-with OptionalImports(messages=REQUIREMENT_LLAMA):
-    from trulens_eval.tru_llama import TruLlama
 
 with OptionalImports(messages=REQUIREMENT_LITELLM):
     from trulens_eval.feedback import LiteLLM
 
 with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback import OpenAI
+
+# Optional app types.
+with OptionalImports(messages=REQUIREMENT_LLAMA):
+    from trulens_eval.tru_llama import TruLlama
+
+with OptionalImports(messages=REQUIREMENT_RAILS):
+    from trulens_eval.tru_rails import TruRails
+
 
 __all__ = [
     "Tru",
@@ -117,6 +124,7 @@ __all__ = [
     "TruChain",
     "TruLlama",
     "TruVirtual",
+    "TruRails",
     "Feedback",
     "OpenAI",
     "Langchain",

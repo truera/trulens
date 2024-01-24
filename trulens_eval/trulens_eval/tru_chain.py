@@ -6,16 +6,15 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
+from typing import Any, Callable, ClassVar, Dict, Optional
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval.utils.asynchro import sync
+from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.json import jsonify
@@ -46,9 +45,10 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     from langchain.schema import BaseMemory  # no methods instrumented
     from langchain.schema import BaseRetriever
     from langchain.schema.document import Document
-    from langchain.schema.language_model import BaseLanguageModel
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
+    # from langchain.schema.language_model import BaseLanguageModel
+    from langchain_core.language_models.base import BaseLanguageModel
     from langchain_core.runnables.base import RunnableSerializable
 
 
@@ -80,45 +80,35 @@ class LangChainInstrument(Instrument):
         }
 
         # Instrument only methods with these names and of these classes.
-        METHODS = {
-            "invoke":
+        METHODS = dict_set_with_multikey(dict(), {
+            (
+                "generate_prompt",
+                "agenerate_prompt",
+                "predict",
+                "predict_messages",
+                "apredict",
+                "apredict_messages"
+            ): lambda o: isinstance(o, BaseLanguageModel),
+            ("invoke", "ainvoke"):
                 lambda o: isinstance(o, RunnableSerializable),
-            "ainvoke":
-                lambda o: isinstance(o, RunnableSerializable),
-            "save_context":
+            ("save_context", "clear"):
                 lambda o: isinstance(o, BaseMemory),
-            "clear":
-                lambda o: isinstance(o, BaseMemory),
-            "_call":
+            ("_call", "__call__", "_acall", "acall"):
                 lambda o: isinstance(o, Chain),
-            "__call__":
-                lambda o: isinstance(o, Chain),
-            "_acall":
-                lambda o: isinstance(o, Chain),
-            "acall":
-                lambda o: isinstance(o, Chain),
-            "_get_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            "_aget_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            "get_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            "aget_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
+            (
+                "_get_relevant_documents", "_aget_relevant_documents",
+                "get_relevant_documents", "aget_relevant_documents"
+            ): lambda o: isinstance(o, (RunnableSerializable)),
+
             # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
             # the prompt calls might be too small to be interesting
-            "plan":
+            ("plan", "aplan"):
                 lambda o:
                 isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
-            "aplan":
-                lambda o:
-                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
-            "_arun":
-                lambda o: isinstance(o, BaseTool),
-            "_run":
-                lambda o: isinstance(o, BaseTool),
-        }
+            ("_arun", "_run"):
+                lambda o: isinstance(o, BaseTool)
+        })
 
     def __init__(self, *args, **kwargs):
         super().__init__(
