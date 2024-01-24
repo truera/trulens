@@ -28,6 +28,7 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSON
@@ -42,6 +43,46 @@ pp = pprint.PrettyPrinter()
 
 
 class Feedback(FeedbackDefinition):
+    """
+    Feedback function container. Typical usage is to specify a feedback
+    implementation function from a `Provider` and the mapping of selectors
+    describing how to construct the arguments to the implementation:
+
+    ```python
+    from trulens_eval import Feedback
+    from trulens_eval import Huggingface
+    hugs = Huggingface()
+    
+    # Create a feedback function from a provider:
+    feedback = Feedback(
+        hugs.language_match # the implementation
+    ).on_input_output() # selectors shorthand
+    ```
+
+    Attributes include:
+
+        - `imp: Callable` -- an implementation,
+
+        - `agg: Callable` -- an aggregator implementation for handling selectors
+          that name more than one value,
+
+        - `higher_is_better: bool` -- whether higher score is better,
+
+        - attributes via parent `FeedbackDefinition`:
+
+            - `feedback_definition_id: str` -- a unique id,
+
+            - `implementation: FunctionOrMethod` -- A serialized version of
+              `imp`.
+
+            - `aggregator: FunctionOrMethod` -- A serialized version of `agg`.
+
+            - `supplied_name: str` -- an optional name,
+
+            - `selectors: Dict[str, Lens]` mapping of implementation arguments
+              to selectors.
+    """
+
     # Implementation, not serializable, note that FeedbackDefinition contains
     # `implementation` meant to serialize the below.
     imp: Optional[ImpCallable] = pydantic.Field(None, exclude=True)
@@ -508,7 +549,8 @@ class Feedback(FeedbackDefinition):
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost = Endpoint.track_all_costs_tally(
+                    result_and_meta, part_cost = sync(
+                        Endpoint.atrack_all_costs_tally,
                         lambda: self.imp(**ins)
                     )
                     cost += part_cost

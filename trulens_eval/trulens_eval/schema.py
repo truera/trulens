@@ -27,10 +27,8 @@ from datetime import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
-    Type, TYPE_CHECKING, TypeVar, Union
-)
+from typing import (Any, Callable, ClassVar, Dict, Hashable, List, Optional,
+                    Sequence, Tuple, Type, TYPE_CHECKING, TypeVar, Union)
 
 import dill
 import humanize
@@ -49,6 +47,7 @@ from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
 from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.serial import StepItemOrAttribute
 
 T = TypeVar("T")
 
@@ -281,6 +280,9 @@ class Select:
     # TODEP
     Query = Lens
 
+    # The tru wrapper (TruLlama, TruChain, etc.)
+    Tru: Query = Query()
+
     # Instance for constructing queries for record json like `Record.app.llm`.
     Record: Query = Query().__record__
 
@@ -302,6 +304,44 @@ class Select:
     RecordArgs: Query = RecordCall.args
     # The whole output of the first called / last returned method call.
     RecordRets: Query = RecordCall.rets
+
+    @staticmethod
+    def path_and_method(select: Select.Query) -> Tuple[Select.Query, str]:
+        """
+        If `select` names in method as the last attribute, extract the method name
+        and the selector without the final method name.
+        """
+
+        if len(select.path) == 0:
+            raise ValueError("Given selector is empty so does not name a method.")
+        
+        firsts = select.path[:-1]
+        last = select.path[-1]
+
+        if not isinstance(last, StepItemOrAttribute):
+            raise ValueError("Last part of selector is not an attribute so does not name a method.")
+        
+        method_name = last.get_item_or_attribute()
+        path = Select.Query(path=firsts)
+
+        return path, method_name
+        
+
+    @staticmethod
+    def dequalify(select: Select.Query) -> Select.Query:
+        """
+        If the given selector qualifies record or app, remove that
+        qualification.
+        """
+
+        if len(select.path) == 0:
+            return select
+        
+        if select.path[0] == Select.Record.path[0] or \
+            select.path[0] == Select.App.path[0]:
+            return Select.Query(path=select.path[1:])
+        
+        return select
 
     @staticmethod
     def context(app: Optional[Any] = None) -> Lens:
@@ -404,7 +444,35 @@ class FeedbackCall(SerialModel):
 class FeedbackResult(SerialModel):
     """
     Feedback results for a single `Feedback` instance. This might involve
-    multiple feedback function calls.
+    multiple feedback function calls. Typically you should not be constructing
+    these objects yourself except for the cases where you'd like to log human
+    feedback.
+
+    Attributes:
+
+    - `feedback_result_id: str`: Unique identifier for this result.
+
+    - `record_id: str`: Record over which the feedback was evaluated.
+
+    - `feedback_definition_id: str`: The `Feedback` / `FeedbackDefinition` which
+      was evaluated to get this result.
+
+    - `last_ts: datetime`: Last timestamp involved in the evaluation.
+
+    - `status: FeedbackResultStatus`: For deferred feedback evaluation, the
+      status of the evaluation.
+
+    - `cost: Cost`: Cost of the evaluation.
+
+    - `name: str`: Given name of the feedback.
+
+    - `calls: List[FeedbackCall]`: Individual feedback function invocations.
+
+    - `result: float`: Final result, potentially aggregating multiple calls.
+
+    - `error: str`: Error information if there was an error.
+
+    - `multi_result: str`: TODO: doc
     """
 
     feedback_result_id: FeedbackResultID
@@ -428,7 +496,7 @@ class FeedbackResult(SerialModel):
     name: str
 
     # Individual feedback function invocations.
-    calls: Sequence[FeedbackCall] = []
+    calls: List[FeedbackCall] = []
 
     # Final result, potentially aggregating multiple calls.
     result: Optional[float] = None

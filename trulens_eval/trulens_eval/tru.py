@@ -88,18 +88,20 @@ class Tru(SingletonPerName):
     # Process of the dashboard app.
     dashboard_proc = None
 
-    def Chain(__tru_self, chain, **kwargs):
+    def Chain(self, chain, **kwargs):
         """
-        Create a TruChain with database managed by self.
+        Create a langchain app recorder (`TruChain`) with database managed by
+        self.
         """
 
         from trulens_eval.tru_chain import TruChain
 
-        return TruChain(tru=__tru_self, app=chain, **kwargs)
+        return TruChain(tru=self, app=chain, **kwargs)
 
     def Llama(self, engine, **kwargs):
         """
-        Create a llama_index engine with database managed by self.
+        Create a llama_index app recorder (`TruLlama`) with database managed by
+        self.
         """
 
         from trulens_eval.tru_llama import TruLlama
@@ -107,14 +109,34 @@ class Tru(SingletonPerName):
         return TruLlama(tru=self, app=engine, **kwargs)
 
     def Basic(self, text_to_text, **kwargs):
+        """
+        Create a basic app recorder (`TruBasicApp`) with database managed by
+        self.
+        """
+
         from trulens_eval.tru_basic_app import TruBasicApp
 
         return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
 
     def Custom(self, app, **kwargs):
+        """
+        Create a custom app recorder (`TruCustomApp`) with database managed by
+        self.
+        """
+
         from trulens_eval.tru_custom_app import TruCustomApp
 
         return TruCustomApp(tru=self, app=app, **kwargs)
+
+    def Virtual(self, app, **kwargs):
+        """
+        Create a virtual app recorder (`TruVirtualApp`) with database managed by
+        self.
+        """
+
+        from trulens_eval.tru_virtual import TruVirtual
+
+        return TruVirtual(tru=self, app=app, **kwargs)
 
     def __init__(
         self,
@@ -126,17 +148,22 @@ class Tru(SingletonPerName):
         TruLens instrumentation, logging, and feedback functions for apps.
 
         Args:
-           database_url: SQLAlchemy database URL. Defaults to a local
-                                SQLite database file at 'default.sqlite'
-                                See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
-                                on SQLAlchemy database URLs.
-           database_file: (Deprecated) Path to a local SQLite database file
-           database_redact_keys: whether to redact secret keys in data to be written to database.
+           - database_url: SQLAlchemy database URL. Defaults to a local
+                SQLite database file at 'default.sqlite' See [this
+                article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
+                on SQLAlchemy database URLs.
+
+           - database_file: (Deprecated) Path to a local SQLite database file
+
+           - database_redact_keys: whether to redact secret keys in data to be
+             written to database.
         """
         if safe_hasattr(self, "db"):
             if database_url is not None or database_file is not None:
                 logger.warning(
-                    f"Tru was already initialized. Cannot change database_url={database_url} or database_file={database_file} ."
+                    f"Tru was already initialized. "
+                    f"Cannot change database_url={database_url} "
+                    f"or database_file={database_file} ."
                 )
 
             # Already initialized by SingletonByName mechanism.
@@ -147,7 +174,8 @@ class Tru(SingletonPerName):
 
         if database_file:
             warnings.warn(
-                "`database_file` is deprecated, use `database_url` instead as in `database_url='sqlite:///filename'.",
+                ("`database_file` is deprecated, "
+                "use `database_url` instead as in `database_url='sqlite:///filename'."),
                 DeprecationWarning,
                 stacklevel=2
             )

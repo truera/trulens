@@ -124,10 +124,6 @@ class TruBasicApp(App):
 
         return self.app._call(human)
 
-    async def main_acall(self, human: str) -> str:
-        # If available, a single text to a single text invocation of this app.
-        raise NotImplementedError()
-
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
@@ -150,19 +146,10 @@ class TruBasicApp(App):
 
         return super().main_input(func, sig, bindings)
 
-    def call_with_record(self, *args, **kwargs):
-        """
-        Run the callable with the given arguments. Note that the wrapped
-        callable is expected to take in a single string.
+    def call_with_record(self, *args, **kwargs) -> None:
 
-        Returns:
-            dict: record metadata
-        """
-        # NOTE: Actually text_to_text can take in more args.
-
-        self._with_dep_message(method="call", is_async=False, with_record=True)
-
-        return self.with_record(self.app._call, *args, **kwargs)
+        self._throw_dep_message(method="call", is_async=False, with_record=True)
+    
 
 
 TruBasicApp.model_rebuild()

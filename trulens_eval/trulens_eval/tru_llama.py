@@ -6,18 +6,18 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Tuple, Union
+from typing import Any, Callable, ClassVar, Optional, Union
 
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Record
 from trulens_eval.utils.containers import dict_set_with
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
@@ -330,6 +330,9 @@ class TruLlama(App):
 
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
+        # Note that we are ultimately calling a different langchain method here
+        # than in the `main_acall` method so we don't reuse the async version
+        # here in case langchain does something special between them.
 
         if isinstance(self.app, BaseQueryEngine):
             ret = self.app.query(human)
@@ -372,145 +375,108 @@ class TruLlama(App):
                 f"Do not know what in object of type {type(ret).__name__} is the main app output."
             )
 
-    # TODEP
+    def __getattr__(self, __name: str) -> Any:
+        # A message for cases where a user calls something that the wrapped
+        # app has but we do not wrap yet.
+
+        if safe_hasattr(self.app, __name):
+            return RuntimeError(
+                f"TruLlama has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
+                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruLlama`. "
+            )
+        else:
+            raise RuntimeError(f"TruLlama has no attribute named {__name}.")
+
+    # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
-    def chat(self, *args, **kwargs) -> AgentChatResponse:
-        assert isinstance(self.app, BaseChatEngine)
+    def chat(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(method="chat", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="chat", is_async=False, with_record=False
+        )
 
-        res, _ = self.chat_with_record(*args, **kwargs)
-        return res
-
-    # TODEP
+    # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
-    async def achat(self, *args, **kwargs) -> AgentChatResponse:
-        assert isinstance(self.app, BaseChatEngine)
+    async def achat(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(method="achat", is_async=True, with_record=False)
+        self._throw_dep_message(
+            method="achat", is_async=True, with_record=False
+        )
 
-        res, _ = await self.achat_with_record(*args, **kwargs)
-        return res
-
-    # TODEP
+    # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
-    def stream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
-        assert isinstance(self.app, BaseChatEngine)
+    def stream_chat(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(
+        self._throw_dep_message(
             method="stream_chat", is_async=False, with_record=False
         )
 
-        res, _ = self.stream_chat_with_record(*args, **kwargs)
-        return res
-
-    # TODEP
+    # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
-    async def astream_chat(self, *args, **kwargs) -> StreamingAgentChatResponse:
-        assert isinstance(self.app, BaseChatEngine)
+    async def astream_chat(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(
+        self._throw_dep_message(
             method="astream_chat", is_async=True, with_record=False
         )
 
-        res, _ = await self.astream_chat_with_record(*args, **kwargs)
-        return res
-
-    # TODEP
+    # TOREMOVE
     # llama_index.indices.query.base.BaseQueryEngine
-    def query(self, *args, **kwargs) -> RESPONSE_TYPE:
+    def query(self, *args, **kwargs) -> None:
 
-        assert isinstance(self.app, BaseQueryEngine)
-
-        self._with_dep_message(
+        self._throw_dep_message(
             method="query", is_async=False, with_record=False
         )
 
-        res, _ = self.query_with_record(*args, **kwargs)
-        return res
-
-    # TODEP
+    # TOREMOVE
     # llama_index.indices.query.base.BaseQueryEngine
-    async def aquery(self, *args, **kwargs) -> RESPONSE_TYPE:
-
-        assert isinstance(self.app, BaseQueryEngine)
-
-        self._with_dep_message(
+    async def aquery(self, *args, **kwargs) -> None:
+        self._throw_dep_message(
             method="aquery", is_async=True, with_record=False
         )
 
-        res, _ = await self.aquery_with_record(*args, **kwargs)
-        return res
-
-    # TODEP
+    # TOREMOVE
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
-    def query_with_record(self, *args,
-                          **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
+    def query_with_record(self, *args, **kwargs) -> None:
 
-        assert isinstance(self.app, BaseQueryEngine)
+        self._throw_dep_message(
+            method="query", is_async=False, with_record=True
+        )
 
-        self._with_dep_message(method="query", is_async=False, with_record=True)
-
-        return self.with_record(self.app.query, *args, **kwargs)
-
-    # TODEP
+    # TOREMOVE
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
-    async def aquery_with_record(self, *args,
-                                 **kwargs) -> Tuple[RESPONSE_TYPE, Record]:
-        assert isinstance(self.app, BaseQueryEngine)
+    async def aquery_with_record(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(method="aquery", is_async=True, with_record=True)
+        self._throw_dep_message(
+            method="aquery", is_async=True, with_record=True
+        )
 
-        return await self.awith_record(self.app.aquery, *args, **kwargs)
-
-    # TODEP
+    # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
-    def chat_with_record(self, *args,
-                         **kwargs) -> Tuple[AgentChatResponse, Record]:
+    def chat_with_record(self, *args, **kwargs) -> None:
 
-        assert isinstance(self.app, BaseChatEngine)
+        self._throw_dep_message(method="chat", is_async=False, with_record=True)
 
-        self._with_dep_message(method="chat", is_async=False, with_record=True)
-
-        return self.with_record(self.app.chat, *args, **kwargs)
-
-    # TODEP
+    # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
-    async def achat_with_record(self, *args,
-                                **kwargs) -> Tuple[AgentChatResponse, Record]:
-        assert isinstance(self.app, BaseChatEngine)
+    async def achat_with_record(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(method="achat", is_async=True, with_record=True)
+        self._throw_dep_message(method="achat", is_async=True, with_record=True)
 
-        return await self.awith_record(self.app.achat, *args, **kwargs)
-
-    # TODEP
+    # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
-    def stream_chat_with_record(
-        self, *args, **kwargs
-    ) -> Tuple[StreamingAgentChatResponse, Record]:
+    def stream_chat_with_record(self, *args, **kwargs) -> None:
 
-        assert isinstance(self.app, BaseChatEngine)
-
-        self._with_dep_message(
+        self._throw_dep_message(
             method="stream", is_async=False, with_record=True
         )
 
-        return self.with_record(self.app.stream_chat, *args, **kwargs)
-
-    # TODEP
+    # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
-    async def astream_chat_with_record(
-        self, *args, **kwargs
-    ) -> Tuple[StreamingAgentChatResponse, Record]:
+    async def astream_chat_with_record(self, *args, **kwargs) -> None:
 
-        assert isinstance(self.app, BaseChatEngine)
-
-        self._with_dep_message(
+        self._throw_dep_message(
             method="astream_chat", is_async=True, with_record=True
         )
-
-        return await self.awith_record(self.app.astream_chat, *args, **kwargs)
 
 
 TruLlama.model_rebuild()
