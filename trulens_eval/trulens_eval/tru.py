@@ -214,9 +214,14 @@ class Tru(SingletonPerName):
         record: Record,
         feedback_functions: Sequence[Feedback],
         app: Optional[AppDefinition] = None,
-        on_done: Optional[Callable[['Future[Tuple[Feedback,FeedbackResult]]'],
-                                   None]] = None
-    ) -> List['Future[Tuple[Feedback,FeedbackResult]]']:
+        on_done: Optional[Callable[[Future[FeedbackResult]], None]] = None
+    ) -> List[Tuple[Feedback, Future[FeedbackResult]]]:
+        """
+        Schedules to run the given feedback functions. Produces a list of tuples
+        where the first item in each tuple is the feedback function and the
+        second is the future of the feedback result.
+        """
+
         app_id = record.app_id
 
         self.db: DB
@@ -238,20 +243,20 @@ class Tru(SingletonPerName):
                 )
                 self.add_app(app=app)
 
-        futures = []
+        feedbacks_and_futures = []
 
         tp: TP = TP()
 
         for ffunc in feedback_functions:
-            fut: 'Future[Tuple[Feedback,FeedbackResult]]' = \
-                tp.submit(lambda f: (f, f.run(app=app, record=record)), ffunc)
+            fut: Future[FeedbackResult] = \
+                tp.submit(ffunc.run, app=app, record=record)
 
             if on_done is not None:
                 fut.add_done_callback(on_done)
 
-            futures.append(fut)
+            feedbacks_and_futures.append((ffunc, fut))
 
-        return futures
+        return feedbacks_and_futures
 
     def run_feedback_functions(
         self,

@@ -28,7 +28,7 @@ from enum import Enum
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, ClassVar, Dict, List, Optional, Sequence, Type,
+    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple, Type,
     TYPE_CHECKING, TypeVar, Union
 )
 
@@ -169,7 +169,7 @@ class RecordAppCall(SerialModel):
         return self.top().method
 
 
-class Record(SerialModel):
+class Record(SerialModel, Hashable):
     """
     Each instrumented method call produces one of these "record" instances.
     """
@@ -203,7 +203,7 @@ class Record(SerialModel):
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
 
-    feedback_results: Optional[List[TFeedbackResultFuture]] = \
+    feedback_results: Optional[List[Tuple[FeedbackDefinition, TFeedbackResultFuture]]] = \
         pydantic.Field(None, exclude=True)
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
@@ -214,6 +214,26 @@ class Record(SerialModel):
             record_id = obj_id_of_obj(jsonify(self), prefix="record")
 
         self.record_id = record_id
+
+    def __hash__(self):
+        return hash(self.record_id)
+
+    def wait_for_feedback_results(self) -> Dict[FeedbackDefinition, FeedbackResult]:
+        """
+        Wait for feedback results to finish and return a mapping of feedback
+        functions to their results.
+        """
+
+        if self.feedback_results is None:
+            return dict()
+
+        ret = {}
+
+        for feedback, future_result in self.feedback_results:
+            feedback_result = future_result.result()
+            ret[feedback] = feedback_result
+
+        return ret
 
     def layout_calls_as_app(self) -> JSON:
         """
@@ -436,7 +456,7 @@ else:
     TFeedbackResultFuture = Future
 
 
-class FeedbackDefinition(WithClassInfo, SerialModel):
+class FeedbackDefinition(WithClassInfo, SerialModel, Hashable):
     # Serialized parts of a feedback function. The non-serialized parts are in
     # the feedback.py:Feedback class.
 
@@ -499,6 +519,9 @@ class FeedbackDefinition(WithClassInfo, SerialModel):
                 feedback_definition_id = "anonymous_feedback_definition"
 
         self.feedback_definition_id = feedback_definition_id
+
+    def __hash__(self):
+        return hash(self.feedback_definition_id)
 
 
 # App related:
@@ -633,9 +656,7 @@ class AppDefinition(WithClassInfo, SerialModel):
     ) -> 'AppDefinition':
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
         """
-        Create a copy of the json serialized app with the enclosed app being
-        initialized to its initial state before any records are produced (i.e.
-        blank memory).
+        EXPERIMENTAL WORK
         """
 
         app_definition_json['app'] = app

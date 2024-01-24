@@ -5,16 +5,15 @@ Generalized root type for various libraries like llama_index and langchain .
 from abc import ABC
 from abc import abstractmethod
 from concurrent import futures
+from concurrent.futures import Future
 import contextvars
 from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
-    Set, Tuple, Type
-)
+from typing import (Any, Callable, ClassVar, Dict, Hashable, Iterable, List,
+                    Optional, Sequence, Set, Tuple, Type)
 
 import pydantic
 from pydantic import Field
@@ -947,13 +946,17 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 """
         )
 
-    def _add_future_feedback(self, future: 'Future[Feedback, FeedbackResult]'):
-        _, res = future.result()
+    def _add_future_feedback(self, future_result: Future[FeedbackResult]):
+        """
+        Callback used to add feedback results to the database once they are
+        done. See `App._handle_record`.
+        """
+        res = future_result.result()
         self.tru.add_feedback(res)
 
     def _handle_record(
         self, record: Record
-    ) -> Optional[List['Future[Tuple[Feedback, FeedbackResult]]']]:
+    ) -> Optional[List[Tuple[Feedback, Future[FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback
         functions to be evaluated.
