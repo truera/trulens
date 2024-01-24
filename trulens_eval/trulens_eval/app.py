@@ -11,7 +11,9 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
+import queue
 from threading import Lock
+import threading
 from typing import (
     Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
     Set, Tuple, Type
@@ -432,6 +434,18 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     instrumented_methods: Dict[int, Dict[Callable, Lens]] = \
         Field(exclude=True, default_factory=dict)
 
+    # EXPRIMENTAL: Records produced by this app which might have yet to finish
+    # feedback runs.
+    records_with_pending_feedback_results: queue.Queue[Record] = \
+        pydantic.Field(exclude=True, default_factory=queue.Queue)
+    # Control access to the above.
+    _records_with_pending_feedback_results_lock: Lock = \
+        pydantic.Field(default_factory=Lock)
+    # Thread for manager of pending feedback results queue. See
+    # _manage_pending_feedback_results.
+    _manage_pending_feedback_results_thread: Optional[threading.Thread] = \
+        pydantic.Field(exclude=True, default=None)
+
     def __init__(
         self,
         tru: Optional[Tru] = None,
@@ -462,11 +476,65 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         else:
             pass
 
+        if self.feedback_mode == FeedbackMode.WITH_APP_THREAD:
+            # EXPERIMENTAL: Start the thread that manages the queue of records
+            # with pending feedback results. This is meant to be run
+            # permentantly in a separate thread. It will remove records from the
+            # queue `records_with_pending_feedback_results` as their feedback
+            # results are computed and makes sure the queue does not keep
+            # growing.
+            self._start_manage_pending_feedback_results()
+
         self.tru_post_init()
 
     def __del__(self):
         # Can use to do things when this object is being garbage collected.
         pass
+
+    def _start_manage_pending_feedback_results(self) -> None:
+        """
+        EXPERIMENTAL: Start the thread that manages the queue of records with
+        pending feedback results. This is meant to be run permentantly in a
+        separate thread. It will remove records from the queue
+        `records_with_pending_feedback_results` as their feedback results are
+        computed and makes sure the queue does not keep growing.
+        """
+
+        if self._manage_pending_feedback_results is not None:
+            raise RuntimeError("Manager Thread already started.")
+
+        self._manage_pending_feedback_results_thread = threading.Thread(
+            target=self._manage_pending_feedback_results
+        )
+        self._manage_pending_feedback_results_thread.start()
+
+    def _manage_pending_feedback_results(self) -> None:
+        """
+        EXPERIMENTAL: Manage the queue of records with pending feedback results.
+        This is meant to be run permentantly in a separate thread. It will
+        remove records from the queue records_with_pending_feedback_results as
+        their feedback results are computed and makes sure the queue does not
+        keep growing.
+        """
+
+        while True:
+            with self._records_with_pending_feedback_results_lock:
+                record = self.records_with_pending_feedback_results.get()
+
+            record.wait_for_feedback_results()
+
+    def wait_for_pending_feedback_results(self) -> None:
+        """
+        EXPERIMENTAL: Wait for all feedbacks that need to run on all of the
+        records produced by this app. Will block until finished and if new
+        records are produced while this is running, it will include them.
+        """
+
+        while not self.records_with_pending_feedback_results.empty():
+            with self._records_with_pending_feedback_results_lock:
+                record = self.records_with_pending_feedback_results.get()
+
+            record.wait_for_feedback_results()
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> Lens:
@@ -808,6 +876,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         if record.feedback_results is None:
             return record
+
+        if self.feedback_mode == FeedbackMode.WITH_APP_THREAD:
+            # Add the record to ones with pending feedback:
+            with self._records_with_pending_feedback_results_lock:
+                self.records_with_pending_feedback_results.put(record)
 
         # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
         # evaluating before returning the record.
