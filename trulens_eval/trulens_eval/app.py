@@ -437,13 +437,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     # EXPRIMENTAL: Records produced by this app which might have yet to finish
     # feedback runs.
     records_with_pending_feedback_results: queue.Queue[Record] = \
-        pydantic.Field(exclude=True, default_factory=queue.Queue)
-    # Control access to the above.
-    _records_with_pending_feedback_results_lock: Lock = \
-        pydantic.Field(default_factory=Lock)
+        pydantic.Field(exclude=True, default_factory=lambda: queue.Queue(maxsize=1024))
     # Thread for manager of pending feedback results queue. See
     # _manage_pending_feedback_results.
-    _manage_pending_feedback_results_thread: Optional[threading.Thread] = \
+    manage_pending_feedback_results_thread: Optional[threading.Thread] = \
         pydantic.Field(exclude=True, default=None)
 
     def __init__(
@@ -500,13 +497,13 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         computed and makes sure the queue does not keep growing.
         """
 
-        if self._manage_pending_feedback_results is not None:
+        if self.manage_pending_feedback_results_thread is not None:
             raise RuntimeError("Manager Thread already started.")
 
-        self._manage_pending_feedback_results_thread = threading.Thread(
+        self.manage_pending_feedback_results_thread = threading.Thread(
             target=self._manage_pending_feedback_results
         )
-        self._manage_pending_feedback_results_thread.start()
+        self.manage_pending_feedback_results_thread.start()
 
     def _manage_pending_feedback_results(self) -> None:
         """
@@ -518,9 +515,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         """
 
         while True:
-            with self._records_with_pending_feedback_results_lock:
-                record = self.records_with_pending_feedback_results.get()
-
+            record = self.records_with_pending_feedback_results.get()
             record.wait_for_feedback_results()
 
     def wait_for_feedback_results(self) -> None:
@@ -531,8 +526,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         """
 
         while not self.records_with_pending_feedback_results.empty():
-            with self._records_with_pending_feedback_results_lock:
-                record = self.records_with_pending_feedback_results.get()
+            record = self.records_with_pending_feedback_results.get()
 
             record.wait_for_feedback_results()
 
@@ -878,14 +872,15 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             return record
 
         if self.feedback_mode == FeedbackMode.WITH_APP_THREAD:
-            # Add the record to ones with pending feedback:
-            with self._records_with_pending_feedback_results_lock:
-                self.records_with_pending_feedback_results.put(record)
+            # Add the record to ones with pending feedback.
 
-        # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
-        # evaluating before returning the record.
-        if self.feedback_mode in [FeedbackMode.WITH_APP]:
-            futures.wait(record.feedback_results)
+            self.records_with_pending_feedback_results.put(record)
+
+        elif self.feedback_mode == FeedbackMode.WITH_APP:
+            # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
+            # evaluating before returning the record.
+        
+            record.wait_for_feedback_results()
 
         return record
 
@@ -1040,7 +1035,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         self.tru.add_feedback(res)
 
     def _handle_record(
-        self, record: Record
+        self, record: Record, feedback_mode: Optional[FeedbackMode] = None
     ) -> Optional[List[Tuple[Feedback, Future[FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback

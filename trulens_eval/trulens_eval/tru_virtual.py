@@ -303,6 +303,6 @@ TruVirtual.model_rebuild()
 # TODO: Figure out whether any of this is needed.
 from typing import List, Tuple
 from trulens_eval.schema import \
-    TFeedbackResultFuture  
+    TFeedbackResultFuture, FeedbackDefinition
 
 VirtualRecord.model_rebuild()
