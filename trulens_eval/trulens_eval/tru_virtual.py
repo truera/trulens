@@ -300,7 +300,8 @@ virtual = TruVirtual(
 TruVirtual.model_rebuild()
 
 # Need these to make sure rebuild below works.
-from typing import List
+# TODO: Figure out whether any of this is needed.
+from typing import List, Tuple
 from trulens_eval.schema import \
     TFeedbackResultFuture  
 
