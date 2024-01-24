@@ -5,6 +5,8 @@ TruLens allows you to generate a test set of a specified breadth and depth, tail
 Example:
 
 ```python
+from trulens_eval.generate_test_set import GenerateTestSet
+
 test = GenerateTestSet(app_callable = rag_chain.invoke)
 test_set = test.generate_test_set(test_breadth = 3, test_depth = 2)
 test_set
@@ -44,4 +46,15 @@ Returns:
   'What are the limitations of short-term memory in terms of context capacity?'],
  'Planning and task decomposition challenges': ['How long does sensory memory typically last?',
   'What are the challenges in long-term planning and task decomposition?']}
+```
+
+In combination with record metadata logging, this gives you the ability to understand the performance of your application across different prompt categories.
+
+```python
+with tru_recorder as recording:
+    for category in test_set:
+        recording.record_metadata=dict(prompt_category=category)
+        test_prompts = test_set[category]
+        for test_prompt in test_prompts:
+            llm_response = rag_chain.invoke(test_prompt)
 ```
