@@ -2,8 +2,9 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import numpy as np
@@ -442,7 +443,7 @@ def _extract_latency(
     def _extract(perf_json: Union[str, dict, schema.Perf]) -> int:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
-        
+
         if isinstance(perf_json, str):
             perf_json = json.loads(perf_json)
 
@@ -451,7 +452,7 @@ def _extract_latency(
 
         if isinstance(perf_json, schema.Perf):
             return perf_json.latency.seconds
-        
+
         if perf_json is None:
             return 0
 
