@@ -96,7 +96,6 @@ nav:
               - Honest, Harmless, Helpful Evals: trulens_eval/core_concepts_honest_harmless_helpful_evals.md
       - Evaluation:
           - 🎯 Feedback Functions:
-              - Feedback Function Definitions: trulens_eval/function_definitions.md
               - Feedback Function Guide: trulens_eval/feedback_function_guide.md
               - Custom Feedback Functions: trulens_eval/custom_feedback_functions.ipynb
               - Smoke Tests:
