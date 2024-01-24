@@ -115,6 +115,9 @@ nav:
           - 📚 Feedback Implementations:
               - Stock Feedback Functions: trulens_eval/api/feedback.md
               - Custom Feedback Functions: trulens_eval/custom_feedback_functions.ipynb
+
+          - 🎲 Generating Test Cases:
+              - Generating Test Cases: trulens_eval/generate_test_cases.md
           - ✅ Feedback Evaluations:
               - Answer Relevance: trulens_eval/answer_relevance_smoke_tests.ipynb
               - Context Relevance: trulens_eval/context_relevance_smoke_tests.ipynb
