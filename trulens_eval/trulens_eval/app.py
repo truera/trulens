@@ -12,8 +12,10 @@ from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 from threading import Lock
-from typing import (Any, Callable, ClassVar, Dict, Hashable, Iterable, List,
-                    Optional, Sequence, Set, Tuple, Type)
+from typing import (
+    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
+    Set, Tuple, Type
+)
 
 import pydantic
 from pydantic import Field

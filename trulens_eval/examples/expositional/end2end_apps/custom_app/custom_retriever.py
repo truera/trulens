@@ -1,5 +1,5 @@
-import time
 import sys
+import time
 
 from trulens_eval.tru_custom_app import instrument
 
@@ -18,7 +18,6 @@ class CustomRetriever:
             time.sleep(self.delay)
 
         return [
-            f"Relevant chunk: {data.upper()}",
-            f"Relevant chunk: {data[::-1]}",
+            f"Relevant chunk: {data.upper()}", f"Relevant chunk: {data[::-1]}",
             f"Relevant chunk: I allocated {sys.getsizeof(temporary)} bytes to pretend I'm doing something."
         ]

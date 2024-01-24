@@ -14,8 +14,9 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Callable, Dict, Iterable, List, Optional, Sequence, Tuple,
-                    Union)
+from typing import (
+    Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import humanize
@@ -50,8 +51,10 @@ logger = logging.getLogger(__name__)
 # dashboard.
 DASHBOARD_START_TIMEOUT = 30
 
+
 def humanize_seconds(seconds: float):
     return humanize.naturaldelta(timedelta(seconds=seconds))
+
 
 class Tru(SingletonPerName):
     """
@@ -85,7 +88,6 @@ class Tru(SingletonPerName):
     # Process of the dashboard app.
     dashboard_proc = None
 
-    
     def Chain(__tru_self, chain, **kwargs):
         """
         Create a TruChain with database managed by self.
@@ -369,11 +371,9 @@ class Tru(SingletonPerName):
 
         return leaderboard
 
-    def start_evaluator(
-        self,
-        restart: bool = False,
-        fork: bool = False
-    ) -> Union[Process, Thread]:
+    def start_evaluator(self,
+                        restart: bool = False,
+                        fork: bool = False) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
 
@@ -413,10 +413,12 @@ class Tru(SingletonPerName):
 
             print(
                 f"Will keep max of "
-                f"{self.DEFERRED_NUM_RUNS} feedback(s) running.")
+                f"{self.DEFERRED_NUM_RUNS} feedback(s) running."
+            )
             print(
                 f"Tasks are spread among max of "
-                f"{TP.MAX_THREADS} thread(s).")
+                f"{TP.MAX_THREADS} thread(s)."
+            )
             print(
                 f"Will rerun running feedbacks after "
                 f"{humanize_seconds(self.RETRY_RUNNING_SECONDS)}."
@@ -429,7 +431,9 @@ class Tru(SingletonPerName):
             total = 0
 
             # Show the overall counts from the database, not just what has been looked at so far.
-            tqdm_status = tqdm(desc="Feedback Status", initial=0, unit="feedbacks")
+            tqdm_status = tqdm(
+                desc="Feedback Status", initial=0, unit="feedbacks"
+            )
 
             # Show the status of the results so far.
             tqdm_total = tqdm(desc="Done Runs", initial=0, unit="runs")
@@ -510,7 +514,10 @@ class Tru(SingletonPerName):
                 tqdm_status.n = queue_done
                 tqdm_status.total = queue_total
                 tqdm_status.set_postfix(
-                    {status.name: count for status, count in queue_stats.items()}
+                    {
+                        status.name: count
+                        for status, count in queue_stats.items()
+                    }
                 )
 
                 # Check if any of the running futures should be stopped.
@@ -522,7 +529,7 @@ class Tru(SingletonPerName):
                         # Not checking status here as this will be not yet be set
                         # correctly. The computation in the future update the
                         # database but this object is outdated.
-                        
+
                         elapsed = datetime.now().timestamp() - row.last_ts
                         if elapsed > self.RETRY_RUNNING_SECONDS:
                             fut.cancel()

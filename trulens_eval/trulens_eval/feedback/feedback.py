@@ -240,10 +240,7 @@ class Feedback(FeedbackDefinition):
         tru: 'Tru',
         limit: Optional[int] = None,
         shuffle: bool = False
-    ) -> List[Tuple[
-        pandas.Series,
-        Future[FeedbackResult]
-    ]]:
+    ) -> List[Tuple[pandas.Series, Future[FeedbackResult]]]:
         """
         Evaluates feedback functions that were specified to be deferred. Returns
         a list of tuples with the DB row containing the Feedback and initial
@@ -292,12 +289,11 @@ class Feedback(FeedbackDefinition):
         # Get the different status feedbacks except those marked DONE.
         feedbacks_not_done = db.get_feedback(
             status=[
-                FeedbackResultStatus.NONE,
-                FeedbackResultStatus.FAILED,
+                FeedbackResultStatus.NONE, FeedbackResultStatus.FAILED,
                 FeedbackResultStatus.RUNNING
             ],
-            limit = limit,
-            shuffle = shuffle,
+            limit=limit,
+            shuffle=shuffle,
         )
 
         tp = TP()

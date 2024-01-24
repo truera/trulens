@@ -2,8 +2,9 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple,
-                    Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import numpy as np
@@ -11,10 +12,10 @@ import pandas as pd
 from pydantic import Field
 from sqlalchemy import create_engine
 from sqlalchemy import Engine
+from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import MetaData
-from sqlalchemy import func
 
 from trulens_eval import schema
 from trulens_eval.database import orm
@@ -279,7 +280,7 @@ class SqlAlchemyDB(DB):
             q = func.count(orm.FeedbackResult.feedback_result_id)
         else:
             q = select(orm.FeedbackResult)
-        
+
         if record_id:
             q = q.filter_by(record_id=record_id)
 
@@ -329,14 +330,13 @@ class SqlAlchemyDB(DB):
 
         with self.Session.begin() as session:
             q = self._feedback_query(
-                count=True,
-                **locals_except("self", "session")
+                count=True, **locals_except("self", "session")
             )
 
-            results = session.query(orm.FeedbackResult.status, q).group_by(orm.FeedbackResult.status)
+            results = session.query(orm.FeedbackResult.status,
+                                    q).group_by(orm.FeedbackResult.status)
 
             return {FeedbackResultStatus(row[0]): row[1] for row in results}
-
 
     def get_feedback(
         self,
@@ -398,7 +398,7 @@ def _extract_feedback_results(
             _result.name,
             _result.result,
             _result.multi_result,
-            _result.cost_json, # why is cost_json not parsed?
+            _result.cost_json,  # why is cost_json not parsed?
             json.loads(_result.record.perf_json)
             if _result.record.perf_json != MIGRATION_UNKNOWN_STR else no_perf,
             json.loads(_result.calls_json)["calls"],

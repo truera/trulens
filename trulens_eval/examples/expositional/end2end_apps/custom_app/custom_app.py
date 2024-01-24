@@ -1,6 +1,6 @@
 import asyncio
-import time
 from concurrent.futures import wait
+import time
 
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
 from examples.expositional.end2end_apps.custom_app.custom_memory import \
@@ -30,8 +30,8 @@ class CustomTemplate:
 class CustomApp:
 
     def __init__(self, delay: float = 0.05, alloc: int = 1024 * 1024):
-        self.delay = delay # controls how long to delay certain operations to make it look more realistic
-        self.alloc = alloc # controls how much memory to allocate during some operations
+        self.delay = delay  # controls how long to delay certain operations to make it look more realistic
+        self.alloc = alloc  # controls how much memory to allocate during some operations
         self.memory = CustomMemory(delay=delay, alloc=alloc)
         self.retriever = CustomRetriever(delay=delay, alloc=alloc)
         self.llm = CustomLLM(delay=delay, alloc=alloc)

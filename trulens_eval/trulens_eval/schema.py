@@ -28,8 +28,8 @@ from enum import Enum
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple, Type,
-    TYPE_CHECKING, TypeVar, Union
+    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
+    Type, TYPE_CHECKING, TypeVar, Union
 )
 
 import dill
@@ -218,7 +218,9 @@ class Record(SerialModel, Hashable):
     def __hash__(self):
         return hash(self.record_id)
 
-    def wait_for_feedback_results(self) -> Dict[FeedbackDefinition, FeedbackResult]:
+    def wait_for_feedback_results(
+        self
+    ) -> Dict[FeedbackDefinition, FeedbackResult]:
         """
         Wait for feedback results to finish and return a mapping of feedback
         functions to their results.
