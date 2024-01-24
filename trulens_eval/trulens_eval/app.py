@@ -523,7 +523,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
             record.wait_for_feedback_results()
 
-    def wait_for_pending_feedback_results(self) -> None:
+    def wait_for_feedback_results(self) -> None:
         """
         EXPERIMENTAL: Wait for all feedbacks that need to run on all of the
         records produced by this app. Will block until finished and if new
