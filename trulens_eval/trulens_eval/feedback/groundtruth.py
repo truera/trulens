@@ -5,7 +5,6 @@ import numpy as np
 import pydantic
 
 from trulens_eval.feedback.provider import Provider
-from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BERT_SCORE
