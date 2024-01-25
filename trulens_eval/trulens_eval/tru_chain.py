@@ -331,7 +331,7 @@ class TruChain(App):
                 f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruChain`. "
             )
         else:
-            raise RuntimeError(f"TruChain has no attribute named {__name}.")
+            raise AttributeError(f"TruChain has no attribute named {__name}.")
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
     # TOREMOVE

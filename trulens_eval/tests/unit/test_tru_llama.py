@@ -3,7 +3,7 @@ Tests for TruLlama.
 """
 
 import unittest
-from unittest import main
+from unittest import IsolatedAsyncioTestCase, main
 
 from llama_index import ServiceContext
 from llama_index import set_global_service_context
@@ -18,7 +18,7 @@ from trulens_eval.tru_llama import TruLlama
 check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
 
-class TestLlamaIndex(JSONTestCase):
+class TestLlamaIndex(JSONTestCase, IsolatedAsyncioTestCase):
 
     def setUp(self):
 
@@ -35,8 +35,8 @@ class TestLlamaIndex(JSONTestCase):
         ).load_data(["http://paulgraham.com/worked.html"])
         self.index = VectorStoreIndex.from_documents(self.documents)
 
-    def test_query_engine_async(self):
-        self._test_query_engine_async()
+    async def test_query_engine_async(self):
+        await self._test_query_engine_async()
 
     async def _test_query_engine_async(self):
         # Check that the instrumented async aquery method produces the same result as the query method.
@@ -123,8 +123,8 @@ class TestLlamaIndex(JSONTestCase):
             )
         )
 
-    def test_chat_engine_async(self):
-        self._test_chat_engine_async()
+    async def test_chat_engine_async(self):
+        await self._test_chat_engine_async()
 
     async def _test_chat_engine_async(self):
         # Check that the instrumented async achat method produces the same result as the chat method.
@@ -140,7 +140,7 @@ class TestLlamaIndex(JSONTestCase):
         chat_engine = self.index.as_chat_engine()
         tru_chat_engine_recorder = TruLlama(chat_engine)
         with tru_chat_engine_recorder as recording:
-            llm_response_sync = await chat_engine.chat(
+            llm_response_sync = chat_engine.chat(
                 "What did the author do growing up?"
             )
         record_sync = recording.records[0]
