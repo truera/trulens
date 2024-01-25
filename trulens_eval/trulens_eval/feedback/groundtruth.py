@@ -10,9 +10,13 @@ from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BERT_SCORE
 from trulens_eval.utils.imports import REQUIREMENT_EVALUATE
+from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
+
+with OptionalImports(messages=REQUIREMENT_OPENAI):
+    from trulens_eval.feedback.provider.openai import OpenAI
 
 with OptionalImports(messages=REQUIREMENT_BERT_SCORE):
     from bert_score import BERTScorer
