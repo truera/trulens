@@ -33,6 +33,7 @@ with OptionalImports(messages=REQUIREMENT_RAILS):
     from nemoguardrails.flows.runtime import Runtime
     from nemoguardrails.kb.kb import KnowledgeBase
     from nemoguardrails.rails.llm.llmrails import LLMRails
+    from nemoguardrails.actions.action_dispatcher import ActionDispatcher
     
 OptionalImports(messages=REQUIREMENT_RAILS).assert_installed(nemoguardrails)
 
@@ -48,7 +49,7 @@ class RailsInstrument(Instrument):
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
-            LLMRails, KnowledgeBase, LLMGenerationActions, Runtime
+            LLMRails, KnowledgeBase, LLMGenerationActions, Runtime, ActionDispatcher
         }.union(LangChainInstrument.Default.CLASSES())
 
         # Instrument only methods with these names and of these classes. Ok to
@@ -56,6 +57,7 @@ class RailsInstrument(Instrument):
         METHODS = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS), # copy
             {
+                ("execute_action"): lambda o: isinstance(o, ActionDispatcher),
                 (
                     "generate", "generate_async",
                     "stream_async",

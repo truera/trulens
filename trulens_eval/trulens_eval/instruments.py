@@ -210,9 +210,8 @@ import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
-)
+from typing import (Any, Callable, Dict, Iterable, Optional, Sequence, Set,
+                    Tuple)
 import weakref
 
 import pydantic
@@ -442,7 +441,7 @@ class Instrument(object):
                 f"isasyncgeneratorfunction={inspect.isasyncgenfunction(func)}"
             )
 
-            apps = getattr(tru_awrapper, Instrument.APPS)  # DIFF
+            apps = getattr(tru_awrapper, Instrument.APPS)
 
             # If not within a root method, call the wrapped function without
             # any recording.
@@ -743,6 +742,9 @@ class Instrument(object):
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
 
+        # Check for bound methods as they may refer to classes which we are too
+        # late to instrument.
+
         for base in mro:
             logger.debug(f"\t{query}: considering base {base.__name__}")
 
@@ -777,9 +779,18 @@ class Instrument(object):
 
                 if safe_hasattr(base, method_name):
                     check_class = self.include_methods[method_name]
+
                     if not check_class(obj):
                         continue
+
                     original_fun = getattr(base, method_name)
+
+                    # If an instrument class uses a decorator to wrap one of
+                    # their methods, the wrapper will capture an uninstrumented
+                    # version of the inner method which we may fail to
+                    # instrument.
+                    if hasattr(original_fun, "__wrapped__"):
+                        original_fun = original_fun.__wrapped__
 
                     # Sometimes the base class may be in some module but when a
                     # method is looked up from it, it actually comes from some
@@ -851,9 +862,57 @@ class Instrument(object):
 
                 elif isinstance(v, Dict):
                     for k2, sv in v.items():
+                        subquery = query[k][k2]
+                        # WORK IN PROGRESS: BUG: some methods in rails are bound with a class that we cannot instrument
+                        """
+                        if isinstance(sv, Callable):
+                            if safe_hasattr(sv, "__self__"):
+                                # Is a method with bound self.
+                                sv_self = getattr(sv, "__self__")
+                                
+                                if not self.to_instrument_class(type(sv_self)):
+                                    # print(f"{subquery}: Don't need to instrument class {type(sv_self)}")
+                                    continue
+
+                                if not safe_hasattr(sv, self.INSTRUMENT):
+                                    print(f"{subquery}: Trying to instrument bound methods in {sv_self}")
+
+                                if safe_hasattr(sv, "__func__"):
+                                    func = getattr(sv, "__func__")
+                                    if not safe_hasattr(func, self.INSTRUMENT):
+                                        print(f"{subquery}: Bound method {sv}, unbound {func} is not instrumented. Trying to instrument.")
+
+                                        subobj = sv.__self__
+
+                                        try:
+                                            unbound = self.tracked_method_wrapper(
+                                                query=query,
+                                                func=func,
+                                                method_name=func.__name__,
+                                                cls=type(subobj),
+                                                obj=subobj
+                                            )
+                                            if inspect.iscoroutinefunction(func):
+                                                @functools.wraps(unbound)
+                                                async def bound(*args, **kwargs):
+                                                    return await unbound(subobj, *args, **kwargs)
+                                            else:
+                                                def bound(*args, **kwargs):
+                                                    return unbound(subobj, *args, **kwargs)
+                                                
+                                            v[k2] = bound
+                                            
+                                            #setattr(
+                                            #    sv.__func__, "__code__", unbound.__code__
+                                            #)
+                                        except Exception as e:
+                                            print(f"\t\t\t{subquery}: cound not instrument because {e}")
+                                                    #self.instrument_bound_methods(sv_self, query=subquery)
+                                        
+                        """
                         if self.to_instrument_class(type(sv)):
                             self.instrument_object(
-                                obj=sv, query=query[k][k2], done=done
+                                obj=sv, query=subquery, done=done
                             )
 
                 else:
@@ -868,6 +927,56 @@ class Instrument(object):
             logger.debug(
                 f"{query}: Do not know how to instrument object of type {cls}."
             )
+
+        # Check whether bound methods are instrumented properly.
+        
+
+    def instrument_bound_methods(self, obj: object, query: Lens):
+        # TODO: Work in progress. Bugfixing rails instrumentation missing some important methods.
+
+        for method_name in self.include_methods:
+            if not (safe_hasattr(obj, method_name) and self.include_methods[method_name](obj)):
+                pass
+            else:
+                method = safe_getattr(obj, method_name)
+                print(f"\t{query}Looking at {method}")
+
+                if safe_hasattr(method, "__func__"):
+                    func = safe_getattr(method, "__func__")
+                    print(f"\t\t{query}: Looking at bound method {method_name} with func {func}")
+
+                    if safe_hasattr(func, Instrument.INSTRUMENT):
+                        print(f"\t\t\t{query} Bound method {func} is instrumented.")
+
+                    else:
+                        print(f"\t\t\t{query} Bound method {func} is not instrumented. Trying to instrument it")
+                    
+                        try:
+                            unbound = self.tracked_method_wrapper(
+                                query=query,
+                                func=func,
+                                method_name=method_name,
+                                cls=type(obj),
+                                obj=obj
+                            )
+                            if inspect.iscoroutinefunction(func):
+                                async def bound(*args, **kwargs):
+                                    return await unbound(obj, *args, **kwargs)
+                            else:
+                                def bound(*args, **kwargs):
+                                    return unbound(obj, *args, **kwargs)
+                                
+                            setattr(
+                                obj, method_name, bound
+                            )
+                        except Exception as e:
+                            logger.debug(f"\t\t\t{query}: cound not instrument because {e}")
+                        
+                else:
+                    if safe_hasattr(method, Instrument.INSTRUMENT):
+                        print(f"\t\t{query} Bound method {method} is instrumented.")
+                    else:
+                        print(f"\t\t{query} Bound method {method} is NOT instrumented.")
 
 
 class AddInstruments():

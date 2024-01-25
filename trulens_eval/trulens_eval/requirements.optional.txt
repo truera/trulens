@@ -14,6 +14,9 @@ langchainhub >= 0.1.14 # example notebooks
 llama-index >= v0.9.26
 html2text   >= 2020.1.16 # for llama_index example using SimpleWebPageReader
 
+# Apps: NEMO Guardrails
+nemoguardrails >= 0.6.1 # will de-upgrade pydantic
+
 # Models: openai
 openai >= 1.1.1, <2
 httpx  >= 0.23.3 # for openai client serialization
