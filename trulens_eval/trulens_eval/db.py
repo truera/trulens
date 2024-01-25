@@ -741,11 +741,3 @@ class LocalSQLite(DB):
         combined_df = df_records.merge(df_results, on=['record_id'])
 
         return combined_df, list(result_cols)
-
-
-class TruDB(DB):
-
-    def __init__(self, *args, **kwargs):
-        # Since 0.2.0
-        logger.warning("Class TruDB is deprecated, use DB instead.")
-        super().__init__(*args, **kwargs)

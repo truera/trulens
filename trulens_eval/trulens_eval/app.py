@@ -1136,14 +1136,3 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             )
 
         print("\n".join(object_strings))
-
-
-class TruApp(App):
-
-    def __init__(self, *args, **kwargs):
-        # Since 0.2.0
-        logger.warning(
-            "Class TruApp is deprecated, "
-            "use trulens_eval.app.App instead."
-        )
-        super().__init__(*args, **kwargs)
