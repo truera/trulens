@@ -79,7 +79,6 @@ theme:
 
 nav:
   - Home: index.md
-  - Welcome to TruLens!: welcome.md
   - Eval:
       - Getting Started:
           - 🚀 Installation: trulens_eval/install.md
