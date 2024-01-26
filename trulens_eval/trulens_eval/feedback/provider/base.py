@@ -167,7 +167,7 @@ class LLMProvider(Provider):
         else:
             return re_0_10_rating(response) / normalize
 
-    def qs_relevance(self, question: str, statement: str) -> float:
+    def qs_relevance(self, question: str, statement: str, temperature=0.0) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the relevance of the statement to the question.
@@ -203,12 +203,13 @@ class LLMProvider(Provider):
                         prompts.QS_RELEVANCE,
                         question=question,
                         statement=statement
-                    )
+                    ),
+                    temperature=temperature
                 )
             )
         ) / 10
     
-    def qs_relevance_confidence_verb_2s_top1(self, question: str, statement: str) -> float:
+    def qs_relevance_confidence_verb_2s_top1(self, question: str, statement: str, temperature=0.0) -> float:
          return re_0_10_rating(
             self.endpoint.run_me(
                 lambda: self._create_chat_completion(
@@ -216,11 +217,13 @@ class LLMProvider(Provider):
                         prompts.QS_RELEVANCE_VERB_2S_TOP1,
                         question=question,
                         statement=statement
-                    )
+                    ),
+                    temperature=temperature
                 )
             )
         )  / 10
 
+    
     def qs_relevance_with_cot_reasons(
         self, question: str, statement: str
     ) -> float:

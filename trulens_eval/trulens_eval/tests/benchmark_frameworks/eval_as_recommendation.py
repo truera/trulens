@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
             backoff_time: time to wait between retries
             n: number of samples to estimate conditional probabilities of feedback_func's scores
 """
-def score_passages(df, feedback_func_name, feedback_func, backoff_time=0.5, n=5):
+def score_passages(df, feedback_func_name, feedback_func, backoff_time=0.5, n=5, temperature=0.0):
     grouped = df.groupby('query_id')
     scores = []
     true_relevance = []
@@ -26,15 +26,14 @@ def score_passages(df, feedback_func_name, feedback_func, backoff_time=0.5, n=5)
         query_relevance = []
         for _, row in group.iterrows():
             sampled_score = None
-            if feedback_func_name == 'TruEra':
-                sampled_score = feedback_func(row['query'], row['passage']) # hard-coded for now, we don't need to sample for TruEra BERT-based model
+            if feedback_func_name == 'TruEra' or n == 1:
+                sampled_score = feedback_func(row['query'], row['passage'], temperature) # hard-coded for now, we don't need to sample for TruEra BERT-based model
                 time.sleep(backoff_time) 
             else:
                 sampled_scores = []
                 for _ in range(n):
-                    sampled_scores.append(feedback_func(row['query'], row['passage']))
+                    sampled_scores.append(feedback_func(row['query'], row['passage'], temperature))
                     time.sleep(backoff_time) 
-
                 sampled_score = sum(sampled_scores) / len(sampled_scores)
             query_scores.append(sampled_score)
             query_relevance.append(row['is_selected'])
