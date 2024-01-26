@@ -385,7 +385,7 @@ class TruLlama(App):
                 f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruLlama`. "
             )
         else:
-            raise RuntimeError(f"TruLlama has no attribute named {__name}.")
+            raise AttributeError(f"TruLlama has no attribute named {__name}.")
 
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
