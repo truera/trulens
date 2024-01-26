@@ -48,6 +48,9 @@ from trulens_eval.utils.python import T
 from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.threading import Thread
 
+import nest_asyncio
+nest_asyncio.apply()
+
 logger = logging.getLogger(__name__)
 
 A = TypeVar("A")
@@ -103,17 +106,21 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
 
         # Check if there is a running loop.
         try:
-            asyncio.get_running_loop()
-            in_loop = True
-        except Exception:
-            in_loop = False
+            loop = asyncio.get_running_loop()
 
-        if not in_loop:
+        except Exception:
             # If not, we can create one here and run it until completion.
             loop = asyncio.new_event_loop()
             return loop.run_until_complete(awaitable)
+        
+        try:
+            # If have nest_asyncio, can run in current thread.
+            import nest_asyncio
+            return loop.run_until_complete(awaitable)
+        except:
+            pass
 
-        # Otherwise we cannot create a new one in this thread so we create a
+        # Otherwise we cannot run a new loop in this thread so we create a
         # new thread to run the awaitable until completion.
 
         def run_in_new_loop():

@@ -210,19 +210,9 @@ class TestTruChain(JSONTestCase, IsolatedAsyncioTestCase):
         llm = ChatOpenAI(temperature=0.0, streaming=False, cache=False)
         chain = LLMChain(llm=llm, prompt=prompt)
 
-        async def test1():
-            # Does not create a task:
-            result = await chain.llm._agenerate(messages=[msg])
-            return result
+        res1, costs1 = await Endpoint.atrack_all_costs(chain.llm._agenerate, messages=[msg])
 
-        res1, costs1 = await Endpoint.atrack_all_costs(test1)
-
-        async def test2():
-            # Creates a task internally via asyncio.gather:
-            result = await chain._acall(inputs=dict(question="hello there"))
-            return result
-
-        res2, costs2 = await Endpoint.atrack_all_costs(test2)
+        res2, costs2 = await Endpoint.atrack_all_costs(chain._acall, inputs=dict(question="hello there"))
 
         # Results are not the same as they involve different prompts but should
         # not be empty at least:

@@ -13,7 +13,7 @@ from threading import Thread
 from time import sleep
 from types import ModuleType
 from typing import (
-    Any, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,
+    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,
     TypeVar
 )
 import warnings
@@ -22,7 +22,7 @@ import pydantic
 import requests
 
 from trulens_eval.schema import Cost
-from trulens_eval.utils.asynchro import desync
+from trulens_eval.utils.asynchro import CallableMaybeAwaitable, desync
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.asynchro import ThunkMaybeAwaitable
 from trulens_eval.utils.pyschema import safe_getattr
@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
+A = TypeVar("A")
 T = TypeVar("T")
 
 INSTRUMENT = "__tru_instrument"
@@ -382,11 +383,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     async def atrack_all_costs(
-        thunk: ThunkMaybeAwaitable[T],
+        __func: CallableMaybeAwaitable[A, T],
+        *args,
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -419,15 +422,17 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         f"trulens_eval will not track costs/usage of this endpoint. {e}"
                     )
 
-        return await Endpoint._atrack_costs(thunk, with_endpoints=endpoints)
+        return await Endpoint._atrack_costs(__func, *args, with_endpoints=endpoints, **kwargs)
 
     @staticmethod
     async def atrack_all_costs_tally(
-        thunk: ThunkMaybeAwaitable[T],
+        __func: CallableMaybeAwaitable[A, T],
+        *args,
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        **kwargs
     ) -> Tuple[T, Cost]:
         """
         Track costs of all of the apis we can currently track, over the
@@ -435,11 +440,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """
 
         result, cbs = await Endpoint.atrack_all_costs(
-            thunk,
+            __func,
+            *args,
             with_openai=with_openai,
             with_hugs=with_hugs,
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
+            **kwargs
         )
 
         if len(cbs) == 0:
@@ -452,8 +459,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     async def _atrack_costs(
-        thunk: ThunkMaybeAwaitable[T],
+        __func: CallableMaybeAwaitable[A, T],
+        *args,
         with_endpoints: Optional[Sequence[Endpoint]] = None,
+        **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
         Root of all cost tracking methods. Runs the given `thunk`, tracking
@@ -508,14 +517,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             callbacks.append(callback)
 
         # Call the thunk and wait for result.
-        result: T = await desync(thunk)
+        result: T = await desync(__func, *args, **kwargs)
 
         # Return result and only the callbacks created here. Outer thunks might
         # return others.
         return result, callbacks
 
     async def atrack_cost(
-        self, thunk: ThunkMaybeAwaitable[T]
+        self, __func: CallableMaybeAwaitable[T], *args, **kwargs
     ) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.
@@ -524,7 +533,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """
 
         result, callbacks = await Endpoint._atrack_costs(
-            thunk, with_endpoints=[self]
+            __func, *args, with_endpoints=[self], **kwargs
         )
 
         return result, callbacks[0]
@@ -588,7 +597,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
         @functools.wraps(func)
-        async def awrapper(*args, **kwargs):
+        async def tru_awrapper(*args, **kwargs):
             logger.debug(
                 f"Calling wrapped async {func.__name__} for {self.name}, "
                 f"iscoroutinefunction={is_really_coroutinefunction(func)}, "
@@ -596,14 +605,17 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             )
 
             # Get the result of the wrapped function:
-            response = await desync(func, *args, **kwargs)
-
+    
+            response = func(*args, **kwargs)
+            if isinstance(response, Awaitable):
+                response = await response
+            
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
             # Get all of the callback classes suitable for handling this call.
             # Note that we stored this in the INSTRUMENT attribute of the
             # wrapper method.
-            registered_callback_classes = getattr(awrapper, INSTRUMENT)
+            registered_callback_classes = getattr(tru_awrapper, INSTRUMENT)
 
             # Look up the endpoints that are expecting to be notified and the
             # callback tracking the tally. See Endpoint._atrack_costs for
@@ -643,15 +655,15 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             return response
 
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def tru_wrapper(*args, **kwargs):
             logger.debug(
                 f"Calling instrumented sync method {func} of type {type(func)}, "
                 f"iscoroutinefunction={is_really_coroutinefunction(func)}, "
                 f"isasyncgeneratorfunction={inspect.isasyncgenfunction(func)}"
             )
-            return sync(awrapper, *args, **kwargs)
+            return sync(tru_awrapper, *args, **kwargs)
 
-        for w in [wrapper, awrapper]:
+        for w in [tru_wrapper, tru_awrapper]:
             # Set our tracking attribute to tell whether something is already
             # instrumented onto both the sync and async version since either one
             # could be returned from this method.
@@ -660,9 +672,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # Determine which of the wrapper variants to return and to annotate.
 
         if is_really_coroutinefunction(func):
-            w = awrapper
+            w = tru_awrapper
         else:
-            w = wrapper
+            w = tru_wrapper
 
         logger.debug(f"Instrumenting {func.__name__} for {self.name} .")
 
