@@ -207,6 +207,19 @@ class LLMProvider(Provider):
                 )
             )
         ) / 10
+    
+    def qs_relevance_confidence_verb_2s_top1(self, question: str, statement: str) -> float:
+         return re_0_10_rating(
+            self.endpoint.run_me(
+                lambda: self._create_chat_completion(
+                    prompt=str.format(
+                        prompts.QS_RELEVANCE_VERB_2S_TOP1,
+                        question=question,
+                        statement=statement
+                    )
+                )
+            )
+        )  / 10
 
     def qs_relevance_with_cot_reasons(
         self, question: str, statement: str

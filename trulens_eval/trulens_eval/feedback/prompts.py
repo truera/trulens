@@ -47,6 +47,7 @@ STATEMENT: {hypothesis}
 """
 
 QS_RELEVANCE = v2.QuestionStatementRelevance.prompt.template
+QS_RELEVANCE_VERB_2S_TOP1 = v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
 PR_RELEVANCE = v2.PromptResponseRelevance.prompt.template
 
 SYSTEM_FIND_SUPPORTING = """
