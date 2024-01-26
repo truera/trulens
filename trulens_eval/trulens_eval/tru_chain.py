@@ -321,7 +321,7 @@ class TruChain(App):
                 f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruChain`. "
             )
         else:
-            raise RuntimeError(f"TruChain has no attribute named {__name}.")
+            raise AttributeError(f"TruChain has no attribute named {__name}.")
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
     # TOREMOVE
@@ -347,8 +347,8 @@ class TruChain(App):
     # Mimics Chain
     def __call__(self, *args, **kwargs) -> None:
         """
-        Wrapped call to self.app._call with instrumentation. If you need to
-        get the record, use `call_with_record` instead. 
+        DEPRECATED: Wrapped call to self.app._call with instrumentation. If you
+        need to get the record, use `call_with_record` instead. 
         """
         self._throw_dep_message(
             method="__call__", is_async=False, with_record=False

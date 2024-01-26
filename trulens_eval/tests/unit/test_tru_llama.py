@@ -14,11 +14,16 @@ from tests.unit.test import JSONTestCase
 
 from trulens_eval.keys import check_keys
 from trulens_eval.tru_llama import TruLlama
+from trulens_eval.utils.asynchro import sync
 
 check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
 
 class TestLlamaIndex(JSONTestCase):
+    # TODO: Figure out why use of async test cases causes "more than one record
+    # collected"
+    # Need to use this:
+    # from unittest import IsolatedAsyncioTestCase
 
     def setUp(self):
 
@@ -36,19 +41,21 @@ class TestLlamaIndex(JSONTestCase):
         self.index = VectorStoreIndex.from_documents(self.documents)
 
     def test_query_engine_async(self):
-        self._test_query_engine_async()
-
-    async def _test_query_engine_async(self):
         # Check that the instrumented async aquery method produces the same result as the query method.
 
         query_engine = self.index.as_query_engine()
 
+        # This test does not run correctly if async is used, i.e. not using
+        # `sync` to convert to sync.
+
         tru_query_engine_recorder = TruLlama(query_engine)
         with tru_query_engine_recorder as recording:
-            llm_response_async = await query_engine.aquery(
+            llm_response_async = sync(query_engine.aquery,
                 "What did the author do growing up?"
             )
-        record_async = recording.records[0]
+            print("llm_response_async=", llm_response_async)
+
+        record_async = recording.get()
 
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
@@ -56,7 +63,8 @@ class TestLlamaIndex(JSONTestCase):
             llm_response_sync = query_engine.query(
                 "What did the author do growing up?"
             )
-        record_sync = recording.records[0]
+            print("llm_response_sync=", llm_response_sync)
+        record_sync = recording.get()
 
         self.assertJSONEqual(
             llm_response_sync,
@@ -65,8 +73,8 @@ class TestLlamaIndex(JSONTestCase):
         )
 
         self.assertJSONEqual(
-            record_sync,
-            record_async,
+            record_sync.model_dump(),
+            record_async.model_dump(),
             skips=set(
                 [
                     "calls",  # async/sync have different set of internal calls, so cannot easily compare
@@ -91,7 +99,7 @@ class TestLlamaIndex(JSONTestCase):
             llm_response = query_engine.query(
                 "What did the author do growing up?"
             )
-        record = recording.records[0]
+        record = recording.get()
 
         query_engine = self.index.as_query_engine(streaming=True)
         tru_query_engine_recorder = TruLlama(query_engine)
@@ -99,7 +107,7 @@ class TestLlamaIndex(JSONTestCase):
             llm_response_stream = query_engine.query(
                 "What did the author do growing up?"
             )
-        record_stream = stream_recording.records[0]
+        record_stream = stream_recording.get()
 
         self.assertJSONEqual(
             llm_response_stream.get_response(),
@@ -123,10 +131,7 @@ class TestLlamaIndex(JSONTestCase):
             )
         )
 
-    def test_chat_engine_async(self):
-        self._test_chat_engine_async()
-
-    async def _test_chat_engine_async(self):
+    async def test_chat_engine_async(self):
         # Check that the instrumented async achat method produces the same result as the chat method.
 
         chat_engine = self.index.as_chat_engine()
@@ -140,7 +145,7 @@ class TestLlamaIndex(JSONTestCase):
         chat_engine = self.index.as_chat_engine()
         tru_chat_engine_recorder = TruLlama(chat_engine)
         with tru_chat_engine_recorder as recording:
-            llm_response_sync = await chat_engine.chat(
+            llm_response_sync = chat_engine.chat(
                 "What did the author do growing up?"
             )
         record_sync = recording.records[0]
@@ -152,8 +157,8 @@ class TestLlamaIndex(JSONTestCase):
         )
 
         self.assertJSONEqual(
-            record_sync,
-            record_async,
+            record_sync.model_dump(),
+            record_async.model_dump(),
             skips=set(
                 [
                     "calls",  # async/sync have different set of internal calls, so cannot easily compare
