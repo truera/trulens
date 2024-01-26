@@ -32,7 +32,8 @@ tru.reset_database()
 # Imports from langchain to build app
 import bs4
 from langchain import hub
-from langchain.chat_models import ChatOpenAI
+# from langchain.chat_models import ChatOpenAI # Deprecated
+from langchain_openai import ChatOpenAI
 from langchain.document_loaders import WebBaseLoader
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.schema import StrOutputParser
@@ -782,7 +783,8 @@ llm = OpenAI(temperature=0.9, max_tokens=128)
 chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
 
 truchain = TruChain(chain, app_id='Chain1_ChatApplication', tru=tru)
-truchain("This will be automatically logged.")
+with truchain:
+    chain("This will be automatically logged.")
 
 # Feedback functions can also be logged automatically by providing them in a list
 # to the feedbacks arg.
@@ -801,7 +803,8 @@ truchain = TruChain(
     feedbacks=[f_lang_match],  # feedback functions
     tru=tru
 )
-truchain("This will be automatically logged.")
+with truchain:
+    chain("This will be automatically logged.")
 
 # ## Manual Logging
 #
@@ -815,7 +818,7 @@ tc = TruChain(chain, app_id='Chain1_ChatApplication')
 #
 
 prompt_input = 'que hora es?'
-gpt3_response, record = tc.call_with_record(prompt_input)
+gpt3_response, record = tc.with_record(chain.__call__, prompt_input)
 
 # We can log the records but first we need to log the chain itself.
 

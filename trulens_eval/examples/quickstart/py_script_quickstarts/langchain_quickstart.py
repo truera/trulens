@@ -32,7 +32,8 @@ tru.reset_database()
 # Imports from langchain to build app
 import bs4
 from langchain import hub
-from langchain.chat_models import ChatOpenAI
+# from langchain.chat_models import ChatOpenAI # Deprecated
+from langchain_openai import ChatOpenAI
 from langchain.document_loaders import WebBaseLoader
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.schema import StrOutputParser
