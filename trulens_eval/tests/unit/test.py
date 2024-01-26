@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Dict, Sequence
 from unittest import TestCase
 
+import pydantic
 from pydantic import BaseModel
 
 from trulens_eval.utils.serial import JSON_BASES
@@ -77,6 +78,16 @@ class JSONTestCase(TestCase):
                 self.assertTrue(hasattr(j2, f))
 
                 recur(getattr(j1, f), getattr(j2, f), path[f])
+
+        elif isinstance(j1, pydantic.v1.BaseModel):
+            for f in j1.__fields__:
+                if f in skips:
+                    continue
+
+                self.assertTrue(hasattr(j2, f))
+
+                recur(getattr(j1, f), getattr(j2, f), path[f])
+
 
         else:
             raise RuntimeError(
