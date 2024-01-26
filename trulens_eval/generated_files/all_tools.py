@@ -158,7 +158,7 @@ tc = TruChain(chain, app_id='Chain1_ChatApplication')
 #
 
 prompt_input = 'que hora es?'
-gpt3_response, record = tc.call_with_record(prompt_input)
+gpt3_response, record = tc.with_record(chain.__call__, prompt_input)
 
 # We can log the records but first we need to log the chain itself.
 

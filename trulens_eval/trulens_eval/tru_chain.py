@@ -357,8 +357,8 @@ class TruChain(App):
     # Mimics Chain
     def __call__(self, *args, **kwargs) -> None:
         """
-        Wrapped call to self.app._call with instrumentation. If you need to
-        get the record, use `call_with_record` instead. 
+        DEPRECATED: Wrapped call to self.app._call with instrumentation. If you
+        need to get the record, use `call_with_record` instead. 
         """
         self._throw_dep_message(
             method="__call__", is_async=False, with_record=False
