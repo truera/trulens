@@ -321,18 +321,6 @@ class TruChain(App):
             logger.warning("Unsure what the main output string may be.")
             return str(out)
 
-    def __getattr__(self, __name: str) -> Any:
-        # A message for cases where a user calls something that the wrapped
-        # chain has but we do not wrap yet.
-
-        if safe_hasattr(self.app, __name):
-            return RuntimeError(
-                f"TruChain has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
-                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruChain`. "
-            )
-        else:
-            raise AttributeError(f"TruChain has no attribute named {__name}.")
-
     # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
     # TOREMOVE
     async def acall_with_record(self, *args, **kwargs) -> None:
