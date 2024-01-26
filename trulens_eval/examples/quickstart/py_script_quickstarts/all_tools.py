@@ -783,7 +783,8 @@ llm = OpenAI(temperature=0.9, max_tokens=128)
 chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
 
 truchain = TruChain(chain, app_id='Chain1_ChatApplication', tru=tru)
-truchain("This will be automatically logged.")
+with truchain:
+    chain("This will be automatically logged.")
 
 # Feedback functions can also be logged automatically by providing them in a list
 # to the feedbacks arg.
@@ -802,7 +803,8 @@ truchain = TruChain(
     feedbacks=[f_lang_match],  # feedback functions
     tru=tru
 )
-truchain("This will be automatically logged.")
+with truchain:
+    chain("This will be automatically logged.")
 
 # ## Manual Logging
 #

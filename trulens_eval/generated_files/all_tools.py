@@ -132,7 +132,8 @@ tru.get_records_and_feedback(app_ids=[]
 # This is done like so:
 
 truchain = TruChain(chain, app_id='Chain1_ChatApplication', tru=tru)
-truchain("This will be automatically logged.")
+with truchain:
+    chain("This will be automatically logged.")
 
 # Feedback functions can also be logged automatically by providing them in a list to the feedbacks arg.
 
@@ -142,7 +143,8 @@ truchain = TruChain(
     feedbacks=[f_lang_match],  # feedback functions
     tru=tru
 )
-truchain("This will be automatically logged.")
+with truchain:
+    chain("This will be automatically logged.")
 
 # ## Manual Logging
 #
@@ -207,7 +209,8 @@ truchain: TruChain = TruChain(
 )
 
 tru.start_evaluator()
-truchain("This will be logged by deferred evaluator.")
+with truchain:
+    chain("This will be logged by deferred evaluator.")
 tru.stop_evaluator()
 
 # # Custom Functions
