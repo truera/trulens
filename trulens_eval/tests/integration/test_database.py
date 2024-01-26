@@ -273,7 +273,7 @@ def _populate_data(db: DB):
         feedbacks=[fb],
         feedback_mode=FeedbackMode.WITH_APP,
     )
-    _, rec = app.call_with_record("boo")
+    _, rec = app.with_record(app.app.__call__, "boo")
     return fb, app, rec
 
 
