@@ -65,7 +65,7 @@ ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
 
 
 async def desync(
-    func: CallableMaybeAwaitable[..., T], *args, **kwargs
+    func: CallableMaybeAwaitable[A, T], *args, **kwargs
 ) -> T:  # effectively Awaitable[T]:
     """
     Run the given function asynchronously with the given args. If it is not
@@ -88,14 +88,14 @@ async def desync(
             return res
 
 
-def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
+def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
     """
     Get result of calling function on the given args. If it is awaitable, will
     block until it is finished. Runs in a new thread in such cases.
     """
 
     if is_really_coroutinefunction(func):
-        func: Callable[..., Awaitable[T]]
+        func: Callable[[A], Awaitable[T]]
         awaitable: Awaitable[T] = func(*args, **kwargs)
 
         # HACK010: Debugging here to make sure it is awaitable.
@@ -141,7 +141,7 @@ def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
             return thread.ret
 
     else:
-        func: Callable[..., T]
+        func: Callable[[A], T]
         # Not a coroutine function, so do not need to sync anything.
         # HACK010: TODO: What if the inspect fails here too? We do some checks
         # in desync but not here.
