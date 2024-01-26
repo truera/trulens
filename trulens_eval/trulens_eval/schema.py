@@ -30,7 +30,7 @@ from pprint import PrettyPrinter
 from queue import Queue
 import queue
 from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
     Type, TYPE_CHECKING, TypeVar, Union
 )
 
@@ -206,7 +206,7 @@ class Record(SerialModel, Hashable):
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
 
-    feedback_results: Optional[List[Tuple[FeedbackDefinition, TFeedbackResultFuture]]] = \
+    feedback_results: Optional[List[Tuple[FeedbackDefinition, Awaitable[FeedbackResult]]]] = \
         pydantic.Field(None, exclude=True)
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
@@ -221,7 +221,7 @@ class Record(SerialModel, Hashable):
     def __hash__(self):
         return hash(self.record_id)
 
-    def wait_for_feedback_results(
+    async def await_for_feedback_results(
         self
     ) -> Dict[FeedbackDefinition, FeedbackResult]:
         """
@@ -235,7 +235,7 @@ class Record(SerialModel, Hashable):
         ret = {}
 
         for feedback, future_result in self.feedback_results:
-            feedback_result = future_result.result()
+            feedback_result = await future_result# .result()
             ret[feedback] = feedback_result
 
         return ret

@@ -15,7 +15,7 @@ import queue
 from threading import Lock
 import threading
 from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
     Set, Tuple, Type, TypeVar
 )
 
@@ -501,10 +501,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if self.manage_pending_feedback_results_thread is not None:
             raise RuntimeError("Manager Thread already started.")
 
-        self.manage_pending_feedback_results_thread = threading.Thread(
-            target=self._manage_pending_feedback_results
-        )
-        self.manage_pending_feedback_results_thread.start()
+        #self.manage_pending_feedback_results_thread = threading.Thread(
+        #    target=self._manage_pending_feedback_results
+        #)
+        #self.manage_pending_feedback_results_thread.start()
 
     def _manage_pending_feedback_results(self) -> None:
         """
@@ -517,7 +517,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         while True:
             record = self.records_with_pending_feedback_results.get()
-            record.wait_for_feedback_results()
+            # record.wait_for_feedback_results()
 
     def wait_for_feedback_results(self) -> None:
         """
@@ -832,6 +832,22 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         self, ctx: RecordingContext, func: Callable, sig: Signature,
         bindings: BoundArguments, ret: Any, error: Any, perf: Perf, cost: Cost
     ) -> Record:
+        return sync(
+            self._aon_add_record,
+            ctx=ctx,
+            func=func,
+            sig=sig,
+            bindings=bindings,
+            ret=ret,
+            error=error,
+            perf=perf,
+            cost=cost
+        )
+    
+    async def _aon_add_record(
+        self, ctx: RecordingContext, func: Callable, sig: Signature,
+        bindings: BoundArguments, ret: Any, error: Any, perf: Perf, cost: Cost
+    ) -> Record:
         """
         Called by instrumented methods if they use _new_record to construct a
         record call list. 
@@ -867,7 +883,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         # Will block on DB, but not on feedback evaluation, depending on
         # FeedbackMode:
-        record.feedback_results = self._handle_record(record=record)
+        record.feedback_results = await self._ahandle_record(record=record)
 
         if record.feedback_results is None:
             return record
@@ -1035,9 +1051,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         res = future_result.result()
         self.tru.add_feedback(res)
 
-    def _handle_record(
+    async def _ahandle_record(
         self, record: Record, feedback_mode: Optional[FeedbackMode] = None
-    ) -> Optional[List[Tuple[Feedback, Future[FeedbackResult]]]]:
+    ) -> Optional[List[Tuple[Feedback, Awaitable[FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback
         functions to be evaluated. If feedback_mode is provided, will use that
@@ -1059,7 +1075,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if len(self.feedbacks) == 0:
             return []
 
-        # Add empty (to run) feedback to db.
+        # Add feedback to db without a result, status=NONE.
         if feedback_mode == FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 self.db.insert_feedback(
@@ -1077,7 +1093,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             FeedbackMode.WITH_APP_THREAD
         ]:
 
-            return self.tru._submit_feedback_functions(
+            return await self.tru._asubmit_feedback_functions(
                 record=record,
                 feedback_functions=self.feedbacks,
                 app=self,

@@ -83,12 +83,13 @@ class CustomApp:
 
                 yield tok + " "
 
-        gen_task = asyncio.Task(async_generator())
-
+        """
         async def collect_gen():
             ret = ""
-            async for tok in gen_task:
+            async for tok in async_generator():
+                await token_callback(tok)
                 ret += tok
             return ret
+        """
 
-        return gen_task, collect_gen
+        return async_generator()

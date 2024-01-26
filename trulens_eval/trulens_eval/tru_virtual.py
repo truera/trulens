@@ -301,8 +301,8 @@ TruVirtual.model_rebuild()
 
 # Need these to make sure rebuild below works.
 # TODO: Figure out whether any of this is needed.
-from typing import List, Tuple
+from typing import List, Tuple, Awaitable
 from trulens_eval.schema import \
-    TFeedbackResultFuture, FeedbackDefinition
+    TFeedbackResultFuture, FeedbackDefinition, FeedbackResult
 
 VirtualRecord.model_rebuild()

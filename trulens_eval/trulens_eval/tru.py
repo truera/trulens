@@ -1,7 +1,11 @@
+import asyncio
 from collections import defaultdict
-from concurrent.futures import as_completed
-from concurrent.futures import Future
-from concurrent.futures import TimeoutError
+# from concurrent.futures import as_completed
+# from concurrent.futures import Future
+# from concurrent.futures import TimeoutError
+
+from asyncio import Future
+
 from datetime import datetime
 from datetime import timedelta
 import logging
@@ -15,7 +19,7 @@ import threading
 from threading import Thread
 from time import sleep
 from typing import (
-    Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+    Awaitable, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 )
 import warnings
 
@@ -239,7 +243,7 @@ class Tru(SingletonPerName):
 
     update_record = add_record
 
-    def _submit_feedback_functions(
+    async def _asubmit_feedback_functions(
         self,
         record: Record,
         feedback_functions: Sequence[Feedback],
@@ -275,11 +279,21 @@ class Tru(SingletonPerName):
 
         feedbacks_and_futures = []
 
-        tp: TP = TP()
+        # tp: TP = TP()
 
         for ffunc in feedback_functions:
-            fut: Future[FeedbackResult] = \
-                tp.submit(ffunc.run, app=app, record=record)
+            bef = datetime.now()
+
+            loop = asyncio.get_running_loop()
+
+            #fut: Future[FeedbackResult] = \
+            #    loop.create_task(ffunc.arun(app=app, record=record))
+            coro = ffunc.arun(app=app, record=record)
+            fut = loop.create_task(coro)
+
+            aft = datetime.now()
+
+            print(f"submitted future in {aft-bef}")
 
             if on_done is not None:
                 fut.add_done_callback(on_done)
@@ -312,7 +326,7 @@ class Tru(SingletonPerName):
         potentially in random order.
         """
 
-        for res in as_completed(self._submit_feedback_functions(
+        for res in asyncio.gather(self._asubmit_feedback_functions(
                 record=record, feedback_functions=feedback_functions, app=app)):
 
             yield res.result()[1]

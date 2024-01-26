@@ -41,6 +41,8 @@ import asyncio
 import inspect
 import logging
 from threading import current_thread
+import threading
+import time
 from typing import Awaitable, Callable, TypeVar, Union
 
 from trulens_eval.utils.python import is_really_coroutinefunction
@@ -65,7 +67,7 @@ ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
 
 
 async def desync(
-    func: CallableMaybeAwaitable[A, T], *args, **kwargs
+    __func: CallableMaybeAwaitable[A, T], *args, **kwargs
 ) -> T:  # effectively Awaitable[T]:
     """
     Run the given function asynchronously with the given args. If it is not
@@ -75,11 +77,11 @@ async def desync(
     run asynchronously.
     """
 
-    if is_really_coroutinefunction(func):
-        return await func(*args, **kwargs)
+    if is_really_coroutinefunction(__func):
+        return await __func(*args, **kwargs)
 
     else:
-        res = await asyncio.to_thread(func, *args, **kwargs)
+        res = await asyncio.to_thread(__func, *args, **kwargs)
 
         # HACK010: Might actually have been a coroutine after all.
         if inspect.iscoroutine(res):
@@ -88,15 +90,15 @@ async def desync(
             return res
 
 
-def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
+def sync(__func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
     """
     Get result of calling function on the given args. If it is awaitable, will
     block until it is finished. Runs in a new thread in such cases.
     """
 
-    if is_really_coroutinefunction(func):
-        func: Callable[[A], Awaitable[T]]
-        awaitable: Awaitable[T] = func(*args, **kwargs)
+    if is_really_coroutinefunction(__func):
+        __func: Callable[[A], Awaitable[T]]
+        awaitable: Awaitable[T] = __func(*args, **kwargs)
 
         # HACK010: Debugging here to make sure it is awaitable.
         assert inspect.isawaitable(awaitable)
@@ -116,6 +118,8 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         # Otherwise we cannot create a new one in this thread so we create a
         # new thread to run the awaitable until completion.
 
+        done = threading.Event()
+
         def run_in_new_loop():
             th: Thread = current_thread()
             # Attach return value and possibly exception to thread object so we
@@ -128,11 +132,22 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             except Exception as e:
                 th.error = e
 
-        thread = Thread(target=run_in_new_loop)
+            done.set()
+
+        thread = Thread(target=run_in_new_loop, daemon=True)
 
         # Start thread and wait for it to finish.
         thread.start()
+
+        print("pre wait")
+
+        done.wait()
+
+        print("pre join")
+
         thread.join()
+
+        print("post join")
 
         # Get the return or error, return the return or raise the error.
         if thread.error is not None:
@@ -141,9 +156,9 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             return thread.ret
 
     else:
-        func: Callable[[A], T]
+        __func: Callable[[A], T]
         # Not a coroutine function, so do not need to sync anything.
         # HACK010: TODO: What if the inspect fails here too? We do some checks
         # in desync but not here.
 
-        return func(*args, **kwargs)
+        return __func(*args, **kwargs)

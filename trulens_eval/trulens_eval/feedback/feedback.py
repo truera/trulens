@@ -507,6 +507,11 @@ class Feedback(FeedbackDefinition):
     def run(
         self, app: Union[AppDefinition, JSON], record: Record
     ) -> FeedbackResult:
+        return sync(self.arun, app=app, record=record)
+
+    async def arun(
+        self, app: Union[AppDefinition, JSON], record: Record
+    ) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
         produced the record is also required to determine input/output argument
@@ -549,8 +554,8 @@ class Feedback(FeedbackDefinition):
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost = sync(
-                        Endpoint.atrack_all_costs_tally,
+                    result_and_meta, part_cost = await \
+                        Endpoint.atrack_all_costs_tally(
                         lambda: self.imp(**ins)
                     )
                     cost += part_cost
@@ -655,6 +660,15 @@ class Feedback(FeedbackDefinition):
         app: Union[AppDefinition, JSON] = None,
         feedback_result_id: Optional[FeedbackResultID] = None
     ) -> Optional[FeedbackResult]:
+        return sync(self.arun_and_log, record=record, tru=tru, app=app, feedback_result_id=feedback_result_id)
+
+    async def arun_and_log(
+        self,
+        record: Record,
+        tru: 'Tru',
+        app: Union[AppDefinition, JSON] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None
+    ) -> Optional[FeedbackResult]:
 
         record_id = record.record_id
         app_id = record.app_id
@@ -680,7 +694,7 @@ class Feedback(FeedbackDefinition):
                 )
             )
 
-            feedback_result = self.run(
+            feedback_result = await self.arun(
                 app=app, record=record
             ).update(feedback_result_id=feedback_result_id)
 

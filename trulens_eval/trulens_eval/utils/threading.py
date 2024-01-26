@@ -12,6 +12,7 @@ from inspect import stack
 import logging
 import threading
 from threading import Thread as fThread
+import time
 from typing import Callable, Optional
 
 from trulens_eval.utils.python import _future_target_wrapper
@@ -191,5 +192,8 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         # their own retry/timeout capabilities.
 
         return self.thread_pool_debug_tasks.submit(
-            self._run_with_timeout, func, *args, timeout=timeout, **kwargs
+            #self._run_with_timeout, 
+            func, *args,
+            #timeout=timeout,
+            **kwargs
         )
