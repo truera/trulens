@@ -4,7 +4,7 @@ Tests for TruChain. Some of the tests are outdated.
 
 import os
 import unittest
-from unittest import main
+from unittest import IsolatedAsyncioTestCase, main
 
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import ConversationalRetrievalChain
@@ -30,7 +30,7 @@ from trulens_eval.schema import Record
 from trulens_eval.tru_chain import TruChain
 
 
-class TestTruChain(JSONTestCase):
+class TestTruChain(JSONTestCase, IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -196,10 +196,7 @@ class TestTruChain(JSONTestCase):
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
 
-    #def test_async_with_task(self):
-    #    asyncio.run(self._async_with_task())
-
-    async def _async_with_task(self):
+    async def test_async_with_task(self):
         # Check whether an async call that makes use of Task (via
         # asyncio.gather) can still track costs.
 
@@ -241,10 +238,8 @@ class TestTruChain(JSONTestCase):
         # self.assertGreater(costs1[0].cost.n_stream_chunks, 0)
         # self.assertGreater(costs2[0].cost.n_stream_chunks, 0)
 
-    #def test_async_with_record(self):
-    #    asyncio.run(self._async_with_record())
 
-    async def _async_with_record(self):
+    async def test_async_with_record(self):
         # Check that the async awith_record produces the same stuff as the
         # sync with_record.
 
@@ -281,14 +276,11 @@ class TestTruChain(JSONTestCase):
             async_record.model_dump(),
             sync_record.model_dump(),
             skips=set(
-                ["id", "name", "ts", "start_time", "end_time", "record_id"]
+                ["id", "name", "ts", "start_time", "end_time", "record_id", "tid", "pid", "app_id"]
             )
         )
 
-    def test_async_token_gen(self):
-        self._test_async_token_gen()
-
-    async def _test_async_token_gen(self):
+    async def test_async_token_gen(self):
         # Test of chain acall methods as requested in https://github.com/truera/trulens/issues/309 .
 
         tru = Tru()
@@ -327,7 +319,9 @@ class TestTruChain(JSONTestCase):
                     "ts",
                     "start_time",
                     "end_time",
-                    "record_id"
+                    "record_id",
+                    "tid",
+                    "pid"
                 ]
             )
         )
