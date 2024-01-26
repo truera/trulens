@@ -9,7 +9,7 @@ evaluate     >= 0.4.0  # same
 
 # Apps: Langchain (optional parts)
 langchainhub    >= 0.1.14 # example notebooks
-langchan_openai >= 0.0.5 # unit tests, sample apps
+langchain_openai >= 0.0.5 # unit tests, sample apps
 
 # Apps: LlamaIndex
 llama-index >= v0.9.26
