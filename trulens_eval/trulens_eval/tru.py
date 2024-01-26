@@ -1,7 +1,7 @@
 from collections import defaultdict
 from concurrent.futures import as_completed
 from concurrent.futures import Future
-from concurrent.futures import wait
+from concurrent.futures import TimeoutError
 from datetime import datetime
 from datetime import timedelta
 import logging

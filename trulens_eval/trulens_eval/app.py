@@ -16,7 +16,7 @@ from threading import Lock
 import threading
 from typing import (
     Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
-    Set, Tuple, Type
+    Set, Tuple, Type, TypeVar
 )
 
 import pydantic
@@ -59,6 +59,7 @@ pp = PrettyPrinter()
 # App component.
 COMPONENT = Any
 
+A = TypeVar("A")
 
 class ComponentView(ABC):
     """
@@ -916,7 +917,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             )
 
     async def awith_(
-        self, func: CallableMaybeAwaitable[..., T], *args, **kwargs
+        self, func: CallableMaybeAwaitable[A, T], *args, **kwargs
     ) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
@@ -932,7 +933,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     async def awith_record(
         self,
-        func: CallableMaybeAwaitable[..., T],
+        func: CallableMaybeAwaitable[A, T],
         *args,
         record_metadata: JSON = None,
         **kwargs
@@ -955,7 +956,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         return ret, ctx.get()
 
-    def with_(self, func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
+    def with_(self, func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         """
         Call the given `func` with the given `*args` and `**kwargs` while
         recording, producing `func` results. The record of the computation is
@@ -968,7 +969,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     def with_record(
         self,
-        func: CallableMaybeAwaitable[..., T],
+        func: CallableMaybeAwaitable[A, T],
         *args,
         record_metadata: JSON = None,
         **kwargs
