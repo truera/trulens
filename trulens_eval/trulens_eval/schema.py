@@ -27,8 +27,10 @@ from datetime import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
-from typing import (Any, Callable, ClassVar, Dict, List, Optional, Sequence,
-                    Tuple, Type, TYPE_CHECKING, TypeVar, Union)
+from typing import (
+    Any, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,
+    TYPE_CHECKING, TypeVar, Union
+)
 
 import dill
 import humanize
@@ -291,19 +293,22 @@ class Select:
         """
 
         if len(select.path) == 0:
-            raise ValueError("Given selector is empty so does not name a method.")
-        
+            raise ValueError(
+                "Given selector is empty so does not name a method."
+            )
+
         firsts = select.path[:-1]
         last = select.path[-1]
 
         if not isinstance(last, StepItemOrAttribute):
-            raise ValueError("Last part of selector is not an attribute so does not name a method.")
-        
+            raise ValueError(
+                "Last part of selector is not an attribute so does not name a method."
+            )
+
         method_name = last.get_item_or_attribute()
         path = Select.Query(path=firsts)
 
         return path, method_name
-        
 
     @staticmethod
     def dequalify(select: Select.Query) -> Select.Query:
@@ -314,11 +319,11 @@ class Select:
 
         if len(select.path) == 0:
             return select
-        
+
         if select.path[0] == Select.Record.path[0] or \
             select.path[0] == Select.App.path[0]:
             return Select.Query(path=select.path[1:])
-        
+
         return select
 
     @staticmethod
