@@ -519,9 +519,14 @@ class FeedbackDefinition(WithClassInfo, SerialModel):
     # Id, if not given, unique determined from _json below.
     feedback_definition_id: FeedbackDefinitionID
 
+    # Only execute the feedback function if the following selector names
+    # something that exists in a record/app. Can use this to evaluate
+    # conditionally on presence of some calls, for example.
+    if_exists: Optional[Lens] = None
+
     # Selectors, pointers into Records of where to get
     # arguments for `imp`.
-    selectors: Dict[str, Lens]
+    selectors: Dict[str, Lens] = pydantic.Field(default_factory=dict)
 
     supplied_name: Optional[str] = None
 
@@ -529,9 +534,6 @@ class FeedbackDefinition(WithClassInfo, SerialModel):
         self,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         implementation: Optional[Union[Function, Method]] = None,
-        aggregator: Optional[Union[Function, Method]] = None,
-        selectors: Optional[Dict[str, Lens]] = None,
-        supplied_name: Optional[str] = None,
         **kwargs
     ):
         """
@@ -547,14 +549,9 @@ class FeedbackDefinition(WithClassInfo, SerialModel):
           aggregation function.
         """
 
-        selectors = selectors or dict()
-
         super().__init__(
             feedback_definition_id="temporary",
-            selectors=selectors,
             implementation=implementation,
-            aggregator=aggregator,
-            supplied_name=supplied_name,
             **kwargs
         )
 

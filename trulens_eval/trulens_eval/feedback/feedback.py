@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from concurrent.futures import Future
 from datetime import datetime
 from inspect import Signature
 from inspect import signature
@@ -14,6 +17,7 @@ import pydantic
 
 from trulens_eval.feedback import AggCallable
 from trulens_eval.feedback import ImpCallable
+from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
@@ -24,10 +28,12 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
 from trulens_eval.utils.text import UNICODE_YIELD
@@ -36,6 +42,46 @@ from trulens_eval.utils.threading import TP
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+
+def RAG_triad(
+    provider: LLMProvider,
+    question: Lens,
+    answer: Lens,
+    context: Lens
+) -> Tuple[Feedback, ...]:
+    """
+    Creates a triad of feedback functions for evaluating context retrieval generation steps.
+
+    Parameters:
+    
+    - provider: LLMProvider -- the provider to use for implementing the feedback
+      functions,
+    
+    - question: Lens -- a selector for the question,
+
+    - answer: Lens -- a selector for the answer,
+
+    - context: Lens -- a selector for the context.
+    """
+
+
+    assert hasattr(provider, "relevance"), "Need a provider with the `relevance` feedback function."
+    assert hasattr(provider, "qs_relevance"), "Need a provider with the `qs_relevance` feedback function."
+
+    from trulens_eval.feedback.groundedness import Groundedness
+    groudedness_provider = Groundedness(groundedness_provider=provider)
+
+    f_groundedness = Feedback(groudedness_provider.groundedness_measure, if_exists=context)\
+        .on(context).on(answer)
+
+    f_relevance = Feedback(provider.relevance, if_exists=context)\
+        .on(question).on(context)
+
+    f_qa_relevance = Feedback(provider.qs_relevance, if_exists=context)\
+        .on(question).on(answer)
+
+    return f_groundedness, f_relevance, f_qa_relevance
 
 
 # TODO Rename:
@@ -314,7 +360,7 @@ class Feedback(FeedbackDefinition):
 
         tp = TP()
 
-        futures: List['Future[Tuple[Feedback, FeedbackResult]]'] = []
+        futures: List[Future[Tuple[Feedback, FeedbackResult]]] = []
 
         for i, row in feedbacks.iterrows():
             feedback_ident = f"{row.fname} for app {row.app_json['app_id']}, record {row.record_id}"
@@ -436,13 +482,11 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordInput
 
-        return Feedback(
-            imp=self.imp,
-            selectors=new_selectors,
-            agg=self.agg,
-            name=self.supplied_name,
-            higher_is_better=self.higher_is_better
-        )
+        ret = self.model_copy()
+
+        ret.selectors=new_selectors
+
+        return ret
 
     on_input = on_prompt
 
@@ -460,13 +504,11 @@ class Feedback(FeedbackDefinition):
 
         new_selectors[arg] = Select.RecordOutput
 
-        return Feedback(
-            imp=self.imp,
-            selectors=new_selectors,
-            agg=self.agg,
-            name=self.supplied_name,
-            higher_is_better=self.higher_is_better
-        )
+        ret = self.model_copy()
+
+        ret.selectors=new_selectors
+
+        return ret
 
     on_output = on_response
 
@@ -486,16 +528,17 @@ class Feedback(FeedbackDefinition):
             new_selectors[argname] = path
             self._print_guessed_selector(argname, path)
 
-        return Feedback(
-            imp=self.imp,
-            selectors=new_selectors,
-            agg=self.agg,
-            name=self.supplied_name,
-            higher_is_better=self.higher_is_better
-        )
+        ret = self.model_copy()
+
+        ret.selectors=new_selectors
+
+        return ret
 
     def run(
-        self, app: Union[AppDefinition, JSON], record: Record
+        self,
+        app: Optional[Union[AppDefinition, JSON]] = None,
+        record: Optional[Record] = None,
+        source_data: Optional[Dict] = None
     ) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
@@ -516,20 +559,29 @@ class Feedback(FeedbackDefinition):
 
         feedback_result = FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
-            record_id=record.record_id,
+            record_id=record.record_id if record is not None else "no record",
             name=self.supplied_name
             if self.supplied_name is not None else self.name
         )
+
+        source_data = self._construct_source_data(
+            app=app_json, record=record, source_data=source_data
+        )
+
+        if self.if_exists is not None:
+            if not self.if_exists.exists(source_data):
+                logger.warning(f"Feedback {self.name} skipped as {self.if_exists} does not exist.")
+                return feedback_result
 
         # Separate try block for extracting inputs from records/apps in case a
         # user specified something that does not exist. We want to fail and give
         # a warning earlier than later.
         try:
-            input_combinations = list(
-                self.extract_selection(app=app_json, record=record)
-            )
+            input_combinations = list(self._extract_selection(source_data=source_data))
+
         except Exception as e:
-            print(e)
+            # TODO: Block here to remind us that we may want to do something
+            # better here.
             raise e
 
         try:
@@ -699,39 +751,18 @@ class Feedback(FeedbackDefinition):
 
         return self.imp.__name__
 
-    def extract_selection(
-        self, app: Union[AppDefinition, JSON], record: Record
+    def _extract_selection(
+        self, source_data: Dict
     ) -> Iterable[Dict[str, Any]]:
-        """
-        Given the `app` that produced the given `record`, extract from
-        `record` the values that will be sent as arguments to the implementation
-        as specified by `self.selectors`.
-        """
-
+        
         arg_vals = {}
 
-        for k, v in self.selectors.items():
-            if isinstance(v, Select.Query):
-                q = v
-
-            else:
-                raise RuntimeError(f"Unhandled selection type {type(v)}.")
-
-            if q.path[0] == Select.Record.path[0]:
-                o = record.layout_calls_as_app()
-            elif q.path[0] == Select.App.path[0]:
-                o = app
-            else:
-                raise ValueError(
-                    f"Query {q} does not indicate whether it is about a record or about a app."
-                )
-
-            q_within_o = Select.Query(path=q.path[1:])
+        for k, q in self.selectors.items():
             try:
-                arg_vals[k] = list(q_within_o.get(o))
+                arg_vals[k] = list(q.get(source_data))
             except Exception as e:
                 raise RuntimeError(
-                    f"Could not locate {q_within_o} in app/record."
+                    f"Could not locate {q} in recorded data."
                 )
 
         keys = arg_vals.keys()
@@ -741,3 +772,53 @@ class Feedback(FeedbackDefinition):
 
         for assignment in assignments:
             yield {k: v for k, v in zip(keys, assignment)}
+
+        pass
+
+    def _construct_source_data(
+        self,
+        app: Optional[Union[AppDefinition, JSON]] = None,
+        record: Optional[Record] = None,
+        source_data: Optional[Dict] = None
+    ) -> Dict:
+        """
+        Combine sources of data to be selected over from three sources: `app`
+        structure, `record`, and any extras in a dict `source_data`.
+        """
+                
+        if source_data is None:
+            source_data = dict()
+        else:
+            source_data = dict(source_data) # copy
+
+        if app is not None:
+            source_data["__app__"] = app
+
+        if record is not None:
+            source_data["__record__"] = record.layout_calls_as_app()
+
+        return source_data
+    
+
+    def extract_selection(
+        self,
+        app: Optional[Union[AppDefinition, JSON]] = None,
+        record: Optional[Record] = None,
+        source_data: Optional[Dict] = None
+    ) -> Iterable[Dict[str, Any]]:
+        """
+        Given the `app` that produced the given `record`, extract from `record`
+        the values that will be sent as arguments to the implementation as
+        specified by `self.selectors`. Additional data to select from can be
+        provided in `source_data`. All args are optional. If a `Record` is
+        specified, its calls are laid out as app (see
+        `Record.layout_calls_as_app`).
+        """
+
+        return self._extract_selection(
+            source_data=self._construct_source_data(
+                app=app, record=record, source_data=source_data
+            )
+        )
+
+        

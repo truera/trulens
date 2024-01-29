@@ -576,6 +576,20 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         super().__init__(path=tuple(path))
 
+    def exists(self, obj: Any) -> bool:
+        """
+        Check whether the path exists in the given object.
+        """
+
+        try:
+            for _ in self.get(obj):
+                return True
+
+        except (KeyError, IndexError, ValueError):
+            return False
+        
+        return False
+
     @staticmethod
     def of_string(s: str) -> Lens:
         """

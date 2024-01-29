@@ -627,6 +627,9 @@ class WithClassInfo(pydantic.BaseModel):
         except RuntimeError:
             return obj
 
+        # TODO: We shouldn't be doing a lot of these pydantic details but could
+        # not find how to integrate with existing pydantic functionality. Please
+        # figure it out.
         validated = dict()
         for k, finfo in cls.model_fields.items():
             typ = finfo.annotation
@@ -655,6 +658,7 @@ class WithClassInfo(pydantic.BaseModel):
         cls: Optional[type] = None,
         **kwargs
     ):
+
         if obj is not None:
             warnings.warn(
                 "`obj` does not need to be provided to WithClassInfo any more",

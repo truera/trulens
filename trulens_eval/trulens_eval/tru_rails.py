@@ -39,6 +39,26 @@ OptionalImports(messages=REQUIREMENT_RAILS).assert_installed(nemoguardrails)
 
 from trulens_eval.tru_chain import LangChainInstrument
 
+class RailsActionSelect(Select):
+    """
+    Selector shorthands for NEMO guardrails apps when used for evaluating
+    feedback in actions. These should not be used for feedback functions given
+    to `TruRails`.
+    """
+
+    Action = Lens().action
+
+    Events = Action.events
+    Context = Action.context # NOTE: this is not the same "context" as in RAG
+    LLM = Action.llm
+    Config = Action.config
+
+    UserMessage = Context.user_message
+    BotMessage = Context.bot_message
+
+    LastUserMessage = Context.last_user_message
+    LastBotMessage = Context.last_bot_message
+
 
 class RailsInstrument(Instrument):
 
