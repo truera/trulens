@@ -146,8 +146,10 @@ class Tru(SingletonPerName):
 
         if database_file:
             warnings.warn(
-                ("`database_file` is deprecated, "
-                "use `database_url` instead as in `database_url='sqlite:///filename'."),
+                (
+                    "`database_file` is deprecated, "
+                    "use `database_url` instead as in `database_url='sqlite:///filename'."
+                ),
                 DeprecationWarning,
                 stacklevel=2
             )

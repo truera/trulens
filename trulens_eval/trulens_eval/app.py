@@ -935,7 +935,6 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             **kwargs
         )
 
-
     def _throw_dep_message(
         self, method, is_async: bool = False, with_record: bool = False
     ):
@@ -980,7 +979,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         self.tru.add_feedback(res)
 
     def _handle_record(
-        self, record: Record, feedback_mode: Optional[FeedbackMode] = None
+        self,
+        record: Record,
+        feedback_mode: Optional[FeedbackMode] = None
     ) -> Optional[List['Future[Tuple[Feedback, FeedbackResult]]']]:
         """
         Write out record-related info to database if set and schedule feedback
@@ -1016,10 +1017,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
             return None
 
-        elif feedback_mode in [
-            FeedbackMode.WITH_APP,
-            FeedbackMode.WITH_APP_THREAD
-        ]:
+        elif feedback_mode in [FeedbackMode.WITH_APP,
+                               FeedbackMode.WITH_APP_THREAD]:
 
             return self.tru._submit_feedback_functions(
                 record=record,
