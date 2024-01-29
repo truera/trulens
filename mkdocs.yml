@@ -137,6 +137,7 @@ nav:
               - TruChain: trulens_eval/api/truchain.md
               - TruLlama: trulens_eval/api/trullama.md
               - TruCustom: trulens_eval/api/trucustom.md
+              - TruVirtual: trulens_eval/api/truvirtual.md
       - Guides:
           - 🔍 Use Cases:
               - Any LLM App: trulens_eval/use_cases_any.md
