@@ -88,7 +88,6 @@ class JSONTestCase(TestCase):
 
                 recur(getattr(j1, f), getattr(j2, f), path[f])
 
-
         else:
             raise RuntimeError(
                 f"Don't know how to compare objects of type {type(j1)} at {ps}."

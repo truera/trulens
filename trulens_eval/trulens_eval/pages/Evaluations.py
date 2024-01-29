@@ -69,6 +69,7 @@ feedback_directions = {
 }
 default_direction = "HIGHER_IS_BETTER"
 
+
 def render_component(query, component, header=True):
     # Draw the accessor/path within the wrapped app of the component.
     if header:
@@ -105,6 +106,7 @@ def render_component(query, component, header=True):
         with st.expander("Unhandled Component Details:"):
             st.json(jsonify_for_ui(component.json))
 
+
 # Renders record level metrics (e.g. total tokens, cost, latency) compared to the average when appropriate
 def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
     app_specific_df = app_df[app_df["app_id"] == selected_rows["app_id"][0]]
@@ -134,6 +136,7 @@ def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
         delta_color="inverse",
     )
 
+
 # Define a function to extract record metadata from each row
 def extract_metadata(row):
     """
@@ -147,6 +150,7 @@ def extract_metadata(row):
     """
     record_data = json.loads(row['record_json'])
     return str(record_data["meta"])
+
 
 if df_results.empty:
     st.write("No records yet...")
@@ -197,7 +201,9 @@ else:
         evaluations_df['output'] = decoded_output
 
         # Apply the function to each row and create a new column 'record_metadata'
-        evaluations_df['record_metadata'] = evaluations_df.apply(extract_metadata, axis=1)
+        evaluations_df['record_metadata'] = evaluations_df.apply(
+            extract_metadata, axis=1
+        )
 
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
@@ -328,7 +334,7 @@ else:
                     st.write("No record metadata available")
                 else:
                     metadata_cols = list(metadata_dict.keys())
-    
+
                     metadata_cols = st.columns(len(metadata_cols))
 
                     for i, (key, value) in enumerate(metadata_dict.items()):
@@ -344,7 +350,7 @@ else:
                 for fcol in feedback_cols:
                     feedback_name = fcol
                     feedback_result = row[fcol]
-                    
+
                     if MULTI_CALL_NAME_DELIMITER in fcol:
                         fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
                     feedback_calls = row[f"{fcol}_calls"]
