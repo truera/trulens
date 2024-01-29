@@ -15,7 +15,8 @@ from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost, FeedbackMode
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
@@ -26,7 +27,9 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import Module
 from trulens_eval.utils.pyschema import Obj
-from trulens_eval.utils.serial import JSON, GetAttribute, GetItemOrAttribute
+from trulens_eval.utils.serial import GetAttribute
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
@@ -48,7 +51,7 @@ class VirtualApp(dict):
 
         if isinstance(__name, str):
             return super().__setitem__(__name, __value)
-        
+
         # Chop off __app__ or __record__ prefix if there.
         __name = Select.dequalify(__name)
 
@@ -79,10 +82,7 @@ virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name="root")
 # Method name will be replaced by the last attribute in the selector provided by
 # user:
 virtual_method_call = Method(
-    cls=virtual_class,
-    obj=virtual_object,
-    name=
-    "method_name_not_set"  
+    cls=virtual_class, obj=virtual_object, name="method_name_not_set"
 )
 
 
@@ -277,7 +277,11 @@ class TruVirtual(App):
 
         super().__init__(app=app, **kwargs)
 
-    def add_record(self, record: Record, feedback_mode: Optional[FeedbackMode] = None) -> Record:
+    def add_record(
+        self,
+        record: Record,
+        feedback_mode: Optional[FeedbackMode] = None
+    ) -> Record:
         """
         Add the given record to the database and evaluate any pre-specified
         feedbacks on it. The class `VirtualRecord` may be useful for creating
@@ -289,9 +293,11 @@ class TruVirtual(App):
             feedback_mode = self.feedback_mode
 
         record.app_id = self.app_id
-        
+
         # Creates feedback futures.
-        record.feedback_results = self._handle_record(record, feedback_mode=feedback_mode)
+        record.feedback_results = self._handle_record(
+            record, feedback_mode=feedback_mode
+        )
 
         # Wait for results if mode is WITH_APP.
         if feedback_mode == FeedbackMode.WITH_APP and record.feedback_results is not None:
@@ -299,13 +305,13 @@ class TruVirtual(App):
             futures.wait(futs)
 
         return record
-    
+
 
 TruVirtual.model_rebuild()
 
 # Need these to make sure rebuild below works.
 from typing import List
-from trulens_eval.schema import \
-    TFeedbackResultFuture  
+
+from trulens_eval.schema import TFeedbackResultFuture
 
 VirtualRecord.model_rebuild()
