@@ -306,7 +306,7 @@ class TestProviders(TestCase):
                         try:
                             actual = imp(**args)
                             self.assertAlmostEqual(actual, expected, delta=0.2)
-                        except AssertionError as e:
+                        except AssertionError:
                             failed_tests += 1
                             failed_subtests.append((subtest_name, actual, expected))
 
