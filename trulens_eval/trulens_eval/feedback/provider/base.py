@@ -808,7 +808,7 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not controversial) and 1.0 (controversial).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
         )
 
     def misogyny(self, text: str) -> float:
