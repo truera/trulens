@@ -10,8 +10,6 @@ from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains import LLMChain
 from langchain.chains import SimpleSequentialChain
-# from langchain.chat_models.openai import ChatOpenAI # Deprecated
-from langchain_openai import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms.openai import OpenAI
 from langchain.memory import ConversationBufferWindowMemory
@@ -19,6 +17,8 @@ from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
 from langchain.vectorstores import Pinecone
+# from langchain.chat_models.openai import ChatOpenAI # Deprecated
+from langchain_openai import ChatOpenAI
 import pinecone
 from tests.unit.test import JSONTestCase
 
@@ -210,7 +210,6 @@ class TestTruChain(JSONTestCase):
         # self.assertGreater(costs1[0].cost.n_stream_chunks, 0)
         # self.assertGreater(costs2[0].cost.n_stream_chunks, 0)
 
-
     def test_async_with_record(self):
         # Check that the async awith_record produces the same stuff as the
         # sync with_record.
@@ -237,7 +236,8 @@ class TestTruChain(JSONTestCase):
         llm = ChatOpenAI(temperature=0.0)
         chain = LLMChain(llm=llm, prompt=prompt)
         tc = tru.Chain(chain)
-        async_res, async_record = sync(tc.awith_record,
+        async_res, async_record = sync(
+            tc.awith_record,
             tc.app,
             inputs=dict(question=message),
         )
@@ -248,7 +248,10 @@ class TestTruChain(JSONTestCase):
             async_record.model_dump(),
             sync_record.model_dump(),
             skips=set(
-                ["id", "name", "ts", "start_time", "end_time", "record_id", "tid", "pid", "app_id"]
+                [
+                    "id", "name", "ts", "start_time", "end_time", "record_id",
+                    "tid", "pid", "app_id"
+                ]
             )
         )
 
