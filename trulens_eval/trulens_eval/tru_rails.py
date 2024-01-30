@@ -7,8 +7,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import pformat
-from pprint import pprint
-from typing import Any, Callable, ClassVar, Dict, List, Optional
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
 
 from langchain_core.language_models.base import BaseLanguageModel
 from pydantic import Field
@@ -49,7 +48,8 @@ class RailsActionSelect(Select):
     """
     Selector shorthands for NEMO guardrails apps when used for evaluating
     feedback in actions. These should not be used for feedback functions given
-    to `TruRails`.
+    to `TruRails` but instead for selectors in the `FeedbackActions` action
+    invoked from with a rails app.
     """
 
     Action = Lens().action
@@ -74,10 +74,26 @@ class RailsActionSelect(Select):
 registered_feedback_functions = {}
 
 class FeedbackActions():
+    """
+    Feedback action action for NEMO guardrails apps. See docstring of method
+    `feedback`.
+    """
+
     @staticmethod
-    def register_feedback_functions(**kwargs):
+    def register_feedback_functions(*args, **kwargs):
+        """
+        Register one or more feedback functions to use in rails "feedback"
+        action. All keyword arguments indicate the key as the keyword. All
+        positional arguments use the feedback name as the key.
+        """
+
         for name, feedback in kwargs.items():
+            print(f"registered feedback function under name {name}")
             registered_feedback_functions[name] = feedback
+
+        for feedback in args:
+            print(f"registered feedback function under name {feedback.name}")
+            registered_feedback_functions[feedback.name] = feedback
 
     @action(name="feedback")
     @staticmethod
@@ -87,7 +103,7 @@ class FeedbackActions():
         llm: Optional[BaseLanguageModel] = None,
         config: Optional[RailsConfig] = None,
         function: Optional[str] = None,
-        selectors: Optional[Dict[str, Lens]] = None,
+        selectors: Optional[Dict[str, Union[str, Lens]]] = None,
         verbose: bool = False
     ) -> ActionResult:
 
@@ -98,21 +114,24 @@ class FeedbackActions():
         
         ```python
         rails: LLMRails = ... # your app
-        relevance_feedback: Feedback = Feedback(...) # your feedback function
+        language_match: Feedback = Feedback(...) # your feedback function
 
-        FeedbackAction.register_feedback_functions(relevance=relevance_feedback)
+        # First we register some feedback functions with the custom action:
+        FeedbackAction.register_feedback_functions(language_match)
+
         # Can also use kwargs expansion from dict like produced  by RAG_triad:
         # FeedbackAction.register_feedback_functions(**RAG_triad(...))
 
-        rails.register_action(FeedbackAction)
+        # Then the feedback method needs to be registered with the rails app:
+        rails.register_action(FeedbackAction.feedback)
         ```
 
         Args:
             - function: str -- the feedback function to run.
             
             - selectors: Dict[str, Union[str, Lens]] -- the selectors for the
-            function. Can be provided either as strings to be parsed into lenses
-            or lenses themselves.
+              function. Can be provided either as strings to be parsed into lenses
+              or lenses themselves.
             
             - verbose: bool -- whether to print the values of the selectors
               before running feedback and print the result after running
@@ -122,9 +141,6 @@ class FeedbackActions():
 
         Returns:
             ActionResult: An action result containing the result of the feedback.
-
-        Note:
-            ...
 
         Example:
             ```colang
@@ -138,6 +154,7 @@ class FeedbackActions():
                     )
                     if $result < 0.8
                         bot inform language mismatch
+                        stop
             ```
         """
 
@@ -235,7 +252,10 @@ class RailsInstrument(Instrument):
                     "generate_events",
                     "compute_next_steps"
                 ): lambda o: isinstance(o, Runtime),
-                "feedback": lambda o: isinstance(o, FeedbackActions),
+
+                # TODO: Include feedback method in FeedbackActions, currently
+                # bugged and will not be logged.
+                "feedback": lambda o: isinstance(o, FeedbackActions), 
             }
         )
 
