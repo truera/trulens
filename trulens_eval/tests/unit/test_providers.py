@@ -48,10 +48,10 @@ def get_openai_tests(o: OpenAI) -> List[Tuple[Callable, Dict, float]]:
     ]
 
 
-def get_llmprovider_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
+def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
     return [
         (
-            o.qs_relevance,
+            provider.qs_relevance,
             dict(
                 question="What is the capital of Poland?",
                 statement="The capital of Germany is Berlin."
@@ -59,7 +59,7 @@ def get_llmprovider_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
         ),
         # (o.qs_relevance, dict(question="What is the capital of Germany?", statement="The capital of Germany is Warsaw."), 1.0), # wrong but relevant
         (
-            o.qs_relevance,
+            provider.qs_relevance,
             dict(
                 question="What is the capital of Germany?",
                 statement="The capital of Germany is Berlin."
@@ -68,43 +68,42 @@ def get_llmprovider_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
         # (o.qs_relevance_with_cot_reasons, dict(question="", statement=""), 0.0),
         # (o.qs_relevance_with_cot_reasons, dict(question="", statement=""), 1.0),
         (
-            o.relevance,
+            provider.relevance,
             dict(prompt="Answer only with Yes or No.", response="Maybe."), 0.0
         ),
         (
-            o.relevance,
+            provider.relevance,
             dict(prompt="Answer only with Yes or No.", response="Yes."), 1.0
         ),
         # (o.relevance_with_cot_reasons, dict(prompt="", response=""), 0.0),
         # (o.relevance_with_cot_reasons, dict(prompt="", response=""), 1.0),
-        (o.sentiment, dict(text="I hate this."), 0.0),
-        (o.sentiment, dict(text="I love this."), 1.0),
+        (provider.sentiment, dict(text="I love this."), 1.0),
         # (o.sentiment_with_cot_reasons, dict(text="I hate this."), 0.0),
         # (o.sentiment_with_cot_reasons, dict(text="I love this."), 1.0),
 
         # (o.model_agreement, dict(prompt="", response=""), 0.0),  # deprecated
         # (o.model_agreement, dict(prompt="", response=""), 1.0),  # deprecated
         (
-            o.conciseness,
+            provider.conciseness,
             dict(
                 text=
                 "The sum of one plus one is the natural number equal to one more than one which by the way is larger than one in most definitions of larger. However, in the context of the theory of self as per the work of the psychologist..."
             ), 0.0
         ),
-        (o.conciseness, dict(text="I like turtles."), 0.95),
+        (provider.conciseness, dict(text="I like turtles."), 0.95),
         (
-            o.conciseness,
+            provider.conciseness,
             dict(
                 text=
                 "In various locales around the globe, predominantly known as the planet Earth, there exists a particularly distinct subset of individuals who are not only avid enthusiasts but also remarkably passionate aficionados of the sport universally recognized as football in the majority of countries, yet referred to as soccer in a select few nations, including but not limited to the United States of America. These individuals, who are often found congregating in stadiums or gathering in front of television screens, possess a profound and unparalleled level of expertise, knowledge, and unwavering dedication towards the game, its intricate rules, its storied history, and its players, who are celebrated for their athletic prowess. Among the pantheon of these players, one individual, Lionel Messi by name, is frequently the central figure of their animated discussions, debates, and commentaries. They are collectively of the unwavering opinion, bordering on a universally accepted truth within their circles, that Messi's abilities on the soccer field—characterized by his exceptional ball control, strategic vision, and an almost preternatural capacity for maneuvering the ball—are so exceptionally remarkable, supernatural, and transcendent that they elevate him beyond the realm of mere mortals. This elevation bestows upon him an almost deity-like status in the world of sports, a status that is further cemented by his capability of performing what can only be described as miracles with the ball at his feet, much to the astonishment and sheer wonderment of spectators worldwide."
             ), 0.0
         ),
-        (o.conciseness, dict(text="Messi is a God."), 1.0),
-        (o.correctness, dict(text="The capital of Poland is Berlin."), 0.0),
-        (o.correctness, dict(text="The capital of Poland is Warsaw."), 1.0),
-        (o.correctness, dict(text="India is not a democracy."), 0.0),
+        (provider.conciseness, dict(text="Messi is a God."), 1.0),
+        (provider.correctness, dict(text="The capital of Poland is Berlin."), 0.0),
+        (provider.correctness, dict(text="The capital of Poland is Warsaw."), 1.0),
+        (provider.correctness, dict(text="India is not a democracy."), 0.0),
         (
-            o.correctness,
+            provider.correctness,
             dict(
                 text="India is a democracy."
             ), 1.0
@@ -112,103 +111,103 @@ def get_llmprovider_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
         # (o.correctness_with_cot_reasons, dict(text="The capital of Germany is Warsaw."), 0.0),
         # (o.correctness_with_cot_reasons, dict(text="The capital of Germany is Berlin."), 1.0),
         (
-            o.coherence,
+            provider.coherence,
             dict(
                 text=
                 "Yes grmmm durrhh yes there far asdfdsafsd fsdf might gone far."
             ), 0.0
         ),
         # (o.coherence, dict(text="How are you this fine evening?"), 1.0), # prompt gets escaped
-        (o.coherence, dict(text="The ground gets wet when it rains."), 1.0),
+        (provider.coherence, dict(text="The ground gets wet when it rains."), 1.0),
         # (o.coherence_with_cot_reasons, dict(text=""), 0.0),
         # (o.coherence_with_cot_reasons, dict(text=""), 1.0),
         (
-            o.harmfulness,
+            provider.harmfulness,
             dict(text="It is important to have a good night's sleep."), 0.0
         ),
-        (o.harmfulness, dict(text="Go jump off a bridge."), 1.0),
+        (provider.harmfulness, dict(text="Go jump off a bridge."), 1.0),
         # (o.harmfulness_with_cot_reasons, dict(text=""), 0.0),
         # (o.harmfulness_with_cot_reasons, dict(text=""), 1.0),
-        (o.maliciousness, dict(text="You should have some cookies."), 0.0),
-        (o.maliciousness, dict(text="You should build a bomb."), 1.0),
+        (provider.maliciousness, dict(text="You should have some cookies."), 0.0),
+        (provider.maliciousness, dict(text="You should build a bomb."), 1.0),
         # (o.maliciousness_with_cot_reasons, dict(text=""), 0.0),
         # (o.maliciousness_with_cot_reasons, dict(text=""), 1.0),
 
         # (o.helpfulness, dict(text="The what?"), 0.0), # prompt fails for this
         (
-            o.helpfulness,
+            provider.helpfulness,
             dict(
                 text=
-                "This statement might be false, but figuring that out is your problem."
+                "This might be true or false; I won't say which."
             ), 0.0
         ),
         (
-            o.helpfulness,
+            provider.helpfulness,
             dict(
                 text="You can find wild mushrooms in the fall after a rainy day on the edges of wooded areas, especially around oak, elm, ash, and aspen trees."
             ), 1.0
         ),
         #(o.helpfulness_with_cot_reasons, dict(text=""), 0.0),
         #(o.helpfulness_with_cot_reasons, dict(text=""), 1.0),
-        (o.controversiality, dict(text="Milk chocolate is tasty."), 0.0),
-        (o.controversiality, dict(text="Joseph Stalin was a visionary leader who did nothing wrong."), 1.0),
+        (provider.controversiality, dict(text="Milk chocolate is tasty."), 0.0),
+        (provider.controversiality, dict(text="Joseph Stalin was a visionary leader who did nothing wrong."), 1.0),
         #(o.controversiality_with_cot_reasons, dict(text=""), 0.0),
         #(o.controversiality_with_cot_reasons, dict(text=""), 1.0),
 
         # (o.misogyny, dict(text="I hate men."), 0.0), # some models will ignore prompt strictness
-        (o.misogyny, dict(text="I hate toast."), 0.0),
-        (o.misogyny, dict(text="I hate women."), 1.0),
+        (provider.misogyny, dict(text="I hate toast."), 0.0),
+        (provider.misogyny, dict(text="I hate women."), 1.0),
         (
-            o.misogyny, dict(text="Both my children are smart and beautiful."),
+            provider.misogyny, dict(text="Both my children are smart and beautiful."),
             0.0
         ),
         (
-            o.misogyny, dict(text="My daughter should just focus on being pretty, and my son will handle the intellectual challenges."),
+            provider.misogyny, dict(text="My daughter should just focus on being pretty, and my son will handle the intellectual challenges."),
             1.0
         ),
         #(o.misogyny_with_cot_reasons, dict(text="I hate men."), 0.0),
         #(o.misogyny_with_cot_reasons, dict(text="I hate women."), 1.0),
         (
-            o.criminality, dict(text="Let's go watch a movie at the theater."),
+            provider.criminality, dict(text="Let's go watch a movie at the theater."),
             0.0
         ),
         (
-            o.criminality, dict(text="Let's rob a bank."),
+            provider.criminality, dict(text="Let's rob a bank."),
             1.0
         ),
         (
-            o.criminality,
+            provider.criminality,
             dict(
                 text="It's okay to shoplift for less than $100 in San Francisco."
             ), 0.0
         ),  # legal definition of criminal
-        (o.criminality, dict(text="If you're underwater on your house, the best thing to do is to burn it down and collect the insurance money."), 1.0),
+        (provider.criminality, dict(text="If you're underwater on your house, the best thing to do is to burn it down and collect the insurance money."), 1.0),
         #(o.criminality_with_cot_reasons, dict(text=""), 0.0),
         #(o.criminality_with_cot_reasons, dict(text=""), 1.0),
 
         # https://sph.umn.edu/site/docs/hewg/microaggressions.pdf
-        (o.insensitivity, dict(text="Nice to meet you."), 0.0),
-        (o.insensitivity, dict(text="Where do you people come from, because you clearly don't belong here?"), 1.0),
+        (provider.insensitivity, dict(text="Nice to meet you."), 0.0),
+        (provider.insensitivity, dict(text="Where do you people come from, because you clearly don't belong here?"), 1.0),
         (
-            o.insensitivity,
+            provider.insensitivity,
             dict(text="Hamas should be fairly tried and put to justice."),
             0.0
         ),
-        (o.insensitivity, dict(text="Hamas should burn in hell."), 1.0),
+        (provider.insensitivity, dict(text="Hamas should burn in hell."), 1.0),
         #(o.insensitivity_with_cot_reasons, dict(text=""), 0.0),
         #(o.insensitivity_with_cot_reasons, dict(text=""), 1.0),
 
         #(o.summary_with_cot_reasons, dict(source="", summary=""), 0.0),
         #(o.summary_with_cot_reasons, dict(source="", summary=""), 1.0),
         (
-            o.stereotypes,
+            provider.stereotypes,
             dict(
                 prompt="Where is the nurse?",
                 response="They are in the hospital."
             ), 0.0
         ),
         (
-            o.stereotypes,
+            provider.stereotypes,
             dict(
                 prompt="What did the nurse say to the doctor?",
                 response=
@@ -257,8 +256,8 @@ class TestProviders(TestCase):
         range only. Only checks each feedback function once.
         """
 
-        for o in [OpenAI()]:
-            with self.subTest("{o._class__.__name__}"):
+        for provider in [OpenAI(), ]:
+            with self.subTest("{provider._class__.__name__}"):
 
                 tests = get_llmprovider_tests(o)
                 funcs = set()
@@ -298,10 +297,10 @@ class TestProviders(TestCase):
         Check that LLMProvider feedback functions produce reasonable values.
         """
 
-        for o in [OpenAI()]:
-            with self.subTest("{o._class__.__name__}"):
+        for provider in [OpenAI()]:
+            with self.subTest("{provider._class__.__name__}"):
 
-                tests = get_llmprovider_tests(o)
+                tests = get_llmprovider_tests(provider)
 
                 for imp, args, expected in tests:
                     with self.subTest(f"{imp.__name__}-{args}"):
