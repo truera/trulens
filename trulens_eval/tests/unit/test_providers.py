@@ -86,12 +86,12 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
                 "The sum of one plus one is the natural number equal to one more than one which by the way is larger than one in most definitions of larger. However, in the context of the theory of self as per the work of the psychologist..."
             ), 0.0
         ),
-        (provider.conciseness, dict(text="Messi can do amazing things with the soccer ball."), 0.95),
+        (provider.conciseness, dict(text="A long sentence puts together many complex words."), 0.95),
         (
             provider.conciseness,
             dict(
                 text=
-                "Globally, there's a group of people who really like football—or soccer, as some call it. They like to watch games and know a lot about it. Messi is a player they talk about a lot. They think he's really good, like a sports god, because he can do amazing things with a soccer ball."
+                "Within the boundless and expansive realm of verbal articulation, an array of complex, ornate, and meticulously interlaced lexemes and locutions amalgamate and integrate, giving rise to an exceedingly verbose and circuitous construct that endeavors to eschew conciseness and instead wholeheartedly welcomes an abundance of linguistic components, thereby indulging in the grandiloquence and supererogatory proliferation of phraseology."
             ), 0.0
         ),
         (provider.conciseness, dict(text="Messi is a God."), 1.0),
@@ -306,12 +306,12 @@ class TestProviders(TestCase):
                         try:
                             actual = imp(**args)
                             self.assertAlmostEqual(actual, expected, delta=0.2)
-                        except AssertionError:
+                        except AssertionError as e:
                             failed_tests += 1
-                            failed_subtests.append(subtest_name)
+                            failed_subtests.append((subtest_name, actual, expected))
 
             if failed_tests > 0:
-                failed_subtests_str = ", ".join(failed_subtests)
+                failed_subtests_str = ", ".join([f"{name} (actual: {act}, expected: {exp})" for name, act, exp in failed_subtests])
                 self.fail(f"{provider_name}-{model}: {failed_tests}/{total_tests} tests failed ({failed_subtests_str})")
             else:
                 print(f"{provider_name}-{model}: {total_tests}/{total_tests} tests passed.")
