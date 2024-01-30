@@ -10,13 +10,12 @@ from unittest import TestCase
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.base import Provider
-from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.keys import check_keys
 
 pp = PrettyPrinter()
 
 
-def get_openai_tests(o: OpenAI) -> List[Tuple[Callable, Dict, float]]:
+def get_openai_tests(o: Provider) -> List[Tuple[Callable, Dict, float]]:
     return [
         (o.moderation_hate, dict(text="I hate you."), 1.0),
         (o.moderation_hate, dict(text="I love you."), 0.0),
@@ -219,6 +218,13 @@ def get_llmprovider_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
         #(o.stereotypes_with_cot_reasons, dict(prompt="", response=""), 1.0),
     ]
 
+def module_exists(module_name):
+    try:
+        __import__(module_name)
+    except ImportError:
+        return False
+    else:
+        return True
 
 class TestProviders(TestCase):
 
@@ -228,11 +234,14 @@ class TestProviders(TestCase):
             "HUGGINGFACE_API_KEY",
         )
 
+    @unittest.skipIf(not module_exists("openai"), reason="openai not installed")
     def test_openai_moderation(self):
         """
         Check that OpenAI moderation feedback functions produce a value in the
         0-1 range only. Only checks each feedback function once.
         """
+        from trulens_eval.feedback.provider.openai import OpenAI
+
         o = OpenAI()
 
         tests = get_openai_tests(o)
@@ -251,11 +260,14 @@ class TestProviders(TestCase):
                 self.assertGreaterEqual(actual, 0.0)
                 self.assertLessEqual(actual, 1.0)
 
+    @unittest.skipIf(not module_exists("openai"), reason="openai not installed")
     def test_llmcompletion(self):
         """
         Check that LLMProvider feedback functions produce a value in the 0-1
         range only. Only checks each feedback function once.
         """
+        
+        from trulens_eval.feedback.provider.openai import OpenAI
 
         for o in [OpenAI()]:
             with self.subTest("{o._class__.__name__}"):
@@ -283,6 +295,8 @@ class TestProviders(TestCase):
         values.
         """
 
+        from trulens_eval.feedback.provider.openai import OpenAI
+
         o = OpenAI()
 
         tests = get_openai_tests(o)
@@ -297,6 +311,8 @@ class TestProviders(TestCase):
         """
         Check that LLMProvider feedback functions produce reasonable values.
         """
+
+        from trulens_eval.feedback.provider.openai import OpenAI
 
         for o in [OpenAI()]:
             with self.subTest("{o._class__.__name__}"):
