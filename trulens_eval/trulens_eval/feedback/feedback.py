@@ -46,23 +46,27 @@ pp = pprint.PrettyPrinter()
 
 def RAG_triad(
     provider: LLMProvider,
-    question: Lens,
-    answer: Lens,
-    context: Lens
-) -> Tuple[Feedback, ...]:
+    question: Optional[Lens] = None,
+    answer: Optional[Lens] = None,
+    context: Optional[Lens] = None
+) -> Dict[str, Feedback]:
     """
-    Creates a triad of feedback functions for evaluating context retrieval generation steps.
+    Creates a triad of feedback functions for evaluating context retrieval
+    generation steps. If a particular lens is not provided, the relevant
+    selectors will be missing. These can be filled in later or the triad can be
+    used for rails feedback actions whick fill in the selectors based on
+    specification from within colang.
 
     Parameters:
     
     - provider: LLMProvider -- the provider to use for implementing the feedback
       functions,
     
-    - question: Lens -- a selector for the question,
+    - question: Optional[Lens] -- a selector for the question,
 
-    - answer: Lens -- a selector for the answer,
+    - answer: Optional[Lens] -- a selector for the answer,
 
-    - context: Lens -- a selector for the context.
+    - context: Optional[Lens] -- a selector for the context.
     """
 
 
@@ -72,16 +76,46 @@ def RAG_triad(
     from trulens_eval.feedback.groundedness import Groundedness
     groudedness_provider = Groundedness(groundedness_provider=provider)
 
-    f_groundedness = Feedback(groudedness_provider.groundedness_measure, if_exists=context)\
-        .on(context).on(answer)
+    are_complete: bool = True
 
-    f_relevance = Feedback(provider.relevance, if_exists=context)\
-        .on(question).on(context)
+    ret = {}
 
-    f_qa_relevance = Feedback(provider.qs_relevance, if_exists=context)\
-        .on(question).on(answer)
+    for f_imp, f_agg, arg1name, arg1lens, arg2name, arg2lens in [(
+        groudedness_provider.groundedness_measure_with_cot_reasons,
+        groudedness_provider.grounded_statements_aggregator,
+        "source", context,
+        "statement", answer
+    ), (
+        provider.relevance,
+        np.mean,
+        "prompt", question,
+        "response", context
+    ), (
+        provider.qs_relevance,
+        np.mean,
+        "question", question,
+        "statement", answer
+    )]:
+        f = Feedback(f_imp, if_exists=context).aggregate(f_agg)
+        if arg1lens is not None:
+            f = f.on(**{arg1name: arg1lens})
+        else:
+            are_complete = False
 
-    return f_groundedness, f_relevance, f_qa_relevance
+        if arg2lens is not None:
+            f = f.on(**{arg2name: arg2lens})
+        else:
+            are_complete = False
+
+        ret[f.name] = f
+
+    if not are_complete:
+        logger.warning(
+            "Some or all RAG triad feedback functions do not have all their selectors set. "
+            "This may be ok if they are to be used for colang actions."
+        )
+
+    return ret
 
 
 # TODO Rename:

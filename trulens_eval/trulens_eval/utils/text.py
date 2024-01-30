@@ -29,3 +29,7 @@ def make_retab(tab):
         return tab + f"\n{tab}".join(lines)
 
     return retab
+
+def retab(tab: str, s: str):
+    lines = s.split("\n")
+    return tab + f"\n{tab}".join(lines)

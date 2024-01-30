@@ -2,17 +2,21 @@
 # NEMO Guardrails instrumentation and monitoring. 
 """
 
+import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
-from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional
+from pprint import pformat
+from pprint import pprint
+from typing import Any, Callable, ClassVar, Dict, List, Optional
 
+from langchain_core.language_models.base import BaseLanguageModel
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Select
+from trulens_eval.tru_chain import LangChainInstrument
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_RAILS
@@ -22,22 +26,24 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
+from trulens_eval.utils.text import retab
 
 logger = logging.getLogger(__name__)
 
-pp = PrettyPrinter()
-
 with OptionalImports(messages=REQUIREMENT_RAILS):
     import nemoguardrails
+    from nemoguardrails import LLMRails
+    from nemoguardrails import RailsConfig
+    from nemoguardrails.actions.action_dispatcher import ActionDispatcher
+    from nemoguardrails.actions.actions import action
+    from nemoguardrails.actions.actions import ActionResult
     from nemoguardrails.actions.llm.generation import LLMGenerationActions
     from nemoguardrails.flows.runtime import Runtime
     from nemoguardrails.kb.kb import KnowledgeBase
     from nemoguardrails.rails.llm.llmrails import LLMRails
-    from nemoguardrails.actions.action_dispatcher import ActionDispatcher
     
 OptionalImports(messages=REQUIREMENT_RAILS).assert_installed(nemoguardrails)
 
-from trulens_eval.tru_chain import LangChainInstrument
 
 class RailsActionSelect(Select):
     """
@@ -48,16 +54,150 @@ class RailsActionSelect(Select):
 
     Action = Lens().action
 
+    # default action function arguments
     Events = Action.events
     Context = Action.context # NOTE: this is not the same "context" as in RAG
     LLM = Action.llm
     Config = Action.config
+
+    RetrievalContexts = Context.relevant_chunks_sep
 
     UserMessage = Context.user_message
     BotMessage = Context.bot_message
 
     LastUserMessage = Context.last_user_message
     LastBotMessage = Context.last_bot_message
+
+
+# NOTE(piotrm): Cannot have this inside FeedbackActions presently due to perhaps
+# some closure-related issues with the @action decorator below.
+registered_feedback_functions = {}
+
+class FeedbackActions():
+    @staticmethod
+    def register_feedback_functions(**kwargs):
+        for name, feedback in kwargs.items():
+            registered_feedback_functions[name] = feedback
+
+    @action(name="feedback")
+    @staticmethod
+    async def feedback(
+        events: Optional[List[Dict]] = None, 
+        context: Optional[Dict] = None,
+        llm: Optional[BaseLanguageModel] = None,
+        config: Optional[RailsConfig] = None,
+        function: Optional[str] = None,
+        selectors: Optional[Dict[str, Lens]] = None,
+        verbose: bool = False
+    ) -> ActionResult:
+
+        """
+        Run the specified feedback function from trulens_eval. To use this action,
+        it needs to be registered with your rails app and feedback functions
+        themselves need to be registered with this function.
+        
+        ```python
+        rails: LLMRails = ... # your app
+        relevance_feedback: Feedback = Feedback(...) # your feedback function
+
+        FeedbackAction.register_feedback_functions(relevance=relevance_feedback)
+        # Can also use kwargs expansion from dict like produced  by RAG_triad:
+        # FeedbackAction.register_feedback_functions(**RAG_triad(...))
+
+        rails.register_action(FeedbackAction)
+        ```
+
+        Args:
+            - function: str -- the feedback function to run.
+            
+            - selectors: Dict[str, Union[str, Lens]] -- the selectors for the
+            function. Can be provided either as strings to be parsed into lenses
+            or lenses themselves.
+            
+            - verbose: bool -- whether to print the values of the selectors
+              before running feedback and print the result after running
+              feedback.
+
+            - the other args are action defaults args.
+
+        Returns:
+            ActionResult: An action result containing the result of the feedback.
+
+        Note:
+            ...
+
+        Example:
+            ```colang
+                define subflow check language match
+                    $result = execute feedback(\
+                        function="language_match",\
+                        selectors={\
+                        "text1":"action.context.last_user_message",\
+                        "text2":"action.context.bot_message"\
+                        }\
+                    )
+                    if $result < 0.8
+                        bot inform language mismatch
+            ```
+        """
+
+        feedback_function = registered_feedback_functions.get(function)
+        
+
+        if feedback_function is None:
+            raise ValueError(
+                f"Invalid feedback function: {function}; "
+                f"there is/are {len(registered_feedback_functions)} registered function(s):\n\t" + 
+                "\n\t".join(registered_feedback_functions.keys()) + "\n"
+            )
+
+        fname = feedback_function.name
+
+        if selectors is None:
+            raise ValueError(
+                f"Need selectors for feedback function: {fname} "
+                f"with signature {inspect.signature(feedback_function.imp)}"
+            )
+        
+        selectors = {
+            argname: (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
+            for argname, arglens in selectors.items()
+        }
+
+        feedback_function = feedback_function.on(**selectors)
+
+        source_data = dict(
+            action=dict(events=events, context=context, llm=llm, config=config)
+        )
+
+        if verbose:
+            print(fname)
+            for argname, lens in feedback_function.selectors.items():
+                print(f"  {argname} = ", end=None)
+                # use pretty print for the potentially big thing here:
+                print(retab(tab="    ", s=pformat(lens.get_sole_item(source_data))))
+    
+        context_updates = {}
+        
+        try:
+            result = feedback_function.run(source_data=source_data)
+            context_updates["result"] = result.result
+
+            if verbose:
+                print(f"  {fname} result = {result.result}")
+
+        except Exception as e:
+            context_updates["result"] = None
+
+            return ActionResult(
+                return_value=context_updates["result"],
+                context_updates=context_updates,
+            )
+
+        return ActionResult(
+            return_value=context_updates["result"],
+            context_updates=context_updates,
+        )
 
 
 class RailsInstrument(Instrument):
@@ -69,7 +209,7 @@ class RailsInstrument(Instrument):
 
         # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
-            LLMRails, KnowledgeBase, LLMGenerationActions, Runtime, ActionDispatcher
+            LLMRails, KnowledgeBase, LLMGenerationActions, Runtime, ActionDispatcher, FeedbackActions
         }.union(LangChainInstrument.Default.CLASSES())
 
         # Instrument only methods with these names and of these classes. Ok to
@@ -94,7 +234,8 @@ class RailsInstrument(Instrument):
                 (
                     "generate_events",
                     "compute_next_steps"
-                ): lambda o: isinstance(o, Runtime)
+                ): lambda o: isinstance(o, Runtime),
+                "feedback": lambda o: isinstance(o, FeedbackActions),
             }
         )
 

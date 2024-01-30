@@ -565,6 +565,8 @@ class FeedbackDefinition(WithClassInfo, SerialModel):
 
         self.feedback_definition_id = feedback_definition_id
 
+    def __repr__(self):
+        return f"FeedbackDefinition(name={self.name}, ...)"
 
 # App related:
 
