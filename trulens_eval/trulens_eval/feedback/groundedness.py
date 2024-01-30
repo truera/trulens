@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, List, Optional, Tuple
 
-from nltk.tokenize import sent_tokenize
 import numpy as np
 from tqdm.auto import tqdm
 
