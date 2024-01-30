@@ -250,7 +250,7 @@ class TestTruChain(JSONTestCase):
             skips=set(
                 [
                     "id", "name", "ts", "start_time", "end_time", "record_id",
-                    "tid", "pid", "app_id"
+                    "tid", "pid", "app_id", "run_id"
                 ]
             )
         )
@@ -299,7 +299,8 @@ class TestTruChain(JSONTestCase):
                     "end_time",
                     "record_id",
                     "tid",
-                    "pid"
+                    "pid",
+                    "run_id"
                 ]
             )
         )
