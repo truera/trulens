@@ -4,19 +4,21 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 from tqdm.auto import tqdm
 
-from nltk.tokenize import sent_tokenize
-
 from trulens_eval.feedback import prompts
-from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.base import LLMProvider
+from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
+from trulens_eval.utils.imports import REQUIREMENT_GROUNDEDNESS
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
+
+with OptionalImports(messages=REQUIREMENT_GROUNDEDNESS):
+    from nltk.tokenize import sent_tokenize
 
 with OptionalImports(messages=REQUIREMENT_BEDROCK):
     from trulens_eval.feedback.provider.bedrock import Bedrock

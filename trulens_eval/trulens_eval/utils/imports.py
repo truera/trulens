@@ -156,6 +156,10 @@ REQUIREMENT_OPENAI = format_import_errors(
     'openai', purpose="using OpenAI models"
 )
 
+REQUIREMENT_GROUNDEDNESS = format_import_errors(
+    'nltk', purpose="using some groundedness feedback functions"
+)
+
 REQUIREMENT_BERT_SCORE = format_import_errors(
     "bert-score", purpose="measuring BERT Score"
 )
