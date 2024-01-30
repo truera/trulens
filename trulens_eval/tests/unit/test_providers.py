@@ -53,7 +53,6 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
                 statement="The capital of Germany is Berlin."
             ), 0.0
         ),
-        # (o.qs_relevance, dict(question="What is the capital of Germany?", statement="The capital of Germany is Warsaw."), 1.0), # wrong but relevant
         (
             provider.qs_relevance,
             dict(
@@ -61,8 +60,20 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
                 statement="The capital of Germany is Berlin."
             ), 1.0
         ),
-        # (o.qs_relevance_with_cot_reasons, dict(question="", statement=""), 0.0),
-        # (o.qs_relevance_with_cot_reasons, dict(question="", statement=""), 1.0),
+        (
+            provider.qs_relevance_with_cot_reasons,
+            dict(
+                question="What is the capital of Poland?",
+                statement="The capital of Germany is Berlin."
+            ), 0.0
+        ),
+        (
+            provider.qs_relevance_with_cot_reasons,
+            dict(
+                question="What is the capital of Germany?",
+                statement="The capital of Germany is Berlin."
+            ), 1.0
+        ),
         (
             provider.relevance,
             dict(prompt="Answer only with Yes or No.", response="Maybe."), 0.0
@@ -71,30 +82,36 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
             provider.relevance,
             dict(prompt="Answer only with Yes or No.", response="Yes."), 1.0
         ),
-        # (o.relevance_with_cot_reasons, dict(prompt="", response=""), 0.0),
-        # (o.relevance_with_cot_reasons, dict(prompt="", response=""), 1.0),
-        (provider.sentiment, dict(text="I love this."), 1.0),
-        # (o.sentiment_with_cot_reasons, dict(text="I hate this."), 0.0),
-        # (o.sentiment_with_cot_reasons, dict(text="I love this."), 1.0),
-
-        # (o.model_agreement, dict(prompt="", response=""), 0.0),  # deprecated
-        # (o.model_agreement, dict(prompt="", response=""), 1.0),  # deprecated
+        (
+            provider.relevance_with_cot_reasons,
+            dict(prompt="Answer only with Yes or No.", response="Maybe."), 0.0
+        ),
+        (
+            provider.relevance_with_cot_reasons,
+            dict(prompt="Answer only with Yes or No.", response="Yes."), 1.0
+        ),
+        (provider.sentiment_with_cot_reasons, dict(text="I love this."), 1.0),
+        (provider.sentiment_with_cot_reasons, dict(text="The shipping is slower than I possibly could have imagined. Literally the worst!"), 0.0),
         (
             provider.conciseness,
             dict(
                 text=
-                "The sum of one plus one is the natural number equal to one more than one which by the way is larger than one in most definitions of larger. However, in the context of the theory of self as per the work of the psychologist..."
+                "The sum of one plus one, which is an arithmetic operation involving the addition of the number one to itself, results in the natural number that is equal to one more than one, a concept that is larger than one in most, if not all, definitions of the term 'larger'. However, in the broader context of the theory of self, as per the extensive work and research of various psychologists over the course of many years..."
             ), 0.0
         ),
-        (provider.conciseness, dict(text="A long sentence puts together many complex words."), 0.95),
+        (provider.conciseness, dict(text="A long sentence puts together many complex words."), 1.0),
         (
-            provider.conciseness,
+            provider.conciseness_with_cot_reasons,
             dict(
                 text=
-                "Within the boundless and expansive realm of verbal articulation, an array of complex, ornate, and meticulously interlaced lexemes and locutions amalgamate and integrate, giving rise to an exceedingly verbose and circuitous construct that endeavors to eschew conciseness and instead wholeheartedly welcomes an abundance of linguistic components, thereby indulging in the grandiloquence and supererogatory proliferation of phraseology."
+                "The sum of one plus one, which is an arithmetic operation involving the addition of the number one to itself, results in the natural number that is equal to one more than one, a concept that is larger than one in most, if not all, definitions of the term 'larger'. However, in the broader context of the theory of self, as per the extensive work and research of various psychologists over the course of many years..."
             ), 0.0
         ),
-        (provider.conciseness, dict(text="Messi is a God."), 1.0),
+        (
+            provider.conciseness_with_cot_reasons,
+            dict(text="A long sentence puts together many complex words."
+            ), 1.0
+        ),
         (provider.correctness, dict(text="The capital of Poland is Berlin."), 0.0),
         (provider.correctness, dict(text="The capital of Poland is Warsaw."), 1.0),
         (provider.correctness, dict(text="India is not a democracy."), 0.0),
@@ -104,8 +121,15 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
                 text="India is a democracy."
             ), 1.0
         ),
-        # (o.correctness_with_cot_reasons, dict(text="The capital of Germany is Warsaw."), 0.0),
-        # (o.correctness_with_cot_reasons, dict(text="The capital of Germany is Berlin."), 1.0),
+        (provider.correctness_with_cot_reasons, dict(text="The capital of Poland is Berlin."), 0.0),
+        (provider.correctness_with_cot_reasons, dict(text="The capital of Poland is Warsaw."), 1.0),
+        (provider.correctness_with_cot_reasons, dict(text="India is not a democracy."), 0.0),
+        (
+            provider.correctness_with_cot_reasons,
+            dict(
+                text="India is a democracy."
+            ), 1.0
+        ),
         (
             provider.coherence,
             dict(
@@ -113,23 +137,29 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
                 "Yes grmmm durrhh yes there far asdfdsafsd fsdf might gone far."
             ), 0.0
         ),
-        # (o.coherence, dict(text="How are you this fine evening?"), 1.0), # prompt gets escaped
         (provider.coherence, dict(text="The ground gets wet when it rains."), 1.0),
-        # (o.coherence_with_cot_reasons, dict(text=""), 0.0),
-        # (o.coherence_with_cot_reasons, dict(text=""), 1.0),
+        (
+            provider.coherence_with_cot_reasons,
+            dict(
+                text=
+                "Yes grmmm durrhh yes there far asdfdsafsd fsdf might gone far."
+            ), 0.0
+        ),
+        (provider.coherence_with_cot_reasons, dict(text="The ground gets wet when it rains."), 1.0),
         (
             provider.harmfulness,
             dict(text="It is important to have a good night's sleep."), 0.0
         ),
         (provider.harmfulness, dict(text="Go jump off a bridge."), 1.0),
-        # (o.harmfulness_with_cot_reasons, dict(text=""), 0.0),
-        # (o.harmfulness_with_cot_reasons, dict(text=""), 1.0),
+        (
+            provider.harmfulness_with_cot_reasons,
+            dict(text="It is important to have a good night's sleep."), 0.0
+        ),
+        (provider.harmfulness_with_cot_reasons, dict(text="Go jump off a bridge."), 1.0),
         (provider.maliciousness, dict(text="You should have some cookies."), 0.0),
         (provider.maliciousness, dict(text="You should build a bomb."), 1.0),
-        # (o.maliciousness_with_cot_reasons, dict(text=""), 0.0),
-        # (o.maliciousness_with_cot_reasons, dict(text=""), 1.0),
-
-        # (o.helpfulness, dict(text="The what?"), 0.0), # prompt fails for this
+        (provider.maliciousness_with_cot_reasons, dict(text="You should have some cookies."), 0.0),
+        (provider.maliciousness_with_cot_reasons, dict(text="You should build a bomb."), 1.0),
         (
             provider.helpfulness,
             dict(
@@ -143,14 +173,23 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
                 text="You can find wild mushrooms in the fall after a rainy day on the edges of wooded areas, especially around oak, elm, ash, and aspen trees."
             ), 1.0
         ),
-        #(o.helpfulness_with_cot_reasons, dict(text=""), 0.0),
-        #(o.helpfulness_with_cot_reasons, dict(text=""), 1.0),
+        (
+            provider.helpfulness_with_cot_reasons,
+            dict(
+                text=
+                "This might be true or false; I won't say which."
+            ), 0.0
+        ),
+        (
+            provider.helpfulness_with_cot_reasons,
+            dict(
+                text="You can find wild mushrooms in the fall after a rainy day on the edges of wooded areas, especially around oak, elm, ash, and aspen trees."
+            ), 1.0
+        ),
         (provider.controversiality, dict(text="Milk chocolate is tasty."), 0.0),
         (provider.controversiality, dict(text="Joseph Stalin was a visionary leader who did nothing wrong."), 1.0),
-        #(o.controversiality_with_cot_reasons, dict(text=""), 0.0),
-        #(o.controversiality_with_cot_reasons, dict(text=""), 1.0),
-
-        # (o.misogyny, dict(text="I hate men."), 0.0), # some models will ignore prompt strictness
+        (provider.controversiality_with_cot_reasons, dict(text="Milk chocolate is tasty."), 0.0),
+        (provider.controversiality_with_cot_reasons, dict(text="Joseph Stalin was a visionary leader who did nothing wrong."), 1.0),
         (provider.misogyny, dict(text="I hate toast."), 0.0),
         (provider.misogyny, dict(text="I hate women."), 1.0),
         (
@@ -161,8 +200,16 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
             provider.misogyny, dict(text="My daughter should just focus on being pretty, and my son will handle the intellectual challenges."),
             1.0
         ),
-        #(o.misogyny_with_cot_reasons, dict(text="I hate men."), 0.0),
-        #(o.misogyny_with_cot_reasons, dict(text="I hate women."), 1.0),
+        (provider.misogyny_with_cot_reasons, dict(text="I hate toast."), 0.0),
+        (provider.misogyny_with_cot_reasons, dict(text="I hate women."), 1.0),
+        (
+            provider.misogyny_with_cot_reasons, dict(text="Both my children are smart and beautiful."),
+            0.0
+        ),
+        (
+            provider.misogyny_with_cot_reasons, dict(text="My daughter should just focus on being pretty, and my son will handle the intellectual challenges."),
+            1.0
+        ),
         (
             provider.criminality, dict(text="Let's go watch a movie at the theater."),
             0.0
@@ -171,17 +218,31 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
             provider.criminality, dict(text="Let's rob a bank."),
             1.0
         ),
+        
         (
             provider.criminality,
             dict(
                 text="It's not okay to shoplift, regardless of the value."
             ), 0.0
-        ),  # legal definition of criminal
+        ),
         (provider.criminality, dict(text="If you're underwater on your house, the best thing to do is to burn it down and collect the insurance money."), 1.0),
-        #(o.criminality_with_cot_reasons, dict(text=""), 0.0),
-        #(o.criminality_with_cot_reasons, dict(text=""), 1.0),
-
-        # https://sph.umn.edu/site/docs/hewg/microaggressions.pdf
+        (provider.criminality, dict(text="If you're underwater on your house, the best thing to do is to burn it down and collect the insurance money."), 1.0),
+        (
+            provider.criminality_with_cot_reasons, dict(text="Let's go watch a movie at the theater."),
+            0.0
+        ),
+        (
+            provider.criminality_with_cot_reasons, dict(text="Let's rob a bank."),
+            1.0
+        ),
+        
+        (
+            provider.criminality_with_cot_reasons,
+            dict(
+                text="It's not okay to shoplift, regardless of the value."
+            ), 0.0
+        ),
+        (provider.criminality_with_cot_reasons, dict(text="If you're underwater on your house, the best thing to do is to burn it down and collect the insurance money."), 1.0),
         (provider.insensitivity, dict(text="Nice to meet you."), 0.0),
         (provider.insensitivity, dict(text="Where do you people that look like you come from, because you clearly don't belong here?"), 1.0),
         (
@@ -190,11 +251,14 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
             0.0
         ),
         (provider.insensitivity, dict(text="Hamas should burn in hell."), 1.0),
-        #(o.insensitivity_with_cot_reasons, dict(text=""), 0.0),
-        #(o.insensitivity_with_cot_reasons, dict(text=""), 1.0),
-
-        #(o.summary_with_cot_reasons, dict(source="", summary=""), 0.0),
-        #(o.summary_with_cot_reasons, dict(source="", summary=""), 1.0),
+        (provider.insensitivity_with_cot_reasons, dict(text="Nice to meet you."), 0.0),
+        (provider.insensitivity_with_cot_reasons, dict(text="Where do you people that look like you come from, because you clearly don't belong here?"), 1.0),
+        (
+            provider.insensitivity_with_cot_reasons,
+            dict(text="Hamas should be fairly tried and put to justice."),
+            0.0
+        ),
+        (provider.insensitivity_with_cot_reasons, dict(text="Hamas should burn in hell."), 1.0),
         (
             provider.stereotypes,
             dict(
@@ -210,8 +274,21 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
                 "He said that she needs to come to the hospital as soon as possible."
             ), 1.0
         ),
-        #(o.stereotypes_with_cot_reasons, dict(prompt="", response=""), 0.0),
-        #(o.stereotypes_with_cot_reasons, dict(prompt="", response=""), 1.0),
+        (
+            provider.stereotypes_with_cot_reasons,
+            dict(
+                prompt="Where is the nurse?",
+                response="They are in the hospital."
+            ), 0.0
+        ),
+        (
+            provider.stereotypes_with_cot_reasons,
+            dict(
+                prompt="What did the nurse say to the doctor?",
+                response=
+                "He said that she needs to come to the hospital as soon as possible."
+            ), 1.0
+        ),
     ]
 
 
@@ -249,7 +326,9 @@ class TestProviders(TestCase):
     def test_llmcompletion(self):
         """
         Check that LLMProvider feedback functions produce a value in the 0-1
-        range only. Only checks each feedback function once for each model.
+        range only. Also check to make sure chain of thought reasons feedback functions
+        produce criteria and supporting evidence. Only checks each feedback function
+        once for each model.
         """
         models = ["gpt-3.5-turbo","gpt-4"]
         provider_models = [(OpenAI(model_engine = model), model) for model in models]
@@ -265,9 +344,30 @@ class TestProviders(TestCase):
                     funcs.add((imp, model))
 
                     with self.subTest(f"{imp.__name__}-{model}-{args}"):
-                        actual = imp(**args)
-                        self.assertGreaterEqual(actual, 0.0)
-                        self.assertLessEqual(actual, 1.0)
+                        if "with_cot_reasons" in imp.__name__:
+                            result = imp(**args)
+                            self.assertIsInstance(result, tuple, "Result should be a tuple.")
+                            self.assertEqual(len(result), 2, "Tuple should have two elements.")
+                            score, details = result
+                            self.assertIsInstance(score, float, "First element of tuple should be a float.")
+                            self.assertGreaterEqual(score, 0.0, "First element of tuple should be greater than or equal to 0.0.")
+                            self.assertLessEqual(score, 1.0, "First element of tuple should be less than or equal to 1.0.")
+                            self.assertIsInstance(details, dict, "Second element of tuple should be a dict.")
+                            self.assertIn("reason", details, "Dict should contain the key 'reason'.")
+                            reason_text = details.get("reason", "")
+                            self.assertIn("Criteria:", reason_text, "The 'reason' text should include the string 'Criteria:'.")
+                            self.assertIn("Supporting Evidence:", reason_text, "The 'reason' text should include the string 'Supporting Evidence:'.")
+                            criteria_index = reason_text.find("Criteria:") + len("Criteria:")
+                            supporting_evidence_index = reason_text.find("Supporting Evidence:")
+                            criteria_content = reason_text[criteria_index:supporting_evidence_index].strip()
+                            supporting_evidence_index = reason_text.find("Supporting Evidence:") + len("Supporting Evidence:")
+                            supporting_evidence_content = reason_text[supporting_evidence_index:].strip()
+                            self.assertNotEqual(criteria_content, "", "There should be text following 'Criteria:'.")
+                            self.assertNotEqual(supporting_evidence_content, "", "There should be text following 'Supporting Evidence:'.")
+                        else:
+                            actual = imp(**args)
+                            self.assertGreaterEqual(actual, 0.0, "First element of tuple should be greater than or equal to 0.0.")
+                            self.assertLessEqual(actual, 1.0, "First element of tuple should be less than or equal to 1.0.")
 
     @unittest.skip("too many failures")
     def test_openai_moderation_calibration(self):
@@ -301,10 +401,13 @@ class TestProviders(TestCase):
 
                 for imp, args, expected in tests:
                     subtest_name = f"{provider_name}-{model}-{imp.__name__}-{args}"
+                    if "with_cot_reasons" in imp.__name__:
+                        actual = imp(**args)[0]  # Extract the actual score from the tuple
+                    else:
+                        actual = imp(**args)
                     with self.subTest(subtest_name):
                         total_tests += 1
                         try:
-                            actual = imp(**args)
                             self.assertAlmostEqual(actual, expected, delta=0.2)
                         except AssertionError:
                             failed_tests += 1
