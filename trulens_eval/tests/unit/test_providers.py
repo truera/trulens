@@ -259,7 +259,7 @@ class TestProviders(TestCase):
         for provider in [OpenAI(), ]:
             with self.subTest("{provider._class__.__name__}"):
 
-                tests = get_llmprovider_tests(o)
+                tests = get_llmprovider_tests(provider)
                 funcs = set()
 
                 for imp, args, _ in tests:
@@ -275,7 +275,7 @@ class TestProviders(TestCase):
                         self.assertGreaterEqual(actual, 0.0)
                         self.assertLessEqual(actual, 1.0)
 
-    @unittest.skip("too many failures")
+    #@unittest.skip("too many failures")
     def test_openai_moderation_calibration(self):
         """
         Check that OpenAI moderation feedback functions produce reasonable
@@ -291,21 +291,31 @@ class TestProviders(TestCase):
                 actual = imp(**args)
                 self.assertAlmostEqual(actual, expected, delta=0.2)
 
-    #@unittest.skip("too many failures")
     def test_llmcompletion_calibration(self):
         """
         Check that LLMProvider feedback functions produce reasonable values.
+        Also, print a summary of how many tests failed for each provider in a more standard way for python integration tests.
         """
 
         for provider in [OpenAI()]:
-            with self.subTest("{provider._class__.__name__}"):
+            provider_name = provider.__class__.__name__
+            failed_tests = 0
+            total_tests = 0
 
+            with self.subTest(f"{provider_name}"):
                 tests = get_llmprovider_tests(provider)
 
                 for imp, args, expected in tests:
-                    with self.subTest(f"{imp.__name__}-{args}"):
-                        actual = imp(**args)
-                        self.assertAlmostEqual(actual, expected, delta=0.2)
+                    with self.subTest(f"{provider_name}-{imp.__name__}-{args}"):
+                        total_tests += 1
+                        try:
+                            actual = imp(**args)
+                            self.assertAlmostEqual(actual, expected, delta=0.2)
+                        except AssertionError:
+                            failed_tests += 1
+
+            if failed_tests > 0:
+                self.fail(f"{provider_name}: {failed_tests}/{total_tests} tests failed")
 
     def test_hugs(self):
         pass
