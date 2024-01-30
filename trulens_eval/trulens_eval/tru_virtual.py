@@ -15,7 +15,8 @@ from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost, FeedbackMode
+from trulens_eval.schema import Cost
+from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
@@ -26,7 +27,9 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import Module
 from trulens_eval.utils.pyschema import Obj
-from trulens_eval.utils.serial import JSON, GetAttribute, GetItemOrAttribute
+from trulens_eval.utils.serial import GetAttribute
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
@@ -48,7 +51,7 @@ class VirtualApp(dict):
 
         if isinstance(__name, str):
             return super().__setitem__(__name, __value)
-        
+
         # Chop off __app__ or __record__ prefix if there.
         __name = Select.dequalify(__name)
 
@@ -79,10 +82,7 @@ virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name="root")
 # Method name will be replaced by the last attribute in the selector provided by
 # user:
 virtual_method_call = Method(
-    cls=virtual_class,
-    obj=virtual_object,
-    name=
-    "method_name_not_set"  
+    cls=virtual_class, obj=virtual_object, name="method_name_not_set"
 )
 
 
@@ -91,23 +91,28 @@ class VirtualRecord(Record):
     Utility class for creating `Record`s using selectors. In the example below,
     `Select.RecordCalls.retriever` refers to a presumed component of some
     virtual model which is assumed to have called the method `get_context`. The
-    inputs and outputs of that call are specified in as the value with the
-    selector as key. Other than `calls`, other arguments are the same as for
-    `Record` but empty values are filled for arguments that are not provided but
-    are otherwise required.
+    inputs and outputs of that call are specified as the value with the
+    selector as the key. Other than `calls`, other arguments are the same as for
+    `Record`, but empty values are filled for arguments that are not provided
+    but are otherwise required.
+
+    **Usage:**
 
     ```python
-VirtualRecord(
-    main_input="Where is Germany?", main_output="Germany is in Europe", calls=
-        {
-            Select.RecordCalls.retriever.get_context: dict(
-                args=["Where is Germany?"], rets=["Germany is a country located
-                in Europe."]
-            ), Select.RecordCalls.some_other_component.do_something: dict(
-                args=["Some other inputs."], rets=["Some other output."]
-            )
-        }
-    )
+        VirtualRecord(
+            main_input="Where is Germany?", 
+            main_output="Germany is in Europe", 
+            calls={
+                Select.RecordCalls.retriever.get_context: {
+                    'args': ["Where is Germany?"], 
+                    'rets': ["Germany is a country located in Europe."]
+                },
+                Select.RecordCalls.some_other_component.do_something: {
+                    'args': ["Some other inputs."], 
+                    'rets': ["Some other output."]
+                }
+            }
+        )
     ```
     """
 
@@ -194,52 +199,51 @@ class TruVirtual(App):
     executed but for whom previously-computed results can be added using
     `add_record`. The `VirtualRecord` class may be useful for creating records
     for this. Fields used by non-virtual apps can be specified here, notably:
-    
-        - `app_id: str` -- Unique identifier for the app.
 
-        - `tags: List[str]` -- List of tags.
+    * app_id: str -- Unique identifier for the app.
 
-        - `metadata: Dict[Any, Any]` -- Open-ended metadata.
+    * tags: List[str] -- List of tags.
 
-        - `app_extra_json: JSON` -- Additional json structured information to include in the recorded app structure.
+    * metadata: Dict[Any, Any] -- Open-ended metadata.
 
-        - `feedbacks: List[Feedback]` -- Which feedback functions to run when a record is ingested.
+    * app_extra_json: JSON -- Additional json structured information to include in the recorded app structure.
 
-        - `feedback_mode: FeedbackMode` -- How to run feedback functions when a record is ingested.
+    * feedbacks: List[Feedback] -- Which feedback functions to run when a record is ingested.
 
-        - `app: JSON` -- See below.
+    * feedback_mode: FeedbackMode -- How to run feedback functions when a record is ingested.
+
+    * app: JSON -- See below.
 
     # The `app` field.
 
-    You can store any information you would like by passing in a dictionry to
+    You can store any information you would like by passing in a dictionary to
     TruVirtual in the `app` field. This may involve an index of components or
     versions, or anything else. You can refer to these values for evaluating
     feedback.
 
     You can use `VirtualApp` to create the `app` structure or a plain
     dictionary. Using `VirtualApp` lets you use Selectors to define components:
-
+    
     ```python
-virtual_app = VirtualApp()
-virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
+    virtual_app = VirtualApp()
+    virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
     ```
 
     # Example
-
     ```python
+    virtual_app = dict(
+        llm=dict(
+            modelname="some llm component model name"
+        ),
+        template="information about the template I used in my app",
+        debug="all of these fields are completely optional"
+    )
 
-virtual_app = dict(
-    llm=dict(
-        modelname="some llm component model name"
-    ),
-    template="information about the template I used in my app",
-    debug="all of these fields are completely optional"
-)
-
-virtual = TruVirtual(
-    app_id="my_virtual_app",
-    app=virtual_app
-)
+    virtual = TruVirtual(
+        app_id="my_virtual_app",
+        app=virtual_app
+    )
+    ```
     """
 
     app: VirtualApp = Field(default_factory=VirtualApp)
@@ -273,7 +277,11 @@ virtual = TruVirtual(
 
         super().__init__(app=app, **kwargs)
 
-    def add_record(self, record: Record, feedback_mode: Optional[FeedbackMode] = None) -> Record:
+    def add_record(
+        self,
+        record: Record,
+        feedback_mode: Optional[FeedbackMode] = None
+    ) -> Record:
         """
         Add the given record to the database and evaluate any pre-specified
         feedbacks on it. The class `VirtualRecord` may be useful for creating
@@ -285,9 +293,11 @@ virtual = TruVirtual(
             feedback_mode = self.feedback_mode
 
         record.app_id = self.app_id
-        
+
         # Creates feedback futures.
-        record.feedback_results = self._handle_record(record, feedback_mode=feedback_mode)
+        record.feedback_results = self._handle_record(
+            record, feedback_mode=feedback_mode
+        )
 
         # Wait for results if mode is WITH_APP.
         if feedback_mode == FeedbackMode.WITH_APP and record.feedback_results is not None:
@@ -295,13 +305,13 @@ virtual = TruVirtual(
             futures.wait(futs)
 
         return record
-    
+
 
 TruVirtual.model_rebuild()
 
 # Need these to make sure rebuild below works.
 from typing import List
-from trulens_eval.schema import \
-    TFeedbackResultFuture  
+
+from trulens_eval.schema import TFeedbackResultFuture
 
 VirtualRecord.model_rebuild()

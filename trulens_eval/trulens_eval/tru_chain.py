@@ -246,7 +246,6 @@ class TruChain(App):
             Select.RecordCalls + retrievers[0][0]
         ).get_relevant_documents.rets
 
-
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
@@ -369,7 +368,6 @@ class TruChain(App):
         self._throw_dep_message(
             method="_acall", is_async=True, with_record=False
         )
-
 
 
 TruChain.model_rebuild()

@@ -11,7 +11,7 @@
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
-# ! pip install trulens_eval==0.20.3 openai==1.3.7 langchain chromadb langchainhub bs4 langchain_openai
+# ! pip install trulens_eval==0.21.0 openai==1.3.7 langchain chromadb langchainhub bs4
 
 import os
 
@@ -32,8 +32,7 @@ tru.reset_database()
 # Imports from langchain to build app
 import bs4
 from langchain import hub
-# from langchain.chat_models import ChatOpenAI # Deprecated
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import WebBaseLoader
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.schema import StrOutputParser
@@ -185,7 +184,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 # ### Install dependencies
 # Let's install some of the dependencies for this notebook if we don't have them already
 
-# pip install trulens_eval==0.20.3 llama_index>=0.9.15post2 html2text>=2020.1.16
+# pip install trulens_eval==0.21.0 llama_index>=0.9.15post2 html2text>=2020.1.16
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
@@ -316,7 +315,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
 
-# ! pip install trulens_eval==0.20.3 chromadb==0.4.18 openai==1.3.7
+# ! pip install trulens_eval==0.21.0 chromadb==0.4.18 openai==1.3.7
 
 import os
 
@@ -486,7 +485,7 @@ tru.run_dashboard()
 
 # ## Import libraries
 
-# ! pip install trulens_eval==0.20.3
+# ! pip install trulens_eval==0.21.0
 
 from trulens_eval import Feedback
 from trulens_eval import Tru
@@ -562,7 +561,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/human_feedback.ipynb)
 
-# ! pip install trulens_eval==0.20.3 openai==1.3.7
+# ! pip install trulens_eval==0.21.0 openai==1.3.7
 
 import os
 
@@ -670,7 +669,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 # ### Add API keys
 # For this quickstart, you will need Open AI keys.
 
-# ! pip install trulens_eval==0.20.3 openai==1.3.7
+# ! pip install trulens_eval==0.21.0 openai==1.3.7
 
 import os
 

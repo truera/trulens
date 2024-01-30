@@ -50,8 +50,8 @@ class TestLlamaIndex(JSONTestCase):
 
         tru_query_engine_recorder = TruLlama(query_engine)
         with tru_query_engine_recorder as recording:
-            llm_response_async = sync(query_engine.aquery,
-                "What did the author do growing up?"
+            llm_response_async = sync(
+                query_engine.aquery, "What did the author do growing up?"
             )
             print("llm_response_async=", llm_response_async)
 

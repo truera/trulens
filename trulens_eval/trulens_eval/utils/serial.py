@@ -82,7 +82,7 @@ class SerialModel(pydantic.BaseModel):
             setattr(self, k, v)
 
         return self
-    
+
     def replace(self, **d):
         copy = self.model_copy()
         copy.update(**d)
