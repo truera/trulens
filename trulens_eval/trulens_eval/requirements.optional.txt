@@ -17,7 +17,8 @@ llama-index >= v0.9.26
 html2text   >= 2020.1.16 # for llama_index example using SimpleWebPageReader
 
 # Apps: NEMO Guardrails
-nemoguardrails >= 0.6.1 # will de-upgrade pydantic
+# NOTE: cannot install alongside the rest of packages right now due to conflict regarding pydantic
+# nemoguardrails >= 0.6.1 
 
 # Models: openai
 openai >= 1.1.1, <2
