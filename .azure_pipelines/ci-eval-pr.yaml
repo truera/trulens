@@ -50,7 +50,7 @@ jobs:
           conda init bash
 
       - name: Format Code
-        condition: {{ eq(python-version, "3.11") }} # only run format check with latest python version
+        # condition: {{ eq(python-version, "3.11") }} # only run format check with latest python version
         bash: |
           set -e
           source activate $(python-version)
