@@ -9,22 +9,27 @@ pr:
 
 jobs:
   - job: branchtest
+    pool:
+      vmImage: ubuntu-latest
     timeoutInMinutes: 30
 
     strategy:
       matrix:
-        image: ["ubuntu-latest"]
-        architecture: ["x64"]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-        tests-folder: ["tests/unit", "tests/unit/static"]
-        #exclude: 
-        #  - tests-folder: "tests/unit"
-        #    python-version: ["3.8", "3.9", "3.10"] # only run full set of unit tests on 3.11
-        #  - tests-folder: "tests/unit/static" # already included in parent folder
-        #    python-version: ["3.11"]
-
-    pool:
-      vmImage: $(image)
+        latest:
+          python-version: 3.11
+          tests-folder: tests/unit
+        py308:
+          python-version: 3.8
+          tests-folder: tests/unit/static
+        py309:
+          python-version: 3.9
+          tests-folder: tests/unit/static
+        py310:
+          python-version: 3.10
+          tests-folder: tests/unit/static
+        py311:
+          python-version: 3.11
+          tests-folder: tests/unit/static
 
     #env:
     #  OPENAI_API_KEY: $(OPENAI_API_KEY)
