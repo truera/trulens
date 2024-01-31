@@ -9,43 +9,45 @@ pr:
 
 jobs:
   - job: PRBranchProtect
-    pool:
-      vmImage: "ubuntu-latest"
+    #pool:
+    #  vmImage: "ubuntu-latest"
     timeoutInMinutes: 30
 
     strategy:
       matrix:
-        pyversion: [3.8, 3.9, 3.10, 3.11]
-        testSubdirectory: ["tests/unit", "tests/unit/static"]
+        os: ["ubuntu-latest"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        tests-folder: ["tests/unit", "tests/unit/static"]
         exclude: 
-          - testSubdirectory: "tests/unit"
-            pyversion: [3.8, 3.9, 3.10] # only run full set of unit tests on 3.11
-          - testSubdirectory: "tests/unit/static" # already included in parent folder
-            pyversion: [3.11]
+          - tests-folder: "tests/unit"
+            python-version: ["3.8", "3.9", "3.10"] # only run full set of unit tests on 3.11
+          - tests-folder: "tests/unit/static" # already included in parent folder
+            python-version: ["3.11"]
 
-    runs-on: ${{ matrix.pyversion }}
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - with: 
-          condaEnvFileSuffix: "trulens-eval-${{ matrix.pyversion }}"
-          testSubdirectory: ${{ matrix.testSubdirectory }}
+      - uses: actions/checkout@v4
 
-      - checkout: self
-        clean: true
+      - name: Setup Python # Set Python version
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-      - bash: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: Add conda to PATH
+      #- name: Add conda to PATH
+      #  bash: echo "##vso[task.prependpath]$CONDA/bin"
 
-      - bash: |
-          set -e
-          conda create  -y --quiet -n $(condaEnvFileSuffix) python=$(pyversion)
-          conda init bash
+      #- name: Create Anaconda environment with python=$(pyversion)
+      #  bash: |
+      #    set -e
+      #    conda create  -y --quiet -n $(condaEnvFileSuffix) python=$(pyversion)
+      #    conda init bash
 
-        displayName: Create Anaconda environment with python=$(pyversion)
-
-      - if: $(pyversion) == 3.11 # only run format check with latest python version
-        bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
+      - if: $(python-version) == 3.11 # only run format check with latest python version
+        name: Format Code
+        run: |
+          #set -e
+          #source activate $(condaEnvFileSuffix)
 
           pip install yapf==0.32.0
           pip install isort==5.10.1
@@ -54,9 +56,9 @@ jobs:
           isort --vn
 
           ./format.sh --eval
-        displayName: Format Code
 
-      - bash: |
+      - name: NoDiffCheck
+        run: |
           num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
           if [ $num_changed_files -ne 0 ]; then
             echo "The following files have changed after running format.sh. Please format your code and update the PR."
@@ -64,11 +66,11 @@ jobs:
             echo "\n\nOutputting git diff for checked in files.\n"
             git diff
           fi
-        displayName: NoDiffCheck
-      
-      - bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
+
+      - name: Install trulens
+        run: |
+          #set -e
+          #source activate $(condaEnvFileSuffix)
 
           cd ./trulens_eval
           pip install -e .
@@ -77,11 +79,10 @@ jobs:
           pip --version
           pip list
 
-        displayName: Install trulens
-
-      - bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
+      - name: Install testing packages
+        run: |
+          #set -e
+          #source activate $(condaEnvFileSuffix)
 
           pip install ipykernel
           pip install pytest==7.0.1 pytest-azurepipelines
@@ -90,18 +91,17 @@ jobs:
             --name $(condaEnvFileSuffix) \
             --display-name $(condaEnvFileSuffix)
 
-        displayName: Install testing packages
-
-      - bash: |
-          source activate $(condaEnvFileSuffix)
+      - name: Unit tests
+        run: |
+          #source activate $(condaEnvFileSuffix)
 
           cd ./trulens_eval
           python -m pytest $(testSubdirectory)
-        displayName: Required unit tests
 
-      - bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
+      - name: Install optional packages
+        run: |
+          #set -e
+          #source activate $(condaEnvFileSuffix)
 
           cd ./trulens_eval
 
@@ -111,12 +111,9 @@ jobs:
           pip --version
           pip list
 
-        displayName: Install optional packages
-
-      - bash: |      
-          python -m pytest $(testSubdirectory)
-
-        displayName: Optional unit tests
+      - name: Unit tests with optional packages
+        run: |
+          python -m pytest ${{ matrix.tests-folder }}
 
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
