@@ -4,6 +4,7 @@ munch              >= 3.0.0
 dill               >= 0.3.7
 tqdm               >= 4.66.1    # groundedness.py
 requests           >= 2.31.0
+nest-asyncio       >= 1.5.8
 
 # Secrets/env management
 python-dotenv      >= 1.0.0
