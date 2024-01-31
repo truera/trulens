@@ -8,14 +8,13 @@ pr:
       - trulens_eval
 
 jobs:
-  - job: PRBranchProtect
-    #pool:
-    #  vmImage: "ubuntu-latest"
+  - job: branchtest
     timeoutInMinutes: 30
 
     strategy:
       matrix:
-        os: ["ubuntu-latest"]
+        image: ["ubuntu-latest"]
+        architecture: ["x64"]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         tests-folder: ["tests/unit", "tests/unit/static"]
         exclude: 
@@ -24,30 +23,37 @@ jobs:
           - tests-folder: "tests/unit/static" # already included in parent folder
             python-version: ["3.11"]
 
-    runs-on: ${{ matrix.os }}
+    pool:
+      vmImage: $(os)
+
+    env:
+      OPENAI_API_KEY: $(OPENAI_API_KEY)
+      HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
+      PINECONE_API_KEY: $(PINECONE_API_KEY)
+      PINECONE_ENV: $(PINECONE_ENV)
+      HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
 
     steps:
-      - uses: actions/checkout@v4
+      - checkout: self
+        clean: true
 
-      - name: Setup Python # Set Python version
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
+      - name: Add conda to PATH
+        bash: echo "##vso[task.prependpath]$CONDA/bin"
 
-      #- name: Add conda to PATH
-      #  bash: echo "##vso[task.prependpath]$CONDA/bin"
+      - name: Create Anaconda environment with python=$(python-version)
+        bash: |
+          set -e
+          conda create -y --quiet \
+            -n $(python-version) \
+            python=$(python-version)
 
-      #- name: Create Anaconda environment with python=$(pyversion)
-      #  bash: |
-      #    set -e
-      #    conda create  -y --quiet -n $(condaEnvFileSuffix) python=$(pyversion)
-      #    conda init bash
+          conda init bash
 
-      - if: $(python-version) == 3.11 # only run format check with latest python version
+      - condition: {{ eq(python-version, "3.11") }} # only run format check with latest python version
         name: Format Code
-        run: |
-          #set -e
-          #source activate $(condaEnvFileSuffix)
+        bash: |
+          set -e
+          source activate $(python-version)
 
           pip install yapf==0.32.0
           pip install isort==5.10.1
@@ -58,7 +64,7 @@ jobs:
           ./format.sh --eval
 
       - name: NoDiffCheck
-        run: |
+        bash: |
           num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
           if [ $num_changed_files -ne 0 ]; then
             echo "The following files have changed after running format.sh. Please format your code and update the PR."
@@ -68,9 +74,9 @@ jobs:
           fi
 
       - name: Install trulens
-        run: |
-          #set -e
-          #source activate $(condaEnvFileSuffix)
+        bash: |
+          set -e
+          source activate $(python-version)
 
           cd ./trulens_eval
           pip install -e .
@@ -80,28 +86,28 @@ jobs:
           pip list
 
       - name: Install testing packages
-        run: |
-          #set -e
-          #source activate $(condaEnvFileSuffix)
+        bash: |
+          set -e
+          source activate $(python-version)
 
           pip install ipykernel
           pip install pytest==7.0.1 pytest-azurepipelines
 
           python -m ipykernel install --user \
-            --name $(condaEnvFileSuffix) \
-            --display-name $(condaEnvFileSuffix)
+            --name $(python-version) \
+            --display-name $(python-version)
 
       - name: Unit tests
-        run: |
-          #source activate $(condaEnvFileSuffix)
+        bash: |
+          source activate $(python-version)
 
           cd ./trulens_eval
-          python -m pytest $(testSubdirectory)
+          python -m pytest $(tests-folder)
 
       - name: Install optional packages
-        run: |
-          #set -e
-          #source activate $(condaEnvFileSuffix)
+        bash: |
+          set -e
+          source activate $(python-version)
 
           cd ./trulens_eval
 
@@ -112,12 +118,10 @@ jobs:
           pip list
 
       - name: Unit tests with optional packages
-        run: |
-          python -m pytest ${{ matrix.tests-folder }}
+        bash: |
+          set -e
+          source activate $(python-version)
 
-        env:
-          OPENAI_API_KEY: $(OPENAI_API_KEY)
-          HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
-          PINECONE_API_KEY: $(PINECONE_API_KEY)
-          PINECONE_ENV: $(PINECONE_ENV)
-          HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
+          cd ./trulens_eval
+
+          python -m pytest $(tests-folder)
