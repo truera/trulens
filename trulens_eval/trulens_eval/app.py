@@ -75,6 +75,7 @@ manager as in this example:
 ```
 """
 
+
 class ComponentView(ABC):
     """
     Views of common app component types for sorting them and displaying them in
@@ -1042,9 +1043,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 app_class_name=type(self.app).__name__
             )
             raise AttributeError(msg)
-    
+
         else:
-            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{__name}'")
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{__name}'"
+            )
 
     def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
         """
