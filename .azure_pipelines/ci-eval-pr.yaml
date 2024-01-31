@@ -1,3 +1,6 @@
+# This a definition for azure pipelines, not github pipelines. There are
+# differences between these systems.
+
 pr:
   branches:
     include:
@@ -39,21 +42,20 @@ jobs:
       - checkout: self
         clean: true
 
-      - name: Add conda to PATH
-        bash: echo "##vso[task.prependpath]$CONDA/bin"
+      - bash: echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: Add conda to PATH
 
-      - name: Create Anaconda environment with python=$(python-version)
-        bash: |
+      - bash: |
           set -e
           conda create -y --quiet \
             -n $(python-version) \
             python=$(python-version)
 
           conda init bash
+        displayName: Create Anaconda environment with python=$(python-version)
 
-      - name: Format Code
-        # condition: ${{ eq(python-version, "3.11") }} # only run format check with latest python version
-        bash: |
+      - bash: |
+          # condition: ${{ eq(python-version, "3.11") }} # only run format check with latest python version
           set -e
           source activate $(python-version)
 
@@ -64,9 +66,9 @@ jobs:
           isort --vn
 
           ./format.sh --eval
+        displayName: Format Code
 
-      - name: NoDiffCheck
-        bash: |
+      - bash: |
           num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
           if [ $num_changed_files -ne 0 ]; then
             echo "The following files have changed after running format.sh. Please format your code and update the PR."
@@ -74,9 +76,9 @@ jobs:
             echo "\n\nOutputting git diff for checked in files.\n"
             git diff
           fi
+        displayName: NoDiffCheck
 
-      - name: Install trulens
-        bash: |
+      - bash: |
           set -e
           source activate $(python-version)
 
@@ -86,9 +88,9 @@ jobs:
           python --version
           pip --version
           pip list
+        displayName: Install trulens
 
-      - name: Install testing packages
-        bash: |
+      - bash: |
           set -e
           source activate $(python-version)
 
@@ -98,16 +100,16 @@ jobs:
           python -m ipykernel install --user \
             --name $(python-version) \
             --display-name $(python-version)
+        displayName: Install testing packages
 
-      - name: Unit tests
-        bash: |
+      - bash: |
           source activate $(python-version)
 
           cd ./trulens_eval
           python -m pytest $(tests-folder)
+        displayName: Unit tests
 
-      - name: Install optional packages
-        bash: |
+      - bash: |
           set -e
           source activate $(python-version)
 
@@ -118,12 +120,13 @@ jobs:
           python --version
           pip --version
           pip list
+        displayName: Install optional packages
 
-      - name: Unit tests with optional packages
-        bash: |
+      - bash: |
           set -e
           source activate $(python-version)
 
           cd ./trulens_eval
 
           python -m pytest $(tests-folder)
+        displayName: Unit tests with optional packages
