@@ -68,12 +68,12 @@ jobs:
           condaEnvFileSuffix: "trulens-eval"
           testSubdirectory: "tests/unit"
           condaSpecs: "python"
-        py38:
-          condaEnvFileSuffix: "trulens-eval-py38"
+        py308:
+          condaEnvFileSuffix: "trulens-eval-py308"
           testSubdirectory: "tests/unit/static"
           condaSpecs: "python=3.8"
-        py39:
-          condaEnvFileSuffix: "trulens-eval-py39"
+        py309:
+          condaEnvFileSuffix: "trulens-eval-py309"
           testSubdirectory: "tests/unit/static"
           condaSpecs: "python=3.9"
         py310:
