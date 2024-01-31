@@ -9,7 +9,7 @@ on:
       - "docs/trulens_eval/trulens_eval_gh_top_readme.ipynb"
       - "trulens_eval/examples/quickstart/llama_index_quickstart.ipynb"
       - "trulens_eval/examples/quickstart/langchain_quickstart.ipynb"
-      - "trulens_eval/examples/quickstart/text2text_quickstart.ipynb"
+      - "trulens_eval/examples/quickstart/quickstart.ipynb"
       - ".github/workflows/*"
 jobs:
   Generate-Docs-and-Testing-Files:
