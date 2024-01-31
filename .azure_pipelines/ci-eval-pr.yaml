@@ -18,7 +18,7 @@ jobs:
         latest:
           condaEnvFileSuffix: "trulens-eval"
           testSubdirectory: "tests/unit"
-          condaSpecs: "python<3.12"
+          condaSpecs: "\"python<3.12\""
   
     steps:
       - checkout: self
