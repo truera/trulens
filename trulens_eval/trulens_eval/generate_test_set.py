@@ -1,22 +1,27 @@
-from trulens_eval import Tru
-from typing import Any, Callable, Optional, List
-from trulens_eval import Feedback
-from trulens_eval.feedback import Groundedness
-from trulens_eval import TruChain, TruLlama, Select
-from trulens_eval.app import App
 import logging
+from typing import Any, Callable, List, Optional
+
+from trulens_eval import Feedback
+from trulens_eval import Select
+from trulens_eval import Tru
+from trulens_eval import TruChain
+from trulens_eval import TruLlama
+from trulens_eval.app import App
+from trulens_eval.feedback import Groundedness
+
 logger = logging.getLogger(__name__)
+from ast import literal_eval
+import json
 from logging import StreamHandler
 
-from ast import literal_eval
-
 import numpy as np
-import json
+
 
 class GenerateTestSet:
     """
     This class is responsible for generating a test set using the provided application callable.
     """
+
     def __init__(self, app_callable: Callable):
         """
         Initialize the GenerateTestSet class.
@@ -25,7 +30,7 @@ class GenerateTestSet:
         app_callable (Callable): The application callable to be used for generating the test set.
         """
         self.app_callable = app_callable
-        
+
     def _generate_themes(self, test_breadth: int) -> str:
         """
         Generates themes of the context available using a RAG application. 
@@ -39,10 +44,12 @@ class GenerateTestSet:
         """
         logger.info("Generating test categories...")
         # generate categories of questions to test based on context provided.
-        themes = self.app_callable(f"""
+        themes = self.app_callable(
+            f"""
         Ignore all prior instructions. What are the {test_breadth} key themes critical to understanding the entire context provided?
         Themes must be three words or less. The {test_breadth} key themes are:
-        """)
+        """
+        )
         return themes
 
     def _format_themes(self, themes: str, test_breadth: int) -> list:
@@ -56,14 +63,21 @@ class GenerateTestSet:
         list: A list of formatted themes.
         """
         theme_format = [f"theme {i+1}" for i in range(test_breadth)]
-        test_categories = literal_eval(self.app_callable(
-            f"Take the following themes, and turn them into a python list of the exact format: {theme_format}.\n\n"
-            f"Themes: {themes}\n\n"
-            "Python list:"
-        ))
+        test_categories = literal_eval(
+            self.app_callable(
+                f"Take the following themes, and turn them into a python list of the exact format: {theme_format}.\n\n"
+                f"Themes: {themes}\n\n"
+                "Python list:"
+            )
+        )
         return test_categories
-    
-    def _generate_test_prompts(self, test_category: str, test_depth: int, examples: Optional[list] = None) -> str:
+
+    def _generate_test_prompts(
+        self,
+        test_category: str,
+        test_depth: int,
+        examples: Optional[list] = None
+    ) -> str:
         """
         Generate raw test prompts for a given category, optionally using few shot examples.
         
@@ -110,7 +124,12 @@ class GenerateTestSet:
         test_prompts = literal_eval(self.app_callable(formatted_prompt))
         return test_prompts
 
-    def _generate_and_format_test_prompts(self, test_category: str, test_depth: int, examples: Optional[list] = None) -> list:
+    def _generate_and_format_test_prompts(
+        self,
+        test_category: str,
+        test_depth: int,
+        examples: Optional[list] = None
+    ) -> list:
         """
         Generate test prompts for a given category, optionally using few shot examples.
         
@@ -122,11 +141,18 @@ class GenerateTestSet:
         Returns:
         list: A list of test prompts.
         """
-        test_prompts = self._generate_test_prompts(test_category, test_depth, examples)
+        test_prompts = self._generate_test_prompts(
+            test_category, test_depth, examples
+        )
         formatted_test_prompts = self._format_test_prompts(test_prompts)
         return formatted_test_prompts
 
-    def generate_test_set(self, test_breadth: int, test_depth: int, examples: Optional[list] = None) -> dict:
+    def generate_test_set(
+        self,
+        test_breadth: int,
+        test_depth: int,
+        examples: Optional[list] = None
+    ) -> dict:
         """
         Generate a test set, optionally using few shot examples provided.
         
@@ -152,14 +178,22 @@ class GenerateTestSet:
         retry_count = 0
         while retry_count < 3:
             try:
-                themes = self._generate_themes(test_breadth = test_breadth)
-                test_categories = self._format_themes(themes = themes, test_breadth = test_breadth)
+                themes = self._generate_themes(test_breadth=test_breadth)
+                test_categories = self._format_themes(
+                    themes=themes, test_breadth=test_breadth
+                )
                 test_set = {}
                 for test_category in test_categories:
                     if examples:
-                        test_set[test_category] = self._generate_and_format_test_prompts(test_category, test_depth, examples)
+                        test_set[test_category
+                                ] = self._generate_and_format_test_prompts(
+                                    test_category, test_depth, examples
+                                )
                     else:
-                        test_set[test_category] = self._generate_and_format_test_prompts(test_category, test_depth)
+                        test_set[test_category
+                                ] = self._generate_and_format_test_prompts(
+                                    test_category, test_depth
+                                )
                 return test_set
             except Exception as e:
                 logger.error(f"Error generating test set: {e}")

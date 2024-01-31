@@ -8,7 +8,8 @@ bert-score   >= 0.3.13 # groundtruth.py
 evaluate     >= 0.4.0  # same
 
 # Apps: Langchain (optional parts)
-langchainhub >= 0.1.14 # example notebooks
+langchainhub    >= 0.1.14 # example notebooks
+langchain_openai >= 0.0.5 # unit tests, sample apps
 
 # Apps: LlamaIndex
 llama-index >= v0.9.26

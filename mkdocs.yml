@@ -138,7 +138,6 @@ nav:
           - Dev to Prod: trulens_eval/use_cases_production.md
   - Contributing:
       - 🤝 Contribution Guidelines: trulens_eval/CONTRIBUTING.md
-
   - Explain:
       - Getting Started:
           - 🚀 Installation: trulens_explain/install.md
