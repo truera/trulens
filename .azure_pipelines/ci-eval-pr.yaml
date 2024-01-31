@@ -55,7 +55,7 @@ jobs:
         displayName: Create Anaconda environment with python=$(python-version)
 
       - bash: |
-          # condition: ${{ eq(python-version, "3.11") }} # only run format check with latest python version
+          # condition: ${{ eq(python-version, 3.11) }} # only run format check with latest python version
           set -e
           source activate $(python-version)
 
