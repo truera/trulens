@@ -67,7 +67,7 @@ jobs:
         latest:
           condaEnvFileSuffix: "trulens-eval"
           testSubdirectory: "tests/unit"
-          condaSpecs: "python"
+          condaSpecs: "\"python<3.12\""
         py308:
           condaEnvFileSuffix: "trulens-eval-py308"
           testSubdirectory: "tests/unit/static"
