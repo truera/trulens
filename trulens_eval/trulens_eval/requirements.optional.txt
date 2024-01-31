@@ -6,6 +6,7 @@ watchdog >= 3.0.0 # no direct uses
 scikit-learn >= 1.3.1
 bert-score   >= 0.3.13 # groundtruth.py
 evaluate     >= 0.4.0  # same
+nltk         >= 3.8.1  # groundedness.py
 
 # Apps: Langchain (optional parts)
 langchainhub    >= 0.1.14 # example notebooks
@@ -14,6 +15,11 @@ langchain_openai >= 0.0.5 # unit tests, sample apps
 # Apps: LlamaIndex
 llama-index >= v0.9.26
 html2text   >= 2020.1.16 # for llama_index example using SimpleWebPageReader
+
+# Apps: NEMO Guardrails
+# NOTE: cannot install alongside the rest of packages right now due to conflict
+# regarding pydantic
+# nemoguardrails >= 0.6.1 
 
 # Models: openai
 openai >= 1.1.1, <2
