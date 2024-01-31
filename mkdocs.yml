@@ -66,9 +66,6 @@ theme:
   logo: img/squid.png
   features:
     - navigation.indexes
-    - navigation.sections
-    - navigation.tabs
-    - navigation.tabs.sticky
     - navigation.top
     - navigation.tracking
     - navigation.path
