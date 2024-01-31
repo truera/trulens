@@ -1,3 +1,20 @@
+# TODO: reintagrate code formatting check as we currently don't prevent PRs with unformatted code
+#- bash: |
+#          set -e
+#          source activate $(condaEnvFileSuffix)
+#          echo Using $(yapf --version) isort $(isort --vn)
+#          ./format.sh --eval
+#        displayName: Format Code
+#- bash: |
+#          num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
+#          if [ $num_changed_files -ne 0 ]; then
+#            echo "The following files have changed after running format.sh. Please format your code and update the PR."
+#            git ls-files --others -m --exclude-standard ./trulens_eval
+#            echo "\n\nOutputting git diff for checked in files.\n"
+#            git diff
+#          fi
+#        displayName: NoDiffCheck
+
 pr:
   branches:
     include:
@@ -16,9 +33,30 @@ jobs:
 
     strategy:
       matrix:
-        default:
+        latest:
           condaEnvFileSuffix: "trulens-llm"
           testSubdirectory: "tests/unit"
+          condaSpecs: "python"
+        py38:
+          condaEnvFileSuffix: "trulens-llm-py38"
+          testSubdirectory: "tests/unit/static"
+          condaSpecs: "python=3.8"
+        py39:
+          condaEnvFileSuffix: "trulens-llm-py39"
+          testSubdirectory: "tests/unit/static"
+          condaSpecs: "python=3.9"
+        py310:
+          condaEnvFileSuffix: "trulens-llm-py310"
+          testSubdirectory: "tests/unit/static"
+          condaSpecs: "python=3.10"
+        py311:
+          condaEnvFileSuffix: "trulens-llm-py311"
+          testSubdirectory: "tests/unit/static"
+          condaSpecs: "python=3.11"
+        py312:
+          condaEnvFileSuffix: "trulens-llm-py312"
+          testSubdirectory: "tests/unit/static"
+          condaSpecs: "python=3.12"
 
     steps:
       - checkout: self
@@ -29,59 +67,63 @@ jobs:
 
       - bash: |
           set -e
-          conda create  -y --quiet -n $(condaEnvFileSuffix) python=3.11
+          conda create  -y --quiet -n $(condaEnvFileSuffix) $(condaSpecs)
           conda init bash
-        displayName: Create Anaconda environment
+        displayName: Create Anaconda environment with $(condaSpecs)
 
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
-          which python
-          python --version
-        displayName: Which Python
 
-      - bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
           pip install -e .
+
+          python --version
+          pip --version
+          pip list
+
+        displayName: Install trulens
+
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
+
           pip install yapf==0.32.0
           pip install isort==5.10.1
           pip install ipykernel
-          python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
-        displayName: Install pip package
+          pip install pytest==7.0.1 pytest-azurepipelines
 
-      - bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
-          echo Using $(yapf --version) isort $(isort --vn)
-          ./format.sh --eval
-        displayName: Format Code
+          python -m ipykernel install --user \
+            --name $(condaEnvFileSuffix) \
+            --display-name $(condaEnvFileSuffix)
 
-      - bash: |
-          num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
-          if [ $num_changed_files -ne 0 ]; then
-            echo "The following files have changed after running format.sh. Please format your code and update the PR."
-            git ls-files --others -m --exclude-standard ./trulens_eval
-            echo "\n\nOutputting git diff for checked in files.\n"
-            git diff
-          fi
-        displayName: NoDiffCheck
+        displayName: Install testing packages
 
       - bash: |
           source activate $(condaEnvFileSuffix)
 
           cd ./trulens_eval
-
-          pip install pytest==7.0.1 pytest-azurepipelines
-          pip install -r trulens_eval/requirements.optional.txt
-          
-          echo '::group::piplist'
-          echo "$(pip list)"
-          echo '::endgroup::'
-          
           python -m pytest $(testSubdirectory)
-        displayName: Run unit tests
+        displayName: Required unit tests
+
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
+
+          cd ./trulens_eval
+
+          pip install -r trulens_eval/requirements.optional.txt
+
+          python --version
+          pip --version
+          pip list
+
+        displayName: Install optional packages
+
+      - bash: |      
+          python -m pytest $(testSubdirectory)
+
+        displayName: Optional unit tests
 
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
