@@ -8,19 +8,27 @@ pr:
       - trulens_eval
 
 jobs:
-  - job: syntax
+  - job: PRBranchProtect
     pool:
       vmImage: "ubuntu-latest"
     timeoutInMinutes: 30
 
     strategy:
       matrix:
-        latest:
-          condaEnvFileSuffix: "trulens-eval"
-          testSubdirectory: "tests/unit"
-          condaSpecs: "\"python<3.12\""
-  
+        pyversion: [3.8, 3.9, 3.10, 3.11]
+        testSubdirectory: ["tests/unit", "tests/unit/static"]
+        exclude: 
+          - testSubdirectory: "tests/unit"
+            pyversion: [3.8, 3.9, 3.10] # only run full set of unit tests on 3.11
+          - testSubdirectory: "tests/unit/static" # already included in parent folder
+            pyversion: [3.11]
+
+    runs-on: ${{ matrix.pyversion }}
     steps:
+      - with: 
+          condaEnvFileSuffix: "trulens-eval-${{ matrix.pyversion }}"
+          testSubdirectory: ${{ matrix.testSubdirectory }}
+
       - checkout: self
         clean: true
 
@@ -29,12 +37,13 @@ jobs:
 
       - bash: |
           set -e
-          conda create  -y --quiet -n $(condaEnvFileSuffix) $(condaSpecs)
+          conda create  -y --quiet -n $(condaEnvFileSuffix) python=$(pyversion)
           conda init bash
 
-        displayName: Create Anaconda environment with $(condaSpecs)
+        displayName: Create Anaconda environment with python=$(pyversion)
 
-      - bash: |
+      - if: $(pyversion) == 3.11 # only run format check with latest python version
+        bash: |
           set -e
           source activate $(condaEnvFileSuffix)
 
@@ -56,52 +65,7 @@ jobs:
             git diff
           fi
         displayName: NoDiffCheck
-
-  - job: PRBranchProtect
-    pool:
-      vmImage: "ubuntu-latest"
-    timeoutInMinutes: 30
-
-    strategy:
-      matrix:
-        latest:
-          condaEnvFileSuffix: "trulens-eval"
-          testSubdirectory: "tests/unit"
-          condaSpecs: "\"python<3.12\""
-        py308:
-          condaEnvFileSuffix: "trulens-eval-py308"
-          testSubdirectory: "tests/unit/static"
-          condaSpecs: "python=3.8"
-        py309:
-          condaEnvFileSuffix: "trulens-eval-py309"
-          testSubdirectory: "tests/unit/static"
-          condaSpecs: "python=3.9"
-        py310:
-          condaEnvFileSuffix: "trulens-eval-py310"
-          testSubdirectory: "tests/unit/static"
-          condaSpecs: "python=3.10"
-        py311:
-          condaEnvFileSuffix: "trulens-eval-py311"
-          testSubdirectory: "tests/unit/static"
-          condaSpecs: "python=3.11"
-        #py312: # we don't support 3.12 yet
-        #  condaEnvFileSuffix: "trulens-eval-py312"
-        #  testSubdirectory: "tests/unit/static"
-        #  condaSpecs: "python=3.12"
-
-    steps:
-      - checkout: self
-        clean: true
-
-      - bash: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: Add conda to PATH
-
-      - bash: |
-          set -e
-          conda create  -y --quiet -n $(condaEnvFileSuffix) $(condaSpecs)
-          conda init bash
-        displayName: Create Anaconda environment with $(condaSpecs)
-
+      
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)

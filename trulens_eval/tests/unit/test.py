@@ -11,6 +11,14 @@ from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
 
 
+def check_installed(module: str) -> bool:
+    try:
+        __import__(module)
+        return True
+    except ImportError:
+        return False
+
+
 class JSONTestCase(TestCase):
 
     def assertJSONEqual(

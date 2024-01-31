@@ -2,25 +2,17 @@
 Tests for TruChain. Some of the tests are outdated.
 """
 
-import os
 import unittest
 from unittest import main
 
 from langchain.callbacks import AsyncIteratorCallbackHandler
-from langchain.chains import ConversationalRetrievalChain
 from langchain.chains import LLMChain
-from langchain.chains import SimpleSequentialChain
-from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms.openai import OpenAI
-from langchain.memory import ConversationBufferWindowMemory
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
-from langchain.vectorstores import Pinecone
-# from langchain.chat_models.openai import ChatOpenAI # Deprecated
-from langchain_openai import ChatOpenAI
-import pinecone
-from tests.unit.test import JSONTestCase
+
+from tests.unit.test import JSONTestCase, check_installed
 
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.endpoint import Endpoint
@@ -67,7 +59,8 @@ class TestTruChain(JSONTestCase):
         chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
 
     def _create_basic_chain(self, app_id: str = None):
-        OpenAIEndpoint()
+
+        from langchain_openai import ChatOpenAI
 
         # Create simple QA chain.
         tru = Tru()
@@ -87,6 +80,7 @@ class TestTruChain(JSONTestCase):
 
         return tc
 
+    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
     def test_record_metadata_plain(self):
         # Test inclusion of metadata in records.
 
@@ -135,6 +129,7 @@ class TestTruChain(JSONTestCase):
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, new_meta)
 
+    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
     def test_record_metadata_json(self):
         # Test inclusion of metadata in records.
 
@@ -167,11 +162,14 @@ class TestTruChain(JSONTestCase):
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
 
+    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
     def test_async_with_task(self):
         # Check whether an async call that makes use of Task (via
         # asyncio.gather) can still track costs.
 
         # TODO: move to a different test file as TruChain is not involved.
+
+        from langchain_openai import ChatOpenAI
 
         msg = HumanMessage(content="Hello there")
 
@@ -210,11 +208,12 @@ class TestTruChain(JSONTestCase):
         # self.assertGreater(costs1[0].cost.n_stream_chunks, 0)
         # self.assertGreater(costs2[0].cost.n_stream_chunks, 0)
 
+    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
     def test_async_with_record(self):
         # Check that the async awith_record produces the same stuff as the
         # sync with_record.
 
-        OpenAIEndpoint()
+        from langchain_openai import ChatOpenAI
 
         # Create simple QA chain.
         tru = Tru()
@@ -255,9 +254,12 @@ class TestTruChain(JSONTestCase):
             )
         )
 
+    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
     @unittest.skip("bug in langchain")
     def test_async_token_gen(self):
         # Test of chain acall methods as requested in https://github.com/truera/trulens/issues/309 .
+
+        from langchain_openai import ChatOpenAI
 
         tru = Tru()
         # hugs = feedback.Huggingface()
