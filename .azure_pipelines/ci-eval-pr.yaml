@@ -34,29 +34,29 @@ jobs:
     strategy:
       matrix:
         latest:
-          condaEnvFileSuffix: "trulens-llm"
+          condaEnvFileSuffix: "trulens-eval"
           testSubdirectory: "tests/unit"
           condaSpecs: "python"
         py38:
-          condaEnvFileSuffix: "trulens-llm-py38"
+          condaEnvFileSuffix: "trulens-eval-py38"
           testSubdirectory: "tests/unit/static"
           condaSpecs: "python=3.8"
         py39:
-          condaEnvFileSuffix: "trulens-llm-py39"
+          condaEnvFileSuffix: "trulens-eval-py39"
           testSubdirectory: "tests/unit/static"
           condaSpecs: "python=3.9"
         py310:
-          condaEnvFileSuffix: "trulens-llm-py310"
+          condaEnvFileSuffix: "trulens-eval-py310"
           testSubdirectory: "tests/unit/static"
           condaSpecs: "python=3.10"
         py311:
-          condaEnvFileSuffix: "trulens-llm-py311"
+          condaEnvFileSuffix: "trulens-eval-py311"
           testSubdirectory: "tests/unit/static"
           condaSpecs: "python=3.11"
-        py312:
-          condaEnvFileSuffix: "trulens-llm-py312"
-          testSubdirectory: "tests/unit/static"
-          condaSpecs: "python=3.12"
+        #py312: # we don't support 3.12 yet
+        #  condaEnvFileSuffix: "trulens-eval-py312"
+        #  testSubdirectory: "tests/unit/static"
+        #  condaSpecs: "python=3.12"
 
     steps:
       - checkout: self

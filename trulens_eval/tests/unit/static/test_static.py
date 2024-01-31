@@ -18,6 +18,7 @@ class TestLens(TestCase):
 
     def test_import_trulens_eval(self):
         import trulens_eval
+        pass
 
 
 if __name__ == '__main__':
