@@ -24,7 +24,7 @@ jobs:
             python-version: ["3.11"]
 
     pool:
-      vmImage: $(os)
+      vmImage: $(image)
 
     env:
       OPENAI_API_KEY: $(OPENAI_API_KEY)
