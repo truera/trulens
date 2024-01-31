@@ -375,18 +375,6 @@ class TruLlama(App):
                 f"Do not know what in object of type {type(ret).__name__} is the main app output."
             )
 
-    def __getattr__(self, __name: str) -> Any:
-        # A message for cases where a user calls something that the wrapped
-        # app has but we do not wrap yet.
-
-        if safe_hasattr(self.app, __name):
-            return RuntimeError(
-                f"TruLlama has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
-                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruLlama`. "
-            )
-        else:
-            raise AttributeError(f"TruLlama has no attribute named {__name}.")
-
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     def chat(self, *args, **kwargs) -> None:
