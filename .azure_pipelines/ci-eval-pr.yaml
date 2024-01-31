@@ -1,20 +1,3 @@
-# TODO: reintagrate code formatting check as we currently don't prevent PRs with unformatted code
-#- bash: |
-#          set -e
-#          source activate $(condaEnvFileSuffix)
-#          echo Using $(yapf --version) isort $(isort --vn)
-#          ./format.sh --eval
-#        displayName: Format Code
-#- bash: |
-#          num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
-#          if [ $num_changed_files -ne 0 ]; then
-#            echo "The following files have changed after running format.sh. Please format your code and update the PR."
-#            git ls-files --others -m --exclude-standard ./trulens_eval
-#            echo "\n\nOutputting git diff for checked in files.\n"
-#            git diff
-#          fi
-#        displayName: NoDiffCheck
-
 pr:
   branches:
     include:
@@ -23,9 +6,57 @@ pr:
   paths:
     include:
       - trulens_eval
-      - docs/trulens_eval/*.ipynb
 
 jobs:
+  - job: syntax
+    pool:
+      vmImage: "ubuntu-latest"
+    timeoutInMinutes: 30
+
+    strategy:
+      matrix:
+        latest:
+          condaEnvFileSuffix: "trulens-eval"
+          testSubdirectory: "tests/unit"
+          condaSpecs: "python<3.12"
+  
+    steps:
+      - checkout: self
+        clean: true
+
+      - bash: echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: Add conda to PATH
+
+      - bash: |
+          set -e
+          conda create  -y --quiet -n $(condaEnvFileSuffix) $(condaSpecs)
+          conda init bash
+
+        displayName: Create Anaconda environment with $(condaSpecs)
+
+      - bash: |
+          set -e
+          source activate $(condaEnvFileSuffix)
+
+          pip install yapf==0.32.0
+          pip install isort==5.10.1
+
+          yapf --version
+          isort --vn
+
+          ./format.sh --eval
+        displayName: Format Code
+
+      - bash: |
+          num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
+          if [ $num_changed_files -ne 0 ]; then
+            echo "The following files have changed after running format.sh. Please format your code and update the PR."
+            git ls-files --others -m --exclude-standard ./trulens_eval
+            echo "\n\nOutputting git diff for checked in files.\n"
+            git diff
+          fi
+        displayName: NoDiffCheck
+
   - job: PRBranchProtect
     pool:
       vmImage: "ubuntu-latest"
@@ -88,8 +119,6 @@ jobs:
           set -e
           source activate $(condaEnvFileSuffix)
 
-          pip install yapf==0.32.0
-          pip install isort==5.10.1
           pip install ipykernel
           pip install pytest==7.0.1 pytest-azurepipelines
 
