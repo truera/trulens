@@ -15,20 +15,17 @@ jobs:
 
     strategy:
       matrix:
-        latest:
-          python-version: 3.11
-          tests-folder: tests/unit
-        py308:
-          python-version: 3.8
-          tests-folder: tests/unit/static
-        py309:
-          python-version: 3.9
-          tests-folder: tests/unit/static
-        py310:
-          python-version: 3.10
-          tests-folder: tests/unit/static
         py311:
           python-version: 3.11
+          tests-folder: tests/unit
+        py308-static:
+          python-version: 3.8
+          tests-folder: tests/unit/static
+        py309-static:
+          python-version: 3.9
+          tests-folder: tests/unit/static
+        py310-static:
+          python-version: 3.10
           tests-folder: tests/unit/static
 
     #env:
