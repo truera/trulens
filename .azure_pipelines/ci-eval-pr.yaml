@@ -17,11 +17,11 @@ jobs:
         architecture: ["x64"]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         tests-folder: ["tests/unit", "tests/unit/static"]
-        exclude: 
-          - tests-folder: "tests/unit"
-            python-version: ["3.8", "3.9", "3.10"] # only run full set of unit tests on 3.11
-          - tests-folder: "tests/unit/static" # already included in parent folder
-            python-version: ["3.11"]
+        #exclude: 
+        #  - tests-folder: "tests/unit"
+        #    python-version: ["3.8", "3.9", "3.10"] # only run full set of unit tests on 3.11
+        #  - tests-folder: "tests/unit/static" # already included in parent folder
+        #    python-version: ["3.11"]
 
     pool:
       vmImage: $(image)
