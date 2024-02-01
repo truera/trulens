@@ -205,6 +205,26 @@ class Dummy(type, object):
     def __subclasscheck__(self, __subclass: type) -> bool:
         return True
 
+    def _wasused(self, *args, **kwargs):
+        raise self.exception_class(self.message)
+
+    # If someone tries to use dummy in an expression, raise our usage exception:
+    __add__ = _wasused
+    __sub__ = _wasused
+    __mul__ = _wasused
+    __truediv__ = _wasused
+    __floordiv__ = _wasused
+    __mod__ = _wasused
+    __divmod__ = _wasused
+    __pow__ = _wasused
+    __lshift__ = _wasused
+    __rshift__ = _wasused
+    __and__ = _wasused
+    __xor__ = _wasused
+    __or__ = _wasused
+    __radd__ = _wasused
+    __rsub__ = _wasused
+
     def __getattr__(self, name):
         # If in OptionalImport context, create a new dummy for the requested
         # attribute. Otherwise raise error.

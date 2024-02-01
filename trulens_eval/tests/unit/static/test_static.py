@@ -7,7 +7,7 @@ from pprint import PrettyPrinter
 from unittest import main
 from unittest import TestCase
 
-from tests.unit.test import optional_test
+from tests.unit.test import module_installed, optional_test
 from tests.unit.test import requiredonly_test
 
 pp = PrettyPrinter()
@@ -31,18 +31,31 @@ base_mods = [
 ]
 
 # Importing any of these should throw ImportError (or its sublcass
-# ModuleNotFoundError) if optional packages are not installed.
-optional_mods = [
-    "trulens_eval.appui",
-    "trulens_eval.tru_llama",
-    "trulens_eval.utils.llama",
-    "trulens_eval.feedback.provider.bedrock",
-    "trulens_eval.feedback.provider.endpoint.bedrock",
-    "trulens_eval.feedback.provider.litellm",
-    "trulens_eval.feedback.provider.endpoint.litellm",
-    "trulens_eval.feedback.provider.openai",
-    "trulens_eval.feedback.provider.endpoint.openai"
+# ModuleNotFoundError) if optional packages are not installed. The key is the
+# package that the values depend on. Tests will first make sure the named
+# package is not installed and then check that importing any of those named
+# modules produces the correct exception.
+optional_mods = dict(
+    ipython=[
+        "trulens_eval.appui"
+    ],
+    llama_index = [
+        "trulens_eval.tru_llama",
+        "trulens_eval.utils.llama"
+    ],
+    boto3 = [
+        "trulens_eval.feedback.provider.bedrock",
+        "trulens_eval.feedback.provider.endpoint.bedrock"
+    ],
+    litellm = [
+        "trulens_eval.feedback.provider.litellm",
+        "trulens_eval.feedback.provider.endpoint.litellm",
+    ],
+    openai = [
+        "trulens_eval.feedback.provider.openai",
+        "trulens_eval.feedback.provider.endpoint.openai"
     ]
+)
 
 class TestStatic(TestCase):
 
@@ -68,15 +81,21 @@ class TestStatic(TestCase):
         packages have not been installed.
         """
 
-        for mod in optional_mods:
-            with self.subTest(msg=mod):
-                with self.assertRaises(ImportError) as context:
-                    __import__(mod)
+        for opt, mods in optional_mods.items():
+            with self.subTest(optional=opt):
+                # First make sure the optional package is not installed.
+                self.assertFalse(module_installed(opt))
 
-                # Make sure the message is the one we produce as part of the
-                # optional imports scheme (see
-                # utils/imports.py:format_import_errors).
-                assert "You should be able to install" in context.exception.args[0] # message?
+                for mod in mods:
+                    with self.subTest(mod=mod):
+                        # Make sure the import raises ImportError:
+                        with self.assertRaises(ImportError) as context:
+                            __import__(mod)
+
+                        # Make sure the message in the exception is the one we
+                        # produce as part of the optional imports scheme (see
+                        # utils/imports.py:format_import_errors).
+                        self.assertTrue("You should be able to install" in context.exception.args[0])
 
     @optional_test
     def test_import_optional_success(self):
@@ -85,9 +104,15 @@ class TestStatic(TestCase):
         we run this test after installing optional packages.
         """
 
-        for mod in optional_mods:
-            with self.subTest(msg=mod):
-                __import__(mod)
+        for opt, mods in optional_mods.items():
+            with self.subTest(optional=opt):
+                # First make sure the optional package is installed.
+                self.assertTrue(module_installed(opt))
+
+                for mod in mods:
+                    with self.subTest(mod=mod):
+                        # Make sure we can import the module now.                        
+                        __import__(mod)
 
 
 if __name__ == '__main__':

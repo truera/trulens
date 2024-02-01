@@ -37,7 +37,7 @@ def requiredonly_test(testmethodorclass):
     )(testmethodorclass)
 
 
-def check_installed(module: str) -> bool:
+def module_installed(module: str) -> bool:
     try:
         __import__(module)
         return True
