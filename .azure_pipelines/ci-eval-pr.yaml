@@ -93,12 +93,8 @@ jobs:
           source activate $(python-version)
 
           pip install \
-            ipykernel \
             pytest==7.0.1 pytest-subtests pytest-azurepipelines
 
-          python -m ipykernel install --user \
-            --name $(python-version) \
-            --display-name $(python-version)
         displayName: Install testing packages
 
       - bash: |
@@ -114,6 +110,12 @@ jobs:
           source activate $(python-version)
 
           cd ./trulens_eval
+
+          # Once we start running notebooks in these tests, might have to do this again:
+          # pip install ipykernel
+          # python -m ipykernel install --user \
+          #  --name $(python-version) \
+          #  --display-name $(python-version)
 
           pip install -r trulens_eval/requirements.optional.txt
 

@@ -36,7 +36,7 @@ base_mods = [
 # package is not installed and then check that importing any of those named
 # modules produces the correct exception.
 optional_mods = dict(
-    IPython=[ # pypi name is ipython but module name is IPython ...
+    ipywidgets=[ # ipython gets installed non-optionally
         "trulens_eval.appui"
     ],
     llama_index = [
