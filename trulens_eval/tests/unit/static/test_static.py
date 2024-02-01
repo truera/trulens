@@ -7,8 +7,8 @@ from pprint import PrettyPrinter
 from unittest import main
 from unittest import TestCase
 
-from tests.unit.test import optional_test, requiredonly_test
-
+from tests.unit.test import optional_test
+from tests.unit.test import requiredonly_test
 
 pp = PrettyPrinter()
 
@@ -20,10 +20,11 @@ base_mods = [
     "trulens_eval.feedback.provider.endpoint"
 ]
 
-# Importing any of these should throw ImportError if optional packages are not
-# installed.
+# Importing any of these should throw ImportError (or its sublcass
+# ModuleNotFoundError) if optional packages are not installed.
 optional_mods = [
     "trulens_eval.tru_llama",
+    "trulens_eval.utils.llama"
     "trulens_eval.feedback.provider.bedrock",
     "trulens_eval.feedback.provider.endpoint.bedrock",
     "trulens_eval.feedback.provider.litellm",
@@ -58,7 +59,7 @@ class TestStatic(TestCase):
 
         for mod in optional_mods:
             with self.subTest(mod=mod):
-                with self.assertRaises(ModuleNotFoundError) as context:
+                with self.assertRaises(ImportError) as context:
                     __import__(mod)
 
                 # Make sure the message is the one we produce as part of the
