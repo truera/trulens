@@ -13,7 +13,7 @@ from pprint import PrettyPrinter
 from threading import Lock
 from typing import (
     Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
-    Set, Tuple, Type
+    Set, Tuple, Type, TypeVar
 )
 
 import pydantic
@@ -55,6 +55,27 @@ pp = PrettyPrinter()
 
 # App component.
 COMPONENT = Any
+
+A = TypeVar("A")
+
+# Message produced when an attribute is looked up from our App but is actually
+# an attribute of the enclosed app.
+ATTRIBUTE_ERROR_MESSAGE = """
+{class_name} has no attribute `{attribute_name}` but the wrapped app {app_class_name} does. If
+you are calling a {app_class_name} method, retrieve it from that app instead of from
+{class_name}. If you need to record your app's behaviour, use {class_name} as a context
+manager as in this example:
+
+```python
+    app: {app_class_name} = ...  # your app
+    truapp: {class_name} = {class_name}(app, ...)  # the truera recorder
+
+    with truapp as recorder:
+      result = app.{attribute_name}(...)
+
+    record: Record = recorder.get() # get the record of the invocation if needed
+```
+"""
 
 
 class ComponentView(ABC):
@@ -847,7 +868,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             )
 
     async def awith_(
-        self, func: CallableMaybeAwaitable[..., T], *args, **kwargs
+        self, func: CallableMaybeAwaitable[A, T], *args, **kwargs
     ) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
@@ -863,7 +884,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     async def awith_record(
         self,
-        func: CallableMaybeAwaitable[..., T],
+        func: CallableMaybeAwaitable[A, T],
         *args,
         record_metadata: JSON = None,
         **kwargs
@@ -886,7 +907,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         return ret, ctx.get()
 
-    def with_(self, func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
+    def with_(self, func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         """
         Call the given `func` with the given `*args` and `**kwargs` while
         recording, producing `func` results. The record of the computation is
@@ -899,7 +920,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     def with_record(
         self,
-        func: CallableMaybeAwaitable[..., T],
+        func: CallableMaybeAwaitable[A, T],
         *args,
         record_metadata: JSON = None,
         **kwargs
@@ -1012,6 +1033,23 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
             return
+
+    def __getattr__(self, __name: str) -> Any:
+        # A message for cases where a user calls something that the wrapped app
+        # contains. We do not support this form of pass-through calls anymore.
+
+        if safe_hasattr(self.app, __name):
+            msg = ATTRIBUTE_ERROR_MESSAGE.format(
+                attribute_name=__name,
+                class_name=type(self).__name__,
+                app_class_name=type(self.app).__name__
+            )
+            raise AttributeError(msg)
+
+        else:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{__name}'"
+            )
 
     def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
         """
