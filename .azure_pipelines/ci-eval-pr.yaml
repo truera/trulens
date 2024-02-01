@@ -55,7 +55,6 @@ jobs:
         displayName: Create Anaconda environment with python=$(python-version)
 
       - bash: |
-          # condition: eq(python-version, 3.11) # only run format check with latest python version
           set -e
           source activate $(python-version)
 
@@ -66,9 +65,7 @@ jobs:
           isort --vn
 
           ./format.sh --eval
-        displayName: Format Code
 
-      - bash: |
           num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
           if [ $num_changed_files -ne 0 ]; then
             echo "The following files have changed after running format.sh. Please format your code and update the PR."
@@ -76,6 +73,7 @@ jobs:
             echo "\n\nOutputting git diff for checked in files.\n"
             git diff
           fi
+        # condition: eq(python-version, 3.11) # only run format check with latest python version
         displayName: NoDiffCheck
 
       - bash: |
