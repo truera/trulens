@@ -18,7 +18,7 @@ jobs:
 
     strategy:
       matrix:
-        py311:
+        default: # name is important
           python-version: 3.11
           tests-folder: tests/unit
         py308-static:
