@@ -10,9 +10,10 @@ from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 logger = logging.getLogger(__name__)
 
 with OptionalImports(messages=REQUIREMENT_BEDROCK):
+    # Here only to make sure we throw our message if bedrock optional packages
+    # are not installed.
     import boto3
 
-# check that the optional imports are not dummies:
 OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(boto3)
 
 
