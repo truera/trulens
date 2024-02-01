@@ -15,6 +15,16 @@ pp = PrettyPrinter()
 # Importing any of these should be ok regardless of optional packages.
 base_mods = [
     "trulens_eval",
+    "trulens_eval.tru",
+    "trulens_eval.tru_chain",
+    "trulens_eval.tru_basic_app",
+    "trulens_eval.tru_custom_app",
+    "trulens_eval.tru_virtual",
+    "trulens_eval.app",
+    "trulens_eval.db",
+    "trulens_eval.schema",
+    "trulens_eval.keys",
+    "trulens_eval.instruments",
     "trulens_eval.feedback",
     "trulens_eval.feedback.provider",
     "trulens_eval.feedback.provider.endpoint"
@@ -23,8 +33,9 @@ base_mods = [
 # Importing any of these should throw ImportError (or its sublcass
 # ModuleNotFoundError) if optional packages are not installed.
 optional_mods = [
+    "trulens_eval.appui",
     "trulens_eval.tru_llama",
-    "trulens_eval.utils.llama"
+    "trulens_eval.utils.llama",
     "trulens_eval.feedback.provider.bedrock",
     "trulens_eval.feedback.provider.endpoint.bedrock",
     "trulens_eval.feedback.provider.litellm",
