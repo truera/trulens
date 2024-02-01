@@ -102,7 +102,7 @@ jobs:
           source activate $(python-version)
 
           cd ./trulens_eval
-          python -m pytest --test-run-title="Required unit tests" $(tests-folder)
+          python -m pytest --test-run-title="Required $(python-version) unit tests" $(tests-folder)
         displayName: Unit tests with required packages
 
       - bash: |
@@ -130,7 +130,7 @@ jobs:
 
           cd ./trulens_eval
 
-          python -m pytest  --test-run-title="Optional unit tests" $(tests-folder)
+          python -m pytest  --test-run-title="Optional $(python-version) unit tests" $(tests-folder)
         env:
           # enables optional tests, see tests/unit/test.py
           with_optional: true 
