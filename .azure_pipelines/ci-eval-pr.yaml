@@ -94,7 +94,7 @@ jobs:
 
           pip install \
             ipykernel \
-            pytest==7.0.1 pytest-azurepipelines
+            pytest==7.0.1 pytest-subtests pytest-azurepipelines
 
           python -m ipykernel install --user \
             --name $(python-version) \
