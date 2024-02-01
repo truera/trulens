@@ -173,7 +173,11 @@ REQUIREMENT_NOTEBOOK = format_import_errors(
 class Dummy(type, object):
     """
     Class to pretend to be a module or some other imported object. Will raise an
-    error if accessed in any way.
+    error if accessed in some dynamic way. Accesses that are "static-ish" will
+    try not to raise the exception so things like defining subclasses of a
+    missing class should not raise exception. Dynamic uses are things like
+    calls, use in expressions. Looking up an attribute is static-ish so we don't
+    throw the error at that point but instead make more dummies.
     """
 
     def __new__(cls, name, *args, **kwargs):
