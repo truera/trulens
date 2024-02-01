@@ -11,7 +11,7 @@ from inspect import stack
 import logging
 import threading
 from threading import Thread as fThread
-from typing import Callable, Optional
+from typing import Callable, Optional, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
+
+A = TypeVar("A")
 
 class Thread(fThread):
     """
@@ -138,7 +140,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def _run_with_timeout(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
@@ -168,7 +170,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def submit(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
@@ -186,7 +188,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def _submit(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
