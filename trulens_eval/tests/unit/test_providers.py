@@ -8,9 +8,11 @@ import unittest
 from unittest import main
 from unittest import TestCase
 
+from tests.unit.test import check_installed
+from tests.unit.test import JSONTestCase
+
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.keys import check_keys
-from trulens_eval.tests.unit.test import check_installed
 
 pp = PrettyPrinter()
 

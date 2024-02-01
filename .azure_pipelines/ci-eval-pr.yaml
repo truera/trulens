@@ -94,8 +94,9 @@ jobs:
           set -e
           source activate $(python-version)
 
-          pip install ipykernel
-          pip install pytest==7.0.1 pytest-azurepipelines
+          pip install \
+            ipykernel \
+            pytest==7.0.1 pytest-azurepipelines
 
           python -m ipykernel install --user \
             --name $(python-version) \
@@ -103,6 +104,7 @@ jobs:
         displayName: Install testing packages
 
       - bash: |
+          set -e
           source activate $(python-version)
 
           cd ./trulens_eval
