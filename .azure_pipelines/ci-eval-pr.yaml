@@ -74,7 +74,7 @@ jobs:
             echo "\n\nOutputting git diff for checked in files.\n"
             git diff
           fi
-        condition: eq(${{'python-version'}}, 3.11) # only run format check with latest python version
+        condition: eq(variables['python-version'], 3.11) # only run format check with latest python version
         displayName: Format diffs
 
       - bash: |

@@ -24,7 +24,6 @@ def optional_test(testmethodorclass):
     )(testmethodorclass)
 
 
-
 def requiredonly_test(testmethodorclass):
     """
     Only runs the decorated test if the environment variable with_optional
