@@ -34,9 +34,12 @@ base_mods = [
 # ModuleNotFoundError) if optional packages are not installed. The key is the
 # package that the values depend on. Tests will first make sure the named
 # package is not installed and then check that importing any of those named
-# modules produces the correct exception.
+# modules produces the correct exception. If the uninstalled check fails, it may
+# be that something in the requirements list installs what we thought was
+# optional in which case it should no longer be considered optional.
+
 optional_mods = dict(
-    ipywidgets=[ # ipython gets installed non-optionally
+    ipywidgets=[
         "trulens_eval.appui"
     ],
     llama_index = [

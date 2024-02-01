@@ -11,7 +11,7 @@ pr:
       - trulens_eval
 
 jobs:
-  - job: pr_branch_protect
+  - job: PRBranchProtect # name seems to be important but cannot figure out why
     pool:
       vmImage: ubuntu-latest
     timeoutInMinutes: 30
