@@ -42,17 +42,17 @@ jobs:
       - checkout: self
         clean: true
 
-      - bash: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: Add conda to PATH
-
       - bash: |
+          echo "##vso[task.prependpath]$CONDA/bin"
+
           set -e
           conda create -y --quiet \
             -n $(python-version) \
             python=$(python-version)
 
           conda init bash
-        displayName: Create Anaconda environment with python=$(python-version)
+
+        displayName: Setup conda
 
       - bash: |
           set -e
@@ -74,7 +74,7 @@ jobs:
             git diff
           fi
         # condition: eq(python-version, 3.11) # only run format check with latest python version
-        displayName: NoDiffCheck
+        displayName: Format diffs
 
       - bash: |
           set -e
