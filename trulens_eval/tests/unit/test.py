@@ -20,7 +20,7 @@ def optional_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        not os.environ.get('with_optional'), "optional test"
+        not os.environ.get('TEST_OPTIONAL'), "optional test"
     )(testmethodorclass)
 
 
@@ -33,7 +33,7 @@ def requiredonly_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        os.environ.get('with_optional'), "not an optional test"
+        os.environ.get('TEST_OPTIONAL'), "not an optional test"
     )(testmethodorclass)
 
 
