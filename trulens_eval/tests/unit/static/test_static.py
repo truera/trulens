@@ -24,7 +24,6 @@ base_mods = [
 # installed.
 optional_mods = [
     "trulens_eval.tru_llama",
-    "trulens_eval.feedback.bedrock",
     "trulens_eval.feedback.provider.bedrock",
     "trulens_eval.feedback.provider.endpoint.bedrock",
     "trulens_eval.feedback.provider.litellm",
