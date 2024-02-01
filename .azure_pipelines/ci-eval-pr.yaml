@@ -11,7 +11,7 @@ pr:
       - trulens_eval
 
 jobs:
-  - job: branchtest
+  - job: pr_branch_protect
     pool:
       vmImage: ubuntu-latest
     timeoutInMinutes: 30

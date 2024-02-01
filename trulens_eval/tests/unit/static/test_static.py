@@ -56,7 +56,7 @@ class TestStatic(TestCase):
         """
 
         for mod in base_mods:
-            with self.subTest(mod=mod):
+            with self.subTest(msg=mod):
                 __import__(mod)
     
 
@@ -69,7 +69,7 @@ class TestStatic(TestCase):
         """
 
         for mod in optional_mods:
-            with self.subTest(mod=mod):
+            with self.subTest(msg=mod):
                 with self.assertRaises(ImportError) as context:
                     __import__(mod)
 
@@ -86,7 +86,7 @@ class TestStatic(TestCase):
         """
 
         for mod in optional_mods:
-            with self.subTest(mod=mod):
+            with self.subTest(msg=mod):
                 __import__(mod)
 
 
