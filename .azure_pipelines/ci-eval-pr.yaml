@@ -131,4 +131,9 @@ jobs:
           cd ./trulens_eval
 
           python -m pytest $(tests-folder)
+        env:
+          # enables optional tests, see tests/unit/test.py
+          with_optional: true 
+
         displayName: Unit tests with optional packages
+

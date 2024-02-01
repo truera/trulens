@@ -5,22 +5,24 @@ Tests for TruLlama.
 import unittest
 from unittest import main
 
-from tests.unit.test import check_installed
 from tests.unit.test import JSONTestCase
+from tests.unit.test import optional_test
 
 from trulens_eval.keys import check_keys
 from trulens_eval.utils.asynchro import sync
 
-check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
-@unittest.skipIf(not check_installed("llama_index"), "llama_index not installed")
+@optional_test
 class TestLlamaIndex(JSONTestCase):
+
     # TODO: Figure out why use of async test cases causes "more than one record
     # collected"
     # Need to use this:
     # from unittest import IsolatedAsyncioTestCase
 
     def setUp(self):
+        check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
+
         from llama_index import ServiceContext
         from llama_index import set_global_service_context
         from llama_index import VectorStoreIndex

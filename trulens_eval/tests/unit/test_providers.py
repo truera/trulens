@@ -8,8 +8,7 @@ import unittest
 from unittest import main
 from unittest import TestCase
 
-from tests.unit.test import check_installed
-from tests.unit.test import JSONTestCase
+from tests.unit.test import optional_test
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.keys import check_keys
@@ -228,7 +227,7 @@ class TestProviders(TestCase):
             "HUGGINGFACE_API_KEY",
         )
 
-    @unittest.skipIf(not check_installed("openai"), "openai not installed")
+    @optional_test
     def test_openai_moderation(self):
         """
         Check that OpenAI moderation feedback functions produce a value in the
@@ -254,7 +253,7 @@ class TestProviders(TestCase):
                 self.assertGreaterEqual(actual, 0.0)
                 self.assertLessEqual(actual, 1.0)
 
-    @unittest.skipIf(not check_installed("openai"), "openai not installed")
+    @optional_test
     def test_llmcompletion(self):
         """
         Check that LLMProvider feedback functions produce a value in the 0-1
@@ -282,7 +281,7 @@ class TestProviders(TestCase):
                         self.assertGreaterEqual(actual, 0.0)
                         self.assertLessEqual(actual, 1.0)
 
-    @unittest.skipIf(not check_installed("openai"), "openai not installed")
+    @optional_test
     @unittest.skip("too many failures")
     def test_openai_moderation_calibration(self):
         """
@@ -301,7 +300,7 @@ class TestProviders(TestCase):
                 actual = imp(**args)
                 self.assertAlmostEqual(actual, expected, places=1)
 
-    @unittest.skipIf(not check_installed("openai"), "openai not installed")
+    @optional_test
     @unittest.skip("too many failures")
     def test_llmcompletion_calibration(self):
         """

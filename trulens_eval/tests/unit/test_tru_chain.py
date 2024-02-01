@@ -2,6 +2,7 @@
 Tests for TruChain. Some of the tests are outdated.
 """
 
+import os
 import unittest
 from unittest import main
 
@@ -11,16 +12,14 @@ from langchain.llms.openai import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
-
-from tests.unit.test import JSONTestCase, check_installed
+from tests.unit.test import JSONTestCase
+from tests.unit.test import optional_test
 
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.endpoint import Endpoint
-from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.keys import check_keys
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Record
-from trulens_eval.tru_chain import TruChain
 from trulens_eval.utils.asynchro import sync
 
 
@@ -40,6 +39,7 @@ class TestTruChain(JSONTestCase):
             "PINECONE_ENV"
         )
 
+    @optional_test
     def test_multiple_instruments(self):
         # Multiple wrapped apps use the same components. Make sure paths are
         # correctly tracked.
@@ -80,7 +80,7 @@ class TestTruChain(JSONTestCase):
 
         return tc
 
-    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
+    @optional_test
     def test_record_metadata_plain(self):
         # Test inclusion of metadata in records.
 
@@ -129,7 +129,7 @@ class TestTruChain(JSONTestCase):
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, new_meta)
 
-    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
+    @optional_test
     def test_record_metadata_json(self):
         # Test inclusion of metadata in records.
 
@@ -162,7 +162,7 @@ class TestTruChain(JSONTestCase):
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
 
-    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
+    @optional_test
     def test_async_with_task(self):
         # Check whether an async call that makes use of Task (via
         # asyncio.gather) can still track costs.
@@ -208,7 +208,7 @@ class TestTruChain(JSONTestCase):
         # self.assertGreater(costs1[0].cost.n_stream_chunks, 0)
         # self.assertGreater(costs2[0].cost.n_stream_chunks, 0)
 
-    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
+    @optional_test
     def test_async_with_record(self):
         # Check that the async awith_record produces the same stuff as the
         # sync with_record.
@@ -254,7 +254,7 @@ class TestTruChain(JSONTestCase):
             )
         )
 
-    @unittest.skipIf(not check_installed("langchain_openai"), "langchain_openai not installed")
+    @optional_test
     @unittest.skip("bug in langchain")
     def test_async_token_gen(self):
         # Test of chain acall methods as requested in https://github.com/truera/trulens/issues/309 .

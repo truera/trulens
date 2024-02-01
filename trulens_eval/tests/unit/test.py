@@ -1,14 +1,26 @@
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
+import os
 from typing import Dict, Sequence
 from unittest import TestCase
+import unittest
 
 import pydantic
 from pydantic import BaseModel
 
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
+
+def optional_test(testmethodorclass):
+    """
+    Only runs the decorated test if the environment variable with_optional
+    evalutes true.
+    """
+
+    return unittest.skipIf(
+        not os.environ.get('with_optional'), "optional test"
+    )(testmethodorclass)
 
 
 def check_installed(module: str) -> bool:
