@@ -3,16 +3,21 @@ from pprint import PrettyPrinter
 from threading import Thread
 from typing import Callable, List, Mapping, Optional, Sequence, Union
 
-from ipywidgets import widgets
-import traitlets
-from traitlets import HasTraits
-from traitlets import Unicode
-
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_NOTEBOOK
 from trulens_eval.utils.json import JSON_BASES
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
+
+with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
+    from ipywidgets import widgets
+    import traitlets
+    from traitlets import HasTraits
+    from traitlets import Unicode
+
+OptionalImports(messages=REQUIREMENT_NOTEBOOK).assert_installed(widgets)
 
 pp = PrettyPrinter()
 

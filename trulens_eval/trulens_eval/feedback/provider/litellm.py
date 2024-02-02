@@ -1,15 +1,16 @@
 import logging
 from typing import Dict, Optional, Sequence
 
-# optional package
-import litellm
-from litellm import completion
-
 from trulens_eval.feedback.provider.base import LLMProvider
-from trulens_eval.feedback.provider.endpoint import LiteLLMEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
+
+with OptionalImports(messages=REQUIREMENT_LITELLM):
+    import litellm
+    from litellm import completion
+
+    from trulens_eval.feedback.provider.endpoint import LiteLLMEndpoint
 
 # check that the optional imports are not dummies:
 OptionalImports(messages=REQUIREMENT_LITELLM).assert_installed(litellm)
