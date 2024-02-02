@@ -4,11 +4,17 @@ from typing import Dict, Optional, Sequence, Tuple, Union
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
 from trulens_eval.utils.generated import re_0_10_rating
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 
 logger = logging.getLogger(__name__)
 
-# if using optional packages, check they are installed with this:
-# OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(...)
+with OptionalImports(messages=REQUIREMENT_BEDROCK):
+    # Here only to make sure we throw our message if bedrock optional packages
+    # are not installed.
+    import boto3
+
+OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(boto3)
 
 
 class Bedrock(LLMProvider):
