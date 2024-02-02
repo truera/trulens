@@ -394,6 +394,7 @@ class TestProviders(TestCase):
         """
         Check that LLMProvider feedback functions produce reasonable values.
         """
+        from trulens_eval.feedback.provider.openai import OpenAI
         provider_models = [(OpenAI(model_engine=model), model) for model in ["gpt-3.5-turbo", "gpt-4"]]
         for provider, model in provider_models:
             provider_name = provider.__class__.__name__
