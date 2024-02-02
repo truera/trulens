@@ -82,17 +82,13 @@ class LLMProvider(Provider):
         Returns:
             float: Information Overlap
         """
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=str.format(
+        return self.generate_score(
+                    system_prompt=str.format(
                         prompts.LLM_GROUNDEDNESS,
                         premise=premise,
                         hypothesis=hypothesis,
                     )
-                )
-            )
-        ) / 10.0
+        )
 
     def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
         """
@@ -116,13 +112,13 @@ class LLMProvider(Provider):
                 )
             )
         )
-
-    def _extract_score_and_reasons_from_response(
+    
+    def generate_score(
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
         normalize: float = 10.0
-    ) -> Tuple[float, Dict]:
+    ) -> float:
         """
         Extractor for LLM prompts. If CoT is used; it will look for
         "Supporting Evidence" template. Otherwise, it will look for the typical
@@ -132,7 +128,33 @@ class LLMProvider(Provider):
             system_prompt (str): A pre-formated system prompt
 
         Returns:
-            The score and reason metadata if available.
+            The score (float): 0-1 scale.
+        """
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        if user_prompt is not None:
+            llm_messages.append({"role": "user", "content": user_prompt})
+
+        response = self.endpoint.run_me(
+            lambda: self._create_chat_completion(messages=llm_messages)
+        )
+
+        return re_0_10_rating(response) / normalize
+
+    def generate_score_and_reasons(
+        self,
+        system_prompt: str,
+        user_prompt: Optional[str] = None,
+        normalize: float = 10.0
+    ) -> Tuple[float, Dict]:
+        """
+        Generator and extractor for LLM prompts. It will look for
+        "Supporting Evidence" template.
+
+        Args:
+            system_prompt (str): A pre-formated system prompt
+
+        Returns:
+            The score (float): 0-1 scale and reason metadata (dict) if available.
         """
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -164,6 +186,7 @@ class LLMProvider(Provider):
                     )
             }
             return score, reasons
+        
         else:
             score = re_0_10_rating(response) / normalize
             warnings.warn(
@@ -201,17 +224,13 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=str.format(
+        return self.generate_score(
+                    system_prompt=str.format(
                         prompts.QS_RELEVANCE,
                         question=question,
                         statement=statement
                     )
                 )
-            )
-        ) / 10
 
     def qs_relevance_with_cot_reasons(
         self, question: str, statement: str
@@ -250,7 +269,7 @@ class LLMProvider(Provider):
         system_prompt = system_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
-        return self._extract_score_and_reasons_from_response(system_prompt)
+        return self.generate_score_and_reasons(system_prompt)
 
     def relevance(self, prompt: str, response: str) -> float:
         """
@@ -284,15 +303,10 @@ class LLMProvider(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=str.format(
+        return self.generate_score(system_prompt=str.format(
                         prompts.PR_RELEVANCE, prompt=prompt, response=response
                     )
                 )
-            )
-        ) / 10.0
 
     def relevance_with_cot_reasons(self, prompt: str, response: str) -> Tuple[float, Dict]:
         """
@@ -333,7 +347,7 @@ class LLMProvider(Provider):
         system_prompt = system_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
-        return self._extract_score_and_reasons_from_response(system_prompt)
+        return self.generate_score_and_reasons(system_prompt)
 
     def sentiment(self, text: str) -> float:
         """
@@ -356,14 +370,10 @@ class LLMProvider(Provider):
             float: A value between 0 and 1. 0 being "negative sentiment" and 1
             being "positive sentiment".
         """
-
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=prompts.SENTIMENT_SYSTEM_PROMPT + text
+        system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT + text
+        return self.generate_score(
+                    system_prompt=system_prompt
                 )
-            )
-        ) / 10.0
 
     def sentiment_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
@@ -386,10 +396,10 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
-
-        system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT + text + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt
+        system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT
+        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
+        return self.generate_score_and_reasons(
+            system_prompt, user_prompt=text
         )
 
     def model_agreement(self, prompt: str, response: str) -> float:
@@ -442,17 +452,13 @@ class LLMProvider(Provider):
             evaluation.
         """
 
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=str.format(
+        system_prompt = str.format(
                         prompts.LANGCHAIN_PROMPT_TEMPLATE,
                         criteria=criteria,
                         submission=text
                     )
-                )
-            )
-        ) / 10.0
+
+        return self.generate_score(system_prompt=system_prompt)
 
     def _langchain_evaluate_with_cot_reasons(
         self, text: str, criteria: str
@@ -475,7 +481,7 @@ class LLMProvider(Provider):
                     criteria=criteria,
                     submission=text
                 )
-        return self._extract_score_and_reasons_from_response(system_prompt)
+        return self.generate_score_and_reasons(system_prompt=system_prompt)
 
     def conciseness(self, text: str) -> float:
         """
@@ -1006,7 +1012,7 @@ class LLMProvider(Provider):
         system_prompt = system_prompt.replace(
             "COMPREHENSIVENESS:", prompts.COT_REASONS_TEMPLATE
         )
-        return self._extract_score_and_reasons_from_response(system_prompt)
+        return self.generate_score_and_reasons(system_prompt)
 
     def summarization_with_cot_reasons(
         self, source: str, summary: str
@@ -1042,14 +1048,7 @@ class LLMProvider(Provider):
         system_prompt = str.format(
             prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
         )
-
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    system_prompt
-                )
-            )
-        ) / 10.0
+        return self.generate_score(system_prompt)
 
     def stereotypes_with_cot_reasons(self, prompt: str, response: str) -> Tuple[float, Dict]:
         """
@@ -1074,4 +1073,4 @@ class LLMProvider(Provider):
             prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
         ) + prompts.COT_REASONS_TEMPLATE
 
-        return self._extract_score_and_reasons_from_response(system_prompt)
+        return self.generate_score_and_reasons(system_prompt)
