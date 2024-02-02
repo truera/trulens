@@ -11,6 +11,7 @@ from unittest import TestCase
 from tests.unit.test import optional_test
 
 from trulens_eval.feedback.provider.base import LLMProvider
+from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.keys import check_keys
 
 pp = PrettyPrinter()
@@ -377,9 +378,6 @@ class TestProviders(TestCase):
         Check that OpenAI moderation feedback functions produce reasonable
         values.
         """
-
-        from trulens_eval.feedback.provider.openai import OpenAI
-
         o = OpenAI()
 
         tests = get_openai_tests(o)
@@ -394,7 +392,6 @@ class TestProviders(TestCase):
         """
         Check that LLMProvider feedback functions produce reasonable values.
         """
-        from trulens_eval.feedback.provider.openai import OpenAI
         provider_models = [(OpenAI(model_engine=model), model) for model in ["gpt-3.5-turbo", "gpt-4"]]
         for provider, model in provider_models:
             provider_name = provider.__class__.__name__
