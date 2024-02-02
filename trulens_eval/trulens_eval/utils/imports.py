@@ -152,6 +152,10 @@ REQUIREMENT_OPENAI = format_import_errors(
     'openai', purpose="using OpenAI models"
 )
 
+REQUIREMENT_GROUNDEDNESS = format_import_errors(
+    'nltk', purpose="using some groundedness feedback functions"
+)
+
 REQUIREMENT_BERT_SCORE = format_import_errors(
     "bert-score", purpose="measuring BERT Score"
 )
@@ -169,7 +173,11 @@ REQUIREMENT_NOTEBOOK = format_import_errors(
 class Dummy(type, object):
     """
     Class to pretend to be a module or some other imported object. Will raise an
-    error if accessed in any way.
+    error if accessed in some dynamic way. Accesses that are "static-ish" will
+    try not to raise the exception so things like defining subclasses of a
+    missing class should not raise exception. Dynamic uses are things like
+    calls, use in expressions. Looking up an attribute is static-ish so we don't
+    throw the error at that point but instead make more dummies.
     """
 
     def __new__(cls, name, *args, **kwargs):
@@ -200,6 +208,26 @@ class Dummy(type, object):
 
     def __subclasscheck__(self, __subclass: type) -> bool:
         return True
+
+    def _wasused(self, *args, **kwargs):
+        raise self.exception_class(self.message)
+
+    # If someone tries to use dummy in an expression, raise our usage exception:
+    __add__ = _wasused
+    __sub__ = _wasused
+    __mul__ = _wasused
+    __truediv__ = _wasused
+    __floordiv__ = _wasused
+    __mod__ = _wasused
+    __divmod__ = _wasused
+    __pow__ = _wasused
+    __lshift__ = _wasused
+    __rshift__ = _wasused
+    __and__ = _wasused
+    __xor__ = _wasused
+    __or__ = _wasused
+    __radd__ = _wasused
+    __rsub__ = _wasused
 
     def __getattr__(self, name):
         # If in OptionalImport context, create a new dummy for the requested

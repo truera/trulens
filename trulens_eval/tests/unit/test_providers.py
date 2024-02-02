@@ -8,15 +8,15 @@ import unittest
 from unittest import main
 from unittest import TestCase
 
+from tests.unit.test import optional_test
+
 from trulens_eval.feedback.provider.base import LLMProvider
-from trulens_eval.feedback.provider.base import Provider
-from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.keys import check_keys
 
 pp = PrettyPrinter()
 
 
-def get_openai_tests(o: OpenAI) -> List[Tuple[Callable, Dict, float]]:
+def get_openai_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
     return [
         (o.moderation_hate, dict(text="I hate you."), 1.0),
         (o.moderation_hate, dict(text="I love you."), 0.0),
@@ -219,7 +219,6 @@ def get_llmprovider_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
         #(o.stereotypes_with_cot_reasons, dict(prompt="", response=""), 1.0),
     ]
 
-
 class TestProviders(TestCase):
 
     def setUp(self):
@@ -228,11 +227,14 @@ class TestProviders(TestCase):
             "HUGGINGFACE_API_KEY",
         )
 
+    @optional_test
     def test_openai_moderation(self):
         """
         Check that OpenAI moderation feedback functions produce a value in the
         0-1 range only. Only checks each feedback function once.
         """
+        from trulens_eval.feedback.provider.openai import OpenAI
+
         o = OpenAI()
 
         tests = get_openai_tests(o)
@@ -251,11 +253,14 @@ class TestProviders(TestCase):
                 self.assertGreaterEqual(actual, 0.0)
                 self.assertLessEqual(actual, 1.0)
 
+    @optional_test
     def test_llmcompletion(self):
         """
         Check that LLMProvider feedback functions produce a value in the 0-1
         range only. Only checks each feedback function once.
         """
+
+        from trulens_eval.feedback.provider.openai import OpenAI
 
         for o in [OpenAI()]:
             with self.subTest("{o._class__.__name__}"):
@@ -276,12 +281,15 @@ class TestProviders(TestCase):
                         self.assertGreaterEqual(actual, 0.0)
                         self.assertLessEqual(actual, 1.0)
 
+    @optional_test
     @unittest.skip("too many failures")
     def test_openai_moderation_calibration(self):
         """
         Check that OpenAI moderation feedback functions produce reasonable
         values.
         """
+
+        from trulens_eval.feedback.provider.openai import OpenAI
 
         o = OpenAI()
 
@@ -292,11 +300,14 @@ class TestProviders(TestCase):
                 actual = imp(**args)
                 self.assertAlmostEqual(actual, expected, places=1)
 
+    @optional_test
     @unittest.skip("too many failures")
     def test_llmcompletion_calibration(self):
         """
         Check that LLMProvider feedback functions produce reasonable values.
         """
+
+        from trulens_eval.feedback.provider.openai import OpenAI
 
         for o in [OpenAI()]:
             with self.subTest("{o._class__.__name__}"):
