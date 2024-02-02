@@ -3,9 +3,6 @@ import logging
 import pprint
 from typing import Any, Callable, ClassVar, Iterable, Optional
 
-# optional:
-import boto3
-from botocore.client import ClientCreator
 import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -14,6 +11,11 @@ from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.python import safe_hasattr
+
+with OptionalImports(messages=REQUIREMENT_BEDROCK):
+    import boto3
+    from botocore.client import ClientCreator
+
 
 # check that the optional imports are not dummies:
 OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(boto3)
