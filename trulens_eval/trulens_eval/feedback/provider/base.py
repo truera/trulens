@@ -164,7 +164,7 @@ class LLMProvider(Provider):
             lambda: self._create_chat_completion(messages=llm_messages)
         )
         if "Supporting Evidence" in response:
-            score = 0.0
+            score = -1
             supporting_evidence = None
             criteria = None
             for line in response.split('\n'):
@@ -396,7 +396,6 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
-
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT
         system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
         return self.generate_score_and_reasons(
@@ -482,7 +481,6 @@ class LLMProvider(Provider):
                     criteria=criteria,
                     submission=text
                 )
-        
         return self.generate_score_and_reasons(system_prompt=system_prompt)
 
     def conciseness(self, text: str) -> float:
@@ -554,7 +552,8 @@ class LLMProvider(Provider):
             response to the prompt.
 
         Returns:
-            flo"""
+            float: A value between 0.0 (not correct) and 1.0 (correct).
+        """
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
         )
@@ -763,7 +762,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.o (not helpful) and 1.0 (helpful).
+            float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_PROMPT
@@ -815,7 +814,7 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not controversial) and 1.0 (controversial).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
         )
 
     def misogyny(self, text: str) -> float:
@@ -1049,7 +1048,6 @@ class LLMProvider(Provider):
         system_prompt = str.format(
             prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
         )
-
         return self.generate_score(system_prompt)
 
     def stereotypes_with_cot_reasons(self, prompt: str, response: str) -> Tuple[float, Dict]:
@@ -1073,7 +1071,6 @@ class LLMProvider(Provider):
         """
         system_prompt = str.format(
             prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
-        )
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
+        ) + prompts.COT_REASONS_TEMPLATE
 
         return self.generate_score_and_reasons(system_prompt)
