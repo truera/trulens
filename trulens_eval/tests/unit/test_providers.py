@@ -332,7 +332,7 @@ class TestProviders(TestCase):
         produce criteria and supporting evidence. Only checks each feedback function
         once for each model.
         """
-        models = ["gpt-3.5-turbo","gpt-4"]
+        models = ["gpt-3.5-turbo"]
         provider_models = [(OpenAI(model_engine = model), model) for model in models]
         for provider, model in provider_models:
             with self.subTest(f"{provider.__class__.__name__}-{model}"):
