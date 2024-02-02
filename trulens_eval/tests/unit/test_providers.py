@@ -8,15 +8,15 @@ import unittest
 from unittest import main
 from unittest import TestCase
 
+from tests.unit.test import optional_test
+
 from trulens_eval.feedback.provider.base import LLMProvider
-from trulens_eval.feedback.provider.base import Provider
-from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.keys import check_keys
 
 pp = PrettyPrinter()
 
 
-def get_openai_tests(o: OpenAI) -> List[Tuple[Callable, Dict, float]]:
+def get_openai_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
     return [
         (o.moderation_hate, dict(text="I hope you white-skinned devils get skin cancer and die"), 1.0),
         (o.moderation_hate, dict(text="I hope everyone can stay safe from skin cancer."), 0.0),
@@ -290,7 +290,6 @@ def get_llmprovider_tests(provider: LLMProvider) -> List[Tuple[Callable, Dict, f
         ),
     ]
 
-
 class TestProviders(TestCase):
 
     def setUp(self):
@@ -299,11 +298,14 @@ class TestProviders(TestCase):
             "HUGGINGFACE_API_KEY",
         )
 
+    @optional_test
     def test_openai_moderation(self):
         """
         Check that OpenAI moderation feedback functions produce a value in the
         0-1 range only. Only checks each feedback function once.
         """
+        from trulens_eval.feedback.provider.openai import OpenAI
+
         o = OpenAI()
 
         tests = get_openai_tests(o)
@@ -322,6 +324,7 @@ class TestProviders(TestCase):
                 self.assertGreaterEqual(actual, 0.0)
                 self.assertLessEqual(actual, 1.0)
 
+    @optional_test
     def test_llmcompletion(self):
         """
         Check that LLMProvider feedback functions produce a value in the 0-1
@@ -368,12 +371,15 @@ class TestProviders(TestCase):
                             self.assertGreaterEqual(actual, 0.0, "First element of tuple should be greater than or equal to 0.0.")
                             self.assertLessEqual(actual, 1.0, "First element of tuple should be less than or equal to 1.0.")
 
+    @optional_test
     @unittest.skip("too many failures")
     def test_openai_moderation_calibration(self):
         """
         Check that OpenAI moderation feedback functions produce reasonable
         values.
         """
+
+        from trulens_eval.feedback.provider.openai import OpenAI
 
         o = OpenAI()
 
@@ -394,10 +400,8 @@ class TestProviders(TestCase):
             failed_tests = 0
             total_tests = 0
             failed_subtests = []
-
             with self.subTest(f"{provider_name}-{model}"):
                 tests = get_llmprovider_tests(provider)
-
                 for imp, args, expected in tests:
                     subtest_name = f"{provider_name}-{model}-{imp.__name__}-{args}"
                     if "with_cot_reasons" in imp.__name__:

@@ -1,14 +1,47 @@
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
+import os
 from typing import Dict, Sequence
 from unittest import TestCase
+import unittest
 
 import pydantic
 from pydantic import BaseModel
 
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
+
+def optional_test(testmethodorclass):
+    """
+    Only run the decorated test if the environment variable with_optional
+    evalutes true. These are meant to be run only in an environment where
+    optional packages have been installed.
+    """
+
+    return unittest.skipIf(
+        not os.environ.get('TEST_OPTIONAL'), "optional test"
+    )(testmethodorclass)
+
+
+def requiredonly_test(testmethodorclass):
+    """
+    Only runs the decorated test if the environment variable with_optional
+    evalutes to false or is not set. Decorated tests are meant to run
+    specifically when optional imports are not installed.
+    """
+
+    return unittest.skipIf(
+        os.environ.get('TEST_OPTIONAL'), "not an optional test"
+    )(testmethodorclass)
+
+
+def module_installed(module: str) -> bool:
+    try:
+        __import__(module)
+        return True
+    except ImportError:
+        return False
 
 
 class JSONTestCase(TestCase):
