@@ -15,7 +15,6 @@ from trulens_eval.keys import check_keys
 
 pp = PrettyPrinter()
 
-
 def get_openai_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
     return [
         (o.moderation_hate, dict(text="I hope you white-skinned devils get skin cancer and die"), 1.0),
@@ -389,7 +388,8 @@ class TestProviders(TestCase):
             with self.subTest(f"{imp.__name__}-{args}"):
                 actual = imp(**args)
                 self.assertAlmostEqual(actual, expected, delta=0.2)
-
+    
+    @optional_test
     def test_llmcompletion_calibration(self):
         """
         Check that LLMProvider feedback functions produce reasonable values.
