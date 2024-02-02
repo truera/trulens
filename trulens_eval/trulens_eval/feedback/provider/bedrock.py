@@ -92,9 +92,36 @@ class Bedrock(LLMProvider):
         response_body = json.loads(response.get('body').read()
                                   ).get('results')[0]["outputText"]
         return response_body
+    
+    # overwrite base to use prompt instead of messages
+    def generate_score(
+        self,
+        system_prompt: str,
+        user_prompt: Optional[str] = None,
+        normalize: float = 10.0
+    ) -> float:
+        """
+        Extractor for LLM prompts. If CoT is used; it will look for
+        "Supporting Evidence" template. Otherwise, it will look for the typical
+        0-10 scoring.
+
+        Args:
+            system_prompt (str): A pre-formated system prompt
+
+        Returns:
+            The score and reason metadata if available.
+        """
+        response = self.endpoint.run_me(
+            lambda: self._create_chat_completion(
+                prompt=
+                (system_prompt + user_prompt if user_prompt else system_prompt)
+            )
+        )
+
+        return re_0_10_rating(response) / normalize
 
     # overwrite base to use prompt instead of messages
-    def _extract_score_and_reasons_from_response(
+    def generate_score_and_reasons(
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
