@@ -128,7 +128,7 @@ class LLMProvider(Provider):
             system_prompt (str): A pre-formated system prompt
 
         Returns:
-            The score and reason metadata if available.
+            The score (float): 0-1 scale.
         """
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -154,7 +154,7 @@ class LLMProvider(Provider):
             system_prompt (str): A pre-formated system prompt
 
         Returns:
-            The score and reason metadata if available.
+            The score (float): 0-1 scale and reason metadata (dict) if available.
         """
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
