@@ -1249,6 +1249,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#extending-existing-providers" class="md-nav__link">
+    Extending existing providers.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#multi-output-feedback-functions" class="md-nav__link">
     Multi-Output Feedback functions
   </a>
@@ -2434,6 +2441,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#extending-existing-providers" class="md-nav__link">
+    Extending existing providers.
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#multi-output-feedback-functions" class="md-nav__link">
     Multi-Output Feedback functions
   </a>
@@ -3025,6 +3039,175 @@ tru.add_feedbacks(feedback_results)</div>
 </div>
 </div>
 </div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=171cc0b7">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="extending-existing-providers">Extending existing providers.<a class="anchor-link" href="#extending-existing-providers">¶</a></h2><p>In addition to calling your own methods, you can also extend stock feedback providers (such as <code>OpenAI</code>, <code>AzureOpenAI</code>, <code>Bedrock</code>) to custom feedback implementations. This can be especially useful for tweaking stock feedback functions, or running custom feedback function prompts while letting TruLens handle the backend LLM provider.</p>
+<p>This is done by subclassing the provider you wish to extend, and using the <code>generate_score</code> method that runs the provided prompt with your specified provider, and extracts a float score from 0-1. Your prompt should request the LLM respond on the scale from 0 to 10, then the <code>generate_score</code> method will normalize to 0-1.</p>
+<p>See below for example usage:</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=25d420d6">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-4">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider</span> <span class="kn">import</span> <span class="n">AzureOpenAI</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.utils.generated</span> <span class="kn">import</span> <span class="n">re_0_10_rating</span>
+
+<span class="k">class</span> <span class="nc">Custom_AzureOpenAI</span><span class="p">(</span><span class="n">AzureOpenAI</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">style_check_professional</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Custom feedback function to grade the professional style of the resposne, extending AzureOpenAI provider.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            response (str): text to be graded for professional style.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: A value between 0 and 1. 0 being "not professional" and 1 being "professional".</span>
+<span class="sd">        """</span>
+        <span class="n">professional_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">"Please rate the professionalism of the following text on a scale from 0 to 10, where 0 is not at all professional and 10 is extremely professional: </span><span class="se">\n\n</span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_score</span><span class="p">(</span><span class="n">system_prompt</span><span class="o">=</span><span class="n">professional_prompt</span><span class="p">)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-4">from trulens_eval.feedback.provider import AzureOpenAI
+from trulens_eval.utils.generated import re_0_10_rating
+
+class Custom_AzureOpenAI(AzureOpenAI):
+    def style_check_professional(self, response: str) -&gt; float:
+        """
+        Custom feedback function to grade the professional style of the resposne, extending AzureOpenAI provider.
+
+        Args:
+            response (str): text to be graded for professional style.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not professional" and 1 being "professional".
+        """
+        professional_prompt = str.format("Please rate the professionalism of the following text on a scale from 0 to 10, where 0 is not at all professional and 10 is extremely professional: \n\n{}", response)
+        return self.generate_score(system_prompt=professional_prompt)</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3d621d70">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>Running "chain of thought evaluations" is another use case for extending providers. Doing so follows a similar process as above, where the base provider (such as <code>AzureOpenAI</code>) is subclassed.</p>
+<p>For this case, the method <code>generate_score_and_reasons</code> can be used to extract both the score and chain of thought reasons from the LLM response.</p>
+<p>To use this method, the prompt used should include the <code>COT_REASONS_TEMPLATE</code> available from the TruLens prompts library (<code>trulens_eval.feedback.prompts</code>).</p>
+<p>See below for example usage:</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=bc024c6e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-5">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">prompts</span>
+
+<span class="k">class</span> <span class="nc">Custom_AzureOpenAI</span><span class="p">(</span><span class="n">AzureOpenAI</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">qs_relevance_with_cot_reasons_extreme</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Tweaked version of question statement relevance, extending AzureOpenAI provider.</span>
+<span class="sd">        A function that completes a template to check the relevance of the statement to the question.</span>
+<span class="sd">        Scoring guidelines for scores 5-8 are removed to push the LLM to more extreme scores.</span>
+<span class="sd">        Also uses chain of thought methodology and emits the reasons.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            question (str): A question being asked. </span>
+<span class="sd">            statement (str): A statement to the question.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".</span>
+<span class="sd">        """</span>
+
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prompts</span><span class="o">.</span><span class="n">QS_RELEVANCE</span><span class="p">,</span> <span class="n">question</span> <span class="o">=</span> <span class="n">question</span><span class="p">,</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">statement</span><span class="p">)</span>
+
+        <span class="c1"># remove scoring guidelines around middle scores</span>
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="n">system_prompt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+        <span class="s2">"- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="n">system_prompt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+            <span class="s2">"RELEVANCE:"</span><span class="p">,</span> <span class="n">prompts</span><span class="o">.</span><span class="n">COT_REASONS_TEMPLATE</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_score_and_reasons</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-5">from typing import Tuple, Dict
+from trulens_eval.feedback import prompts
+
+class Custom_AzureOpenAI(AzureOpenAI):
+    def qs_relevance_with_cot_reasons_extreme(self, question: str, statement: str) -&gt; Tuple[float, Dict]:
+        """
+        Tweaked version of question statement relevance, extending AzureOpenAI provider.
+        A function that completes a template to check the relevance of the statement to the question.
+        Scoring guidelines for scores 5-8 are removed to push the LLM to more extreme scores.
+        Also uses chain of thought methodology and emits the reasons.
+
+        Args:
+            question (str): A question being asked. 
+            statement (str): A statement to the question.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+        """
+
+        system_prompt = str.format(prompts.QS_RELEVANCE, question = question, statement = statement)
+
+        # remove scoring guidelines around middle scores
+        system_prompt = system_prompt.replace(
+        "- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.\n\n", "")
+        
+        system_prompt = system_prompt.replace(
+            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(system_prompt)</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0383846e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -3044,7 +3227,7 @@ tru.add_feedbacks(feedback_results)</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-4">
+<clipboard-copy for="cell-6">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3063,7 +3246,7 @@ tru.add_feedbacks(feedback_results)</div>
 <span class="p">)</span>
 <span class="n">tru</span><span class="o">.</span><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4">multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name="multi").on(
+<div class="clipboard-copy-txt" id="cell-6">multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name="multi").on(
     input_param=Select.RecordOutput
 )
 feedback_results = tru.run_feedback_functions(
@@ -3085,7 +3268,7 @@ tru.add_feedbacks(feedback_results)</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-5">
+<clipboard-copy for="cell-7">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3106,7 +3289,7 @@ tru.add_feedbacks(feedback_results)</div>
 <span class="p">)</span>
 <span class="n">tru</span><span class="o">.</span><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5"># Aggregators will run on the same dict keys.
+<div class="clipboard-copy-txt" id="cell-7"># Aggregators will run on the same dict keys.
 import numpy as np
 multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name="multi-agg").on(
     input_param=Select.RecordOutput
@@ -3131,7 +3314,7 @@ tru.add_feedbacks(feedback_results)
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-6">
+<clipboard-copy for="cell-8">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3156,7 +3339,7 @@ tru.add_feedbacks(feedback_results)
 <span class="p">)</span>
 <span class="n">tru</span><span class="o">.</span><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6"># For multi-context chunking, an aggregator can operate on a list of multi output dictionaries.
+<div class="clipboard-copy-txt" id="cell-8"># For multi-context chunking, an aggregator can operate on a list of multi output dictionaries.
 def dict_aggregator(list_dict_input):
     agg = 0
     for dict_input in list_dict_input:

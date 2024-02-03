@@ -2491,8 +2491,7 @@
 
             <details class="quote">
               <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/litellm.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
-<span class="normal">21</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
 <span class="normal">24</span>
@@ -2553,7 +2552,8 @@
 <span class="normal">79</span>
 <span class="normal">80</span>
 <span class="normal">81</span>
-<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">LiteLLM</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
+<span class="normal">82</span>
+<span class="normal">83</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">LiteLLM</span><span class="p">(</span><span class="n">LLMProvider</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Out of the box feedback functions calling LiteLLM API.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model_engine</span><span class="p">:</span> <span class="nb">str</span>
@@ -2697,8 +2697,7 @@ litellm_provider = LiteLLM()
 
           <details class="quote">
             <summary>Source code in <code>trulens_eval/trulens_eval/feedback/provider/litellm.py</code></summary>
-            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">26</span>
-<span class="normal">27</span>
+            <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">27</span>
 <span class="normal">28</span>
 <span class="normal">29</span>
 <span class="normal">30</span>
@@ -2725,7 +2724,8 @@ litellm_provider = LiteLLM()
 <span class="normal">51</span>
 <span class="normal">52</span>
 <span class="normal">53</span>
-<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">54</span>
+<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
     <span class="c1"># NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this</span>
