@@ -84,7 +84,7 @@ all_trulens_mods = get_all_modules(
 
 # Things which should not be imported at all.
 not_mods = [
-    "trulens_eval.database.env" # can only be executed by alembic
+    "trulens_eval.database.migrations.env" # can only be executed by alembic
 ]
 
 # Importing any of these should be ok regardless of optional packages. These are
