@@ -80,11 +80,13 @@ TO PLACE
 
 __version__ = "0.21.0"
 
+# NOTE: Lets try to import modules from their full location instead of an alias
+# in some other location. Lets leave those alieses only for external users.
 
 from trulens_eval.feedback import Feedback
-from trulens_eval.feedback import Huggingface
 from trulens_eval.feedback import Langchain
 from trulens_eval.feedback.provider import Provider
+from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
@@ -103,13 +105,14 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     from trulens_eval.tru_llama import TruLlama
 
 with OptionalImports(messages=REQUIREMENT_LITELLM):
-    from trulens_eval.feedback import LiteLLM
-
+    from trulens_eval.feedback.provider.litellm import LiteLLM
+        
 with OptionalImports(messages=REQUIREMENT_BEDROCK):
-    from trulens_eval.feedback import Bedrock
+    from trulens_eval.feedback.provider.bedrock import Bedrock
 
 with OptionalImports(messages=REQUIREMENT_OPENAI):
-    from trulens_eval.feedback import OpenAI
+    from trulens_eval.feedback.provider.openai import AzureOpenAI
+    from trulens_eval.feedback.provider.openai import OpenAI
 
 __all__ = [
     "Tru",
@@ -119,6 +122,7 @@ __all__ = [
     "TruLlama",
     "TruVirtual",
     "Feedback",
+    "AzureOpenAI",
     "OpenAI",
     "Langchain",
     "LiteLLM",

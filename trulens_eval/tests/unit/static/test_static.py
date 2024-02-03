@@ -3,32 +3,21 @@ Static tests, i.e. ones that don't run anything substatial. This should find
 issues that occur from merely importing trulens.
 """
 
+import os
+from pathlib import Path
+import pkgutil
 from pprint import PrettyPrinter
+from typing import List
 from unittest import main
 from unittest import TestCase
 
-from tests.unit.test import module_installed, optional_test
+from tests.unit.test import module_installed
+from tests.unit.test import optional_test
 from tests.unit.test import requiredonly_test
 
-pp = PrettyPrinter()
+import trulens_eval
 
-# Importing any of these should be ok regardless of optional packages.
-base_mods = [
-    "trulens_eval",
-    "trulens_eval.tru",
-    "trulens_eval.tru_chain",
-    "trulens_eval.tru_basic_app",
-    "trulens_eval.tru_custom_app",
-    "trulens_eval.tru_virtual",
-    "trulens_eval.app",
-    "trulens_eval.db",
-    "trulens_eval.schema",
-    "trulens_eval.keys",
-    "trulens_eval.instruments",
-    "trulens_eval.feedback",
-    "trulens_eval.feedback.provider",
-    "trulens_eval.feedback.provider.endpoint"
-]
+pp = PrettyPrinter()
 
 # Importing any of these should throw ImportError (or its sublcass
 # ModuleNotFoundError) if optional packages are not installed. The key is the
@@ -59,6 +48,59 @@ optional_mods = dict(
         "trulens_eval.feedback.provider.endpoint.openai"
     ]
 )
+
+optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
+
+ # Every module not mentioned above should be importable without any optional
+ # packages.
+
+def get_all_modules(path: Path, startswith=None):
+    ret = []
+    for modinfo in pkgutil.iter_modules([str(path)]):
+        
+        if startswith is not None and not modinfo.name.startswith(startswith):
+            continue
+
+        ret.append(modinfo.name)
+        if modinfo.ispkg:
+            for submod in get_all_modules(path / modinfo.name, startswith=None):
+                submodqualname = modinfo.name + "." + submod
+
+                if startswith is not None and not submodqualname.startswith(startswith):
+                    continue
+                
+                ret.append(modinfo.name + "." + submod)
+
+    return ret
+
+# Get all modules inside trulens_eval: 
+all_trulens_mods = get_all_modules(
+    Path(trulens_eval.__file__).parent.parent,
+    startswith="trulens_eval"
+)
+
+# Importing any of these should be ok regardless of optional packages. These are
+# all modules not mentioned in optional modules above.
+base_mods = [mod for mod in all_trulens_mods if mod not in optional_mods_flat]
+
+# OLD list:
+"""
+    "trulens_eval",
+    "trulens_eval.tru",
+    "trulens_eval.tru_chain",
+    "trulens_eval.tru_basic_app",
+    "trulens_eval.tru_custom_app",
+    "trulens_eval.tru_virtual",
+    "trulens_eval.app",
+    "trulens_eval.db",
+    "trulens_eval.schema",
+    "trulens_eval.keys",
+    "trulens_eval.instruments",
+    "trulens_eval.feedback",
+    "trulens_eval.feedback.provider",
+    "trulens_eval.feedback.provider.endpoint"
+]
+"""
 
 class TestStatic(TestCase):
 
