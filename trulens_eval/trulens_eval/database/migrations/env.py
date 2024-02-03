@@ -7,6 +7,10 @@ from sqlalchemy import pool
 
 from trulens_eval.database.orm import Base
 
+if __name__ != "__main__":
+    # This is a script not mean to be imported.
+    exit()
+
 # Database schema information
 target_metadata = Base.metadata
 
@@ -70,7 +74,6 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
-
 
 if context.is_offline_mode():
     run_migrations_offline()
