@@ -9,16 +9,22 @@ from langchain.llms import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.vectorstores import Pinecone
 import numpy as np
-import pinecone
 import streamlit as st
 
 from trulens_eval import feedback
 from trulens_eval import Select
 from trulens_eval import tru
 from trulens_eval import tru_chain
-from trulens_eval.db import Record
 from trulens_eval.feedback import Feedback
 from trulens_eval.keys import check_keys
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_PINECONE
+
+with OptionalImports(messages=REQUIREMENT_PINECONE):
+    import pinecone
+
+OptionalImports(messages=REQUIREMENT_PINECONE).assert_installed(pinecone)
+
 
 check_keys("OPENAI_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV")
 
