@@ -152,7 +152,7 @@ class TestStatic(TestCase):
                         # Make sure the message in the exception is the one we
                         # produce as part of the optional imports scheme (see
                         # utils/imports.py:format_import_errors).
-                        self.assertTrue("You should be able to install" in context.exception.args[0])
+                        self.assertIn("You should be able to install", context.exception.args[0])
 
     @optional_test
     def test_import_optional_success(self):
