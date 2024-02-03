@@ -80,13 +80,10 @@ TO PLACE
 
 __version__ = "0.21.0"
 
-# with OptionalImports(messages=REQUIREMENT_BEDROCK):
-from trulens_eval.feedback import Bedrock
+
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Huggingface
 from trulens_eval.feedback import Langchain
-from trulens_eval.feedback import LiteLLM
-from trulens_eval.feedback import OpenAI
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Select
@@ -96,14 +93,23 @@ from trulens_eval.tru_chain import TruChain
 from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.tru_virtual import TruVirtual
 from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
+from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
+from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.threading import TP
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     from trulens_eval.tru_llama import TruLlama
 
-#with OptionalImports(messages=REQUIREMENT_LITELLM):
-#with OptionalImports(messages=REQUIREMENT_OPENAI):
+with OptionalImports(messages=REQUIREMENT_LITELLM):
+    from trulens_eval.feedback import LiteLLM
+
+with OptionalImports(messages=REQUIREMENT_BEDROCK):
+    from trulens_eval.feedback import Bedrock
+
+with OptionalImports(messages=REQUIREMENT_OPENAI):
+    from trulens_eval.feedback import OpenAI
 
 __all__ = [
     "Tru",
