@@ -7,10 +7,6 @@ from sqlalchemy import pool
 
 from trulens_eval.database.orm import Base
 
-if __name__ != "__main__":
-    # This is a script not mean to be imported.
-    exit()
-
 # Database schema information
 target_metadata = Base.metadata
 

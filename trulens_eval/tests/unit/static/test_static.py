@@ -82,9 +82,18 @@ all_trulens_mods = get_all_modules(
     startswith="trulens_eval"
 )
 
+# Things which should not be imported at all.
+not_mods = [
+    "trulens_eval.database.env" # can only be executed by alembic
+]
+
 # Importing any of these should be ok regardless of optional packages. These are
 # all modules not mentioned in optional modules above.
-base_mods = [mod for mod in all_trulens_mods if mod not in optional_mods_flat]
+base_mods = [
+    mod for mod in all_trulens_mods 
+    if mod not in optional_mods_flat 
+    and mod not in not_mods
+]
 
 # OLD list:
 """
