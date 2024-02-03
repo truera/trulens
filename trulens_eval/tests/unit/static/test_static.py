@@ -95,25 +95,6 @@ base_mods = [
     and mod not in not_mods
 ]
 
-# OLD list:
-"""
-    "trulens_eval",
-    "trulens_eval.tru",
-    "trulens_eval.tru_chain",
-    "trulens_eval.tru_basic_app",
-    "trulens_eval.tru_custom_app",
-    "trulens_eval.tru_virtual",
-    "trulens_eval.app",
-    "trulens_eval.db",
-    "trulens_eval.schema",
-    "trulens_eval.keys",
-    "trulens_eval.instruments",
-    "trulens_eval.feedback",
-    "trulens_eval.feedback.provider",
-    "trulens_eval.feedback.provider.endpoint"
-]
-"""
-
 class TestStatic(TestCase):
 
     def setUp(self):
@@ -126,7 +107,7 @@ class TestStatic(TestCase):
         """
 
         for mod in base_mods:
-            with self.subTest(msg=mod):
+            with self.subTest(mod=mod):
                 __import__(mod)
     
 
@@ -141,7 +122,10 @@ class TestStatic(TestCase):
         for opt, mods in optional_mods.items():
             with self.subTest(optional=opt):
                 # First make sure the optional package is not installed.
-                self.assertFalse(module_installed(opt))
+                self.assertFalse(
+                    module_installed(opt),
+                    msg=f"Module {opt} was not supposed to be installed."
+                )
 
                 for mod in mods:
                     with self.subTest(mod=mod):
@@ -152,7 +136,11 @@ class TestStatic(TestCase):
                         # Make sure the message in the exception is the one we
                         # produce as part of the optional imports scheme (see
                         # utils/imports.py:format_import_errors).
-                        self.assertIn("You should be able to install", context.exception.args[0])
+                        self.assertIn(
+                            "You should be able to install",
+                            context.exception.args[0],
+                            msg="Exception did not have the expected content."
+                        )
 
     @optional_test
     def test_import_optional_success(self):
@@ -164,11 +152,14 @@ class TestStatic(TestCase):
         for opt, mods in optional_mods.items():
             with self.subTest(optional=opt):
                 # First make sure the optional package is installed.
-                self.assertTrue(module_installed(opt))
+                self.assertTrue(
+                    module_installed(opt), 
+                    f"Module {opt} was supposed to be installed."
+                )
 
                 for mod in mods:
                     with self.subTest(mod=mod):
-                        # Make sure we can import the module now.                        
+                        # Make sure we can import the module now.
                         __import__(mod)
 
 
