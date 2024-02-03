@@ -8,9 +8,15 @@ This top-level import should include everything to get started.
 Modules on lower lines should not import modules on same or above lines as
 otherwise you might get circular import errors.
 
+- `tests/`
+
+- `db_migration.py`
+
 - `__init__.py`
 
-- all UI/dashboard components
+- all UI/dashboard components, `pages`, `react_components`, `ux`, `Leaderboard.py`, `appui.py`
+
+- `appui.py`
 
 - `tru_chain.py` `tru_custom_app.py` `tru_virtual.py`
 
@@ -28,23 +34,23 @@ otherwise you might get circular import errors.
 
     - `provider`
 
-        - `__init__.py`
+        - `__init__.py` 
 
         - `endpoint`
 
             - `__init__.py`
 
-            - `openai.py` `hugs.py`
+            - `openai.py` `hugs.py` `bedrock.py` `litellm.py` `langchain.py`
 
             - `base.py` 
 
-        - `hugs.py` `openai.py` `cohere.py`
+        - `hugs.py` `openai.py` `bedrock.py` `litellm.py` `langchain.py`
 
         - `base.py`
 
-    - `groundedness.py` `groundtruth.py`
+    - `groundedness.py` `groundtruth.py` `prompts.py` `embeddings.py`
 
-    - `feedback.py` `prompts.py`
+    - `feedback.py`
 
 - `tru_basic_app.py` TODO: bad placement
 
@@ -72,16 +78,17 @@ otherwise you might get circular import errors.
 
 TO PLACE
 
+`database/`
+`feedback/v2/`
 `utils/command_line.py`
 `utils/notebook_utils.py`
+`utils/asynchro.py`
+`utils/text.py`
 `utils/__init__.py`
 
 """
 
 __version__ = "0.21.0"
-
-# NOTE: Lets try to import modules from their full location instead of an alias
-# in some other location. Lets leave those alieses only for external users.
 
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Langchain
@@ -115,21 +122,31 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import OpenAI
 
 __all__ = [
-    "Tru",
-    "TruBasicApp",
-    "TruCustomApp",
+    "Tru", # main interface
+
+    # app types
+    "TruBasicApp", 
+    "TruCustomApp", 
     "TruChain",
     "TruLlama",
     "TruVirtual",
+
+    # app setup
+    "FeedbackMode",
+
+    # feedback setup
     "Feedback",
+    "Select",
+
+    # feedback providers
+    "Provider",
     "AzureOpenAI",
     "OpenAI",
     "Langchain",
     "LiteLLM",
     "Bedrock",
     "Huggingface",
-    "FeedbackMode",
-    "Provider",
-    "Select",
+
+    # misc utility
     "TP",
 ]
