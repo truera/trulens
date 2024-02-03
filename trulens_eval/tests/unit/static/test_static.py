@@ -28,6 +28,9 @@ pp = PrettyPrinter()
 # optional in which case it should no longer be considered optional.
 
 optional_mods = dict(
+    pinecone=[
+        "trulens_eval.Example_TruBot"
+    ],
     ipywidgets=[
         "trulens_eval.appui"
     ],
