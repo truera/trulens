@@ -36,7 +36,7 @@ app_id = "TruBot"
 # app_id = "TruBot_relevance"
 
 # Pinecone configuration.
-pinecone.init(
+pinecone_client = pinecone.Pinecone(
     api_key=os.environ.get("PINECONE_API_KEY"),  # find at app.pinecone.io
     environment=os.environ.get("PINECONE_ENV")  # next to api key in console
 )
@@ -68,7 +68,9 @@ f_qs_relevance = feedback.Feedback(openai.qs_relevance).on_input().on(
 def generate_response(prompt):
     # Embedding needed for Pinecone vector db.
     embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
-    docsearch = Pinecone.from_existing_index(
+
+    # TODO: Check updated usage here.
+    docsearch = pinecone_client.from_existing_index(
         index_name="llmdemo", embedding=embedding
     )
     retriever = docsearch.as_retriever()
