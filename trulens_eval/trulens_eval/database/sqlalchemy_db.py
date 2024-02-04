@@ -2,7 +2,9 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import Any, ClassVar, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import (
+    Any, ClassVar, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import numpy as np
@@ -12,6 +14,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.schema import MetaData
 
 from trulens_eval import schema
 from trulens_eval.database import orm
@@ -34,6 +37,7 @@ from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
+from trulens_eval.schema import Perf
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.serial import JSON
@@ -47,7 +51,11 @@ logger = logging.getLogger(__name__)
 
 @for_all_methods(
     run_before(lambda self, *args, **kwargs: check_db_revision(self.engine)),
-    _except=["migrate_database", "reload_engine"]
+    _except=[
+        "migrate_database",
+        "reload_engine",
+        "reset_database"  # migrates database automatically
+    ]
 )
 class SqlAlchemyDB(DB):
     engine_params: dict = Field(default_factory=dict)
@@ -55,9 +63,7 @@ class SqlAlchemyDB(DB):
     engine: Engine = None
     Session: sessionmaker = None
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def __init__(self, redact_keys: bool = False, **kwargs):
         super().__init__(redact_keys=redact_keys, **kwargs)
@@ -132,14 +138,11 @@ class SqlAlchemyDB(DB):
         logger.info("Your database does not need migration.")
 
     def reset_database(self):
-        deleted = 0
-        with self.Session.begin() as session:
-            deleted += session.query(AppDefinition).delete()
-            deleted += session.query(FeedbackDefinition).delete()
-            deleted += session.query(Record).delete()
-            deleted += session.query(FeedbackResult).delete()
+        meta = MetaData()
+        meta.reflect(bind=self.engine)
+        meta.drop_all(bind=self.engine)
 
-        logger.info(f"Deleted {deleted} rows.")
+        self.migrate_database()
 
     def insert_record(self, record: schema.Record) -> schema.RecordID:
         # TODO: thread safety
@@ -370,12 +373,19 @@ def _extract_latency(
     def _extract(perf_json: Union[str, dict, schema.Perf]) -> int:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
+
         if isinstance(perf_json, str):
             perf_json = json.loads(perf_json)
+
         if isinstance(perf_json, dict):
             perf_json = schema.Perf.model_validate(perf_json)
+
         if isinstance(perf_json, schema.Perf):
             return perf_json.latency.seconds
+
+        if perf_json is None:
+            return 0
+
         raise ValueError(f"Failed to parse perf_json: {perf_json}")
 
     return pd.Series(data=(_extract(p) for p in series))
@@ -386,7 +396,10 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
     def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
-        cost = schema.Cost(**_cost_json)
+        if _cost_json is not None:
+            cost = schema.Cost(**_cost_json)
+        else:
+            cost = schema.Cost()
         return cost.n_tokens, cost.cost
 
     return pd.DataFrame(

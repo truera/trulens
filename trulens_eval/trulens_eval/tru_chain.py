@@ -15,6 +15,7 @@ from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.json import jsonify
@@ -32,7 +33,7 @@ pp = PrettyPrinter()
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
     # import langchain
-    
+
     from langchain.agents.agent import BaseMultiActionAgent
     from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
@@ -192,11 +193,9 @@ class TruChain(App):
     app: Any  # Chain
 
     # TODO: what if _acall is being used instead?
-    root_callable: ClassVar[Any] = Field(
+    root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call)
     )
-
-    # FunctionOrMethod
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
@@ -223,7 +222,7 @@ class TruChain(App):
         """
         Get the path to the context in the query output.
         """
-        
+
         if app is None:
             raise ValueError(
                 "langchain app/chain is required to determine context for langchain apps. "
@@ -238,40 +237,24 @@ class TruChain(App):
                 comp = lens.get_sole_item(app)
                 if isinstance(comp, BaseRetriever):
                     retrievers.append((lens, comp))
-                
-            except Exception:
+
+            except Exception as e:
                 pass
-        
+
         if len(retrievers) == 0:
             raise ValueError("Cannot find any `BaseRetriever` in app.")
-        
+
         if len(retrievers) > 1:
             raise ValueError(
                 "Found more than one `BaseRetriever` in app:\n\t" + \
                 ("\n\t".join(map(
-                    lambda lr: f"{type(lr[1])} at {lr[0]}", 
+                    lambda lr: f"{type(lr[1])} at {lr[0]}",
                     retrievers)))
             )
 
-        return (Select.RecordCalls + retrievers[0][0]).get_relevant_documents.rets
-
-    # TODEP
-    # Chain requirement
-    @property
-    def _chain_type(self):
-        return "TruChain"
-
-    # TODEP
-    # Chain requirement
-    @property
-    def input_keys(self) -> List[str]:
-        return self.app.input_keys
-
-    # TODEP
-    # Chain requirement
-    @property
-    def output_keys(self) -> List[str]:
-        return self.app.output_keys
+        return (
+            Select.RecordCalls + retrievers[0][0]
+        ).get_relevant_documents.rets
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
@@ -282,7 +265,10 @@ class TruChain(App):
         `bindings`.
         """
 
-        if 'inputs' in bindings.arguments:
+        if 'inputs' in bindings.arguments \
+            and safe_hasattr(self.app, "input_keys") \
+            and safe_hasattr(self.app, "prep_inputs"):
+
             # langchain specific:
             ins = self.app.prep_inputs(bindings.arguments['inputs'])
 
@@ -305,7 +291,7 @@ class TruChain(App):
         returned `ret`.
         """
 
-        if isinstance(ret, Dict):
+        if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
             # langchain specific:
             if self.app.output_keys[0] in ret:
                 return ret[self.app.output_keys[0]]
@@ -315,91 +301,71 @@ class TruChain(App):
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        out_key = self.app.output_keys[0]
-
-        return self.app(human)[out_key]
+        if safe_hasattr(self.app, "output_keys"):
+            out_key = self.app.output_keys[0]
+            return self.app(human)[out_key]
+        else:
+            logger.warning("Unsure what the main output string may be.")
+            return str(self.app(human))
 
     async def main_acall(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        out_key = self.app.output_keys[0]
+        out = await self._acall(human)
 
-        return await self._acall(human)[out_key]
-
-    def __getattr__(self, __name: str) -> Any:
-        # A message for cases where a user calls something that the wrapped
-        # chain has but we do not wrap yet.
-
-        if safe_hasattr(self.app, __name):
-            return RuntimeError(
-                f"TruChain has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
-                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruChain`. "
-                f"TruChain presently only wraps Chain.__call__, Chain._call, and Chain._acall ."
-            )
+        if safe_hasattr(self.app, "output_keys"):
+            out_key = self.app.output_keys[0]
+            return out[out_key]
         else:
-            raise RuntimeError(f"TruChain has no attribute named {__name}.")
+            logger.warning("Unsure what the main output string may be.")
+            return str(out)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
-    # TODEP
-    async def acall_with_record(self, *args, **kwargs) -> Tuple[Any, Record]:
+    # TOREMOVE
+    async def acall_with_record(self, *args, **kwargs) -> None:
         """
-        Run the chain acall method and also return a record metadata object.
+        DEPRECATED: Run the chain acall method and also return a record metadata object.
         """
 
-        self._with_dep_message(method="acall", is_async=True, with_record=True)
-
-        return await self.awith_record(self.app.acall, *args, **kwargs)
+        self._throw_dep_message(method="acall", is_async=True, with_record=True)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
-    # TODEP
-    def call_with_record(self, *args, **kwargs) -> Tuple[Any, Record]:
+    # TOREMOVE
+    def call_with_record(self, *args, **kwargs) -> None:
         """
-        Run the chain call method and also return a record metadata object.
+        DEPRECATED: Run the chain call method and also return a record metadata object.
         """
 
-        self._with_dep_message(
+        self._throw_dep_message(
             method="__call__", is_async=False, with_record=True
         )
 
-        return self.with_record(self.app.__call__, *args, **kwargs)
-
-    # TODEP
+    # TOREMOVE
     # Mimics Chain
-    def __call__(self, *args, **kwargs) -> Dict[str, Any]:
+    def __call__(self, *args, **kwargs) -> None:
         """
-        Wrapped call to self.app._call with instrumentation. If you need to
-        get the record, use `call_with_record` instead. 
+        DEPRECATED: Wrapped call to self.app._call with instrumentation. If you
+        need to get the record, use `call_with_record` instead. 
         """
-
-        self._with_dep_message(
+        self._throw_dep_message(
             method="__call__", is_async=False, with_record=False
         )
 
-        return self.with_(self.app, *args, **kwargs)
-
-    # TODEP
+    # TOREMOVE
     # Chain requirement
-    def _call(self, *args, **kwargs) -> Any:
+    def _call(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(
+        self._throw_dep_message(
             method="_call", is_async=False, with_record=False
         )
 
-        ret, _ = self.with_(self.app._call, *args, **kwargs)
-
-        return ret
-
-    # TODEP
+    # TOREMOVE
     # Optional Chain requirement
-    async def _acall(self, *args, **kwargs) -> Any:
+    async def _acall(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(
+        self._throw_dep_message(
             method="_acall", is_async=True, with_record=False
         )
-
-        ret, _ = await self.awith_(self.app.acall, *args, **kwargs)
-
-        return ret
 
 
 TruChain.model_rebuild()

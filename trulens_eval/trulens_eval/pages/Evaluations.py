@@ -5,6 +5,8 @@ from typing import Iterable, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
+from pprint import PrettyPrinter
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -15,6 +17,8 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from ux.add_logo import add_logo_and_style_overrides
 from ux.styles import CATEGORY
+
+pp = PrettyPrinter()
 
 from trulens_eval import Tru
 from trulens_eval.app import Agent
@@ -133,6 +137,21 @@ def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
     )
 
 
+# Define a function to extract record metadata from each row
+def extract_metadata(row):
+    """
+    Extract metadata from the record_json and return the metadata as a string.
+
+    Args:
+        row: The row containing the record_json.
+
+    Returns:
+        str: The metadata extracted from the record_json.
+    """
+    record_data = json.loads(row['record_json'])
+    return str(record_data["meta"])
+
+
 if df_results.empty:
     st.write("No records yet...")
 
@@ -181,6 +200,11 @@ else:
         evaluations_df['input'] = decoded_input
         evaluations_df['output'] = decoded_output
 
+        # Apply the function to each row and create a new column 'record_metadata'
+        evaluations_df['record_metadata'] = evaluations_df.apply(
+            extract_metadata, axis=1
+        )
+
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
         gb.configure_column("type", header_name="App Type")
@@ -194,14 +218,13 @@ else:
 
         gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
         gb.configure_column("input", header_name="User Input")
-        gb.configure_column(
-            "output",
-            header_name="Response",
-        )
+        gb.configure_column("output", header_name="Response")
+        gb.configure_column("record_metadata", header_name="Record Metadata")
+
         gb.configure_column("total_tokens", header_name="Total Tokens (#)")
         gb.configure_column("total_cost", header_name="Total Cost (USD)")
         gb.configure_column("latency", header_name="Latency (Seconds)")
-        gb.configure_column("tags", header_name="Tags")
+        gb.configure_column("tags", header_name="Application Tag")
         gb.configure_column("ts", header_name="Time Stamp", sort="desc")
 
         non_feedback_cols = [
@@ -212,8 +235,9 @@ else:
             "total_cost",
             "record_json",
             "latency",
+            "tags",
+            "record_metadata",
             "record_id",
-            "app_id",
             "cost_json",
             "app_json",
             "input",
@@ -275,6 +299,8 @@ else:
             prompt = selected_rows["input"][0]
             response = selected_rows["output"][0]
             details = selected_rows["app_json"][0]
+            record_json = selected_rows["record_json"][0]
+            record_metadata = selected_rows["record_metadata"][0]
 
             app_json = json.loads(
                 details
@@ -303,12 +329,19 @@ else:
             feedback_tab, metadata_tab = st.tabs(["Feedback", "Metadata"])
 
             with metadata_tab:
-                metadata = app_json.get("metadata")
-                if metadata:
-                    with st.expander("Metadata"):
-                        st.markdown(draw_metadata(metadata))
+                metadata_dict = json.loads(record_json).get("meta", None)
+                if metadata_dict is None:
+                    st.write("No record metadata available")
                 else:
-                    st.write("No metadata found")
+                    metadata_cols = list(metadata_dict.keys())
+
+                    metadata_cols = st.columns(len(metadata_cols))
+
+                    for i, (key, value) in enumerate(metadata_dict.items()):
+                        metadata_cols[i].metric(
+                            label=key,
+                            value=value,
+                        )
 
             with feedback_tab:
                 if len(feedback_cols) == 0:
@@ -317,7 +350,6 @@ else:
                 for fcol in feedback_cols:
                     feedback_name = fcol
                     feedback_result = row[fcol]
-                    print(feedback_result)
 
                     if MULTI_CALL_NAME_DELIMITER in fcol:
                         fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
@@ -339,9 +371,24 @@ else:
                             return [f"background-color: {cat.color}"] * len(s)
 
                         if call is not None and len(call) > 0:
+                            # NOTE(piotrm for garett): converting feedback
+                            # function inputs to strings here as other
+                            # structures get rendered as [object Object] in the
+                            # javascript downstream. If the first input/column
+                            # is a list, the DataFrame.from_records does create
+                            # multiple rows, one for each element, but if the
+                            # second or other column is a list, it will not do
+                            # this.
+                            for c in call:
+                                args = c['args']
+                                for k, v in args.items():
+                                    if not isinstance(v, str):
+                                        args[k] = pp.pformat(v)
+
                             df = pd.DataFrame.from_records(
-                                [call[i]["args"] for i in range(len(call))]
+                                c['args'] for c in call
                             )
+
                             df["result"] = pd.DataFrame(
                                 [
                                     float(call[i]["ret"])
@@ -357,7 +404,7 @@ else:
 
                             st.dataframe(
                                 df.style.apply(highlight, axis=1).format(
-                                    "{:.2}", subset=["result"]
+                                    "{:.2f}", subset=["result"]
                                 )
                             )
 

@@ -5,14 +5,17 @@ import numpy as np
 import pydantic
 
 from trulens_eval.feedback.provider import Provider
-from trulens_eval.feedback.provider.openai import OpenAI
 from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BERT_SCORE
 from trulens_eval.utils.imports import REQUIREMENT_EVALUATE
+from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
+
+with OptionalImports(messages=REQUIREMENT_OPENAI):
+    from trulens_eval.feedback.provider.openai import OpenAI
 
 with OptionalImports(messages=REQUIREMENT_BERT_SCORE):
     from bert_score import BERTScorer
@@ -24,26 +27,27 @@ logger = logging.getLogger(__name__)
 
 
 # TODEP
-class GroundTruthAgreement(SerialModel, WithClassInfo):
-    """Measures Agreement against a Ground Truth.
+class GroundTruthAgreement(WithClassInfo, SerialModel):
+    """
+    Measures Agreement against a Ground Truth.
     """
     ground_truth: Union[List[Dict], FunctionOrMethod]
     provider: Provider
+
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
     bert_scorer: object
 
-    ground_truth_imp: Optional[Callable] = pydantic.Field(exclude=True)
+    ground_truth_imp: Optional[Callable] = pydantic.Field(None, exclude=True)
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def __init__(
         self,
         ground_truth: Union[List, Callable, FunctionOrMethod],
         provider: Optional[Provider] = None,
-        bert_scorer: Optional["BERTScorer"] = None
+        bert_scorer: Optional["BERTScorer"] = None,
+        **kwargs
     ):
         """Measures Agreement against a Ground Truth. 
 
@@ -94,7 +98,7 @@ class GroundTruthAgreement(SerialModel, WithClassInfo):
             ground_truth_imp=ground_truth_imp,
             provider=provider,
             bert_scorer=bert_scorer,
-            obj=self  # for WithClassInfo
+            **kwargs
         )
 
     def _find_response(self, prompt: str) -> Optional[str]:

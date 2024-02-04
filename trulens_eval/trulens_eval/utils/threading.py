@@ -1,5 +1,6 @@
 """
-Multi-threading utilities.
+# Threading Utilities
+
 """
 
 from concurrent.futures import Future
@@ -9,18 +10,54 @@ import contextvars
 from inspect import stack
 import logging
 import threading
+from threading import Thread as fThread
 from typing import Callable, Optional, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
+from trulens_eval.utils.python import T
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
-
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
+
+
+A = TypeVar("A")
+
+class Thread(fThread):
+    """
+    Thread that wraps target with our stack/context tracking.
+    """
+
+    def __init__(
+        self,
+        name=None,
+        group=None,
+        target=None,
+        args=(),
+        kwargs={},
+        daemon=None
+    ):
+        present_stack = stack()
+        present_context = contextvars.copy_context()
+
+        fThread.__init__(
+            self,
+            name=name,
+            group=group,
+            target=_future_target_wrapper,
+            args=(present_stack, present_context, target, *args),
+            kwargs=kwargs,
+            daemon=daemon
+        )
+
+
+# HACK007: Attempt to force other users of Thread to use our version instead.
+import threading
+
+threading.Thread = Thread
 
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
@@ -36,22 +73,37 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         present_stack = stack()
         present_context = contextvars.copy_context()
         return super().submit(
-            _future_target_wrapper, present_stack, present_context, fn, *args, **kwargs
+            _future_target_wrapper, present_stack, present_context, fn, *args,
+            **kwargs
         )
 
-# Attempt other users of ThreadPoolExecutor to use our version.
+
+# HACK002: Attempt to make other users of ThreadPoolExecutor use our version
+# instead. TODO: this may be redundant with the thread override above.
 import concurrent
 
 concurrent.futures.ThreadPoolExecutor = ThreadPoolExecutor
 concurrent.futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 
-# Hack to try to make langchain use our ThreadPoolExecutor as the above doesn't
+# HACK003: Hack to try to make langchain use our ThreadPoolExecutor as the above doesn't
 # seem to do the trick.
 try:
     import langchain_core
     langchain_core.runnables.config.ThreadPoolExecutor = ThreadPoolExecutor
+
+    # Newer langchain_core uses ContextThreadPoolExecutor extending
+    # ThreadPoolExecutor. We cannot reliable override
+    # concurrent.futures.ThreadPoolExecutor before langchain_core is loaded so
+    # lets just retrofit the base class afterwards:
+    from langchain_core.runnables.config import ContextThreadPoolExecutor
+    ContextThreadPoolExecutor.__bases__ = (ThreadPoolExecutor,)
+
+    # TODO: ContextThreadPoolExecutor already maintains context so we no longer
+    # need to do it for them but we still need to maintain call stack.
+
 except Exception:
     pass
+
 
 class TP(SingletonPerName['TP']):  # "thread processing"
 
@@ -88,7 +140,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def _run_with_timeout(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
@@ -118,7 +170,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def submit(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
@@ -136,7 +188,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def _submit(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs

@@ -12,8 +12,8 @@ import logging
 from pprint import PrettyPrinter
 from threading import Lock
 from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence, Set,
-    Tuple, Type
+    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
+    Set, Tuple, Type, TypeVar
 )
 
 import pydantic
@@ -32,19 +32,22 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
+from trulens_eval.utils.asynchro import CallableMaybeAwaitable
+from trulens_eval.utils.asynchro import desync
+from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.python import T
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import JSON_BASES_T
 from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +55,27 @@ pp = PrettyPrinter()
 
 # App component.
 COMPONENT = Any
+
+A = TypeVar("A")
+
+# Message produced when an attribute is looked up from our App but is actually
+# an attribute of the enclosed app.
+ATTRIBUTE_ERROR_MESSAGE = """
+{class_name} has no attribute `{attribute_name}` but the wrapped app {app_class_name} does. If
+you are calling a {app_class_name} method, retrieve it from that app instead of from
+{class_name}. If you need to record your app's behaviour, use {class_name} as a context
+manager as in this example:
+
+```python
+    app: {app_class_name} = ...  # your app
+    truapp: {class_name} = {class_name}(app, ...)  # the truera recorder
+
+    with truapp as recorder:
+      result = app.{attribute_name}(...)
+
+    record: Record = recorder.get() # get the record of the invocation if needed
+```
+"""
 
 
 class ComponentView(ABC):
@@ -385,14 +409,14 @@ class RecordingContext():
         return record
 
 
-class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
+class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     """
     Generalization of a wrapped model.
     """
 
     model_config: ClassVar[dict] = dict(
         # Tru, DB, most of the types on the excluded fields.
-        arbitrary_types_allowed = True
+        arbitrary_types_allowed=True
     )
 
     # Non-serialized fields here while the serialized ones are defined in
@@ -415,13 +439,13 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
     # Instrumentation class. This is needed for serialization as it tells us
     # which objects we want to be included in the json representation of this
     # app.
-    instrument: Instrument = Field(exclude=True)
+    instrument: Optional[Instrument] = Field(None, exclude=True)
 
     # Sequnces of records produced by the this class used as a context manager
     # are stpred om a RecordingContext. Using a context var so that context
     # managers can be nested.
     recording_contexts: contextvars.ContextVar[RecordingContext] \
-        = Field(exclude=True)
+        = Field(None, exclude=True)
 
     # Mapping of instrumented methods (by id(.) of owner object and the
     # function) to their path in this app:
@@ -446,27 +470,31 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             "recording_contexts"
         )
 
-        # Cannot use this to set app. AppDefinition has app as JSON type.
-        # TODO: Figure out a better design to avoid this.
         super().__init__(**kwargs)
 
         app = kwargs['app']
         self.app = app
 
-        self.instrument.instrument_object(
-            obj=self.app, query=Select.Query().app
-        )
+        if self.instrument is not None:
+            self.instrument.instrument_object(
+                obj=self.app, query=Select.Query().app
+            )
+        else:
+            pass
 
         self.tru_post_init()
 
+    def __del__(self):
+        # Can use to do things when this object is being garbage collected.
+        pass
+
     @classmethod
-    def select_context(
-        cls,
-        app: Optional[Any] = None
-    ) -> Lens:
+    def select_context(cls, app: Optional[Any] = None) -> Lens:
         if app is None:
-            raise ValueError("Could not determine context selection without `app` argument.")
-        
+            raise ValueError(
+                "Could not determine context selection without `app` argument."
+            )
+
         # Checking by module name so we don't have to try to import either
         # langchain or llama_index beforehand.
         if type(app).__module__.startswith("langchain"):
@@ -476,7 +504,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             from trulens_eval.tru_llama import TruLlama
             return TruLlama.select_context(app)
         else:
-            raise ValueError(f"Could not determine context from unrecognized `app` type {type(app)}.")
+            raise ValueError(
+                f"Could not determine context from unrecognized `app` type {type(app)}."
+            )
 
     def __hash__(self):
         return hash(id(self))
@@ -529,10 +559,21 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
     def main_call(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
+
+        if self.__class__.main_acall is not App.main_acall:
+            # Use the async version if available.
+            return sync(self.main_acall, human)
+
         raise NotImplementedError()
 
     async def main_acall(self, human: str) -> str:
         # If available, a single text to a single text invocation of this app.
+
+        if self.__class__.main_call is not App.main_call:
+            logger.warning("Using synchronous version of main call.")
+            # Use the sync version if available.
+            return await desync(self.main_call, human)
+
         raise NotImplementedError()
 
     def main_input(
@@ -588,7 +629,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         else:
             logger.warning(
-                f"Unsure what the main output string is for the call to {callable_name(func)}."
+                f"Unsure what the main output string is for the call to {callable_name(func)} with return type {type(ret)}."
             )
             return str(ret)
 
@@ -811,7 +852,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         if not safe_hasattr(func, Instrument.INSTRUMENT):
             if Instrument.INSTRUMENT in dir(func):
-                # TODO: Need to figure out the __call__ accesses by class
+                # HACK009: Need to figure out the __call__ accesses by class
                 # name/object name with relation to this check for
                 # instrumentation because we keep hitting spurious warnings
                 # here. This is a temporary workaround.
@@ -826,7 +867,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
                 f"`{self.__class__.__name__}` method `print_instrumented` may be used to see methods that have been instrumented. "
             )
 
-    async def awith_(self, func, *args, **kwargs) -> Any:
+    async def awith_(
+        self, func: CallableMaybeAwaitable[A, T], *args, **kwargs
+    ) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
         recording, producing `func` results. The record of the computation is
@@ -835,56 +878,17 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         or the `App` as a context mananger instead.
         """
 
-        self._check_instrumented(func)
-
         res, _ = await self.awith_record(func, *args, **kwargs)
 
         return res
 
     async def awith_record(
         self,
-        func,
+        func: CallableMaybeAwaitable[A, T],
         *args,
         record_metadata: JSON = None,
         **kwargs
-    ) -> Tuple[Any, Record]:
-        """
-        Call the given async `func` with the given `*args` and `**kwargs`,
-        producing its results as well as a record of the execution.
-        """
-
-        self._check_instrumented(func)
-
-        with self as ctx:
-            ctx.record_metadata = record_metadata
-            ret = await func(*args, **kwargs)
-
-        assert len(ctx.records) > 0, (
-            f"Did not create any records. "
-            f"This means that no instrumented methods were invoked in the process of calling {func}."
-        )
-
-        return ret, ctx.get()
-
-    def with_(self, func, *args, **kwargs) -> Any:
-        """
-        Call the given `func` with the given `*args` and `**kwargs` while
-        recording, producing `func` results. The record of the computation is
-        available through other means like the database or dashboard.  If you
-        need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context mananger instead.
-        """
-
-        self._check_instrumented(func)
-
-        res, _ = self.with_record(func, *args, **kwargs)
-        return res
-
-    def with_record(self,
-                    func,
-                    *args,
-                    record_metadata: JSON = None,
-                    **kwargs) -> Tuple[Any, Record]:
+    ) -> Tuple[T, Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
@@ -894,7 +898,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         with self as ctx:
             ctx.record_metadata = record_metadata
-            ret = func(*args, **kwargs)
+            ret = await desync(func, *args, **kwargs)
 
         assert len(ctx.records) > 0, (
             f"Did not create any records. "
@@ -903,11 +907,42 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
         return ret, ctx.get()
 
-    def _with_dep_message(self, method, is_async=False, with_record=False):
-        # Deprecation message for the various methods that pass through to
-        # wrapped app while recording.
+    def with_(self, func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
+        """
+        Call the given `func` with the given `*args` and `**kwargs` while
+        recording, producing `func` results. The record of the computation is
+        available through other means like the database or dashboard.  If you
+        need a record of this execution immediately, you can use `awith_record`
+        or the `App` as a context mananger instead.
+        """
 
-        # TODO: enable dep message in 0.12.0
+        return sync(self.awith_, func, *args, **kwargs)
+
+    def with_record(
+        self,
+        func: CallableMaybeAwaitable[A, T],
+        *args,
+        record_metadata: JSON = None,
+        **kwargs
+    ) -> Tuple[T, Record]:
+        """
+        Call the given `func` with the given `*args` and `**kwargs`, producing
+        its results as well as a record of the execution.
+        """
+
+        return sync(
+            self.awith_record,
+            func,
+            *args,
+            record_metadata=record_metadata,
+            **kwargs
+        )
+
+    def _throw_dep_message(
+        self, method, is_async: bool = False, with_record: bool = False
+    ):
+        # Raises a deprecation message for the various methods that pass through to
+        # wrapped app while recording.
 
         cname = self.__class__.__name__
 
@@ -922,9 +957,9 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         if iscall:
             app_callable = f"app"
 
-        print(
+        raise AttributeError(
             f"""
-`{old_method}` will be deprecated soon; To record results of your app's execution, use one of these options to invoke your app:
+`{old_method}` is deprecated; To record results of your app's execution, use one of these options to invoke your app:
     (1) Use the `{"a" if is_async else ""}with_{"record" if with_record else ""}` method:
         ```python
         app # your app
@@ -947,12 +982,18 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         self.tru.add_feedback(res)
 
     def _handle_record(
-        self, record: Record
+        self,
+        record: Record,
+        feedback_mode: Optional[FeedbackMode] = None
     ) -> Optional[List['Future[Tuple[Feedback, FeedbackResult]]']]:
         """
         Write out record-related info to database if set and schedule feedback
-        functions to be evaluated.
+        functions to be evaluated. If feedback_mode is provided, will use that
+        mode instead of the one provided to constructor.
         """
+
+        if feedback_mode is None:
+            feedback_mode = self.feedback_mode
 
         if self.tru is None or self.feedback_mode is None:
             return None
@@ -967,7 +1008,7 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             return []
 
         # Add empty (to run) feedback to db.
-        if self.feedback_mode == FeedbackMode.DEFERRED:
+        if feedback_mode == FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 self.db.insert_feedback(
                     FeedbackResult(
@@ -979,8 +1020,8 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
 
             return None
 
-        elif self.feedback_mode in [FeedbackMode.WITH_APP,
-                                    FeedbackMode.WITH_APP_THREAD]:
+        elif feedback_mode in [FeedbackMode.WITH_APP,
+                               FeedbackMode.WITH_APP_THREAD]:
 
             return self.tru._submit_feedback_functions(
                 record=record,
@@ -993,7 +1034,24 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
         if self.db is None:
             return
 
-    def instrumented(self,) -> Iterable[Tuple[Lens, ComponentView]]:
+    def __getattr__(self, __name: str) -> Any:
+        # A message for cases where a user calls something that the wrapped app
+        # contains. We do not support this form of pass-through calls anymore.
+
+        if safe_hasattr(self.app, __name):
+            msg = ATTRIBUTE_ERROR_MESSAGE.format(
+                attribute_name=__name,
+                class_name=type(self).__name__,
+                app_class_name=type(self.app).__name__
+            )
+            raise AttributeError(msg)
+
+        else:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{__name}'"
+            )
+
+    def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
         """
         Enumerate instrumented components and their categories.
         """
@@ -1042,14 +1100,3 @@ class App(AppDefinition, SerialModel, WithInstrumentCallbacks, Hashable):
             )
 
         print("\n".join(object_strings))
-
-
-class TruApp(App):
-
-    def __init__(self, *args, **kwargs):
-        # Since 0.2.0
-        logger.warning(
-            "Class TruApp is deprecated, "
-            "use trulens_eval.app.App instead."
-        )
-        super().__init__(*args, **kwargs)

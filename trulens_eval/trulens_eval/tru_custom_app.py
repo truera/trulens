@@ -287,9 +287,7 @@ class TruCustomApp(App):
             app (Any): Any class
     """
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     app: Any
 
@@ -456,22 +454,6 @@ class TruCustomApp(App):
                                     f"Placeholder for method {m.__name__}."
                             }
                         )
-
-    def __getattr__(self, __name: str) -> Any:
-        # A message for cases where a user calls something that the wrapped
-        # app has but we do not wrap yet.
-
-        print(__name)
-
-        if safe_hasattr(self.app, __name):
-            return RuntimeError(
-                f"TruCustomApp has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
-                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruCustomApp`. "
-            )
-        else:
-            raise RuntimeError(
-                f"TruCustomApp nor wrapped app have attribute named {__name}."
-            )
 
     def main_call(self, human: str):
         if self.main_method_loaded is None:

@@ -5,18 +5,23 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
+with OptionalImports(messages=REQUIREMENT_LITELLM):
+    # Here only so we can throw the proper error if litellm is not installed.
+    import litellm
+
+OptionalImports(messages=REQUIREMENT_LITELLM).assert_installed(litellm)
+
 
 class LiteLLMCallback(EndpointCallback):
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: Dict) -> None:
         super().handle_classification(response)
@@ -25,7 +30,7 @@ class LiteLLMCallback(EndpointCallback):
         super().handle_generation(response)
 
 
-class LiteLLMEndpoint(Endpoint, WithClassInfo):
+class LiteLLMEndpoint(Endpoint):
     """
     LiteLLM endpoint. Instruments "completion" methods in litellm.* classes.
     """
@@ -63,8 +68,5 @@ class LiteLLMEndpoint(Endpoint, WithClassInfo):
 
         kwargs['name'] = "litellm"
         kwargs['callback_class'] = LiteLLMCallback
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)

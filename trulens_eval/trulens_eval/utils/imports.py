@@ -99,7 +99,7 @@ def format_import_errors(
 {','.join(packages)} {pack_s} {is_are} required for {purpose}.
 You should be able to install {it_them} with pip:
 
-    pip install '{' '.join(requirements)}
+    pip install {' '.join(map(lambda a: f'"{a}"', requirements))}
 """
     )
 
@@ -109,7 +109,7 @@ You have {packs} installed but we could not import the required
 components. There may be a version incompatibility. Please try installing {this_these}
 exact {pack_s} with pip: 
 
-  pip install '{' '.join(requirements_pinned)}'
+  pip install {' '.join(map(lambda a: f'"{a}"', requirements_pinned))}
 
 Alternatively, if you do not need {packs}, uninstall {it_them}:
 
@@ -140,12 +140,20 @@ REQUIREMENT_SKLEARN = format_import_errors(
     "scikit-learn", purpose="using embedding vector distances"
 )
 
+REQUIREMENT_LITELLM = format_import_errors(
+    ['litellm'], purpose="using LiteLLM models"
+)
+
 REQUIREMENT_BEDROCK = format_import_errors(
     ['boto3', 'botocore'], purpose="using Bedrock models"
 )
 
 REQUIREMENT_OPENAI = format_import_errors(
     'openai', purpose="using OpenAI models"
+)
+
+REQUIREMENT_GROUNDEDNESS = format_import_errors(
+    'nltk', purpose="using some groundedness feedback functions"
 )
 
 REQUIREMENT_BERT_SCORE = format_import_errors(
@@ -156,16 +164,29 @@ REQUIREMENT_EVALUATE = format_import_errors(
     "evaluate", purpose="using certain metrics"
 )
 
+REQUIREMENT_NOTEBOOK = format_import_errors(
+    ["ipython", "ipywidgets"], purpose="using trulens_eval in a notebook"
+)
+
 
 # Try to pretend to be a type as well as an instance.
 class Dummy(type, object):
     """
     Class to pretend to be a module or some other imported object. Will raise an
-    error if accessed in any way.
+    error if accessed in some dynamic way. Accesses that are "static-ish" will
+    try not to raise the exception so things like defining subclasses of a
+    missing class should not raise exception. Dynamic uses are things like
+    calls, use in expressions. Looking up an attribute is static-ish so we don't
+    throw the error at that point but instead make more dummies.
     """
 
-    def __new__(cls, name, **kwargs):
-        return type.__new__(cls, name, (object,), {})
+    def __new__(cls, name, *args, **kwargs):
+        if len(args) >= 2 and isinstance(args[1],
+                                         dict) and "__classcell__" in args[1]:
+            # (used as type)
+            return type.__new__(cls, name, args[0], args[1])
+        else:
+            return type.__new__(cls, name, (object,), {})
 
     def __init__(
         self,
@@ -188,6 +209,26 @@ class Dummy(type, object):
     def __subclasscheck__(self, __subclass: type) -> bool:
         return True
 
+    def _wasused(self, *args, **kwargs):
+        raise self.exception_class(self.message)
+
+    # If someone tries to use dummy in an expression, raise our usage exception:
+    __add__ = _wasused
+    __sub__ = _wasused
+    __mul__ = _wasused
+    __truediv__ = _wasused
+    __floordiv__ = _wasused
+    __mod__ = _wasused
+    __divmod__ = _wasused
+    __pow__ = _wasused
+    __lshift__ = _wasused
+    __rshift__ = _wasused
+    __and__ = _wasused
+    __xor__ = _wasused
+    __or__ = _wasused
+    __radd__ = _wasused
+    __rsub__ = _wasused
+
     def __getattr__(self, name):
         # If in OptionalImport context, create a new dummy for the requested
         # attribute. Otherwise raise error.
@@ -206,15 +247,16 @@ class Dummy(type, object):
 
         # If we are still in an optional import block, continue making dummies
         # inside this dummy.
-        if self.importer is not None and self.importer.importing:
+        if self.importer is not None and (self.importer.importing and
+                                          not self.importer.fail):
             return Dummy(
                 name=self.name + "." + name,
                 message=self.message,
                 importer=self.importer
             )
 
-        # If we are no longer in optional imports context, raise the exception
-        # with the optional package message.
+        # If we are no longer in optional imports context or context said to
+        # fail anyway, raise the exception with the optional package message.
         raise self.exception_class(self.message)
 
 
@@ -237,9 +279,23 @@ class OptionalImports(object):
     specified message (unless llama_index is installed of course).
     """
 
-    def __init__(self, messages: ImportErrorMessages):
+    def assert_installed(self, mod):
+        """
+        Check that the given module `mod` is not a dummy. If it is, show the
+        optional requirement message.
+        """
+        if isinstance(mod, Dummy):
+            raise ModuleNotFoundError(self.messages.module_not_found)
+
+    def __init__(self, messages: ImportErrorMessages, fail: bool = False):
+        """
+        Create an optional imports context manager class. Will keep module not
+        found or import errors quiet inside context unless fail is True.
+        """
+
         self.messages = messages
         self.importing = False
+        self.fail = fail
         self.imp = builtins.__import__
 
     def __import__(self, name, globals=None, locals=None, fromlist=(), level=0):
@@ -272,7 +328,7 @@ class OptionalImports(object):
             # otherwise we don't want to intercept the error as some modules
             # rely on import failures for various things.
             module_name = inspect.currentframe().f_back.f_globals["__name__"]
-            if not module_name.startswith(trulens_name):
+            if self.fail or not module_name.startswith(trulens_name):
                 raise e
             logger.debug(f"Module not found {name}.")
             return Dummy(
@@ -310,16 +366,19 @@ class OptionalImports(object):
         if exc_value is None:
             return None
 
-        # Print the appropriate message.
+        # Re-raise appropriate exception.
 
         if isinstance(exc_value, ModuleNotFoundError):
-            print(exc_value)
-            print(self.messages.module_not_found)
+            exc_value = ModuleNotFoundError(self.messages.module_not_found)
+
         elif isinstance(exc_value, ImportError):
-            print(exc_value)
-            print(self.messages.import_error)
+            exc_value = ImportError(self.messages.import_error)
+
         else:
-            print(exc_value)
+            raise exc_value
 
         # Will re-raise exception unless True is returned.
-        return None
+        if self.fail:
+            raise exc_value
+
+        return True

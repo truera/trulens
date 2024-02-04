@@ -14,16 +14,14 @@
 # ### Install dependencies
 # Let's install some of the dependencies for this notebook if we don't have them already
 
-# In[ ]:
 
 
-# pip install trulens_eval==0.20.0 llama_index>=0.9.15post2 html2text>=2020.1.16 
+# pip install trulens_eval==0.22.0 llama_index>=0.9.15post2 html2text>=2020.1.16 
 
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
 
-# In[ ]:
 
 
 import os
@@ -32,7 +30,6 @@ os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # ### Import from TruLens
 
-# In[ ]:
 
 
 from trulens_eval import Tru
@@ -43,7 +40,6 @@ tru = Tru()
 # 
 # This example uses LlamaIndex which internally uses an OpenAI LLM.
 
-# In[ ]:
 
 
 from llama_index import VectorStoreIndex
@@ -59,7 +55,6 @@ query_engine = index.as_query_engine()
 
 # ### Send your first request
 
-# In[ ]:
 
 
 response = query_engine.query("What did the author do growing up?")
@@ -68,7 +63,6 @@ print(response)
 
 # ## Initialize Feedback Function(s)
 
-# In[ ]:
 
 
 import numpy as np
@@ -108,7 +102,6 @@ f_qs_relevance = (
 
 # ## Instrument app for logging with TruLens
 
-# In[ ]:
 
 
 from trulens_eval import TruLlama
@@ -117,7 +110,6 @@ tru_query_engine_recorder = TruLlama(query_engine,
     feedbacks=[f_groundedness, f_qa_relevance, f_qs_relevance])
 
 
-# In[ ]:
 
 
 # or as context manager
@@ -127,18 +119,16 @@ with tru_query_engine_recorder as recording:
 
 # ## Retrieve records and feedback
 
-# In[ ]:
 
 
-# The record of the ap invocation can be retrieved from the `recording`:
+# The record of the app invocation can be retrieved from the `recording`:
 
 rec = recording.get() # use .get if only one record
 # recs = recording.records # use .records if multiple
 
-display(rec)
+print(rec)
 
 
-# In[ ]:
 
 
 # The results of the feedback functions can be rertireved from the record. These
@@ -155,10 +145,9 @@ for feedback_future in  as_completed(rec.feedback_results):
     feedback: Feedback
     feedbac_result: FeedbackResult
 
-    display(feedback.name, feedback_result.result)
+    print(feedback.name, feedback_result.result)
 
 
-# In[ ]:
 
 
 records, feedback = tru.get_records_and_feedback(app_ids=["LlamaIndex_App1"])
@@ -166,7 +155,6 @@ records, feedback = tru.get_records_and_feedback(app_ids=["LlamaIndex_App1"])
 records.head()
 
 
-# In[ ]:
 
 
 tru.get_leaderboard(app_ids=["LlamaIndex_App1"])
@@ -174,7 +162,6 @@ tru.get_leaderboard(app_ids=["LlamaIndex_App1"])
 
 # ## Explore in a Dashboard
 
-# In[ ]:
 
 
 tru.run_dashboard() # open a local streamlit app to explore

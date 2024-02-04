@@ -1,7 +1,7 @@
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional
+from typing import Any, Callable, ClassVar, Iterable, Optional
 
 import pydantic
 
@@ -10,23 +10,24 @@ from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
-from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
-
-logger = logging.getLogger(__name__)
-
-pp = pprint.PrettyPrinter()
 
 with OptionalImports(messages=REQUIREMENT_BEDROCK):
     import boto3
     from botocore.client import ClientCreator
 
 
+# check that the optional imports are not dummies:
+OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(boto3)
+
+logger = logging.getLogger(__name__)
+
+pp = pprint.PrettyPrinter()
+
+
 class BedrockCallback(EndpointCallback):
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed = True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response)
@@ -131,7 +132,7 @@ class BedrockCallback(EndpointCallback):
             )
 
 
-class BedrockEndpoint(Endpoint, WithClassInfo):
+class BedrockEndpoint(Endpoint):
     """
     Bedrock endpoint. Instruments "completion" methods in bedrock.* classes.
     """
@@ -172,9 +173,6 @@ class BedrockEndpoint(Endpoint, WithClassInfo):
         # for Endpoint, SingletonPerName:
         kwargs['name'] = name
         kwargs['callback_class'] = BedrockCallback
-
-        # for WithClassInfo:
-        kwargs['obj'] = self
 
         super().__init__(*args, **kwargs)
 

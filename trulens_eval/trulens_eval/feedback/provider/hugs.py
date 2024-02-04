@@ -2,7 +2,7 @@ from concurrent.futures import Future
 from concurrent.futures import wait
 import logging
 from multiprocessing.pool import AsyncResult
-from typing import Dict, Optional, Tuple
+from typing import Dict, get_args, get_origin, Optional, Tuple, Union
 
 import numpy as np
 
@@ -50,9 +50,23 @@ def _tci(func):  # "typecheck inputs"
             if annot is not None:
                 pident = f"Input `{param}` to `{func.__name__}`"
                 v = bindings.arguments[param]
-                if not isinstance(v, annot.annotation):
+
+                typ_origin = get_origin(annot.annotation)
+                if typ_origin == Union:
+                    annotation = get_args(annot.annotation)
+                    annotation_name = "(" + ", ".join(
+                        a.__name__ for a in annotation
+                    ) + ")"
+                elif typ_origin:
+                    annotation = typ_origin
+                    annotation_name = annotation.__name__
+                else:
+                    annotation = annot.annotation
+                    annotation_name = annot.annotation.__name__
+
+                if not isinstance(v, annotation):
                     raise TypeError(
-                        f"{pident} must be of type `{annot.annotation.__name__}` but was `{type(v).__name__}` instead."
+                        f"{pident} must be of type `{annotation_name}` but was `{type(v).__name__}` instead."
                     )
                 if annot.annotation is str:
                     if len(v) == 0:
@@ -78,7 +92,7 @@ class Huggingface(Provider):
         endpoint: Optional[Endpoint] = None,
         **kwargs
     ):
-        # NOTE(piotrm): pydantic adds endpoint to the signature of this
+        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
         """
