@@ -92,7 +92,7 @@ class Bedrock(LLMProvider):
         response_body = json.loads(response.get('body').read()
                                   ).get('results')[0]["outputText"]
         return response_body
-    
+
     # overwrite base to use prompt instead of messages
     def generate_score(
         self,

@@ -7,26 +7,19 @@ from pprint import PrettyPrinter
 from unittest import main
 from unittest import TestCase
 
-from tests.unit.test import module_installed, optional_test
+from tests.unit.test import module_installed
+from tests.unit.test import optional_test
 from tests.unit.test import requiredonly_test
 
 pp = PrettyPrinter()
 
 # Importing any of these should be ok regardless of optional packages.
 base_mods = [
-    "trulens_eval",
-    "trulens_eval.tru",
-    "trulens_eval.tru_chain",
-    "trulens_eval.tru_basic_app",
-    "trulens_eval.tru_custom_app",
-    "trulens_eval.tru_virtual",
-    "trulens_eval.app",
-    "trulens_eval.db",
-    "trulens_eval.schema",
-    "trulens_eval.keys",
-    "trulens_eval.instruments",
-    "trulens_eval.feedback",
-    "trulens_eval.feedback.provider",
+    "trulens_eval", "trulens_eval.tru", "trulens_eval.tru_chain",
+    "trulens_eval.tru_basic_app", "trulens_eval.tru_custom_app",
+    "trulens_eval.tru_virtual", "trulens_eval.app", "trulens_eval.db",
+    "trulens_eval.schema", "trulens_eval.keys", "trulens_eval.instruments",
+    "trulens_eval.feedback", "trulens_eval.feedback.provider",
     "trulens_eval.feedback.provider.endpoint"
 ]
 
@@ -39,26 +32,22 @@ base_mods = [
 # optional in which case it should no longer be considered optional.
 
 optional_mods = dict(
-    ipywidgets=[
-        "trulens_eval.appui"
-    ],
-    llama_index = [
-        "trulens_eval.tru_llama",
-        "trulens_eval.utils.llama"
-    ],
-    boto3 = [
+    ipywidgets=["trulens_eval.appui"],
+    llama_index=["trulens_eval.tru_llama", "trulens_eval.utils.llama"],
+    boto3=[
         "trulens_eval.feedback.provider.bedrock",
         "trulens_eval.feedback.provider.endpoint.bedrock"
     ],
-    litellm = [
+    litellm=[
         "trulens_eval.feedback.provider.litellm",
         "trulens_eval.feedback.provider.endpoint.litellm",
     ],
-    openai = [
+    openai=[
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
     ]
 )
+
 
 class TestStatic(TestCase):
 
@@ -74,7 +63,6 @@ class TestStatic(TestCase):
         for mod in base_mods:
             with self.subTest(msg=mod):
                 __import__(mod)
-    
 
     @requiredonly_test
     def test_import_optional_fail(self):
@@ -98,7 +86,10 @@ class TestStatic(TestCase):
                         # Make sure the message in the exception is the one we
                         # produce as part of the optional imports scheme (see
                         # utils/imports.py:format_import_errors).
-                        self.assertTrue("You should be able to install" in context.exception.args[0])
+                        self.assertTrue(
+                            "You should be able to install" in
+                            context.exception.args[0]
+                        )
 
     @optional_test
     def test_import_optional_success(self):
@@ -114,7 +105,7 @@ class TestStatic(TestCase):
 
                 for mod in mods:
                     with self.subTest(mod=mod):
-                        # Make sure we can import the module now.                        
+                        # Make sure we can import the module now.
                         __import__(mod)
 
 
