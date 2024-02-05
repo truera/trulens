@@ -136,6 +136,10 @@ REQUIREMENT_LANGCHAIN = format_import_errors(
     'langchain', purpose="instrumenting langchain apps"
 )
 
+REQUIREMENT_PINECONE = format_import_errors(
+    'pinecone', purpose="running TruBot"
+)
+
 REQUIREMENT_SKLEARN = format_import_errors(
     "scikit-learn", purpose="using embedding vector distances"
 )
