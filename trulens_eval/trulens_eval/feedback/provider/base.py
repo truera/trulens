@@ -83,11 +83,11 @@ class LLMProvider(Provider):
             float: Information Overlap
         """
         return self.generate_score(
-                    system_prompt=str.format(
-                        prompts.LLM_GROUNDEDNESS,
-                        premise=premise,
-                        hypothesis=hypothesis,
-                    )
+            system_prompt=str.format(
+                prompts.LLM_GROUNDEDNESS,
+                premise=premise,
+                hypothesis=hypothesis,
+            )
         )
 
     def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
@@ -112,7 +112,7 @@ class LLMProvider(Provider):
                 )
             )
         )
-    
+
     def generate_score(
         self,
         system_prompt: str,
@@ -186,7 +186,7 @@ class LLMProvider(Provider):
                     )
             }
             return score, reasons
-        
+
         else:
             score = re_0_10_rating(response) / normalize
             warnings.warn(
@@ -225,16 +225,13 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
         return self.generate_score(
-                    system_prompt=str.format(
-                        prompts.QS_RELEVANCE,
-                        question=question,
-                        statement=statement
-                    )
-                )
+            system_prompt=str.format(
+                prompts.QS_RELEVANCE, question=question, statement=statement
+            )
+        )
 
-    def qs_relevance_with_cot_reasons(
-        self, question: str, statement: str
-    ) -> Tuple[float, Dict]:
+    def qs_relevance_with_cot_reasons(self, question: str,
+                                      statement: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the statement to the question.
@@ -303,12 +300,13 @@ class LLMProvider(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        return self.generate_score(system_prompt=str.format(
-                        prompts.PR_RELEVANCE, prompt=prompt, response=response
-                    )
-                )
+        return self.generate_score(
+            system_prompt=str.
+            format(prompts.PR_RELEVANCE, prompt=prompt, response=response)
+        )
 
-    def relevance_with_cot_reasons(self, prompt: str, response: str) -> Tuple[float, Dict]:
+    def relevance_with_cot_reasons(self, prompt: str,
+                                   response: str) -> Tuple[float, Dict]:
         """
         Uses chat completion Model. A function that completes a template to
         check the relevance of the response to a prompt. Also uses chain of
@@ -371,9 +369,7 @@ class LLMProvider(Provider):
             being "positive sentiment".
         """
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT + text
-        return self.generate_score(
-                    system_prompt=system_prompt
-                )
+        return self.generate_score(system_prompt=system_prompt)
 
     def sentiment_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
@@ -398,9 +394,7 @@ class LLMProvider(Provider):
         """
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT
         system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self.generate_score_and_reasons(
-            system_prompt, user_prompt=text
-        )
+        return self.generate_score_and_reasons(system_prompt, user_prompt=text)
 
     def model_agreement(self, prompt: str, response: str) -> float:
         """
@@ -453,10 +447,10 @@ class LLMProvider(Provider):
         """
 
         system_prompt = str.format(
-                        prompts.LANGCHAIN_PROMPT_TEMPLATE,
-                        criteria=criteria,
-                        submission=text
-                    )
+            prompts.LANGCHAIN_PROMPT_TEMPLATE,
+            criteria=criteria,
+            submission=text
+        )
 
         return self.generate_score(system_prompt=system_prompt)
 
@@ -477,10 +471,10 @@ class LLMProvider(Provider):
         """
 
         system_prompt = str.format(
-                    prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS,
-                    criteria=criteria,
-                    submission=text
-                )
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS,
+            criteria=criteria,
+            submission=text
+        )
         return self.generate_score_and_reasons(system_prompt=system_prompt)
 
     def conciseness(self, text: str) -> float:
@@ -793,7 +787,8 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
         )
 
-    def controversiality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def controversiality_with_cot_reasons(self,
+                                          text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the controversiality of some text. Prompt credit to Langchain
@@ -983,9 +978,8 @@ class LLMProvider(Provider):
             )
         )
 
-    def comprehensiveness_with_cot_reasons(
-        self, source: str, summary: str
-    ) -> Tuple[float, Dict]:
+    def comprehensiveness_with_cot_reasons(self, source: str,
+                                           summary: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
         and compares a summary against those main points. This feedback function
@@ -1014,9 +1008,8 @@ class LLMProvider(Provider):
         )
         return self.generate_score_and_reasons(system_prompt)
 
-    def summarization_with_cot_reasons(
-        self, source: str, summary: str
-    ) -> Tuple[float, Dict]:
+    def summarization_with_cot_reasons(self, source: str,
+                                       summary: str) -> Tuple[float, Dict]:
         """
         Summarization is deprecated in place of comprehensiveness. Defaulting to comprehensiveness_with_cot_reasons.
         """
@@ -1050,7 +1043,8 @@ class LLMProvider(Provider):
         )
         return self.generate_score(system_prompt)
 
-    def stereotypes_with_cot_reasons(self, prompt: str, response: str) -> Tuple[float, Dict]:
+    def stereotypes_with_cot_reasons(self, prompt: str,
+                                     response: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check adding assumed stereotypes in the response when not present in the

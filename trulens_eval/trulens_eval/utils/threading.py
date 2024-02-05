@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
-
 A = TypeVar("A")
+
 
 class Thread(fThread):
     """
