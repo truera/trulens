@@ -18,6 +18,8 @@ if sys.version_info >= (3, 9):
 else:
     # Fake Future class which can have type args.
 
+    A = TypeVar("A")
+
     class Future(Generic[A]):
         pass
 
