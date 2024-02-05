@@ -3,11 +3,8 @@ Static tests, i.e. ones that don't run anything substatial. This should find
 issues that occur from merely importing trulens.
 """
 
-import os
 from pathlib import Path
 import pkgutil
-from pprint import PrettyPrinter
-from typing import List
 from unittest import main
 from unittest import TestCase
 
@@ -16,8 +13,6 @@ from tests.unit.test import optional_test
 from tests.unit.test import requiredonly_test
 
 import trulens_eval
-
-pp = PrettyPrinter()
 
 # Importing any of these should throw ImportError (or its sublcass
 # ModuleNotFoundError) if optional packages are not installed. The key is the
@@ -38,15 +33,15 @@ optional_mods = dict(
         "trulens_eval.tru_llama",
         "trulens_eval.utils.llama"
     ],
-    boto3 = [
+    boto3=[
         "trulens_eval.feedback.provider.bedrock",
         "trulens_eval.feedback.provider.endpoint.bedrock"
     ],
-    litellm = [
+    litellm=[
         "trulens_eval.feedback.provider.litellm",
         "trulens_eval.feedback.provider.endpoint.litellm",
     ],
-    openai = [
+    openai=[
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
     ]
@@ -109,7 +104,6 @@ class TestStatic(TestCase):
         for mod in base_mods:
             with self.subTest(mod=mod):
                 __import__(mod)
-    
 
     @requiredonly_test
     def test_import_optional_fail(self):

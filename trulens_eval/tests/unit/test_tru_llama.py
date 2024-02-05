@@ -11,6 +11,7 @@ from tests.unit.test import optional_test
 from trulens_eval.keys import check_keys
 from trulens_eval.utils.asynchro import sync
 
+
 # All tests require optional packages.
 @optional_test
 class TestLlamaIndex(JSONTestCase):

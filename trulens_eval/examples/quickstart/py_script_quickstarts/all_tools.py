@@ -11,7 +11,7 @@
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
-# ! pip install trulens_eval==0.21.0 openai==1.3.7 langchain chromadb langchainhub bs4
+# ! pip install trulens_eval==0.22.0 openai==1.3.7 langchain chromadb langchainhub bs4
 
 import os
 
@@ -184,7 +184,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 # ### Install dependencies
 # Let's install some of the dependencies for this notebook if we don't have them already
 
-# pip install trulens_eval==0.21.0 llama_index>=0.9.15post2 html2text>=2020.1.16
+# pip install trulens_eval==0.22.0 llama_index>=0.9.15post2 html2text>=2020.1.16
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
@@ -315,7 +315,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
 
-# ! pip install trulens_eval==0.21.0 chromadb==0.4.18 openai==1.3.7
+# ! pip install trulens_eval==0.22.0 chromadb==0.4.18 openai==1.3.7
 
 import os
 
@@ -485,7 +485,7 @@ tru.run_dashboard()
 
 # ## Import libraries
 
-# ! pip install trulens_eval==0.21.0
+# ! pip install trulens_eval==0.22.0
 
 from trulens_eval import Feedback
 from trulens_eval import Tru
@@ -561,7 +561,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/human_feedback.ipynb)
 
-# ! pip install trulens_eval==0.21.0 openai==1.3.7
+# ! pip install trulens_eval==0.22.0 openai==1.3.7
 
 import os
 
@@ -669,7 +669,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 # ### Add API keys
 # For this quickstart, you will need Open AI keys.
 
-# ! pip install trulens_eval==0.21.0 openai==1.3.7
+# ! pip install trulens_eval==0.22.0 openai==1.3.7
 
 import os
 
@@ -927,6 +927,86 @@ feedback_results = tru.run_feedback_functions(
     record=record, feedback_functions=[f_custom_function]
 )
 tru.add_feedbacks(feedback_results)
+
+# ## Extending existing providers.
+#
+# In addition to calling your own methods, you can also extend stock feedback providers (such as `OpenAI`, `AzureOpenAI`, `Bedrock`) to custom feedback implementations. This can be especially useful for tweaking stock feedback functions, or running custom feedback function prompts while letting TruLens handle the backend LLM provider.
+#
+# This is done by subclassing the provider you wish to extend, and using the `generate_score` method that runs the provided prompt with your specified provider, and extracts a float score from 0-1. Your prompt should request the LLM respond on the scale from 0 to 10, then the `generate_score` method will normalize to 0-1.
+#
+# See below for example usage:
+
+from trulens_eval.feedback.provider import AzureOpenAI
+from trulens_eval.utils.generated import re_0_10_rating
+
+
+class Custom_AzureOpenAI(AzureOpenAI):
+
+    def style_check_professional(self, response: str) -> float:
+        """
+        Custom feedback function to grade the professional style of the resposne, extending AzureOpenAI provider.
+
+        Args:
+            response (str): text to be graded for professional style.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not professional" and 1 being "professional".
+        """
+        professional_prompt = str.format(
+            "Please rate the professionalism of the following text on a scale from 0 to 10, where 0 is not at all professional and 10 is extremely professional: \n\n{}",
+            response
+        )
+        return self.generate_score(system_prompt=professional_prompt)
+
+
+# Running "chain of thought evaluations" is another use case for extending providers. Doing so follows a similar process as above, where the base provider (such as `AzureOpenAI`) is subclassed.
+#
+# For this case, the method `generate_score_and_reasons` can be used to extract both the score and chain of thought reasons from the LLM response.
+#
+# To use this method, the prompt used should include the `COT_REASONS_TEMPLATE` available from the TruLens prompts library (`trulens_eval.feedback.prompts`).
+#
+# See below for example usage:
+
+from typing import Dict, Tuple
+
+from trulens_eval.feedback import prompts
+
+
+class Custom_AzureOpenAI(AzureOpenAI):
+
+    def qs_relevance_with_cot_reasons_extreme(
+        self, question: str, statement: str
+    ) -> Tuple[float, Dict]:
+        """
+        Tweaked version of question statement relevance, extending AzureOpenAI provider.
+        A function that completes a template to check the relevance of the statement to the question.
+        Scoring guidelines for scores 5-8 are removed to push the LLM to more extreme scores.
+        Also uses chain of thought methodology and emits the reasons.
+
+        Args:
+            question (str): A question being asked. 
+            statement (str): A statement to the question.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+        """
+
+        system_prompt = str.format(
+            prompts.QS_RELEVANCE, question=question, statement=statement
+        )
+
+        # remove scoring guidelines around middle scores
+        system_prompt = system_prompt.replace(
+            "- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.\n\n",
+            ""
+        )
+
+        system_prompt = system_prompt.replace(
+            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(system_prompt)
+
 
 # ## Multi-Output Feedback functions
 # Trulens also supports multi-output feedback functions. As a typical feedback function will output a float between 0 and 1, multi-output should output a dictionary of `output_key` to a float between 0 and 1. The feedbacks table will print the feedback with column `feedback_name:::outputkey`
