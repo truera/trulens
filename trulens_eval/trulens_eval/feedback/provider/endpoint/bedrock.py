@@ -16,7 +16,6 @@ with OptionalImports(messages=REQUIREMENT_BEDROCK):
     import boto3
     from botocore.client import ClientCreator
 
-
 # check that the optional imports are not dummies:
 OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(boto3)
 

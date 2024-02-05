@@ -3,14 +3,15 @@ from dataclasses import is_dataclass
 from datetime import datetime
 import os
 from typing import Dict, Sequence
-from unittest import TestCase
 import unittest
+from unittest import TestCase
 
 import pydantic
 from pydantic import BaseModel
 
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
+
 
 def optional_test(testmethodorclass):
     """
