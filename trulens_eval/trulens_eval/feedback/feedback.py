@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from trulens_eval.utils.python import Future
 from datetime import datetime
 from inspect import Signature
 from inspect import signature
@@ -31,10 +30,9 @@ from trulens_eval.schema import Select
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.text import UNICODE_CHECK
-from trulens_eval.utils.text import UNICODE_CLOCK
-from trulens_eval.utils.text import UNICODE_YIELD
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)

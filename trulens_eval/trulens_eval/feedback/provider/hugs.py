@@ -1,7 +1,5 @@
-from trulens_eval.utils.python import Future
 from concurrent.futures import wait
 import logging
-from multiprocessing.pool import AsyncResult
 from typing import Dict, get_args, get_origin, Optional, Tuple, Union
 
 import numpy as np
@@ -10,9 +8,9 @@ from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.threading import ThreadPoolExecutor
-from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 

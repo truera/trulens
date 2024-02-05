@@ -1,6 +1,5 @@
 from collections import defaultdict
 from concurrent.futures import as_completed
-from trulens_eval.utils.python import Future
 from concurrent.futures import TimeoutError
 from datetime import datetime
 from datetime import timedelta
@@ -14,9 +13,8 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (
-    Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
-)
+from typing import (Callable, Dict, Iterable, List, Optional, Sequence, Tuple,
+                    Union)
 import warnings
 
 import humanize
@@ -34,13 +32,12 @@ from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.utils.notebook_utils import is_notebook
 from trulens_eval.utils.notebook_utils import setup_widget_stdout_stderr
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
-from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_LOCK
 from trulens_eval.utils.text import UNICODE_SQUID
 from trulens_eval.utils.text import UNICODE_STOP
-from trulens_eval.utils.text import UNICODE_YIELD
 from trulens_eval.utils.threading import TP
 
 pp = PrettyPrinter()

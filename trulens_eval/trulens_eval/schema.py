@@ -22,13 +22,10 @@ util.py:CLASS_INFO key.
 
 from __future__ import annotations
 
-from trulens_eval.utils.python import Future
 from datetime import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
-import queue
-from queue import Queue
 from typing import (Any, Callable, ClassVar, Dict, Hashable, List, Optional,
                     Sequence, Tuple, Type, TYPE_CHECKING, TypeVar, Union)
 
@@ -44,6 +41,7 @@ from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
