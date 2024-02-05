@@ -3,7 +3,6 @@
 
 """
 
-
 from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
@@ -12,7 +11,7 @@ from inspect import stack
 import logging
 import threading
 from threading import Thread as fThread
-from typing import Callable, Optional
+from typing import Callable, Optional, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
@@ -24,13 +23,23 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
+A = TypeVar("A")
+
 
 class Thread(fThread):
     """
     Thread that wraps target with our stack/context tracking.
     """
 
-    def __init__(self, name=None, group=None, target=None, args=(), kwargs={}, daemon=None):
+    def __init__(
+        self,
+        name=None,
+        group=None,
+        target=None,
+        args=(),
+        kwargs={},
+        daemon=None
+    ):
         present_stack = stack()
         present_context = contextvars.copy_context()
 
@@ -40,14 +49,16 @@ class Thread(fThread):
             group=group,
             target=_future_target_wrapper,
             args=(present_stack, present_context, target, *args),
-            kwargs=kwargs, 
+            kwargs=kwargs,
             daemon=daemon
         )
+
 
 # HACK007: Attempt to force other users of Thread to use our version instead.
 import threading
 
 threading.Thread = Thread
+
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
     """
@@ -129,7 +140,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def _run_with_timeout(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
@@ -159,7 +170,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def submit(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
@@ -177,7 +188,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def _submit(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs

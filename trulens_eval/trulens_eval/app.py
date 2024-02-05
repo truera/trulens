@@ -61,6 +61,26 @@ COMPONENT = Any
 
 A = TypeVar("A")
 
+# Message produced when an attribute is looked up from our App but is actually
+# an attribute of the enclosed app.
+ATTRIBUTE_ERROR_MESSAGE = """
+{class_name} has no attribute `{attribute_name}` but the wrapped app {app_class_name} does. If
+you are calling a {app_class_name} method, retrieve it from that app instead of from
+{class_name}. If you need to record your app's behaviour, use {class_name} as a context
+manager as in this example:
+
+```python
+    app: {app_class_name} = ...  # your app
+    truapp: {class_name} = {class_name}(app, ...)  # the truera recorder
+
+    with truapp as recorder:
+      result = app.{attribute_name}(...)
+
+    record: Record = recorder.get() # get the record of the invocation if needed
+```
+"""
+
+
 class ComponentView(ABC):
     """
     Views of common app component types for sorting them and displaying them in
@@ -987,7 +1007,6 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             **kwargs
         )
 
-
     def _throw_dep_message(
         self, method, is_async: bool = False, with_record: bool = False
     ):
@@ -1072,10 +1091,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
             return None
 
-        elif feedback_mode in [
-            FeedbackMode.WITH_APP,
-            FeedbackMode.WITH_APP_THREAD
-        ]:
+        elif feedback_mode in [FeedbackMode.WITH_APP,
+                               FeedbackMode.WITH_APP_THREAD]:
 
             return self.tru._submit_feedback_functions(
                 record=record,
@@ -1087,6 +1104,23 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     def _handle_error(self, record: Record, error: Exception):
         if self.db is None:
             return
+
+    def __getattr__(self, __name: str) -> Any:
+        # A message for cases where a user calls something that the wrapped app
+        # contains. We do not support this form of pass-through calls anymore.
+
+        if safe_hasattr(self.app, __name):
+            msg = ATTRIBUTE_ERROR_MESSAGE.format(
+                attribute_name=__name,
+                class_name=type(self).__name__,
+                app_class_name=type(self.app).__name__
+            )
+            raise AttributeError(msg)
+
+        else:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{__name}'"
+            )
 
     def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
         """

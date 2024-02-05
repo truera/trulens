@@ -82,7 +82,7 @@ class SerialModel(pydantic.BaseModel):
             setattr(self, k, v)
 
         return self
-    
+
     def replace(self, **d):
         copy = self.model_copy()
         copy.update(**d)
@@ -934,7 +934,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             # NOTE(piotrm): when displaying objects, ipython checks whether they
             # have overwritten __getattr__ by looking up this attribute. If it
             # does not result in AttributeError or None, IPython knows it was
-            # overwritten and it will not try to use any of the _repr_*_ methdos
+            # overwritten and it will not try to use any of the _repr_*_ methods
             # to display the object. In our case, this will result Lenses being
             # constructed with this canary attribute name. We instead return
             # None here to let ipython know we have overwritten __getattr__ but

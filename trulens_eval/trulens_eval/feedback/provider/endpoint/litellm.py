@@ -5,10 +5,18 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+with OptionalImports(messages=REQUIREMENT_LITELLM):
+    # Here only so we can throw the proper error if litellm is not installed.
+    import litellm
+
+OptionalImports(messages=REQUIREMENT_LITELLM).assert_installed(litellm)
 
 
 class LiteLLMCallback(EndpointCallback):

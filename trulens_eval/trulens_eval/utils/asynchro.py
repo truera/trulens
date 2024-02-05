@@ -43,12 +43,13 @@ import logging
 from threading import current_thread
 from typing import Awaitable, Callable, TypeVar, Union
 
+import nest_asyncio
+
 from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import T
 from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.threading import Thread
 
-import nest_asyncio
 nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
@@ -113,6 +114,13 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             loop = asyncio.new_event_loop()
             return loop.run_until_complete(awaitable)
         
+        try:
+            # If have nest_asyncio, can run in current thread.
+            import nest_asyncio
+            return loop.run_until_complete(awaitable)
+        except:
+            pass
+
         try:
             # If have nest_asyncio, can run in current thread.
             import nest_asyncio

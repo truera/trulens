@@ -66,9 +66,6 @@ theme:
   logo: img/squid.png
   features:
     - navigation.indexes
-    - navigation.sections
-    - navigation.tabs
-    - navigation.tabs.sticky
     - navigation.top
     - navigation.tracking
     - navigation.path
@@ -78,78 +75,72 @@ theme:
     - content.code.copy
 
 nav:
-  - Home: index.md
-  - Welcome to TruLens!: welcome.md
-  - Eval:
+  - 🏠 Home: index.md
+  - 🚀 Getting Started:
+      - Installation: trulens_eval/install.md
+      - Quickstarts:
+          - Quickstart: trulens_eval/quickstart.ipynb
+          - LangChain Quickstart: trulens_eval/langchain_quickstart.ipynb
+          - Llama-Index Quickstart: trulens_eval/llama_index_quickstart.ipynb
+          - Text to Text Quickstart: trulens_eval/text2text_quickstart.ipynb
+          - Ground Truth Evaluation Quickstart: trulens_eval/groundtruth_evals.ipynb
+          - Human Feedback Quickstart: trulens_eval/human_feedback.ipynb
+      - Core Concepts:
+          - Feedback Functions: trulens_eval/core_concepts_feedback_functions.md
+          - RAG Triad: trulens_eval/core_concepts_rag_triad.md
+          - Honest, Harmless, Helpful Evals: trulens_eval/core_concepts_honest_harmless_helpful_evals.md
+  - 🎯 Evaluation:
+      - Feedback Function Overview:
+          - What is a Feedback Function?: trulens_eval/feedback_function_overview.md
+          - Anatomy of a Feedback Function: trulens_eval/feedback_function_anatomy.md
+      - Running Feedback Functions:
+          - Running with your app: trulens_eval/feedback_functions_running_with_app.md
+          - Running on existing data: trulens_eval/feedback_functions_existing_data.md
+      - Feedback Selectors:
+          - Overview: trulens_eval/feedback_selectors.md
+          - Selecting Components: trulens_eval/selecting_components.md
+          - Available shortcuts: trulens_eval/selector_shortcuts.md
+      - Feedback Providers:
+          - OpenAI: trulens_eval/api/openai_provider.md
+          - AzureOpenAI: trulens_eval/api/azureopenai_provider.md
+          - AWS Bedrock: trulens_eval/api/bedrock_provider.md
+          - HuggingFace: trulens_eval/api/huggingface_provider.md
+          - LiteLLM: trulens_eval/api/litellm_provider.md
+          - Langchain: trulens_eval/api/langchain_provider.md
+      - Feedback Implementations:
+          - Stock Feedback Functions: trulens_eval/api/feedback.md
+          - Custom Feedback Functions: trulens_eval/custom_feedback_functions.ipynb
+      - Generating Test Cases:
+          - Generating Test Cases: trulens_eval/generate_test_cases.md
+      - Feedback Evaluations:
+          - Answer Relevance: trulens_eval/answer_relevance_smoke_tests.ipynb
+          - Context Relevance: trulens_eval/context_relevance_smoke_tests.ipynb
+          - Groundedness: trulens_eval/groundedness_smoke_tests.ipynb
+  - 🎺 Tracking:
+      - Instrumentation:
+          - Overview: trulens_eval/trulens_instrumentation.ipynb
+          - LangChain Integration: trulens_eval/langchain_instrumentation.ipynb
+          - Llama-Index Integration: trulens_eval/llama_index_instrumentation.ipynb
+      - Logging:
+          - Where to Log: trulens_eval/where_to_log.md
+          - Logging Methods: trulens_eval/logging.ipynb
+      - API Reference:
+          - Tru: trulens_eval/api/tru.md
+          - TruBasicApp: trulens_eval/api/trubasicapp.md
+          - TruChain: trulens_eval/api/truchain.md
+          - TruLlama: trulens_eval/api/trullama.md
+          - TruCustom: trulens_eval/api/trucustom.md
+  - 🔍 Guides:
+      - Any LLM App: trulens_eval/use_cases_any.md
+      - RAGs: trulens_eval/use_cases_rag.md
+      - LLM Agents: trulens_eval/use_cases_agent.md
+      - Dev to Prod: trulens_eval/use_cases_production.md
+  - 🤝 Contributing:
+      - Contribution Guidelines: trulens_eval/CONTRIBUTING.md
+  - ❓ Explain:
       - Getting Started:
-          - 🚀 Installation: trulens_eval/install.md
-          - ⚡ Quickstarts:
-              - Quickstart: trulens_eval/quickstart.ipynb
-              - LangChain Quickstart: trulens_eval/langchain_quickstart.ipynb
-              - Llama-Index Quickstart: trulens_eval/llama_index_quickstart.ipynb
-              - Text to Text Quickstart: trulens_eval/text2text_quickstart.ipynb
-              - Ground Truth Evaluation Quickstart: trulens_eval/groundtruth_evals.ipynb
-              - Human Feedback Quickstart: trulens_eval/human_feedback.ipynb
-          - 🧠 Core Concepts:
-              - Feedback Functions: trulens_eval/core_concepts_feedback_functions.md
-              - RAG Triad: trulens_eval/core_concepts_rag_triad.md
-              - Honest, Harmless, Helpful Evals: trulens_eval/core_concepts_honest_harmless_helpful_evals.md
-      - Evaluation:
-          - 🎯 Feedback Function Overview:
-              - What is a Feedback Function?: trulens_eval/feedback_function_overview.md
-              - Anatomy of a Feedback Function: trulens_eval/feedback_function_anatomy.md
-          - 🏃 Running Feedback Functions:
-              - Running with your app: trulens_eval/feedback_functions_running_with_app.md
-              - Running on existing data: trulens_eval/feedback_functions_existing_data.md
-          - 🫵 Feedback Selectors:
-              - Overview: trulens_eval/feedback_selectors.md
-              - Selecting Components: trulens_eval/selecting_components.md
-              - Available shortcuts: trulens_eval/selector_shortcuts.md
-          - 💪 Feedback Providers:
-              - OpenAI: trulens_eval/api/openai_provider.md
-              - AzureOpenAI: trulens_eval/api/azureopenai_provider.md
-              - AWS Bedrock: trulens_eval/api/bedrock_provider.md
-              - HuggingFace: trulens_eval/api/huggingface_provider.md
-              - LiteLLM: trulens_eval/api/litellm_provider.md
-              - Langchain: trulens_eval/api/langchain_provider.md
-          - 📚 Feedback Implementations:
-              - Stock Feedback Functions: trulens_eval/api/feedback.md
-              - Custom Feedback Functions: trulens_eval/custom_feedback_functions.ipynb
-
-          - 🎲 Generating Test Cases:
-              - Generating Test Cases: trulens_eval/generate_test_cases.md
-          - ✅ Feedback Evaluations:
-              - Answer Relevance: trulens_eval/answer_relevance_smoke_tests.ipynb
-              - Context Relevance: trulens_eval/context_relevance_smoke_tests.ipynb
-              - Groundedness: trulens_eval/groundedness_smoke_tests.ipynb
-
-      - Tracking:
-          - 🎺 Instrumentation:
-              - Overview: trulens_eval/trulens_instrumentation.ipynb
-              - LangChain Integration: trulens_eval/langchain_instrumentation.ipynb
-              - Llama-Index Integration: trulens_eval/llama_index_instrumentation.ipynb
-          - 🚚 Logging:
-              - Where to Log: trulens_eval/where_to_log.md
-              - Logging Methods: trulens_eval/logging.ipynb
-          - 📚 API Reference:
-              - Tru: trulens_eval/api/tru.md
-              - TruBasicApp: trulens_eval/api/trubasicapp.md
-              - TruChain: trulens_eval/api/truchain.md
-              - TruLlama: trulens_eval/api/trullama.md
-              - TruCustom: trulens_eval/api/trucustom.md
-      - Guides:
-          - 🔍 Use Cases:
-              - Any LLM App: trulens_eval/use_cases_any.md
-              - RAGs: trulens_eval/use_cases_rag.md
-              - LLM Agents: trulens_eval/use_cases_agent.md
-              - Dev to Prod: trulens_eval/use_cases_production.md
-      - Contributing:
-          - 🤝 Contribution Guidelines: trulens_eval/CONTRIBUTING.md
-
-  - Explain:
-      - Getting Started:
-          - 🚀 Installation: trulens_explain/install.md
-          - ⚡ Quickstart: trulens_explain/quickstart.md
+          - Installation: trulens_explain/install.md
+          - Quickstart: trulens_explain/quickstart.md
       - Attributions: trulens_explain/attribution_parameterization.md
       - API Reference:
           - Attribution: trulens_explain/api/attribution.md

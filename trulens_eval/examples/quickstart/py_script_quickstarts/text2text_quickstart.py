@@ -11,7 +11,7 @@
 # ### Add API keys
 # For this quickstart you will need an OpenAI Key.
 
-# ! pip install trulens_eval==0.20.3 openai==1.3.1
+# ! pip install trulens_eval==0.22.0 openai==1.3.1
 
 import os
 

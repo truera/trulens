@@ -14,7 +14,7 @@
 # ### Install dependencies
 # Let's install some of the dependencies for this notebook if we don't have them already
 
-# pip install trulens_eval==0.20.3 llama_index>=0.9.15post2 html2text>=2020.1.16
+# pip install trulens_eval==0.22.0 llama_index>=0.9.15post2 html2text>=2020.1.16
 
 # ### Add API keys
 # For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.

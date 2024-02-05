@@ -27,12 +27,10 @@ from datetime import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
-from queue import Queue
 import queue
-from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
-    Type, TYPE_CHECKING, TypeVar, Union
-)
+from queue import Queue
+from typing import (Any, Callable, ClassVar, Dict, Hashable, List, Optional,
+                    Sequence, Tuple, Type, TYPE_CHECKING, TypeVar, Union)
 
 import dill
 import humanize
