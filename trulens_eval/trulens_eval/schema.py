@@ -22,7 +22,7 @@ util.py:CLASS_INFO key.
 
 from __future__ import annotations
 
-from concurrent.futures import Future
+from trulens_eval.utils.python import Future
 from datetime import datetime
 from enum import Enum
 import logging

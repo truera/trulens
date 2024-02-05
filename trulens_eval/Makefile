@@ -1,10 +1,11 @@
 SHELL := /bin/bash
 CONDA_ENV := py311_trulens
-# CONDA_ENV := py38_trulens
 CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate $(CONDA_ENV)
 
+PYENV:=PYTHONPATH=$(PWD)
+
 trubot:
-	$(CONDA); (PYTHONPATH=. python -u examples/trubot/trubot.py)
+	$(CONDA); ($(PYENV) python -u examples/trubot/trubot.py)
 
 test:
 	$(CONDA); python -m unittest discover tests.unit
@@ -33,6 +34,9 @@ test-database-legacy-migration:
 test-database-future:
 	$(CONDA); python -m unittest \
 		tests.integration.test_database.TestDbV2Migration.test_future_db
+
+test-tru:
+	$(CONDA); python -m unittest tests.unit.test_tru
 
 test-lens:
 	$(CONDA); python -m unittest tests.unit.test_lens
@@ -63,13 +67,13 @@ lab:
 	$(CONDA); jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 example_app:
-	$(CONDA); PYTHONPATH=. streamlit run trulens_eval/Example_Application.py
+	$(CONDA); $(PYENV) streamlit run trulens_eval/Example_Application.py
 
 example_trubot:
-	$(CONDA); PYTHONPATH=. streamlit run trulens_eval/Example_TruBot.py
+	$(CONDA); $(PYENV) streamlit run trulens_eval/Example_TruBot.py
 
 leaderboard:
-	$(CONDA); PYTHONPATH=. streamlit run trulens_eval/Leaderboard.py
+	$(CONDA); $(PYENV) streamlit run trulens_eval/Leaderboard.py
 
 react:
 	$(CONDA); \

@@ -9,10 +9,17 @@ import inspect
 import logging
 from pprint import PrettyPrinter
 from queue import Queue
-from typing import (
-    Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
-    TypeVar
-)
+import sys
+from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
+                    Sequence, Type, TypeVar)
+
+if sys.version_info >= (3, 9):
+    from concurrent.futures import Future
+else:
+    # Fake Future class which can have type args.
+
+    class Future(Generic[A]):
+        pass
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -387,8 +394,22 @@ class SingletonPerName(Generic[T]):
             logger.debug(
                 f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
-            SingletonPerName._instances[k] = super().__new__(cls)
+            # If exception happens here, the instance should not be added to
+            # _instances.
+            instance = super().__new__(cls)
+            instance.__singleton_name = name
+
+            SingletonPerName._instances[k] = instance
 
         obj: cls = SingletonPerName._instances[k]
 
         return obj
+
+    def delete_singleton(self):
+        """
+        Delete the singleton instance. Can be used for testing to create another
+        singleton.
+        """
+        k = self.__class__.__name__, self.__singleton_name
+
+        del SingletonPerName._instances[k]

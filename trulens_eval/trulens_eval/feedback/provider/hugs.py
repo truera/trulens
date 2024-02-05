@@ -1,4 +1,4 @@
-from concurrent.futures import Future
+from trulens_eval.utils.python import Future
 from concurrent.futures import wait
 import logging
 from multiprocessing.pool import AsyncResult

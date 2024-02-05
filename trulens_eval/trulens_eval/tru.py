@@ -1,6 +1,6 @@
 from collections import defaultdict
 from concurrent.futures import as_completed
-from concurrent.futures import Future
+from trulens_eval.utils.python import Future
 from concurrent.futures import TimeoutError
 from datetime import datetime
 from datetime import timedelta
@@ -295,33 +295,52 @@ class Tru(SingletonPerName):
         record: Record,
         feedback_functions: Sequence[Feedback],
         app: Optional[AppDefinition] = None,
-    ) -> Iterable[FeedbackResult]:
+        wait: bool = True
+    ) -> Union[
+            Iterable[Tuple[Feedback, FeedbackResult]],
+            Iterable[Tuple[Feedback, Future[FeedbackResult]]]
+        ]:
         """
         Run a collection of feedback functions and report their result.
 
         Parameters:
 
-            record (Record): The record on which to evaluate the feedback
-            functions.
+            - record (Record): The record on which to evaluate the feedback
+              functions.
 
-            app (App, optional): The app that produced the given record.
-            If not provided, it is looked up from the given database `db`.
+            - app (App, optional): The app that produced the given record.
+              If not provided, it is looked up from the given database `db`.
 
-            feedback_functions (Sequence[Feedback]): A collection of feedback
-            functions to evaluate.
+            - feedback_functions (Sequence[Feedback]): A collection of feedback
+              functions to evaluate.
 
-        Yields `FeedbackResult`, one for each element of `feedback_functions`
-        potentially in random order.
+            - wait: (bool, optional): If set (default), will wait for results
+              before returning.
+
+        Yields tuples of `Feedback` and their `FeedbackResult`, one tuple for
+        each element of `feedback_functions` potentially in random order. If
+        `wait` is set to `False`, yields tuples of `Feedback` and
+        `Future[FeedbackResult]` instead.
         """
 
-        for res in as_completed(self._submit_feedback_functions(
-                record=record, feedback_functions=feedback_functions, app=app)):
+        future_feedback_map: Dict[Future[FeedbackResult], Feedback] = {
+            p[1]: p[0] for p in self._submit_feedback_functions(
+                record=record, feedback_functions=feedback_functions, app=app
+            )
+        }
 
-            yield res.result()[1]
+        if wait:
+            # In blocking mode, wait for futures to complete.
+            for res in as_completed(future_feedback_map.values()):
+                yield (future_feedback_map[res], res.result())
+        else:
+            # In non-blocking, return the futures instead.
+            for fut, feedback in future_feedback_map.items():
+                yield (feedback, fut)
 
     def add_app(self, app: AppDefinition) -> None:
         """
-        Add a app to the database.        
+        Add a app to the database.
         """
 
         self.db.insert_app(app=app)
