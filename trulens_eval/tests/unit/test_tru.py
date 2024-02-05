@@ -101,6 +101,26 @@ class TestTru(TestCase):
                         # Need to delete singleton after test as otherwise we
                         # cannot change the arguments in next test.
 
+    def _create_custom(self):
+        return CustomApp()
+    
+    def _create_basic(self):
+        def custom_application(prompt: str) -> str:
+            return "a response"
+        
+        return custom_application
+
+    def _create_chain(self):
+        prompt = PromptTemplate.from_template(
+            """Honestly answer this question: {question}."""
+        )
+        llm = OpenAI(temperature=0.0, streaming=False, cache=False)
+        chain = LLMChain(llm=llm, prompt=prompt)
+        return chain
+
+    def _create_llama(self):
+        pass
+
     def test_required_constructors(self):
         """
         Test the capitilized methods of Tru class that are aliases for various
@@ -110,61 +130,65 @@ class TestTru(TestCase):
         tru = Tru()
 
         with self.subTest(type="TruChain"):
-            
-            prompt = PromptTemplate.from_template(
-                """Honestly answer this question: {question}."""
-            )
-            llm = OpenAI(temperature=0.0, streaming=False, cache=False)
-
-            chain = LLMChain(llm=llm, prompt=prompt)
+            app = self._create_chain()
 
             with self.subTest(argname=None):
-                tru.Chain(chain)
+                tru.Chain(app)
 
             with self.subTest(argname="chain"):
-                tru.Chain(chain=chain)
+                tru.Chain(chain=app)
 
             # Not specifying chain should be an error.
             with self.assertRaises(Exception):
                 tru.Chain()
 
-            # Specifying custom chain using any of these other argument names
+            # Specifying the chain using any of these other argument names
             # should be an error.
             wrong_args = ["app", "engine", "text_to_text"]
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
-                        tru.Chain(**{arg: chain})
+                        tru.Chain(**{arg: app})
 
         with self.subTest(type="TruBasicApp"):
-            def custom_application(prompt: str) -> str:
-                return "a response"
-            
+            app = self._create_basic()
+
             with self.subTest(argname=None):
-                tru.Basic(custom_application)
+                tru.Basic(app)
 
             with self.subTest(argname="text_to_text"):
-                tru.Basic(text_to_text=custom_application)
+                tru.Basic(text_to_text=app)
 
             # Not specifying callable should be an error.
             with self.assertRaises(Exception):
                 tru.Basic()
 
-            # Specifying custom callable using any of these other argument names
-            # should be an error.
+            # Specifying custom basic app using any of these other argument
+            # names should be an error.
             wrong_args = ["app", "chain", "engine"]
 
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
-                        tru.Basic(**{arg: custom_application})
+                        tru.Basic(**{arg: app})
     
         with self.subTest(type="TruCustomApp"):
-            ca = CustomApp()
+            app = self._create_custom()
 
-            ta1 = tru.Custom(ca)
-            ta2 = tru.Custom(app=ca)
+            tru.Custom(app)
+            tru.Custom(app=app)
 
+            # Not specifying callable should be an error.
+            with self.assertRaises(Exception):
+                tru.Custom()
+
+            # Specifying custom app using any of these other argument names
+            # should be an error.
+            wrong_args = ["chain", "engine", "text_to_text"]
+            for arg in wrong_args:
+                with self.subTest(argname=arg):
+                    with self.assertRaises(Exception):
+                        tru.Custom(**{arg: app})
 
         with self.subTest(type="TruVirtual"):
             tru.Virtual(None)
@@ -177,42 +201,58 @@ class TestTru(TestCase):
         tru = Tru()
 
         with self.subTest(type="TruLlama"):
+
+            app = self._create_llama()
+
             # Not specifying an app should be an error.
             with self.assertRaises(Exception):
                 tru.Llama(None)
 
     def test_reset_database(self):
+        # TODO
         pass
 
+    def test_run_feedback_functions(self):
+
+        pass
+
+
     def test_add_record(self):
+        # TODO
         pass
 
     def test_add_app(self):
+        # TODO
         pass
 
     def test_add_feedback(self):
+        # TODO
         pass
 
     def test_add_feedbacks(self):
+        # TODO
         pass
 
     def test_get_records_and_feedback(self):
+        # TODO
         pass
 
     def test_get_leaderboard(self):
+        # TODO
         pass
 
     def test_start_evaluator(self):
+        # TODO
         pass
 
     def test_stop_evaluator(self):
+        # TODO
         pass
 
     def test_stop_dashboard(self):
+        # TODO
         pass
 
     def test_run_dashboard(self):
         pass
 
-    def test_run_feedback_functions(self):
-        pass

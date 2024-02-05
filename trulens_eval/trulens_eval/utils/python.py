@@ -8,19 +8,26 @@ import asyncio
 import inspect
 import logging
 from pprint import PrettyPrinter
-from queue import Queue
+import queue
 import sys
 from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
                     Sequence, Type, TypeVar)
 
 if sys.version_info >= (3, 9):
     from concurrent.futures import Future
+    from queue import Queue
+
 else:
-    # Fake Future class which can have type args.
+    # Fake classes which can have type args. In python earlier than 3.9, the
+    # classes imported above cannot have type args which is annoying for type
+    # annotations. We use these fake ones instead.
 
     A = TypeVar("A")
 
     class Future(Generic[A]):
+        pass
+
+    class Queue(Generic[A]):
         pass
 
 logger = logging.getLogger(__name__)
@@ -291,7 +298,7 @@ def get_all_local_in_call_stack(
     # to be reconstructed there.
 
     # Using queue for frames as additional frames may be added due to handling threads.
-    q = Queue()
+    q = queue.Queue()
     for f in frames:
         q.put(f)
 

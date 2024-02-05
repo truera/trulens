@@ -39,7 +39,10 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.python import Future
+from trulens_eval.utils.python import \
+    Future  # can take type args with python < 3.9
+from trulens_eval.utils.python import \
+    Queue  # can take type args with python < 3.9
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import T
 from trulens_eval.utils.serial import all_objects
@@ -454,7 +457,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     # EXPRIMENTAL: Records produced by this app which might have yet to finish
     # feedback runs.
-    records_with_pending_feedback_results: queue.Queue[Record] = \
+    records_with_pending_feedback_results: Queue[Record] = \
         pydantic.Field(exclude=True, default_factory=lambda: queue.Queue(maxsize=1024))
     # Thread for manager of pending feedback results queue. See
     # _manage_pending_feedback_results.
