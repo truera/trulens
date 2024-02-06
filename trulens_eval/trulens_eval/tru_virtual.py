@@ -313,6 +313,7 @@ TruVirtual.model_rebuild()
 from typing import List, Tuple
 
 from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import TFeedbackResultFuture
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.utils.python import Future
 
 VirtualRecord.model_rebuild()

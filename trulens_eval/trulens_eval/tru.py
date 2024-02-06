@@ -278,7 +278,7 @@ class Tru(SingletonPerName):
 
         for ffunc in feedback_functions:
             fut: Future[FeedbackResult] = \
-                tp.submit(ffunc.run, app=app, record=record)
+                tp.submit(ffunc.run_and_log, app=app, record=record, tru=self)
 
             if on_done is not None:
                 fut.add_done_callback(on_done)
@@ -320,6 +320,13 @@ class Tru(SingletonPerName):
         `Future[FeedbackResult]` instead.
         """
 
+        assert isinstance(record, Record), "record must be a Record."
+        assert isinstance(feedback_functions, Sequence), "feedback_functions must be a sequence."
+        assert all(
+            isinstance(ffunc, Feedback) for ffunc in feedback_functions
+        ), "feedback_functions must be a sequence of Feedback."
+        assert app is None or isinstance(app, AppDefinition), "app must be an AppDefinition."
+
         future_feedback_map: Dict[Future[FeedbackResult], Feedback] = {
             p[1]: p[0] for p in self._submit_feedback_functions(
                 record=record, feedback_functions=feedback_functions, app=app
@@ -328,12 +335,13 @@ class Tru(SingletonPerName):
 
         if wait:
             # In blocking mode, wait for futures to complete.
-            for res in as_completed(future_feedback_map.values()):
-                yield (future_feedback_map[res], res.result())
+            for fut_result in as_completed(future_feedback_map.keys()):
+                yield (future_feedback_map[fut_result], fut_result.result())
+
         else:
             # In non-blocking, return the futures instead.
-            for fut, feedback in future_feedback_map.items():
-                yield (feedback, fut)
+            for fut_result, feedback in future_feedback_map.items():
+                yield (feedback, fut_result)
 
     def add_app(self, app: AppDefinition) -> None:
         """
@@ -384,7 +392,7 @@ class Tru(SingletonPerName):
 
         return self.db.get_apps()
 
-    def get_records_and_feedback(self, app_ids: List[str]):
+    def get_records_and_feedback(self, app_ids: List[str]) -> Tuple[pandas.DataFrame, List[str]]:
         """
         Get records, their feeback results, and feedback names from the
         database. Pass an empty list of app_ids to return all.

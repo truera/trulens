@@ -387,6 +387,11 @@ class SingletonPerName(Generic[T]):
     # Hold singleton instances here.
     _instances: Dict[Hashable, SingletonPerName] = dict()
 
+    # Need some way to look up the name of the singleton instance. Cannot attach
+    # a new attribute to instance since some metaclasses don't allow this (like
+    # pydantic). We instead create a map from instance address to name.
+    _id_to_name_map: Dict[int, Optional[str]] = dict()
+
     def __new__(
         cls: Type[SingletonPerName[T]],
         *args,
@@ -406,8 +411,8 @@ class SingletonPerName(Generic[T]):
             # If exception happens here, the instance should not be added to
             # _instances.
             instance = super().__new__(cls)
-            instance.__singleton_name = name
 
+            SingletonPerName._id_to_name_map[id(instance)] = name
             SingletonPerName._instances[k] = instance
 
         obj: cls = SingletonPerName._instances[k]
@@ -419,6 +424,9 @@ class SingletonPerName(Generic[T]):
         Delete the singleton instance. Can be used for testing to create another
         singleton.
         """
-        k = self.__class__.__name__, self.__singleton_name
-
-        del SingletonPerName._instances[k]
+        if id(self) in SingletonPerName._id_to_name_map:
+            name = SingletonPerName._id_to_name_map[id(self)]
+            del SingletonPerName._id_to_name_map[id(self)]
+            del SingletonPerName._instances[self.__class__.__name__, name]
+        else:
+            logger.warning(f"Instance {self} not found in our records.")

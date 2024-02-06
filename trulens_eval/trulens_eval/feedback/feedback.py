@@ -700,8 +700,11 @@ class Feedback(FeedbackDefinition):
     def name(self):
         """
         Name of the feedback function. Presently derived from the name of the
-        function implementing it.
+        function implementing it if no supplied name provided.
         """
+
+        if self.supplied_name is not None:
+            return self.supplied_name
 
         if self.imp is None:
             raise RuntimeError("This feedback function has no implementation.")

@@ -2,6 +2,9 @@
 Tests of various functionalities of the `Tru` class.
 """
 
+from concurrent.futures import Future as FutureClass
+from concurrent.futures import wait
+from datetime import datetime
 import os
 from pathlib import Path
 import unittest
@@ -24,11 +27,12 @@ from trulens_eval import Tru
 from trulens_eval import TruCustomApp
 from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.keys import check_keys
-from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema import FeedbackMode, FeedbackResult
 from trulens_eval.schema import Record
 from trulens_eval.tru_basic_app import TruBasicApp
 from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.utils.asynchro import sync
+from trulens_eval.feedback.provider.hugs import Dummy
 from trulens_eval.utils.json import jsonify
 
 
@@ -118,8 +122,42 @@ class TestTru(TestCase):
         chain = LLMChain(llm=llm, prompt=prompt)
         return chain
 
+    def _create_feedback_functions(self):
+        provider = Dummy(
+            loading_prob=0.0,
+            freeze_prob=0.0,
+            error_prob=0.0,
+            overloaded_prob=0.0,
+            rpm=1000,
+            alloc = 1024, # how much fake data to allocate during requests
+        )
+
+        f_dummy1 = Feedback(
+            provider.language_match, name="language match"
+        ).on_input_output()
+
+        f_dummy2 = Feedback(
+            provider.positive_sentiment, name="output sentiment"
+        ).on_output()
+
+        f_dummy3 = Feedback(
+            provider.positive_sentiment, name="input sentiment"
+        ).on_input()
+
+        return [f_dummy1, f_dummy2, f_dummy3]
+
     def _create_llama(self):
-        pass
+        # Starter example of
+        # https://docs.llamaindex.ai/en/latest/getting_started/starter_example.html
+        # except with trulens_docs as data.
+        from llama_index import SimpleDirectoryReader
+        from llama_index import VectorStoreIndex
+
+        documents = SimpleDirectoryReader("../docs/trulens_eval").load_data()
+        index = VectorStoreIndex.from_documents(documents)
+        query_engine = index.as_query_engine()
+
+        return query_engine
 
     def test_required_constructors(self):
         """
@@ -141,6 +179,8 @@ class TestTru(TestCase):
             # Not specifying chain should be an error.
             with self.assertRaises(Exception):
                 tru.Chain()
+            with self.assertRaises(Exception):
+                tru.Chain(None)
 
             # Specifying the chain using any of these other argument names
             # should be an error.
@@ -162,6 +202,8 @@ class TestTru(TestCase):
             # Not specifying callable should be an error.
             with self.assertRaises(Exception):
                 tru.Basic()
+            with self.assertRaises(Exception):
+                tru.Basic(None)
 
             # Specifying custom basic app using any of these other argument
             # names should be an error.
@@ -181,6 +223,8 @@ class TestTru(TestCase):
             # Not specifying callable should be an error.
             with self.assertRaises(Exception):
                 tru.Custom()
+            with self.assertRaises(Exception):
+                tru.Custom(None)
 
             # Specifying custom app using any of these other argument names
             # should be an error.
@@ -201,21 +245,136 @@ class TestTru(TestCase):
         tru = Tru()
 
         with self.subTest(type="TruLlama"):
-
             app = self._create_llama()
 
-            # Not specifying an app should be an error.
+            tru.Llama(app)
+
+            tru.Llama(engine=app)
+
+            # Not specifying an engine should be an error.
+            with self.assertRaises(Exception):
+                tru.Llama()
+
             with self.assertRaises(Exception):
                 tru.Llama(None)
+
+            # Specifying engine using any of these other argument names
+            # should be an error.
+            wrong_args = ["chain", "app", "text_to_text"]
+            for arg in wrong_args:
+                with self.subTest(argname=arg):
+                    with self.assertRaises(Exception):
+                        tru.Llama(**{arg: app})
+
+    def test_run_feedback_functions_wait(self):
+        """
+        Test run_feedback_functions in wait mode. This mode blocks until results
+        are ready.
+        """
+
+        app = self._create_custom()
+
+        feedbacks = self._create_feedback_functions()
+
+        tru = Tru()
+
+        tru_app = TruCustomApp(app)
+
+        with tru_app as recording:
+            response = app.respond_to_query("hello")
+
+        record = recording.get()
+
+        feedback_results = list(tru.run_feedback_functions(
+            record=record, feedback_functions=feedbacks, app=tru_app, wait=True
+        ))
+
+        # Check we get the right number of results.
+        self.assertEqual(len(feedback_results), len(feedbacks))
+
+        # Check that the results are for the feedbacks we submitted.
+        self.assertEqual(set(tup[0] for tup in feedback_results), set(feedbacks))
+
+        # Check that the structure of returned tuples is correct.
+        for feedback, result in feedback_results:
+            self.assertIsInstance(feedback, Feedback)
+            self.assertIsInstance(result, FeedbackResult)
+            self.assertIsInstance(result.result, float)
+
+        # Check that results were added to db.
+        df, feedback_names = tru.get_records_and_feedback(
+            app_ids = [tru_app.app_id]
+        )
+
+        # Check we got the right feedback names.
+        self.assertEqual(
+            set(feedback.name for feedback in feedbacks),
+            set(feedback_names)
+        )
+
+    def test_run_feedback_functions_nowait(self):
+        """
+        Test run_feedback_functions in non-blocking mode. This mode returns
+        futures instead of results.
+        """
+
+        app = self._create_custom()
+
+        feedbacks = self._create_feedback_functions()
+
+        tru = Tru()
+
+        tru_app = TruCustomApp(app)
+
+        with tru_app as recording:
+            response = app.respond_to_query("hello")
+
+        record = recording.get()
+
+        start_time = datetime.now()
+
+        feedback_results = list(tru.run_feedback_functions(
+            record=record, feedback_functions=feedbacks, app=tru_app, wait=False
+        ))
+
+        end_time = datetime.now()
+
+        # Should return quickly.
+        self.assertLess(
+            (end_time - start_time).total_seconds(), 1.0,  # TODO: get it to return faster
+            "Non-blocking run_feedback_functions did not return fast enough."
+        )
+
+        # Check we get the right number of results.
+        self.assertEqual(len(feedback_results), len(feedbacks))
+
+        # Check that the results are for the feedbacks we submitted.
+        self.assertEqual(set(tup[0] for tup in feedback_results), set(feedbacks))
+
+        # Check that the structure of returned tuples is correct.
+        for feedback, future_result in feedback_results:
+            self.assertIsInstance(feedback, Feedback)
+            self.assertIsInstance(future_result, FutureClass)
+
+            wait([future_result])
+
+            result = future_result.result()
+            self.assertIsInstance(result.result, float)
+
+        # Check that results were added to db.
+        df, feedback_names = tru.get_records_and_feedback(
+            app_ids = [tru_app.app_id]
+        )
+
+        # Check we got the right feedback names.
+        self.assertEqual(
+            set(feedback.name for feedback in feedbacks),
+            set(feedback_names)
+        )
 
     def test_reset_database(self):
         # TODO
         pass
-
-    def test_run_feedback_functions(self):
-
-        pass
-
 
     def test_add_record(self):
         # TODO
@@ -234,6 +393,7 @@ class TestTru(TestCase):
         pass
 
     def test_get_records_and_feedback(self):
+        # Also tested in test_run_feedback_functions_wait.
         # TODO
         pass
 

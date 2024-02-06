@@ -174,7 +174,7 @@ class Record(SerialModel, Hashable):
     """
 
     model_config: ClassVar[dict] = dict(
-        # for `Future[FeedbackResult]` = `TFeedbackResultFuture`
+        # for `Future[FeedbackResult]`
         arbitrary_types_allowed=True
     )
 
@@ -202,7 +202,7 @@ class Record(SerialModel, Hashable):
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
 
-    feedback_results: Optional[List[Tuple[FeedbackDefinition, TFeedbackResultFuture]]] = \
+    feedback_results: Optional[List[Tuple[FeedbackDefinition, Future[FeedbackResult]]]] = \
         pydantic.Field(None, exclude=True)
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
@@ -521,12 +521,6 @@ class FeedbackResult(SerialModel):
             )
 
         self.feedback_result_id = feedback_result_id
-
-
-if TYPE_CHECKING:
-    TFeedbackResultFuture = Future[FeedbackResult]
-else:
-    TFeedbackResultFuture = Future
 
 
 class FeedbackDefinition(WithClassInfo, SerialModel, Hashable):
