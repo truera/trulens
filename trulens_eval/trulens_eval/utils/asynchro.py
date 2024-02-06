@@ -64,6 +64,8 @@ MaybeAwaitable = Union[T, Awaitable[T]]
 # is_really_coroutinefunction .
 CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]
 
+CallableAwaitable = Callable[[A], Awaitable[B]]
+
 # Thunk or coroutine thunk. May be checked with is_really_coroutinefunction .
 ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
 

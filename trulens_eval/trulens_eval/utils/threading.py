@@ -148,7 +148,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
-        fut: 'Future[T]' = self.thread_pool.submit(func, *args, **kwargs)
+        fut: Future[T] = self.thread_pool.submit(func, *args, **kwargs)
 
         try:
             res: T = fut.result(timeout=timeout)
@@ -174,7 +174,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         *args,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> 'Future[T]':
+    ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
@@ -192,7 +192,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         *args,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> 'Future[T]':
+    ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 

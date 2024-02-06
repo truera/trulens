@@ -238,6 +238,8 @@ class Tru(SingletonPerName):
 
     update_record = add_record
 
+    # TODO: this method is used by app.py, which represents poor code
+    # organization.
     def _submit_feedback_functions(
         self,
         record: Record,
@@ -279,7 +281,7 @@ class Tru(SingletonPerName):
         for ffunc in feedback_functions:
             fut: Future[FeedbackResult] = \
                 tp.submit(ffunc.run, app=app, record=record)
-
+            
             if on_done is not None:
                 fut.add_done_callback(on_done)
 

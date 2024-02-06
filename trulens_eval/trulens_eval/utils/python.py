@@ -258,7 +258,6 @@ def _future_target_wrapper(stack, context, func, *args, **kwargs):
     pre_start_stack = stack
 
     for var, value in context.items():
-        logger.debug(f"Copying context var {var} to thread.")
         var.set(value)
 
     return func(*args, **kwargs)
