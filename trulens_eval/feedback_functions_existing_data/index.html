@@ -2464,18 +2464,14 @@ matching their signatures like so:</p>
 <p>Running the feedback implementation in isolation will not log the evaluation results in TruLens.</p>
 </div>
 <p>In the case that you have already logged a run of your application with TruLens and have the record available, the process for running an (additional) evaluation on that record is by using <code>tru.run_feedback_functions</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span>
-    <span class="n">chain</span><span class="p">,</span>
-    <span class="n">app_id</span><span class="o">=</span><span class="s1">&#39;Chain1_ChatApplication&#39;</span>
-<span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">tru_rag</span> <span class="o">=</span> <span class="n">TruCustomApp</span><span class="p">(</span><span class="n">rag</span><span class="p">,</span> <span class="n">app_id</span> <span class="o">=</span> <span class="s1">&#39;RAG v1&#39;</span><span class="p">)</span>
 
-<span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">record</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="n">What</span> <span class="ow">is</span> <span class="n">langchain</span><span class="err">?</span><span class="s2">&quot;)</span>
-
-<span class="n">tru</span><span class="o">.</span><span class="n">run_feedbacks</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">,</span> <span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
+<span class="n">result</span><span class="p">,</span> <span class="n">record</span> <span class="o">=</span> <span class="n">tru_rag</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="n">rag</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="s2">&quot;How many professors are at UW in Seattle?&quot;</span><span class="p">)</span>
+<span class="n">feedback_results</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">run_feedback_functions</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">,</span> <span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
+<span class="n">tru</span><span class="o">.</span><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="truvirtual">TruVirtual<a class="headerlink" href="#truvirtual" title="Permanent link">&para;</a></h3>
-<p>If your application was run (and logged) outside of TruLens, <code>TruVirtual</code> can be used to ingest and evluate the logs.</p>
+<p>If your application was run (and logged) outside of TruLens, <code>TruVirtual</code> can be used to ingest and evaluate the logs.</p>
 <p>To incorporate your data into TruLens, you have two options. You can either create a <code>Record</code> directly, or you can use the <code>VirtualRecord</code> class, which is designed to help you build records so they can be ingested to TruLens.</p>
 <p>The parameters you'll use with <code>VirtualRecord</code> are the same as those for <code>Record</code>, with one key difference: calls are specified using selectors.</p>
 <p>In the example below, we add two records. Each record includes the inputs and outputs for a context retrieval component. Remember, you only need to provide the information that you want to track or evaluate. The selectors are references to methods that can be selected for feedback, as we'll demonstrate below.</p>
