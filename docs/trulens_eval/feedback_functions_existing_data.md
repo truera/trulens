@@ -23,7 +23,7 @@ tru.add_feedbacks(feedback_results)
 
 ### TruVirtual
 
-If your application was run (and logged) outside of TruLens, `TruVirtual` can be used to ingest and evluate the logs.
+If your application was run (and logged) outside of TruLens, `TruVirtual` can be used to ingest and evaluate the logs.
 
 To incorporate your data into TruLens, you have two options. You can either create a `Record` directly, or you can use the `VirtualRecord` class, which is designed to help you build records so they can be ingested to TruLens.
 
