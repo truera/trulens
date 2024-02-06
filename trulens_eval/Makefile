@@ -36,7 +36,7 @@ test-database-future:
 		tests.integration.test_database.TestDbV2Migration.test_future_db
 
 test-tru:
-	$(CONDA); python -m unittest tests.unit.test_tru -k test_run_feedback
+	$(CONDA); python -m unittest tests.unit.test_tru
 
 test-lens:
 	$(CONDA); python -m unittest tests.unit.test_lens
