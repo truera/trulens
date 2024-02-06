@@ -1,5 +1,5 @@
 from collections import defaultdict
-from concurrent.futures import as_completed
+from concurrent.futures import as_completed, wait
 from concurrent.futures import TimeoutError
 from datetime import datetime
 from datetime import timedelta
@@ -278,7 +278,7 @@ class Tru(SingletonPerName):
 
         for ffunc in feedback_functions:
             fut: Future[FeedbackResult] = \
-                tp.submit(ffunc.run_and_log, app=app, record=record, tru=self)
+                tp.submit(ffunc.run, app=app, record=record)
 
             if on_done is not None:
                 fut.add_done_callback(on_done)
@@ -294,8 +294,8 @@ class Tru(SingletonPerName):
         app: Optional[AppDefinition] = None,
         wait: bool = True
     ) -> Union[
-            Iterable[Tuple[Feedback, FeedbackResult]],
-            Iterable[Tuple[Feedback, Future[FeedbackResult]]]
+            Iterable[FeedbackResult],
+            Iterable[Future[FeedbackResult]]
         ]:
         """
         Run a collection of feedback functions and report their result.
@@ -314,9 +314,8 @@ class Tru(SingletonPerName):
             - wait: (bool, optional): If set (default), will wait for results
               before returning.
 
-        Yields tuples of `Feedback` and their `FeedbackResult`, one tuple for
-        each element of `feedback_functions` potentially in random order. If
-        `wait` is set to `False`, yields tuples of `Feedback` and
+        Yields `FeedbackResult`, one for each element of `feedback_functions`
+        potentially in random order. If `wait` is set to `False`, yields
         `Future[FeedbackResult]` instead.
         """
 
@@ -336,12 +335,21 @@ class Tru(SingletonPerName):
         if wait:
             # In blocking mode, wait for futures to complete.
             for fut_result in as_completed(future_feedback_map.keys()):
-                yield (future_feedback_map[fut_result], fut_result.result())
+                # TODO: Do we want a version that gives the feedback for which
+                # the result is being produced too? This is more useful in the
+                # Future case as we cannot check associate a Future result to
+                # its feedback before result is ready.
+
+                # yield (future_feedback_map[fut_result], fut_result.result())
+                yield fut_result.result()
 
         else:
             # In non-blocking, return the futures instead.
             for fut_result, feedback in future_feedback_map.items():
-                yield (feedback, fut_result)
+                # TODO: see prior.
+
+                # yield (feedback, fut_result)
+                yield fut_result
 
     def add_app(self, app: AppDefinition) -> None:
         """
@@ -352,31 +360,51 @@ class Tru(SingletonPerName):
 
     def add_feedback(
         self,
-        feedback_result: Optional[FeedbackResult] = None,
+        feedback_result_or_future: Optional[Union[FeedbackResult, Future[FeedbackResult]]] = None,
         **kwargs
     ) -> None:
         """
-        Add a single feedback result to the database.
+        Add a single feedback result to the database. Accepts a FeedbackResult,
+        Future[FeedbackResult], or kwargs to create a FeedbackResult from. If a
+        Future is given, it will wait for the result before adding it to the
+        database. If kwargs are given and a FeedbackResult is also given, the
+        kwargs will be used to update the FeedbackResult.
         """
 
-        if feedback_result is None:
+        if feedback_result_or_future is None:
             if 'result' in kwargs and 'status' not in kwargs:
                 # If result already present, set status to done.
                 kwargs['status'] = FeedbackResultStatus.DONE
 
-            feedback_result = FeedbackResult(**kwargs)
+            feedback_or_future_result = FeedbackResult(**kwargs)
+
         else:
-            feedback_result.update(**kwargs)
+            if isinstance(feedback_result_or_future, Future):
+                wait([feedback_result_or_future])
+                feedback_result_or_future = feedback_result_or_future.result()
+            elif isinstance(feedback_result_or_future, FeedbackResult):
+                pass
+            else:
+                raise ValueError(
+                    f"Unknown type {type(feedback_result_or_future)} in feedback_results."
+                )
 
-        self.db.insert_feedback(feedback_result=feedback_result)
+            feedback_result_or_future.update(**kwargs)
 
-    def add_feedbacks(self, feedback_results: Iterable[FeedbackResult]) -> None:
+        self.db.insert_feedback(feedback_result=feedback_result_or_future)
+
+    def add_feedbacks(
+        self,
+        feedback_results: Iterable[Union[FeedbackResult, Future[FeedbackResult]]]
+    ) -> None:
         """
-        Add multiple feedback results to the database.
+        Add multiple feedback results to the database. Accepts a list of either
+        `FeedbackResult` or `Future[FeedbackResult]`. If a `Future` is given, it
+        will wait for the result before adding it to the database.
         """
 
-        for feedback_result in feedback_results:
-            self.add_feedback(feedback_result=feedback_result)
+        for feedback_result_or_future in feedback_results:
+            self.add_feedback(feedback_result_or_future=feedback_result_or_future)
 
     def get_app(self, app_id: Optional[str] = None) -> JSON:
         """

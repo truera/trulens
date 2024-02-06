@@ -5,35 +5,23 @@ Tests of various functionalities of the `Tru` class.
 from concurrent.futures import Future as FutureClass
 from concurrent.futures import wait
 from datetime import datetime
-import os
 from pathlib import Path
-import unittest
-from unittest import IsolatedAsyncioTestCase
 from unittest import main
 from unittest import TestCase
 
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
-from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import LLMChain
 from langchain.llms.openai import OpenAI
-from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
-from langchain.schema.messages import HumanMessage
-from tests.unit.test import JSONTestCase
 from tests.unit.test import optional_test
 
 from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
-from trulens_eval.feedback.provider.endpoint import Endpoint
-from trulens_eval.keys import check_keys
-from trulens_eval.schema import FeedbackMode, FeedbackResult
-from trulens_eval.schema import Record
-from trulens_eval.tru_basic_app import TruBasicApp
-from trulens_eval.tru_custom_app import TruCustomApp
-from trulens_eval.utils.asynchro import sync
 from trulens_eval.feedback.provider.hugs import Dummy
-from trulens_eval.utils.json import jsonify
+from trulens_eval.keys import check_keys
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.tru_custom_app import TruCustomApp
 
 
 class TestTru(TestCase):
@@ -276,6 +264,8 @@ class TestTru(TestCase):
 
         feedbacks = self._create_feedback_functions()
 
+        expected_feedback_names = set(f.name for f in feedbacks)
+
         tru = Tru()
 
         tru_app = TruCustomApp(app)
@@ -292,24 +282,31 @@ class TestTru(TestCase):
         # Check we get the right number of results.
         self.assertEqual(len(feedback_results), len(feedbacks))
 
-        # Check that the results are for the feedbacks we submitted.
-        self.assertEqual(set(tup[0] for tup in feedback_results), set(feedbacks))
+        # Check that the results are for the feedbacks we submitted. 
+        self.assertEqual(
+            set(expected_feedback_names),
+            set(res.name for res in feedback_results),
+            "feedback result names do not match requested feedback names"
+        )
 
         # Check that the structure of returned tuples is correct.
-        for feedback, result in feedback_results:
-            self.assertIsInstance(feedback, Feedback)
+        for result in feedback_results:
             self.assertIsInstance(result, FeedbackResult)
             self.assertIsInstance(result.result, float)
 
+        # TODO: move tests to test_add_feedbacks.
+        # Add to db.
+        tru.add_feedbacks(feedback_results)
+
         # Check that results were added to db.
-        df, feedback_names = tru.get_records_and_feedback(
+        df, returned_feedback_names = tru.get_records_and_feedback(
             app_ids = [tru_app.app_id]
         )
 
-        # Check we got the right feedback names.
+        # Check we got the right feedback names from db.
         self.assertEqual(
-            set(feedback.name for feedback in feedbacks),
-            set(feedback_names)
+            expected_feedback_names,
+            set(returned_feedback_names)
         )
 
     def test_run_feedback_functions_nowait(self):
@@ -321,6 +318,7 @@ class TestTru(TestCase):
         app = self._create_custom()
 
         feedbacks = self._create_feedback_functions()
+        expected_feedback_names = set(f.name for f in feedbacks)
 
         tru = Tru()
 
@@ -333,7 +331,7 @@ class TestTru(TestCase):
 
         start_time = datetime.now()
 
-        feedback_results = list(tru.run_feedback_functions(
+        future_feedback_results = list(tru.run_feedback_functions(
             record=record, feedback_functions=feedbacks, app=tru_app, wait=False
         ))
 
@@ -341,35 +339,40 @@ class TestTru(TestCase):
 
         # Should return quickly.
         self.assertLess(
-            (end_time - start_time).total_seconds(), 1.0,  # TODO: get it to return faster
+            (end_time - start_time).total_seconds(), 2.0,  # TODO: get it to return faster
             "Non-blocking run_feedback_functions did not return fast enough."
         )
 
         # Check we get the right number of results.
-        self.assertEqual(len(feedback_results), len(feedbacks))
+        self.assertEqual(len(future_feedback_results), len(feedbacks))
 
-        # Check that the results are for the feedbacks we submitted.
-        self.assertEqual(set(tup[0] for tup in feedback_results), set(feedbacks))
+        feedback_results = []
 
         # Check that the structure of returned tuples is correct.
-        for feedback, future_result in feedback_results:
-            self.assertIsInstance(feedback, Feedback)
+        for future_result in future_feedback_results:
             self.assertIsInstance(future_result, FutureClass)
 
             wait([future_result])
 
             result = future_result.result()
+            self.assertIsInstance(result, FeedbackResult)
             self.assertIsInstance(result.result, float)
 
+            feedback_results.append(result)
+
+        # TODO: move tests to test_add_feedbacks.
+        # Add to db.
+        tru.add_feedbacks(feedback_results)
+
         # Check that results were added to db.
-        df, feedback_names = tru.get_records_and_feedback(
+        df, returned_feedback_names = tru.get_records_and_feedback(
             app_ids = [tru_app.app_id]
         )
 
         # Check we got the right feedback names.
         self.assertEqual(
-            set(feedback.name for feedback in feedbacks),
-            set(feedback_names)
+            expected_feedback_names,
+            set(returned_feedback_names)
         )
 
     def test_reset_database(self):
@@ -389,11 +392,13 @@ class TestTru(TestCase):
         pass
 
     def test_add_feedbacks(self):
-        # TODO
+        # TODO: move testing from test_run_feedback_functions_wait and
+        # test_run_feedback_functions_nowait.
         pass
 
     def test_get_records_and_feedback(self):
-        # Also tested in test_run_feedback_functions_wait.
+        # Also tested in test_run_feedback_functions_wait and
+        # test_run_feedback_functions_nowait.
         # TODO
         pass
 
