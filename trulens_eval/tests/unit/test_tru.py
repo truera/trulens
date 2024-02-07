@@ -6,10 +6,8 @@ from concurrent.futures import Future as FutureClass
 from concurrent.futures import wait
 from datetime import datetime
 from pathlib import Path
-from unittest import main
 from unittest import TestCase
 
-from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
 from tests.unit.test import optional_test
 
 from trulens_eval import Feedback
@@ -91,6 +89,8 @@ class TestTru(TestCase):
                         # cannot change the arguments in next test.
 
     def _create_custom(self):
+        from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
+
         return CustomApp()
     
     def _create_basic(self):
