@@ -10,9 +10,6 @@ from unittest import main
 from unittest import TestCase
 
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
-from langchain.chains import LLMChain
-from langchain.llms.openai import OpenAI
-from langchain.prompts import PromptTemplate
 from tests.unit.test import optional_test
 
 from trulens_eval import Feedback
@@ -103,6 +100,13 @@ class TestTru(TestCase):
         return custom_application
 
     def _create_chain(self):
+        # Note that while langchain is required, openai is not so tests using
+        # this app are optional.
+
+        from langchain.chains import LLMChain
+        from langchain.llms.openai import OpenAI
+        from langchain.prompts import PromptTemplate
+
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
@@ -164,29 +168,6 @@ class TestTru(TestCase):
         """
         tru = Tru()
 
-        with self.subTest(type="TruChain"):
-            app = self._create_chain()
-
-            with self.subTest(argname=None):
-                tru.Chain(app)
-
-            with self.subTest(argname="chain"):
-                tru.Chain(chain=app)
-
-            # Not specifying chain should be an error.
-            with self.assertRaises(Exception):
-                tru.Chain()
-            with self.assertRaises(Exception):
-                tru.Chain(None)
-
-            # Specifying the chain using any of these other argument names
-            # should be an error.
-            wrong_args = ["app", "engine", "text_to_text"]
-            for arg in wrong_args:
-                with self.subTest(argname=arg):
-                    with self.assertRaises(Exception):
-                        tru.Chain(**{arg: app})
-
         with self.subTest(type="TruBasicApp"):
             app = self._create_basic()
 
@@ -240,6 +221,30 @@ class TestTru(TestCase):
         Test Tru class utility aliases that require optional packages.
         """
         tru = Tru()
+
+        with self.subTest(type="TruChain"):
+            app = self._create_chain()
+
+            with self.subTest(argname=None):
+                tru.Chain(app)
+
+            with self.subTest(argname="chain"):
+                tru.Chain(chain=app)
+
+            # Not specifying chain should be an error.
+            with self.assertRaises(Exception):
+                tru.Chain()
+            with self.assertRaises(Exception):
+                tru.Chain(None)
+
+            # Specifying the chain using any of these other argument names
+            # should be an error.
+            wrong_args = ["app", "engine", "text_to_text"]
+            for arg in wrong_args:
+                with self.subTest(argname=arg):
+                    with self.assertRaises(Exception):
+                        tru.Chain(**{arg: app})
+
 
         with self.subTest(type="TruLlama"):
             app = self._create_llama()

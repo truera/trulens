@@ -221,24 +221,10 @@ def stack_with_tasks() -> Sequence['frame']:
 
     ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_task_stack
 
-    # Need a more verbose debug mode for these:
-    #logger.debug("Getting cross-Task stacks. Current stack:")
-    #for f in ret:
-    #    logger.debug(f"\t{f}")
-
     try:
         task_stack = get_task_stack(asyncio.current_task())
-
-        #logger.debug(f"Merging in stack from {asyncio.current_task()}:")
-        #for s in task_stack:
-        #    logger.debug(f"\t{s}")
-
-        temp = merge_stacks(ret, task_stack)
-        #logger.debug(f"Complete stack:")
-        #for f in temp:
-        #    logger.debug(f"\t{f}")
-
-        return temp
+        
+        return merge_stacks(ret, task_stack)
 
     except:
         return ret
@@ -284,14 +270,6 @@ def get_all_local_in_call_stack(
     with async tasks. In those cases, the `skip` argument is more reliable.
     """
 
-    # TODO: Need a more verbose mode for these:
-    # logger.debug(f"Looking for local '{key}' in the stack.")
-
-    if skip is not None:
-        pass
-        # TODO: verbose debug
-        # logger.debug(f"Will be skipping {skip}.")
-
     frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
     # NOTE: skipping offset frames is done below since the full stack may need
     # to be reconstructed there.
@@ -303,9 +281,6 @@ def get_all_local_in_call_stack(
 
     while not q.empty():
         f = q.get()
-
-        # TODO: verbose debug
-        # logger.debug(f"{f.f_code}")
 
         if id(f.f_code) == id(_future_target_wrapper.__code__):
             logger.debug(
