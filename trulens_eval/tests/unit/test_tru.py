@@ -138,10 +138,19 @@ class TestTru(TestCase):
         # Starter example of
         # https://docs.llamaindex.ai/en/latest/getting_started/starter_example.html
         # except with trulens_docs as data.
-        from llama_index import SimpleDirectoryReader
-        from llama_index import VectorStoreIndex
+        # from llama_index import SimpleDirectoryReader
+        # documents = SimpleDirectoryReader("../docs/trulens_eval").load_data()
 
-        documents = SimpleDirectoryReader("../docs/trulens_eval").load_data()
+        # NOTE: the one based on trulens docs might be too slow to create so
+        # using the other web reader example for now.
+
+        from llama_index import VectorStoreIndex
+        from llama_index.readers.web import SimpleWebPageReader
+
+        documents = SimpleWebPageReader(html_to_text=True).load_data(
+            ["http://paulgraham.com/worked.html"]
+        )
+
         index = VectorStoreIndex.from_documents(documents)
         query_engine = index.as_query_engine()
 
