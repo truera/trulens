@@ -2,6 +2,7 @@ import logging
 from typing import Dict, Optional, Sequence
 
 import pydantic
+from pydantic import BaseModel, Extra
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIClient
@@ -20,23 +21,18 @@ OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(oai)
 logger = logging.getLogger(__name__)
 
 
-class OpenAI(LLMProvider):
+class OpenAI(LLMProvider, BaseModel):
     """
     Out of the box feedback functions calling OpenAI APIs.
     """
 
-    # model_engine: str # LLMProvider
-
-    # Endpoint cannot presently be serialized but is constructed in __init__
-    # below so it is ok.
-    endpoint: Endpoint = pydantic.Field(exclude=True)
+    model_engine: str = "gpt-3.5-turbo"
+    endpoint: Endpoint = pydantic.Field(default_factory=OpenAIEndpoint, exclude=True)
+    model_params: dict = {}
 
     def __init__(
-        self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
+        self, *args, model_engine: Optional[str] = None, endpoint=None, model_params=None, **kwargs
     ):
-        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
-        # constructor if we don't include it explicitly, even though we set it
-        # down below. Adding it as None here as a temporary hack.
         """
         Create an OpenAI Provider with out of the box feedback functions.
 
@@ -44,21 +40,17 @@ class OpenAI(LLMProvider):
         OpenAI openai_provider = OpenAI() ```
 
         Args:
-            model_engine (str): The OpenAI completion model. Defaults to
-              `gpt-3.5-turbo`
+            model_engine (str, optional): The model engine to use. Defaults to "gpt-3.5-turbo" if not provided.
             endpoint (Endpoint): Internal Usage for DB serialization. This
               argument is intentionally ignored.
         """
-        # TODO: why was self_kwargs required here independently of kwargs?
-        self_kwargs = dict()
-        self_kwargs.update(**kwargs)
-        self_kwargs['model_engine'] = model_engine
-
-        self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
-
-        super().__init__(
-            **self_kwargs
-        )  # need to include pydantic.BaseModel.__init__
+        super().__init__(*args, **kwargs)
+        self.model_engine = model_engine if model_engine is not None else "gpt-3.5-turbo"
+        self.model_params = model_params or {}
+        if endpoint is None:
+            self.endpoint = OpenAIEndpoint(*args, **kwargs)
+        else:
+            self.endpoint = endpoint
 
     # LLMProvider requirement
     def _create_chat_completion(
@@ -67,30 +59,26 @@ class OpenAI(LLMProvider):
         messages: Optional[Sequence[Dict]] = None,
         **kwargs
     ) -> str:
-        if 'model' not in kwargs:
-            kwargs['model'] = self.model_engine
+        kwargs = {**self.model_params, **kwargs}
+        # Set default values for parameters if not provided in kwargs
+        kwargs.setdefault('model', self.model_engine)
+        kwargs.setdefault('temperature', 0.0)
+        kwargs.setdefault('seed', 123)
+        print(kwargs)
 
-        if 'temperature' not in kwargs:
-            kwargs['temperature'] = 0.0
-
-        if 'seed' not in kwargs:
-            kwargs['seed'] = 123
-
+        # Construct the messages payload based on the provided prompt or messages
         if prompt is not None:
-            completion = self.endpoint.client.chat.completions.create(
-                messages=[{
-                    "role": "system",
-                    "content": prompt
-                }], **kwargs
-            )
-        elif messages is not None:
+            messages = [{"role": "system", "content": prompt}]
+        
+        # If messages are provided, use them to create a chat completion
+        if messages is not None:
             completion = self.endpoint.client.chat.completions.create(
                 messages=messages, **kwargs
             )
-
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
+        # Return the content of the first message from the completion choices
         return completion.choices[0].message.content
 
     def _moderation(self, text: str):
