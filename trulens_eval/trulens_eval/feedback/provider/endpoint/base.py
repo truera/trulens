@@ -283,8 +283,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             func = getattr(mod, method_name)
             w = self.wrap_function(func)
 
-            # setattr(w, INSTRUMENT, func) # mark the new method indicating it is our wrapper
-
             setattr(mod, method_name, w)
 
             Endpoint.instrumented_methods[mod].append((func, w, type(self)))
@@ -296,8 +294,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             )
             func = getattr(cls, method_name)
             w = self.wrap_function(func)
-
-            # setattr(w, INSTRUMENT, func) # mark the new method indicating it is our wrapper
 
             setattr(cls, method_name, w)
 
@@ -417,7 +413,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
                 except Exception as e:
                     logger.debug(
-                        "Could not initiallize endpoint {cls.__name__}. "
+                        f"Could not initiallize endpoint {cls.__name__}. "
                         "Possibly missing key(s). "
                         f"trulens_eval will not track costs/usage of this endpoint. {e}"
                     )
@@ -492,7 +488,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             # TODO: check if deep copy is needed given we are storing lists in
             # the values and don't want to affect the existing ones here.
-            endpoints = endpoints.copy()
+            endpoints = dict(endpoints)
 
         # Collect any new endpoints requested of us.
         with_endpoints = with_endpoints or []
@@ -540,7 +536,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def __find_tracker(f):
-        return id(f) == Endpoint._atrack_costs.__code__
+        return id(f) == id(Endpoint._atrack_costs.__code__)
 
     def handle_wrapped_call(
         self, bindings: inspect.BoundArguments, response: Any,

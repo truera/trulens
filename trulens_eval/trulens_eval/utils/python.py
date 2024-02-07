@@ -283,10 +283,6 @@ def get_all_local_in_call_stack(
         f = q.get()
 
         if id(f.f_code) == id(_future_target_wrapper.__code__):
-            logger.debug(
-                "Found thread starter frame. "
-                "Will walk over frames prior to thread start."
-            )
             locs = f.f_locals
             assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
             for fi in locs['pre_start_stack']:
@@ -343,6 +339,7 @@ def get_first_local_in_call_stack(
             )
         )
     except StopIteration:
+        logger.debug("no frames found")
         return None
 
 
