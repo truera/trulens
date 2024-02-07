@@ -14,20 +14,16 @@ feedback_result = provider.relevance("<some prompt>", "<some response>")
 In the case that you have already logged a run of your application with TruLens and have the record available, the process for running an (additional) evaluation on that record is by using `tru.run_feedback_functions`:
 
 ```python
-tru_recorder = TruChain(
-    chain,
-    app_id='Chain1_ChatApplication'
-)
+tru_rag = TruCustomApp(rag, app_id = 'RAG v1')
 
-with tru_recorder as recording:
-    record = chain(""What is langchain?")
-
-tru.run_feedbacks(record, feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
+result, record = tru_rag.with_record(rag.query, "How many professors are at UW in Seattle?")
+feedback_results = tru.run_feedback_functions(record, feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
+tru.add_feedbacks(feedback_results)
 ```
 
 ### TruVirtual
 
-If your application was run (and logged) outside of TruLens, `TruVirtual` can be used to ingest and evluate the logs.
+If your application was run (and logged) outside of TruLens, `TruVirtual` can be used to ingest and evaluate the logs.
 
 To incorporate your data into TruLens, you have two options. You can either create a `Record` directly, or you can use the `VirtualRecord` class, which is designed to help you build records so they can be ingested to TruLens.
 
