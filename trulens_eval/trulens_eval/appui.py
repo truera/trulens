@@ -12,7 +12,8 @@ from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
 
 with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
-    import ipywidgets
+    import ipywidgets # here just for the assertion below
+    
     from ipywidgets import widgets
     import traitlets
     from traitlets import HasTraits
