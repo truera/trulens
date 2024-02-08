@@ -103,17 +103,10 @@ class Bedrock(LLMProvider):
                 }
             )
         if self.model_id.startswith("meta"):
-            body = json.dumps(
-                {
-                    "prompt": prompt,
-                    "temperature": 0,
-                    "top_p": 1,
-                    "max_gen_len": 2048
-                }
-            )
+            raise NotImplementedError("This model is not yet implemented as a feedback provider.")
+            
         if self.model_id.startswith("ai21"):
             body = json.dumps(
-                json.dumps(
                 {
                     "prompt": prompt,
                     "temperature": 0,
@@ -121,14 +114,17 @@ class Bedrock(LLMProvider):
                     "maxTokens": 8191
                 }
             )
-            )
-
 
         # TODO: make textGenerationConfig available for user
 
         modelId = self.model_id
 
-        response = self.endpoint.client.invoke_model(body=body, modelId=modelId)
+        accept = "application/json"
+        content_type = "application/json"
+
+        response = self.endpoint.client.invoke_model(body=body, modelId=modelId, accept=accept, contentType=content_type)
+
+        print(response)
         
         if self.model_id.startswith("amazon"):
             response_body = json.loads(response.get('body').read()
@@ -143,13 +139,13 @@ class Bedrock(LLMProvider):
                                     ).get('generations')[0]["text"]
 
         if self.model_id.startswith("meta"):
-            response_body = json.loads(response.get('body').read()
-                                    ).get('generation')
+            # Extract the response body correctly as a string from StreamingBody object
+            response_body = json.loads(response['body'].read().decode('utf-8'))["generation"]
 
         if self.model_id.startswith("ai21"):
             response_body = json.loads(response.get('body').read()
                                     ).get('completions')[0].get('data').get('text')
-        
+
         return response_body
 
     # overwrite base to use prompt instead of messages
