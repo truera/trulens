@@ -178,6 +178,11 @@ class TestTruChain(JSONTestCase):
         llm = ChatOpenAI(temperature=0.0, streaming=False, cache=False)
         chain = LLMChain(llm=llm, prompt=prompt)
 
+        async def test1():
+            # Does not create a task:
+            result = await chain.llm._agenerate(messages=[msg])
+            return result
+
         res1, costs1 = sync(Endpoint.atrack_all_costs, test1)
 
         async def test2():
