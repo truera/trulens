@@ -9,8 +9,9 @@ evaluate     >= 0.4.0  # same
 nltk         >= 3.8.1  # groundedness.py
 
 # Apps: Langchain (optional parts)
-langchainhub    >= 0.1.14  # example notebooks
-langchain_openai >= 0.0.5  # unit tests, sample apps
+langchainhub        >= 0.1.14  # example notebooks
+langchain_community >= 0.0.17  # example notebooks, now required for pinecone, others
+langchain_openai    >= 0.0.5  # unit tests, sample apps
 
 # Apps: LlamaIndex
 llama-index >= v0.9.26
