@@ -111,10 +111,11 @@ class Bedrock(LLMProvider):
         Returns:
             The score and reason metadata if available.
         """
-        response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=
-                (system_prompt + user_prompt if user_prompt else system_prompt)
+
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            prompt=(
+                system_prompt + user_prompt if user_prompt else system_prompt
             )
         )
 
@@ -138,10 +139,10 @@ class Bedrock(LLMProvider):
         Returns:
             The score and reason metadata if available.
         """
-        response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=
-                (system_prompt + user_prompt if user_prompt else system_prompt)
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            prompt=(
+                system_prompt + user_prompt if user_prompt else system_prompt
             )
         )
         if "Supporting Evidence" in response:

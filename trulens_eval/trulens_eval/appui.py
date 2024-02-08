@@ -12,12 +12,18 @@ from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
 
 with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
+    # Here just for the assertion below. Including in a seperate context because
+    # auto import organizer might move it below another import and if that other
+    # import fails, this name will not be defined to check the assertion below.
+    import ipywidgets
+
+with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
     from ipywidgets import widgets
     import traitlets
     from traitlets import HasTraits
     from traitlets import Unicode
 
-OptionalImports(messages=REQUIREMENT_NOTEBOOK).assert_installed(widgets)
+OptionalImports(messages=REQUIREMENT_NOTEBOOK).assert_installed(ipywidgets)
 
 pp = PrettyPrinter()
 
