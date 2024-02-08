@@ -102,8 +102,6 @@ class Bedrock(LLMProvider):
                     "max_tokens": 4096
                 }
             )
-        if self.model_id.startswith("meta"):
-            raise NotImplementedError("This model is not yet implemented as a feedback provider.")
 
         if self.model_id.startswith("ai21"):
             body = json.dumps(
@@ -114,6 +112,9 @@ class Bedrock(LLMProvider):
                     "maxTokens": 8191
                 }
             )
+
+        else:
+            raise NotImplementedError("This model is not yet implemented as a feedback provider.")
 
         # TODO: make textGenerationConfig available for user
 
