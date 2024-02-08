@@ -523,9 +523,24 @@ class Tru(SingletonPerName):
 
             total = 0
 
-            # Show the overall counts from the database, not just what has been looked at so far.
+            # Getting total counts from the database to start off the tqdm
+            # progress bar initial values so that they offer accurate
+            # predictions initially after restarting the process.
+            queue_stats = self.db.get_feedback_count_by_status()
+            queue_done = queue_stats.get(FeedbackResultStatus.DONE) or 0
+            queue_total = sum(queue_stats.values())
+
+            # Show the overall counts from the database, not just what has been
+            # looked at so far.
             tqdm_status = tqdm(
-                desc="Feedback Status", initial=0, unit="feedbacks"
+                desc="Feedback Status",
+                initial=queue_done,
+                unit="feedbacks",
+                total=queue_total,
+                postfix={
+                    status.name: count
+                    for status, count in queue_stats.items()
+                }
             )
 
             # Show the status of the results so far.
@@ -599,8 +614,8 @@ class Tru(SingletonPerName):
                     {name: count for name, count in runs_stats.items()}
                 )
 
-                queue_stats = self.db.get_feedback_count_by_status()
 
+                queue_stats = self.db.get_feedback_count_by_status()
                 queue_done = queue_stats.get(FeedbackResultStatus.DONE) or 0
                 queue_total = sum(queue_stats.values())
 
