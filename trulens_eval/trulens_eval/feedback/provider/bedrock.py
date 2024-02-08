@@ -104,7 +104,7 @@ class Bedrock(LLMProvider):
             )
         if self.model_id.startswith("meta"):
             raise NotImplementedError("This model is not yet implemented as a feedback provider.")
-            
+
         if self.model_id.startswith("ai21"):
             body = json.dumps(
                 {
@@ -137,10 +137,6 @@ class Bedrock(LLMProvider):
         if self.model_id.startswith("cohere"):
             response_body = json.loads(response.get('body').read()
                                     ).get('generations')[0]["text"]
-
-        if self.model_id.startswith("meta"):
-            # Extract the response body correctly as a string from StreamingBody object
-            response_body = json.loads(response['body'].read().decode('utf-8'))["generation"]
 
         if self.model_id.startswith("ai21"):
             response_body = json.loads(response.get('body').read()
