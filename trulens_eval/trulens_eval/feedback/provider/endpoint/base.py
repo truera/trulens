@@ -21,7 +21,6 @@ from trulens_eval.schema import Cost
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.asynchro import desync
 from trulens_eval.utils.asynchro import sync
-from trulens_eval.utils.asynchro import ThunkMaybeAwaitable
 from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
