@@ -20,6 +20,7 @@ from trulens_eval.tru_custom_app import TruCustomApp
 
 
 class TestTru(TestCase):
+
     @staticmethod
     def setUpClass():
         pass
@@ -81,7 +82,9 @@ class TestTru(TestCase):
                             if url is not None:
                                 self.assertTrue(Path("default_url.db").exists())
                             elif file is not None:
-                                self.assertTrue(Path("default_file.db").exists())
+                                self.assertTrue(
+                                    Path("default_file.db").exists()
+                                )
                             else:
                                 self.assertTrue(Path("default.sqlite").exists())
 
@@ -89,14 +92,16 @@ class TestTru(TestCase):
                         # cannot change the arguments in next test.
 
     def _create_custom(self):
-        from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
+        from examples.expositional.end2end_apps.custom_app.custom_app import \
+            CustomApp
 
         return CustomApp()
-    
+
     def _create_basic(self):
+
         def custom_application(prompt: str) -> str:
             return "a response"
-        
+
         return custom_application
 
     def _create_chain(self):
@@ -121,7 +126,7 @@ class TestTru(TestCase):
             error_prob=0.0,
             overloaded_prob=0.0,
             rpm=1000,
-            alloc = 1024, # how much fake data to allocate during requests
+            alloc=1024,  # how much fake data to allocate during requests
         )
 
         f_dummy1 = Feedback(
@@ -191,7 +196,7 @@ class TestTru(TestCase):
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
                         tru.Basic(**{arg: app})
-    
+
         with self.subTest(type="TruCustomApp"):
             app = self._create_custom()
 
@@ -245,7 +250,6 @@ class TestTru(TestCase):
                     with self.assertRaises(Exception):
                         tru.Chain(**{arg: app})
 
-
         with self.subTest(type="TruLlama"):
             app = self._create_llama()
 
@@ -289,14 +293,19 @@ class TestTru(TestCase):
 
         record = recording.get()
 
-        feedback_results = list(tru.run_feedback_functions(
-            record=record, feedback_functions=feedbacks, app=tru_app, wait=True
-        ))
+        feedback_results = list(
+            tru.run_feedback_functions(
+                record=record,
+                feedback_functions=feedbacks,
+                app=tru_app,
+                wait=True
+            )
+        )
 
         # Check we get the right number of results.
         self.assertEqual(len(feedback_results), len(feedbacks))
 
-        # Check that the results are for the feedbacks we submitted. 
+        # Check that the results are for the feedbacks we submitted.
         self.assertEqual(
             set(expected_feedback_names),
             set(res.name for res in feedback_results),
@@ -314,14 +323,11 @@ class TestTru(TestCase):
 
         # Check that results were added to db.
         df, returned_feedback_names = tru.get_records_and_feedback(
-            app_ids = [tru_app.app_id]
+            app_ids=[tru_app.app_id]
         )
 
         # Check we got the right feedback names from db.
-        self.assertEqual(
-            expected_feedback_names,
-            set(returned_feedback_names)
-        )
+        self.assertEqual(expected_feedback_names, set(returned_feedback_names))
 
     def test_run_feedback_functions_nowait(self):
         """
@@ -345,15 +351,21 @@ class TestTru(TestCase):
 
         start_time = datetime.now()
 
-        future_feedback_results = list(tru.run_feedback_functions(
-            record=record, feedback_functions=feedbacks, app=tru_app, wait=False
-        ))
+        future_feedback_results = list(
+            tru.run_feedback_functions(
+                record=record,
+                feedback_functions=feedbacks,
+                app=tru_app,
+                wait=False
+            )
+        )
 
         end_time = datetime.now()
 
         # Should return quickly.
         self.assertLess(
-            (end_time - start_time).total_seconds(), 2.0,  # TODO: get it to return faster
+            (end_time - start_time).total_seconds(),
+            2.0,  # TODO: get it to return faster
             "Non-blocking run_feedback_functions did not return fast enough."
         )
 
@@ -380,14 +392,11 @@ class TestTru(TestCase):
 
         # Check that results were added to db.
         df, returned_feedback_names = tru.get_records_and_feedback(
-            app_ids = [tru_app.app_id]
+            app_ids=[tru_app.app_id]
         )
 
         # Check we got the right feedback names.
-        self.assertEqual(
-            expected_feedback_names,
-            set(returned_feedback_names)
-        )
+        self.assertEqual(expected_feedback_names, set(returned_feedback_names))
 
     def test_reset_database(self):
         # TODO
@@ -434,4 +443,3 @@ class TestTru(TestCase):
 
     def test_run_dashboard(self):
         pass
-

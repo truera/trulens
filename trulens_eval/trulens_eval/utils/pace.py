@@ -12,6 +12,7 @@ from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
+
 class Pace(BaseModel):
     """
     Keep a given pace. Calls to `Pace.mark` may block until the pace of its
@@ -23,7 +24,7 @@ class Pace(BaseModel):
 
     # The pace in number of mark returns per second.
     marks_per_second: float = 1.0
-    
+
     # Evaluate pace as overage over this period. Assumes that prior to
     # construction of this Pace instance, the period did not have any marks
     # called. The longer this period is, the bigger burst of marks will be
@@ -44,16 +45,14 @@ class Pace(BaseModel):
     # set to (seconds_per_period * returns_per_second) so that the average
     # returns per second over period is no more than exactly returns_per_second.
     max_marks: int
-    
+
     # Time of the last mark return.
     last_mark: datetime = Field(default_factory=datetime.now)
 
     # Thread Lock to ensure mark content runs only one at a time.
     lock: LockType = Field(default_factory=Lock)
 
-    model_config: ClassVar[dict] = dict(
-        arbitrary_types_allowed=True
-    )
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def __init__(
         self,
@@ -63,7 +62,7 @@ class Pace(BaseModel):
         rpm: Optional[float] = None,
         **kwargs
     ):
-        
+
         if marks_per_second is None:
             assert rpm is not None, "Either `marks_per_second` or `rpm` must be given."
             marks_per_second = rpm / 60.0
@@ -80,13 +79,12 @@ class Pace(BaseModel):
         super().__init__(
             *args,
             seconds_per_period=seconds_per_period,
-            seconds_per_period_timedelta = timedelta(seconds=seconds_per_period),
+            seconds_per_period_timedelta=timedelta(seconds=seconds_per_period),
             marks_per_second=marks_per_second,
             max_marks=max_marks,
             **kwargs
         )
 
-    
     def mark(self) -> float:
         """
         Return in appropriate pace. Blocks until return can happen in the
@@ -94,12 +92,14 @@ class Pace(BaseModel):
         """
 
         with self.lock:
-    
+
             while len(self.mark_expirations) >= self.max_marks:
-                delay = (self.mark_expirations[0] - datetime.now()).total_seconds()
+                delay = (self.mark_expirations[0] -
+                         datetime.now()).total_seconds()
 
                 if delay >= self.seconds_per_period * 0.5:
-                    logger.warning(f"""
+                    logger.warning(
+                        f"""
 Pace has a long delay of {delay} seconds. There might have been a burst of
 requests which may become a problem for the receiver of whatever is being paced.
 Consider reducing the `seconds_per_period` (currently {self.seconds_per_period} [seconds]) over which to
@@ -113,13 +113,15 @@ per second in that period.
                     time.sleep(delay)
 
                 self.mark_expirations.popleft()
-    
+
             prior_last_mark = self.last_mark
             now = datetime.now()
             self.last_mark = now
 
             # Add to marks the point at which the mark can be removed (after
             # `period` seconds).
-            self.mark_expirations.append(now + self.seconds_per_period_timedelta)
+            self.mark_expirations.append(
+                now + self.seconds_per_period_timedelta
+            )
 
             return (now - prior_last_mark).total_seconds()

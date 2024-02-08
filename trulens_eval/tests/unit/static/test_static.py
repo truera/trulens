@@ -23,16 +23,9 @@ import trulens_eval
 # optional in which case it should no longer be considered optional.
 
 optional_mods = dict(
-    pinecone=[
-        "trulens_eval.Example_TruBot"
-    ],
-    ipywidgets=[
-        "trulens_eval.appui"
-    ],
-    llama_index = [
-        "trulens_eval.tru_llama",
-        "trulens_eval.utils.llama"
-    ],
+    pinecone=["trulens_eval.Example_TruBot"],
+    ipywidgets=["trulens_eval.appui"],
+    llama_index=["trulens_eval.tru_llama", "trulens_eval.utils.llama"],
     boto3=[
         "trulens_eval.feedback.provider.bedrock",
         "trulens_eval.feedback.provider.endpoint.bedrock"
@@ -49,13 +42,14 @@ optional_mods = dict(
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 
- # Every module not mentioned above should be importable without any optional
- # packages.
+# Every module not mentioned above should be importable without any optional
+# packages.
+
 
 def get_all_modules(path: Path, startswith=None):
     ret = []
     for modinfo in pkgutil.iter_modules([str(path)]):
-        
+
         if startswith is not None and not modinfo.name.startswith(startswith):
             continue
 
@@ -64,31 +58,32 @@ def get_all_modules(path: Path, startswith=None):
             for submod in get_all_modules(path / modinfo.name, startswith=None):
                 submodqualname = modinfo.name + "." + submod
 
-                if startswith is not None and not submodqualname.startswith(startswith):
+                if startswith is not None and not submodqualname.startswith(
+                        startswith):
                     continue
-                
+
                 ret.append(modinfo.name + "." + submod)
 
     return ret
 
-# Get all modules inside trulens_eval: 
+
+# Get all modules inside trulens_eval:
 all_trulens_mods = get_all_modules(
-    Path(trulens_eval.__file__).parent.parent,
-    startswith="trulens_eval"
+    Path(trulens_eval.__file__).parent.parent, startswith="trulens_eval"
 )
 
 # Things which should not be imported at all.
 not_mods = [
-    "trulens_eval.database.migrations.env" # can only be executed by alembic
+    "trulens_eval.database.migrations.env"  # can only be executed by alembic
 ]
 
 # Importing any of these should be ok regardless of optional packages. These are
 # all modules not mentioned in optional modules above.
 base_mods = [
-    mod for mod in all_trulens_mods 
-    if mod not in optional_mods_flat 
-    and mod not in not_mods
+    mod for mod in all_trulens_mods
+    if mod not in optional_mods_flat and mod not in not_mods
 ]
+
 
 class TestStatic(TestCase):
 
@@ -147,7 +142,7 @@ class TestStatic(TestCase):
             with self.subTest(optional=opt):
                 # First make sure the optional package is installed.
                 self.assertTrue(
-                    module_installed(opt), 
+                    module_installed(opt),
                     f"Module {opt} was supposed to be installed."
                 )
 
