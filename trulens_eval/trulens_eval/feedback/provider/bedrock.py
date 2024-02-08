@@ -71,26 +71,85 @@ class Bedrock(LLMProvider):
 
         import json
 
-        body = json.dumps(
-            {
-                "inputText": prompt,
-                "textGenerationConfig":
-                    {
-                        "maxTokenCount": 4096,
-                        "stopSequences": [],
-                        "temperature": 0,
-                        "topP": 1
-                    }
-            }
-        )
+        if self.model_id.startswith("amazon"):
+            body = json.dumps(
+                {
+                    "inputText": prompt,
+                    "textGenerationConfig":
+                        {
+                            "maxTokenCount": 4096,
+                            "stopSequences": [],
+                            "temperature": 0,
+                            "topP": 1
+                        }
+                }
+            )
+        if self.model_id.startswith("anthropic"):
+            body = json.dumps(
+                {
+                    "prompt": f"\n\nHuman:{prompt}\n\nAssistant:",
+                    "temperature": 0,
+                    "top_p": 1,
+                    "max_tokens_to_sample": 4096
+                }
+            )
+        if self.model_id.startswith("cohere"):
+            body = json.dumps(
+                {
+                    "prompt": prompt,
+                    "temperature": 0,
+                    "p": 1,
+                    "max_tokens": 4096
+                }
+            )
+        if self.model_id.startswith("meta"):
+            body = json.dumps(
+                {
+                    "prompt": prompt,
+                    "temperature": 0,
+                    "top_p": 1,
+                    "max_gen_len": 2048
+                }
+            )
+        if self.model_id.startswith("ai21"):
+            body = json.dumps(
+                json.dumps(
+                {
+                    "prompt": prompt,
+                    "temperature": 0,
+                    "topP": 1,
+                    "maxTokens": 8191
+                }
+            )
+            )
+
+
         # TODO: make textGenerationConfig available for user
 
         modelId = self.model_id
 
         response = self.endpoint.client.invoke_model(body=body, modelId=modelId)
+        
+        if self.model_id.startswith("amazon"):
+            response_body = json.loads(response.get('body').read()
+                                    ).get('results')[0]["outputText"]
 
-        response_body = json.loads(response.get('body').read()
-                                  ).get('results')[0]["outputText"]
+        if self.model_id.startswith("anthropic"):
+            response_body = json.loads(response.get('body').read()
+                                    ).get('completion')
+
+        if self.model_id.startswith("cohere"):
+            response_body = json.loads(response.get('body').read()
+                                    ).get('generations')[0]["text"]
+
+        if self.model_id.startswith("meta"):
+            response_body = json.loads(response.get('body').read()
+                                    ).get('generation')
+
+        if self.model_id.startswith("ai21"):
+            response_body = json.loads(response.get('body').read()
+                                    ).get('completions')[0].get('data').get('text')
+        
         return response_body
 
     # overwrite base to use prompt instead of messages
