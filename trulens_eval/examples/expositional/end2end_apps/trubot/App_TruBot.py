@@ -2,11 +2,11 @@ import os
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
-from langchain_community.callbacks import get_openai_callback
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
+from langchain_community.callbacks import get_openai_callback
 from langchain_community.vectorstores import Pinecone
 import numpy as np
 import pinecone
@@ -16,7 +16,6 @@ from trulens_eval import feedback
 from trulens_eval import Select
 from trulens_eval import tru
 from trulens_eval import tru_chain_recorder
-from trulens_eval.db import Record
 from trulens_eval.feedback import Feedback
 from trulens_eval.keys import check_keys
 
