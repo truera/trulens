@@ -577,9 +577,6 @@ class Tru(SingletonPerName):
                         futures[fut] = row
                         total += 1
 
-                        # TODO: REMOVE
-                        # print(row.status, datetime.fromtimestamp(row.last_ts))
-
                     tqdm_total.total = total
                     tqdm_total.refresh()
 
@@ -614,7 +611,6 @@ class Tru(SingletonPerName):
                     {name: count for name, count in runs_stats.items()}
                 )
 
-
                 queue_stats = self.db.get_feedback_count_by_status()
                 queue_done = queue_stats.get(FeedbackResultStatus.DONE) or 0
                 queue_total = sum(queue_stats.values())
@@ -635,15 +631,12 @@ class Tru(SingletonPerName):
 
                     if fut.running():
                         # Not checking status here as this will be not yet be set
-                        # correctly. The computation in the future update the
+                        # correctly. The computation in the future updates the
                         # database but this object is outdated.
 
                         elapsed = datetime.now().timestamp() - row.last_ts
                         if elapsed > self.RETRY_RUNNING_SECONDS:
                             fut.cancel()
-
-                            # TODO: REMOVE
-                            # print("cancelling:", row.status, datetime.fromtimestamp(row.last_ts), elapsed)
 
                             # Not an actual status, but would be nice to
                             # indicate cancellations in run stats:
