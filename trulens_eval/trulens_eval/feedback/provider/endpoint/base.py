@@ -17,10 +17,10 @@ from pydantic import Field
 import requests
 
 from trulens_eval.schema import Cost
-from trulens_eval.trulens_eval.utils.pace import Pace
 from trulens_eval.utils.asynchro import desync
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.asynchro import ThunkMaybeAwaitable
+from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import get_first_local_in_call_stack
