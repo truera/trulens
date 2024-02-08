@@ -762,7 +762,7 @@ tru = Tru()
 Tru().migrate_database()
 
 from langchain.chains import LLMChain
-from langchain.llms import OpenAI
+from langchain_community.llms import OpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.prompts import HumanMessagePromptTemplate
 from langchain.prompts import PromptTemplate
