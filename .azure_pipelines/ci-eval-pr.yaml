@@ -96,6 +96,7 @@ jobs:
 
           cd ./trulens_eval
           python -m pytest --test-run-title="Required $(python-version) unit tests" $(tests-folder)
+
         displayName: Unit tests with required packages
 
       - bash: |

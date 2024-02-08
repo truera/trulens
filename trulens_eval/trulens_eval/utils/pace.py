@@ -112,7 +112,7 @@ per second in that period.
                 if delay > 0.0:
                     time.sleep(delay)
 
-                self.marks.popleft()
+                self.mark_expirations.popleft()
     
             prior_last_mark = self.last_mark
             now = datetime.now()
