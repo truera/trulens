@@ -29,7 +29,7 @@ class Langchain(LLMProvider):
         **Usage:**
         ```
         from trulens_eval.feedback.provider.langchain import Langchain
-        from langchain.llms import OpenAI
+        from langchain_community.llms import OpenAI
 
         gpt3_llm = OpenAI(model="gpt-3.5-turbo-instruct")
         langchain_provider = Langchain(chain = gpt3_llm)
