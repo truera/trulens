@@ -12,8 +12,10 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (Any, Callable, ClassVar, Dict, Hashable, Iterable, List,
-                    Optional, Sequence, Set, Tuple, Type, TypeVar)
+from typing import (
+    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
+    Set, Tuple, Type, TypeVar
+)
 
 import pydantic
 from pydantic import Field
@@ -523,7 +525,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         self.manage_pending_feedback_results_thread = threading.Thread(
             target=self._manage_pending_feedback_results,
-            daemon=True # otherwise this thread will keep parent alive
+            daemon=True  # otherwise this thread will keep parent alive
         )
         self.manage_pending_feedback_results_thread.start()
 
@@ -901,7 +903,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         elif self.feedback_mode == FeedbackMode.WITH_APP:
             # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
             # evaluating before returning the record.
-        
+
             record.wait_for_feedback_results()
 
         return record
@@ -1056,7 +1058,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         self.tru.add_feedback(res)
 
     def _handle_record(
-        self, record: Record, feedback_mode: Optional[FeedbackMode] = None
+        self,
+        record: Record,
+        feedback_mode: Optional[FeedbackMode] = None
     ) -> Optional[List[Tuple[Feedback, Future[FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback

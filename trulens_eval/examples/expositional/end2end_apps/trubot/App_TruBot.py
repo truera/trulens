@@ -4,9 +4,9 @@ os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain_community.llms import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain_community.callbacks import get_openai_callback
+from langchain_community.llms import OpenAI
 from langchain_community.vectorstores import Pinecone
 import numpy as np
 import pinecone

@@ -16,6 +16,7 @@ from trulens_eval.utils.serial import Lens
 # run.
 OPTIONAL_ENV_VAR = "TEST_OPTIONAL"
 
+
 def optional_test(testmethodorclass):
     """
     Only run the decorated test if the environment variable with_optional
