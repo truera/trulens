@@ -19,7 +19,7 @@ with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
     from traitlets import HasTraits
     from traitlets import Unicode
 
-OptionalImports(messages=REQUIREMENT_NOTEBOOK).assert_installed(ipwidgets)
+OptionalImports(messages=REQUIREMENT_NOTEBOOK).assert_installed(ipywidgets)
 
 pp = PrettyPrinter()
 
