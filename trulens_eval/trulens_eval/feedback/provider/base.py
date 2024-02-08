@@ -67,8 +67,8 @@ class LLMProvider(Provider):
             prompt=str.format(
                 prompts.SYSTEM_FIND_SUPPORTING,
                 prompt=full_source,
-            ) + "\n" + str.
-            format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
+            ) + "\n" +
+            str.format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
         )
 
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
@@ -105,10 +105,10 @@ class LLMProvider(Provider):
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
-        return self.endpoint.run_in_pace(    
+        return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + str.
-            format(
+            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
+            str.format(
                 prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
                 premise=premise,
                 hypothesis=hypothesis
@@ -980,9 +980,8 @@ class LLMProvider(Provider):
 
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=
-            (prompts.AGREEMENT_SYSTEM_PROMPT %
-                (prompt, check_response)) + response
+            prompt=(prompts.AGREEMENT_SYSTEM_PROMPT %
+                    (prompt, check_response)) + response
         )
 
     def comprehensiveness_with_cot_reasons(self, source: str,

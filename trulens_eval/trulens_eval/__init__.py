@@ -113,7 +113,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
 
 with OptionalImports(messages=REQUIREMENT_LITELLM):
     from trulens_eval.feedback.provider.litellm import LiteLLM
-        
+
 with OptionalImports(messages=REQUIREMENT_BEDROCK):
     from trulens_eval.feedback.provider.bedrock import Bedrock
 
@@ -122,11 +122,11 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import OpenAI
 
 __all__ = [
-    "Tru", # main interface
+    "Tru",  # main interface
 
     # app types
-    "TruBasicApp", 
-    "TruCustomApp", 
+    "TruBasicApp",
+    "TruCustomApp",
     "TruChain",
     "TruLlama",
     "TruVirtual",

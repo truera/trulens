@@ -1,6 +1,7 @@
 from collections import defaultdict
-from concurrent.futures import as_completed, wait
+from concurrent.futures import as_completed
 from concurrent.futures import TimeoutError
+from concurrent.futures import wait
 from datetime import datetime
 from datetime import timedelta
 import logging
@@ -13,8 +14,9 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Callable, Dict, Iterable, List, Optional, Sequence, Tuple,
-                    Union)
+from typing import (
+    Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import humanize
@@ -281,7 +283,7 @@ class Tru(SingletonPerName):
         for ffunc in feedback_functions:
             fut: Future[FeedbackResult] = \
                 tp.submit(ffunc.run, app=app, record=record)
-            
+
             if on_done is not None:
                 fut.add_done_callback(on_done)
 
@@ -295,10 +297,7 @@ class Tru(SingletonPerName):
         feedback_functions: Sequence[Feedback],
         app: Optional[AppDefinition] = None,
         wait: bool = True
-    ) -> Union[
-            Iterable[FeedbackResult],
-            Iterable[Future[FeedbackResult]]
-        ]:
+    ) -> Union[Iterable[FeedbackResult], Iterable[Future[FeedbackResult]]]:
         """
         Run a collection of feedback functions and report their result.
 
@@ -322,11 +321,15 @@ class Tru(SingletonPerName):
         """
 
         assert isinstance(record, Record), "record must be a Record."
-        assert isinstance(feedback_functions, Sequence), "feedback_functions must be a sequence."
+        assert isinstance(
+            feedback_functions, Sequence
+        ), "feedback_functions must be a sequence."
         assert all(
             isinstance(ffunc, Feedback) for ffunc in feedback_functions
         ), "feedback_functions must be a sequence of Feedback."
-        assert app is None or isinstance(app, AppDefinition), "app must be an AppDefinition."
+        assert app is None or isinstance(
+            app, AppDefinition
+        ), "app must be an AppDefinition."
 
         future_feedback_map: Dict[Future[FeedbackResult], Feedback] = {
             p[1]: p[0] for p in self._submit_feedback_functions(
@@ -362,7 +365,9 @@ class Tru(SingletonPerName):
 
     def add_feedback(
         self,
-        feedback_result_or_future: Optional[Union[FeedbackResult, Future[FeedbackResult]]] = None,
+        feedback_result_or_future: Optional[Union[FeedbackResult,
+                                                  Future[FeedbackResult]]
+                                           ] = None,
         **kwargs
     ) -> None:
         """
@@ -396,8 +401,8 @@ class Tru(SingletonPerName):
         self.db.insert_feedback(feedback_result=feedback_result_or_future)
 
     def add_feedbacks(
-        self,
-        feedback_results: Iterable[Union[FeedbackResult, Future[FeedbackResult]]]
+        self, feedback_results: Iterable[Union[FeedbackResult,
+                                               Future[FeedbackResult]]]
     ) -> None:
         """
         Add multiple feedback results to the database. Accepts a list of either
@@ -406,7 +411,9 @@ class Tru(SingletonPerName):
         """
 
         for feedback_result_or_future in feedback_results:
-            self.add_feedback(feedback_result_or_future=feedback_result_or_future)
+            self.add_feedback(
+                feedback_result_or_future=feedback_result_or_future
+            )
 
     def get_app(self, app_id: Optional[str] = None) -> JSON:
         """
@@ -422,7 +429,9 @@ class Tru(SingletonPerName):
 
         return self.db.get_apps()
 
-    def get_records_and_feedback(self, app_ids: List[str]) -> Tuple[pandas.DataFrame, List[str]]:
+    def get_records_and_feedback(
+        self, app_ids: List[str]
+    ) -> Tuple[pandas.DataFrame, List[str]]:
         """
         Get records, their feeback results, and feedback names from the
         database. Pass an empty list of app_ids to return all.

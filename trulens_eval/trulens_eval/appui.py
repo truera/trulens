@@ -15,7 +15,7 @@ with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
     # Here just for the assertion below. Including in a seperate context because
     # auto import organizer might move it below another import and if that other
     # import fails, this name will not be defined to check the assertion below.
-    import ipywidgets 
+    import ipywidgets
 
 with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
     from ipywidgets import widgets

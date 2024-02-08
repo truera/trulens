@@ -30,10 +30,10 @@ tru = Tru()
 # with the following:
 # ! pip install langchain>=0.0.170
 from langchain.chains import LLMChain
-from langchain_community.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
+from langchain_community.llms import OpenAI
 
 # ### Create Simple LLM Application
 #

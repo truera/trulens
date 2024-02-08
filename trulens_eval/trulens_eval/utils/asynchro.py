@@ -115,7 +115,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             # If not, we can create one here and run it until completion.
             loop = asyncio.new_event_loop()
             return loop.run_until_complete(awaitable)
-        
+
         try:
             # If have nest_asyncio, can run in current thread.
             import nest_asyncio
