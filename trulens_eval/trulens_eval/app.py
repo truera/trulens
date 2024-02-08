@@ -522,7 +522,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             raise RuntimeError("Manager Thread already started.")
 
         self.manage_pending_feedback_results_thread = threading.Thread(
-            target=self._manage_pending_feedback_results
+            target=self._manage_pending_feedback_results,
+            daemon=True # otherwise this thread will keep parent alive
         )
         self.manage_pending_feedback_results_thread.start()
 

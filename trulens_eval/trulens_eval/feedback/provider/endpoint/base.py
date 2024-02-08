@@ -190,7 +190,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 self.pace.put(True)
 
         self.pace_thread = Thread(target=keep_pace)
-        self.pace_thread.daemon = True
+        self.pace_thread.daemon = True # otherwise this thread will keep the parent alive if it tries to exit
         self.pace_thread.start()
 
         logger.debug(f"*** Creating {self.name} endpoint ***")
