@@ -41,6 +41,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.llm_predictor import LLMPredictor
     from llama_index.llm_predictor.base import BaseLLMPredictor
     from llama_index.llm_predictor.base import LLMMetadata
+    from llama_index.postprocessor.types import BaseNodePostprocessor
     # LLMs
     from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
     # memory
@@ -105,7 +106,8 @@ class LlamaInstrument(Instrument):
             ToolMetadata,
             BaseTool,
             BaseMemory,
-            WithFeedbackFilterNodes
+            WithFeedbackFilterNodes,
+            BaseNodePostprocessor
         }.union(LangChainInstrument.Default.CLASSES())
 
         # Instrument only methods with these names and of these classes. Ok to
@@ -168,6 +170,10 @@ class LlamaInstrument(Instrument):
                 # BaseQueryEngine:
                 "synthesize":
                     lambda o: isinstance(o, BaseQueryEngine),
+
+                # BaseNodePostProcessor
+                "_postprocess_nodes":
+                    lambda o: isinstance(o, (BaseNodePostprocessor)),
             },
             LangChainInstrument.Default.METHODS
         )
