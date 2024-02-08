@@ -8,7 +8,6 @@ import logging
 from pprint import PrettyPrinter
 import random
 import sys
-from threading import Thread
 from time import sleep
 from types import ModuleType
 from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
