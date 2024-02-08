@@ -114,7 +114,7 @@ class Bedrock(LLMProvider):
             )
 
         else:
-            raise NotImplementedError("This model is not yet implemented as a feedback provider.")
+            raise NotImplementedError(f"The model selected, {self.model_id}, is not yet implemented as a feedback provider")
 
         # TODO: make textGenerationConfig available for user
 
