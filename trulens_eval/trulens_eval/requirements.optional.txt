@@ -49,8 +49,6 @@ slack-bolt >= 1.18.0
 slack-sdk  >= 3.21.3
 
 # UI
-# ipython    >= 8.19.0  # for notebooks # will fail with python <= 3.9
-# ipython    >= 8.18.0  # for notebooks # will fail with python <= 3.8
 ipython    >= 8.12.0  # for notebooks
 ipywidgets >= 8.0.6  # for some example notebooks
 
