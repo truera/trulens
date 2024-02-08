@@ -10,7 +10,7 @@ import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Any, Dict, Optional, Sequence, Set, TypeVar
+from typing import Any, Awaitable, Dict, Generator, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
 import pydantic
@@ -144,6 +144,19 @@ def jsonify(
 
         JSON | Sequence[JSON]
     """
+
+    # HACKS: if we try to jsonize an awaitable or generator, we might break
+    # downstream users as those steps are stateful.
+    if isinstance(obj, Awaitable):
+        return {
+            "COROUTINE": "I don't want to await for this awaitable because it might break downstream users's expectations."
+        }
+
+    if isinstance(obj, Generator):
+        return {
+            "GENERATOR": "I don't want to iterate over this generator because it might break downstream users's expectations."
+        }
+
     skip_excluded = not include_excluded
     # Hack so that our models do not get exludes dumped which causes many
     # problems. Another variable set here so we can recurse with the original
@@ -151,6 +164,7 @@ def jsonify(
     if isinstance(obj, SerialModel):
         skip_excluded = True
 
+    
     from trulens_eval.instruments import Instrument
 
     if instrument is None:
@@ -184,6 +198,7 @@ def jsonify(
     if isinstance(obj, Path):
         return str(obj)
 
+    print(f"encoding type {type(obj)}")
     if type(obj) in pydantic.v1.json.ENCODERS_BY_TYPE:
         return pydantic.v1.json.ENCODERS_BY_TYPE[type(obj)](obj)
 

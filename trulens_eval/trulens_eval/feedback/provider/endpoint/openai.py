@@ -33,6 +33,7 @@ import pydantic
 from trulens_eval.feedback.provider.endpoint.base import DEFAULT_RPM
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.trulens_eval.utils.json import jsonify
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import Class
@@ -281,7 +282,9 @@ class OpenAIEndpoint(Endpoint):
         if not counted_something:
             logger.warning(
                 f"Could not find usage information in openai response:\n" +
-                pp.pformat(response)
+                pp.pformat(
+                    jsonify(response)
+                )
             )
 
     def __init__(
