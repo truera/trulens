@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from inspect import Signature
 from inspect import signature
@@ -10,6 +12,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
 
 import numpy as np
+import pandas
 import pydantic
 
 from trulens_eval.feedback import AggCallable
@@ -27,10 +30,9 @@ from trulens_eval.schema import Select
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.text import UNICODE_CHECK
-from trulens_eval.utils.text import UNICODE_CLOCK
-from trulens_eval.utils.text import UNICODE_YIELD
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
@@ -38,10 +40,6 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter()
 
 
-# TODO Rename:
-# Option:
-#  Feedback -> FeedbackRunner
-#  FeedbackDefinition -> FeedbackRunnerDefinition
 class Feedback(FeedbackDefinition):
     """
     Feedback function container. Typical usage is to specify a feedback
@@ -278,16 +276,33 @@ class Feedback(FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(
-        tru: 'Tru'
-    ) -> List['Future[Tuple[Feedback, FeedbackResult]]']:
+        tru: 'Tru',
+        limit: Optional[int] = None,
+        shuffle: bool = False
+    ) -> List[Tuple[pandas.Series, Future[FeedbackResult]]]:
         """
         Evaluates feedback functions that were specified to be deferred. Returns
-        an integer indicating how many evaluates were run.
+        a list of tuples with the DB row containing the Feedback and initial
+        FeedbackResult as well as the Future which will contain the actual
+        result.
+        
+        - `limit: Optional[int]` -- indicates the maximum number of evals to
+          start.
+
+        - `shuffle: bool` -- shuffles the order of the feedbacks to evaluate.
+        
+        Constants that govern behaviour:
+
+        - Tru.RETRY_RUNNING_SECONDS: How long to time before restarting a feedback
+          that was started but never failed (or failed without recording that
+          fact).
+
+        - Tru.RETRY_FAILED_SECONDS: How long to wait to retry a failed feedback.
         """
 
         db = tru.db
 
-        def prepare_feedback(row):
+        def prepare_feedback(row) -> Optional[FeedbackResultStatus]:
             record_json = row.record_json
             record = Record.model_validate(record_json)
 
@@ -299,66 +314,59 @@ class Feedback(FeedbackDefinition):
                     "This might have come from an old database. \n"
                     f"{row}"
                 )
-                return None, None
+                return None
 
             feedback = Feedback.model_validate(row.feedback_json)
 
-            return feedback, feedback.run_and_log(
+            return feedback.run_and_log(
                 record=record,
                 app=app_json,
                 tru=tru,
                 feedback_result_id=row.feedback_result_id
             )
 
-        feedbacks = db.get_feedback()
+        # Get the different status feedbacks except those marked DONE.
+        feedbacks_not_done = db.get_feedback(
+            status=[
+                FeedbackResultStatus.NONE, FeedbackResultStatus.FAILED,
+                FeedbackResultStatus.RUNNING
+            ],
+            limit=limit,
+            shuffle=shuffle,
+        )
 
         tp = TP()
 
-        futures: List['Future[Tuple[Feedback, FeedbackResult]]'] = []
+        futures: List[Tuple[pandas.Series, Future[FeedbackResult]]] = []
 
-        for i, row in feedbacks.iterrows():
-            feedback_ident = f"{row.fname} for app {row.app_json['app_id']}, record {row.record_id}"
+        for _, row in feedbacks_not_done.iterrows():
+            now = datetime.now().timestamp()
+            elapsed = now - row.last_ts
+
+            # TODO: figure out useful things to print.
+            # feedback_ident = (
+            #     f"[last seen {humanize.naturaldelta(elapsed)} ago] "
+            #    f"{row.fname} for app {row.app_json['app_id']}"
+            # )
 
             if row.status == FeedbackResultStatus.NONE:
+                futures.append((row, tp.submit(prepare_feedback, row)))
 
-                print(
-                    f"{UNICODE_YIELD} Feedback task starting: {feedback_ident}"
-                )
+            elif row.status == FeedbackResultStatus.RUNNING:
 
-                futures.append(tp.submit(prepare_feedback, row))
-
-            elif row.status in [FeedbackResultStatus.RUNNING]:
-                now = datetime.now().timestamp()
-                if now - row.last_ts > 30:
-                    print(
-                        f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. "
-                        f"Retrying: {feedback_ident}"
-                    )
-                    futures.append(tp.submit(prepare_feedback, row))
+                if elapsed > tru.RETRY_RUNNING_SECONDS:
+                    futures.append((row, tp.submit(prepare_feedback, row)))
 
                 else:
-                    print(
-                        f"{UNICODE_CLOCK} Feedback task last made progress less than 30 seconds ago. "
-                        f"Giving it more time: {feedback_ident}"
-                    )
+                    pass
 
-            elif row.status in [FeedbackResultStatus.FAILED]:
-                now = datetime.now().timestamp()
-                if now - row.last_ts > 60 * 5:
-                    print(
-                        f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. "
-                        f"Retrying: {feedback_ident}"
-                    )
-                    futures.append(tp.submit(prepare_feedback, row))
+            elif row.status == FeedbackResultStatus.FAILED:
+
+                if elapsed > tru.RETRY_FAILED_SECONDS:
+                    futures.append((row, tp.submit(prepare_feedback, row)))
 
                 else:
-                    print(
-                        f"{UNICODE_CLOCK} Feedback task last made progress less than 5 minutes ago. "
-                        f"Not touching it for now: {feedback_ident}"
-                    )
-
-            elif row.status == FeedbackResultStatus.DONE:
-                pass
+                    pass
 
         return futures
 
@@ -540,8 +548,7 @@ class Feedback(FeedbackDefinition):
             for ins in input_combinations:
                 try:
                     result_and_meta, part_cost = sync(
-                        Endpoint.atrack_all_costs_tally,
-                        lambda: self.imp(**ins)
+                        Endpoint.atrack_all_costs_tally, self.imp, **ins
                     )
                     cost += part_cost
                 except Exception as e:
@@ -645,6 +652,7 @@ class Feedback(FeedbackDefinition):
         app: Union[AppDefinition, JSON] = None,
         feedback_result_id: Optional[FeedbackResultID] = None
     ) -> Optional[FeedbackResult]:
+
         record_id = record.record_id
         app_id = record.app_id
 
@@ -682,7 +690,8 @@ class Feedback(FeedbackDefinition):
             )
             return
 
-        # Otherwise update based on what Feedback.run produced (could be success or failure).
+        # Otherwise update based on what Feedback.run produced (could be success
+        # or failure).
         db.insert_feedback(feedback_result)
 
         return feedback_result
@@ -691,8 +700,11 @@ class Feedback(FeedbackDefinition):
     def name(self):
         """
         Name of the feedback function. Presently derived from the name of the
-        function implementing it.
+        function implementing it if no supplied name provided.
         """
+
+        if self.supplied_name is not None:
+            return self.supplied_name
 
         if self.imp is None:
             raise RuntimeError("This feedback function has no implementation.")

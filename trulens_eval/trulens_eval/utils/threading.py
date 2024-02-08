@@ -3,7 +3,6 @@
 
 """
 
-from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
 import contextvars
@@ -15,6 +14,7 @@ from typing import Callable, Optional, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import T
@@ -148,7 +148,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
-        fut: 'Future[T]' = self.thread_pool.submit(func, *args, **kwargs)
+        fut: Future[T] = self.thread_pool.submit(func, *args, **kwargs)
 
         try:
             res: T = fut.result(timeout=timeout)
@@ -174,7 +174,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         *args,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> 'Future[T]':
+    ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
@@ -192,7 +192,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         *args,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> 'Future[T]':
+    ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 

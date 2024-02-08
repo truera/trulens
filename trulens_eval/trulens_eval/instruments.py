@@ -559,7 +559,7 @@ class Instrument(object):
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
                 rets, cost = await Endpoint.atrack_all_costs_tally(
-                    lambda: desync(func, *args, **kwargs)
+                    func, *args, **kwargs
                 )
 
             except BaseException as e:
