@@ -274,25 +274,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         Retries request multiple times if self.retries > 0.
         """
 
-        retries = self.retries + 1
-        retry_delay = 2.0
-
-        while retries > 0:
-            try:
-                self.pace_me()
-                ret = thunk()
-                return ret
-            except Exception as e:
-                retries -= 1
-                logger.error(
-                    f"{self.name} request failed {type(e)}={e}. Retries remaining={retries}."
-                )
-                if retries > 0:
-                    sleep(retry_delay)
-                    retry_delay *= 2
-
-        raise RuntimeError(
-            f"API {self.name} request failed {self.retries+1} time(s)."
+        raise NotImplementedError(
+            "This method is deprecated. Use `run_in_pace` instead."
         )
 
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
