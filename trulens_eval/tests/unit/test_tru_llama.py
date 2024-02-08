@@ -3,7 +3,7 @@ Tests for TruLlama.
 """
 
 import unittest
-from unittest import IsolatedAsyncioTestCase, main
+from unittest import main
 
 from tests.unit.test import JSONTestCase
 from tests.unit.test import optional_test

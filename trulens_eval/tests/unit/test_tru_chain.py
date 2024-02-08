@@ -2,9 +2,8 @@
 Tests for TruChain. Some of the tests are outdated.
 """
 
-import os
 import unittest
-from unittest import IsolatedAsyncioTestCase, main
+from unittest import main
 
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import LLMChain
