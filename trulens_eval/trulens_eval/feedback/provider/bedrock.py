@@ -113,7 +113,7 @@ class Bedrock(LLMProvider):
         """
         
         response = self.endpoint.run_in_pace(
-            self._create_chat_completion,
+            func=self._create_chat_completion,
             prompt=
             (system_prompt + user_prompt if user_prompt else system_prompt)
         )
@@ -139,7 +139,7 @@ class Bedrock(LLMProvider):
             The score and reason metadata if available.
         """
         response = self.endpoint.run_in_pace(
-            self._create_chat_completion,
+            func=self._create_chat_completion,
             prompt=
             (system_prompt + user_prompt if user_prompt else system_prompt)
         )

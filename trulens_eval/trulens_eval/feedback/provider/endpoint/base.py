@@ -249,6 +249,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         retries = self.retries + 1
         retry_delay = 2.0
 
+        errors = []
+
         while retries > 0:
             try:
                 self.pace_me()
@@ -260,12 +262,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 logger.error(
                     f"{self.name} request failed {type(e)}={e}. Retries remaining={retries}."
                 )
+                errors.append(e)
                 if retries > 0:
                     sleep(retry_delay)
                     retry_delay *= 2
 
         raise RuntimeError(
-            f"API {self.name} request failed {self.retries+1} time(s)."
+            f"Endpoint {self.name} request failed {self.retries+1} time(s): \n\t" + ("\n\t".join(map(str, errors)))
         )
     
     def run_me(self, thunk: Thunk[T]) -> T:

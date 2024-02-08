@@ -63,7 +63,7 @@ class LLMProvider(Provider):
         assert self.endpoint is not None, "Endpoint is not set."
 
         return self.endpoint.run_in_pace(
-            self._create_chat_completion,
+            func=self._create_chat_completion,
             prompt=str.format(
                 prompts.SYSTEM_FIND_SUPPORTING,
                 prompt=full_source,
@@ -106,7 +106,7 @@ class LLMProvider(Provider):
         assert self.endpoint is not None, "Endpoint is not set."
 
         return self.endpoint.run_in_pace(    
-            self._create_chat_completion,
+            func=self._create_chat_completion,
             prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + str.
             format(
                 prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
@@ -139,7 +139,7 @@ class LLMProvider(Provider):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
-            self._create_chat_completion, messages=llm_messages
+            func=self._create_chat_completion, messages=llm_messages
         )
 
         return re_0_10_rating(response) / normalize
@@ -167,7 +167,7 @@ class LLMProvider(Provider):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
-            self._create_chat_completion, messages=llm_messages
+            func=self._create_chat_completion, messages=llm_messages
         )
         if "Supporting Evidence" in response:
             score = -1
@@ -979,7 +979,7 @@ class LLMProvider(Provider):
         assert self.endpoint is not None, "Endpoint is not set."
 
         return self.endpoint.run_in_pace(
-            self._create_chat_completion,
+            func=self._create_chat_completion,
             prompt=
             (prompts.AGREEMENT_SYSTEM_PROMPT %
                 (prompt, check_response)) + response
