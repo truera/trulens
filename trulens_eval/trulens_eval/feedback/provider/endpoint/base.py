@@ -10,8 +10,10 @@ import random
 import sys
 from time import sleep
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
-                    Sequence, Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
+    Type, TypeVar
+)
 import warnings
 
 from pydantic import Field
@@ -128,23 +130,22 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     retries: int = 3
 
     # Optional post headers for post requests if done by this class.
-    post_headers: Dict[str, str] = Field(
-        default_factory=dict, exclude=True
-    )
+    post_headers: Dict[str, str] = Field(default_factory=dict, exclude=True)
 
     # Queue that gets filled at rate rpm.
     pace: Pace = Field(
-        default_factory=lambda: Pace(
-            marks_per_second=DEFAULT_RPM / 60.0,
-            seconds_per_period=60.0
-        ), exclude=True
+        default_factory=lambda:
+        Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
+        exclude=True
     )
 
     # Track costs not run inside "atrack_cost" here. Also note that Endpoints
     # are singletons (one for each unique name argument) hence this global
     # callback will track all requests for the named api even if you try to
     # create multiple endpoints (with the same name).
-    global_callback: EndpointCallback = Field(exclude=True)  # of type _callback_class
+    global_callback: EndpointCallback = Field(
+        exclude=True
+    )  # of type _callback_class
 
     # Callback class to use for usage tracking
     callback_class: Type[EndpointCallback] = Field(exclude=True)
@@ -156,7 +157,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         name = name or cls.__name__
         return super().__new__(cls, *args, name=name, **kwargs)
 
-    def __init__(self, *args, name: str, rpm: Optional[float] = None, callback_class: Optional[Any] = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        name: str,
+        rpm: Optional[float] = None,
+        callback_class: Optional[Any] = None,
+        **kwargs
+    ):
         """
         API usage, pacing, and utilities for API endpoints.
 
@@ -180,7 +188,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         kwargs['global_callback'] = callback_class()
         kwargs['callback_name'] = f"callback_{name}"
         kwargs['pace'] = Pace(
-            seconds_per_period=60.0, # 1 minute
+            seconds_per_period=60.0,  # 1 minute
             marks_per_second=rpm / 60.0
         )
 
@@ -257,7 +265,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 self.pace_me()
                 ret = func(*args, **kwargs)
                 return ret
-            
+
             except Exception as e:
                 retries -= 1
                 logger.error(
@@ -269,9 +277,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     retry_delay *= 2
 
         raise RuntimeError(
-            f"Endpoint {self.name} request failed {self.retries+1} time(s): \n\t" + ("\n\t".join(map(str, errors)))
+            f"Endpoint {self.name} request failed {self.retries+1} time(s): \n\t"
+            + ("\n\t".join(map(str, errors)))
         )
-    
+
     def run_me(self, thunk: Thunk[T]) -> T:
         """
         DEPRECTED: Run the given thunk, returning itse output, on pace with the api.
@@ -427,7 +436,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         f"trulens_eval will not track costs/usage of this endpoint. {e}"
                     )
 
-        return await Endpoint._atrack_costs(__func, *args, with_endpoints=endpoints, **kwargs)
+        return await Endpoint._atrack_costs(
+            __func, *args, with_endpoints=endpoints, **kwargs
+        )
 
     @staticmethod
     async def atrack_all_costs_tally(
@@ -610,11 +621,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             )
 
             # Get the result of the wrapped function:
-    
+
             response = func(*args, **kwargs)
             if isinstance(response, Awaitable):
                 response = await response
-            
+
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
             # Get all of the callback classes suitable for handling this call.

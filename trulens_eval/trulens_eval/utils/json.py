@@ -255,7 +255,6 @@ def jsonify(
 
         content = temp
 
-
     elif isinstance(obj, pydantic.v1.BaseModel):
         # TODO: DEDUP with pydantic.BaseModel case
 
