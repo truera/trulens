@@ -10,7 +10,7 @@ import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Any, Dict, Optional, Sequence, Set, TypeVar
+from typing import Any, Awaitable, Dict, Generator, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
 import pydantic
@@ -144,6 +144,19 @@ def jsonify(
 
         JSON | Sequence[JSON]
     """
+
+    # HACKS: if we try to jsonize an awaitable or generator, we might break
+    # downstream users as those steps are stateful.
+    if isinstance(obj, Awaitable):
+        return {
+            "COROUTINE": "I don't want to await for this awaitable because it might break downstream users's expectations."
+        }
+
+    if isinstance(obj, Generator):
+        return {
+            "GENERATOR": "I don't want to iterate over this generator because it might break downstream users's expectations."
+        }
+
     skip_excluded = not include_excluded
     # Hack so that our models do not get exludes dumped which causes many
     # problems. Another variable set here so we can recurse with the original
@@ -151,6 +164,7 @@ def jsonify(
     if isinstance(obj, SerialModel):
         skip_excluded = True
 
+    
     from trulens_eval.instruments import Instrument
 
     if instrument is None:
@@ -232,29 +246,6 @@ def jsonify(
 
         content = temp
 
-    elif isinstance(obj, pydantic.v1.BaseModel):
-        # TODO: DEDUP with pydantic.BaseModel case
-
-        # Not even trying to use pydantic.dict here.
-
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update(
-            {
-                k: recur(safe_getattr(obj, k))
-                for k, v in obj.__fields__.items()
-                if (not skip_excluded or not v.field_info.exclude) and
-                recur_key(k)
-            }
-        )
-
-        # Redact possible secrets based on key name and value.
-        if redact_keys:
-            for k, v in temp.items():
-                temp[k] = redact_value(v=v, k=k)
-
-        content = temp
-
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
 
@@ -268,6 +259,30 @@ def jsonify(
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.model_fields.items()
                 if (not skip_excluded or not v.exclude) and recur_key(k)
+            }
+        )
+
+        # Redact possible secrets based on key name and value.
+        if redact_keys:
+            for k, v in temp.items():
+                temp[k] = redact_value(v=v, k=k)
+
+        content = temp
+
+
+    elif isinstance(obj, pydantic.v1.BaseModel):
+        # TODO: DEDUP with pydantic.BaseModel case
+
+        # Not even trying to use pydantic.dict here.
+
+        temp = {}
+        new_dicted[id(obj)] = temp
+        temp.update(
+            {
+                k: recur(safe_getattr(obj, k))
+                for k, v in obj.__fields__.items()
+                if (not skip_excluded or not v.field_info.exclude) and
+                recur_key(k)
             }
         )
 

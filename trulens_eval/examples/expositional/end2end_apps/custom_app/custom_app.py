@@ -1,6 +1,6 @@
 import asyncio
-from asyncio import sleep
 from concurrent.futures import wait
+import time
 
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
 from examples.expositional.end2end_apps.custom_app.custom_memory import \
@@ -29,10 +29,12 @@ class CustomTemplate:
 
 class CustomApp:
 
-    def __init__(self):
-        self.memory = CustomMemory()
-        self.retriever = CustomRetriever()
-        self.llm = CustomLLM()
+    def __init__(self, delay: float = 0.05, alloc: int = 1024 * 1024):
+        self.delay = delay  # controls how long to delay certain operations to make it look more realistic
+        self.alloc = alloc  # controls how much memory to allocate during some operations
+        self.memory = CustomMemory(delay=delay, alloc=alloc)
+        self.retriever = CustomRetriever(delay=delay, alloc=alloc)
+        self.llm = CustomLLM(delay=delay, alloc=alloc)
         self.template = CustomTemplate(
             "The answer to {question} is probably {answer} or something ..."
         )
@@ -44,6 +46,9 @@ class CustomApp:
     @instrument
     def respond_to_query(self, input):
         chunks = self.retrieve_chunks(input)
+
+        if self.delay > 0.0:
+            time.sleep(self.delay)
 
         # Creates a few threads to process chunks in parallel to test apps that
         # make use of threads.
@@ -73,7 +78,9 @@ class CustomApp:
 
         async def async_generator():
             for tok in res.split(" "):
-                await sleep(0.05)
+                if self.delay > 0.0:
+                    await asyncio.sleep(self.delay)
+
                 yield tok + " "
 
         gen_task = asyncio.Task(async_generator())

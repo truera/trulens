@@ -64,6 +64,8 @@ MaybeAwaitable = Union[T, Awaitable[T]]
 # is_really_coroutinefunction .
 CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]
 
+CallableAwaitable = Callable[[A], Awaitable[B]]
+
 # Thunk or coroutine thunk. May be checked with is_really_coroutinefunction .
 ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
 
@@ -113,6 +115,13 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             # If not, we can create one here and run it until completion.
             loop = asyncio.new_event_loop()
             return loop.run_until_complete(awaitable)
+        
+        try:
+            # If have nest_asyncio, can run in current thread.
+            import nest_asyncio
+            return loop.run_until_complete(awaitable)
+        except:
+            pass
 
         try:
             # If have nest_asyncio, can run in current thread.
