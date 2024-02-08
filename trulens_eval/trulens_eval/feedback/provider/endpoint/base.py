@@ -270,8 +270,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     
     def run_me(self, thunk: Thunk[T]) -> T:
         """
-        Run the given thunk, returning itse output, on pace with the api.
+        DEPRECTED: Run the given thunk, returning itse output, on pace with the api.
         Retries request multiple times if self.retries > 0.
+
+        DEPRECATED: Use `run_in_pace` instead.
         """
 
         raise NotImplementedError(
