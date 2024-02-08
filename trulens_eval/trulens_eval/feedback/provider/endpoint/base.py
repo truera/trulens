@@ -682,7 +682,7 @@ class DummyEndpoint(Endpoint):
     loading_prob: float
     # How much time to indicate as needed to load the model in the above response.
     loading_time: Callable[[], float] = \
-        pydantic.Field(exclude=True, default_factory=lambda: lambda: random.uniform(0.73, 3.7))
+        Field(exclude=True, default_factory=lambda: lambda: random.uniform(0.73, 3.7))
 
     # How often to produce an error response.
     error_prob: float
