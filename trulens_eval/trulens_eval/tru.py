@@ -523,9 +523,24 @@ class Tru(SingletonPerName):
 
             total = 0
 
-            # Show the overall counts from the database, not just what has been looked at so far.
+            # Getting total counts from the database to start off the tqdm
+            # progress bar initial values so that they offer accurate
+            # predictions initially after restarting the process.
+            queue_stats = self.db.get_feedback_count_by_status()
+            queue_done = queue_stats.get(FeedbackResultStatus.DONE) or 0
+            queue_total = sum(queue_stats.values())
+
+            # Show the overall counts from the database, not just what has been
+            # looked at so far.
             tqdm_status = tqdm(
-                desc="Feedback Status", initial=0, unit="feedbacks"
+                desc="Feedback Status",
+                initial=queue_done,
+                unit="feedbacks",
+                total=queue_total,
+                postfix={
+                    status.name: count
+                    for status, count in queue_stats.items()
+                }
             )
 
             # Show the status of the results so far.
@@ -562,9 +577,6 @@ class Tru(SingletonPerName):
                         futures[fut] = row
                         total += 1
 
-                        # TODO: REMOVE
-                        # print(row.status, datetime.fromtimestamp(row.last_ts))
-
                     tqdm_total.total = total
                     tqdm_total.refresh()
 
@@ -600,7 +612,6 @@ class Tru(SingletonPerName):
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()
-
                 queue_done = queue_stats.get(FeedbackResultStatus.DONE) or 0
                 queue_total = sum(queue_stats.values())
 
@@ -620,15 +631,12 @@ class Tru(SingletonPerName):
 
                     if fut.running():
                         # Not checking status here as this will be not yet be set
-                        # correctly. The computation in the future update the
+                        # correctly. The computation in the future updates the
                         # database but this object is outdated.
 
                         elapsed = datetime.now().timestamp() - row.last_ts
                         if elapsed > self.RETRY_RUNNING_SECONDS:
                             fut.cancel()
-
-                            # TODO: REMOVE
-                            # print("cancelling:", row.status, datetime.fromtimestamp(row.last_ts), elapsed)
 
                             # Not an actual status, but would be nice to
                             # indicate cancellations in run stats:
