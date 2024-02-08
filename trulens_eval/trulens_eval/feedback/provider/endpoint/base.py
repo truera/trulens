@@ -722,6 +722,9 @@ class DummyEndpoint(Endpoint):
     # How much data in bytes to allocate when making requests.
     alloc: int
 
+    # How long to delay a request.
+    delay: float = 0.0
+
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
 
@@ -733,6 +736,7 @@ class DummyEndpoint(Endpoint):
         overloaded_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
         alloc: int = 1024 * 1024,
+        delay: float = 0.0,
         rpm: float = DEFAULT_RPM * 10,
         **kwargs
     ):
@@ -774,6 +778,11 @@ class DummyEndpoint(Endpoint):
 
         # allocate some data to pretend we are doing hard work
         temporary = [0x42] * self.alloc
+
+        from numpy import random
+
+        if self.delay > 0.0:
+            sleep(max(0.0, random.normal(self.delay, self.delay / 2)))
 
         r = random.random()
         j: Optional[JSON] = None
