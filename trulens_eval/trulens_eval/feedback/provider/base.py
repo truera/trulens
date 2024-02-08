@@ -60,14 +60,15 @@ class LLMProvider(Provider):
         pass
 
     def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
-        return self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=str.format(
-                    prompts.SYSTEM_FIND_SUPPORTING,
-                    prompt=full_source,
-                ) + "\n" + str.
-                format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
-            )
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        return self.endpoint.run_in_pace(
+            self._create_chat_completion,
+            prompt=str.format(
+                prompts.SYSTEM_FIND_SUPPORTING,
+                prompt=full_source,
+            ) + "\n" + str.
+            format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
         )
 
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
@@ -102,14 +103,15 @@ class LLMProvider(Provider):
         Returns:
             str: An LLM response using a scorecard template
         """
-        return self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + str.
-                format(
-                    prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                    premise=premise,
-                    hypothesis=hypothesis
-                )
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        return self.endpoint.run_in_pace(    
+            self._create_chat_completion,
+            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + str.
+            format(
+                prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                premise=premise,
+                hypothesis=hypothesis
             )
         )
 
@@ -130,12 +132,14 @@ class LLMProvider(Provider):
         Returns:
             The score (float): 0-1 scale.
         """
+        assert self.endpoint is not None, "Endpoint is not set."
+
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
-        response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(messages=llm_messages)
+        response = self.endpoint.run_in_pace(
+            self._create_chat_completion, messages=llm_messages
         )
 
         return re_0_10_rating(response) / normalize
@@ -156,12 +160,14 @@ class LLMProvider(Provider):
         Returns:
             The score (float): 0-1 scale and reason metadata (dict) if available.
         """
+        assert self.endpoint is not None, "Endpoint is not set."
+
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
-        response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(messages=llm_messages)
+        response = self.endpoint.run_in_pace(
+            self._create_chat_completion, messages=llm_messages
         )
         if "Supporting Evidence" in response:
             score = -1
@@ -970,12 +976,13 @@ class LLMProvider(Provider):
             str
         """
 
-        return self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=
-                (prompts.AGREEMENT_SYSTEM_PROMPT %
-                 (prompt, check_response)) + response
-            )
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        return self.endpoint.run_in_pace(
+            self._create_chat_completion,
+            prompt=
+            (prompts.AGREEMENT_SYSTEM_PROMPT %
+                (prompt, check_response)) + response
         )
 
     def comprehensiveness_with_cot_reasons(self, source: str,

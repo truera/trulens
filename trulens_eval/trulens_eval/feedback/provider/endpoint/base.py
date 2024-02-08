@@ -6,21 +6,18 @@ import functools
 import inspect
 import logging
 from pprint import PrettyPrinter
-from queue import Queue
 import random
-from threading import Thread
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,
-    TypeVar
-)
+from typing import (Any, Callable, ClassVar, Dict, List, Optional, Sequence,
+                    Tuple, Type, TypeVar)
 import warnings
 
-import pydantic
+from pydantic import Field
 import requests
 
 from trulens_eval.schema import Cost
+from trulens_eval.trulens_eval.utils.pace import Pace
 from trulens_eval.utils.asynchro import desync
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.asynchro import ThunkMaybeAwaitable
@@ -40,6 +37,8 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
+A = TypeVar("A")
+B = TypeVar("B")
 T = TypeVar("T")
 
 INSTRUMENT = "__tru_instrument"
@@ -52,7 +51,7 @@ class EndpointCallback(SerialModel):
     like token usage.
     """
 
-    cost: Cost = pydantic.Field(default_factory=Cost)
+    cost: Cost = Field(default_factory=Cost)
 
     def handle(self, response: Any) -> None:
         self.cost.n_requests += 1
@@ -115,7 +114,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     # - wrapped version,
     # - endpoint that did the wrapping.
     instrumented_methods: ClassVar[Dict[Any, List[Tuple[Callable, Callable, Type[Endpoint]]]]] \
-        = defaultdict(list) # pydantic.Field([], exclude=True)
+        = defaultdict(list)
 
     # API/endpoint name
     name: str
@@ -128,37 +127,35 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     retries: int = 3
 
     # Optional post headers for post requests if done by this class.
-    post_headers: Dict[str, str] = pydantic.Field(
+    post_headers: Dict[str, str] = Field(
         default_factory=dict, exclude=True
     )
 
     # Queue that gets filled at rate rpm.
-    pace: Queue = pydantic.Field(
-        default_factory=lambda: Queue(maxsize=10), exclude=True
+    pace: Pace = Field(
+        default_factory=lambda: Pace(
+            marks_per_second=DEFAULT_RPM / 60.0,
+            seconds_per_period=60.0
+        ), exclude=True
     )
 
     # Track costs not run inside "atrack_cost" here. Also note that Endpoints
     # are singletons (one for each unique name argument) hence this global
     # callback will track all requests for the named api even if you try to
     # create multiple endpoints (with the same name).
-    global_callback: EndpointCallback = pydantic.Field(
-        exclude=True
-    )  # of type _callback_class
+    global_callback: EndpointCallback = Field(exclude=True)  # of type _callback_class
 
     # Callback class to use for usage tracking
-    callback_class: Type[EndpointCallback] = pydantic.Field(exclude=True)
+    callback_class: Type[EndpointCallback] = Field(exclude=True)
 
     # Name of variable that stores the callback noted above.
-    callback_name: str = pydantic.Field(exclude=True)
-
-    # Thread that fills the queue at the appropriate rate.
-    pace_thread: Thread = pydantic.Field(exclude=True)
+    callback_name: str = Field(exclude=True)
 
     def __new__(cls, *args, name: Optional[str] = None, **kwargs):
         name = name or cls.__name__
         return super().__new__(cls, *args, name=name, **kwargs)
 
-    def __init__(self, *args, name: str, callback_class: Any = None, **kwargs):
+    def __init__(self, *args, name: str, rpm: Optional[float] = None, callback_class: Optional[Any] = None, **kwargs):
         """
         API usage, pacing, and utilities for API endpoints.
 
@@ -174,36 +171,33 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 "Endpoint has to be extended by class that can set `callback_class`."
             )
 
+        if rpm is None:
+            rpm = DEFAULT_RPM
+
         kwargs['name'] = name
         kwargs['callback_class'] = callback_class
         kwargs['global_callback'] = callback_class()
         kwargs['callback_name'] = f"callback_{name}"
-        kwargs['pace_thread'] = Thread()  # temporary
-        kwargs['pace_thread'].daemon = True
+        kwargs['pace'] = Pace(
+            seconds_per_period=60.0, # 1 minute
+            marks_per_second=rpm / 60.0
+        )
+
         super().__init__(*args, **kwargs)
 
-        def keep_pace():
-            while True:
-                sleep(60.0 / self.rpm)
-                self.pace.put(True)
-
-        self.pace_thread = Thread(target=keep_pace)
-        self.pace_thread.daemon = True
-        self.pace_thread.start()
-
-        logger.debug(f"*** Creating {self.name} endpoint ***")
+        logger.debug(f"Creating new endpoint singleton with name {self.name}.")
 
         # Extending class should call _instrument_module on the appropriate
         # modules and methods names.
 
-    def pace_me(self):
+    def pace_me(self) -> float:
         """
-        Block until we can make a request to this endpoint.
+        Block until we can make a request to this endpoint to keep pace with
+        maximum rpm. Returns time in seconds since last call to this method
+        returned.
         """
 
-        self.pace.get()
-
-        return
+        return self.pace.mark()
 
     def post(
         self,
@@ -246,6 +240,34 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         else:
             return j
 
+    def run_in_pace(self, func: Callable[[A], B], *args, **kwargs) -> B:
+        """
+        Run the given `func` on the given `args` and `kwargs` at pace with the
+        endpoint-specified rpm. Failures will be retried `self.retries` times.
+        """
+
+        retries = self.retries + 1
+        retry_delay = 2.0
+
+        while retries > 0:
+            try:
+                self.pace_me()
+                ret = func(*args, **kwargs)
+                return ret
+            
+            except Exception as e:
+                retries -= 1
+                logger.error(
+                    f"{self.name} request failed {type(e)}={e}. Retries remaining={retries}."
+                )
+                if retries > 0:
+                    sleep(retry_delay)
+                    retry_delay *= 2
+
+        raise RuntimeError(
+            f"API {self.name} request failed {self.retries+1} time(s)."
+        )
+    
     def run_me(self, thunk: Thunk[T]) -> T:
         """
         Run the given thunk, returning itse output, on pace with the api.
