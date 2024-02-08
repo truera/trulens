@@ -166,7 +166,20 @@ class LlamaInstrument(Instrument):
                             WithFeedbackFilterNodes
                         )
                     ),
-
+                "_retrieve":
+                    lambda o: isinstance(
+                        o, (
+                            BaseQueryEngine, BaseRetriever,
+                            WithFeedbackFilterNodes
+                        )
+                    ),
+                "_aretrieve":
+                    lambda o: isinstance(
+                        o, (
+                            BaseQueryEngine, BaseRetriever,
+                            WithFeedbackFilterNodes
+                        )
+                    ),
                 # BaseQueryEngine:
                 "synthesize":
                     lambda o: isinstance(o, BaseQueryEngine),
