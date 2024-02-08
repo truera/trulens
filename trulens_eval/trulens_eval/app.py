@@ -4,17 +4,16 @@ Generalized root type for various libraries like llama_index and langchain .
 
 from abc import ABC
 from abc import abstractmethod
-from concurrent import futures
 import contextvars
 from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
+import queue
+import threading
 from threading import Lock
-from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
-    Set, Tuple, Type, TypeVar
-)
+from typing import (Any, Callable, ClassVar, Dict, Hashable, Iterable, List,
+                    Optional, Sequence, Set, Tuple, Type, TypeVar)
 
 import pydantic
 from pydantic import Field
@@ -40,6 +39,10 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.python import \
+    Future  # can take type args with python < 3.9
+from trulens_eval.utils.python import \
+    Queue  # can take type args with python < 3.9
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import T
 from trulens_eval.utils.serial import all_objects
@@ -452,6 +455,15 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     instrumented_methods: Dict[int, Dict[Callable, Lens]] = \
         Field(exclude=True, default_factory=dict)
 
+    # EXPRIMENTAL: Records produced by this app which might have yet to finish
+    # feedback runs.
+    records_with_pending_feedback_results: Queue[Record] = \
+        pydantic.Field(exclude=True, default_factory=lambda: queue.Queue(maxsize=1024))
+    # Thread for manager of pending feedback results queue. See
+    # _manage_pending_feedback_results.
+    manage_pending_feedback_results_thread: Optional[threading.Thread] = \
+        pydantic.Field(exclude=True, default=None)
+
     def __init__(
         self,
         tru: Optional[Tru] = None,
@@ -482,11 +494,63 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         else:
             pass
 
+        if self.feedback_mode == FeedbackMode.WITH_APP_THREAD:
+            # EXPERIMENTAL: Start the thread that manages the queue of records
+            # with pending feedback results. This is meant to be run
+            # permentantly in a separate thread. It will remove records from the
+            # queue `records_with_pending_feedback_results` as their feedback
+            # results are computed and makes sure the queue does not keep
+            # growing.
+            self._start_manage_pending_feedback_results()
+
         self.tru_post_init()
 
     def __del__(self):
         # Can use to do things when this object is being garbage collected.
         pass
+
+    def _start_manage_pending_feedback_results(self) -> None:
+        """
+        EXPERIMENTAL: Start the thread that manages the queue of records with
+        pending feedback results. This is meant to be run permentantly in a
+        separate thread. It will remove records from the queue
+        `records_with_pending_feedback_results` as their feedback results are
+        computed and makes sure the queue does not keep growing.
+        """
+
+        if self.manage_pending_feedback_results_thread is not None:
+            raise RuntimeError("Manager Thread already started.")
+
+        self.manage_pending_feedback_results_thread = threading.Thread(
+            target=self._manage_pending_feedback_results,
+            daemon=True # otherwise this thread will keep parent alive
+        )
+        self.manage_pending_feedback_results_thread.start()
+
+    def _manage_pending_feedback_results(self) -> None:
+        """
+        EXPERIMENTAL: Manage the queue of records with pending feedback results.
+        This is meant to be run permentantly in a separate thread. It will
+        remove records from the queue records_with_pending_feedback_results as
+        their feedback results are computed and makes sure the queue does not
+        keep growing.
+        """
+
+        while True:
+            record = self.records_with_pending_feedback_results.get()
+            record.wait_for_feedback_results()
+
+    def wait_for_feedback_results(self) -> None:
+        """
+        EXPERIMENTAL: Wait for all feedbacks that need to run on all of the
+        records produced by this app. Will block until finished and if new
+        records are produced while this is running, it will include them.
+        """
+
+        while not self.records_with_pending_feedback_results.empty():
+            record = self.records_with_pending_feedback_results.get()
+
+            record.wait_for_feedback_results()
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> Lens:
@@ -829,10 +893,16 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if record.feedback_results is None:
             return record
 
-        # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
-        # evaluating before returning the record.
-        if self.feedback_mode in [FeedbackMode.WITH_APP]:
-            futures.wait(record.feedback_results)
+        if self.feedback_mode == FeedbackMode.WITH_APP_THREAD:
+            # Add the record to ones with pending feedback.
+
+            self.records_with_pending_feedback_results.put(record)
+
+        elif self.feedback_mode == FeedbackMode.WITH_APP:
+            # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
+            # evaluating before returning the record.
+        
+            record.wait_for_feedback_results()
 
         return record
 
@@ -977,15 +1047,17 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 """
         )
 
-    def _add_future_feedback(self, future: 'Future[Feedback, FeedbackResult]'):
-        _, res = future.result()
+    def _add_future_feedback(self, future_result: Future[FeedbackResult]):
+        """
+        Callback used to add feedback results to the database once they are
+        done. See `App._handle_record`.
+        """
+        res = future_result.result()
         self.tru.add_feedback(res)
 
     def _handle_record(
-        self,
-        record: Record,
-        feedback_mode: Optional[FeedbackMode] = None
-    ) -> Optional[List['Future[Tuple[Feedback, FeedbackResult]]']]:
+        self, record: Record, feedback_mode: Optional[FeedbackMode] = None
+    ) -> Optional[List[Tuple[Feedback, Future[FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback
         functions to be evaluated. If feedback_mode is provided, will use that

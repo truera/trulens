@@ -27,7 +27,6 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import Module
 from trulens_eval.utils.pyschema import Obj
-from trulens_eval.utils.serial import GetAttribute
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
@@ -310,8 +309,11 @@ class TruVirtual(App):
 TruVirtual.model_rebuild()
 
 # Need these to make sure rebuild below works.
-from typing import List
+# TODO: Figure out whether any of this is needed.
+from typing import List, Tuple
 
-from trulens_eval.schema import TFeedbackResultFuture
+from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.utils.python import Future
 
 VirtualRecord.model_rebuild()
