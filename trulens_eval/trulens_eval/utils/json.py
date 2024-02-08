@@ -198,7 +198,6 @@ def jsonify(
     if isinstance(obj, Path):
         return str(obj)
 
-    print(f"encoding type {type(obj)}")
     if type(obj) in pydantic.v1.json.ENCODERS_BY_TYPE:
         return pydantic.v1.json.ENCODERS_BY_TYPE[type(obj)](obj)
 
