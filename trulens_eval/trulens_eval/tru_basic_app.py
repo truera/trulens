@@ -57,9 +57,9 @@ class TruWrapperApp(object):
 class TruBasicApp(App):
     """Instantiates a Basic app that makes little assumptions. Assumes input text and output text.
         
-        **Usage:**
+        Usage:
 
-        ```
+        ```python
         def custom_application(prompt: str) -> str:
             return "a response"
         
@@ -75,12 +75,12 @@ class TruBasicApp(App):
             tru_recorder.app(question)
 
         tru_record = recording.records[0]
-        
         ```
+
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
         Args:
-            text_to_text (Callable): A text to text callable.
+            text_to_text: A str to str callable.
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -94,7 +94,7 @@ class TruBasicApp(App):
 
     def __init__(
         self,
-        text_to_text: Optional[Callable] = None,
+        text_to_text: Optional[Callable[[str], str]] = None,
         app: Optional[TruWrapperApp] = None,
         **kwargs
     ):

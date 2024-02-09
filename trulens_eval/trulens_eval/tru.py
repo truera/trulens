@@ -14,9 +14,8 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Union)
 import warnings
 
 import humanize
@@ -28,8 +27,9 @@ from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
 from trulens_eval.db import DB
 from trulens_eval.db import JSON
 from trulens_eval.feedback import Feedback
-from trulens_eval.schema import AppDefinition
+from trulens_eval.schema import AppDefinition, AppID
 from trulens_eval.schema import FeedbackResult
+from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.utils.notebook_utils import is_notebook
@@ -289,16 +289,15 @@ class Tru(SingletonPerName):
     def add_record(self, record: Optional[Record] = None, **kwargs):
         """Add a record to the database.
 
-        # Args
-    
+        Args:
             record: The record to add.
 
             **kwargs: Record fields to add to the given record or a new record
                 if no `record` provided.
             
-        # Returns
+        Returns:
         
-        RecordID (`str` alias) Unique record identifier.
+            RecordID (`str` alias) Unique record identifier.
 
         """
 
@@ -334,8 +333,10 @@ class Tru(SingletonPerName):
 
         Returns:
         
-        Produces a list of tuples where the first item in each tuple is the
-        feedback function and the second is the future of the feedback result.
+            List[Tuple[Feedback, Future[FeedbackResult]]]
+
+            Produces a list of tuples where the first item in each tuple is the
+            feedback function and the second is the future of the feedback result.
         """
 
         app_id = record.app_id
@@ -381,26 +382,24 @@ class Tru(SingletonPerName):
         app: Optional[AppDefinition] = None,
         wait: bool = True
     ) -> Union[Iterable[FeedbackResult], Iterable[Future[FeedbackResult]]]:
-        """
-        Run a collection of feedback functions and report their result.
+        """Run a collection of feedback functions and report their result.
 
-        Parameters:
-
-            - record (Record): The record on which to evaluate the feedback
+        Args:
+            record: The record on which to evaluate the feedback
               functions.
 
-            - app (App, optional): The app that produced the given record.
+            app: The app that produced the given record.
               If not provided, it is looked up from the given database `db`.
 
-            - feedback_functions (Sequence[Feedback]): A collection of feedback
+            feedback_functions: A collection of feedback
               functions to evaluate.
 
-            - wait: (bool, optional): If set (default), will wait for results
+            wait: If set (default), will wait for results
               before returning.
 
-        Yields `FeedbackResult`, one for each element of `feedback_functions`
-        potentially in random order. If `wait` is set to `False`, yields
-        `Future[FeedbackResult]` instead.
+        Yields:
+            One result for each element of `feedback_functions` of
+                `FeedbackResult` if `wait` is enabled (default) or `Future[FeedbackResult]` if `wait` is disabled.
         """
 
         assert isinstance(record, Record), "record must be a Record."
@@ -439,12 +438,19 @@ class Tru(SingletonPerName):
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(self, app: AppDefinition) -> None:
+    def add_app(self, app: AppDefinition) -> AppID:
         """
-        Add a app to the database.
+        Add an app to the database.
+
+        Args:
+            app: The app to add to the database.
+
+        Returns:
+            AppID: An alias for `str`, a unique identifier.
+
         """
 
-        self.db.insert_app(app=app)
+        return self.db.insert_app(app=app)
 
     def add_feedback(
         self,
@@ -452,13 +458,21 @@ class Tru(SingletonPerName):
                                                   Future[FeedbackResult]]
                                            ] = None,
         **kwargs
-    ) -> None:
-        """
-        Add a single feedback result to the database. Accepts a FeedbackResult,
-        Future[FeedbackResult], or kwargs to create a FeedbackResult from. If a
-        Future is given, it will wait for the result before adding it to the
-        database. If kwargs are given and a FeedbackResult is also given, the
-        kwargs will be used to update the FeedbackResult.
+    ) -> FeedbackResultID:
+        """Add a single feedback result to the database.
+        
+        Args:
+            feedback_result_or_future: If a `Future` is given, it will wait for
+                the result before adding it to the database. If kwargs are given
+                and a `FeedbackResult` is also given, the kwargs will be used to
+                update the `FeedbackResult`.
+
+            **kwargs: Fields to add to the given feedback result or to create a
+                new `FeedbackResult` with.
+
+        Returns:
+            FeedbackResultID: An alias for `str`, a unique identifier.
+
         """
 
         if feedback_result_or_future is None:
@@ -481,14 +495,17 @@ class Tru(SingletonPerName):
 
             feedback_result_or_future.update(**kwargs)
 
-        self.db.insert_feedback(feedback_result=feedback_result_or_future)
+        return self.db.insert_feedback(feedback_result=feedback_result_or_future)
 
     def add_feedbacks(
-        self, feedback_results: Iterable[Union[FeedbackResult,
-                                               Future[FeedbackResult]]]
+        self, feedback_results: Iterable[Union[
+            FeedbackResult,
+            Future[FeedbackResult]
+        ]]
     ) -> None:
-        """
-        Add multiple feedback results to the database. Accepts a list of either
+        """Add multiple feedback results to the database.
+        
+        Accepts a list of either
         `FeedbackResult` or `Future[FeedbackResult]`. If a `Future` is given, it
         will wait for the result before adding it to the database.
         """
@@ -499,25 +516,21 @@ class Tru(SingletonPerName):
             )
 
     def get_app(self, app_id: Optional[str] = None) -> JSON:
-        """
-        Look up a app from the database.
-        """
+        """Look up an app from the database."""
 
         return self.db.get_app(app_id)
 
     def get_apps(self) -> Iterable[JSON]:
-        """
-        Look up all apps from the database.
-        """
+        """Look up all apps from the database."""
 
         return self.db.get_apps()
 
     def get_records_and_feedback(
         self, app_ids: List[str]
     ) -> Tuple[pandas.DataFrame, List[str]]:
-        """
-        Get records, their feeback results, and feedback names from the
-        database. Pass an empty list of app_ids to return all.
+        """Get records, their feeback results, and feedback names.
+        
+        Pass an empty list of app_ids to return all.
 
         ```python
         tru.get_records_and_feedback(app_ids=[])
@@ -529,9 +542,9 @@ class Tru(SingletonPerName):
         return df, feedback_columns
 
     def get_leaderboard(self, app_ids: List[str]):
-        """
-        Get a leaderboard by app id from the
-        database. Pass an empty list of app_ids to return all.
+        """ Get a leaderboard by app id.
+
+        Pass an empty list of app_ids to return all.
 
         ```python
         tru.get_leaderboard(app_ids=[])
@@ -547,28 +560,37 @@ class Tru(SingletonPerName):
 
         return leaderboard
 
-    def start_evaluator(self,
-                        restart: bool = False,
-                        fork: bool = False) -> Union[Process, Thread]:
+    def start_evaluator(
+        self,
+        restart: bool = False,
+        fork: bool = False
+    ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread.
 
+        Args:
+            restart: If set, will stop the existing evaluator before starting a
+                new one.
+            
+            fork: If set, will start the evaluator in a new process instead of a
+                thread. NOT CURRENTLY SUPPORTED.
+
+        Returns:
+            Union[Process, Thread]: The process or thread that was started.
+
         Constants that govern behaviour:
+            `Tru.RETRY_RUNNING_SECONDS: float`: How long to
+                time before restarting a feedback that was started but never failed
+                (or failed without recording that fact).
 
-        - `Tru.RETRY_RUNNING_SECONDS: float` -- How long to
-          time before restarting a feedback that was started but never failed
-          (or failed without recording that fact).
+            `Tru.RETRY_FAILED_SECONDS: float`: How long to wait to retry a
+                failed feedback.
 
-        - `Tru.RETRY_FAILED_SECONDS: float` -- How long to wait to retry a
-          failed feedback.
+            `Tru.DEFERRED_NUM_RUNS: int`: Max number of futures to wait for at
+                any time.
 
-        - `Tru.DEFERRED_NUM_RUNS: int` -- Max number of futures to wait for at
-          any time.
-
-        - `TP.MAX_THREADS: int` -- Max number of threads to use. This should be
-          greater than `Tru.DEFERRED_NUM_RUNS`.
-
-        - 
+            `TP.MAX_THREADS: int`: Max number of threads to use. This should be
+                greater than `Tru.DEFERRED_NUM_RUNS`.
         """
 
         assert not fork, "Fork mode not yet implemented."
@@ -775,13 +797,11 @@ class Tru(SingletonPerName):
         Stop existing dashboard(s) if running.
 
         Args:
-
-            - force: bool: Also try to find any other dashboard processes not
+            force: bool: Also try to find any other dashboard processes not
               started in this notebook and shut them down too.
 
         Raises:
-
-            - ValueError: Dashboard is not running.
+             ValueError: Dashboard is not running.
         """
         if Tru.dashboard_proc is None:
             if not force:
@@ -841,27 +861,25 @@ class Tru(SingletonPerName):
         force: bool = False,
         _dev: Optional[Path] = None
     ) -> Process:
-        """
-        Run a streamlit dashboard to view logged results and apps.
+        """Run a streamlit dashboard to view logged results and apps.
 
         Args:
-            - port: int: port number to pass to streamlit through server.port.
+           port: Port number to pass to streamlit through server.port.
 
-            - address: str: address to pass to streamlit through server.address.
+           address: Address to pass to streamlit through server.address. Note that if the address cannot be given if running from a colab notebook.
         
-            - force: bool: Stop existing dashboard(s) first.
+           force: Stop existing dashboard(s) first. Defaults to `False`.
 
-            - _dev: Optional[Path]: If given, run dashboard with the given
+           _dev: If given, run dashboard with the given
               PYTHONPATH. This can be used to run the dashboard from outside of
               its pip package installation folder.
 
-        Raises:
-
-            - ValueError: Dashboard is already running.
-
         Returns:
+            Process: `Process` executing the streamlit dashboard.
 
-            - Process: Process containing streamlit dashboard.
+        Raises:
+            ValueError: Dashboard is already running. Can be avoided if `force` is set.
+
         """
 
         IN_COLAB = 'google.colab' in sys.modules

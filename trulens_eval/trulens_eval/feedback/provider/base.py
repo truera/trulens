@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class Provider(WithClassInfo, SerialModel):
+    """Base Provider class."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
