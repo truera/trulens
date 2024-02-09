@@ -137,7 +137,8 @@ REQUIREMENT_LANGCHAIN = format_import_errors(
 )
 
 REQUIREMENT_PINECONE = format_import_errors(
-    'pinecone', purpose="running TruBot"
+    # package name is "pinecone-client" but module is "pinecone"
+    'pinecone-client', purpose="running TruBot" 
 )
 
 REQUIREMENT_SKLEARN = format_import_errors(

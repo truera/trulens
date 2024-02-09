@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 import logging
 from typing import (
-    Any, ClassVar, Iterable, List, Optional, Sequence, Tuple, Union
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 )
 import warnings
 
@@ -12,6 +12,7 @@ import pandas as pd
 from pydantic import Field
 from sqlalchemy import create_engine
 from sqlalchemy import Engine
+from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import MetaData
@@ -40,6 +41,7 @@ from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Perf
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -262,6 +264,81 @@ class SqlAlchemyDB(DB):
 
             return _feedback_result.feedback_result_id
 
+    def _feedback_query(
+        self,
+        count: bool = False,
+        shuffle: bool = False,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        status: Optional[Union[FeedbackResultStatus,
+                               Sequence[FeedbackResultStatus]]] = None,
+        last_ts_before: Optional[datetime] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
+    ):
+        if count:
+            q = func.count(orm.FeedbackResult.feedback_result_id)
+        else:
+            q = select(orm.FeedbackResult)
+
+        if record_id:
+            q = q.filter_by(record_id=record_id)
+
+        if feedback_result_id:
+            q = q.filter_by(feedback_result_id=feedback_result_id)
+
+        if feedback_definition_id:
+            q = q.filter_by(feedback_definition_id=feedback_definition_id)
+
+        if status:
+            if isinstance(status, FeedbackResultStatus):
+                status = [status.value]
+            q = q.filter(
+                orm.FeedbackResult.status.in_([s.value for s in status])
+            )
+        if last_ts_before:
+            q = q.filter(
+                orm.FeedbackResult.last_ts < last_ts_before.timestamp()
+            )
+
+        if offset is not None:
+            q = q.offset(offset)
+
+        if limit is not None:
+            q = q.limit(limit)
+
+        if shuffle:
+            q = q.order_by(func.random())
+
+        return q
+
+    def get_feedback_count_by_status(
+        self,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        status: Optional[Union[FeedbackResultStatus,
+                               Sequence[FeedbackResultStatus]]] = None,
+        last_ts_before: Optional[datetime] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+        shuffle: bool = False
+    ) -> Dict[FeedbackResultStatus, int]:
+        """
+        Get the number of feedback results that match the given criteria grouped by status.
+        """
+
+        with self.Session.begin() as session:
+            q = self._feedback_query(
+                count=True, **locals_except("self", "session")
+            )
+
+            results = session.query(orm.FeedbackResult.status,
+                                    q).group_by(orm.FeedbackResult.status)
+
+            return {FeedbackResultStatus(row[0]): row[1] for row in results}
+
     def get_feedback(
         self,
         record_id: Optional[RecordID] = None,
@@ -269,27 +346,20 @@ class SqlAlchemyDB(DB):
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         status: Optional[Union[FeedbackResultStatus,
                                Sequence[FeedbackResultStatus]]] = None,
-        last_ts_before: Optional[datetime] = None
+        last_ts_before: Optional[datetime] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+        shuffle: Optional[bool] = False
     ) -> pd.DataFrame:
+        """
+        See abstract trulens_eval.db:DB.get_feedback for documentation.
+        """
+
         with self.Session.begin() as session:
-            q = select(orm.FeedbackResult)
-            if record_id:
-                q = q.filter_by(record_id=record_id)
-            if feedback_result_id:
-                q = q.filter_by(feedback_result_id=feedback_result_id)
-            if feedback_definition_id:
-                q = q.filter_by(feedback_definition_id=feedback_definition_id)
-            if status:
-                if isinstance(status, FeedbackResultStatus):
-                    status = [status.value]
-                q = q.filter(
-                    orm.FeedbackResult.status.in_([s.value for s in status])
-                )
-            if last_ts_before:
-                q = q.filter(
-                    orm.FeedbackResult.last_ts < last_ts_before.timestamp()
-                )
+            q = self._feedback_query(**locals_except("self", "session"))
+
             results = (row[0] for row in session.execute(q))
+
             return _extract_feedback_results(results)
 
     def get_records_and_feedback(
@@ -329,7 +399,7 @@ def _extract_feedback_results(
             _result.name,
             _result.result,
             _result.multi_result,
-            _result.cost_json,
+            _result.cost_json,  # why is cost_json not parsed?
             json.loads(_result.record.perf_json)
             if _result.record.perf_json != MIGRATION_UNKNOWN_STR else no_perf,
             json.loads(_result.calls_json)["calls"],
