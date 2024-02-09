@@ -295,9 +295,12 @@ class TruVirtual(App):
         record.app_id = self.app_id
 
         # Creates feedback futures.
-        record.feedback_results = self._handle_record(
-            record, feedback_mode=feedback_mode
+        record.feedback_and_future_results = self._handle_record(
+            record,
+            feedback_mode=feedback_mode
         )
+        if record.feedback_and_future_results is not None:
+            record.feedback_results = [tup[1] for tup in record.feedback_and_future_results]
 
         # Wait for results if mode is WITH_APP.
         if feedback_mode == FeedbackMode.WITH_APP and record.feedback_results is not None:

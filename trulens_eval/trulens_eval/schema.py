@@ -204,7 +204,12 @@ class Record(SerialModel, Hashable):
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
 
-    feedback_results: Optional[List[Tuple[FeedbackDefinition, Future[FeedbackResult]]]] = \
+    feedback_and_future_results: Optional[List[Tuple[
+        FeedbackDefinition, Future[FeedbackResult]
+    ]]] = pydantic.Field(None, exclude=True)
+
+    # Only the futures part of the above for backwards compatibility.
+    feedback_results: Optional[List[Future[FeedbackResult]]] = \
         pydantic.Field(None, exclude=True)
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
@@ -227,12 +232,12 @@ class Record(SerialModel, Hashable):
         functions to their results.
         """
 
-        if self.feedback_results is None:
-            return dict()
+        if self.feedback_and_future_results is None:
+            return {}
 
         ret = {}
 
-        for feedback, future_result in self.feedback_results:
+        for feedback, future_result in self.feedback_and_future_results:
             feedback_result = future_result.result()
             ret[feedback] = feedback_result
 
