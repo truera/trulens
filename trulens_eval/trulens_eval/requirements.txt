@@ -25,7 +25,7 @@ typing_extensions  >= 4.5.0  # fixes big with langchain on python < 3.9
 # UI
 millify            >= 0.1.1
 humanize           >= 4.6.0
-streamlit          >= 1.27.0
+streamlit          >= 1.30.0
 streamlit-aggrid   >= 0.3.4.post3
 streamlit-extras   >= 0.2.7
 
