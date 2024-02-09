@@ -890,9 +890,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         # Will block on DB, but not on feedback evaluation, depending on
         # FeedbackMode:
-        record.feedback_results = self._handle_record(record=record)
+        record.feedback_and_future_results = self._handle_record(record=record)
+        if record.feedback_and_future_results is not None:
+            record.feedback_results = [tup[1] for tup in record.feedback_and_future_results]
 
-        if record.feedback_results is None:
+        if record.feedback_and_future_results is None:
             return record
 
         if self.feedback_mode == FeedbackMode.WITH_APP_THREAD:
