@@ -162,7 +162,7 @@ else:
     else:
         app = apps
 
-    st.query_params(app=app)
+    st.query_params['app'] = app
 
     options = st.multiselect("Filter Applications", apps, default=app)
 
