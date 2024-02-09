@@ -1,3 +1,3 @@
 # Tru Virtual
 
-::: trulens_eval.trulens_eval.tru_virtual
+::: trulens_eval.tru_virtual

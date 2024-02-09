@@ -1,3 +1,3 @@
-# Feedback Function API
+# Feedback
 
-::: trulens_eval.trulens_eval.feedback.feedback
+::: trulens_eval.feedback.feedback

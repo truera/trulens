@@ -25,7 +25,7 @@ markdown_extensions:
   # - pymdownx.details
   # - pymdownx.extra
   # - pymdownx.inlinehilite
-  # - pymdownx.magiclink
+  - pymdownx.magiclink
   # - pymdownx.mark
   # - pymdownx.smartsymbols
   - pymdownx.superfences
@@ -51,7 +51,12 @@ plugins:
       handlers:
         python:
           import:
+            # These allow for links to types defined by various packages.
             - https://docs.python.org/3/objects.inv
+            - https://docs.scipy.org/doc/numpy/objects.inv
+            - https://api.python.langchain.com/en/latest/objects.inv
+            - http://pandas.pydata.org/pandas-docs/stable/objects.inv
+            - https://docs.pydantic.dev/latest/objects.inv
           options:
             allow_inspection: true
             separate_signature: true
@@ -63,6 +68,9 @@ plugins:
             summary: true
             show_source: true
             show_root_heading: false
+          paths:
+            - trulens_explain
+            - trulens_eval
           selection:
             filters:
               - "!^_" # exlude all members starting with _

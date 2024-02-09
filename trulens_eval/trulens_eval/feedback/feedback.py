@@ -374,7 +374,7 @@ class Feedback(FeedbackDefinition):
         assert self.imp is not None, "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
 
-    def aggregate(self, func: Callable) -> 'Feedback':
+    def aggregate(self, func: Callable) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
         generate more than one value for implementation argument(s).

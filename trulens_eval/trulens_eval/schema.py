@@ -803,7 +803,7 @@ class AppDefinition(WithClassInfo, SerialModel):
         # it is considered an `AppDefinition` and is thus using this definition
         # of `dict` instead of the one in `app.App`.
 
-        from trulens_eval.trulens_eval import app
+        from trulens_eval import app
         if isinstance(self, app.App):
             return jsonify(self, instrument=self.instrument)
         else:

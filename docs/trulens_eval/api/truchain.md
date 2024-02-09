@@ -1,3 +1,3 @@
 # Tru Chain
 
-::: trulens_eval.trulens_eval.tru_chain
+::: trulens_eval.tru_chain
