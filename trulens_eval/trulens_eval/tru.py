@@ -383,7 +383,7 @@ class Tru(SingletonPerName):
                 # If result already present, set status to done.
                 kwargs['status'] = FeedbackResultStatus.DONE
 
-            feedback_or_future_result = FeedbackResult(**kwargs)
+            feedback_result_or_future = FeedbackResult(**kwargs)
 
         else:
             if isinstance(feedback_result_or_future, Future):
