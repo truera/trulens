@@ -459,6 +459,7 @@ class Dummy(Huggingface):
         overloaded_prob: float = 1 / 100,
         alloc: int = 1024 * 1024,
         rpm: float = 600,
+        delay: float = 1.0,
         **kwargs
     ):
         kwargs['name'] = name or "dummyhugs"
