@@ -31,12 +31,14 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.chat_engine.types import StreamingAgentChatResponse
     from llama_index.embeddings.base import BaseEmbedding
     from llama_index.indices.base import BaseIndex
+    # retriever
+    from llama_index.core.base_retriever import BaseRetriever
+    from llama_index.core.base_retriever import RetrieverComponent
     # misc
-    from llama_index.indices.base_retriever import BaseRetriever
     from llama_index.indices.prompt_helper import PromptHelper
-    from llama_index.indices.query.base import BaseQueryEngine
+    from llama_index.core.base_query_engine import BaseQueryEngine
+    from llama_index.core.base_query_engine import QueryEngineComponent
     from llama_index.indices.query.schema import QueryBundle
-    from llama_index.indices.query.schema import QueryType
     from llama_index.indices.service_context import ServiceContext
     from llama_index.llm_predictor import LLMPredictor
     from llama_index.llm_predictor.base import BaseLLMPredictor
@@ -50,7 +52,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.prompts.base import Prompt
     from llama_index.question_gen.types import BaseQuestionGenerator
     from llama_index.response.schema import Response
-    from llama_index.response.schema import RESPONSE_TYPE
     from llama_index.response.schema import StreamingResponse
     from llama_index.response_synthesizers.base import BaseSynthesizer
     from llama_index.response_synthesizers.refine import Refine
@@ -107,7 +108,8 @@ class LlamaInstrument(Instrument):
             BaseTool,
             BaseMemory,
             WithFeedbackFilterNodes,
-            BaseNodePostprocessor
+            BaseNodePostprocessor,
+            QueryEngineComponent
         }.union(LangChainInstrument.Default.CLASSES())
 
         # Instrument only methods with these names and of these classes. Ok to
@@ -187,6 +189,10 @@ class LlamaInstrument(Instrument):
                 # BaseNodePostProcessor
                 "_postprocess_nodes":
                     lambda o: isinstance(o, (BaseNodePostprocessor)),
+
+                # Components
+                "_run_component":
+                    lambda o: isinstance(o, (QueryEngineComponent, RetrieverComponent))
             },
             LangChainInstrument.Default.METHODS
         )
