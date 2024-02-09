@@ -37,7 +37,7 @@ def score_passages(df, feedback_func_name, feedback_func, backoff_time=0.5, n=5,
                 sampled_score = sum(sampled_scores) / len(sampled_scores)
             query_scores.append(sampled_score)
             query_relevance.append(row['is_selected'])
-            print(f"Feedback avg score for query {name} is {sampled_score}, is_selected is {row['is_selected']}")
+            # print(f"Feedback avg score for query {name} is {sampled_score}, is_selected is {row['is_selected']}")
         
         print(f"Query {name} scored {len(query_scores)} out of {len(group)} passages.")
         scores.append(query_scores)
