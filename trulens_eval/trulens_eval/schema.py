@@ -28,7 +28,7 @@ import logging
 from pprint import PrettyPrinter
 from typing import (
     Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
-    Type, TYPE_CHECKING, TypeVar, Union
+    Type, TypeVar, Union
 )
 
 import dill

@@ -15,7 +15,7 @@ import threading
 from threading import Thread
 from time import sleep
 from typing import (
-    Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 )
 import warnings
 
@@ -56,17 +56,67 @@ def humanize_seconds(seconds: float):
 
 
 class Tru(SingletonPerName):
-    """
-    Tru is the main class that provides an entry points to trulens-eval. Tru lets you:
+    """Tru is the main class that provides an entry points to trulens-eval.
+    
+    Tru lets you:
 
-    * Log app prompts and outputs
-    * Log app Metadata
-    * Run and log feedback functions
-    * Run streamlit dashboard to view experiment results
+    - Log app prompts and outputs
+    - Log app Metadata
+    - Run and log feedback functions
+    - Run streamlit dashboard to view experiment results
 
-    By default, all data is logged to the current working directory to `default.sqlite`. 
-    Data can be logged to a SQLAlchemy-compatible referred to by `database_url`.
+    By default, all data is logged to the current working directory to
+    `default.sqlite`. Data can be logged to a SQLAlchemy-compatible referred to
+    by `database_url`.
+
+    Supported App Types:
+
+    - `TruChain` / `Tru.Chain` -- Langchain apps.
+
+    - `TruLlama` / `Tru.Llama` -- Llama Index apps.
+
+    - `TruBasicApp` / `Tru.Basic` -- Basic apps defined solely using a
+      text_to_text function.
+
+    - `TruCustomApp` / `Tru.Custom` -- Custom apps containing custom structures
+      and methods. Requres annotation of methods to instrument.
+
+    - `TruVirtualApp` / `Tru.Virtual` -- Virtual apps that do not have a real
+      app to instrument but have a virtual structure and can log existing
+      captured data as if they were trulens records.
+
+    Args:
+        database_url: Database URL. Defaults to a local SQLite
+            database file at 'default.sqlite' See [this
+            article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
+            on SQLAlchemy database URLs. (defaults to
+            `sqlite://DEFAULT_DATABASE_FILE`).
+
+        database_file: (Deprecated) Path to a local SQLite database file.
+
+        database_redact_keys: Whether to redact secret keys in data to be
+            written to database (defaults to `False`)
+
+    Attributes:
+        DEFAULT_DATABASE_FILE (str): Initially `"default.sqlite"`.
+
+        RETRY_RUNNING_SECONDS (float): Initially `60.0` (seconds).
+
+        RETRY_FAILED_SECONDS (float): Initially `5 * 60.0` (seconds).
+
+        DEFERRED_NUM_RUNS (int): Initially `32`.
+
+        evaluator_proc (Optional[Process]): `Process` or Thread of the deferred
+            feedback evaluator if started. `None` if not running.
+
+        dashboard_proc (Optional[Process]): `Process` of the dashboard app if
+            started. None if not running.
+
+        db (SqlAlchemyDB): Database supporting this workspace.
+
+
     """
+
     DEFAULT_DATABASE_FILE = "default.sqlite"
 
     # How long to time before restarting a feedback function that has already
@@ -87,76 +137,13 @@ class Tru(SingletonPerName):
     # Process of the dashboard app.
     dashboard_proc = None
 
-    def Chain(self, chain, **kwargs):
-        """
-        Create a langchain app recorder (`TruChain`) with database managed by
-        self.
-        """
-
-        from trulens_eval.tru_chain import TruChain
-
-        return TruChain(tru=self, app=chain, **kwargs)
-
-    def Llama(self, engine, **kwargs):
-        """
-        Create a llama_index app recorder (`TruLlama`) with database managed by
-        self.
-        """
-
-        from trulens_eval.tru_llama import TruLlama
-
-        return TruLlama(tru=self, app=engine, **kwargs)
-
-    def Basic(self, text_to_text, **kwargs):
-        """
-        Create a basic app recorder (`TruBasicApp`) with database managed by
-        self.
-        """
-
-        from trulens_eval.tru_basic_app import TruBasicApp
-
-        return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
-
-    def Custom(self, app, **kwargs):
-        """
-        Create a custom app recorder (`TruCustomApp`) with database managed by
-        self.
-        """
-
-        from trulens_eval.tru_custom_app import TruCustomApp
-
-        return TruCustomApp(tru=self, app=app, **kwargs)
-
-    def Virtual(self, app, **kwargs):
-        """
-        Create a virtual app recorder (`TruVirtualApp`) with database managed by
-        self.
-        """
-
-        from trulens_eval.tru_virtual import TruVirtual
-
-        return TruVirtual(tru=self, app=app, **kwargs)
-
     def __init__(
         self,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
         database_redact_keys: bool = False
     ):
-        """
-        TruLens instrumentation, logging, and feedback functions for apps.
 
-        Args:
-           - database_url: SQLAlchemy database URL. Defaults to a local
-                SQLite database file at 'default.sqlite' See [this
-                article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
-                on SQLAlchemy database URLs.
-
-           - database_file: (Deprecated) Path to a local SQLite database file
-
-           - database_redact_keys: whether to redact secret keys in data to be
-             written to database.
-        """
         if safe_hasattr(self, "db"):
             if database_url is not None or database_file is not None:
                 logger.warning(
@@ -201,6 +188,88 @@ class Tru(SingletonPerName):
                 "See the `database_redact_keys` option of `Tru` to prevent this."
             )
 
+    def Chain(self, chain: 'langchain.chains.base.Chain', **kwargs):
+        """Create a langchain app recorder with database managed by self.
+
+        Args:
+            chain: The langchain chain defining the app to be instrumented.
+
+            **kwargs: Additional keyword arguments to pass to the `TruChain`
+        """
+
+        from trulens_eval.tru_chain import TruChain
+
+        return TruChain(tru=self, app=chain, **kwargs)
+
+    def Llama(
+        self,
+        engine: Union[
+            'llama_index.indices.query.base.BaseQueryEngine',
+            'llama_index.chat_engine.types.BaseChatEngine'
+        ], **kwargs
+    ):
+        """Create a llama_index app recorder with database managed by self.
+
+        Args:
+            engine: The llama_index engine defining
+                the app to be instrumented.
+
+            **kwargs: Additional keyword arguments to pass to `TruLlama`.
+        """
+
+        from trulens_eval.tru_llama import TruLlama
+
+        return TruLlama(tru=self, app=engine, **kwargs)
+
+    def Basic(self, text_to_text: Callable[[str], str], **kwargs):
+        """Create a basic app recorder with database managed by self.
+
+        Args:
+            text_to_text: A function that takes a string and returns a string.
+                The wrapped app's functionality is expected to be entirely in
+                this function.
+
+            **kwargs: Additional keyword arguments to pass to `TruBasicApp`.
+        """
+
+        from trulens_eval.tru_basic_app import TruBasicApp
+
+        return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
+
+    def Custom(self, app: Any, **kwargs):
+        """Create a custom app recorder with database managed by self.
+
+        Args:
+            app: The app to be instrumented. This can be any python object.
+
+            **kwargs: Additional keyword arguments to pass to `TruCustomApp`.
+        """
+
+        from trulens_eval.tru_custom_app import TruCustomApp
+
+        return TruCustomApp(tru=self, app=app, **kwargs)
+
+    def Virtual(self, app: Union['trulens_eval.tru_virtual.TruVirtual', Dict], **kwargs):
+        """Create a virtual app recorder with database managed by self.
+
+        Args:
+            app: The app to be instrumented. If not a `TruVirtual`, it is passed
+                to `TruVirtual` constructor to create it.
+
+            **kwargs: Additional keyword arguments to pass to `TruVirtual`.
+        """
+
+        from trulens_eval.tru_virtual import TruVirtual
+
+        return TruVirtual(tru=self, app=app, **kwargs)
+
+    # Aliases
+    TruChain = Chain
+    TruLlama = Llama
+    TruBasicApp = Basic
+    TruCustomApp = Custom
+    TruVirtualApp = Virtual
+
     def reset_database(self):
         """
         Reset the database. Clears all tables.
@@ -209,25 +278,27 @@ class Tru(SingletonPerName):
         self.db.reset_database()
 
     def migrate_database(self):
-        """
-        Migrates the database. This should be run whenever there are breaking
-        changes in a database created with an older version of trulens_eval.
+        """Migrates the database.
+        
+        This should be run whenever there are breaking changes in a database
+        created with an older version of trulens_eval.
         """
 
         self.db.migrate_database()
 
     def add_record(self, record: Optional[Record] = None, **kwargs):
-        """
-        Add a record to the database.
+        """Add a record to the database.
 
-        Args:
-        
-            record: Record
+        # Args
+    
+            record: The record to add.
 
-            **kwargs: Record fields.
+            **kwargs: Record fields to add to the given record or a new record
+                if no `record` provided.
             
-        Returns:
-            RecordID: Unique record identifier.
+        # Returns
+        
+        RecordID (`str` alias) Unique record identifier.
 
         """
 
@@ -249,10 +320,22 @@ class Tru(SingletonPerName):
         app: Optional[AppDefinition] = None,
         on_done: Optional[Callable[[Future[FeedbackResult]], None]] = None
     ) -> List[Tuple[Feedback, Future[FeedbackResult]]]:
-        """
-        Schedules to run the given feedback functions. Produces a list of tuples
-        where the first item in each tuple is the feedback function and the
-        second is the future of the feedback result.
+        """Schedules to run the given feedback functions.
+        
+        Args:
+            record: The record on which to evaluate the feedback functions.
+
+            feedback_functions: A collection of feedback functions to evaluate.
+
+            app: The app that produced the given record. If not provided, it is
+                looked up from the database of this `Tru` instance
+
+            on_done: A callback to call when each feedback function is done.
+
+        Returns:
+        
+        Produces a list of tuples where the first item in each tuple is the
+        feedback function and the second is the future of the feedback result.
         """
 
         app_id = record.app_id
@@ -538,8 +621,7 @@ class Tru(SingletonPerName):
                 unit="feedbacks",
                 total=queue_total,
                 postfix={
-                    status.name: count
-                    for status, count in queue_stats.items()
+                    status.name: count for status, count in queue_stats.items()
                 }
             )
 
@@ -608,7 +690,9 @@ class Tru(SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {name: count for name, count in runs_stats.items()}
+                    {
+                        name: count for name, count in runs_stats.items()
+                    }
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()

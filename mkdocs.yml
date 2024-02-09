@@ -51,6 +51,7 @@ plugins:
               - "^__call__$" # and __call__ methods
       watch:
         - trulens_explain/trulens
+        - trulens_eval/trulens_eval
   - search
 
 theme:
@@ -130,6 +131,7 @@ nav:
           - TruChain: trulens_eval/api/truchain.md
           - TruLlama: trulens_eval/api/trullama.md
           - TruCustom: trulens_eval/api/trucustom.md
+          - TruVirtual: trulens_eval/api/truvirtual.md
   - 🔍 Guides:
       - Any LLM App: trulens_eval/use_cases_any.md
       - RAGs: trulens_eval/use_cases_rag.md
