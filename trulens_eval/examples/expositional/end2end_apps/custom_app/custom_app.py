@@ -32,8 +32,8 @@ class CustomApp:
     def __init__(self, delay: float = 0.05, alloc: int = 1024 * 1024):
         self.delay = delay  # controls how long to delay certain operations to make it look more realistic
         self.alloc = alloc  # controls how much memory to allocate during some operations
-        self.memory = CustomMemory(delay=delay/20.0, alloc=alloc)
-        self.retriever = CustomRetriever(delay=delay/4.0, alloc=alloc)
+        self.memory = CustomMemory(delay=delay / 20.0, alloc=alloc)
+        self.retriever = CustomRetriever(delay=delay / 4.0, alloc=alloc)
         self.llm = CustomLLM(delay=delay, alloc=alloc)
         self.template = CustomTemplate(
             "The answer to {question} is probably {answer} or something ..."
