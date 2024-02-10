@@ -5,39 +5,58 @@ Utilities related to core python functionalities.
 from __future__ import annotations
 
 import asyncio
+from concurrent import futures
 import inspect
 import logging
 from pprint import PrettyPrinter
 import queue
 import sys
-from typing import (
-    Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
-    TypeVar
-)
+from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
+                    Sequence, Type, TypeVar)
 
 if sys.version_info >= (3, 9):
-    from concurrent.futures import Future
-    from queue import Queue
+    Future = futures.Future
+    """Alias for concurrent.futures.Future ."""
+
+    Queue = queue.Queue
+    """Alias for queue.Queue ."""
+
+    import types
+    NoneType = types.NoneType
+    """Alias for types.NoneType ."""
 
 else:
+    NoneType = type(None)
+    """Type of `None`"""
+
     # Fake classes which can have type args. In python earlier than 3.9, the
     # classes imported above cannot have type args which is annoying for type
     # annotations. We use these fake ones instead.
 
     A = TypeVar("A")
 
-    class Future(Generic[A]):
-        pass
+    # HACK011
+    class Future(Generic[A], futures.Future):
+        """Future that can have type args for use in type annotations only.
+        
+        This class is not necessary with python >= 3.9 .
+        """
 
-    class Queue(Generic[A]):
-        pass
+    # HACK012
+    class Queue(Generic[A], queue.Queue):
+        """Queue that can have type args for use in type annotations only.
+        
+        This class is not necessary with python >= 3.9 .
+        """
 
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
+
 Thunk = Callable[[], T]
+"""A function that takes no arguments."""
 
 # Reflection utilities.
 

@@ -44,7 +44,7 @@ watch:
     - trulens_eval/trulens_eval
 
 plugins:
-  - mkdocs-jupyter
+  # - mkdocs-jupyter
   - mkdocstrings:
       # See https://mkdocstrings.github.io/python/usage/configuration/docstrings/ .
       default_handler: python
@@ -57,19 +57,47 @@ plugins:
             - https://api.python.langchain.com/en/latest/objects.inv
             - http://pandas.pydata.org/pandas-docs/stable/objects.inv
             - https://docs.pydantic.dev/latest/objects.inv
+            - https://typing-extensions.readthedocs.io/en/latest/objects.inv
           options:
-            allow_inspection: true
+            extensions:
+            - pydantic: {schema: true}
             separate_signature: true
+            # show_signature: false
+            show_signature_annotations: true
+            signature_crossrefs: true
+
+            # separate_signature: true
             line_length: 80
             docstring_style: google
-            signature_crossrefs: true
-            show_signature_annotations: true
+            docstring_section_style: spacy
+            
             show_symbol_type_heading: true
-            summary: true
-            show_source: true
+            show_symbol_type_toc: true
+            show_attributes: true
+            show_category_heading: true
+            show_submodules: false
+            group_by_category: true
+            # summary: true
+            show_source: false
             show_root_heading: false
+            show_if_no_docstring: true
+            members_order: source
+            # members: true
+            allow_inspection: true
+            # load_external_modules: true
+            # unwrap_annotated: true
+            preload_modules:
+              # - __future__
+              # - builtins
+              # - datetime
+              # - pandas
+              # - numpy # some error occurs
+              # - pydantic
+              # - llama_index
+              - typing
+              - typing_extensions
           paths:
-            - trulens_explain
+            #- trulens_explain
             - trulens_eval
           selection:
             filters:
@@ -150,10 +178,10 @@ nav:
           - Where to Log: trulens_eval/where_to_log.md
           - Logging Methods: trulens_eval/logging.ipynb
       - API Reference:
-          - Tru: trulens_eval/api/tru.md
+          - 🦑 Tru: trulens_eval/api/tru.md
           - TruBasicApp: trulens_eval/api/trubasicapp.md
-          - TruChain: trulens_eval/api/truchain.md
-          - TruLlama: trulens_eval/api/trullama.md
+          - 🦜️🔗 TruChain: trulens_eval/api/truchain.md
+          - 🦙 TruLlama: trulens_eval/api/trullama.md
           - TruCustom: trulens_eval/api/trucustom.md
           - TruVirtual: trulens_eval/api/truvirtual.md
           - Feedback: trulens_eval/api/feedback.md

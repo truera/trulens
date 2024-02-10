@@ -5,7 +5,7 @@ Log existing results with trulens_eval and run evals against them.
 """
 
 from concurrent import futures
-from datetime import datetime
+import datetime
 import logging
 from pprint import PrettyPrinter
 import time
@@ -119,12 +119,12 @@ class VirtualRecord(Record):
     def __init__(self, calls: Dict[serial.Lens, Dict], **kwargs):
         root_call = RecordAppCallMethod(path=serial.Lens(), method=virtual_method_root)
 
-        start_time = datetime.now()
+        start_time = datetime.datetime.now()
 
         record_calls = []
 
         for lens, call in calls.items():
-            substart_time = datetime.now()
+            substart_time = datetime.datetime.now()
 
             # NOTE(piotrm for garrett): that the dashboard timeline has problems
             # with calls that span too little time so we add some delays to the
@@ -150,7 +150,7 @@ class VirtualRecord(Record):
             if "tid" not in call:
                 call['tid'] = 0
 
-            subend_time = datetime.now()
+            subend_time = datetime.datetime.now()
 
             if "perf" not in call:
                 call['perf'] = Perf(
@@ -160,7 +160,7 @@ class VirtualRecord(Record):
             rinfo = RecordAppCall(**call)
             record_calls.append(rinfo)
 
-        end_time = datetime.now()
+        end_time = datetime.datetime.now()
 
         if "cost" not in kwargs:
             kwargs['cost'] = Cost()
@@ -310,14 +310,14 @@ class TruVirtual(App):
         return record
 
 
-TruVirtual.model_rebuild()
+# TruVirtual.model_rebuild()
 
 # Need these to make sure rebuild below works.
 # TODO: Figure out whether any of this is needed.
-from typing import List, Tuple
+# from typing import List, Tuple
 
-from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.utils.python import Future
+# from trulens_eval.schema import FeedbackDefinition
+# from trulens_eval.schema import FeedbackResult
+# from trulens_eval.utils.python import Future
 
-VirtualRecord.model_rebuild()
+# VirtualRecord.model_rebuild()

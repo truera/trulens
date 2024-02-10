@@ -1,7 +1,7 @@
 # Style, Documentation, Testing Standards
 
 Enumerations of standards for code and its documentation to be maintained in
-`trulens_eval`.
+`trulens_eval`. Ongoing work aims at adapting these standards to existing code.
 
 ## Python
 
@@ -20,7 +20,21 @@ Enumerations of standards for code and its documentation to be maintained in
     COLUMN_LIMIT=80
     ```
 
+### Imports
+
 - Use `isort` to organize import statements.
+
+- Generally import modules only as per
+  <https://google.github.io/styleguide/pyguide.html#22-imports> with some
+  exceptions:
+  
+    - Very standard names like types from python or widely used packages. Also
+      names meant to stand in for them.
+    - Other exceptions in the google style guide above.
+
+- Use full paths when importing internally
+  <https://google.github.io/styleguide/pyguide.html#23-packages>. Aliases still
+  ok for external users.
 
 ### Docstrings
 

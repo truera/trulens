@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from collections import defaultdict
-#from concurrent.futures import TimeoutError
 from concurrent import futures
 from datetime import datetime
 from datetime import timedelta
@@ -13,8 +14,9 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
+from typing import (Any, Callable, Dict, Iterable, List, NewType, Optional, Sequence,
                     Tuple, Union)
+from typing_extensions import Annotated, Doc, TypeAlias
 import warnings
 
 import humanize
@@ -29,21 +31,19 @@ from trulens_eval.feedback import feedback
 from trulens_eval.utils import notebook_utils
 from trulens_eval.utils import python
 from trulens_eval.utils import text
-from trulens_eval.utils.python import Future
-from trulens_eval.utils.threading import TP
+from trulens_eval.utils import threading as tru_threading
+from trulens_eval.utils import serial
+from trulens_eval.utils.python import Future  # code style exception
 
 pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
 
-# How long to wait (seconds) for streamlit to print out url when starting the
-# dashboard.
-DASHBOARD_START_TIMEOUT = 30
-
+DASHBOARD_START_TIMEOUT: Annotated[int, Doc("Seconds to wait for dashboard to start")] \
+    = 30
 
 def humanize_seconds(seconds: float):
     return humanize.naturaldelta(timedelta(seconds=seconds))
-
 
 class Tru(python.SingletonPerName):
     """Tru is the main class that provides an entry points to trulens-eval.
@@ -56,8 +56,8 @@ class Tru(python.SingletonPerName):
     - Run streamlit dashboard to view experiment results
 
     By default, all data is logged to the current working directory to
-    `default.sqlite`. Data can be logged to a SQLAlchemy-compatible referred to
-    by `database_url`.
+    `"default.sqlite"`. Data can be logged to a SQLAlchemy-compatible url
+    referred to by `database_url`.
 
     Supported App Types:
 
@@ -81,7 +81,7 @@ class Tru(python.SingletonPerName):
 
     Args:
         database_url: Database URL. Defaults to a local SQLite
-            database file at 'default.sqlite' See [this
+            database file at `"default.sqlite"` See [this
             article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
             on SQLAlchemy database URLs. (defaults to
             `sqlite://DEFAULT_DATABASE_FILE`).
@@ -91,48 +91,40 @@ class Tru(python.SingletonPerName):
         database_redact_keys: Whether to redact secret keys in data to be
             written to database (defaults to `False`)
 
-    Attributes:
-        DEFAULT_DATABASE_FILE (str): Initially `"default.sqlite"`.
-
-        RETRY_RUNNING_SECONDS (float): Initially `60.0` (seconds).
-
-        RETRY_FAILED_SECONDS (float): Initially `5 * 60.0` (seconds).
-
-        DEFERRED_NUM_RUNS (int): Initially `32`.
-
-        evaluator_proc (Optional[Process]): `Process` or Thread of the deferred
-            feedback evaluator if started. `None` if not running.
-
-        dashboard_proc (Optional[Process]): `Process` of the dashboard app if
-            started. None if not running.
-
-        db (sqlalchemy_db.SqlAlchemyDB): Database supporting this workspace.
-
-
     """
 
-    DEFAULT_DATABASE_FILE = "default.sqlite"
+    DEFAULT_DATABASE_FILE: str = "default.sqlite"
 
-    # How long to time before restarting a feedback function that has already
-    # started (but may have stalled or failed in a bad way that did not record the
-    # failure.)
     RETRY_RUNNING_SECONDS: float = 60.0
+    """How long to wait (in seconds) before restarting a feedback function that has already started
+    
+    A feedback function execution that has started may have stalled or failed in a bad way that did not record the
+    failure.
+    """
 
-    # How long to wait to retry a failed feedback function run.
     RETRY_FAILED_SECONDS: float = 5 * 60.0
+    """How long to wait (in seconds) to retry a failed feedback function run."""
 
-    # Max number of futures to wait for when evaluating deferred feedback
-    # functions.
     DEFERRED_NUM_RUNS: int = 32
+    """Number of futures to wait for when evaluating deferred feedback functions."""
 
-    # Process or Thread of the deferred feedback function evaluator.
-    evaluator_proc = None
+    _evaluator_proc: Optional[Union[Process, Thread]] = None
+    """[Process][multiprocessing.Process] or [Thread][threading.Thread] of the deferred feedback evaluator if started.
 
-    # Process of the dashboard app.
-    dashboard_proc = None
+        Is set to `None` if evaluator is not running.
+    """
 
-    # Event for stopping the deferred evaluator which runs in another thread.
-    evaluator_stop: Optional[threading.Event] = None
+    _dashboard_proc: Optional[Process] = None
+    """[Process][multiprocessing.Process] executing the dashboard streamlit app.
+    
+    Is set to `None` if not executing.
+    """
+
+    _evaluator_stop: Optional[threading.Event] = None
+    """Event for stopping the deferred evaluator which runs in another thread."""
+
+    db: db.DB
+    """Database supporting this workspace."""
 
     def __init__(
         self,
@@ -168,7 +160,7 @@ class Tru(python.SingletonPerName):
         if database_url is None:
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
 
-        self.db: sqlalchemy_db.SqlAlchemyDB = sqlalchemy_db.SqlAlchemyDB.from_db_url(
+        self.db: db.DB = sqlalchemy_db.SqlAlchemyDB.from_db_url(
             database_url, redact_keys=database_redact_keys
         )
 
@@ -182,16 +174,21 @@ class Tru(python.SingletonPerName):
         else:
             print(
                 f"{text.UNICODE_STOP} Secret keys may be written to the database. "
-                "See the `database_redact_keys` option of `Tru` to prevent this."
+                "See the `database_redact_keys` option of Tru` to prevent this."
             )
 
-    def Chain(self, chain: 'langchain.chains.base.Chain', **kwargs):
+    def Chain(
+        self,
+        chain: langchain.chains.base.Chain,
+        **kwargs
+    ) -> trulens_eval.tru_chain.TruChain:
         """Create a langchain app recorder with database managed by self.
 
         Args:
             chain: The langchain chain defining the app to be instrumented.
 
-            **kwargs: Additional keyword arguments to pass to the `TruChain`
+            **kwargs: Additional keyword arguments to pass to the
+                [TruChain][trulens_eval.tru_chain.TruChain].
         """
 
         from trulens_eval.tru_chain import TruChain
@@ -201,24 +198,29 @@ class Tru(python.SingletonPerName):
     def Llama(
         self,
         engine: Union[
-            'llama_index.indices.query.base.BaseQueryEngine',
-            'llama_index.chat_engine.types.BaseChatEngine'
+            llama_index.indices.query.base.BaseQueryEngine,
+            llama_index.chat_engine.types.BaseChatEngine
         ], **kwargs
-    ):
-        """Create a llama_index app recorder with database managed by self.
+    ) -> trulens_eval.tru_llama.TruLlama:
+        """Create a llama-index app recorder with database managed by self.
 
         Args:
-            engine: The llama_index engine defining
+            engine: The llama-index engine defining
                 the app to be instrumented.
 
-            **kwargs: Additional keyword arguments to pass to `TruLlama`.
+            **kwargs: Additional keyword arguments to pass to
+                [TruLlama][trulens_eval.tru_llama.TruLlama].
         """
 
         from trulens_eval.tru_llama import TruLlama
 
         return TruLlama(tru=self, app=engine, **kwargs)
 
-    def Basic(self, text_to_text: Callable[[str], str], **kwargs):
+    def Basic(
+        self,
+        text_to_text: Callable[[str], str],
+        **kwargs
+    ) -> trulens_eval.tru_basic_app.TruBasicApp:
         """Create a basic app recorder with database managed by self.
 
         Args:
@@ -226,34 +228,46 @@ class Tru(python.SingletonPerName):
                 The wrapped app's functionality is expected to be entirely in
                 this function.
 
-            **kwargs: Additional keyword arguments to pass to `TruBasicApp`.
+            **kwargs: Additional keyword arguments to pass to
+                [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp].
         """
 
         from trulens_eval.tru_basic_app import TruBasicApp
 
         return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
 
-    def Custom(self, app: Any, **kwargs):
+    def Custom(
+        self,
+        app: Any,
+        **kwargs
+    ) -> trulens_eval.tru_custom_app.TruCustomApp:
         """Create a custom app recorder with database managed by self.
 
         Args:
             app: The app to be instrumented. This can be any python object.
 
-            **kwargs: Additional keyword arguments to pass to `TruCustomApp`.
+            **kwargs: Additional keyword arguments to pass to
+                [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp].
         """
 
         from trulens_eval.tru_custom_app import TruCustomApp
 
         return TruCustomApp(tru=self, app=app, **kwargs)
 
-    def Virtual(self, app: Union['trulens_eval.tru_virtual.VirtualApp', Dict], **kwargs):
+    def Virtual(
+        self,
+        app: Union[trulens_eval.tru_virtual.VirtualApp, Dict], **kwargs
+    ) -> trulens_eval.tru_virtual.TruVirtual:
         """Create a virtual app recorder with database managed by self.
 
         Args:
-            app: The app to be instrumented. If not a `VirtualApp`, it is passed
-                to `VirtualApp` constructor to create it.
+            app: The app to be instrumented. If not a
+                [VirtualApp][trulens_eval.tru_virtual.VirtualApp], it is passed
+                to [VirtualApp][trulens_eval.tru_virtual.VirtualApp] constructor
+                to create it.
 
-            **kwargs: Additional keyword arguments to pass to `TruVirtual`.
+            **kwargs: Additional keyword arguments to pass to
+                [TruVirtual][trulens_eval.tru_virtual.TruVirtual].
         """
 
         from trulens_eval.tru_virtual import TruVirtual
@@ -262,10 +276,19 @@ class Tru(python.SingletonPerName):
 
     # Aliases
     TruChain = Chain
+    """Alias for Chain."""
+
     TruLlama = Llama
+    """Alias for LLama."""
+
     TruBasicApp = Basic
+    """Alias for Basic."""
+
     TruCustomApp = Custom
+    """Alias for Custom."""
+
     TruVirtualApp = Virtual
+    """Alias for Virtual."""
 
     def reset_database(self):
         """Reset the database. Clears all tables."""
@@ -287,12 +310,11 @@ class Tru(python.SingletonPerName):
         Args:
             record: The record to add.
 
-            **kwargs: schema.Record fields to add to the given record or a new record
-                if no `record` provided.
+            **kwargs: [Record][trulens_eval.schema.Record] fields to add to the
+                given record or a new record if no `record` provided.
             
         Returns:
-        
-            schema.RecordID (`str` alias) Unique record identifier.
+            Unique record identifier [str][] .
 
         """
 
@@ -357,7 +379,7 @@ class Tru(python.SingletonPerName):
 
         feedbacks_and_futures = []
 
-        tp: TP = TP()
+        tp: tru_threading.TP = tru_threading.TP()
 
         for ffunc in feedback_functions:
             fut: Future[schema.FeedbackResult] = \
@@ -394,19 +416,25 @@ class Tru(python.SingletonPerName):
 
         Yields:
             One result for each element of `feedback_functions` of
-                `schema.FeedbackResult` if `wait` is enabled (default) or `Future[schema.FeedbackResult]` if `wait` is disabled.
+                [FeedbackResult][trulens_eval.schema.FeedbackResult] if `wait` is enabled (default) or [Future][concurrent.futures.Future] of [FeedbackResult][trulens_eval.schema.FeedbackResult] if `wait` is disabled.
         """
 
-        assert isinstance(record, schema.Record), "record must be a schema.Record."
-        assert isinstance(
-            feedback_functions, Sequence
-        ), "feedback_functions must be a sequence."
-        assert all(
+        if not isinstance(record, schema.Record):
+            raise ValueError("record must be a schema.Record.")
+        
+        if not isinstance(feedback_functions, Sequence):
+            raise ValueError("feedback_functions must be a sequence.")
+        
+        if not all(
             isinstance(ffunc, feedback.Feedback) for ffunc in feedback_functions
-        ), "feedback_functions must be a sequence of feedback.Feedback."
-        assert app is None or isinstance(
-            app, schema.AppDefinition
-        ), "app must be a trulens_eval.schema.AppDefinition."
+        ):
+            raise ValueError("feedback_functions must be a sequence of feedback.Feedback.")
+        
+        if not (app is None or isinstance(app, schema.AppDefinition)):
+            raise ValueError("app must be a trulens_eval.schema.AppDefinition.")
+
+        if not isinstance(wait, bool):
+            raise ValueError("wait must be a bool.")
 
         future_feedback_map: Dict[Future[schema.FeedbackResult], feedback.Feedback] = {
             p[1]: p[0] for p in self._submit_feedback_functions(
@@ -435,13 +463,13 @@ class Tru(python.SingletonPerName):
 
     def add_app(self, app: schema.AppDefinition) -> schema.AppID:
         """
-        Add an app to the database.
+        Add an app to the database and return its unique id.
 
         Args:
             app: The app to add to the database.
 
         Returns:
-            A unique identifier `str`.
+            A unique app identifier [str][].
 
         """
 
@@ -449,24 +477,29 @@ class Tru(python.SingletonPerName):
 
     def add_feedback(
         self,
-        feedback_result_or_future: Optional[Union[schema.FeedbackResult,
-                                                  Future[schema.FeedbackResult]]
-                                           ] = None,
+        feedback_result_or_future: Optional[Union[
+            schema.FeedbackResult,
+            Future[schema.FeedbackResult]
+        ]] = None,
         **kwargs
     ) -> schema.FeedbackResultID:
-        """Add a single feedback result to the database.
+        """Add a single feedback result or future to the database and return its unique id.
         
         Args:
-            feedback_result_or_future: If a `Future` is given, it will wait for
-                the result before adding it to the database. If kwargs are given
-                and a `schema.FeedbackResult` is also given, the kwargs will be used to
-                update the `schema.FeedbackResult`.
+            feedback_result_or_future: If a [Future][concurrent.futures.Future]
+                is given, call will wait for the result before adding it to the
+                database. If `kwargs` are given and a
+                [FeedbackResult][trulens_eval.schema.FeedbackResult] is also
+                given, the `kwargs` will be used to update the
+                [FeedbackResult][trulens_eval.schema.FeedbackResult] otherwise a
+                new one will be created with `kwargs` as arguments to its
+                constructor.
 
             **kwargs: Fields to add to the given feedback result or to create a
-                new `schema.FeedbackResult` with.
+                new [FeedbackResult][trulens_eval.schema.FeedbackResult] with.
 
         Returns:
-            schema.FeedbackResultID: An alias for `str`, a unique identifier.
+            A unique result identifier [str][].
 
         """
 
@@ -498,67 +531,99 @@ class Tru(python.SingletonPerName):
             schema.FeedbackResult,
             Future[schema.FeedbackResult]
         ]]
-    ) -> None:
-        """Add multiple feedback results to the database.
+    ) -> List[schema.FeedbackResultID]:
+        """Add multiple feedback results to the database and return their unique ids.
         
         Args:
-            feedback_results: An iterable of `schema.FeedbackResult` or
-                `Future[schema.FeedbackResult]`. If a `Future` is given, call will
-                wait for the result before adding it to the database.
+            feedback_results: An iterable with each iteration being a [FeedbackResult][trulens_eval.schema.FeedbackResult] or
+                [Future][concurrent.futures.Future] of the same. Each given future will be waited.
+
+        Returns:
+            List of unique result identifiers [str][] in the same order as input
+                `feedback_results`.
         """
 
-        for feedback_result_or_future in feedback_results:
-            self.add_feedback(
-                feedback_result_or_future=feedback_result_or_future
-            )
+        ids = []
 
-    def get_app(self, app_id: schema.AppID) -> db.JSON:
+        for feedback_result_or_future in feedback_results:
+            ids.append(self.add_feedback(
+                feedback_result_or_future=feedback_result_or_future
+            ))
+
+        return ids
+
+    def get_app(self, app_id: schema.AppID) -> serial.JSONized[schema.AppDefinition]:
         """Look up an app from the database.
+
+        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens_eval.schema.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
+        
+        Example:
+            ```python
+            from trulens_eval import schema
+            app_json = tru.get_app(app_id="Custom Application v1")
+            app = schema.AppDefinition.model_validate(app_json)
+            ```
+
+        !!! note "Deserialization"
+            Do not rely on deserializing into [App][trulens_eval.schema.App] as
+            its implementations feature attributes not meant to be deserialized.
         
         Args:
-            app_id: The unique identifier of the app to look up.
+            app_id: The unique identifier [str][] of the app to look up.
+
+        Returns:
+            JSON-ized version of the app.
         """
 
         return self.db.get_app(app_id)
 
-    def get_apps(self) -> Iterable[db.JSON]:
-        """Look up all apps from the database."""
+    def get_apps(self) -> List[serial.JSONized[schema.AppDefinition]]:
+        """Look up all apps from the database.
+        
+        Returns:
+            A list of JSON-ized version of all apps in the database.
+
+        !!! note "Same Deserialization caveats as `get_app`"
+        """
 
         return self.db.get_apps()
 
     def get_records_and_feedback(
-        self, app_ids: List[str]
+        self, app_ids: Optional[List[schema.AppID]] = None
     ) -> Tuple[pandas.DataFrame, List[str]]:
         """Get records, their feeback results, and feedback names.
         
         Args:
-            app_ids: A list of app ids to filter records by. If empty, all
+            app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps' records will be returned.
 
         Returns:
             Dataframe of records with their feedback results.
             
             List of feedback names that are columns in the dataframe.
-
-        Example:
-            ```python
-            tru.get_records_and_feedback(app_ids=[])
-            ```
         """
+
+        if app_ids is None:
+            app_ids = []
 
         df, feedback_columns = self.db.get_records_and_feedback(app_ids)
 
         return df, feedback_columns
 
-    def get_leaderboard(self, app_ids: List[str]):
-        """ Get a leaderboard by app id.
+    def get_leaderboard(self, app_ids: Optional[List[schema.AppID]] = None) -> pandas.DataFrame:
+        """Get a leaderboard for the given apps.
 
-        Pass an empty list of app_ids to return all.
+        Args:
+            app_ids: A list of app ids to filter records by. If empty or not given, all
+                apps will be included in leaderboard.
 
-        ```python
-        tru.get_leaderboard(app_ids=[])
-        ```
+        Returns:
+            Dataframe of apps with their feedback results aggregated.
         """
+
+        if app_ids is None:
+            app_ids = []
+
         df, feedback_cols = self.db.get_records_and_feedback(app_ids)
 
         col_agg_list = feedback_cols + ['latency', 'total_cost']
@@ -575,7 +640,7 @@ class Tru(python.SingletonPerName):
         fork: bool = False
     ) -> Union[Process, Thread]:
         """
-        Start a deferred feedback function evaluation thread.
+        Start a deferred feedback function evaluation thread or process.
 
         Args:
             restart: If set, will stop the existing evaluator before starting a
@@ -585,26 +650,22 @@ class Tru(python.SingletonPerName):
                 thread. NOT CURRENTLY SUPPORTED.
 
         Returns:
-            Union[Process, Thread]: The process or thread that was started.
+            The started process or thread that is executing the deferred feedback
+                evaluator.
 
-        Constants that govern behaviour:
-            `Tru.RETRY_RUNNING_SECONDS: float`: How long to
-                time before restarting a feedback that was started but never failed
-                (or failed without recording that fact).
+        Relevant constants:
+            [RETRY_RUNNING_SECONDS][trulens_eval.tru.Tru.RETRY_RUNNING_SECONDS]
 
-            `Tru.RETRY_FAILED_SECONDS: float`: How long to wait to retry a
-                failed feedback.
+            [RETRY_FAILED_SECONDS][trulens_eval.tru.Tru.RETRY_FAILED_SECONDS]
 
-            `Tru.DEFERRED_NUM_RUNS: int`: Max number of futures to wait for at
-                any time.
+            [DEFERRED_NUM_RUNS][trulens_eval.tru.Tru.DEFERRED_NUM_RUNS]
 
-            `TP.MAX_THREADS: int`: Max number of threads to use. This should be
-                greater than `Tru.DEFERRED_NUM_RUNS`.
+            [MAX_THREADS][trulens_eval.utils.threading.TP.MAX_THREADS]
         """
 
         assert not fork, "Fork mode not yet implemented."
 
-        if self.evaluator_proc is not None:
+        if self._evaluator_proc is not None:
             if restart:
                 self.stop_evaluator()
             else:
@@ -613,10 +674,10 @@ class Tru(python.SingletonPerName):
                 )
 
         if not fork:
-            self.evaluator_stop = threading.Event()
+            self._evaluator_stop = threading.Event()
 
         def runloop():
-            assert self.evaluator_stop is not None
+            assert self._evaluator_stop is not None
 
             print(
                 f"Will keep max of "
@@ -624,7 +685,7 @@ class Tru(python.SingletonPerName):
             )
             print(
                 f"Tasks are spread among max of "
-                f"{TP.MAX_THREADS} thread(s)."
+                f"{tru_threading.TP.MAX_THREADS} thread(s)."
             )
             print(
                 f"Will rerun running feedbacks after "
@@ -666,7 +727,7 @@ class Tru(python.SingletonPerName):
 
             futures_map: Dict[Future[schema.FeedbackResult], pandas.Series] = dict()
 
-            while fork or not self.evaluator_stop.is_set():
+            while fork or not self._evaluator_stop.is_set():
 
                 if len(futures_map) < self.DEFERRED_NUM_RUNS:
                     # Get some new evals to run if some already completed by now.
@@ -764,7 +825,7 @@ class Tru(python.SingletonPerName):
                     if fork:
                         sleep(10)
                     else:
-                        self.evaluator_stop.wait(10)
+                        self._evaluator_stop.wait(10)
 
             print("Evaluator stopped.")
 
@@ -776,7 +837,7 @@ class Tru(python.SingletonPerName):
 
         # Start a persistent thread or process that evaluates feedback functions.
 
-        self.evaluator_proc = proc
+        self._evaluator_proc = proc
         proc.start()
 
         return proc
@@ -788,80 +849,18 @@ class Tru(python.SingletonPerName):
         Stop the deferred feedback evaluation thread.
         """
 
-        if self.evaluator_proc is None:
+        if self._evaluator_proc is None:
             raise RuntimeError("Evaluator not running this process.")
 
-        if isinstance(self.evaluator_proc, Process):
-            self.evaluator_proc.terminate()
+        if isinstance(self._evaluator_proc, Process):
+            self._evaluator_proc.terminate()
 
-        elif isinstance(self.evaluator_proc, Thread):
-            self.evaluator_stop.set()
-            self.evaluator_proc.join()
-            self.evaluator_stop = None
+        elif isinstance(self._evaluator_proc, Thread):
+            self._evaluator_stop.set()
+            self._evaluator_proc.join()
+            self._evaluator_stop = None
 
-        self.evaluator_proc = None
-
-    def stop_dashboard(self, force: bool = False) -> None:
-        """
-        Stop existing dashboard(s) if running.
-
-        Args:
-            force: bool: Also try to find any other dashboard processes not
-              started in this notebook and shut them down too.
-
-        Raises:
-             ValueError: Dashboard is not running.
-        """
-        if Tru.dashboard_proc is None:
-            if not force:
-                raise ValueError(
-                    "Dashboard not running in this workspace. "
-                    "You may be able to shut other instances by setting the `force` flag."
-                )
-
-            else:
-                if sys.platform.startswith("win"):
-                    raise RuntimeError(
-                        "Force stop option is not supported on windows."
-                    )
-
-                print("Force stopping dashboard ...")
-                import os
-                import pwd  # PROBLEM: does not exist on windows
-
-                import psutil
-                username = pwd.getpwuid(os.getuid())[0]
-                for p in psutil.process_iter():
-                    try:
-                        cmd = " ".join(p.cmdline())
-                        if "streamlit" in cmd and "Leaderboard.py" in cmd and p.username(
-                        ) == username:
-                            print(f"killing {p}")
-                            p.kill()
-                    except Exception as e:
-                        continue
-
-        else:
-            Tru.dashboard_proc.kill()
-            Tru.dashboard_proc = None
-
-    def run_dashboard_in_jupyter(self):
-        """
-        Experimental approach to attempt to display the dashboard inside a
-        jupyter notebook. Relies on the `streamlit_jupyter` package.
-        """
-        # EXPERIMENTAL
-        # TODO: check for jupyter
-
-        logger.warning(
-            "Running dashboard inside a notebook is an experimental feature and may not work well."
-        )
-
-        from streamlit_jupyter import StreamlitPatcher
-        StreamlitPatcher().jupyter()
-        from trulens_eval import Leaderboard
-
-        Leaderboard.main()
+        self._evaluator_proc = None
 
     def run_dashboard(
         self,
@@ -873,21 +872,26 @@ class Tru(python.SingletonPerName):
         """Run a streamlit dashboard to view logged results and apps.
 
         Args:
-           port: Port number to pass to streamlit through server.port.
+           port: Port number to pass to streamlit through `server.port`.
 
-           address: Address to pass to streamlit through server.address. Note that if the address cannot be given if running from a colab notebook.
+           address: Address to pass to streamlit through `server.address`.
+           
+               **Address cannot be set if running from a colab
+               notebook.**
         
            force: Stop existing dashboard(s) first. Defaults to `False`.
 
            _dev: If given, run dashboard with the given
-              PYTHONPATH. This can be used to run the dashboard from outside of
-              its pip package installation folder.
+              `PYTHONPATH`. This can be used to run the dashboard from outside
+              of its pip package installation folder.
 
         Returns:
-            Process: `Process` executing the streamlit dashboard.
+            The [Process][multiprocessing.Process] executing the streamlit
+                dashboard.
 
         Raises:
-            ValueError: Dashboard is already running. Can be avoided if `force` is set.
+            RuntimeError: Dashboard is already running. Can be avoided if `force`
+                is set.
 
         """
 
@@ -935,9 +939,9 @@ class Tru(python.SingletonPerName):
             'trulens_eval', 'Leaderboard.py'
         )
 
-        if Tru.dashboard_proc is not None:
+        if Tru._dashboard_proc is not None:
             print("Dashboard already running at path:", Tru.dashboard_urls)
-            return Tru.dashboard_proc
+            return Tru._dashboard_proc
 
         env_opts = {}
         if _dev is not None:
@@ -1062,7 +1066,7 @@ class Tru(python.SingletonPerName):
         Tru.dashboard_listener_stdout.start()
         Tru.dashboard_listener_stderr.start()
 
-        Tru.dashboard_proc = proc
+        Tru._dashboard_proc = proc
 
         wait_period = DASHBOARD_START_TIMEOUT
         if IN_COLAB:
@@ -1071,7 +1075,7 @@ class Tru(python.SingletonPerName):
 
         # This might not work on windows.
         if not started.wait(timeout=wait_period):
-            Tru.dashboard_proc = None
+            Tru._dashboard_proc = None
             raise RuntimeError(
                 "Dashboard failed to start in time. "
                 "Please inspect dashboard logs for additional information."
@@ -1080,3 +1084,50 @@ class Tru(python.SingletonPerName):
         return proc
 
     start_dashboard = run_dashboard
+
+
+    def stop_dashboard(self, force: bool = False) -> None:
+        """
+        Stop existing dashboard(s) if running.
+
+        Args:
+            force: Also try to find any other dashboard processes not
+                started in this notebook and shut them down too.
+              
+                **This option is not supported under windows.**
+
+        Raises:
+             RuntimeError: Dashboard is not running in the current process. Can be avoided with `force`.
+        """
+        if Tru._dashboard_proc is None:
+            if not force:
+                raise RuntimeError(
+                    "Dashboard not running in this workspace. "
+                    "You may be able to shut other instances by setting the `force` flag."
+                )
+
+            else:
+                if sys.platform.startswith("win"):
+                    raise RuntimeError(
+                        "Force stop option is not supported on windows."
+                    )
+
+                print("Force stopping dashboard ...")
+                import os
+                import pwd  # PROBLEM: does not exist on windows
+
+                import psutil
+                username = pwd.getpwuid(os.getuid())[0]
+                for p in psutil.process_iter():
+                    try:
+                        cmd = " ".join(p.cmdline())
+                        if "streamlit" in cmd and "Leaderboard.py" in cmd and p.username(
+                        ) == username:
+                            print(f"killing {p}")
+                            p.kill()
+                    except Exception as e:
+                        continue
+
+        else:
+            Tru._dashboard_proc.kill()
+            Tru._dashboard_proc = None

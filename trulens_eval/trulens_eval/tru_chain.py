@@ -368,4 +368,5 @@ class TruChain(App):
         )
 
 
-TruChain.model_rebuild()
+# from trulens_eval.utils import serial
+# TruChain.model_rebuild()
