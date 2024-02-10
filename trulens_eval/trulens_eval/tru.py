@@ -14,7 +14,7 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Iterable, List, NewType, Optional,
+from typing import (Any, Callable, Dict, Iterable, List, Optional,
                     Sequence, Tuple, Union)
 import warnings
 
@@ -24,7 +24,6 @@ import pkg_resources
 from tqdm.auto import tqdm
 from typing_extensions import Annotated
 from typing_extensions import Doc
-from typing_extensions import TypeAlias
 
 from trulens_eval import db
 from trulens_eval import schema
