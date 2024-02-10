@@ -27,10 +27,10 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import Module
 from trulens_eval.utils.pyschema import Obj
-from trulens_eval.utils.serial import GetAttribute
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import Lens
+from trulens_eval.utils import serial
+
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,9 @@ class VirtualApp(dict):
     will refer to this class as the wrapped app. All calls will be under `VirtualApp.root` 
     """
 
-    def __setitem__(self, __name: Union[str, Lens], __value: Any) -> None:
+    def __setitem__(self, __name: Union[str, serial.Lens], __value: Any) -> None:
         """
-        Allow setitem to work on Lenses instead of just strings. Uses Lens.set
+        Allow setitem to work on Lenses instead of just strings. Uses `Lens.set`
         if a lens is given.
         """
 
@@ -58,7 +58,7 @@ class VirtualApp(dict):
         # Chop off "app" prefix if there.
         if isinstance(__name.path[0], GetItemOrAttribute) \
             and __name.path[0].get_item_or_attribute() == "app":
-            __name = Lens(path=__name.path[1:])
+            __name = serial.Lens(path=__name.path[1:])
 
         # Does not mutate so need to use dict.update .
         temp = __name.set(self, __value)
@@ -116,8 +116,8 @@ class VirtualRecord(Record):
     ```
     """
 
-    def __init__(self, calls: Dict[Lens, Dict], **kwargs):
-        root_call = RecordAppCallMethod(path=Lens(), method=virtual_method_root)
+    def __init__(self, calls: Dict[serial.Lens, Dict], **kwargs):
+        root_call = RecordAppCallMethod(path=serial.Lens(), method=virtual_method_root)
 
         start_time = datetime.now()
 
@@ -295,9 +295,12 @@ class TruVirtual(App):
         record.app_id = self.app_id
 
         # Creates feedback futures.
-        record.feedback_results = self._handle_record(
-            record, feedback_mode=feedback_mode
+        record.feedback_and_future_results = self._handle_record(
+            record,
+            feedback_mode=feedback_mode
         )
+        if record.feedback_and_future_results is not None:
+            record.feedback_results = [tup[1] for tup in record.feedback_and_future_results]
 
         # Wait for results if mode is WITH_APP.
         if feedback_mode == FeedbackMode.WITH_APP and record.feedback_results is not None:
@@ -310,8 +313,11 @@ class TruVirtual(App):
 TruVirtual.model_rebuild()
 
 # Need these to make sure rebuild below works.
-from typing import List
+# TODO: Figure out whether any of this is needed.
+from typing import List, Tuple
 
-from trulens_eval.schema import TFeedbackResultFuture
+from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import FeedbackResult
+from trulens_eval.utils.python import Future
 
 VirtualRecord.model_rebuild()

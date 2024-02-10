@@ -22,14 +22,13 @@ util.py:CLASS_INFO key.
 
 from __future__ import annotations
 
-from concurrent.futures import Future
 from datetime import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,
-    TYPE_CHECKING, TypeVar, Union
+    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
+    Type, TypeVar, Union
 )
 
 import dill
@@ -44,6 +43,7 @@ from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
@@ -170,13 +170,13 @@ class RecordAppCall(SerialModel):
         return self.top().method
 
 
-class Record(SerialModel):
+class Record(SerialModel, Hashable):
     """
     Each instrumented method call produces one of these "record" instances.
     """
 
     model_config: ClassVar[dict] = dict(
-        # for `Future[FeedbackResult]` = `TFeedbackResultFuture`
+        # for `Future[FeedbackResult]`
         arbitrary_types_allowed=True
     )
 
@@ -204,7 +204,12 @@ class Record(SerialModel):
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
 
-    feedback_results: Optional[List[TFeedbackResultFuture]] = \
+    feedback_and_future_results: Optional[List[Tuple[
+        FeedbackDefinition, Future[FeedbackResult]
+    ]]] = pydantic.Field(None, exclude=True)
+
+    # Only the futures part of the above for backwards compatibility.
+    feedback_results: Optional[List[Future[FeedbackResult]]] = \
         pydantic.Field(None, exclude=True)
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
@@ -215,6 +220,28 @@ class Record(SerialModel):
             record_id = obj_id_of_obj(jsonify(self), prefix="record")
 
         self.record_id = record_id
+
+    def __hash__(self):
+        return hash(self.record_id)
+
+    def wait_for_feedback_results(
+        self
+    ) -> Dict[FeedbackDefinition, FeedbackResult]:
+        """
+        Wait for feedback results to finish and return a mapping of feedback
+        functions to their results.
+        """
+
+        if self.feedback_and_future_results is None:
+            return {}
+
+        ret = {}
+
+        for feedback, future_result in self.feedback_and_future_results:
+            feedback_result = future_result.result()
+            ret[feedback] = feedback_result
+
+        return ret
 
     def layout_calls_as_app(self) -> JSON:
         """
@@ -503,13 +530,7 @@ class FeedbackResult(SerialModel):
         self.feedback_result_id = feedback_result_id
 
 
-if TYPE_CHECKING:
-    TFeedbackResultFuture = Future[FeedbackResult]
-else:
-    TFeedbackResultFuture = Future
-
-
-class FeedbackDefinition(WithClassInfo, SerialModel):
+class FeedbackDefinition(WithClassInfo, SerialModel, Hashable):
     # Serialized parts of a feedback function. The non-serialized parts are in
     # the feedback.py:Feedback class.
 
@@ -572,6 +593,9 @@ class FeedbackDefinition(WithClassInfo, SerialModel):
                 feedback_definition_id = "anonymous_feedback_definition"
 
         self.feedback_definition_id = feedback_definition_id
+
+    def __hash__(self):
+        return hash(self.feedback_definition_id)
 
 
 # App related:
@@ -706,9 +730,7 @@ class AppDefinition(WithClassInfo, SerialModel):
     ) -> 'AppDefinition':
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
         """
-        Create a copy of the json serialized app with the enclosed app being
-        initialized to its initial state before any records are produced (i.e.
-        blank memory).
+        EXPERIMENTAL WORK
         """
 
         app_definition_json['app'] = app
@@ -786,7 +808,7 @@ class AppDefinition(WithClassInfo, SerialModel):
         # it is considered an `AppDefinition` and is thus using this definition
         # of `dict` instead of the one in `app.App`.
 
-        from trulens_eval.trulens_eval import app
+        from trulens_eval import app
         if isinstance(self, app.App):
             return jsonify(self, instrument=self.instrument)
         else:

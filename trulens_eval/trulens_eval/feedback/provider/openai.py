@@ -83,8 +83,8 @@ class OpenAI(LLMProvider, BaseModel):
 
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
-        moderation_response = self.endpoint.run_me(
-            lambda: self.endpoint.client.moderations.create(input=text)
+        moderation_response = self.endpoint.run_in_pace(
+            func=self.endpoint.client.moderations.create, input=text
         )
         return moderation_response.results[0]
 

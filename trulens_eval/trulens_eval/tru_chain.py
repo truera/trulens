@@ -141,7 +141,7 @@ class TruChain(App):
         ```python
          # Code snippet taken from langchain 0.0.281 (API subject to change with new versions)
         from langchain.chains import LLMChain
-        from langchain.llms import OpenAI
+        from langchain_community.llms import OpenAI
         from langchain.prompts import PromptTemplate
         from langchain.prompts.chat import ChatPromptTemplate
         from langchain.prompts.chat import HumanMessagePromptTemplate

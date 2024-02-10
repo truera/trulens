@@ -5,9 +5,9 @@ from typing import Dict, Set, Tuple
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.llms import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
-from langchain.vectorstores import Pinecone
+from langchain_community.llms import OpenAI
+from langchain_community.vectorstores import Pinecone
 import numpy as np
 import openai
 import pinecone
