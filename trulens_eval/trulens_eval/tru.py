@@ -4,7 +4,6 @@ from collections import defaultdict
 from concurrent import futures
 from datetime import datetime
 from datetime import timedelta
-import functools
 import logging
 from multiprocessing import Process
 import os
@@ -15,15 +14,17 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Iterable, List, NewType, Optional, Sequence,
-                    Tuple, Union)
-from typing_extensions import Annotated, Doc, TypeAlias
+from typing import (Any, Callable, Dict, Iterable, List, NewType, Optional,
+                    Sequence, Tuple, Union)
 import warnings
 
 import humanize
 import pandas
 import pkg_resources
 from tqdm.auto import tqdm
+from typing_extensions import Annotated
+from typing_extensions import Doc
+from typing_extensions import TypeAlias
 
 from trulens_eval import db
 from trulens_eval import schema
@@ -31,9 +32,9 @@ from trulens_eval.database import sqlalchemy_db
 from trulens_eval.feedback import feedback
 from trulens_eval.utils import notebook_utils
 from trulens_eval.utils import python
+from trulens_eval.utils import serial
 from trulens_eval.utils import text
 from trulens_eval.utils import threading as tru_threading
-from trulens_eval.utils import serial
 from trulens_eval.utils.python import Future  # code style exception
 
 pp = PrettyPrinter()
