@@ -4,6 +4,7 @@ from collections import defaultdict
 from concurrent import futures
 from datetime import datetime
 from datetime import timedelta
+import functools
 import logging
 from multiprocessing import Process
 import os
@@ -60,24 +61,23 @@ class Tru(python.SingletonPerName):
     referred to by `database_url`.
 
     Supported App Types:
+        [TruChain][trulens_eval.tru_chain.TruChain]: Langchain
+            apps.
 
-    - [TruChain][trulens_eval.tru_chain.TruChain] -- Langchain
-      apps.
+        [TruLlama][trulens_eval.tru_llama.TruLlama]: Llama Index
+            apps.
 
-    - [TruLlama][trulens_eval.tru_llama.TruLlama] -- Llama Index
-      apps.
+        [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp]:
+            Basic apps defined solely using a function from `str` to `str`.
 
-    - [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp] --
-      Basic apps defined solely using a text_to_text function.
+        [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp]:
+            Custom apps containing custom structures and methods. Requres annotation
+            of methods to instrument.
 
-    - [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp] --
-      Custom apps containing custom structures and methods. Requres annotation
-      of methods to instrument.
-
-    - [TruVirtual][trulens_eval.tru_virtual.TruVirtual] -- Virtual
-      apps that do not have a real app to instrument but have a virtual
-      structure and can log existing captured data as if they were trulens
-      records.
+        [TruVirtual][trulens_eval.tru_virtual.TruVirtual]: Virtual
+            apps that do not have a real app to instrument but have a virtual
+            structure and can log existing captured data as if they were trulens
+            records.
 
     Args:
         database_url: Database URL. Defaults to a local SQLite
@@ -86,7 +86,9 @@ class Tru(python.SingletonPerName):
             on SQLAlchemy database URLs. (defaults to
             `sqlite://DEFAULT_DATABASE_FILE`).
 
-        database_file: (Deprecated) Path to a local SQLite database file.
+        database_file: Path to a local SQLite database file.
+
+            **Deprecated**: Use `database_url` instead.
 
         database_redact_keys: Whether to redact secret keys in data to be
             written to database (defaults to `False`)
@@ -94,12 +96,21 @@ class Tru(python.SingletonPerName):
     """
 
     DEFAULT_DATABASE_FILE: str = "default.sqlite"
+    """Filename for default sqlite database.
+
+    The sqlalchemy url for this default local sqlite database is `sqlite:///default.sqlite`.
+    """
 
     RETRY_RUNNING_SECONDS: float = 60.0
     """How long to wait (in seconds) before restarting a feedback function that has already started
     
     A feedback function execution that has started may have stalled or failed in a bad way that did not record the
     failure.
+
+    See also:
+        [start_evaluator][trulens_eval.tru.Tru.start_evaluator]
+
+        [DEFERRED][trulens_eval.schema.FeedbackMode.DEFERRED]
     """
 
     RETRY_FAILED_SECONDS: float = 5 * 60.0
@@ -273,22 +284,6 @@ class Tru(python.SingletonPerName):
         from trulens_eval.tru_virtual import TruVirtual
 
         return TruVirtual(tru=self, app=app, **kwargs)
-
-    # Aliases
-    TruChain = Chain
-    """Alias for Chain."""
-
-    TruLlama = Llama
-    """Alias for LLama."""
-
-    TruBasicApp = Basic
-    """Alias for Basic."""
-
-    TruCustomApp = Custom
-    """Alias for Custom."""
-
-    TruVirtualApp = Virtual
-    """Alias for Virtual."""
 
     def reset_database(self):
         """Reset the database. Clears all tables."""

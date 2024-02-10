@@ -177,7 +177,7 @@ nav:
       - Logging:
           - Where to Log: trulens_eval/where_to_log.md
           - Logging Methods: trulens_eval/logging.ipynb
-      - API Reference:
+      - Class Reference:
           - 🦑 Tru: trulens_eval/api/tru.md
           - TruBasicApp: trulens_eval/api/trubasicapp.md
           - 🦜️🔗 TruChain: trulens_eval/api/truchain.md
