@@ -119,6 +119,11 @@ class Tru(python.SingletonPerName):
     DEFERRED_NUM_RUNS: int = 32
     """Number of futures to wait for when evaluating deferred feedback functions."""
 
+    db: db.DB
+    """Database supporting this workspace."""
+
+    _dashboard_urls: Optional[str] = None
+
     _evaluator_proc: Optional[Union[Process, Thread]] = None
     """[Process][multiprocessing.Process] or [Thread][threading.Thread] of the deferred feedback evaluator if started.
 
@@ -134,8 +139,6 @@ class Tru(python.SingletonPerName):
     _evaluator_stop: Optional[threading.Event] = None
     """Event for stopping the deferred evaluator which runs in another thread."""
 
-    db: db.DB
-    """Database supporting this workspace."""
 
     def __init__(
         self,
@@ -935,7 +938,7 @@ class Tru(python.SingletonPerName):
         )
 
         if Tru._dashboard_proc is not None:
-            print("Dashboard already running at path:", Tru.dashboard_urls)
+            print("Dashboard already running at path:", Tru._dashboard_urls)
             return Tru._dashboard_proc
 
         env_opts = {}
@@ -1028,14 +1031,14 @@ class Tru(python.SingletonPerName):
                             out.append_stdout(line)
                         else:
                             print(line)
-                        Tru.dashboard_urls = line  # store the url when dashboard is started
+                        Tru._dashboard_urls = line  # store the url when dashboard is started
                 else:
                     if "Network URL: " in line:
                         url = line.split(": ")[1]
                         url = url.rstrip()
                         print(f"Dashboard started at {url} .")
                         started.set()
-                        Tru.dashboard_urls = line  # store the url when dashboard is started
+                        Tru._dashboard_urls = line  # store the url when dashboard is started
                     if out is not None:
                         out.append_stdout(line)
                     else:
