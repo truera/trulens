@@ -1,3 +1,4 @@
+import ast
 from abc import ABC
 from abc import abstractmethod
 import logging
@@ -16,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class Provider(WithClassInfo, SerialModel):
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint] = None
@@ -26,7 +26,6 @@ class Provider(WithClassInfo, SerialModel):
 
 
 class LLMProvider(Provider):
-
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any
     # warnings if we try to override some internal pydantic name.
@@ -42,12 +41,12 @@ class LLMProvider(Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    #@abstractmethod
+    # @abstractmethod
     def _create_chat_completion(
-        self,
-        prompt: Optional[str] = None,
-        messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+            self,
+            prompt: Optional[str] = None,
+            messages: Optional[Sequence[Dict]] = None,
+            **kwargs
     ) -> str:
         """
         Chat Completion Model
@@ -68,7 +67,7 @@ class LLMProvider(Provider):
                 prompts.SYSTEM_FIND_SUPPORTING,
                 prompt=full_source,
             ) + "\n" +
-            str.format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
+                   str.format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
         )
 
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
@@ -107,19 +106,19 @@ class LLMProvider(Provider):
 
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
-            str.format(
-                prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                premise=premise,
-                hypothesis=hypothesis
-            )
+            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM, ) +
+                   str.format(
+                       prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                       premise=premise,
+                       hypothesis=hypothesis
+                   )
         )
 
     def generate_score(
-        self,
-        system_prompt: str,
-        user_prompt: Optional[str] = None,
-        normalize: float = 10.0
+            self,
+            system_prompt: str,
+            user_prompt: Optional[str] = None,
+            normalize: float = 10.0
     ) -> float:
         """
         Extractor for LLM prompts. If CoT is used; it will look for
@@ -145,10 +144,10 @@ class LLMProvider(Provider):
         return re_0_10_rating(response) / normalize
 
     def generate_score_and_reasons(
-        self,
-        system_prompt: str,
-        user_prompt: Optional[str] = None,
-        normalize: float = 10.0
+            self,
+            system_prompt: str,
+            user_prompt: Optional[str] = None,
+            normalize: float = 10.0
     ) -> Tuple[float, Dict]:
         """
         Generator and extractor for LLM prompts. It will look for
@@ -169,37 +168,56 @@ class LLMProvider(Provider):
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion, messages=llm_messages
         )
-        if "Supporting Evidence" in response:
-            score = -1
-            supporting_evidence = None
-            criteria = None
-            for line in response.split('\n'):
-                if "Score" in line:
-                    score = re_0_10_rating(line) / normalize
-                if "Criteria" in line:
-                    parts = line.split(":")
-                    if len(parts) > 1:
-                        criteria = ":".join(parts[1:]).strip()
-                if "Supporting Evidence" in line:
-                    supporting_evidence = line[
-                        line.index("Supporting Evidence:") +
-                        len("Supporting Evidence:"):].strip()
-            reasons = {
-                'reason':
-                    (
-                        f"{'Criteria: ' + str(criteria)}\n"
-                        f"{'Supporting Evidence: ' + str(supporting_evidence)}"
-                    )
-            }
-            return score, reasons
+        # Converting the response to JSON Since we have the COT Prompt with JSON output parsing, we will get the
+        # repsonse output as a json {Score: <The score 0-10 based on the given criteria>,Criteria: <Provide the
+        # criteria for this evaluation>,Supporting Evidence: <Provide your reasons for scoring based on the listed
+        # criteria step by step. Tie it back to the evaluation being completed.>}
+        response_json = ast.literal_eval(response)
 
-        else:
-            score = re_0_10_rating(response) / normalize
-            warnings.warn(
-                "No supporting evidence provided. Returning score only.",
-                UserWarning
-            )
-            return score, {}
+        # getting the score, criteria and supporting_eveidence
+        score = response_json["Score"]
+        criteria = response_json["Criteria"]
+        supporting_evidence = response_json["Supporting Evidence"]
+
+        reasons = {
+            'reason':[
+                {'Criteria':str(criteria)},
+                {'Supporting Evidence': str(supporting_evidence)}
+            ]
+        }
+        return score, reasons
+
+        # if "Supporting Evidence" in response:
+        #     score = -1
+        #     supporting_evidence = None
+        #     criteria = None
+        #     for line in response.split('\n'):
+        #         if "Score" in line:
+        #             score = re_0_10_rating(line) / normalize
+        #         if "Criteria" in line:
+        #             parts = line.split(":")
+        #             if len(parts) > 1:
+        #                 criteria = ":".join(parts[1:]).strip()
+        #         if "Supporting Evidence" in line:
+        #             supporting_evidence = line[
+        #                                   line.index("Supporting Evidence:") +
+        #                                   len("Supporting Evidence:"):].strip()
+        #     reasons = {
+        #         'reason':
+        #             (
+        #                 f"{'Criteria: ' + str(criteria)}\n"
+        #                 f"{'Supporting Evidence: ' + str(supporting_evidence)}"
+        #             )
+        #     }
+        #     return score, reasons
+        #
+        # else:
+        #     score = re_0_10_rating(response) / normalize
+        #     warnings.warn(
+        #         "No supporting evidence provided. Returning score only.",
+        #         UserWarning
+        #     )
+        #     return score, {}
 
     def qs_relevance(self, question: str, statement: str) -> float:
         """
@@ -461,7 +479,7 @@ class LLMProvider(Provider):
         return self.generate_score(system_prompt=system_prompt)
 
     def _langchain_evaluate_with_cot_reasons(
-        self, text: str, criteria: str
+            self, text: str, criteria: str
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A general function that completes a template
@@ -961,7 +979,7 @@ class LLMProvider(Provider):
         )
 
     def _get_answer_agreement(
-        self, prompt: str, response: str, check_response: str
+            self, prompt: str, response: str, check_response: str
     ) -> str:
         """
         Uses chat completion model. A function that completes a template to
