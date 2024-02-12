@@ -61,7 +61,7 @@ from llama_index.core.tools.types import \
         ToolMetadata  # all of the readable info regarding tools is in this class
 from llama_index.core.vector_stores.types import VectorStore
 
-    from trulens_eval.utils.llama import WithFeedbackFilterNodes
+from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
 # Need to `from ... import ...` for the below as referring to some of these
 # later in this file by full path does not work due to lack of intermediate
