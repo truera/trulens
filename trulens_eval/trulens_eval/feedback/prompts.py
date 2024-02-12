@@ -79,7 +79,7 @@ The expected answer is:
 
 Answer only with an integer from 1 to 10 based on how semantically similar the responses are to the expected answer. 
 where 0 is no semantic similarity at all and 10 is perfect agreement between the responses and the expected answer.
-Never elaborate.
+On a NEW LINE, give the integer score and nothing more.
 """
 
 REMOVE_Y_N = " If so, respond Y. If not, respond N."
