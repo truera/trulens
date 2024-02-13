@@ -84,7 +84,7 @@ class Bedrock(LLMProvider):
                         }
                 }
             )
-        if self.model_id.startswith("anthropic"):
+        elif self.model_id.startswith("anthropic"):
             body = json.dumps(
                 {
                     "prompt": f"\n\nHuman:{prompt}\n\nAssistant:",
@@ -93,7 +93,7 @@ class Bedrock(LLMProvider):
                     "max_tokens_to_sample": 4096
                 }
             )
-        if self.model_id.startswith("cohere"):
+        elif self.model_id.startswith("cohere"):
             body = json.dumps(
                 {
                     "prompt": prompt,
@@ -102,8 +102,7 @@ class Bedrock(LLMProvider):
                     "max_tokens": 4096
                 }
             )
-
-        if self.model_id.startswith("ai21"):
+        elif self.model_id.startswith("ai21"):
             body = json.dumps(
                 {
                     "prompt": prompt,
@@ -112,7 +111,6 @@ class Bedrock(LLMProvider):
                     "maxTokens": 8191
                 }
             )
-
         else:
             raise NotImplementedError(f"The model selected, {self.model_id}, is not yet implemented as a feedback provider")
 
@@ -124,8 +122,6 @@ class Bedrock(LLMProvider):
         content_type = "application/json"
 
         response = self.endpoint.client.invoke_model(body=body, modelId=modelId, accept=accept, contentType=content_type)
-
-        print(response)
         
         if self.model_id.startswith("amazon"):
             response_body = json.loads(response.get('body').read()
