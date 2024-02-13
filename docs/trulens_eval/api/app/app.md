@@ -1,5 +1,3 @@
-# App
-
 Apps in trulens derive from two classes,
 [AppDefinition][trulens_eval.schema.AppDefinition] and
 [App][trulens_eval.app.App]. The first contains only serialized or serializable

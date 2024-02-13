@@ -80,7 +80,7 @@ plugins:
             # summary: true
             show_source: false
             show_root_heading: true
-            show_if_no_docstring: true
+            show_if_no_docstring: false
             members_order: source
             # members: true
             allow_inspection: true
@@ -118,6 +118,8 @@ theme:
   favicon: img/favicon.ico
   logo: img/squid.png
   features:
+    - navigation.instant
+    - navigation.instant.progress
     - navigation.indexes
     - navigation.top
     - navigation.tracking
@@ -226,7 +228,7 @@ extra_css:
 # importing MathJax.
 extra_javascript:
   - javascript/config.js
-  - javascript/app.js
+  - assets/Scripts/app.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - javascript/tex-mml-chtml-3.0.0.js
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
