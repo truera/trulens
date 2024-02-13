@@ -15,6 +15,10 @@ See `instruments.py` docstring for discussion why these are done.
 - We inspect the call stack in process of tracking method invocation. It may be
   possible to replace this with `contextvars`. 
 
+- "HACK012" -- In the optional imports scheme, we have to make sure that imports
+  that happen from outside of trulens raise normal exceptions instead of
+  producing dummies.
+
 ## Method overriding
 
 See `instruments.py` docstring for discussion why these are done.

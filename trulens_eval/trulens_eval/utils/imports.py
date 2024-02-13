@@ -328,13 +328,25 @@ class OptionalImports(object):
             return mod
 
         except ModuleNotFoundError as e:
-            # Check if the import error was from an import in trulens_eval as otherwise we don't
-            # want to intercept the error as some modules rely on import failures for various
-            # things.
-            module_name = inspect.currentframe().f_back.f_globals["__name__"]
+            # Check if the import error was from an import in trulens_eval as
+            # otherwise we don't want to intercept the error as some modules
+            # rely on import failures for various things.
+            # HACK012: we have to step back a frame or two here to check where
+            # the original import come from. We skip any frames that refer to
+            # our overwritten __import__. We have to step back multiple times if
+            # we accidentally nest our OptionalImport context manager.
+
+            frame = inspect.currentframe().f_back
+            while frame.f_code == self.__import__.__code__:
+                frame = frame.f_back
+            
+            module_name = frame.f_globals["__name__"]
+
+            logger.debug("Module not found %s in %s.", name, module_name)
+
             if self.fail or not module_name.startswith(trulens_name):
                 raise e
-            logger.debug(f"Module not found {name}.")
+
             return Dummy(
                 name=name,
                 message=self.messages.module_not_found,
@@ -373,10 +385,14 @@ class OptionalImports(object):
         # Re-raise appropriate exception.
 
         if isinstance(exc_value, ModuleNotFoundError):
-            exc_value = ModuleNotFoundError(self.messages.module_not_found)
+            exc_value = ModuleNotFoundError(
+                self.messages.module_not_found
+            )
 
         elif isinstance(exc_value, ImportError):
-            exc_value = ImportError(self.messages.import_error)
+            exc_value = ImportError(
+                self.messages.import_error
+            )
 
         else:
             raise exc_value

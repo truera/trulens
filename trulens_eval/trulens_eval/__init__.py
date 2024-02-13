@@ -88,7 +88,7 @@ TO PLACE
 
 """
 
-__version__ = "0.22.1"
+__version__ = "0.22.2"
 
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Langchain
