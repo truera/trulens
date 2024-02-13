@@ -14,6 +14,7 @@ import sys
 from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
                     Sequence, Type, TypeVar)
 
+
 if sys.version_info >= (3, 9):
     Future = futures.Future
     """Alias for concurrent.futures.Future ."""
@@ -21,14 +22,7 @@ if sys.version_info >= (3, 9):
     Queue = queue.Queue
     """Alias for queue.Queue ."""
 
-    import types
-    NoneType = types.NoneType
-    """Alias for types.NoneType ."""
-
 else:
-    NoneType = type(None)
-    """Type of `None`"""
-
     # Fake classes which can have type args. In python earlier than 3.9, the
     # classes imported above cannot have type args which is annoying for type
     # annotations. We use these fake ones instead.
@@ -48,6 +42,15 @@ else:
         
         This class is not necessary with python >= 3.9 .
         """
+
+if sys.version_info >= (3, 10):
+    import types
+    NoneType = types.NoneType
+    """Alias for types.NoneType ."""
+
+else:
+    NoneType = type(None)
+    """Type of `None`"""
 
 
 logger = logging.getLogger(__name__)
