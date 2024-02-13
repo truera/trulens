@@ -204,9 +204,11 @@ class Record(SerialModel, Hashable):
     # be filled in when read from database. Also, will not fill in when using
     # `FeedbackMode.DEFERRED`.
 
-    feedback_and_future_results: Optional[List[Tuple[
-        FeedbackDefinition, Future[FeedbackResult]
-    ]]] = pydantic.Field(None, exclude=True)
+    feedback_and_future_results: Optional[List[Tuple[FeedbackDefinition,
+                                                     Future[FeedbackResult]]]
+                                         ] = pydantic.Field(
+                                             None, exclude=True
+                                         )
 
     # Only the futures part of the above for backwards compatibility.
     feedback_results: Optional[List[Future[FeedbackResult]]] = \

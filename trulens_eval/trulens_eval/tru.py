@@ -538,8 +538,7 @@ class Tru(SingletonPerName):
                 unit="feedbacks",
                 total=queue_total,
                 postfix={
-                    status.name: count
-                    for status, count in queue_stats.items()
+                    status.name: count for status, count in queue_stats.items()
                 }
             )
 

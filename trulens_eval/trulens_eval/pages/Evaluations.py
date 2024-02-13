@@ -333,7 +333,9 @@ else:
                 if metadata_dict is None:
                     st.write("No record metadata available")
                 elif not isinstance(metadata_dict, dict):
-                    st.write("Invalid metadata format: expected a dictionary (dict) type")
+                    st.write(
+                        "Invalid metadata format: expected a dictionary (dict) type"
+                    )
                 else:
                     metadata_cols = list(metadata_dict.keys())
 

@@ -138,7 +138,8 @@ REQUIREMENT_LANGCHAIN = format_import_errors(
 
 REQUIREMENT_PINECONE = format_import_errors(
     # package name is "pinecone-client" but module is "pinecone"
-    'pinecone-client', purpose="running TruBot" 
+    'pinecone-client',
+    purpose="running TruBot"
 )
 
 REQUIREMENT_SKLEARN = format_import_errors(
@@ -340,7 +341,7 @@ class OptionalImports(object):
             frame = inspect.currentframe().f_back
             while frame.f_code == self.__import__.__code__:
                 frame = frame.f_back
-            
+
             module_name = frame.f_globals["__name__"]
 
             logger.debug("Module not found %s in %s.", name, module_name)
@@ -386,14 +387,10 @@ class OptionalImports(object):
         # Re-raise appropriate exception.
 
         if isinstance(exc_value, ModuleNotFoundError):
-            exc_value = ModuleNotFoundError(
-                self.messages.module_not_found
-            )
+            exc_value = ModuleNotFoundError(self.messages.module_not_found)
 
         elif isinstance(exc_value, ImportError):
-            exc_value = ImportError(
-                self.messages.import_error
-            )
+            exc_value = ImportError(self.messages.import_error)
 
         else:
             raise exc_value
