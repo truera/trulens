@@ -88,17 +88,17 @@ virtual_method_call = Method(
 
 class VirtualRecord(Record):
     """
-    Utility class for creating `Record`s using selectors. In the example below,
-    `Select.RecordCalls.retriever` refers to a presumed component of some
-    virtual model which is assumed to have called the method `get_context`. The
-    inputs and outputs of that call are specified as the value with the
-    selector as the key. Other than `calls`, other arguments are the same as for
-    `Record`, but empty values are filled for arguments that are not provided
-    but are otherwise required.
+    Utility class for creating `Record`s using selectors.
+    
+    In the example below, `Select.RecordCalls.retriever` refers to a presumed
+    component of some virtual model which is assumed to have called the method
+    `get_context`. The inputs and outputs of that call are specified as the
+    value with the selector as the key. Other than `calls`, other arguments are
+    the same as for `Record`, but empty values are filled for arguments that are
+    not provided but are otherwise required.
 
-    **Usage:**
-
-    ```python
+    Usage:
+        ```python
         VirtualRecord(
             main_input="Where is Germany?", 
             main_output="Germany is in Europe", 
@@ -113,7 +113,7 @@ class VirtualRecord(Record):
                 }
             }
         )
-    ```
+        ```
     """
 
     def __init__(self, calls: Dict[serial.Lens, Dict], **kwargs):
@@ -206,11 +206,14 @@ class TruVirtual(App):
 
     * metadata: Dict[Any, Any] -- Open-ended metadata.
 
-    * app_extra_json: JSON -- Additional json structured information to include in the recorded app structure.
+    * app_extra_json: JSON -- Additional json structured information to include
+      in the recorded app structure.
 
-    * feedbacks: List[Feedback] -- Which feedback functions to run when a record is ingested.
+    * feedbacks: List[Feedback] -- Which feedback functions to run when a record
+      is ingested.
 
-    * feedback_mode: FeedbackMode -- How to run feedback functions when a record is ingested.
+    * feedback_mode: FeedbackMode -- How to run feedback functions when a record
+      is ingested.
 
     * app: JSON -- See below.
 
@@ -221,29 +224,30 @@ class TruVirtual(App):
     versions, or anything else. You can refer to these values for evaluating
     feedback.
 
-    You can use `VirtualApp` to create the `app` structure or a plain
-    dictionary. Using `VirtualApp` lets you use Selectors to define components:
+    Usage:
+        You can use `VirtualApp` to create the `app` structure or a plain
+        dictionary. Using `VirtualApp` lets you use Selectors to define components:
     
-    ```python
-    virtual_app = VirtualApp()
-    virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
-    ```
+        ```python
+        virtual_app = VirtualApp()
+        virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
+        ```
 
-    # Example
-    ```python
-    virtual_app = dict(
-        llm=dict(
-            modelname="some llm component model name"
-        ),
-        template="information about the template I used in my app",
-        debug="all of these fields are completely optional"
-    )
+    Example:
+        ```python
+        virtual_app = dict(
+            llm=dict(
+                modelname="some llm component model name"
+            ),
+            template="information about the template I used in my app",
+            debug="all of these fields are completely optional"
+        )
 
-    virtual = TruVirtual(
-        app_id="my_virtual_app",
-        app=virtual_app
-    )
-    ```
+        virtual = TruVirtual(
+            app_id="my_virtual_app",
+            app=virtual_app
+        )
+        ```
     """
 
     app: VirtualApp = Field(default_factory=VirtualApp)
@@ -255,14 +259,7 @@ class TruVirtual(App):
     instrument: Optional[Instrument] = None
 
     def __init__(self, app: Optional[JSON] = None, **kwargs):
-        """
-        Virtual app for logging existing app results.
-
-        Arguments:
-        - More args in App
-        - More args in AppDefinition
-        - More args in WithClassInfo
-        """
+        """Virtual app for logging existing app results. """
 
         if app is None:
             app = VirtualApp()
@@ -282,9 +279,10 @@ class TruVirtual(App):
         record: Record,
         feedback_mode: Optional[FeedbackMode] = None
     ) -> Record:
-        """
-        Add the given record to the database and evaluate any pre-specified
-        feedbacks on it. The class `VirtualRecord` may be useful for creating
+        """Add the given record to the database and evaluate any pre-specified
+        feedbacks on it.
+        
+        The class `VirtualRecord` may be useful for creating
         records for virtual models. If `feedback_mode` is specified, will use
         that mode for this record only.
         """

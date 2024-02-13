@@ -131,11 +131,9 @@ class LangChainInstrument(Instrument):
 
 
 class TruChain(App):
-    """
-    Instantiates the Langchain Wrapper.
+    """Instantiates the Langchain Wrapper.
         
-        **Usage:**
-
+    Usage:
         Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)
 
         ```python
@@ -184,10 +182,10 @@ class TruChain(App):
             chain("Where do I download langchain?")
         ```
 
-        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+    See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
-        Args:
-            app (Chain): A langchain application.
+    Args:
+        app: A langchain application.
     """
 
     app: Any  # Chain
@@ -200,16 +198,6 @@ class TruChain(App):
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
     def __init__(self, app: Chain, **kwargs):
-        """
-        Wrap a langchain chain for monitoring.
-
-        Arguments:
-        - app: Chain -- the chain to wrap.
-        - More args in App
-        - More args in AppDefinition
-        - More args in WithClassInfo
-        """
-
         # TruChain specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)

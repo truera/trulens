@@ -15,7 +15,7 @@ Also, join the [AI Quality Slack
 community](https://communityinviter.com/apps/aiqualityforum/josh) for ideas and
 discussions.
 
-## 💪 Add new [feedback functions](https://www.trulens.org/trulens_eval/feedback_functions/)
+## 💪 Add new [feedback functions](https://www.trulens.org/trulens_eval/api/providers)
 
 Feedback functions are the backbone of TruLens, and evaluating unique LLM apps
 may require new evaluations. We'd love your contribution to extend the feedback
@@ -30,7 +30,7 @@ functions library so others can benefit!
   a float, or a dict of multiple floats. Each output value should be a float on
   the scale of 0 (worst) to 1 (best).
 - Make sure to add its definition to this
-  [list](https://github.com/truera/trulens/blob/main/docs/trulens_eval/function_definitions.md).
+  [list](https://github.com/truera/trulens/blob/main/docs/trulens_eval/api/providers.md).
 
 ## 🤝 Add new feedback function providers.
 

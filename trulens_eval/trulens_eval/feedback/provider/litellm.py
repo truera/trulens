@@ -20,30 +20,32 @@ logger = logging.getLogger(__name__)
 
 class LiteLLM(LLMProvider):
     """Out of the box feedback functions calling LiteLLM API.
+
+
+    Create an LiteLLM Provider with out of the box feedback functions.
+
+    Usage:
+        ```python
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
+        ```
+
+    Args:
+        model_engine: The LiteLLM completion model.Defaults to
+            `gpt-3.5-turbo`
+        
+        endpoint: Internal Usage for DB serialization.
     """
     model_engine: str
     endpoint: Endpoint
 
     def __init__(
-        self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
+        self, *args, endpoint: Optional[Endpoint] = None, model_engine: str = "gpt-3.5-turbo", **kwargs
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-        """
-        Create an LiteLLM Provider with out of the box feedback functions.
 
-        **Usage:**
-        ```
-        from trulens_eval.feedback.provider.litellm import LiteLLM
-        litellm_provider = LiteLLM()
-
-        ```
-
-        Args:
-            model_engine (str): The LiteLLM completion model.Defaults to `gpt-3.5-turbo`
-            endpoint (Endpoint): Internal Usage for DB serialization
-        """
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)

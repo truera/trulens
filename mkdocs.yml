@@ -44,7 +44,7 @@ watch:
     - trulens_eval/trulens_eval
 
 plugins:
-  # - mkdocs-jupyter
+  - mkdocs-jupyter
   - mkdocstrings:
       # See https://mkdocstrings.github.io/python/usage/configuration/docstrings/ .
       default_handler: python
@@ -79,7 +79,7 @@ plugins:
             group_by_category: true
             # summary: true
             show_source: false
-            show_root_heading: false
+            show_root_heading: true
             show_if_no_docstring: true
             members_order: source
             # members: true
@@ -131,13 +131,15 @@ nav:
   - 🏠 Home: index.md
   - 🚀 Getting Started:
       - Installation: trulens_eval/install.md
-      - Quickstarts:
-          - Quickstart: trulens_eval/quickstart.ipynb
-          - LangChain Quickstart: trulens_eval/langchain_quickstart.ipynb
-          - Llama-Index Quickstart: trulens_eval/llama_index_quickstart.ipynb
-          - Text to Text Quickstart: trulens_eval/text2text_quickstart.ipynb
-          - Ground Truth Evaluation Quickstart: trulens_eval/groundtruth_evals.ipynb
-          - Human Feedback Quickstart: trulens_eval/human_feedback.ipynb
+      - 📓 Quickstarts:
+      # Title labels of these notebooks come from within the notebooks
+      # themselves and will be overridden if specified here.
+          - trulens_eval/quickstart.ipynb
+          - trulens_eval/langchain_quickstart.ipynb
+          - trulens_eval/llama_index_quickstart.ipynb
+          - trulens_eval/text2text_quickstart.ipynb
+          - trulens_eval/groundtruth_evals.ipynb
+          - trulens_eval/human_feedback.ipynb
       - Core Concepts:
           - Feedback Functions: trulens_eval/core_concepts_feedback_functions.md
           - RAG Triad: trulens_eval/core_concepts_rag_triad.md
@@ -154,44 +156,51 @@ nav:
           - Selecting Components: trulens_eval/selecting_components.md
           - Available shortcuts: trulens_eval/selector_shortcuts.md
       - Feedback Providers:
-          - OpenAI: trulens_eval/api/openai_provider.md
-          - AzureOpenAI: trulens_eval/api/azureopenai_provider.md
-          - AWS Bedrock: trulens_eval/api/bedrock_provider.md
-          - HuggingFace: trulens_eval/api/huggingface_provider.md
-          - LiteLLM: trulens_eval/api/litellm_provider.md
-          - Langchain: trulens_eval/api/langchain_provider.md
+          - LLMProvider:
+            - Base: trulens_eval/api/provider/llmprovider.md
+            - OpenAI:
+              - Base: trulens_eval/api/provider/openai.md
+              - AzureOpenAI: trulens_eval/api/provider/azureopenai.md
+            - AWS Bedrock: trulens_eval/api/provider/bedrock.md
+            - LiteLLM: trulens_eval/api/provider/litellm.md
+            - 🦜️🔗 Langchain: trulens_eval/api/provider/langchain.md
+          - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
       - Feedback Implementations:
           - Stock Feedback Functions: trulens_eval/api/providers.md
-          - Custom Feedback Functions: trulens_eval/custom_feedback_functions.ipynb
-      - Generating Test Cases:
-          - Generating Test Cases: trulens_eval/generate_test_cases.md
+          - trulens_eval/custom_feedback_functions.ipynb
+      - Generating Test Cases: trulens_eval/generate_test_cases.md
       - Feedback Evaluations:
-          - Answer Relevance: trulens_eval/answer_relevance_smoke_tests.ipynb
-          - Context Relevance: trulens_eval/context_relevance_smoke_tests.ipynb
-          - Groundedness: trulens_eval/groundedness_smoke_tests.ipynb
+          # Titles come from notebook and will be overridden if specified here.
+          - trulens_eval/answer_relevance_smoke_tests.ipynb
+          - trulens_eval/context_relevance_smoke_tests.ipynb
+          - trulens_eval/groundedness_smoke_tests.ipynb
   - 🎺 Tracking:
       - Instrumentation:
-          - Overview: trulens_eval/trulens_instrumentation.ipynb
-          - LangChain Integration: trulens_eval/langchain_instrumentation.ipynb
-          - Llama-Index Integration: trulens_eval/llama_index_instrumentation.ipynb
+          # Titles set inside notebooks and will be overridden if provider here.
+          - trulens_eval/trulens_instrumentation.ipynb
+          - trulens_eval/langchain_instrumentation.ipynb
+          - trulens_eval/llama_index_instrumentation.ipynb
       - Logging:
           - Where to Log: trulens_eval/where_to_log.md
-          - Logging Methods: trulens_eval/logging.ipynb
-      - Class Reference:
-          - 🦑 Tru: trulens_eval/api/tru.md
-          - TruBasicApp: trulens_eval/api/trubasicapp.md
-          - 🦜️🔗 TruChain: trulens_eval/api/truchain.md
-          - 🦙 TruLlama: trulens_eval/api/trullama.md
-          - TruCustom: trulens_eval/api/trucustom.md
-          - TruVirtual: trulens_eval/api/truvirtual.md
-          - Feedback: trulens_eval/api/feedback.md
-          - Provider: trulens_eval/api/provider.md
-          - Endpoint: trulens_eval/api/endpoint.md
+          - 📓 Logging Methods: trulens_eval/logging.ipynb
   - 🔍 Guides:
       - Any LLM App: trulens_eval/use_cases_any.md
       - RAGs: trulens_eval/use_cases_rag.md
       - LLM Agents: trulens_eval/use_cases_agent.md
       - Dev to Prod: trulens_eval/use_cases_production.md
+  - ☕ API Reference:
+          - 🦑 Tru: trulens_eval/api/tru.md
+          - App:
+            - App(Definition): trulens_eval/api/app/app.md
+            - TruBasicApp: trulens_eval/api/app/trubasicapp.md
+            - 🦜️🔗 TruChain: trulens_eval/api/app/truchain.md
+            - 🦙 TruLlama: trulens_eval/api/app/trullama.md
+            - TruCustom: trulens_eval/api/app/trucustom.md
+            - TruVirtual: trulens_eval/api/app/truvirtual.md
+          - Feedback: trulens_eval/api/feedback.md
+          - Provider: 
+            - Provider: trulens_eval/api/provider/provider.md
+            - Endpoint: trulens_eval/api/endpoint.md
   - 🤝 Contributing:
       - Contribution Guidelines: trulens_eval/CONTRIBUTING.md
   - ❓ Explain:
@@ -199,7 +208,7 @@ nav:
           - Installation: trulens_explain/install.md
           - Quickstart: trulens_explain/quickstart.md
       - Attributions: trulens_explain/attribution_parameterization.md
-      - API Reference:
+      - ☕ API Reference:
           - Attribution: trulens_explain/api/attribution.md
           - Models: trulens_explain/api/model_wrappers.md
           - Slices: trulens_explain/api/slices.md
@@ -211,7 +220,6 @@ nav:
 
 extra_css:
   - stylesheets/extra.css
-  - stylesheets/cover.css
 
 # https://squidfunk.github.io/mkdocs-material/reference/mathjax/
 # Polyfill provides backcompat for JS. We need to import it before

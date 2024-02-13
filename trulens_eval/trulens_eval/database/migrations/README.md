@@ -45,7 +45,7 @@ Note: You must create a new schema revision before doing this
    trulens-eval) TODO: Move these to a script
     * all_tools.ipynb # `cp ../../../generated_files/all_tools.ipynb ./`
     * llama_index_quickstart.ipynb # `cp
-      ../../../examples/frameworks/llama_index/llama_index_quickstart.ipynb ./`
+      ../../../examples/quickstart/llama_index_quickstart.ipynb ./`
     * langchain-retrieval-augmentation-with-trulens.ipynb # `cp
       ../../../examples/vector-dbs/pinecone/langchain-retrieval-augmentation-with-trulens.ipynb
       ./`

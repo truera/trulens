@@ -18,6 +18,17 @@ OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(boto3)
 
 
 class Bedrock(LLMProvider):
+    """
+    A set of AWS Feedback Functions.
+
+    Parameters:
+
+    - model_id (str, optional): The specific model id. Defaults to
+        "amazon.titan-text-express-v1".
+
+    - All other args/kwargs passed to BedrockEndpoint and subsequently
+        to boto3 client constructor.
+    """
     # LLMProvider requirement which we do not use:
     model_engine: str = "Bedrock"
 
@@ -31,17 +42,7 @@ class Bedrock(LLMProvider):
         **kwargs
         # self, *args, model_id: str = "amazon.titan-text-express-v1", **kwargs
     ):
-        """
-        A set of AWS Feedback Functions.
 
-        Parameters:
-
-        - model_id (str, optional): The specific model id. Defaults to
-          "amazon.titan-text-express-v1".
-
-        - All other args/kwargs passed to BedrockEndpoint and subsequently
-          to boto3 client constructor.
-        """
 
         # SingletonPerName: return singleton unless client provided
         if hasattr(self, "model_id") and "client" not in kwargs:
