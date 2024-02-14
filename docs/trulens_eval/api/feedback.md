@@ -1,10 +1,9 @@
-# Feedback Function APIs
-Below are out of the box feedback functions and how to instantiate them.
+# Feedback
 
-::: trulens_eval.trulens_eval.feedback.provider.base
+::: trulens_eval.feedback.feedback.ImpCallable
 
-::: trulens_eval.trulens_eval.feedback.groundedness
+::: trulens_eval.feedback.feedback.AggCallable
 
-::: trulens_eval.trulens_eval.feedback.groundtruth
+::: trulens_eval.feedback.feedback.Feedback
 
-::: trulens_eval.trulens_eval.feedback.embeddings
+::: trulens_eval.schema.FeedbackDefinition

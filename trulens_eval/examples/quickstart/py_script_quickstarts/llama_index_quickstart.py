@@ -26,12 +26,14 @@
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
+
 # ### Import from TruLens
 
 # In[ ]:
 
 from trulens_eval import Tru
 tru = Tru()
+
 
 # ### Create Simple LLM Application
 # 
@@ -49,12 +51,14 @@ index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()
 
+
 # ### Send your first request
 
 # In[ ]:
 
 response = query_engine.query("What did the author do growing up?")
 print(response)
+
 
 # ## Initialize Feedback Function(s)
 
@@ -94,6 +98,7 @@ f_qs_relevance = (
     .aggregate(np.mean)
 )
 
+
 # ## Instrument app for logging with TruLens
 
 # In[ ]:
@@ -109,6 +114,7 @@ tru_query_engine_recorder = TruLlama(query_engine,
 with tru_query_engine_recorder as recording:
     query_engine.query("What did the author do growing up?")
 
+
 # ## Retrieve records and feedback
 
 # In[ ]:
@@ -121,6 +127,9 @@ rec = recording.get() # use .get if only one record
 display(rec)
 
 # In[ ]:
+
+
+
 
 # The results of the feedback functions can be rertireved from
 # `Record.feedback_results` or using the `wait_for_feedback_result` method. The
@@ -144,6 +153,7 @@ records.head()
 
 tru.get_leaderboard(app_ids=["LlamaIndex_App1"])
 
+
 # ## Explore in a Dashboard
 
 # In[ ]:
@@ -151,6 +161,7 @@ tru.get_leaderboard(app_ids=["LlamaIndex_App1"])
 tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
+
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 

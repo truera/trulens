@@ -5,7 +5,7 @@ Log existing results with trulens_eval and run evals against them.
 """
 
 from concurrent import futures
-from datetime import datetime
+import datetime
 import logging
 from pprint import PrettyPrinter
 import time
@@ -87,18 +87,17 @@ virtual_method_call = Method(
 
 
 class VirtualRecord(Record):
-    """
-    Utility class for creating `Record`s using selectors. In the example below,
-    `Select.RecordCalls.retriever` refers to a presumed component of some
-    virtual model which is assumed to have called the method `get_context`. The
-    inputs and outputs of that call are specified as the value with the
-    selector as the key. Other than `calls`, other arguments are the same as for
-    `Record`, but empty values are filled for arguments that are not provided
-    but are otherwise required.
+    """Utility class for creating `Record`s using selectors.
+    
+    In the example below, `Select.RecordCalls.retriever` refers to a presumed
+    component of some virtual model which is assumed to have called the method
+    `get_context`. The inputs and outputs of that call are specified as the
+    value with the selector as the key. Other than `calls`, other arguments are
+    the same as for `Record`, but empty values are filled for arguments that are
+    not provided but are otherwise required.
 
-    **Usage:**
-
-    ```python
+    Example:
+        ```python
         VirtualRecord(
             main_input="Where is Germany?", 
             main_output="Germany is in Europe", 
@@ -113,18 +112,18 @@ class VirtualRecord(Record):
                 }
             }
         )
-    ```
+        ```
     """
 
     def __init__(self, calls: Dict[serial.Lens, Dict], **kwargs):
         root_call = RecordAppCallMethod(path=serial.Lens(), method=virtual_method_root)
 
-        start_time = datetime.now()
+        start_time = datetime.datetime.now()
 
         record_calls = []
 
         for lens, call in calls.items():
-            substart_time = datetime.now()
+            substart_time = datetime.datetime.now()
 
             # NOTE(piotrm for garrett): that the dashboard timeline has problems
             # with calls that span too little time so we add some delays to the
@@ -150,7 +149,7 @@ class VirtualRecord(Record):
             if "tid" not in call:
                 call['tid'] = 0
 
-            subend_time = datetime.now()
+            subend_time = datetime.datetime.now()
 
             if "perf" not in call:
                 call['perf'] = Perf(
@@ -160,7 +159,7 @@ class VirtualRecord(Record):
             rinfo = RecordAppCall(**call)
             record_calls.append(rinfo)
 
-        end_time = datetime.now()
+        end_time = datetime.datetime.now()
 
         if "cost" not in kwargs:
             kwargs['cost'] = Cost()
@@ -194,25 +193,30 @@ class VirtualRecord(Record):
 
 
 class TruVirtual(App):
-    """
-    Recorder for virtual apps. Virtual apps are data only in that they cannot be
+    """Recorder for virtual apps.
+    
+    Virtual apps are data only in that they cannot be
     executed but for whom previously-computed results can be added using
     `add_record`. The `VirtualRecord` class may be useful for creating records
     for this. Fields used by non-virtual apps can be specified here, notably:
 
-    * app_id: str -- Unique identifier for the app.
+    Args:
+        app_id: Unique identifier for the app.
 
-    * tags: List[str] -- List of tags.
+        tags: List of tags.
 
-    * metadata: Dict[Any, Any] -- Open-ended metadata.
+        metadata: Open-ended metadata.
 
-    * app_extra_json: JSON -- Additional json structured information to include in the recorded app structure.
+        app_extra_json: Additional json structured information to include
+            in the recorded app structure.
 
-    * feedbacks: List[Feedback] -- Which feedback functions to run when a record is ingested.
+        feedbacks: Which feedback functions to run when a record
+            is ingested.
 
-    * feedback_mode: FeedbackMode -- How to run feedback functions when a record is ingested.
+        feedback_mode: How to run feedback functions when a record
+            is ingested.
 
-    * app: JSON -- See below.
+        app: See below.
 
     # The `app` field.
 
@@ -221,29 +225,30 @@ class TruVirtual(App):
     versions, or anything else. You can refer to these values for evaluating
     feedback.
 
-    You can use `VirtualApp` to create the `app` structure or a plain
-    dictionary. Using `VirtualApp` lets you use Selectors to define components:
+    Usage:
+        You can use `VirtualApp` to create the `app` structure or a plain
+        dictionary. Using `VirtualApp` lets you use Selectors to define components:
     
-    ```python
-    virtual_app = VirtualApp()
-    virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
-    ```
+        ```python
+        virtual_app = VirtualApp()
+        virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
+        ```
 
-    # Example
-    ```python
-    virtual_app = dict(
-        llm=dict(
-            modelname="some llm component model name"
-        ),
-        template="information about the template I used in my app",
-        debug="all of these fields are completely optional"
-    )
+    Example:
+        ```python
+        virtual_app = dict(
+            llm=dict(
+                modelname="some llm component model name"
+            ),
+            template="information about the template I used in my app",
+            debug="all of these fields are completely optional"
+        )
 
-    virtual = TruVirtual(
-        app_id="my_virtual_app",
-        app=virtual_app
-    )
-    ```
+        virtual = TruVirtual(
+            app_id="my_virtual_app",
+            app=virtual_app
+        )
+        ```
     """
 
     app: VirtualApp = Field(default_factory=VirtualApp)
@@ -254,15 +259,8 @@ class TruVirtual(App):
 
     instrument: Optional[Instrument] = None
 
-    def __init__(self, app: Optional[JSON] = None, **kwargs):
-        """
-        Virtual app for logging existing app results.
-
-        Arguments:
-        - More args in App
-        - More args in AppDefinition
-        - More args in WithClassInfo
-        """
+    def __init__(self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs):
+        """Virtual app for logging existing app results. """
 
         if app is None:
             app = VirtualApp()
@@ -282,9 +280,10 @@ class TruVirtual(App):
         record: Record,
         feedback_mode: Optional[FeedbackMode] = None
     ) -> Record:
-        """
-        Add the given record to the database and evaluate any pre-specified
-        feedbacks on it. The class `VirtualRecord` may be useful for creating
+        """Add the given record to the database and evaluate any pre-specified
+        feedbacks on it.
+        
+        The class `VirtualRecord` may be useful for creating
         records for virtual models. If `feedback_mode` is specified, will use
         that mode for this record only.
         """
@@ -310,14 +309,14 @@ class TruVirtual(App):
         return record
 
 
-TruVirtual.model_rebuild()
+# TruVirtual.model_rebuild()
 
 # Need these to make sure rebuild below works.
 # TODO: Figure out whether any of this is needed.
-from typing import List, Tuple
+# from typing import List, Tuple
 
-from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.utils.python import Future
+# from trulens_eval.schema import FeedbackDefinition
+# from trulens_eval.schema import FeedbackResult
+# from trulens_eval.utils.python import Future
 
-VirtualRecord.model_rebuild()
+# VirtualRecord.model_rebuild()
