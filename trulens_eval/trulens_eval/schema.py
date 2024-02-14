@@ -27,8 +27,10 @@ import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
-from typing import (Any, Callable, ClassVar, Dict, Hashable, List, Optional,
-                    Sequence, Tuple, Type, TypeVar, Union)
+from typing import (
+    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
+    Type, TypeVar, Union
+)
 
 import dill
 import humanize
@@ -133,7 +135,7 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
 
     start_time: datetime.datetime
     """Datetime before the recorded call."""
-    
+
     end_time: datetime.datetime
     """Datetime after the recorded call."""
 
@@ -157,7 +159,7 @@ class RecordAppCall(serial.SerialModel):
     
     Sometimes this is a dict, sometimes a sequence, and sometimes a base value.
     """
-    
+
     error: Optional[str] = None
     """Error message if call raised exception."""
 
@@ -201,7 +203,9 @@ class Record(serial.SerialModel, Hashable):
     perf: Optional[Perf] = None
     """Performance information."""
 
-    ts: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
+    ts: datetime.datetime = pydantic.Field(
+        default_factory=datetime.datetime.now
+    )
     """Timestamp of last update.
     
     This is usually set whenever a record is changed in any way."""
@@ -228,9 +232,11 @@ class Record(serial.SerialModel, Hashable):
     as the app that generated this record via `layout_calls_as_app`.
     """
 
-    feedback_and_future_results: Optional[List[Tuple[
-        FeedbackDefinition, Future[FeedbackResult]
-    ]]] = pydantic.Field(None, exclude=True)
+    feedback_and_future_results: Optional[List[Tuple[FeedbackDefinition,
+                                                     Future[FeedbackResult]]]
+                                         ] = pydantic.Field(
+                                             None, exclude=True
+                                         )
     """Map of feedbacks to the futures for of their results.
      
     These are only filled for records that were just produced. This will not
@@ -298,7 +304,9 @@ class Record(serial.SerialModel, Hashable):
 
             # Adds another attribute to path, from method name:
             path = frame_info.path._append(
-                serial.GetItemOrAttribute(item_or_attribute=frame_info.method.name)
+                serial.GetItemOrAttribute(
+                    item_or_attribute=frame_info.method.name
+                )
             )
 
             ret = path.set_or_append(obj=ret, val=call)
@@ -526,7 +534,9 @@ class FeedbackResult(serial.SerialModel):
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
     # Last timestamp involved in the evaluation.
-    last_ts: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
+    last_ts: datetime.datetime = pydantic.Field(
+        default_factory=datetime.datetime.now
+    )
 
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
     """For deferred feedback evaluation, the status of the evaluation."""
@@ -591,7 +601,8 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     def __init__(
         self,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        implementation: Optional[Union[pyschema.Function, pyschema.Method]] = None,
+        implementation: Optional[Union[pyschema.Function,
+                                       pyschema.Method]] = None,
         aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
         selectors: Optional[Dict[str, serial.Lens]] = None,
         name: Optional[str] = None,
@@ -823,8 +834,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         blank memory).
         """
 
-        serial_bytes_json: Optional[serial.JSON] = app_definition_json[
-            'initial_app_loader_dump']
+        serial_bytes_json: Optional[
+            serial.JSON] = app_definition_json['initial_app_loader_dump']
 
         if initial_app_loader is None:
             assert serial_bytes_json is not None, "Cannot create new session without `initial_app_loader`."

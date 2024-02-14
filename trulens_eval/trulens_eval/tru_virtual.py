@@ -22,6 +22,7 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
 from trulens_eval.schema import Select
+from trulens_eval.utils import serial
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import Method
@@ -29,8 +30,6 @@ from trulens_eval.utils.pyschema import Module
 from trulens_eval.utils.pyschema import Obj
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
-from trulens_eval.utils import serial
-
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +42,9 @@ class VirtualApp(dict):
     will refer to this class as the wrapped app. All calls will be under `VirtualApp.root` 
     """
 
-    def __setitem__(self, __name: Union[str, serial.Lens], __value: Any) -> None:
+    def __setitem__(
+        self, __name: Union[str, serial.Lens], __value: Any
+    ) -> None:
         """
         Allow setitem to work on Lenses instead of just strings. Uses `Lens.set`
         if a lens is given.
@@ -116,7 +117,9 @@ class VirtualRecord(Record):
     """
 
     def __init__(self, calls: Dict[serial.Lens, Dict], **kwargs):
-        root_call = RecordAppCallMethod(path=serial.Lens(), method=virtual_method_root)
+        root_call = RecordAppCallMethod(
+            path=serial.Lens(), method=virtual_method_root
+        )
 
         start_time = datetime.datetime.now()
 
@@ -295,11 +298,12 @@ class TruVirtual(App):
 
         # Creates feedback futures.
         record.feedback_and_future_results = self._handle_record(
-            record,
-            feedback_mode=feedback_mode
+            record, feedback_mode=feedback_mode
         )
         if record.feedback_and_future_results is not None:
-            record.feedback_results = [tup[1] for tup in record.feedback_and_future_results]
+            record.feedback_results = [
+                tup[1] for tup in record.feedback_and_future_results
+            ]
 
         # Wait for results if mode is WITH_APP.
         if feedback_mode == FeedbackMode.WITH_APP and record.feedback_results is not None:

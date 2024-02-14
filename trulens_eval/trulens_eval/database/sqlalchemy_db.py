@@ -549,12 +549,8 @@ class AppsExtractor:
                     self.feedback_columns.add(_res.name)
 
             row = {
-                **{
-                    k: np.mean(v) for k, v in values.items()
-                },
-                **{
-                    k + "_calls": flatten(v) for k, v in calls.items()
-                },
+                **{k: np.mean(v) for k, v in values.items()},
+                **{k + "_calls": flatten(v) for k, v in calls.items()},
             }
 
             for col in self.rec_cols:

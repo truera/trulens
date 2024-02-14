@@ -414,7 +414,7 @@ class AzureOpenAI(OpenAI):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-        
+
         # Make a dict of args to pass to AzureOpenAI client. Remove any we use
         # for our needs. Note that model name / deployment name is not set in
         # that client and instead is an argument to each chat request. We pass

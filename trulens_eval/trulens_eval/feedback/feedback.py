@@ -8,7 +8,9 @@ import json
 import logging
 import pprint
 import traceback
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
+)
 import warnings
 
 import numpy as np
@@ -670,7 +672,7 @@ class Feedback(FeedbackDefinition):
 
         if self.imp is not None:
             return self.imp.__name__
-        
+
         return super().name
 
     def extract_selection(
