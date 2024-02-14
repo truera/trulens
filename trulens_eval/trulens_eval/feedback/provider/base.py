@@ -123,9 +123,7 @@ class LLMProvider(Provider):
         normalize: float = 10.0
     ) -> float:
         """
-        Extractor for LLM prompts. If CoT is used; it will look for
-        "Supporting Evidence" template. Otherwise, it will look for the typical
-        0-10 scoring.
+        Base method to generate a score only, used for evaluation.
 
         Args:
             system_prompt (str): A pre-formated system prompt
@@ -152,14 +150,13 @@ class LLMProvider(Provider):
         normalize: float = 10.0
     ) -> Tuple[float, Dict]:
         """
-        Generator and extractor for LLM prompts. It will look for
-        "Supporting Evidence" template.
+        Base method to generate a score and reason, used for evaluation.
 
         Args:
             system_prompt (str): A pre-formated system prompt
 
         Returns:
-            The score (float): 0-1 scale and reason metadata (dict) if available.
+            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
