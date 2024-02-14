@@ -13,12 +13,15 @@ from ast import parse
 from copy import copy
 import logging
 from pprint import PrettyPrinter
-from typing import (Any, Callable, Dict, Generic, Hashable, Iterable, List, Optional,
-                    Sequence, Sized, Tuple, TypeVar, Union)
+from typing import (Any, Callable, Dict, Generic, Hashable, Iterable, List,
+                    Optional, Sequence, Sized, Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema
+from pydantic_core import CoreSchema
 
 from trulens_eval.utils.containers import iterable_peek
 
@@ -26,8 +29,6 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
-
-# JSON types
 
 JSON_BASES: Tuple[type, ...] = (str, int, float, bytes, type(None))
 """
@@ -64,16 +65,21 @@ Alias for (strictly) JSON-able data.
 Python object that is directly mappable to JSON.
 """
 
-class JSONized(Generic[T], JSON_STRICT):
-    """
-    JSON-encoded data the can be deserialized into a given type `T`.
+class JSONized(JSON_STRICT, Generic[T]):  # really JSON_STRICT
+    """JSON-encoded data the can be deserialized into a given type `T`.
     
     This class is meant only for type annotations. Any
     serialization/deserialization logic is handled by different classes, usually
     subclasses of `pydantic.BaseModel`.
     """
-    pass
 
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> CoreSchema:
+        """Make pydantic treat this class same as a `dict`."""
+        return core_schema.no_info_after_validator_function(cls, handler(dict))
+    
 mj = MerkleJson()
 
 
