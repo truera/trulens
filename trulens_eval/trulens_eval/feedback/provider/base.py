@@ -1009,7 +1009,6 @@ class LLMProvider(Provider):
         system_prompt = str.format(
             prompts.COMPREHENSIVENESS_PROMPT, source=source, summary=summary
         )
-        print(system_prompt)
         return self.generate_score_and_reasons(system_prompt)
 
     def summarization_with_cot_reasons(self, source: str,
