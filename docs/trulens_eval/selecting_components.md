@@ -17,14 +17,14 @@ f_qs_relevance = Feedback(openai.qs_relevance)
   specification will be discussed in further details in the Specifying Arguments
   section.
 
-- **Aggregation specification** -- The last line `aggregate(numpy.min)` specifies
-  how feedback outputs are to be aggregated. This only applies to cases where
-  the argument specification names more than one value for an input. The second
-  specification, for `statement` was of this type. The input to `aggregate` must
-  be a method which can be imported globally. This requirement is further
-  elaborated in the next section. This function is called on the `float` results
-  of feedback function evaluations to produce a single float. The default is
-  `numpy.mean`.
+- **Aggregation specification** -- The last line `aggregate(numpy.min)`
+  specifies how feedback outputs are to be aggregated. This only applies to
+  cases where the argument specification names more than one value for an input.
+  The second specification, for `statement` was of this type. The input to
+  `aggregate` must be a method which can be imported globally. This requirement
+  is further elaborated in the next section. This function is called on the
+  `float` results of feedback function evaluations to produce a single float.
+  The default is `numpy.mean`.
 
 The result of these lines is that `f_qs_relevance` can be now be run on
 app/records and will automatically select the specified components of those
@@ -113,19 +113,21 @@ are equivalent assuming the feedback implementation has two arguments,
 
 ### Selector Details
 
-Apps and Records will be converted to JSON-like structures representing their callstack.
+Apps and Records will be converted to JSON-like structures representing their
+callstack.
 
-Selectors are of type `JSONPath` defined in `utils/serial.py` help specify paths into JSON-like
-structures (enumerating `Record` or `App` contents).
+Selectors are of type `JSONPath` defined in `utils/serial.py` help specify paths
+into JSON-like structures (enumerating `Record` or `App` contents).
 
 In most cases, the Select object produces only a single item but can also
 address multiple items.
 
-You can access the JSON structure with `with_record` methods and then calling `layout_calls_as_app`.
+You can access the JSON structure with `with_record` methods and then calling
+`layout_calls_as_app`.
 
 for example
 
-```
+```python
 response = my_llm_app(query)
 
 from trulens_eval import TruChain
@@ -139,30 +141,31 @@ json_like = tru_record.layout_calls_as_app()
 
 If a selector looks like the below
 
-```
+```python
 Select.Record.app.combine_documents_chain._call
 ```
 
 It can be accessed via the JSON-like via
 
-```
+```python
 json_like['app']['combine_documents_chain']['_call']
 ```
 
-This structure can also be seen in the TruLens Evaluations UI by clicking on a component of interest in the timeline.
+This structure can also be seen in the TruLens Evaluations UI by clicking on a
+component of interest in the timeline.
 
 The top level record also contains these helper accessors
 
 - `RecordInput = Record.main_input` -- points to the main input part of a
-  Record. This is the first argument to the root method of an app (for
-  langchain Chains this is the `__call__` method).
+  Record. This is the first argument to the root method of an app (for langchain
+  Chains this is the `__call__` method).
 
 - `RecordOutput = Record.main_output` -- points to the main output part of a
-  Record. This is the output of the root method of an app (i.e. `__call__`
-  for langchain Chains).
+  Record. This is the output of the root method of an app (i.e. `__call__` for
+  langchain Chains).
 
-- `RecordCalls = Record.app` -- points to the root of the app-structured
-  mirror of calls in a record. See **App-organized Calls** Section above.
+- `RecordCalls = Record.app` -- points to the root of the app-structured mirror
+  of calls in a record. See **App-organized Calls** Section above.
 
 ## Multiple Inputs Per Argument
 
@@ -235,13 +238,13 @@ print(tru.dict())
 
 ### Calls made by App Components
 
-When evaluating a feedback function, Records are augmented with
-app/component calls. For example, if the instrumented app
-contains a component `combine_docs_chain` then `app.combine_docs_chain` will
-contain calls to methods of this component. `app.combine_docs_chain._call` will
-contain a `RecordAppCall` (see schema.py) with information about the inputs/outputs/metadata
-regarding the `_call` call to that component. Selecting this information is the
-reason behind the `Select.RecordCalls` alias.
+When evaluating a feedback function, Records are augmented with app/component
+calls. For example, if the instrumented app contains a component
+`combine_docs_chain` then `app.combine_docs_chain` will contain calls to methods
+of this component. `app.combine_docs_chain._call` will contain a `RecordAppCall`
+(see schema.py) with information about the inputs/outputs/metadata regarding the
+`_call` call to that component. Selecting this information is the reason behind
+the `Select.RecordCalls` alias.
 
 You can inspect the components making up your app via the `App` method
 `print_instrumented`.

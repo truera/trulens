@@ -20,6 +20,7 @@
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
+
 # ### Import from LangChain and TruLens
 
 # In[ ]:
@@ -40,6 +41,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough
 
+
 # ### Load documents
 
 # In[ ]:
@@ -53,6 +55,7 @@ loader = WebBaseLoader(
     ),
 )
 docs = loader.load()
+
 
 # ### Create Vector Store
 
@@ -69,6 +72,7 @@ vectorstore = Chroma.from_documents(
     documents=splits,
     embedding=OpenAIEmbeddings()
 )
+
 
 # ### Create RAG
 
@@ -89,11 +93,13 @@ rag_chain = (
     | StrOutputParser()
 )
 
+
 # ### Send your first request
 
 # In[ ]:
 
 rag_chain.invoke("What is Task Decomposition?")
+
 
 # ## Initialize Feedback Function(s)
 
@@ -129,6 +135,7 @@ f_context_relevance = (
     .aggregate(np.mean)
 )
 
+
 # ## Instrument chain for logging with TruLens
 
 # In[ ]:
@@ -144,6 +151,7 @@ with tru_recorder as recording:
 
 display(llm_response)
 
+
 # ## Retrieve records and feedback
 
 # In[ ]:
@@ -156,6 +164,9 @@ rec = recording.get() # use .get if only one record
 display(rec)
 
 # In[ ]:
+
+
+
 
 # The results of the feedback functions can be rertireved from
 # `Record.feedback_results` or using the `wait_for_feedback_result` method. The
@@ -179,6 +190,7 @@ records.head()
 
 tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])
 
+
 # ## Explore in a Dashboard
 
 # In[ ]:
@@ -186,6 +198,7 @@ tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])
 tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
+
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
@@ -216,12 +229,14 @@ tru.run_dashboard() # open a local streamlit app to explore
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
+
 # ### Import from TruLens
 
 # In[ ]:
 
 from trulens_eval import Tru
 tru = Tru()
+
 
 # ### Create Simple LLM Application
 # 
@@ -239,12 +254,14 @@ index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()
 
+
 # ### Send your first request
 
 # In[ ]:
 
 response = query_engine.query("What did the author do growing up?")
 print(response)
+
 
 # ## Initialize Feedback Function(s)
 
@@ -284,6 +301,7 @@ f_qs_relevance = (
     .aggregate(np.mean)
 )
 
+
 # ## Instrument app for logging with TruLens
 
 # In[ ]:
@@ -299,6 +317,7 @@ tru_query_engine_recorder = TruLlama(query_engine,
 with tru_query_engine_recorder as recording:
     query_engine.query("What did the author do growing up?")
 
+
 # ## Retrieve records and feedback
 
 # In[ ]:
@@ -311,6 +330,9 @@ rec = recording.get() # use .get if only one record
 display(rec)
 
 # In[ ]:
+
+
+
 
 # The results of the feedback functions can be rertireved from
 # `Record.feedback_results` or using the `wait_for_feedback_result` method. The
@@ -334,6 +356,7 @@ records.head()
 
 tru.get_leaderboard(app_ids=["LlamaIndex_App1"])
 
+
 # ## Explore in a Dashboard
 
 # In[ ]:
@@ -341,6 +364,7 @@ tru.get_leaderboard(app_ids=["LlamaIndex_App1"])
 tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
+
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
@@ -363,6 +387,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
+
 # ## Get Data
 # 
 # In this case, we'll just initialize some simple text in the notebook.
@@ -376,6 +401,7 @@ As the flagship institution of the six public universities in Washington state,
 UW encompasses over 500 buildings and 20 million square feet of space,
 including one of the largest library systems in the world.
 """
+
 
 # ## Create Vector Store
 # 
@@ -408,6 +434,7 @@ vector_store = chroma_client.get_or_create_collection(name="Universities",
 # In[ ]:
 
 vector_store.add("uni_info", documents=university_info)
+
 
 # ## Build RAG from scratch
 # 
@@ -463,6 +490,7 @@ class RAG_from_scratch:
 
 rag = RAG_from_scratch()
 
+
 # ## Set up feedback functions.
 # 
 # Here we'll use groundedness, answer relevance and context relevance to detect hallucination.
@@ -503,6 +531,7 @@ f_context_relevance = (
     .aggregate(np.mean)
 )
 
+
 # ## Construct the app
 # Wrap the custom RAG with TruCustomApp, add list of feedbacks for eval
 
@@ -529,6 +558,7 @@ tru.get_leaderboard(app_ids=["RAG v1"])
 
 tru.run_dashboard()
 
+
 # # Prototype Evals
 # This notebook shows the use of the dummy feedback function provider which
 # behaves like the huggingface provider except it does not actually perform any
@@ -553,12 +583,14 @@ tru = Tru()
 
 tru.run_dashboard()
 
+
 # ## Set keys
 
 # In[ ]:
 
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
+
 
 # ## Build the app
 
@@ -587,6 +619,7 @@ class APP:
     
 llm_app = APP()
 
+
 # ## Create dummy feedback
 # 
 # By setting the provider as `Dummy()`, you can erect your evaluation suite and then easily substitute in a real model provider (e.g. OpenAI) later.
@@ -599,6 +632,7 @@ from trulens_eval.feedback.provider.hugs import Dummy
 hugs = Dummy()
 
 f_positive_sentiment = Feedback(hugs.positive_sentiment).on_output()
+
 
 # ## Create the app
 
@@ -621,6 +655,7 @@ with tru_app as recording:
 
 tru.get_leaderboard(app_ids=[tru_app.app_id])
 
+
 # ## Logging Human Feedback
 # 
 # In many situations, it can be useful to log human feedback from your users about your LLM app's performance. Combining human feedback along with automated feedback can help you drill down on subsets of your app that underperform, and uncover new failure modes. This example will walk you through a simple example of recording human feedback with TruLens.
@@ -640,6 +675,7 @@ from trulens_eval import TruCustomApp
 
 tru = Tru()
 
+
 # ## Set Keys
 # 
 # For this example, you need an OpenAI key.
@@ -647,6 +683,7 @@ tru = Tru()
 # In[ ]:
 
 os.environ["OPENAI_API_KEY"] = "sk-..."
+
 
 # ## Set up your app
 # 
@@ -692,6 +729,7 @@ with tru_app as recording:
 # Get the record to add the feedback to.
 record = recording.get()
 
+
 # ## Create a mechamism for recording human feedback.
 # 
 # Be sure to click an emoji in the record to record `human_feedback` to log.
@@ -728,11 +766,13 @@ tru.add_feedback(
     result=human_feedback
 )
 
+
 # ## See the result logged with your app.
 
 # In[ ]:
 
 tru.get_leaderboard(app_ids=[tru_app.app_id])
+
 
 # # Ground Truth Evaluations
 # 
@@ -760,6 +800,7 @@ from trulens_eval import Tru
 
 tru = Tru()
 
+
 # ### Create Simple LLM Application
 
 # In[4]:
@@ -786,6 +827,7 @@ class APP:
         return completion
     
 llm_app = APP()
+
 
 # ## Initialize Feedback Function(s)
 
@@ -816,11 +858,13 @@ with tru_app as recording:
     llm_app.completion("¿quien invento la bombilla?")
     llm_app.completion("who invented the lightbulb?")
 
+
 # ## See results
 
 # In[8]:
 
 tru.get_leaderboard(app_ids=[tru_app.app_id])
+
 
 # # Logging Methods
 # 
@@ -871,6 +915,7 @@ truchain = TruChain(
 with truchain:
     chain("This will be automatically logged.")
 
+
 # Feedback functions can also be logged automatically by providing them in a list
 # to the feedbacks arg.
 
@@ -895,6 +940,7 @@ truchain = TruChain(
 with truchain:
     chain("This will be automatically logged.")
 
+
 # ## Manual Logging
 # 
 # ### Wrap with TruChain to instrument your chain
@@ -902,6 +948,7 @@ with truchain:
 # In[ ]:
 
 tc = TruChain(chain, app_id='Chain1_ChatApplication')
+
 
 # ### Set up logging and instrumentation
 # 
@@ -913,17 +960,20 @@ tc = TruChain(chain, app_id='Chain1_ChatApplication')
 prompt_input = 'que hora es?'
 gpt3_response, record = tc.with_record(chain.__call__, prompt_input)
 
+
 # We can log the records but first we need to log the chain itself.
 
 # In[ ]:
 
 tru.add_app(app=truchain)
 
+
 # Then we can log the record:
 
 # In[ ]:
 
 tru.add_record(record)
+
 
 # ### Log App Feedback
 # Capturing app feedback such as user feedback of the responses can be added with
@@ -937,6 +987,7 @@ tru.add_feedback(
     record_id=record.record_id, 
     result=thumb_result
 )
+
 
 # ### Evaluate Quality
 # 
@@ -960,11 +1011,13 @@ feedback_results = tru.run_feedback_functions(
 for result in feedback_results:
     display(result)
 
+
 # After capturing feedback, you can then log it to your local database.
 
 # In[ ]:
 
 tru.add_feedbacks(feedback_results)
+
 
 # ### Out-of-band Feedback evaluation
 # 
@@ -993,6 +1046,7 @@ with truchain:
 tru.start_evaluator()
 # tru.stop_evaluator()
 
+
 # # Custom Functions
 # 
 # Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating `trulens_eval/feedback.py`, or simply creating a new provider class and feedback function in youre notebook. If your contributions would be useful for others, we encourage you to contribute to TruLens!
@@ -1003,6 +1057,8 @@ tru.start_evaluator()
 # 1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class. Add the new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best).
 
 # In[ ]:
+
+from trulens_eval import Provider, Feedback, Select, Tru
 
 from trulens_eval import Provider, Feedback, Select, Tru
 
@@ -1038,6 +1094,7 @@ feedback_results = tru.run_feedback_functions(
     feedback_functions=[f_custom_function]
 )
 tru.add_feedbacks(feedback_results)
+
 
 # ## Extending existing providers.
 # 
@@ -1136,6 +1193,8 @@ tru.add_feedbacks(feedback_results)
 
 # In[ ]:
 
+
+
 # For multi-context chunking, an aggregator can operate on a list of multi output dictionaries.
 def dict_aggregator(list_dict_input):
     agg = 0
@@ -1150,3 +1209,4 @@ feedback_results = tru.run_feedback_functions(
     feedback_functions=[multi_output_feedback]
 )
 tru.add_feedbacks(feedback_results)
+

@@ -43,5 +43,6 @@ credentials.toml
 
 **/*.sqlite
 
-# Virtual environment
+# Virtual environments
 .venv
+.conda

@@ -2,12 +2,12 @@ from abc import abstractmethod
 from typing import ClassVar, Iterable, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.trulens_eval.feedback.base import ClassificationModel
-from trulens_eval.trulens_eval.feedback.base import Hate
-from trulens_eval.trulens_eval.feedback.base import HateThreatening
-from trulens_eval.trulens_eval.feedback.base import Model
-from trulens_eval.trulens_eval.feedback.base import WithExamples
-from trulens_eval.trulens_eval.feedback.base import WithPrompt
+from trulens_eval.feedback.base import ClassificationModel
+from trulens_eval.feedback.base import Hate
+from trulens_eval.feedback.base import HateThreatening
+from trulens_eval.feedback.base import Model
+from trulens_eval.feedback.base import WithExamples
+from trulens_eval.feedback.base import WithPrompt
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
