@@ -563,7 +563,7 @@ class Tru(python.SingletonPerName):
             ```
 
         !!! note "Deserialization"
-            Do not rely on deserializing into [App][trulens_eval.schema.App] as
+            Do not rely on deserializing into [App][trulens_eval.app.App] as
             its implementations feature attributes not meant to be deserialized.
         
         Args:

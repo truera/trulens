@@ -1,3 +1,3 @@
-# Serial Utils
+# Serialization Utilities
 
 ::: trulens_eval.utils.serial

@@ -17,10 +17,18 @@ from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
 
 if sys.version_info >= (3, 9):
     Future = futures.Future
-    """Alias for concurrent.futures.Future ."""
+    """Alias for [concurrent.futures.Future][].
+    
+    In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+    `Generic[A]` is used instead.
+    """
 
     Queue = queue.Queue
-    """Alias for queue.Queue ."""
+    """Alias for [queue.Queue][] .
+    
+    In python < 3.9, a sublcass of [queue.Queue][] with
+    `Generic[A]` is used instead.
+    """
 
 else:
     # Fake classes which can have type args. In python earlier than 3.9, the
@@ -31,27 +39,34 @@ else:
 
     # HACK011
     class Future(Generic[A], futures.Future):
-        """Future that can have type args for use in type annotations only.
-        
-        This class is not necessary with python >= 3.9 .
+        """Alias for [concurrent.futures.Future][].
+    
+        In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+        `Generic[A]` is used instead.
         """
 
     # HACK012
     class Queue(Generic[A], queue.Queue):
-        """Queue that can have type args for use in type annotations only.
-        
-        This class is not necessary with python >= 3.9 .
+        """Alias for [queue.Queue][] .
+    
+        In python < 3.9, a sublcass of [queue.Queue][] with
+        `Generic[A]` is used instead.
         """
 
 if sys.version_info >= (3, 10):
     import types
     NoneType = types.NoneType
-    """Alias for types.NoneType ."""
+    """Alias for [types.NoneType][] .
+    
+    In python < 3.10, it is defined as `type(None)` instead.
+    """
 
 else:
     NoneType = type(None)
-    """Type of `None`"""
-
+    """Alias for [types.NoneType][] .
+    
+    In python < 3.10, it is defined as `type(None)` instead.
+    """
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -65,14 +80,19 @@ Thunk = Callable[[], T]
 
 
 def is_really_coroutinefunction(func) -> bool:
-    # NOTE(piotrm): inspect checkers for async functions do not work on openai
-    # clients, perhaps because they use @typing.overload. Because of that, we
-    # detect them by checking __wrapped__ attribute instead. Note that the
-    # inspect docs suggest they should be able to handle wrapped functions but
-    # perhaps they handle different type of wrapping? See
-    # https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction
-    # . Another place they do not work is the decorator langchain uses to mark
-    # deprecated functions.
+    """Determine whether the given function is a coroutine function.
+
+    !!! Warning
+     
+        Inspect checkers for async functions do not work on openai clients,
+        perhaps because they use `@typing.overload`. Because of that, we detect
+        them by checking `__wrapped__` attribute instead. Note that the inspect
+        docs suggest they should be able to handle wrapped functions but perhaps
+        they handle different type of wrapping? See
+        https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction
+        . Another place they do not work is the decorator langchain uses to mark
+        deprecated functions.
+    """
 
     if inspect.iscoroutinefunction(func):
         return True

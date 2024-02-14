@@ -21,12 +21,26 @@ class Provider(WithClassInfo, SerialModel):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint] = None
+    """Endpoint supporting this provider.
+    
+    Remote API invocations are handled by the endpoint.
+    """
 
     def __init__(self, name: Optional[str] = None, **kwargs):
         super().__init__(name=name, **kwargs)
 
 
 class LLMProvider(Provider):
+    """An LLM-based provider.
+    
+    This is an abstract class and needs to be initialized as one of these:
+
+    - [OpenAI provider][trulens_eval.feedback.provider.openai.OpenAI] or
+      [AzureOpenAI provider][trulens_eval.feedback.provider.openai.AzureOpenAI]
+    - [Bedrock provider][trulens_eval.feedback.provider.bedrock.Bedrock]
+    - [LiteLLM provider][trulens_eval.feedback.provider.litellm.LiteLLM]
+    - [Langchain provider][trulens_eval.feedback.provider.langchain.Langchain]
+    """
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any

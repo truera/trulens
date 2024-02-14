@@ -651,59 +651,73 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
 
 class FeedbackMode(str, Enum):
-    # No evaluation will happen even if feedback functions are specified.
     NONE = "none"
+    """No evaluation will happen even if feedback functions are specified."""
 
-    # Try to run feedback functions immediately and before app returns a
-    # record.
     WITH_APP = "with_app"
+    """Try to run feedback functions immediately and before app returns a
+    record."""
 
-    # Try to run feedback functions in the same process as the app but after
-    # it produces a record.
     WITH_APP_THREAD = "with_app_thread"
+    """Try to run feedback functions in the same process as the app but after
+    it produces a record."""
 
-    # Evaluate later via the process started by
-    # `tru.start_deferred_feedback_evaluator`.
     DEFERRED = "deferred"
+    """Evaluate later via the process started by
+    `tru.start_deferred_feedback_evaluator`."""
 
 
 class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
-    # Serialized fields here whereas app.py:App contains
-    # non-serialized fields.
+    """Serialized fields of an app here whereas [App][trulens_eval.app.App]
+    contains non-serialized fields."""
 
     app_id: AppID  # str
+    """Unique identifier for this app."""
+
     tags: Tags  # str
+    """Tags for the app."""
+
     metadata: Metadata  # dict  # TODO: rename to meta for consistency with other metas
+    """Metadata for the app."""
 
-    # Feedback functions to evaluate on each record. Unlike the above, these are
-    # meant to be serialized.
     feedback_definitions: Sequence[FeedbackDefinition] = []
+    """Feedback functions to evaluate on each record."""
 
-    # NOTE: Custom feedback functions cannot be run deferred and will be run as
-    # if "withappthread" was set.
     feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
+    """How to evaluate feedback functions upon producing a record."""
 
-    # Class of the main instrumented object. Ideally this would be a ClassVar
-    # but since we want to check this without instantiating the subclass of
-    # AppDefinition that would define it, we cannot use ClassVar.
     root_class: pyschema.Class
+    """Class of the main instrumented object.
+    
+    Ideally this would be a [ClassVar][] but since we want to check this without
+    instantiating the subclass of
+    [AppDefinition][trulens_eval.schema.AppDefinition] that would define it, we
+    cannot use [ClassVar][].
+    """
 
-    # App's main method. To be filled in by subclass. Want to make this abstract
-    # but this causes problems when trying to load an AppDefinition from json.
     root_callable: ClassVar[pyschema.FunctionOrMethod]
+    """App's main method. 
+    
+    This is to be filled in by subclass.
+    """
 
-    # Wrapped app in jsonized form.
-    app: serial.JSON
+    app: serial.JSONized[AppDefinition]
+    """Wrapped app in jsonized form."""
 
-    # EXPERIMENTAL
-    # NOTE: temporary unsafe serialization of function that loads the app:
-    # Dump of the initial app before any invocations. Can be used to create a new session.
     initial_app_loader_dump: Optional[serial.SerialBytes] = None
+    """EXPERIMENTAL: serialization of a function that loads an app.
 
-    # Info to store about the app and to display in dashboard. This is useful if
-    # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
-    # whatever the user might want to see about the app.
+    Dump is of the initial app state before any invocations. This can be used to
+    create a new session.
+    """
+
     app_extra_json: serial.JSON
+    """Info to store about the app and to display in dashboard. 
+    
+    This can be used even if app itself cannot be serialized. `app_extra_json`,
+    then, can stand in place for whatever data the user might want to keep track
+    of about the app.
+    """
 
     def __init__(
         self,

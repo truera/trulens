@@ -39,12 +39,14 @@ pp = pprint.PrettyPrinter()
 
 A = TypeVar("A")
 
-# Signature of feedback implementations. Take in any number of arguments
-# and return either a single float or a float and a dictionary (of metadata).
 ImpCallable = Callable[[A], Union[float, Tuple[float, Dict[str, Any]]]]
+"""Signature of feedback implementations.
 
-# Signature of aggregation functions.
+Those take in any number of arguments and return either a single float or a
+float and a dictionary (of metadata)."""
+
 AggCallable = Callable[[Iterable[float]], float]
+"""Signature of aggregation functions."""
 
 
 class Feedback(FeedbackDefinition):
