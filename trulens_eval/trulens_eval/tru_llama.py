@@ -186,48 +186,52 @@ class TruLlama(App):
     """
     Instantiates the LLama Index Wrapper.
 
-    Usage, LLama-Index code: [LLama Index
-    Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
+    Example:
+        LLama-Index code: [LLama Index
+        Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
     
-    ```python
-    # Code snippet taken from llama_index 0.8.29 (API subject to change with new versions)
-    from llama_index import VectorStoreIndex
-    from llama_index.readers.web import SimpleWebPageReader
+        ```python
+        # Code snippet taken from llama_index 0.8.29 (API subject to change with new versions)
+        from llama_index import VectorStoreIndex
+        from llama_index.readers.web import SimpleWebPageReader
 
-    documents = SimpleWebPageReader(
-        html_to_text=True
-    ).load_data(["http://paulgraham.com/worked.html"])
-    index = VectorStoreIndex.from_documents(documents)
+        documents = SimpleWebPageReader(
+            html_to_text=True
+        ).load_data(["http://paulgraham.com/worked.html"])
+        index = VectorStoreIndex.from_documents(documents)
 
-    query_engine = index.as_query_engine()
-    ```
+        query_engine = index.as_query_engine()
+        ```
 
-    Trulens Eval Code:
-    ```python
-    from trulens_eval import TruLlama
-    # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-    tru_recorder = TruLlama(query_engine,
-        app_id='LlamaIndex_App1',
-        feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+        Trulens Eval Code:
+        ```python
+        from trulens_eval import TruLlama
+        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        tru_recorder = TruLlama(query_engine,
+            app_id='LlamaIndex_App1',
+            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
 
-    with tru_recorder as recording:
-        query_engine.query("What is llama index?")
+        with tru_recorder as recording:
+            query_engine.query("What is llama index?")
 
-    tru_record = recording.records[0]
+        tru_record = recording.records[0]
 
-    # To add record metadata 
-    with tru_recorder as recording:
-        recording.record_metadata="this is metadata for all records in this context that follow this line"
-        query_engine.query("What is llama index?")
-        recording.record_metadata="this is different metadata for all records in this context that follow this line"
-        query_engine.query("Where do I download llama index?")
-    
-    ```
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            query_engine.query("What is llama index?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            query_engine.query("Where do I download llama index?")
+        
+        ```
 
-    See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
     Args:
-        app (BaseQueryEngine | BaseChatEngine): A llama index application.
+        app: A llama index application.
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)

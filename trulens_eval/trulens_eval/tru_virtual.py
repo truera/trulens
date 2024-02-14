@@ -87,8 +87,7 @@ virtual_method_call = Method(
 
 
 class VirtualRecord(Record):
-    """
-    Utility class for creating `Record`s using selectors.
+    """Utility class for creating `Record`s using selectors.
     
     In the example below, `Select.RecordCalls.retriever` refers to a presumed
     component of some virtual model which is assumed to have called the method
@@ -97,7 +96,7 @@ class VirtualRecord(Record):
     the same as for `Record`, but empty values are filled for arguments that are
     not provided but are otherwise required.
 
-    Usage:
+    Example:
         ```python
         VirtualRecord(
             main_input="Where is Germany?", 
@@ -194,28 +193,30 @@ class VirtualRecord(Record):
 
 
 class TruVirtual(App):
-    """
-    Recorder for virtual apps. Virtual apps are data only in that they cannot be
+    """Recorder for virtual apps.
+    
+    Virtual apps are data only in that they cannot be
     executed but for whom previously-computed results can be added using
     `add_record`. The `VirtualRecord` class may be useful for creating records
     for this. Fields used by non-virtual apps can be specified here, notably:
 
-    * app_id: str -- Unique identifier for the app.
+    Args:
+        app_id: Unique identifier for the app.
 
-    * tags: List[str] -- List of tags.
+        tags: List of tags.
 
-    * metadata: Dict[Any, Any] -- Open-ended metadata.
+        metadata: Open-ended metadata.
 
-    * app_extra_json: JSON -- Additional json structured information to include
-      in the recorded app structure.
+        app_extra_json: Additional json structured information to include
+            in the recorded app structure.
 
-    * feedbacks: List[Feedback] -- Which feedback functions to run when a record
-      is ingested.
+        feedbacks: Which feedback functions to run when a record
+            is ingested.
 
-    * feedback_mode: FeedbackMode -- How to run feedback functions when a record
-      is ingested.
+        feedback_mode: How to run feedback functions when a record
+            is ingested.
 
-    * app: JSON -- See below.
+        app: See below.
 
     # The `app` field.
 
@@ -258,7 +259,7 @@ class TruVirtual(App):
 
     instrument: Optional[Instrument] = None
 
-    def __init__(self, app: Optional[JSON] = None, **kwargs):
+    def __init__(self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs):
         """Virtual app for logging existing app results. """
 
         if app is None:

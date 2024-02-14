@@ -229,62 +229,65 @@ PLACEHOLDER = "__tru_placeholder"
 class TruCustomApp(App):
     """Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.
         
-        Usage:
-            ```python
-            from trulens_eval import instrument
-            
-            class CustomApp:
+    Example:
+        ```python
+        from trulens_eval import instrument
+        
+        class CustomApp:
 
-                def __init__(self):
-                    self.retriever = CustomRetriever()
-                    self.llm = CustomLLM()
-                    self.template = CustomTemplate(
-                        "The answer to {question} is probably {answer} or something ..."
-                    )
+            def __init__(self):
+                self.retriever = CustomRetriever()
+                self.llm = CustomLLM()
+                self.template = CustomTemplate(
+                    "The answer to {question} is probably {answer} or something ..."
+                )
 
-                @instrument
-                def retrieve_chunks(self, data):
-                    return self.retriever.retrieve_chunks(data)
+            @instrument
+            def retrieve_chunks(self, data):
+                return self.retriever.retrieve_chunks(data)
 
-                @instrument
-                def respond_to_query(self, input):
-                    chunks = self.retrieve_chunks(input)
-                    answer = self.llm.generate(",".join(chunks))
-                    output = self.template.fill(question=input, answer=answer)
+            @instrument
+            def respond_to_query(self, input):
+                chunks = self.retrieve_chunks(input)
+                answer = self.llm.generate(",".join(chunks))
+                output = self.template.fill(question=input, answer=answer)
 
-                    return output
-            
-            ca = CustomApp()
-            from trulens_eval import TruCustomApp
-            # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-            tru_recorder = TruCustomApp(ca, 
-                app_id="Custom Application v1",
-                feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
-            
-            question = "What is the capital of Indonesia?"
+                return output
+        
+        ca = CustomApp()
+        from trulens_eval import TruCustomApp
+        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        tru_recorder = TruCustomApp(ca, 
+            app_id="Custom Application v1",
+            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+        
+        question = "What is the capital of Indonesia?"
 
-            # Normal Usage:
-            response_normal = ca.respond_to_query(question)
+        # Normal Usage:
+        response_normal = ca.respond_to_query(question)
 
-            # Instrumented Usage:
-            with tru_recorder as recording:
-                ca.respond_to_query(question)
+        # Instrumented Usage:
+        with tru_recorder as recording:
+            ca.respond_to_query(question)
 
-            tru_record = recording.records[0]
+        tru_record = recording.records[0]
 
-            # To add record metadata 
-            with tru_recorder as recording:
-                recording.record_metadata="this is metadata for all records in this context that follow this line"
-                ca.respond_to_query("What is llama 2?")
-                recording.record_metadata="this is different metadata for all records in this context that follow this line"
-                ca.respond_to_query("Where do I download llama 2?")
-            
-            ```
+        # To add record metadata 
+        with tru_recorder as recording:
+            recording.record_metadata="this is metadata for all records in this context that follow this line"
+            ca.respond_to_query("What is llama 2?")
+            recording.record_metadata="this is different metadata for all records in this context that follow this line"
+            ca.respond_to_query("Where do I download llama 2?")
+        
+        ```
 
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
-        Args:
-            app: Any class.
+    Args:
+        app: Any class.
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)

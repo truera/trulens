@@ -8,15 +8,13 @@ import json
 import logging
 import pprint
 import traceback
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
 import warnings
 
 import numpy as np
 import pandas
 import pydantic
 
-from trulens_eval.feedback import AggCallable
-from trulens_eval.feedback import ImpCallable
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
@@ -39,83 +37,50 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
+A = TypeVar("A")
+
+# Signature of feedback implementations. Take in any number of arguments
+# and return either a single float or a float and a dictionary (of metadata).
+ImpCallable = Callable[[A], Union[float, Tuple[float, Dict[str, Any]]]]
+
+# Signature of aggregation functions.
+AggCallable = Callable[[Iterable[float]], float]
+
 
 class Feedback(FeedbackDefinition):
     """
-    Feedback function container. Typical usage is to specify a feedback
+    Feedback function container. 
+    
+    Typical usage is to specify a feedback
     implementation function from a `Provider` and the mapping of selectors
     describing how to construct the arguments to the implementation:
 
-    ```python
-    from trulens_eval import Feedback
-    from trulens_eval import Huggingface
-    hugs = Huggingface()
-    
-    # Create a feedback function from a provider:
-    feedback = Feedback(
-        hugs.language_match # the implementation
-    ).on_input_output() # selectors shorthand
-    ```
-
-    Attributes include:
-
-        - `imp: Callable` -- an implementation,
-
-        - `agg: Callable` -- an aggregator implementation for handling selectors
-          that name more than one value,
-
-        - `higher_is_better: bool` -- whether higher score is better,
-
-        - attributes via parent `FeedbackDefinition`:
-
-            - `feedback_definition_id: str` -- a unique id,
-
-            - `implementation: FunctionOrMethod` -- A serialized version of
-              `imp`.
-
-            - `aggregator: FunctionOrMethod` -- A serialized version of `agg`.
-
-            - `supplied_name: str` -- an optional name,
-
-            - `selectors: Dict[str, Lens]` mapping of implementation arguments
-              to selectors.
+    Example:
+        ```python
+        from trulens_eval import Feedback
+        from trulens_eval import Huggingface
+        hugs = Huggingface()
+        
+        # Create a feedback function from a provider:
+        feedback = Feedback(
+            hugs.language_match # the implementation
+        ).on_input_output() # selectors shorthand
+        ```
     """
 
-    # Implementation, not serializable, note that FeedbackDefinition contains
-    # `implementation` meant to serialize the below.
     imp: Optional[ImpCallable] = pydantic.Field(None, exclude=True)
+    """Implementation callable. A serialized version is stored at `FeedbackDefinition.implementation`."""
 
-    # Aggregator method for feedback functions that produce more than one
-    # result.
     agg: Optional[AggCallable] = pydantic.Field(None, exclude=True)
-
-    # An optional name. Only will affect display tables
-    supplied_name: Optional[str] = None
-
-    # feedback direction
-    higher_is_better: Optional[bool] = None
+    """Aggregator method for feedback functions that produce more than one
+    result. A serialized version is stored at `FeedbackDefinition.aggregator`."""
 
     def __init__(
         self,
         imp: Optional[Callable] = None,
         agg: Optional[Callable] = None,
-        name: Optional[str] = None,
-        higher_is_better: Optional[bool] = None,
         **kwargs
     ):
-        """
-        A Feedback function container.
-
-        Parameters:
-        
-        - imp: Optional[Callable] -- implementation of the feedback function.
-
-        - agg: Optional[Callable] -- aggregation function for producing a single
-          float for feedback implementations that are run more than once.
-        """
-
-        if name is not None:
-            kwargs['supplied_name'] = name
 
         # imp is the python function/method while implementation is a serialized
         # json structure. Create the one that is missing based on the one that
@@ -180,12 +145,6 @@ class Feedback(FeedbackDefinition):
         self.imp = imp
         self.agg = agg
 
-        # By default, higher score is better
-        if higher_is_better is None:
-            self.higher_is_better = True
-        else:
-            self.higher_is_better = higher_is_better
-
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
             sig: Signature = signature(self.imp)
@@ -195,7 +154,7 @@ class Feedback(FeedbackDefinition):
                     f"Its arguments are {list(sig.parameters.keys())}."
                 )
 
-    def on_input_output(self):
+    def on_input_output(self) -> Feedback:
         """
         Specifies that the feedback implementation arguments are to be the main
         app input and output in that order.
@@ -204,7 +163,7 @@ class Feedback(FeedbackDefinition):
         """
         return self.on_input().on_output()
 
-    def on_default(self):
+    def on_default(self) -> Feedback:
         """
         Specifies that one argument feedbacks should be evaluated on the main
         app output and two argument feedbacks should be evaluates on main input
@@ -276,7 +235,7 @@ class Feedback(FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(
-        tru: 'Tru',
+        tru: Tru,
         limit: Optional[int] = None,
         shuffle: bool = False
     ) -> List[Tuple[pandas.Series, Future[FeedbackResult]]]:
@@ -374,7 +333,7 @@ class Feedback(FeedbackDefinition):
         assert self.imp is not None, "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
 
-    def aggregate(self, func: Callable) -> Feedback:
+    def aggregate(self, func: AggCallable) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
         generate more than one value for implementation argument(s).
@@ -430,7 +389,7 @@ class Feedback(FeedbackDefinition):
                 "Cannot determine name of feedback function parameter without its definition."
             )
 
-    def on_prompt(self, arg: Optional[str] = None):
+    def on_prompt(self, arg: Optional[str] = None) -> Feedback:
         """
         Create a variant of `self` that will take in the main app input or
         "prompt" as input, sending it as an argument `arg` to implementation.
@@ -454,7 +413,7 @@ class Feedback(FeedbackDefinition):
 
     on_input = on_prompt
 
-    def on_response(self, arg: Optional[str] = None):
+    def on_response(self, arg: Optional[str] = None) -> Feedback:
         """
         Create a variant of `self` that will take in the main app output or
         "response" as input, sending it as an argument `arg` to implementation.
@@ -478,7 +437,7 @@ class Feedback(FeedbackDefinition):
 
     on_output = on_response
 
-    def on(self, *args, **kwargs):
+    def on(self, *args, **kwargs) -> Feedback:
         """
         Create a variant of `self` with the same implementation but the given
         selectors. Those provided positionally get their implementation argument
@@ -697,19 +656,20 @@ class Feedback(FeedbackDefinition):
         return feedback_result
 
     @property
-    def name(self):
-        """
-        Name of the feedback function. Presently derived from the name of the
-        function implementing it if no supplied name provided.
+    def name(self) -> str:
+        """Name of the feedback function.
+        
+        Derived from the name of the function implementing it if no supplied
+        name provided.
         """
 
         if self.supplied_name is not None:
             return self.supplied_name
 
-        if self.imp is None:
-            raise RuntimeError("This feedback function has no implementation.")
-
-        return self.imp.__name__
+        if self.imp is not None:
+            return self.imp.__name__
+        
+        return super().name
 
     def extract_selection(
         self, app: Union[AppDefinition, JSON], record: Record

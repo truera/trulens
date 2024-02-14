@@ -133,7 +133,7 @@ class LangChainInstrument(Instrument):
 class TruChain(App):
     """Instantiates the Langchain Wrapper.
         
-    Usage:
+    Example:
         Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)
 
         ```python
@@ -186,6 +186,9 @@ class TruChain(App):
 
     Args:
         app: A langchain application.
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     app: Any  # Chain

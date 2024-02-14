@@ -8,15 +8,6 @@ from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 
 logger = logging.getLogger(__name__)
 
-A = TypeVar("A")
-
-# Signature of feedback implementations. Take in any number of arguments
-# and return either a single float or a float and a dictionary (of metadata).
-ImpCallable = Callable[[A], Union[float, Tuple[float, Dict[str, Any]]]]
-
-# Signature of aggregation functions.
-AggCallable = Callable[[Iterable[float]], float]
-
 # Specific feedback functions:
 from trulens_eval.feedback.embeddings import Embeddings
 # Main class holding and running feedback functions:

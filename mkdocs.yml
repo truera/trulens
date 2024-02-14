@@ -80,7 +80,7 @@ plugins:
             group_by_category: true
             # summary: true
             show_source: false
-            # show_root_heading: true
+            show_root_heading: true
             show_if_no_docstring: false
             members_order: source
             # members: true
@@ -206,11 +206,13 @@ nav:
             - TruCustom: trulens_eval/api/app/trucustom.md
             - TruVirtual: trulens_eval/api/app/truvirtual.md
           - Feedback: trulens_eval/api/feedback.md
+          - Record: trulens_eval/api/record.md
 #          - Provider: 
 #            - Provider: trulens_eval/api/provider/provider.md
 #            - Endpoint: trulens_eval/api/endpoint.md
   - 🤝 Contributing:
       - Contribution Guidelines: trulens_eval/CONTRIBUTING.md
+      - Standards: trulens_eval/STANDARDS.md
   - ❓ Explain:
       - Getting Started:
           - Installation: trulens_explain/install.md
