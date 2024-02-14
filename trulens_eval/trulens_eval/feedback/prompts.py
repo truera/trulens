@@ -122,31 +122,28 @@ LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS = LANGCHAIN_PROMPT_TEMPLATE + COT_REA
 STEREOTYPES_PROMPT = v2.Stereotypes.prompt.template
 
 COMPREHENSIVENESS_PROMPT = """
-You are a helper for summarization tasks. You will do two steps. You must do both steps, and most importantly, you must add a score.
+You are a helper for summarization tasks. You will complete two steps.
 
-STEP 1 - Most Important Points:
-(DO NOT SKIP THIS STEP!)
+STEP 1 - MOST IMPORTANT POINTS:
 
 For the given SOURCE What are the most important points?
 
-please answer with this template:
+/START MOST/ 
+{source}
+/END SOURCE/
 
-Important Points: <Outline the important points>
-
-Step 2 - Compare:
-(DO NOT SKIP THIS STEP!)
+Step 2 - Compare SUMMARY to MOST IMPPORTANT POINTS:
 
 /START SUMMARY/ 
 {summary}
 /END SUMMARY/ 
 
-/START SOURCE/ 
-{source}
-/END SOURCE/
+What proportion of the MOST IMPORTANT POINTS are included in SUMMARY?
 
-For a SUMMARY How well does this summary address the above main points?
+Answer with the following TEMPLATE:
 
-please answer with this template:
+Score: <The score 0-10 based on the given criteria>
+Criteria: <Provide the criteria for this evaluation>
+Supporting Evidence: <Which of the MOST IMPORTANT POINTS were left out of SUMMARY?>
 
-COMPREHENSIVENESS:
 """
