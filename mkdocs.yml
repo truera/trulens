@@ -1,4 +1,4 @@
-site_name: TruLens
+site_name: 🦑 TruLens
 site_description: Evaluate and track LLM applications. Explain Deep Neural Nets.
 
 repo_name: truera/trulens
@@ -44,6 +44,7 @@ watch:
     - trulens_eval/trulens_eval
 
 plugins:
+  - search
   - mkdocs-jupyter
   - mkdocstrings:
       # See https://mkdocstrings.github.io/python/usage/configuration/docstrings/ .
@@ -79,7 +80,7 @@ plugins:
             group_by_category: true
             # summary: true
             show_source: false
-            show_root_heading: true
+            # show_root_heading: true
             show_if_no_docstring: false
             members_order: source
             # members: true
@@ -104,7 +105,7 @@ plugins:
               - "!^_" # exlude all members starting with _
               - "^__init__$" # but always include __init__ modules and methods
               - "^__call__$" # and __call__ methods
-  - search
+
 
 theme:
   name: material
@@ -118,15 +119,20 @@ theme:
   favicon: img/favicon.ico
   logo: img/squid.png
   features:
-    - navigation.instant
-    - navigation.instant.progress
+    # https://squidfunk.github.io/mkdocs-material/setup/setting-up-navigation/
+    # - navigation.instant
+    # - navigation.instant.progress
+    # - navigation.expand
     - navigation.indexes
     - navigation.top
+    # - navigation.tabs
     - navigation.tracking
     - navigation.path
+    # - navigation.sections
     - search.share
     - search.suggest
     - toc.follow
+    # - toc.integrate
     - content.code.copy
 
 nav:
@@ -200,9 +206,9 @@ nav:
             - TruCustom: trulens_eval/api/app/trucustom.md
             - TruVirtual: trulens_eval/api/app/truvirtual.md
           - Feedback: trulens_eval/api/feedback.md
-          - Provider: 
-            - Provider: trulens_eval/api/provider/provider.md
-            - Endpoint: trulens_eval/api/endpoint.md
+#          - Provider: 
+#            - Provider: trulens_eval/api/provider/provider.md
+#            - Endpoint: trulens_eval/api/endpoint.md
   - 🤝 Contributing:
       - Contribution Guidelines: trulens_eval/CONTRIBUTING.md
   - ❓ Explain:
@@ -228,7 +234,6 @@ extra_css:
 # importing MathJax.
 extra_javascript:
   - javascript/config.js
-  - assets/Scripts/app.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - javascript/tex-mml-chtml-3.0.0.js
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
