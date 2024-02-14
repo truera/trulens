@@ -26,6 +26,9 @@ site: .conda/docs $(shell find docs -type f) mkdocs.yml
 	$(CONDA) .conda/docs; mkdocs build
 	rm -Rf site/overrides
 
+deploy: .conda/docs $(shell find docs -type f) mkdocs.yml
+	$(CONDA) .conda/docs; mkdocs gh-deploy
+
 # Check that links in the documentation are valid. Requires the lychee tool.
 linkcheck: site
 	lychee "site/**/*.html"
