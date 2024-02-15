@@ -20,6 +20,7 @@
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
+
 # ### Import from TruLens
 
 # In[ ]:
@@ -33,11 +34,13 @@ from trulens_eval import Feedback, OpenAI as fOpenAI, Tru
 tru = Tru()
 tru.reset_database()
 
+
 # ### Create Simple Text to Text Application
 # 
 # This example uses a bare bones OpenAI LLM, and a non-LLM just for demonstration purposes.
 
 # In[ ]:
+
 
 def llm_standalone(prompt):
     return client.chat.completions.create(
@@ -56,6 +59,7 @@ prompt_input="How good is language AI?"
 prompt_output = llm_standalone(prompt_input)
 prompt_output
 
+
 # ## Initialize Feedback Function(s)
 
 # In[ ]:
@@ -65,6 +69,7 @@ fopenai = fOpenAI()
 
 # Define a relevance function from openai
 f_relevance = Feedback(fopenai.relevance).on_input_output()
+
 
 # ## Instrument the callable for logging with TruLens
 
@@ -78,6 +83,7 @@ tru_llm_standalone_recorder = TruBasicApp(llm_standalone, app_id="Happy Bot", fe
 with tru_llm_standalone_recorder as recording:
     tru_llm_standalone_recorder.app(prompt_input)
 
+
 # ## Explore in a Dashboard
 
 # In[ ]:
@@ -85,6 +91,7 @@ with tru_llm_standalone_recorder as recording:
 tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
+
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 

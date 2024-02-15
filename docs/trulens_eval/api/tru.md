@@ -1,3 +1,7 @@
-# Tru
+# 🦑 Tru
 
-::: trulens_eval.trulens_eval.tru.Tru
+::: trulens_eval.tru.Tru
+    options:
+        # members: true
+        filters:
+            - "!^_"
