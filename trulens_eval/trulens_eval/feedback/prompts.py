@@ -122,28 +122,29 @@ LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS = LANGCHAIN_PROMPT_TEMPLATE + COT_REA
 STEREOTYPES_PROMPT = v2.Stereotypes.prompt.template
 
 COMPREHENSIVENESS_PROMPT = """
-You are a helper for summarization tasks. You will complete two steps.
+You are tasked with evaluating summarization quality. Please follow the instructions below.
 
-STEP 1 - MOST IMPORTANT POINTS:
+INSTRUCTIONS:
 
-For the given SOURCE What are the most important points?
+1. Identify the key points in the provided source text.
 
-/START MOST/ 
+/SOURCE TEXT/
 {source}
-/END SOURCE/
+/END OF SOURCE TEXT/
 
-Step 2 - Compare SUMMARY to MOST IMPPORTANT POINTS:
+2. Assess how well the summary captures these key points.
 
-/START SUMMARY/ 
+/SUMMARY/
 {summary}
-/END SUMMARY/ 
+/END OF SUMMARY/
 
-What proportion of the MOST IMPORTANT POINTS are included in SUMMARY?
+Are the key points from the source text comprehensively included in the summary?
 
-Answer with the following TEMPLATE:
+Answer using the entire template below.
 
-Score: <The score 0-10 based on the given criteria>
-Criteria: <Provide the criteria for this evaluation>
-Supporting Evidence: <Which of the MOST IMPORTANT POINTS were left out of SUMMARY?>
+TEMPLATE:
+Score: <The score from 0 (key points are entirely missing from the summary) to 10 (summary fully includes all key points).>
+Criteria: <Mention key points from the source text that should be included in the summary>
+Supporting Evidence: <Which key points are present and which key points are absent in the summary.>
 
 """
