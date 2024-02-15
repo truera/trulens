@@ -223,8 +223,8 @@ class PytorchModelWrapper(ModelWrapper):
 
         elif isinstance(cut, LogitCut):
             return_output = many_of_om(
-                hooks['logits' if self._logit_layer is None else self.
-                      _logit_layer]
+                hooks['logits' if self._logit_layer is
+                      None else self._logit_layer]
             )
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):

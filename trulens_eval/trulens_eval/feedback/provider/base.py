@@ -16,16 +16,31 @@ logger = logging.getLogger(__name__)
 
 
 class Provider(WithClassInfo, SerialModel):
+    """Base Provider class."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint] = None
+    """Endpoint supporting this provider.
+    
+    Remote API invocations are handled by the endpoint.
+    """
 
     def __init__(self, name: Optional[str] = None, **kwargs):
         super().__init__(name=name, **kwargs)
 
 
 class LLMProvider(Provider):
+    """An LLM-based provider.
+    
+    This is an abstract class and needs to be initialized as one of these:
+
+    - [OpenAI provider][trulens_eval.feedback.provider.openai.OpenAI] or
+      [AzureOpenAI provider][trulens_eval.feedback.provider.openai.AzureOpenAI]
+    - [Bedrock provider][trulens_eval.feedback.provider.bedrock.Bedrock]
+    - [LiteLLM provider][trulens_eval.feedback.provider.litellm.LiteLLM]
+    - [Langchain provider][trulens_eval.feedback.provider.langchain.Langchain]
+    """
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any
@@ -122,9 +137,7 @@ class LLMProvider(Provider):
         normalize: float = 10.0
     ) -> float:
         """
-        Extractor for LLM prompts. If CoT is used; it will look for
-        "Supporting Evidence" template. Otherwise, it will look for the typical
-        0-10 scoring.
+        Base method to generate a score only, used for evaluation.
 
         Args:
             system_prompt (str): A pre-formated system prompt
@@ -151,14 +164,13 @@ class LLMProvider(Provider):
         normalize: float = 10.0
     ) -> Tuple[float, Dict]:
         """
-        Generator and extractor for LLM prompts. It will look for
-        "Supporting Evidence" template.
+        Base method to generate a score and reason, used for evaluation.
 
         Args:
             system_prompt (str): A pre-formated system prompt
 
         Returns:
-            The score (float): 0-1 scale and reason metadata (dict) if available.
+            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -176,14 +188,33 @@ class LLMProvider(Provider):
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_0_10_rating(line) / normalize
-                if "Criteria" in line:
-                    parts = line.split(":")
-                    if len(parts) > 1:
-                        criteria = ":".join(parts[1:]).strip()
-                if "Supporting Evidence" in line:
-                    supporting_evidence = line[
-                        line.index("Supporting Evidence:") +
-                        len("Supporting Evidence:"):].strip()
+                criteria_lines = []
+                supporting_evidence_lines = []
+                collecting_criteria = False
+                collecting_evidence = False
+
+                for line in response.split('\n'):
+                    if "Criteria:" in line:
+                        criteria_lines.append(line.split("Criteria:", 1)[1].strip())
+                        collecting_criteria = True
+                        collecting_evidence = False
+                    elif "Supporting Evidence:" in line:
+                        supporting_evidence_lines.append(line.split("Supporting Evidence:", 1)[1].strip())
+                        collecting_evidence = True
+                        collecting_criteria = False
+                    elif collecting_criteria:
+                        if "Supporting Evidence:" not in line:
+                            criteria_lines.append(line.strip())
+                        else:
+                            collecting_criteria = False
+                    elif collecting_evidence:
+                        if "Criteria:" not in line:
+                            supporting_evidence_lines.append(line.strip())
+                        else:
+                            collecting_evidence = False
+
+                criteria = "\n".join(criteria_lines).strip()
+                supporting_evidence = "\n".join(supporting_evidence_lines).strip()
             reasons = {
                 'reason':
                     (
@@ -1008,9 +1039,6 @@ class LLMProvider(Provider):
 
         system_prompt = str.format(
             prompts.COMPREHENSIVENESS_PROMPT, source=source, summary=summary
-        )
-        system_prompt = system_prompt.replace(
-            "COMPREHENSIVENESS:", prompts.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(system_prompt)
 

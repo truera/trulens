@@ -505,7 +505,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             # growing.
             self._start_manage_pending_feedback_results()
 
-        self.tru_post_init()
+        self._tru_post_init()
 
     def __del__(self):
         # Can use to do things when this object is being garbage collected.
@@ -543,10 +543,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             record.wait_for_feedback_results()
 
     def wait_for_feedback_results(self) -> None:
-        """
-        EXPERIMENTAL: Wait for all feedbacks that need to run on all of the
-        records produced by this app. Will block until finished and if new
-        records are produced while this is running, it will include them.
+        """Wait for all feedbacks functions to complete.
+         
+        This applies to all feedbacks on all records produced by this app. This
+        call will block until finished and if new records are produced while
+        this is running, it will include them.
         """
 
         while not self.records_with_pending_feedback_results.empty():
@@ -577,7 +578,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     def __hash__(self):
         return hash(id(self))
 
-    def tru_post_init(self):
+    def _tru_post_init(self):
         """
         Database-related initialization.
         """

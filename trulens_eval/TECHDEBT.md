@@ -80,3 +80,10 @@ See `instruments.py` docstring for discussion why these are done.
 
 - "HACK010" -- cannot tell whether something is a coroutine and need additional
   checks in `sync`/`desync`.
+
+- "HACK011" -- older pythons don't allow use of `Future` as a type constructor
+  in annotations. We define a dummy type `Future` in older versions of python to
+  circumvent this but have to selectively import it to make sure type checking
+  and mkdocs is done right.
+
+- "HACK012" -- same but with `Queue`.

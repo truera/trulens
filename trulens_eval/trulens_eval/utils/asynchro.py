@@ -57,17 +57,25 @@ logger = logging.getLogger(__name__)
 A = TypeVar("A")
 B = TypeVar("B")
 
-# Awaitable or not. May be checked with inspect.isawaitable .
 MaybeAwaitable = Union[T, Awaitable[T]]
+"""Awaitable or not.
 
-# Function or coroutine function. May be checked with
-# is_really_coroutinefunction .
+May be checked with [isawaitable][inspect.isawaitable].
+"""
+
 CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]
+"""Function or coroutine function.
+
+May be checked with [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction]."""
 
 CallableAwaitable = Callable[[A], Awaitable[B]]
+"""Function that produces an awaitable / coroutine function."""
 
-# Thunk or coroutine thunk. May be checked with is_really_coroutinefunction .
 ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
+"""Thunk or coroutine thunk. 
+
+May be checked with [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].
+"""
 
 
 async def desync(

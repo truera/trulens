@@ -18,6 +18,7 @@
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
+
 # ## Get Data
 # 
 # In this case, we'll just initialize some simple text in the notebook.
@@ -31,6 +32,7 @@ As the flagship institution of the six public universities in Washington state,
 UW encompasses over 500 buildings and 20 million square feet of space,
 including one of the largest library systems in the world.
 """
+
 
 # ## Create Vector Store
 # 
@@ -63,6 +65,7 @@ vector_store = chroma_client.get_or_create_collection(name="Universities",
 # In[ ]:
 
 vector_store.add("uni_info", documents=university_info)
+
 
 # ## Build RAG from scratch
 # 
@@ -118,6 +121,7 @@ class RAG_from_scratch:
 
 rag = RAG_from_scratch()
 
+
 # ## Set up feedback functions.
 # 
 # Here we'll use groundedness, answer relevance and context relevance to detect hallucination.
@@ -158,6 +162,7 @@ f_context_relevance = (
     .aggregate(np.mean)
 )
 
+
 # ## Construct the app
 # Wrap the custom RAG with TruCustomApp, add list of feedbacks for eval
 
@@ -183,3 +188,4 @@ tru.get_leaderboard(app_ids=["RAG v1"])
 # In[ ]:
 
 tru.run_dashboard()
+
