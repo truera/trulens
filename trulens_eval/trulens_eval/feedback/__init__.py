@@ -1,12 +1,7 @@
-import logging
-from typing import Any, Callable, Dict, Iterable, Tuple, TypeVar, Union
-
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
-
-logger = logging.getLogger(__name__)
 
 # Specific feedback functions:
 from trulens_eval.feedback.embeddings import Embeddings
@@ -36,7 +31,6 @@ __all__ = [
     "OpenAI",
     "AzureOpenAI",
     "Huggingface",
-    "Cohere",
     "LiteLLM",
     "Bedrock",
     "Langchain",

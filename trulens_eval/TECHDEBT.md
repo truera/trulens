@@ -87,3 +87,9 @@ See `instruments.py` docstring for discussion why these are done.
   and mkdocs is done right.
 
 - "HACK012" -- same but with `Queue`.
+
+- "HACK013" -- when using `from __future__ import annotations` for more
+  convenient type annotation specification, one may have to call pydantic's
+  `BaseModel.model_rebuild` after all types references in annotations in that file
+  have been defined for each model class that uses type annotations that
+  reference types defined after its own definition (i.e. "forward refs").
