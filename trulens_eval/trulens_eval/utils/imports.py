@@ -1,5 +1,7 @@
-"""
-Utilities for importing python modules and optional importing.
+"""Import utilities for required and optional imports.
+
+Utilities for importing python modules and optional importing. This is some long line. Hopefully
+this wraps automatically. 
 """
 
 import builtins
@@ -65,10 +67,9 @@ def format_import_errors(
     throw: Union[bool, Exception] = False
 ) -> ImportErrorMessages:
     """
-    Format two messages for missing optional package or bad import from an
-    optional package.. Throws an `ImportError` with the formatted message if
-    `throw` flag is set. If `throw` is already an exception, throws that instead
-    after printing the message.
+    Format two messages for missing optional package or bad import from an optional package. Throws
+    an `ImportError` with the formatted message if `throw` flag is set. If `throw` is already an
+    exception, throws that instead after printing the message.
     """
 
     if purpose is None:
@@ -138,7 +139,8 @@ REQUIREMENT_LANGCHAIN = format_import_errors(
 
 REQUIREMENT_PINECONE = format_import_errors(
     # package name is "pinecone-client" but module is "pinecone"
-    'pinecone-client', purpose="running TruBot" 
+    'pinecone-client',
+    purpose="running TruBot"
 )
 
 REQUIREMENT_SKLEARN = format_import_errors(
@@ -177,12 +179,11 @@ REQUIREMENT_NOTEBOOK = format_import_errors(
 # Try to pretend to be a type as well as an instance.
 class Dummy(type, object):
     """
-    Class to pretend to be a module or some other imported object. Will raise an
-    error if accessed in some dynamic way. Accesses that are "static-ish" will
-    try not to raise the exception so things like defining subclasses of a
-    missing class should not raise exception. Dynamic uses are things like
-    calls, use in expressions. Looking up an attribute is static-ish so we don't
-    throw the error at that point but instead make more dummies.
+    Class to pretend to be a module or some other imported object. Will raise an error if accessed
+    in some dynamic way. Accesses that are "static-ish" will try not to raise the exception so
+    things like defining subclasses of a missing class should not raise exception. Dynamic uses are
+    things like calls, use in expressions. Looking up an attribute is static-ish so we don't throw
+    the error at that point but instead make more dummies.
     """
 
     def __new__(cls, name, *args, **kwargs):
@@ -235,15 +236,15 @@ class Dummy(type, object):
     __rsub__ = _wasused
 
     def __getattr__(self, name):
-        # If in OptionalImport context, create a new dummy for the requested
-        # attribute. Otherwise raise error.
+        # If in OptionalImport context, create a new dummy for the requested attribute. Otherwise
+        # raise error.
 
         # Pretend to be object for generic attributes.
         if hasattr(object, name):
             return getattr(object, name)
 
-        # Prevent pydantic inspecting this object as if it were a type from
-        # triggering the exception message below.
+        # Prevent pydantic inspecting this object as if it were a type from triggering the exception
+        # message below.
         if name in ["__pydantic_generic_metadata__",
                     "__get_pydantic_core_schema__", "__get_validators__",
                     "__get_pydantic_json_schema__", "__modify_schema__",
@@ -307,13 +308,11 @@ class OptionalImports(object):
         try:
             mod = self.imp(name, globals, locals, fromlist, level)
 
-            # NOTE(piotrm): commented block attempts to check module contents
-            # for required attributes so we can offer a message without raising
-            # an exception later. It is commented out for now it is catching
-            # some things we don't watch to catch. Need to check how attributes
-            # are normally looked up in a module to fix this. Specifically, the
-            # code that raises these messages: "ImportError: cannot import name
-            # ..."
+            # NOTE(piotrm): commented block attempts to check module contents for required
+            # attributes so we can offer a message without raising an exception later. It is
+            # commented out for now it is catching some things we don't watch to catch. Need to
+            # check how attributes are normally looked up in a module to fix this. Specifically, the
+            # code that raises these messages: "ImportError: cannot import name ..."
             """
             if isinstance(fromlist, Iterable):
                 for i in fromlist:
@@ -354,8 +353,8 @@ class OptionalImports(object):
                 importer=self
             )
 
-        # NOTE(piotrm): This below seems to never be caught. It might be that a
-        # different import method is being used once a module is found.
+        # NOTE(piotrm): This below seems to never be caught. It might be that a different import
+        # method is being used once a module is found.
         """
         except ImportError as e:
             module_name = inspect.currentframe().f_back.f_globals["__name__"]

@@ -5,19 +5,30 @@ Utilities related to core python functionalities.
 from __future__ import annotations
 
 import asyncio
+from concurrent import futures
 import inspect
 import logging
 from pprint import PrettyPrinter
 import queue
 import sys
-from typing import (
-    Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
-    TypeVar
-)
+from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
+                    Sequence, Type, TypeVar)
+
 
 if sys.version_info >= (3, 9):
-    from concurrent.futures import Future
-    from queue import Queue
+    Future = futures.Future
+    """Alias for [concurrent.futures.Future][].
+    
+    In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+    `Generic[A]` is used instead.
+    """
+
+    Queue = queue.Queue
+    """Alias for [queue.Queue][] .
+    
+    In python < 3.9, a sublcass of [queue.Queue][] with
+    `Generic[A]` is used instead.
+    """
 
 else:
     # Fake classes which can have type args. In python earlier than 3.9, the
@@ -26,31 +37,62 @@ else:
 
     A = TypeVar("A")
 
-    class Future(Generic[A]):
-        pass
+    # HACK011
+    class Future(Generic[A], futures.Future):
+        """Alias for [concurrent.futures.Future][].
+    
+        In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+        `Generic[A]` is used instead.
+        """
 
-    class Queue(Generic[A]):
-        pass
+    # HACK012
+    class Queue(Generic[A], queue.Queue):
+        """Alias for [queue.Queue][] .
+    
+        In python < 3.9, a sublcass of [queue.Queue][] with
+        `Generic[A]` is used instead.
+        """
 
+if sys.version_info >= (3, 10):
+    import types
+    NoneType = types.NoneType
+    """Alias for [types.NoneType][] .
+    
+    In python < 3.10, it is defined as `type(None)` instead.
+    """
+
+else:
+    NoneType = type(None)
+    """Alias for [types.NoneType][] .
+    
+    In python < 3.10, it is defined as `type(None)` instead.
+    """
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
+
 Thunk = Callable[[], T]
+"""A function that takes no arguments."""
 
 # Reflection utilities.
 
 
 def is_really_coroutinefunction(func) -> bool:
-    # NOTE(piotrm): inspect checkers for async functions do not work on openai
-    # clients, perhaps because they use @typing.overload. Because of that, we
-    # detect them by checking __wrapped__ attribute instead. Note that the
-    # inspect docs suggest they should be able to handle wrapped functions but
-    # perhaps they handle different type of wrapping? See
-    # https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction
-    # . Another place they do not work is the decorator langchain uses to mark
-    # deprecated functions.
+    """Determine whether the given function is a coroutine function.
+
+    !!! Warning
+     
+        Inspect checkers for async functions do not work on openai clients,
+        perhaps because they use `@typing.overload`. Because of that, we detect
+        them by checking `__wrapped__` attribute instead. Note that the inspect
+        docs suggest they should be able to handle wrapped functions but perhaps
+        they handle different type of wrapping? See
+        https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction
+        . Another place they do not work is the decorator langchain uses to mark
+        deprecated functions.
+    """
 
     if inspect.iscoroutinefunction(func):
         return True

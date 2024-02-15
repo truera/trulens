@@ -211,11 +211,12 @@ class TruLlama(App):
     """
     Instantiates the LLama Index Wrapper.
 
-        **Usage:**
-
-        LLama-Index code: [LLama Index Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
+    Example:
+        LLama-Index code: [LLama Index
+        Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
+    
         ```python
-         # Code snippet taken from llama_index 0.8.29 (API subject to change with new versions)
+        # Code snippet taken from llama_index 0.8.29 (API subject to change with new versions)
         from llama_index import VectorStoreIndex
         from llama_index.readers.web import SimpleWebPageReader
 
@@ -251,8 +252,11 @@ class TruLlama(App):
 
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
-        Args:
-            app (BaseQueryEngine | BaseChatEngine): A llama index application.
+    Args:
+        app: A llama index application.
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
