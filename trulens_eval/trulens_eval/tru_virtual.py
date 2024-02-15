@@ -307,16 +307,3 @@ class TruVirtual(App):
             futures.wait(futs)
 
         return record
-
-
-# TruVirtual.model_rebuild()
-
-# Need these to make sure rebuild below works.
-# TODO: Figure out whether any of this is needed.
-# from typing import List, Tuple
-
-# from trulens_eval.schema import FeedbackDefinition
-# from trulens_eval.schema import FeedbackResult
-# from trulens_eval.utils.python import Future
-
-# VirtualRecord.model_rebuild()

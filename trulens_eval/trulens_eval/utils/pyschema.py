@@ -686,3 +686,14 @@ class WithClassInfo(pydantic.BaseModel):
     @staticmethod
     def of_class(cls: type):  # class
         return WithClassInfo(class_info=Class.of_class(cls))
+
+
+# HACK013:
+Module.model_rebuild()
+Class.model_rebuild()
+Obj.model_rebuild()
+Bindings.model_rebuild()
+FunctionOrMethod.model_rebuild()
+Function.model_rebuild()
+Method.model_rebuild()
+WithClassInfo.model_rebuild()
