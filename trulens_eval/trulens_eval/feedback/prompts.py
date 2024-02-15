@@ -126,7 +126,7 @@ You are tasked with evaluating summarization quality. Please follow the instruct
 
 INSTRUCTIONS:
 
-1. Identify the key points in the provided source text.
+1. Identify the key points in the provided source text and assign them high or low importance level.
 
 /SOURCE TEXT/
 {source}
@@ -138,12 +138,17 @@ INSTRUCTIONS:
 {summary}
 /END OF SUMMARY/
 
-Are the key points from the source text comprehensively included in the summary?
+Are the key points from the source text comprehensively included in the summary? More important key points matter more in the evaluation.
+
+Scoring criteria:
+0 - Capturing no key points with high importance level
+5 - Capturing 70 percent of key points with high importance level
+10 - Capturing all key points of high importance level
 
 Answer using the entire template below.
 
 TEMPLATE:
-Score: <The score from 0 (key points are entirely missing from the summary) to 10 (summary fully includes all key points).>
+Score: <The score from 0 (capturing none of the important key points) to 10 (captures all key points of high importance).>
 Criteria: <Mention key points from the source text that should be included in the summary>
 Supporting Evidence: <Which key points are present and which key points are absent in the summary.>
 
