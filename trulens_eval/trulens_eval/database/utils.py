@@ -9,6 +9,7 @@ from typing import Callable, List, Optional, Union
 import uuid
 
 import pandas as pd
+import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import inspect as sql_inspect
@@ -90,17 +91,33 @@ def is_legacy_sqlite(engine: Engine) -> bool:
     #return DbRevisions.load(engine).current is None
 
 
-def is_memory_sqlite(engine: Engine) -> bool:
+def is_memory_sqlite(
+    engine: Optional[Engine] = None,
+    url: Optional[Union[sqlalchemy.engine.URL, str]] = None
+) -> bool:
+    """Check if DB is an in-memory SQLite instance.
+
+    Either engine or url can be provided.
     """
-    Check if DB is an in-memory SQLite instance.
-    """
+
+    if isinstance(engine, Engine):
+        url = engine.url
+
+    elif isinstance(url, sqlalchemy.engine.URL):
+        pass
+
+    elif isinstance(url, str):
+        url = sqlalchemy.engine.make_url(url)
+
+    else:
+        raise ValueError("Either engine or url must be provided")
 
     return (
         # The database type is SQLite
-        engine.url.drivername.startswith("sqlite")
+        url.drivername.startswith("sqlite")
 
         # The database storage is in memory
-        and engine.url.database == ":memory:"
+        and url.database == ":memory:"
     )
 
 
@@ -110,7 +127,7 @@ def check_db_revision(engine: Engine):
     """
 
     if is_legacy_sqlite(engine):
-        logger.info("Found legacy SQLite file: %s" % (engine.url,))
+        logger.info("Found legacy SQLite file: %s", engine.url)
         raise DatabaseVersionException.behind()
 
     revisions = DbRevisions.load(engine)
