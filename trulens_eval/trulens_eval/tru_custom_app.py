@@ -229,9 +229,8 @@ PLACEHOLDER = "__tru_placeholder"
 class TruCustomApp(App):
     """Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.
         
-        **Usage:**
-
-        ```
+    Example:
+        ```python
         from trulens_eval import instrument
         
         class CustomApp:
@@ -281,10 +280,14 @@ class TruCustomApp(App):
             ca.respond_to_query("Where do I download llama 2?")
         
         ```
+
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
-        Args:
-            app (Any): Any class
+    Args:
+        app: Any class.
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -304,16 +307,6 @@ class TruCustomApp(App):
     # main_async_method: Optional[Union[Callable, Method]] = None # = Field(exclude=True)
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
-        """
-        Wrap a custom class for recording.
-
-        Arguments:
-        - app: Any -- the custom app object being wrapped.
-        - More args in App
-        - More args in AppDefinition
-        - More args in WithClassInfo
-        """
-
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
 

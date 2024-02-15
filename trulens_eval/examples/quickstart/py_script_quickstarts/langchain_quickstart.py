@@ -20,6 +20,7 @@
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
+
 # ### Import from LangChain and TruLens
 
 # In[ ]:
@@ -40,6 +41,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough
 
+
 # ### Load documents
 
 # In[ ]:
@@ -53,6 +55,7 @@ loader = WebBaseLoader(
     ),
 )
 docs = loader.load()
+
 
 # ### Create Vector Store
 
@@ -69,6 +72,7 @@ vectorstore = Chroma.from_documents(
     documents=splits,
     embedding=OpenAIEmbeddings()
 )
+
 
 # ### Create RAG
 
@@ -89,11 +93,13 @@ rag_chain = (
     | StrOutputParser()
 )
 
+
 # ### Send your first request
 
 # In[ ]:
 
 rag_chain.invoke("What is Task Decomposition?")
+
 
 # ## Initialize Feedback Function(s)
 
@@ -129,6 +135,7 @@ f_context_relevance = (
     .aggregate(np.mean)
 )
 
+
 # ## Instrument chain for logging with TruLens
 
 # In[ ]:
@@ -144,6 +151,7 @@ with tru_recorder as recording:
 
 display(llm_response)
 
+
 # ## Retrieve records and feedback
 
 # In[ ]:
@@ -156,6 +164,9 @@ rec = recording.get() # use .get if only one record
 display(rec)
 
 # In[ ]:
+
+
+
 
 # The results of the feedback functions can be rertireved from
 # `Record.feedback_results` or using the `wait_for_feedback_result` method. The
@@ -179,6 +190,7 @@ records.head()
 
 tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])
 
+
 # ## Explore in a Dashboard
 
 # In[ ]:
@@ -186,6 +198,7 @@ tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])
 tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
+
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 

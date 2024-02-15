@@ -216,7 +216,7 @@ You can access the JSON structure with `with_record` methods and then calling `l
 
 for example
 
-```
+```python
 response = my_llm_app(query)
 
 from trulens_eval import TruChain
@@ -230,13 +230,13 @@ json_like = tru_record.layout_calls_as_app()
 
 If a selector looks like the below
 
-```
+```python
 Select.Record.app.combine_documents_chain._call
 ```
 
 It can be accessed via the JSON-like via
 
-```
+```python
 json_like['app']['combine_documents_chain']['_call']
 ```
 

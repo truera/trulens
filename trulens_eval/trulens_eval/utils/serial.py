@@ -13,14 +13,15 @@ from ast import parse
 from copy import copy
 import logging
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Sized,
-    Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Generic, Hashable, Iterable, List,
+                    Optional, Sequence, Sized, Tuple, TypeVar, Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema
+from pydantic_core import CoreSchema
 
 from trulens_eval.utils.containers import iterable_peek
 
@@ -29,18 +30,56 @@ pp = PrettyPrinter()
 
 T = TypeVar("T")
 
-# JSON types
+JSON_BASES: Tuple[type, ...] = (str, int, float, bytes, type(None))
+"""
+Tuple of JSON-able base types.
 
-JSON_BASES = (str, int, float, bytes, type(None))
-JSON_BASES_T = Union[str, int, float, bytes, type(None)]
+Can be used in `isinstance` checks.
+"""
 
-# TODO: rename to "JSON_LIKE" as it is not stringly json.
-# JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
-JSON = Union[JSON_BASES_T, Sequence[Any], Dict[str, Any]]  # Any = JSON
+JSON_BASES_T = Union[\
+    str, int, float, bytes, None
+]
+"""
+Alias for JSON-able base types.
+"""
 
-# TODO: rename to "JSON".
+JSON = Union[\
+    JSON_BASES_T,
+    Sequence[Any],
+    Dict[str, Any]
+]
+"""Alias for (non-strict) JSON-able data (`Any` = `JSON`).
+
+If used with type argument, that argument indicates what the JSON represents and
+can be desererialized into.
+
+Formal JSON must be a `dict` at the root but non-strict here means that the root
+can be a basic type or a sequence as well.
+"""
+
 JSON_STRICT = Dict[str, JSON]
+"""
+Alias for (strictly) JSON-able data.
 
+Python object that is directly mappable to JSON.
+"""
+
+class JSONized(JSON_STRICT, Generic[T]):  # really JSON_STRICT
+    """JSON-encoded data the can be deserialized into a given type `T`.
+    
+    This class is meant only for type annotations. Any
+    serialization/deserialization logic is handled by different classes, usually
+    subclasses of `pydantic.BaseModel`.
+    """
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> CoreSchema:
+        """Make pydantic treat this class same as a `dict`."""
+        return core_schema.no_info_after_validator_function(cls, handler(dict))
+    
 mj = MerkleJson()
 
 

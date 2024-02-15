@@ -55,11 +55,12 @@ class TruWrapperApp(object):
 
 
 class TruBasicApp(App):
-    """Instantiates a Basic app that makes little assumptions. Assumes input text and output text.
+    """Instantiates a Basic app that makes little assumptions.
+    
+    Assumes input text and output text.
         
-        **Usage:**
-
-        ```
+    Example:
+        ```python
         def custom_application(prompt: str) -> str:
             return "a response"
         
@@ -75,12 +76,20 @@ class TruBasicApp(App):
             tru_recorder.app(question)
 
         tru_record = recording.records[0]
-        
         ```
-        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
-        Args:
-            text_to_text (Callable): A text to text callable.
+        See [Feedback
+        Functions](https://www.trulens.org/trulens_eval/api/feedback/) for
+        instantiating feedback functions.
+
+    Args:
+        text_to_text: A str to str callable.
+
+        app: A TruWrapperApp instance. If not provided, `text_to_text` must
+            be provided.
+        
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -94,20 +103,10 @@ class TruBasicApp(App):
 
     def __init__(
         self,
-        text_to_text: Optional[Callable] = None,
+        text_to_text: Optional[Callable[[str], str]] = None,
         app: Optional[TruWrapperApp] = None,
         **kwargs
     ):
-        """
-        Wrap a callable for monitoring.
-
-        Arguments:
-        - text_to_text: A function with signature string to string.
-        - More args in App
-        - More args in AppDefinition
-        - More args in WithClassInfo
-        """
-
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
         else:
@@ -150,5 +149,5 @@ class TruBasicApp(App):
 
         self._throw_dep_message(method="call", is_async=False, with_record=True)
 
-
-TruBasicApp.model_rebuild()
+# from trulens_eval.utils import serial
+# TruBasicApp.model_rebuild()
