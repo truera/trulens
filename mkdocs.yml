@@ -218,7 +218,7 @@ nav:
             - AWS Bedrock: trulens_eval/api/provider/bedrock.md
             - LiteLLM: trulens_eval/api/provider/litellm.md
             - 🦜️🔗 Langchain: trulens_eval/api/provider/langchain.md
-          - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
+            - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
 #            - Endpoint: trulens_eval/api/endpoint.md
           - Utils: 
             - trulens_eval/api/utils/python.md
