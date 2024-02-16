@@ -867,3 +867,8 @@ class DummyEndpoint(Endpoint):
         logger.debug(f"I have allocated {sys.getsizeof(temporary)} bytes.")
 
         return j[0]
+
+
+EndpointCallback.model_rebuild()
+Endpoint.model_rebuild()
+DummyEndpoint.model_rebuild()
