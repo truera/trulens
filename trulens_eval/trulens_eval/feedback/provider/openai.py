@@ -35,11 +35,12 @@ class OpenAI(LLMProvider):
     Args:
         model_engine (str): The OpenAI completion model. Defaults to
             `gpt-3.5-turbo`
-        endpoint (Endpoint): Internal Usage for DB serialization. This
-            argument is intentionally ignored.
-    """
 
-    # model_engine: str # LLMProvider
+        kwargs: Additional arguments to pass to the [OpenAIEndpoint][trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint] which are
+            then passed to
+            [OpenAIClient][trulens_eval.feedback.provider.endpoint.openai.OpenAIClient]
+            and finally to the [OpenAI][] API client.
+    """
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.

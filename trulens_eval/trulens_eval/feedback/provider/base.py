@@ -1,10 +1,6 @@
-from abc import ABC
-from abc import abstractmethod
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
+from typing import ClassVar, Dict, Optional, Sequence, Tuple
 import warnings
-
-import pydantic
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -35,12 +31,18 @@ class LLMProvider(Provider):
     
     This is an abstract class and needs to be initialized as one of these:
 
-    - [OpenAI provider][trulens_eval.feedback.provider.openai.OpenAI] or
-      [AzureOpenAI provider][trulens_eval.feedback.provider.openai.AzureOpenAI]
-    - [Bedrock provider][trulens_eval.feedback.provider.bedrock.Bedrock]
-    - [LiteLLM provider][trulens_eval.feedback.provider.litellm.LiteLLM]
-    - [Langchain provider][trulens_eval.feedback.provider.langchain.Langchain]
-    """
+    * [OpenAI][trulens_eval.feedback.provider.openai.OpenAI] and subclass
+      [AzureOpenAI][trulens_eval.feedback.provider.openai.AzureOpenAI].
+
+    * [Bedrock][trulens_eval.feedback.provider.bedrock.Bedrock].
+
+    * [LiteLLM][trulens_eval.feedback.provider.litellm.LiteLLM]. LiteLLM provides an
+    interface to a [wide range of
+    models](https://docs.litellm.ai/docs/providers).
+    
+    * [Langchain][trulens_eval.feedback.provider.langchain.Langchain].
+
+"""
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any
