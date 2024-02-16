@@ -192,15 +192,17 @@ class TruChain(App):
     """
 
     app: Any  # Chain
+    """The langchain app to be instrumented."""
 
     # TODO: what if _acall is being used instead?
     root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call)
     )
+    """The root callable of the wrapped app."""
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
-    def __init__(self, app: Chain, **kwargs):
+    def __init__(self, app: Chain, **kwargs: dict):
         # TruChain specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
@@ -210,9 +212,7 @@ class TruChain(App):
 
     @classmethod
     def select_context(cls, app: Optional[Chain] = None) -> Lens:
-        """
-        Get the path to the context in the query output.
-        """
+        """Get the path to the context in the query output."""
 
         if app is None:
             raise ValueError(

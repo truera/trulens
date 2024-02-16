@@ -7,7 +7,7 @@ the involved classes will need to be adapted here. The important classes are:
 - `langchain.schema.LLMResult`
 - `langchain.callbacks.openai_info.OpenAICallbackHandler`
 
-# Changes due to openai v1
+## Changes for openai 1.0
 
 - Previously we instrumented classes `openai.*` and their methods `create` and
   `acreate`. Now we instrument classes `openai.resources.*` and their `create`
@@ -54,25 +54,29 @@ pp = pprint.PrettyPrinter()
 
 class OpenAIClient(SerialModel):
     """
-    A wrapper for openai clients that allows them to be serialized into json.
-    Does not serialize API key though. You can access openai.OpenAI under the
-    `client` attribute. Any attributes not defined by this wrapper are looked up
-    from the wrapped `client` so you should be able to use this instance as if
-    it were an `openai.OpenAI` instance.
+    A wrapper for openai clients.
+     
+    This class allows wrapped clients to be serialized into json. Does not
+    serialize API key though. You can access openai.OpenAI under the `client`
+    attribute. Any attributes not defined by this wrapper are looked up from the
+    wrapped `client` so you should be able to use this instance as if it were an
+    `openai.OpenAI` instance.
     """
 
-    # Parameters of the OpenAI client that will not be serialized because they
-    # contain secrets.
     REDACTED_KEYS: ClassVar[List[str]] = ["api_key", "default_headers"]
+    """Parameters of the OpenAI client that will not be serialized because they
+    contain secrets."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    # Deserialized representation.
     client: Union[oai.OpenAI, oai.AzureOpenAI] = pydantic.Field(exclude=True)
+    """Deserialized representation."""
 
-    # Serialized representation.
     client_cls: Class
+    """Serialized representation class."""
+
     client_kwargs: dict
+    """Serialized representation constructor arguments."""
 
     def __init__(
         self,
@@ -199,9 +203,71 @@ class OpenAICallback(EndpointCallback):
 class OpenAIEndpoint(Endpoint):
     """
     OpenAI endpoint. Instruments "create" methods in openai client.
+
+    Args:
+        client: openai client to use. If not provided, a new client will be
+            created using the provided kwargs.
+
+        **kwargs: arguments to constructor of a new OpenAI client if `client`
+            not provided.
+
     """
 
     client: OpenAIClient
+
+    def __init__(
+        self,
+        rpm: float = DEFAULT_RPM,
+        name: str = "openai",
+        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
+                               OpenAIClient]] = None,
+        **kwargs: dict
+    ):
+        if safe_hasattr(self, "name") and client is not None:
+            # Already created with SingletonPerName mechanism
+            return
+
+        self_kwargs = dict(
+            name=name,  # for SingletonPerName
+            rpm=rpm,  # for Endpoint
+            **kwargs
+        )
+
+        self_kwargs['callback_class'] = OpenAICallback
+
+        if CLASS_INFO in kwargs:
+            del kwargs[CLASS_INFO]
+
+        if client is None:
+            # Pass kwargs to client.
+            client = oai.OpenAI(**kwargs)
+            self_kwargs['client'] = OpenAIClient(client=client)
+
+        else:
+            if len(kwargs) != 0:
+                logger.warning(
+                    f"Arguments {list(kwargs.keys())} are ignored as `client` was provided."
+                )
+
+            # Convert openai client to our wrapper if needed.
+            if not isinstance(client, OpenAIClient):
+                assert isinstance(client, (oai.OpenAI, oai.AzureOpenAI)), \
+                    "OpenAI client expected"
+
+                client = OpenAIClient(client=client)
+
+            self_kwargs['client'] = client
+
+        # for pydantic.BaseModel
+        super().__init__(**self_kwargs)
+
+        # Instrument various methods for usage/cost tracking.
+        from openai import resources
+        from openai.resources import chat
+
+        self._instrument_module_members(resources, "create")
+        self._instrument_module_members(chat, "create")
+
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="openai")
@@ -283,60 +349,3 @@ class OpenAIEndpoint(Endpoint):
                 f"Could not find usage information in openai response:\n" +
                 pp.pformat(response)
             )
-
-    def __init__(
-        self,
-        rpm: float = DEFAULT_RPM,
-        name: str = "openai",
-        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
-                               OpenAIClient]] = None,
-        **kwargs
-    ):
-        """
-        Passes `kwargs` to constructor of a new OpenAI client if `client` not provided.
-        """
-
-        if safe_hasattr(self, "name") and client is not None:
-            # Already created with SingletonPerName mechanism
-            return
-
-        self_kwargs = dict(
-            name=name,  # for SingletonPerName
-            rpm=rpm,  # for Endpoint
-            **kwargs
-        )
-
-        self_kwargs['callback_class'] = OpenAICallback
-
-        if CLASS_INFO in kwargs:
-            del kwargs[CLASS_INFO]
-
-        if client is None:
-            # Pass kwargs to client.
-            client = oai.OpenAI(**kwargs)
-            self_kwargs['client'] = OpenAIClient(client=client)
-
-        else:
-            if len(kwargs) != 0:
-                logger.warning(
-                    f"Arguments {list(kwargs.keys())} are ignored as `client` was provided."
-                )
-
-            # Convert openai client to our wrapper if needed.
-            if not isinstance(client, OpenAIClient):
-                assert isinstance(client, (oai.OpenAI, oai.AzureOpenAI)), \
-                    "OpenAI client expected"
-
-                client = OpenAIClient(client=client)
-
-            self_kwargs['client'] = client
-
-        # for pydantic.BaseModel
-        super().__init__(**self_kwargs)
-
-        # Instrument various methods for usage/cost tracking.
-        from openai import resources
-        from openai.resources import chat
-
-        self._instrument_module_members(resources, "create")
-        self._instrument_module_members(chat, "create")

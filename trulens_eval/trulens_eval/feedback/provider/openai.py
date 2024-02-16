@@ -33,20 +33,22 @@ class OpenAI(LLMProvider):
         ```
 
     Args:
-        model_engine (str): The OpenAI completion model. Defaults to
+        model_engine: The OpenAI completion model. Defaults to
             `gpt-3.5-turbo`
-        endpoint (Endpoint): Internal Usage for DB serialization. This
-            argument is intentionally ignored.
-    """
 
-    # model_engine: str # LLMProvider
+        **kwargs: Additional arguments to pass to the
+            [OpenAIEndpoint][trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint]
+            which are then passed to
+            [OpenAIClient][trulens_eval.feedback.provider.endpoint.openai.OpenAIClient]
+            and finally to the OpenAI client.
+    """
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
     endpoint: Endpoint = pydantic.Field(exclude=True)
 
     def __init__(
-        self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
+        self, *args, endpoint=None, model_engine: str = "gpt-3.5-turbo", **kwargs: dict
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -401,16 +403,18 @@ class AzureOpenAI(OpenAI):
 
     Args:
         deployment_name: The name of the deployment.
-
-        endpoint: Internal Usage for DB
-            serialization. This argument is intentionally ignored.
     """
 
     # Sent to our openai client wrapper but need to keep here as well so that it
     # gets dumped when jsonifying.
     deployment_name: str = pydantic.Field(alias="model_engine")
 
-    def __init__(self, deployment_name: str, endpoint=None, **kwargs):
+    def __init__(
+        self,
+        deployment_name: str,
+        endpoint: Optional[Endpoint]=None,
+        **kwargs: dict
+    ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.

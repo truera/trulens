@@ -95,14 +95,11 @@ class Huggingface(Provider):
         """
         Create a Huggingface Provider with out of the box feedback functions.
 
-        **Usage:**
-        ```python
-        from trulens_eval.feedback.provider.hugs import Huggingface
-        huggingface_provider = Huggingface()
-        ```
-
-        Args:
-            endpoint (Endpoint): Internal Usage for DB serialization
+        Usage:
+            ```python
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            huggingface_provider = Huggingface()
+            ```
         """
 
         kwargs['name'] = name
@@ -321,20 +318,23 @@ class Huggingface(Provider):
     def pii_detection(self, text: str) -> float:
         """
         NER model to detect PII.
-        **Usage:**
-        ```
-        hugs = Huggingface()
 
-        # Define a pii_detection feedback function using HuggingFace.
-        f_pii_detection = Feedback(hugs.pii_detection).on_input()
-        ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+        Usage:
+            ```python
+            hugs = Huggingface()
+
+            # Define a pii_detection feedback function using HuggingFace.
+            f_pii_detection = Feedback(hugs.pii_detection).on_input()
+            ```
+            
+            The `on(...)` selector can be changed. See [Feedback Function Guide:
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            input (str): A text prompt that may contain a name.
+            text: A text prompt that may contain a name.
 
         Returns:
-            - float: the likelihood that a name is contained in the input text.
+            The likelihood that a name is contained in the input text.
         """
 
         # Initialize a list to store scores for "NAME" entities
