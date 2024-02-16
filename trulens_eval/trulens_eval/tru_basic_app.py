@@ -95,17 +95,21 @@ class TruBasicApp(App):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     app: TruWrapperApp
+    """The app to be instrumented."""
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.
         of_callable(TruWrapperApp._call)
     )
+    """The root callable to be instrumented.
+    
+    This is the method that will be called by the main_input method."""
 
     def __init__(
         self,
         text_to_text: Optional[Callable[[str], str]] = None,
         app: Optional[TruWrapperApp] = None,
-        **kwargs
+        **kwargs: dict
     ):
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
@@ -148,6 +152,3 @@ class TruBasicApp(App):
     def call_with_record(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(method="call", is_async=False, with_record=True)
-
-# from trulens_eval.utils import serial
-# TruBasicApp.model_rebuild()
