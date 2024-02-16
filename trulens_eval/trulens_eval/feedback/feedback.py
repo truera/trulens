@@ -717,3 +717,6 @@ class Feedback(FeedbackDefinition):
 
         for assignment in assignments:
             yield {k: v for k, v in zip(keys, assignment)}
+
+# HACK013:
+Feedback.model_rebuild()

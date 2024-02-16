@@ -919,13 +919,13 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             cls.root_callable.default_factory().name
         ).rets
 
-
-class App(AppDefinition):
-
-    def __init__(self, *args, **kwargs):
-        # Since 0.2.0
-        logger.warning(
-            "Class trulens_eval.schema.App is deprecated, "
-            "use trulens_eval.schema.AppDefinition instead."
-        )
-        super().__init__(*args, **kwargs)
+# HACK013: Need these if using __future__.annotations .
+RecordAppCallMethod.model_rebuild()
+Cost.model_rebuild()
+Perf.model_rebuild()
+Record.model_rebuild()
+RecordAppCall.model_rebuild()
+FeedbackResult.model_rebuild()
+FeedbackCall.model_rebuild()
+FeedbackDefinition.model_rebuild()
+AppDefinition.model_rebuild()

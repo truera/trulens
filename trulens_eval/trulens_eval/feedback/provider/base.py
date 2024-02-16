@@ -188,14 +188,33 @@ class LLMProvider(Provider):
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_0_10_rating(line) / normalize
-                if "Criteria" in line:
-                    parts = line.split(":")
-                    if len(parts) > 1:
-                        criteria = ":".join(parts[1:]).strip()
-                if "Supporting Evidence" in line:
-                    supporting_evidence = line[
-                        line.index("Supporting Evidence:") +
-                        len("Supporting Evidence:"):].strip()
+                criteria_lines = []
+                supporting_evidence_lines = []
+                collecting_criteria = False
+                collecting_evidence = False
+
+                for line in response.split('\n'):
+                    if "Criteria:" in line:
+                        criteria_lines.append(line.split("Criteria:", 1)[1].strip())
+                        collecting_criteria = True
+                        collecting_evidence = False
+                    elif "Supporting Evidence:" in line:
+                        supporting_evidence_lines.append(line.split("Supporting Evidence:", 1)[1].strip())
+                        collecting_evidence = True
+                        collecting_criteria = False
+                    elif collecting_criteria:
+                        if "Supporting Evidence:" not in line:
+                            criteria_lines.append(line.strip())
+                        else:
+                            collecting_criteria = False
+                    elif collecting_evidence:
+                        if "Criteria:" not in line:
+                            supporting_evidence_lines.append(line.strip())
+                        else:
+                            collecting_evidence = False
+
+                criteria = "\n".join(criteria_lines).strip()
+                supporting_evidence = "\n".join(supporting_evidence_lines).strip()
             reasons = {
                 'reason':
                     (
@@ -1020,9 +1039,6 @@ class LLMProvider(Provider):
 
         system_prompt = str.format(
             prompts.COMPREHENSIVENESS_PROMPT, source=source, summary=summary
-        )
-        system_prompt = system_prompt.replace(
-            "COMPREHENSIVENESS:", prompts.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(system_prompt)
 

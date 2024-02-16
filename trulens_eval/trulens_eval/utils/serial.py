@@ -1114,3 +1114,19 @@ def matching_objects(obj: Any, match: Callable) -> Iterable[Tuple[Lens, Any]]:
 def matching_queries(obj: Any, match: Callable) -> Iterable[Lens]:
     for q, _ in matching_objects(obj, match=match):
         yield q
+
+
+# HACK013:
+SerialModel.model_rebuild()
+SerialBytes.model_rebuild()
+Step.model_rebuild()
+Collect.model_rebuild()
+StepItemOrAttribute.model_rebuild()
+GetAttribute.model_rebuild()
+GetIndex.model_rebuild()
+GetItem.model_rebuild()
+GetItemOrAttribute.model_rebuild()
+GetSlice.model_rebuild()
+GetIndices.model_rebuild()
+GetItems.model_rebuild()
+Lens.model_rebuild()
