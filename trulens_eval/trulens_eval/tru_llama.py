@@ -29,26 +29,26 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.chat_engine.types import AgentChatResponse
     from llama_index.chat_engine.types import BaseChatEngine
     from llama_index.chat_engine.types import StreamingAgentChatResponse
-    from llama_index.embeddings.base import BaseEmbedding
-    from llama_index.indices.base import BaseIndex
+    from llama_index.core.base_query_engine import BaseQueryEngine
+    from llama_index.core.base_query_engine import QueryEngineComponent
     # retriever
     from llama_index.core.base_retriever import BaseRetriever
     from llama_index.core.base_retriever import RetrieverComponent
+    from llama_index.embeddings.base import BaseEmbedding
+    from llama_index.indices.base import BaseIndex
     # misc
     from llama_index.indices.prompt_helper import PromptHelper
-    from llama_index.core.base_query_engine import BaseQueryEngine
-    from llama_index.core.base_query_engine import QueryEngineComponent
     from llama_index.indices.query.schema import QueryBundle
     from llama_index.indices.service_context import ServiceContext
     from llama_index.llm_predictor import LLMPredictor
     from llama_index.llm_predictor.base import BaseLLMPredictor
     from llama_index.llm_predictor.base import LLMMetadata
-    from llama_index.postprocessor.types import BaseNodePostprocessor
     # LLMs
     from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
     # memory
     from llama_index.memory import BaseMemory
     from llama_index.node_parser.interface import NodeParser
+    from llama_index.postprocessor.types import BaseNodePostprocessor
     from llama_index.prompts.base import Prompt
     from llama_index.question_gen.types import BaseQuestionGenerator
     from llama_index.response.schema import Response
@@ -192,7 +192,8 @@ class LlamaInstrument(Instrument):
 
                 # Components
                 "_run_component":
-                    lambda o: isinstance(o, (QueryEngineComponent, RetrieverComponent))
+                    lambda o:
+                    isinstance(o, (QueryEngineComponent, RetrieverComponent))
             },
             LangChainInstrument.Default.METHODS
         )
@@ -267,7 +268,9 @@ class TruLlama(App):
         default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
     )
 
-    def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict):
+    def __init__(
+        self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict
+    ):
         # TruLlama specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property

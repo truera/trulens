@@ -43,7 +43,6 @@ class Bedrock(LLMProvider):
         # self, *args, model_id: str = "amazon.titan-text-express-v1", **kwargs
     ):
 
-
         # SingletonPerName: return singleton unless client provided
         if hasattr(self, "model_id") and "client" not in kwargs:
             return
@@ -113,7 +112,9 @@ class Bedrock(LLMProvider):
                 }
             )
         else:
-            raise NotImplementedError(f"The model selected, {self.model_id}, is not yet implemented as a feedback provider")
+            raise NotImplementedError(
+                f"The model selected, {self.model_id}, is not yet implemented as a feedback provider"
+            )
 
         # TODO: make textGenerationConfig available for user
 
@@ -122,23 +123,26 @@ class Bedrock(LLMProvider):
         accept = "application/json"
         content_type = "application/json"
 
-        response = self.endpoint.client.invoke_model(body=body, modelId=modelId, accept=accept, contentType=content_type)
-        
+        response = self.endpoint.client.invoke_model(
+            body=body, modelId=modelId, accept=accept, contentType=content_type
+        )
+
         if self.model_id.startswith("amazon"):
             response_body = json.loads(response.get('body').read()
-                                    ).get('results')[0]["outputText"]
+                                      ).get('results')[0]["outputText"]
 
         if self.model_id.startswith("anthropic"):
             response_body = json.loads(response.get('body').read()
-                                    ).get('completion')
+                                      ).get('completion')
 
         if self.model_id.startswith("cohere"):
             response_body = json.loads(response.get('body').read()
-                                    ).get('generations')[0]["text"]
+                                      ).get('generations')[0]["text"]
 
         if self.model_id.startswith("ai21"):
-            response_body = json.loads(response.get('body').read()
-                                    ).get('completions')[0].get('data').get('text')
+            response_body = json.loads(
+                response.get('body').read()
+            ).get('completions')[0].get('data').get('text')
 
         return response_body
 

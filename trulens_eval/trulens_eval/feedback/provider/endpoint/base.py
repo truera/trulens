@@ -49,6 +49,7 @@ INSTRUMENT = "__tru_instrument"
 DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
 
+
 class EndpointCallback(SerialModel):
     """
     Callbacks to be invoked after various API requests and track various metrics
@@ -334,8 +335,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(
-                wrapped_thing if wrapped_thing !=
-                object else "unknown dynamically generated class(es)"
+                wrapped_thing if wrapped_thing != object else
+                "unknown dynamically generated class(es)"
             )
             for original, wrapped, endpoint in wrappers:
                 print(
@@ -708,7 +709,6 @@ class DummyEndpoint(Endpoint):
     Does not make any network calls and just pretends to.
     """
 
-    
     loading_prob: float
     """How often to produce the "model loading" response that huggingface api
     sometimes produces."""
@@ -766,10 +766,7 @@ class DummyEndpoint(Endpoint):
         )
 
     def post(
-        self,
-        url: str,
-        payload: JSON,
-        timeout: Optional[float] = None
+        self, url: str, payload: JSON, timeout: Optional[float] = None
     ) -> Any:
         """Pretend to make a classification request similar to huggingface API.
         

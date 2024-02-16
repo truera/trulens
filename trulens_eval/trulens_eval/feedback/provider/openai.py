@@ -48,7 +48,11 @@ class OpenAI(LLMProvider):
     endpoint: Endpoint = pydantic.Field(exclude=True)
 
     def __init__(
-        self, *args, endpoint=None, model_engine: str = "gpt-3.5-turbo", **kwargs: dict
+        self,
+        *args,
+        endpoint=None,
+        model_engine: str = "gpt-3.5-turbo",
+        **kwargs: dict
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -412,13 +416,13 @@ class AzureOpenAI(OpenAI):
     def __init__(
         self,
         deployment_name: str,
-        endpoint: Optional[Endpoint]=None,
+        endpoint: Optional[Endpoint] = None,
         **kwargs: dict
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-        
+
         # Make a dict of args to pass to AzureOpenAI client. Remove any we use
         # for our needs. Note that model name / deployment name is not set in
         # that client and instead is an argument to each chat request. We pass

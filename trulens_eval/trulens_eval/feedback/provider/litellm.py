@@ -40,7 +40,11 @@ class LiteLLM(LLMProvider):
     endpoint: Endpoint
 
     def __init__(
-        self, *args, endpoint: Optional[Endpoint] = None, model_engine: str = "gpt-3.5-turbo", **kwargs
+        self,
+        *args,
+        endpoint: Optional[Endpoint] = None,
+        model_engine: str = "gpt-3.5-turbo",
+        **kwargs
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it

@@ -60,13 +60,12 @@ df_results, feedback_cols = lms.get_records_and_feedback([])
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
     (
-        row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
-    ):
-        (
-            "HIGHER_IS_BETTER"
-            if row.feedback_json.get("higher_is_better", True) else
-            "LOWER_IS_BETTER"
-        ) for _, row in lms.get_feedback_defs().iterrows()
+        row.feedback_json.get("supplied_name", "") or
+        row.feedback_json["implementation"]["name"]
+    ): (
+        "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
+        else "LOWER_IS_BETTER"
+    ) for _, row in lms.get_feedback_defs().iterrows()
 }
 default_direction = "HIGHER_IS_BETTER"
 
@@ -334,7 +333,9 @@ else:
                 if metadata_dict is None:
                     st.write("No record metadata available")
                 elif not isinstance(metadata_dict, dict):
-                    st.write("Invalid metadata format: expected a dictionary (dict) type")
+                    st.write(
+                        "Invalid metadata format: expected a dictionary (dict) type"
+                    )
                 else:
                     metadata_cols = list(metadata_dict.keys())
 
