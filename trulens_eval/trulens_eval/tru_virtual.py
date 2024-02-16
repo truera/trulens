@@ -115,7 +115,7 @@ class VirtualRecord(Record):
         ```
     """
 
-    def __init__(self, calls: Dict[serial.Lens, Dict], **kwargs):
+    def __init__(self, calls: Dict[serial.Lens, Dict], **kwargs: dict):
         root_call = RecordAppCallMethod(path=serial.Lens(), method=virtual_method_root)
 
         start_time = datetime.datetime.now()
@@ -195,28 +195,16 @@ class VirtualRecord(Record):
 class TruVirtual(App):
     """Recorder for virtual apps.
     
-    Virtual apps are data only in that they cannot be
-    executed but for whom previously-computed results can be added using
-    `add_record`. The `VirtualRecord` class may be useful for creating records
-    for this. Fields used by non-virtual apps can be specified here, notably:
+    Virtual apps are data only in that they cannot be executed but for whom
+    previously-computed results can be added using
+    [add_record][trulens_eval.tru_virtual.TruVirtual]. The
+    [VirtualRecord][trulens_eval.tru_virtual.VirtualRecord] class may be useful
+    for creating records for this. Fields used by non-virtual apps can be
+    specified here, notably:
 
-    Args:
-        app_id: Unique identifier for the app.
-
-        tags: List of tags.
-
-        metadata: Open-ended metadata.
-
-        app_extra_json: Additional json structured information to include
-            in the recorded app structure.
-
-        feedbacks: Which feedback functions to run when a record
-            is ingested.
-
-        feedback_mode: How to run feedback functions when a record
-            is ingested.
-
-        app: See below.
+    See [App][trulens_eval.app.App] and
+    [AppDefinition][trulens_eval.schema.AppDefinition] for constructor
+    arguments.
 
     # The `app` field.
 
@@ -259,7 +247,7 @@ class TruVirtual(App):
 
     instrument: Optional[Instrument] = None
 
-    def __init__(self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs):
+    def __init__(self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: dict):
         """Virtual app for logging existing app results. """
 
         if app is None:

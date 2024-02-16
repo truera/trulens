@@ -22,7 +22,7 @@ the rest matching their synchronous version. Example:
 Due to how python handles such functions and how they are executed, it is
 relatively difficult to reshare code between the two versions. Asynchronous
 functions are executed by an async loop (see
-[https://docs.python.org/3/library/asyncio-eventloop.html](Event Loop)). Python
+[EventLoop](https://docs.python.org/3/library/asyncio-eventloop.html)). Python
 prevents any threads from having more than one running loop meaning one may not
 be able to create one to run some async code if one has already been
 created/running in the thread. The method `sync` here, used to convert an async

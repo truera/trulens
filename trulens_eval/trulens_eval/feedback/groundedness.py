@@ -36,20 +36,13 @@ logger = logging.getLogger(__name__)
 class Groundedness(WithClassInfo, SerialModel):
     """
     Measures Groundedness.
-    """
 
-    groundedness_provider: Provider
+    Currently the groundedness
+    functions work well with a summarizer. This class will use an LLM to
+    find the relevant strings in a text. The groundedness_provider can
+    either be an LLM provider (such as OpenAI) or NLI with huggingface.
 
-    def __init__(
-        self, groundedness_provider: Optional[Provider] = None, **kwargs
-    ):
-        """
-        Instantiates the groundedness providers. Currently the groundedness
-        functions work well with a summarizer. This class will use an LLM to
-        find the relevant strings in a text. The groundedness_provider can
-        either be an LLM provider (such as OpenAI) or NLI with huggingface.
-
-        Usage 1:
+    Usage:
         ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -57,7 +50,7 @@ class Groundedness(WithClassInfo, SerialModel):
         groundedness_imp = Groundedness(groundedness_provider=openai_provider)
         ```
 
-        Usage 2:
+    Usage:
         ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.hugs import Huggingface
@@ -65,13 +58,18 @@ class Groundedness(WithClassInfo, SerialModel):
         groundedness_imp = Groundedness(groundedness_provider=huggingface_provider)
         ```
 
-        Args:
-            - groundedness_provider (Provider, optional): groundedness provider
-              options: OpenAI LLM or HuggingFace NLI. Defaults to OpenAI().
-            - summarize_provider (Provider, optional): Internal Usage for DB
-              serialization.
-        """
+    Args:
+        groundedness_provider: Provider to use for evaluating groundedness. This
+            should be [OpenAI][trulens_eval.feedback.provider.openai.OpenAI] LLM
+            or [HuggingFace][trulens_eval.feedback.provider.hugs.Huggingface]
+            NLI. Defaults to `OpenAI`.
+    """
 
+    groundedness_provider: Provider
+
+    def __init__(
+        self, groundedness_provider: Optional[Provider] = None, **kwargs
+    ):
         if groundedness_provider is None:
             logger.warning("Provider not provided. Using OpenAI.")
             groundedness_provider = OpenAI()
@@ -81,32 +79,33 @@ class Groundedness(WithClassInfo, SerialModel):
     def groundedness_measure_with_cot_reasons(
         self, source: str, statement: str
     ) -> Tuple[float, dict]:
-        """
-        A measure to track if the source material supports each sentence in the statement using an LLM provider.
+        """A measure to track if the source material supports each sentence in
+        the statement using an LLM provider.
 
-        The LLM will process the entire statement at once, using chain of thought methodology to emit the reasons. 
+        The LLM will process the entire statement at once, using chain of
+        thought methodology to emit the reasons. 
 
         Usage on RAG Contexts:
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback import Groundedness
-        from trulens_eval.feedback.provider.openai import OpenAI
-        grounded = feedback.Groundedness(groundedness_provider=OpenAI())
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback import Groundedness
+            from trulens_eval.feedback.provider.openai import OpenAI
+            grounded = feedback.Groundedness(groundedness_provider=OpenAI())
 
+            f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_cot_reasons).on(
+                Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
+            ).on_output().aggregate(grounded.grounded_statements_aggregator)
+            ```
 
-        f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_cot_reasons).on(
-            Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
-        ).on_output().aggregate(grounded.grounded_statements_aggregator)
-        ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
+            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            source (str): The source that should support the statement
-            statement (str): The statement to check groundedness
+            source: The source that should support the statement.
+
+            statement: The statement to check groundedness.
 
         Returns:
-            Tuple[float, dict]: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+            A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
         groundedness_scores = {}
         if not isinstance(self.groundedness_provider, LLMProvider):

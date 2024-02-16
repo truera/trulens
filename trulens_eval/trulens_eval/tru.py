@@ -194,7 +194,7 @@ class Tru(python.SingletonPerName):
     def Chain(
         self,
         chain: langchain.chains.base.Chain,
-        **kwargs
+        **kwargs: dict
     ) -> trulens_eval.tru_chain.TruChain:
         """Create a langchain app recorder with database managed by self.
 
@@ -214,7 +214,7 @@ class Tru(python.SingletonPerName):
         engine: Union[
             llama_index.indices.query.base.BaseQueryEngine,
             llama_index.chat_engine.types.BaseChatEngine
-        ], **kwargs
+        ], **kwargs: dict
     ) -> trulens_eval.tru_llama.TruLlama:
         """Create a llama-index app recorder with database managed by self.
 
@@ -233,7 +233,7 @@ class Tru(python.SingletonPerName):
     def Basic(
         self,
         text_to_text: Callable[[str], str],
-        **kwargs
+        **kwargs: dict
     ) -> trulens_eval.tru_basic_app.TruBasicApp:
         """Create a basic app recorder with database managed by self.
 
@@ -253,7 +253,7 @@ class Tru(python.SingletonPerName):
     def Custom(
         self,
         app: Any,
-        **kwargs
+        **kwargs: dict
     ) -> trulens_eval.tru_custom_app.TruCustomApp:
         """Create a custom app recorder with database managed by self.
 
@@ -270,7 +270,8 @@ class Tru(python.SingletonPerName):
 
     def Virtual(
         self,
-        app: Union[trulens_eval.tru_virtual.VirtualApp, Dict], **kwargs
+        app: Union[trulens_eval.tru_virtual.VirtualApp, Dict],
+        **kwargs: dict
     ) -> trulens_eval.tru_virtual.TruVirtual:
         """Create a virtual app recorder with database managed by self.
 
@@ -302,7 +303,11 @@ class Tru(python.SingletonPerName):
 
         self.db.migrate_database()
 
-    def add_record(self, record: Optional[schema.Record] = None, **kwargs) -> schema.RecordID:
+    def add_record(
+        self,
+        record: Optional[schema.Record] = None,
+        **kwargs: dict
+    ) -> schema.RecordID:
         """Add a record to the database.
 
         Args:
@@ -401,20 +406,23 @@ class Tru(python.SingletonPerName):
 
         Args:
             record: The record on which to evaluate the feedback
-              functions.
+                functions.
 
             app: The app that produced the given record.
-              If not provided, it is looked up from the given database `db`.
+                If not provided, it is looked up from the given database `db`.
 
             feedback_functions: A collection of feedback
-              functions to evaluate.
+                functions to evaluate.
 
             wait: If set (default), will wait for results
-              before returning.
+                before returning.
 
         Yields:
             One result for each element of `feedback_functions` of
-                [FeedbackResult][trulens_eval.schema.FeedbackResult] if `wait` is enabled (default) or [Future][concurrent.futures.Future] of [FeedbackResult][trulens_eval.schema.FeedbackResult] if `wait` is disabled.
+                [FeedbackResult][trulens_eval.schema.FeedbackResult] if `wait`
+                is enabled (default) or [Future][concurrent.futures.Future] of
+                [FeedbackResult][trulens_eval.schema.FeedbackResult] if `wait`
+                is disabled.
         """
 
         if not isinstance(record, schema.Record):
@@ -479,7 +487,7 @@ class Tru(python.SingletonPerName):
             schema.FeedbackResult,
             Future[schema.FeedbackResult]
         ]] = None,
-        **kwargs
+        **kwargs: dict
     ) -> schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
         
