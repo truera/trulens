@@ -1963,8 +1963,6 @@
       
         
       
-        
-      
     
     
       
@@ -2270,6 +2268,10 @@
       
         
       
+        
+      
+        
+      
     
     
       
@@ -2504,14 +2506,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
               
                 
   
@@ -2546,6 +2540,110 @@
       
         
       
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5_8" id="__nav_6_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Endpoint
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Endpoint
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_eval/api/endpoint/base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_eval/api/endpoint/openai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
         
       
         
@@ -2562,10 +2660,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
         
           
-          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -2576,8 +2674,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -4000,7 +4098,9 @@ doi_size into rebatch_size chunks to send to model.</p>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.AttributionMethod.attributions" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">attributions</span><span class="p">(</span><span class="o">*</span><span class="n">model_args</span><span class="p">:</span> <span class="n"><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></span><span class="p">,</span> <span class="o">**</span><span class="n">model_kwargs</span><span class="p">:</span> <span class="n"><span title="trulens.utils.typing.KwargsLike">KwargsLike</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.TensorLike">TensorLike</span></span><span class="p">,</span> <span class="n"><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.TensorLike">TensorLike</span></span><span class="p">],</span> <span class="n"><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.TensorLike">TensorLike</span></span><span class="p">]]]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">attributions</span><span class="p">(</span>
+    <span class="o">*</span><span class="n">model_args</span><span class="p">:</span> <span class="n"><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></span><span class="p">,</span> <span class="o">**</span><span class="n">model_kwargs</span><span class="p">:</span> <span class="n"><span title="trulens.utils.typing.KwargsLike">KwargsLike</span></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.TensorLike">TensorLike</span></span><span class="p">,</span> <span class="n"><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.TensorLike">TensorLike</span></span><span class="p">],</span> <span class="n"><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.ArgsLike">ArgsLike</span></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.TensorLike">TensorLike</span></span><span class="p">]]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4153,7 +4253,17 @@ specifies the records over which the attributions are aggregated.</p>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.InternalInfluence.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n"><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></span><span class="p">,</span> <span class="n">cuts</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.SliceLike">SliceLike</span></span><span class="p">,</span> <span class="n">qoi</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.QoiLike">QoiLike</span></span><span class="p">,</span> <span class="n">doi</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.DoiLike">DoiLike</span></span><span class="p">,</span> <span class="n">multiply_activation</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">return_grads</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">return_doi</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n"><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></span><span class="p">,</span>
+    <span class="n">cuts</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.SliceLike">SliceLike</span></span><span class="p">,</span>
+    <span class="n">qoi</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.QoiLike">QoiLike</span></span><span class="p">,</span>
+    <span class="n">doi</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.DoiLike">DoiLike</span></span><span class="p">,</span>
+    <span class="n">multiply_activation</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">return_grads</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">return_doi</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4463,7 +4573,16 @@ is essentially an alias for</p>
 
 
 <a href="#trulens_explain.trulens.nn.attribution.InputAttribution.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n"><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></span><span class="p">,</span> <span class="n">qoi_cut</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.CutLike">CutLike</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">qoi</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.QoiLike">QoiLike</span></span> <span class="o">=</span> <span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="n">doi_cut</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.CutLike">CutLike</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">doi</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.DoiLike">DoiLike</span></span> <span class="o">=</span> <span class="s1">&#39;point&#39;</span><span class="p">,</span> <span class="n">multiply_activation</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n"><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></span><span class="p">,</span>
+    <span class="n">qoi_cut</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.CutLike">CutLike</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">qoi</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.QoiLike">QoiLike</span></span> <span class="o">=</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span>
+    <span class="n">doi_cut</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.CutLike">CutLike</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">doi</span><span class="p">:</span> <span class="n"><span title="trulens_explain.trulens.nn.attribution.DoiLike">DoiLike</span></span> <span class="o">=</span> <span class="s2">&quot;point&quot;</span><span class="p">,</span>
+    <span class="n">multiply_activation</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4675,7 +4794,16 @@ activation, thus converting from "<em>influence space</em>" to
 
 
 <a href="#trulens_explain.trulens.nn.attribution.IntegratedGradients.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n"><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resolution</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">doi_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">qoi</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="n">qoi_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n"><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></span><span class="p">,</span>
+    <span class="n">baseline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">resolution</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">doi_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">qoi</span><span class="o">=</span><span class="s2">&quot;max&quot;</span><span class="p">,</span>
+    <span class="n">qoi_cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">

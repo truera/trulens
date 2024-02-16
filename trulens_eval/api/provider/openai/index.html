@@ -1963,8 +1963,6 @@
       
         
       
-        
-      
     
     
       
@@ -2265,6 +2263,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -2668,14 +2670,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
               
                 
   
@@ -2692,6 +2686,110 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5_8" id="__nav_6_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Endpoint
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Endpoint
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../endpoint/base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../endpoint/openai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2729,10 +2827,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
         
           
-          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2743,8 +2841,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -3522,20 +3620,23 @@ OpenAI.</p>
           </td>
         </tr>
         <tr>
-          <td><code>endpoint</code></td>
+          <td><code>**kwargs</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>Internal Usage for DB serialization. This
-argument is intentionally ignored.</p>
+              <p>Additional arguments to pass to the
+<a class="autorefs autorefs-internal" href="../../endpoint/openai/#trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint">OpenAIEndpoint</a>
+which are then passed to
+<a class="autorefs autorefs-internal" href="../../endpoint/openai/#trulens_eval.feedback.provider.endpoint.openai.OpenAIClient">OpenAIClient</a>
+and finally to the OpenAI client.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
                   <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.endpoint.base.Endpoint" href="../../endpoint/#trulens_eval.feedback.provider.endpoint.base.Endpoint">Endpoint</a></code>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
                 </span>
                 <span class="doc-param-default">
                   <b>DEFAULT:</b> 
-                    <code>None</code>
+                    <code>{}</code>
                 </span>
             </p>
           </td>

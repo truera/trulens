@@ -1963,8 +1963,6 @@
       
         
       
-        
-      
     
     
       
@@ -2829,6 +2827,10 @@
       
         
       
+        
+      
+        
+      
     
     
       
@@ -3066,14 +3068,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
               
                 
   
@@ -3090,6 +3084,110 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5_8" id="__nav_6_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Endpoint
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Endpoint
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../endpoint/base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../endpoint/openai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -3127,10 +3225,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
         
           
-          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -3141,8 +3239,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -4547,7 +4645,9 @@ as the app that generated this record via <code>layout_calls_as_app</code>.</p>
   </span>
 
 <a href="#trulens_eval.schema.Record.feedback_and_future_results" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_and_future_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinition" href="../feedback/#trulens_eval.schema.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Future" href="../utils/python/#trulens_eval.utils.python.Future">Future</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResult" href="../schema/#trulens_eval.schema.FeedbackResult">FeedbackResult</a></span><span class="p">]]]]</span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_and_future_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
+    <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinition" href="../feedback/#trulens_eval.schema.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Future" href="../utils/python/#trulens_eval.utils.python.Future">Future</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResult" href="../schema/#trulens_eval.schema.FeedbackResult">FeedbackResult</a></span><span class="p">]]]</span>
+<span class="p">]</span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4574,7 +4674,9 @@ be filled in when read from database. Also, will not fill in when using
   </span>
 
 <a href="#trulens_eval.schema.Record.feedback_results" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Future" href="../utils/python/#trulens_eval.utils.python.Future">Future</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResult" href="../schema/#trulens_eval.schema.FeedbackResult">FeedbackResult</a></span><span class="p">]]]</span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Future" href="../utils/python/#trulens_eval.utils.python.Future">Future</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResult" href="../schema/#trulens_eval.schema.FeedbackResult">FeedbackResult</a></span><span class="p">]]]</span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span>
+    <span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">

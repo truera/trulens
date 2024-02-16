@@ -1963,8 +1963,6 @@
       
         
       
-        
-      
     
     
       
@@ -2265,6 +2263,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -2882,14 +2884,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
               
                 
   
@@ -2906,6 +2900,110 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5_8" id="__nav_6_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Endpoint
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Endpoint
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../endpoint/base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../endpoint/openai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2943,10 +3041,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
         
           
-          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2957,8 +3055,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -3890,14 +3988,6 @@
 
 
 <h1 id="llm-provider">LLM Provider<a class="headerlink" href="#llm-provider" title="Permanent link">&para;</a></h1>
-<p>LLMProvider is the base class containing feedback functions that use an LLM for
-evaluation. This includes:</p>
-<ul>
-<li><a class="autorefs autorefs-internal" href="../openai/#trulens_eval.feedback.provider.openai.OpenAI">OpenAI</a> and subclass <a class="autorefs autorefs-internal" href="../azureopenai/#trulens_eval.feedback.provider.openai.AzureOpenAI">AzureOpenAI</a>.</li>
-<li><a class="autorefs autorefs-internal" href="../bedrock/#trulens_eval.feedback.provider.bedrock.Bedrock">Bedrock</a>.</li>
-<li><a class="autorefs autorefs-internal" href="../litellm/#trulens_eval.feedback.provider.litellm.LiteLLM">LiteLLM</a>.</li>
-<li><a class="autorefs autorefs-internal" href="../langchain/#trulens_eval.feedback.provider.langchain.Langchain">Langchain</a>.</li>
-</ul>
 
 
 <div class="doc doc-object doc-class">
@@ -3919,11 +4009,21 @@ evaluation. This includes:</p>
       <p>An LLM-based provider.</p>
 <p>This is an abstract class and needs to be initialized as one of these:</p>
 <ul>
-<li><a class="autorefs autorefs-internal" href="../openai/#trulens_eval.feedback.provider.openai.OpenAI">OpenAI provider</a> or
-  <a class="autorefs autorefs-internal" href="../azureopenai/#trulens_eval.feedback.provider.openai.AzureOpenAI">AzureOpenAI provider</a></li>
-<li><a class="autorefs autorefs-internal" href="../bedrock/#trulens_eval.feedback.provider.bedrock.Bedrock">Bedrock provider</a></li>
-<li><a class="autorefs autorefs-internal" href="../litellm/#trulens_eval.feedback.provider.litellm.LiteLLM">LiteLLM provider</a></li>
-<li><a class="autorefs autorefs-internal" href="../langchain/#trulens_eval.feedback.provider.langchain.Langchain">Langchain provider</a></li>
+<li>
+<p><a class="autorefs autorefs-internal" href="../openai/#trulens_eval.feedback.provider.openai.OpenAI">OpenAI</a> and subclass
+  <a class="autorefs autorefs-internal" href="../azureopenai/#trulens_eval.feedback.provider.openai.AzureOpenAI">AzureOpenAI</a>.</p>
+</li>
+<li>
+<p><a class="autorefs autorefs-internal" href="../bedrock/#trulens_eval.feedback.provider.bedrock.Bedrock">Bedrock</a>.</p>
+</li>
+<li>
+<p><a class="autorefs autorefs-internal" href="../litellm/#trulens_eval.feedback.provider.litellm.LiteLLM">LiteLLM</a>. LiteLLM provides an
+interface to a <a href="https://docs.litellm.ai/docs/providers">wide range of
+models</a>.</p>
+</li>
+<li>
+<p><a class="autorefs autorefs-internal" href="../langchain/#trulens_eval.feedback.provider.langchain.Langchain">Langchain</a>.</p>
+</li>
 </ul>
 
 
@@ -3949,7 +4049,11 @@ evaluation. This includes:</p>
 
 
 <a href="#trulens_eval.feedback.provider.base.LLMProvider.generate_score" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score</span><span class="p">(</span>
+    <span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
+    <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4022,7 +4126,11 @@ evaluation. This includes:</p>
 
 
 <a href="#trulens_eval.feedback.provider.base.LLMProvider.generate_score_and_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score_and_reasons</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score_and_reasons</span><span class="p">(</span>
+    <span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
+    <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4198,7 +4306,9 @@ Selectors</a></p>
 
 
 <a href="#trulens_eval.feedback.provider.base.LLMProvider.qs_relevance_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">qs_relevance_with_cot_reasons</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">qs_relevance_with_cot_reasons</span><span class="p">(</span>
+    <span class="n">question</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4541,12 +4651,14 @@ Selectors</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the sentiment of some text.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">sentiment</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">sentiment</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -4561,21 +4673,7 @@ Guide</a></p>
           <td><code>text</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A prompt to an agent.</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                </span>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td><code>response</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>The agent's response to the prompt.</p>
+              <p>The text to evaluate sentiment of.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -4600,29 +4698,14 @@ Guide</a></p>
     <tbody>
         <tr>
           <td>
-              <code>float</code>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>A value between 0 and 1. 0 being "negative sentiment" and 1</p>
-            </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-                </span>
-              </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
               <span class="doc-returns-annotation">
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
               </span>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>being "positive sentiment".</p>
+              <p>A value between 0 and 1. 0 being "negative sentiment" and 1
+being "positive sentiment".</p>
             </div>
           </td>
         </tr>
@@ -4833,12 +4916,14 @@ Guide</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the conciseness of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">conciseness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">conciseness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -4853,118 +4938,7 @@ Guide</a></p>
           <td><code>text</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A prompt to an agent.</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                </span>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td><code>response</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>The agent's response to the prompt.</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                </span>
-            </p>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-
-
-  <table>
-    <thead>
-      <tr>
-        <th><b>RETURNS</b></th>
-        <th><b>DESCRIPTION</b></th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-              <code>float</code>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>A value between 0.0 (not concise) and 1.0 (concise).</p>
-            </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-                </span>
-              </p>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h4 id="trulens_eval.feedback.provider.base.LLMProvider.conciseness_with_cot_reasons" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">conciseness_with_cot_reasons</span>
-
-
-<a href="#trulens_eval.feedback.provider.base.LLMProvider.conciseness_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">conciseness_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Uses chat completion model. A function that completes a template to
-check the conciseness of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">conciseness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div>
-<p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
-Guide</a></p>
-
-
-
-  <table>
-    <thead>
-      <tr>
-        <th><b>PARAMETER</b></th>
-        <th><b> DESCRIPTION</b></th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>text</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>A prompt to an agent.</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                </span>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td><code>response</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>The agent's response to the prompt.</p>
+              <p>The text to evaluate the conciseness of.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -4995,7 +4969,88 @@ Guide</a></p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise),</p>
+              <p>A value between 0.0 (not concise) and 1.0 (concise).</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="trulens_eval.feedback.provider.base.LLMProvider.conciseness_with_cot_reasons" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">conciseness_with_cot_reasons</span>
+
+
+<a href="#trulens_eval.feedback.provider.base.LLMProvider.conciseness_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">conciseness_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses chat completion model. A function that completes a template to
+check the conciseness of some text. Prompt credit to Langchain Eval.</p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">conciseness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
+<p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
+Guide</a></p>
+</details>
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>text</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>The text to evaluate the conciseness of.</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <span class="doc-returns-annotation">
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+              </span>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>A value between 0.0 (not concise) and 1.0 (concise)</p>
             </div>
           </td>
         </tr>
@@ -5007,7 +5062,7 @@ Guide</a></p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>and a string containing the reasons for the evaluation.</p>
+              <p>A dictionary containing the reasons for the evaluation.</p>
             </div>
           </td>
         </tr>
@@ -5035,12 +5090,14 @@ Guide</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the correctness of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">correctness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">correctness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -5055,7 +5112,7 @@ Guide</a></p>
           <td><code>text</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A prompt to an agent. response (str): The agent's</p>
+              <p>A prompt to an agent.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -5080,18 +5137,14 @@ Guide</a></p>
     <tbody>
         <tr>
           <td>
-              <code>float</code>
+              <span class="doc-returns-annotation">
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+              </span>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
               <p>A value between 0.0 (not correct) and 1.0 (correct).</p>
             </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-                </span>
-              </p>
           </td>
         </tr>
     </tbody>
@@ -6490,7 +6543,9 @@ Guide</a></p>
 
 
 <a href="#trulens_eval.feedback.provider.base.LLMProvider.comprehensiveness_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">comprehensiveness_with_cot_reasons</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">summary</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">comprehensiveness_with_cot_reasons</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">summary</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">

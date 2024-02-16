@@ -1963,8 +1963,6 @@
       
         
       
-        
-      
     
     
       
@@ -2270,6 +2268,10 @@
       
         
       
+        
+      
+        
+      
     
     
       
@@ -2504,14 +2506,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
               
                 
   
@@ -2546,6 +2540,110 @@
       
         
       
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5_8" id="__nav_6_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Endpoint
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Endpoint
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_eval/api/endpoint/base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_eval/api/endpoint/openai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
         
       
         
@@ -2562,10 +2660,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
         
           
-          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -2576,8 +2674,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -3360,7 +3458,23 @@ in the parameter descriptions.</p>
 
 
 <a href="#trulens_explain.trulens.nn.models.get_model_wrapper" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_model_wrapper</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n"><span title="trulens.utils.typing.ModelLike">ModelLike</span></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">logit_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replace_softmax</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">softmax_layer</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">custom_objects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">input_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">internal_tensor_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_feed_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_eval</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_model_wrapper</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n"><span title="trulens.utils.typing.ModelLike">ModelLike</span></span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">logit_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">replace_softmax</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">softmax_layer</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">custom_objects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">device</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">input_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">internal_tensor_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">default_feed_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">backend</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">force_eval</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">

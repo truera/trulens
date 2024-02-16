@@ -14,7 +14,7 @@
         <link rel="prev" href="../langchain/">
       
       
-        <link rel="next" href="../../utils/python/">
+        <link rel="next" href="../../endpoint/base/">
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
@@ -1963,8 +1963,6 @@
       
         
       
-        
-      
     
     
       
@@ -2259,10 +2257,16 @@
                 
   
   
+    
+  
   
   
     
     
+      
+        
+      
+        
       
         
       
@@ -2287,11 +2291,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5" checked>
         
           
           <label class="md-nav__link" for="__nav_6_5" id="__nav_6_5_label" tabindex="">
@@ -2305,7 +2309,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6_5">
             <span class="md-nav__icon md-icon"></span>
             Provider
@@ -2513,14 +2517,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
               
                 
   
@@ -2679,6 +2675,110 @@
       
         
       
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5_8" id="__nav_6_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Endpoint
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Endpoint
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../endpoint/base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../endpoint/openai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
         
       
         
@@ -2698,10 +2798,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
         
           
-          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2712,8 +2812,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -3445,48 +3545,21 @@
 
 
 <a href="#trulens_eval.feedback.provider.hugs.Huggingface.__init__" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.endpoint.base.Endpoint" href="../../endpoint/#trulens_eval.feedback.provider.endpoint.base.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.endpoint.base.Endpoint" href="../../endpoint/base/#trulens_eval.feedback.provider.endpoint.base.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
       <p>Create a Huggingface Provider with out of the box feedback functions.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
 <span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
-</code></pre></div></p>
-
-
-
-  <table>
-    <thead>
-      <tr>
-        <th><b>PARAMETER</b></th>
-        <th><b> DESCRIPTION</b></th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>endpoint</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>Internal Usage for DB serialization</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.endpoint.base.Endpoint" href="../../endpoint/#trulens_eval.feedback.provider.endpoint.base.Endpoint">Endpoint</a></code>
-                </span>
-                <span class="doc-param-default">
-                  <b>DEFAULT:</b> 
-                    <code>None</code>
-                </span>
-            </p>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
+</code></pre></div>
+</details>
   </div>
 
 </div>
@@ -3783,15 +3856,18 @@ Guide</a></p>
 
   <div class="doc doc-contents ">
   
-      <p>NER model to detect PII.
-<strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code>hugs = Huggingface()
+      <p>NER model to detect PII.</p>
 
-# Define a pii_detection feedback function using HuggingFace.
-f_pii_detection = Feedback(hugs.pii_detection).on_input()
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">hugs</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
+
+<span class="c1"># Define a pii_detection feedback function using HuggingFace.</span>
+<span class="n">f_pii_detection</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">pii_detection</span><span class="p">)</span><span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
 </code></pre></div>
-The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
-
+<p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide:
+Selectors</a></p>
+</details>
 
 
   <table>
@@ -3803,7 +3879,7 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
     </thead>
     <tbody>
         <tr>
-          <td><code>input</code></td>
+          <td><code>text</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
               <p>A text prompt that may contain a name.</p>
@@ -3837,9 +3913,7 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <ul>
-<li>float: the likelihood that a name is contained in the input text.</li>
-</ul>
+              <p>The likelihood that a name is contained in the input text.</p>
             </div>
           </td>
         </tr>

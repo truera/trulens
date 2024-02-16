@@ -1961,8 +1961,6 @@
       
         
       
-        
-      
     
     
       
@@ -2268,6 +2266,10 @@
       
         
       
+        
+      
+        
+      
     
     
       
@@ -2502,14 +2504,6 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
               
                 
   
@@ -2544,6 +2538,110 @@
       
         
       
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5_8" id="__nav_6_5_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Endpoint
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Endpoint
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_eval/api/endpoint/base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_eval/api/endpoint/openai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
         
       
         
@@ -2560,10 +2658,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
         
           
-          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -2574,8 +2672,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -4180,7 +4278,12 @@ use with input-attributions.</p>
 
 
 <a href="#trulens_explain.trulens.visualizations.Visualizer.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="n">combine_channels</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">normalization_type</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">cmap</span><span class="p">:</span> <span class="n"><span title="matplotlib.colors.Colormap">Colormap</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
+    <span class="n">combine_channels</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">normalization_type</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="p">:</span> <span class="n"><span title="matplotlib.colors.Colormap">Colormap</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4328,7 +4431,17 @@ type. This argument is only used for single-channel data
 
 
 <a href="#trulens_explain.trulens.visualizations.Visualizer.__call__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__call__</span><span class="p">(</span><span class="n">attributions</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="numpy.ndarray" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__call__</span><span class="p">(</span>
+    <span class="n">attributions</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="numpy.ndarray" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4752,7 +4865,18 @@ type. This argument is only used for single-channel data
 
 
 <a href="#trulens_explain.trulens.visualizations.HeatmapVisualizer.__call__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__call__</span><span class="p">(</span><span class="n">attributions</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">overlay_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="numpy.ndarray" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__call__</span><span class="p">(</span>
+    <span class="n">attributions</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">imshow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">fig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_tiled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">overlay_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalization_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="numpy.ndarray" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5059,7 +5183,14 @@ particularly for use with input-attributions.</p>
 
 
 <a href="#trulens_explain.trulens.visualizations.MaskVisualizer.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="n">blur</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">positive_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
+    <span class="n">blur</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">combine_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">positive_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5229,7 +5360,20 @@ towards a particular internal channel or neuron.</p>
 
 
 <a href="#trulens_explain.trulens.visualizations.ChannelMaskVisualizer.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">channel_axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">agg_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">combine_channels</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">positive_only</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">layer</span><span class="p">,</span>
+    <span class="n">channel</span><span class="p">,</span>
+    <span class="n">channel_axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">agg_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">doi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">masked_opacity</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">combine_channels</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_attr_as_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">positive_only</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5444,7 +5588,15 @@ true).</p>
 
 
 <a href="#trulens_explain.trulens.visualizations.ChannelMaskVisualizer.__call__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__call__</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_preprocessed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">masked_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__call__</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">,</span>
+    <span class="n">x_preprocessed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">blur</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">masked_opacity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">combine_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5714,7 +5866,17 @@ defaults to the value supplied to the constructor. Default None.</p>
 
 
 <a href="#trulens_explain.trulens.visualizations.NLP.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="n">wrapper</span><span class="p">:</span> <span class="n"><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_explain.trulens.visualizations.Output" href="#trulens_explain.trulens.visualizations.Output">Output</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tokenize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens_explain.trulens.visualizations.NLP.TextBatch">TextBatch</span></span><span class="p">],</span> <span class="n"><span title="trulens.utils.typing.ModelInputs">ModelInputs</span></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">decode</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">input_accessor</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens.utils.typing.ModelInputs">ModelInputs</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output_accessor</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens_explain.trulens.visualizations.NLP.ModelOutput">ModelOutput</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">attr_aggregate</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">],</span> <span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">hidden_tokens</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Set" href="https://docs.python.org/3/library/typing.html#typing.Set">Set</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">())</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
+    <span class="n">wrapper</span><span class="p">:</span> <span class="n"><span title="trulens.nn.models._model_base.ModelWrapper">ModelWrapper</span></span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_explain.trulens.visualizations.Output" href="#trulens_explain.trulens.visualizations.Output">Output</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">labels</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tokenize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens_explain.trulens.visualizations.NLP.TextBatch">TextBatch</span></span><span class="p">],</span> <span class="n"><span title="trulens.utils.typing.ModelInputs">ModelInputs</span></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">decode</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">input_accessor</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens.utils.typing.ModelInputs">ModelInputs</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_accessor</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens_explain.trulens.visualizations.NLP.ModelOutput">ModelOutput</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">attr_aggregate</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">],</span> <span class="n"><span title="trulens.utils.typing.Tensor">Tensor</span></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">hidden_tokens</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Set" href="https://docs.python.org/3/library/typing.html#typing.Set">Set</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span>
+<span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
