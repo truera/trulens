@@ -27,7 +27,7 @@ boto3    >= 1.33.6
 botocore >= 1.33.6
 
 # Models API
-litellm     >= 1.11.1
+litellm     >= 1.11.1, < 1.23.16 # temporary pin due to issue with py38
 
 # Local models
 transformers  >= 4.10.0
