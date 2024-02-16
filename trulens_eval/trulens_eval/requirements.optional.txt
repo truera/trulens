@@ -28,6 +28,7 @@ botocore >= 1.33.6
 
 # Models API
 litellm     >= 1.11.1
+importlib-resources ==6.6.1 # required to use litellm 1.24.3 on python 3.8
 
 # Local models
 transformers  >= 4.10.0
