@@ -221,7 +221,7 @@ class OpenAIEndpoint(Endpoint):
         name: str = "openai",
         client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
                                OpenAIClient]] = None,
-        **kwargs
+        **kwargs: dict
     ):
         if safe_hasattr(self, "name") and client is not None:
             # Already created with SingletonPerName mechanism

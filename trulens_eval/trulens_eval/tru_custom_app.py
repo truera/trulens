@@ -296,17 +296,21 @@ class TruCustomApp(App):
 
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
 
-    # Methods marked as needing instrumentation. These are checked to make sure
-    # the object walk finds them. If not, a message is shown to let user know
-    # how to let the TruCustomApp constructor know where these methods are.
     functions_to_instrument: ClassVar[Set[Callable]] = set([])
+    """Methods marked as needing instrumentation.
+    
+    These are checked to make sure the object walk finds them. If not, a message
+    is shown to let user know how to let the TruCustomApp constructor know where
+    these methods are.
+    """
 
-    main_method: Optional[Function] = None  # serialized version of the below
     main_method_loaded: Optional[Callable] = Field(None, exclude=True)
+    """Main method of the custom app."""
 
-    # main_async_method: Optional[Union[Callable, Method]] = None # = Field(exclude=True)
+    main_method: Optional[Function] = None
+    """Serialized version of the main method."""
 
-    def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
+    def __init__(self, app: Any, methods_to_instrument=None, **kwargs: dict):
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
 

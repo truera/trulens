@@ -242,7 +242,7 @@ class TruLlama(App):
         default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
     )
 
-    def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs):
+    def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict):
         # TruLlama specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property

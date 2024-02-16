@@ -391,21 +391,20 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the sentiment of some text.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.sentiment).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.sentiment).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+        Args:
+            text: The text to evaluate sentiment of.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1
-            being "positive sentiment".
+            A value between 0 and 1. 0 being "negative sentiment" and 1
+                being "positive sentiment".
         """
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT + text
         return self.generate_score(system_prompt=system_prompt)
@@ -521,21 +520,20 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
+        Usage:
+            ```python
+            feedback = Feedback(provider.conciseness).on_output() 
+            ```
 
-        ```python
-        feedback = Feedback(provider.conciseness).on_output() 
-        ```
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+        Args:
+            text: The text to evaluate the conciseness of.
 
         Returns:
-            float: A value between 0.0 (not concise) and 1.0 (concise).
+            A value between 0.0 (not concise) and 1.0 (concise).
+
         """
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
@@ -546,22 +544,21 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
+        Usage:
+            ```python
+            feedback = Feedback(provider.conciseness).on_output() 
+            ```
 
-        ```python
-        feedback = Feedback(provider.conciseness).on_output() 
-        ```
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+        Args:
+            text: The text to evaluate the conciseness of.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise),
-            and a string containing the reasons for the evaluation.
+            A value between 0.0 (not concise) and 1.0 (concise)
+            
+            A dictionary containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
@@ -572,20 +569,19 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.correctness).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.correctness).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Parameters:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text: A prompt to an agent.
 
         Returns:
-            float: A value between 0.0 (not correct) and 1.0 (correct).
+            A value between 0.0 (not correct) and 1.0 (correct).
         """
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
