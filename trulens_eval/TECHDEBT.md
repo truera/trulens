@@ -13,11 +13,11 @@ lives.
 See `instruments.py` docstring for discussion why these are done.
 
 - We inspect the call stack in process of tracking method invocation. It may be
-  possible to replace this with `contextvars`. 
+  possible to replace this with `contextvars`.
 
 - "HACK012" -- In the optional imports scheme, we have to make sure that imports
-  that happen from outside of trulens raise normal exceptions instead of
-  producing dummies.
+  that happen from outside of trulens raise exceptions instead of
+  producing dummies without raising exceptions.
 
 ## Method overriding
 
@@ -59,7 +59,8 @@ See `instruments.py` docstring for discussion why these are done.
   otherwise.
 
 - "HACK005" -- `model_validate` inside `WithClassInfo` is implemented in
-  decorated method because pydantic doesn't call it otherwise.
+  decorated method because pydantic doesn't call it otherwise. It is uncertain
+  whether this is a pydantic bug.
 
 - We dump attributes marked to be excluded by pydantic except our own classes.
   This is because some objects are of interest despite being marked to exclude.
@@ -87,6 +88,8 @@ See `instruments.py` docstring for discussion why these are done.
   and mkdocs is done right.
 
 - "HACK012" -- same but with `Queue`.
+
+- Similarly, we define `NoneType` for older python versions.
 
 - "HACK013" -- when using `from __future__ import annotations` for more
   convenient type annotation specification, one may have to call pydantic's

@@ -45,8 +45,9 @@ B = TypeVar("B")
 T = TypeVar("T")
 
 INSTRUMENT = "__tru_instrument"
-DEFAULT_RPM = 60
 
+DEFAULT_RPM = 60
+"""Default requests per minute for endpoints."""
 
 class EndpointCallback(SerialModel):
     """
@@ -55,33 +56,38 @@ class EndpointCallback(SerialModel):
     """
 
     cost: Cost = Field(default_factory=Cost)
+    """Costs tracked by this callback."""
 
     def handle(self, response: Any) -> None:
+        """Called after each request."""
         self.cost.n_requests += 1
 
     def handle_chunk(self, response: Any) -> None:
+        """Called after receiving a chunk from a request."""
         self.cost.n_stream_chunks += 1
 
     def handle_generation(self, response: Any) -> None:
+        """Called after each completion request."""
         self.handle(response)
 
     def handle_generation_chunk(self, response: Any) -> None:
+        """Called after receiving a chunk from a completion request."""
         self.handle_chunk(response)
 
     def handle_classification(self, response: Any) -> None:
+        """Called after each classification response."""
         self.handle(response)
 
 
 class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
+    """API usage, pacing, and utilities for API endpoints."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     @dataclass
     class EndpointSetup():
-        """
-        Class for storing supported endpoint information. See `atrack_all_costs`
-        for usage.
-        """
+        """Class for storing supported endpoint information. See [atrack_all_costs][trulens_eval.feedback.provider.endpoint.base.Endpoint.atrack_all_costs]
+        for usage."""
         arg_flag: str
         module_name: str
         class_name: str
@@ -109,49 +115,57 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         )
     ]
 
-    # Dict of classe/module-methods that have been instrumented for cost
-    # tracking along with the wrapper methods and the class that instrumented
-    # them. Key is the class or module owning the instrumented method. Tuple
-    # value has:
-    # - original function,
-    # - wrapped version,
-    # - endpoint that did the wrapping.
     instrumented_methods: ClassVar[Dict[Any, List[Tuple[Callable, Callable, Type[Endpoint]]]]] \
         = defaultdict(list)
+    """Mapping of classe/module-methods that have been instrumented for cost
+     tracking along with the wrapper methods and the class that instrumented
+     them.
+     
+     Key is the class or module owning the instrumented method. Tuple
+     value has:
 
-    # API/endpoint name
+        - original function,
+
+        - wrapped version,
+
+        - endpoint that did the wrapping.
+
+     """
+
     name: str
+    """API/endpoint name."""
 
-    # Requests per minute.
     rpm: float = DEFAULT_RPM
+    """Requests per minute."""
 
-    # Retries (if performing requests using this class). TODO: wire this up to
-    # the various endpoint systems' retries specification.
     retries: int = 3
+    """Retries (if performing requests using this class)."""
 
-    # Optional post headers for post requests if done by this class.
     post_headers: Dict[str, str] = Field(default_factory=dict, exclude=True)
+    """Optional post headers for post requests if done by this class."""
 
-    # Queue that gets filled at rate rpm.
     pace: Pace = Field(
         default_factory=lambda:
         Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
         exclude=True
     )
+    """Pacing instance to maintain a desired rpm."""
 
-    # Track costs not run inside "atrack_cost" here. Also note that Endpoints
-    # are singletons (one for each unique name argument) hence this global
-    # callback will track all requests for the named api even if you try to
-    # create multiple endpoints (with the same name).
     global_callback: EndpointCallback = Field(
         exclude=True
     )  # of type _callback_class
+    """Track costs not run inside "atrack_cost" here. 
+    
+    Also note that Endpoints are singletons (one for each unique name argument)
+    hence this global callback will track all requests for the named api even if
+    you try to create multiple endpoints (with the same name).
+    """
 
-    # Callback class to use for usage tracking
     callback_class: Type[EndpointCallback] = Field(exclude=True)
+    """Callback class to use for usage tracking."""
 
-    # Name of variable that stores the callback noted above.
     callback_name: str = Field(exclude=True)
+    """Name of variable that stores the callback noted above."""
 
     def __new__(cls, *args, name: Optional[str] = None, **kwargs):
         name = name or cls.__name__
@@ -165,12 +179,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         callback_class: Optional[Any] = None,
         **kwargs
     ):
-        """
-        API usage, pacing, and utilities for API endpoints.
-
-        - `callback_class` should be set by subclass.
-        """
-
         if safe_hasattr(self, "rpm"):
             # already initialized via the SingletonPerName mechanism
             return
@@ -567,16 +575,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         should be implemented by each subclass.
 
         Args:
+            bindings: the inputs to the wrapped method.
 
-        - func: Callable -- the wrapped function which returned.
+            response: whatever the wrapped function returned.
 
-        - bindings: BoundArguments -- the inputs to the wrapped method.
-
-        - response: Any -- whatever the wrapped function returned.
-
-        - callback: Optional[EndpointCallback] -- the callback set up by
-          `atrack_cost` if the wrapped method was called and returned within an
-          invocation of `atrack_cost`.
+            callback: the callback set up by
+                `atrack_cost` if the wrapped method was called and returned within an
+                 invocation of `atrack_cost`.
         """
         pass
 
@@ -698,32 +703,34 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
 
 class DummyEndpoint(Endpoint):
-    """
-    Endpoint for testing purposes. Should not make any network calls.
+    """Endpoint for testing purposes.
+    
+    Does not make any network calls and just pretends to.
     """
 
-    # Simulated result parameters below.
-
-    # How often to produce the "model loading" response.
+    
     loading_prob: float
-    # How much time to indicate as needed to load the model in the above response.
+    """How often to produce the "model loading" response that huggingface api
+    sometimes produces."""
+
     loading_time: Callable[[], float] = \
         Field(exclude=True, default_factory=lambda: lambda: random.uniform(0.73, 3.7))
+    """How much time to indicate as needed to load the model in the above response."""
 
-    # How often to produce an error response.
     error_prob: float
+    """How often to produce an error response."""
 
-    # How often to freeze instead of producing a response.
     freeze_prob: float
+    """How often to freeze instead of producing a response."""
 
-    # How often to produce the overloaded message.
     overloaded_prob: float
+    """# How often to produce the overloaded message that huggingface sometimes produces."""
 
-    # How much data in bytes to allocate when making requests.
     alloc: int
+    """How much data in bytes to allocate when making requests."""
 
-    # How long to delay a request.
     delay: float = 0.0
+    """How long to delay each request."""
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
@@ -762,19 +769,23 @@ class DummyEndpoint(Endpoint):
         self,
         url: str,
         payload: JSON,
-        timeout: float = DEFAULT_NETWORK_TIMEOUT
+        timeout: Optional[float] = None
     ) -> Any:
-        # Classification results only, like from huggingface. Simulates
-        # overloaded, model loading, frozen, error.
+        """Pretend to make a classification request similar to huggingface API.
+        
+        Simulates overloaded, model loading, frozen, error as configured:
 
-        self.pace_me()
-
-        # pretend to do this:
-        """
-        ret = requests.post(
+        ```python
+        requests.post(
             url, json=payload, timeout=timeout, headers=self.post_headers
         )
+        ```
+
         """
+        if timeout is None:
+            timeout = DEFAULT_NETWORK_TIMEOUT
+
+        self.pace_me()
 
         # allocate some data to pretend we are doing hard work
         temporary = [0x42] * self.alloc
