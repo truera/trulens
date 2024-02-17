@@ -35,6 +35,9 @@ test-database-future:
 	$(CONDA); python -m unittest \
 		tests.integration.test_database.TestDbV2Migration.test_future_db
 
+test-%-optional:
+	TEST_OPTIONAL=1 make test-$*
+
 test-tru:
 	$(CONDA); python -m unittest tests.unit.test_tru
 
@@ -47,6 +50,9 @@ test-feedback:
 test-providers:
 	$(CONDA); python -m unittest tests.unit.test_providers
 
+test-endpoints:
+	$(CONDA); python -m unittest tests.unit.test_endpoints
+
 test-tru-chain:
 	$(CONDA); python -m unittest tests.unit.test_tru_chain
 
@@ -58,7 +64,6 @@ test-tru-basic-app:
 
 test-tru-custom:
 	$(CONDA); python -m unittest tests.unit.test_tru_custom
-
 
 format:
 	$(CONDA); cd ..; bash format.sh --eval

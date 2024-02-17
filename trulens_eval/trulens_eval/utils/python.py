@@ -392,6 +392,13 @@ def get_first_local_in_call_stack(
 
 T = TypeVar("T")
 
+def class_name(cls):
+    """Get the class name of the given class or instance."""
+
+    if hasattr(cls, "__name__"):
+        return cls.__name__
+    else:
+        return cls.__class__.__name__
 
 class SingletonPerName(Generic[T]):
     """
@@ -434,6 +441,17 @@ class SingletonPerName(Generic[T]):
         obj: cls = SingletonPerName._instances[k]
 
         return obj
+
+    @staticmethod
+    def delete_singleton_by_name(name: str):
+        """
+        Delete the singleton instance with the given name. Can be used for testing
+        to create another singleton.
+        """
+        for k, v in list(SingletonPerName._instances.items()):
+            if k[1] == name:
+                del SingletonPerName._instances[k]
+                del SingletonPerName._id_to_name_map[id(v)]
 
     def delete_singleton(self):
         """

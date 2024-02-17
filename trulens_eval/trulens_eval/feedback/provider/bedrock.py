@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
@@ -29,6 +29,9 @@ class Bedrock(LLMProvider):
     - All other args/kwargs passed to BedrockEndpoint and subsequently
         to boto3 client constructor.
     """
+
+    DEFAULT_MODEL_ID: ClassVar[str] = "amazon.titan-text-express-v1"
+
     # LLMProvider requirement which we do not use:
     model_engine: str = "Bedrock"
 
@@ -38,11 +41,13 @@ class Bedrock(LLMProvider):
     def __init__(
         self,
         *args,
-        model_id: str = "amazon.titan-text-express-v1",
+        model_id: Optional[str] = None,
         **kwargs
         # self, *args, model_id: str = "amazon.titan-text-express-v1", **kwargs
     ):
-
+        
+        if model_id is None:
+            model_id = self.DEFAULT_MODEL_ID
 
         # SingletonPerName: return singleton unless client provided
         if hasattr(self, "model_id") and "client" not in kwargs:
@@ -122,8 +127,12 @@ class Bedrock(LLMProvider):
         accept = "application/json"
         content_type = "application/json"
 
+        print("will request")
+
         response = self.endpoint.client.invoke_model(body=body, modelId=modelId, accept=accept, contentType=content_type)
         
+        print("response=", response)
+
         if self.model_id.startswith("amazon"):
             response_body = json.loads(response.get('body').read()
                                     ).get('results')[0]["outputText"]
