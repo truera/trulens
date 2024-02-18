@@ -4,7 +4,7 @@ from typing import Dict, get_args, get_origin, Optional, Tuple, Union
 
 import numpy as np
 
-from trulens_eval.feedback.provider.base import Provider
+from trulens_eval.feedback.provider.base import Provider, LLMProvider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -76,7 +76,7 @@ def _tci(func):  # "typecheck inputs"
     return wrapper
 
 
-class Huggingface(Provider):
+class Huggingface(LLMProvider):
     """
     Out of the box feedback functions calling Huggingface APIs.
     """
