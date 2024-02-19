@@ -2,9 +2,10 @@ numpy              >= 1.23.5
 frozendict         >= 2.3.8
 munch              >= 3.0.0
 dill               >= 0.3.7
-tqdm               >= 4.66.1    # groundedness.py
+tqdm               >= 4.66.1  # groundedness.py
 requests           >= 2.31.0
 nest-asyncio       >= 1.5.8
+typing_extensions  >= 4.9.0
 
 # Secrets/env management
 python-dotenv      >= 1.0.0
@@ -14,10 +15,9 @@ pydantic           >= 2, <3
 merkle-json        >= 1.0.0
 
 # Langchain
-langchain          >= 0.0.354 # required for cost tracking even outside of langchain
-langchain-core     >= 0.1.6   # required by langchain but here so we can reliably pin/lower bound
-typing-inspect     >= 0.8.0   # fixes bug with langchain on python < 3.9 
-typing_extensions  >= 4.5.0   # fixes big with langchain on python < 3.9
+langchain          >= 0.0.354  # required for cost tracking even outside of langchain
+langchain-core     >= 0.1.6  # required by langchain but here so we can reliably pin/lower bound
+typing-inspect     >= 0.8.0  # fixes bug with langchain on python < 3.9 
 
 # Models
 # All models are optional.
@@ -25,10 +25,9 @@ typing_extensions  >= 4.5.0   # fixes big with langchain on python < 3.9
 # UI
 millify            >= 0.1.1
 humanize           >= 4.6.0
-streamlit          >= 1.27.0
+streamlit          >= 1.30.0
 streamlit-aggrid   >= 0.3.4.post3
 streamlit-extras   >= 0.2.7
-# 'streamlit-javascript >= 0.1.5,  # for copy to clipboard functionality (in progress)
 
 # DB and migration
 sqlalchemy         >= 2.0.19

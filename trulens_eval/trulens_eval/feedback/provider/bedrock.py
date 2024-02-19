@@ -18,6 +18,17 @@ OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(boto3)
 
 
 class Bedrock(LLMProvider):
+    """
+    A set of AWS Feedback Functions.
+
+    Parameters:
+
+    - model_id (str, optional): The specific model id. Defaults to
+        "amazon.titan-text-express-v1".
+
+    - All other args/kwargs passed to BedrockEndpoint and subsequently
+        to boto3 client constructor.
+    """
     # LLMProvider requirement which we do not use:
     model_engine: str = "Bedrock"
 
@@ -31,17 +42,7 @@ class Bedrock(LLMProvider):
         **kwargs
         # self, *args, model_id: str = "amazon.titan-text-express-v1", **kwargs
     ):
-        """
-        A set of AWS Feedback Functions.
 
-        Parameters:
-
-        - model_id (str, optional): The specific model id. Defaults to
-          "amazon.titan-text-express-v1".
-
-        - All other args/kwargs passed to BedrockEndpoint and subsequently
-          to boto3 client constructor.
-        """
 
         # SingletonPerName: return singleton unless client provided
         if hasattr(self, "model_id") and "client" not in kwargs:
@@ -71,28 +72,76 @@ class Bedrock(LLMProvider):
 
         import json
 
-        body = json.dumps(
-            {
-                "inputText": prompt,
-                "textGenerationConfig":
-                    {
-                        "maxTokenCount": 4096,
-                        "stopSequences": [],
-                        "temperature": 0,
-                        "topP": 1
-                    }
-            }
-        )
+        if self.model_id.startswith("amazon"):
+            body = json.dumps(
+                {
+                    "inputText": prompt,
+                    "textGenerationConfig":
+                        {
+                            "maxTokenCount": 4096,
+                            "stopSequences": [],
+                            "temperature": 0,
+                            "topP": 1
+                        }
+                }
+            )
+        elif self.model_id.startswith("anthropic"):
+            body = json.dumps(
+                {
+                    "prompt": f"\n\nHuman:{prompt}\n\nAssistant:",
+                    "temperature": 0,
+                    "top_p": 1,
+                    "max_tokens_to_sample": 4096
+                }
+            )
+        elif self.model_id.startswith("cohere"):
+            body = json.dumps(
+                {
+                    "prompt": prompt,
+                    "temperature": 0,
+                    "p": 1,
+                    "max_tokens": 4096
+                }
+            )
+        elif self.model_id.startswith("ai21"):
+            body = json.dumps(
+                {
+                    "prompt": prompt,
+                    "temperature": 0,
+                    "topP": 1,
+                    "maxTokens": 8191
+                }
+            )
+        else:
+            raise NotImplementedError(f"The model selected, {self.model_id}, is not yet implemented as a feedback provider")
+
         # TODO: make textGenerationConfig available for user
 
         modelId = self.model_id
 
-        response = self.endpoint.client.invoke_model(body=body, modelId=modelId)
+        accept = "application/json"
+        content_type = "application/json"
 
-        response_body = json.loads(response.get('body').read()
-                                  ).get('results')[0]["outputText"]
+        response = self.endpoint.client.invoke_model(body=body, modelId=modelId, accept=accept, contentType=content_type)
+        
+        if self.model_id.startswith("amazon"):
+            response_body = json.loads(response.get('body').read()
+                                    ).get('results')[0]["outputText"]
+
+        if self.model_id.startswith("anthropic"):
+            response_body = json.loads(response.get('body').read()
+                                    ).get('completion')
+
+        if self.model_id.startswith("cohere"):
+            response_body = json.loads(response.get('body').read()
+                                    ).get('generations')[0]["text"]
+
+        if self.model_id.startswith("ai21"):
+            response_body = json.loads(response.get('body').read()
+                                    ).get('completions')[0].get('data').get('text')
+
         return response_body
-    
+
     # overwrite base to use prompt instead of messages
     def generate_score(
         self,
@@ -111,10 +160,11 @@ class Bedrock(LLMProvider):
         Returns:
             The score and reason metadata if available.
         """
-        response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=
-                (system_prompt + user_prompt if user_prompt else system_prompt)
+
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            prompt=(
+                system_prompt + user_prompt if user_prompt else system_prompt
             )
         )
 
@@ -138,10 +188,10 @@ class Bedrock(LLMProvider):
         Returns:
             The score and reason metadata if available.
         """
-        response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=
-                (system_prompt + user_prompt if user_prompt else system_prompt)
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            prompt=(
+                system_prompt + user_prompt if user_prompt else system_prompt
             )
         )
         if "Supporting Evidence" in response:

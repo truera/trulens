@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Llama-Index Quickstart
+# # 📓 Llama-Index Quickstart
 # 
 # In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
 # 
@@ -16,7 +16,7 @@
 
 
 
-# pip install trulens_eval==0.22.0 llama_index>=0.9.15post2 html2text>=2020.1.16 
+# pip install trulens_eval==0.23.0 llama_index>=0.9.15post2 html2text>=2020.1.16 
 
 
 # ### Add API keys
@@ -131,21 +131,17 @@ print(rec)
 
 
 
-# The results of the feedback functions can be rertireved from the record. These
-# are `Future` instances (see `concurrent.futures`). You can use `as_completed`
-# to wait until they have finished evaluating.
+# The results of the feedback functions can be rertireved from
+# `Record.feedback_results` or using the `wait_for_feedback_result` method. The
+# results if retrieved directly are `Future` instances (see
+# `concurrent.futures`). You can use `as_completed` to wait until they have
+# finished evaluating or use the utility method:
 
-from trulens_eval.schema import FeedbackResult
-
-from concurrent.futures import as_completed
-
-for feedback_future in  as_completed(rec.feedback_results):
-    feedback, feedback_result = feedback_future.result()
-    
-    feedback: Feedback
-    feedbac_result: FeedbackResult
-
+for feedback, feedback_result in rec.wait_for_feedback_results().items():
     print(feedback.name, feedback_result.result)
+
+# See more about wait_for_feedback_results:
+# help(rec.wait_for_feedback_results)
 
 
 

@@ -2,7 +2,6 @@
 Tests for TruChain. Some of the tests are outdated.
 """
 
-import os
 import unittest
 from unittest import main
 

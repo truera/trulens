@@ -1,111 +1,114 @@
 """
 # Serializable Classes
 
-Only put classes which can be serialized in this file.
+Note: Only put classes which can be serialized in this module.
 
 ## Classes with non-serializable variants
 
-Many of the classes defined here extending SerialModel are meant to be
+Many of the classes defined here extending serial.SerialModel are meant to be
 serialized into json. Most are extended with non-serialized fields in other files.
 
 | Serializable       | Non-serializable        |
 | ------------------ | ----------------------- |
-| AppDefinition      | App, TruChain, TruLlama |
-| FeedbackDefinition | Feedback                |
+| [AppDefinition][trulens_eval.schema.AppDefinition] | [App][trulens_eval.app.App], Tru{Chain, Llama, ...} |
+| [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition] | [Feedback][trulens_eval.feedback.feedback.Feedback] |
 
-AppDefinition.app is the JSON-ized version of a wrapped app while App.app is the
+`AppDefinition.app` is the JSON-ized version of a wrapped app while `App.app` is the
 actual wrapped app. We can thus inspect the contents of a wrapped app without
-having to construct it. Additionally, JSONized objects like AppDefinition.app
+having to construct it. Additionally, JSONized objects like `AppDefinition.app`
 feature information about the encoded object types in the dictionary under the
-util.py:CLASS_INFO key.
+`util.py:CLASS_INFO` key.
+
 """
 
 from __future__ import annotations
 
-from concurrent.futures import Future
-from datetime import datetime
+import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,
-    TYPE_CHECKING, TypeVar, Union
-)
+from typing import (Any, Callable, ClassVar, Dict, Hashable, List, Optional,
+                    Sequence, Tuple, Type, TypeVar, Union)
 
 import dill
 import humanize
 from munch import Munch as Bunch
 import pydantic
+import typing_extensions
 
+from trulens_eval.utils import pyschema
+from trulens_eval.utils import serial
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
-from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.pyschema import Function
-from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.pyschema import Method
-from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.serial import GetItemOrAttribute
-from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.serial import SerialBytes
-from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.serial import StepItemOrAttribute
+from trulens_eval.utils.python import Future
 
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
-# Identifier types.
+# Identifier type aliases.
 
-RecordID = str
-AppID = str
-Tags = str
-Metadata = dict
-FeedbackDefinitionID = str
-FeedbackResultID = str
+RecordID: typing_extensions.TypeAlias = str
+"""Unique identifier for a record."""
 
-# Serialization of python objects/methods. Not using pickling here so we can
-# inspect the contents a little better before unserializaing.
+AppID: typing_extensions.TypeAlias = str
+"""Unique identifier for an app."""
+
+Tags: typing_extensions.TypeAlias = str
+"""Tags for an app or record."""
+
+Metadata: typing_extensions.TypeAlias = Dict
+"""Metadata for an app or record."""
+
+FeedbackDefinitionID: typing_extensions.TypeAlias = str
+"""Unique identifier for a feedback definition."""
+
+FeedbackResultID: typing_extensions.TypeAlias = str
+"""Unique identifier for a feedback result."""
 
 # Record related:
 
-MAX_DILL_SIZE = 1024 * 1024  # 1MB
+MAX_DILL_SIZE: int = 1024 * 1024  # 1MB
+"""Max size in bytes of pickled objects."""
 
 
-class RecordAppCallMethod(SerialModel):
-    """
-    Method information for the stacks inside `RecordAppCall`.
-    """
+class RecordAppCallMethod(serial.SerialModel):
+    """Method information for the stacks inside `RecordAppCall`."""
 
-    path: Lens
-    method: Method
+    path: serial.Lens
+    """Path to the method in the app's structure."""
+
+    method: pyschema.Method
+    """The method that was called."""
 
 
-class Cost(SerialModel):
-    # Number of requests.
+class Cost(serial.SerialModel, pydantic.BaseModel):
+    """Costs associated with some call or set of calls."""
+
     n_requests: int = 0
+    """Number of requests."""
 
-    # Number of successful ones.
     n_successful_requests: int = 0
+    """Number of successful requests."""
 
-    # Number of class scores retrieved.
     n_classes: int = 0
+    """Number of class scores retrieved."""
 
-    # Total tokens processed.
     n_tokens: int = 0
+    """Total tokens processed."""
 
-    # In streaming mode, number of chunks produced.
     n_stream_chunks: int = 0
+    """In streaming mode, number of chunks produced."""
 
-    # Number of prompt tokens supplied.
     n_prompt_tokens: int = 0
+    """Number of prompt tokens supplied."""
 
-    # Number of completion tokens generated.
     n_completion_tokens: int = 0
+    """Number of completion tokens generated."""
 
-    # Cost in USD.
     cost: float = 0.0
+    """Cost in USD."""
 
     def __add__(self, other: 'Cost') -> 'Cost':
         kwargs = {}
@@ -122,93 +125,124 @@ class Cost(SerialModel):
         return self.__add__(other)
 
 
-class Perf(SerialModel):
-    """
-    Performance information. Presently only the start and end times, and thus
-    latency.
+class Perf(serial.SerialModel, pydantic.BaseModel):
+    """Performance information.
+    
+    Presently only the start and end times, and thus latency.
     """
 
-    start_time: datetime
-    end_time: datetime
+    start_time: datetime.datetime
+    """Datetime before the recorded call."""
+    
+    end_time: datetime.datetime
+    """Datetime after the recorded call."""
 
     @property
     def latency(self):
+        """Latency in seconds."""
         return self.end_time - self.start_time
 
 
-class RecordAppCall(SerialModel):
-    """
-    Info regarding each instrumented method call is put into this container.
-    """
+class RecordAppCall(serial.SerialModel):
+    """Info regarding each instrumented method call."""
 
-    # Call stack but only containing paths of instrumented apps/other objects.
     stack: List[RecordAppCallMethod]
+    """Call stack but only containing paths of instrumented apps/other objects."""
 
-    # Arguments to the instrumented method.
-    args: JSON
+    args: serial.JSON
+    """Arguments to the instrumented method."""
 
-    # Returns of the instrumented method if successful. Sometimes this is a
-    # dict, sometimes a sequence, and sometimes a base value.
-    rets: Optional[JSON] = None
-
-    # Error message if call raised exception.
+    rets: Optional[serial.JSON] = None
+    """Returns of the instrumented method if successful.
+    
+    Sometimes this is a dict, sometimes a sequence, and sometimes a base value.
+    """
+    
     error: Optional[str] = None
+    """Error message if call raised exception."""
 
-    # Timestamps tracking entrance and exit of the instrumented method.
     perf: Optional[Perf] = None
+    """Timestamps tracking entrance and exit of the instrumented method."""
 
-    # Process id.
     pid: int
+    """Process id."""
 
-    # Thread id.
     tid: int
+    """Thread id."""
 
     def top(self) -> RecordAppCallMethod:
+        """The top of the stack."""
+
         return self.stack[-1]
 
-    def method(self) -> Method:
+    def method(self) -> pyschema.Method:
+        """The method at the top of the stack."""
+
         return self.top().method
 
 
-class Record(SerialModel):
-    """
-    Each instrumented method call produces one of these "record" instances.
-    """
+class Record(serial.SerialModel, Hashable):
+    """Each instrumented method call produces one of these "record" instances."""
 
     model_config: ClassVar[dict] = dict(
-        # for `Future[FeedbackResult]` = `TFeedbackResultFuture`
+        # for `Future[FeedbackResult]`
         arbitrary_types_allowed=True
     )
 
-    record_id: RecordID  # str
-    app_id: AppID  # str
+    record_id: RecordID
+    """Unique identifier for this record."""
+
+    app_id: AppID
+    """The app that produced this record."""
 
     cost: Optional[Cost] = None
-    perf: Optional[Perf] = None
+    """Costs associated with the record."""
 
-    ts: datetime = pydantic.Field(default_factory=datetime.now)
+    perf: Optional[Perf] = None
+    """Performance information."""
+
+    ts: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
+    """Timestamp of last update.
+    
+    This is usually set whenever a record is changed in any way."""
 
     tags: Optional[str] = ""
-    meta: Optional[JSON] = None
+    """Tags for the record."""
 
-    main_input: Optional[JSON] = None
-    main_output: Optional[JSON] = None  # if no error
-    main_error: Optional[JSON] = None  # if error
+    meta: Optional[serial.JSON] = None
+    """Metadata for the record."""
 
-    # The collection of calls recorded. Note that these can be converted into a
-    # json structure with the same paths as the app that generated this record
-    # via `layout_calls_as_app`.
+    main_input: Optional[serial.JSON] = None
+    """The app's main input."""
+
+    main_output: Optional[serial.JSON] = None  # if no error
+    """The app's main output if there was no error."""
+
+    main_error: Optional[serial.JSON] = None  # if error
+    """The app's main error if there was an error."""
+
     calls: List[RecordAppCall] = []
+    """The collection of calls recorded.
 
-    # Feedback results only filled for records that were just produced. Will not
-    # be filled in when read from database. Also, will not fill in when using
-    # `FeedbackMode.DEFERRED`.
+    Note that these can be converted into a json structure with the same paths
+    as the app that generated this record via `layout_calls_as_app`.
+    """
 
-    feedback_results: Optional[List[TFeedbackResultFuture]] = \
+    feedback_and_future_results: Optional[List[Tuple[
+        FeedbackDefinition, Future[FeedbackResult]
+    ]]] = pydantic.Field(None, exclude=True)
+    """Map of feedbacks to the futures for of their results.
+     
+    These are only filled for records that were just produced. This will not
+    be filled in when read from database. Also, will not fill in when using
+    `FeedbackMode.DEFERRED`.
+    """
+
+    feedback_results: Optional[List[Future[FeedbackResult]]] = \
         pydantic.Field(None, exclude=True)
+    """Only the futures part of the above for backwards compatibility."""
 
     def __init__(self, record_id: Optional[RecordID] = None, **kwargs):
-        # Fixed record_id for obj_id_of_id below.
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
@@ -216,13 +250,37 @@ class Record(SerialModel):
 
         self.record_id = record_id
 
-    def layout_calls_as_app(self) -> JSON:
-        """
-        Layout the calls in this record into the structure that follows that of
-        the app that created this record. This uses the paths stored in each
-        `RecordAppCall` which are paths into the app.
+    def __hash__(self):
+        return hash(self.record_id)
 
-        Note: We cannot create a validated schema.py:AppDefinitionclass (or
+    def wait_for_feedback_results(
+        self
+    ) -> Dict[FeedbackDefinition, FeedbackResult]:
+        """Wait for feedback results to finish.
+
+        Returns:
+            A mapping of feedback functions to their results.
+        """
+
+        if self.feedback_and_future_results is None:
+            return {}
+
+        ret = {}
+
+        for feedback, future_result in self.feedback_and_future_results:
+            feedback_result = future_result.result()
+            ret[feedback] = feedback_result
+
+        return ret
+
+    def layout_calls_as_app(self) -> serial.JSON:
+        """Layout the calls in this record into the structure that follows that of
+        the app that created this record.
+        
+        This uses the paths stored in each `RecordAppCall` which are paths into
+        the app.
+
+        Note: We cannot create a validated `schema.py:AppDefinition` class (or
         subclass) object here as the layout of records differ in these ways:
 
             - Records do not include anything that is not an instrumented method
@@ -240,7 +298,7 @@ class Record(SerialModel):
 
             # Adds another attribute to path, from method name:
             path = frame_info.path._append(
-                GetItemOrAttribute(item_or_attribute=frame_info.method.name)
+                serial.GetItemOrAttribute(item_or_attribute=frame_info.method.name)
             )
 
             ret = path.set_or_append(obj=ret, val=call)
@@ -258,7 +316,7 @@ class Select:
 
     # Typing for type hints.
     # TODEP
-    Query = Lens
+    Query = serial.Lens
 
     # The tru wrapper (TruLlama, TruChain, etc.)
     Tru: Query = Query()
@@ -300,7 +358,7 @@ class Select:
         firsts = select.path[:-1]
         last = select.path[-1]
 
-        if not isinstance(last, StepItemOrAttribute):
+        if not isinstance(last, serial.StepItemOrAttribute):
             raise ValueError(
                 "Last part of selector is not an attribute so does not name a method."
             )
@@ -327,7 +385,7 @@ class Select:
         return select
 
     @staticmethod
-    def context(app: Optional[Any] = None) -> Lens:
+    def context(app: Optional[Any] = None) -> serial.Lens:
         from trulens_eval.app import App
         return App.select_context(app)
 
@@ -407,14 +465,14 @@ class FeedbackResultStatus(Enum):
     DONE = "done"
 
 
-class FeedbackCall(SerialModel):
+class FeedbackCall(serial.SerialModel):
     """
     Invocations of feedback function results in one of these instances. Note
     that a single `Feedback` instance might require more than one call.
     """
 
     # Arguments to the feedback function.
-    args: Dict[str, Optional[JSON]]
+    args: Dict[str, Optional[serial.JSON]]
 
     # Return value.
     ret: float
@@ -424,38 +482,38 @@ class FeedbackCall(SerialModel):
     meta: Dict[str, Any] = pydantic.Field(default_factory=dict)
 
 
-class FeedbackResult(SerialModel):
-    """
-    Feedback results for a single `Feedback` instance. This might involve
-    multiple feedback function calls. Typically you should not be constructing
-    these objects yourself except for the cases where you'd like to log human
-    feedback.
+class FeedbackResult(serial.SerialModel):
+    """Feedback results for a single [Feedback][trulens_eval.feedback.feedback.Feedback] instance.
+    
+    This might involve multiple feedback function calls. Typically you should
+    not be constructing these objects yourself except for the cases where you'd
+    like to log human feedback.
 
     Attributes:
+        feedback_result_id (str): Unique identifier for this result.
 
-    - `feedback_result_id: str`: Unique identifier for this result.
+        record_id (str): Record over which the feedback was evaluated.
 
-    - `record_id: str`: Record over which the feedback was evaluated.
+        feedback_definition_id (str): The id of the
+            [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition] which
+            was evaluated to get this result.
 
-    - `feedback_definition_id: str`: The `Feedback` / `FeedbackDefinition` which
-      was evaluated to get this result.
+        last_ts (datetime.datetime): Last timestamp involved in the evaluation.
 
-    - `last_ts: datetime`: Last timestamp involved in the evaluation.
+        status (FeedbackResultStatus): For deferred feedback evaluation, the
+            status of the evaluation.
 
-    - `status: FeedbackResultStatus`: For deferred feedback evaluation, the
-      status of the evaluation.
+        cost (Cost): Cost of the evaluation.
 
-    - `cost: Cost`: Cost of the evaluation.
+        name (str): Given name of the feedback.
 
-    - `name: str`: Given name of the feedback.
+        calls (List[FeedbackCall]): Individual feedback function invocations.
 
-    - `calls: List[FeedbackCall]`: Individual feedback function invocations.
+        result (float): Final result, potentially aggregating multiple calls.
 
-    - `result: float`: Final result, potentially aggregating multiple calls.
+        error (str): Error information if there was an error.
 
-    - `error: str`: Error information if there was an error.
-
-    - `multi_result: str`: TODO: doc
+        multi_result (str): TODO: doc
     """
 
     feedback_result_id: FeedbackResultID
@@ -468,10 +526,10 @@ class FeedbackResult(SerialModel):
     feedback_definition_id: Optional[FeedbackDefinitionID] = None
 
     # Last timestamp involved in the evaluation.
-    last_ts: datetime = pydantic.Field(default_factory=datetime.now)
+    last_ts: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
 
-    # For deferred feedback evaluation, the status of the evaluation.
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
+    """For deferred feedback evaluation, the status of the evaluation."""
 
     cost: Cost = pydantic.Field(default_factory=Cost)
 
@@ -503,65 +561,61 @@ class FeedbackResult(SerialModel):
         self.feedback_result_id = feedback_result_id
 
 
-if TYPE_CHECKING:
-    TFeedbackResultFuture = Future[FeedbackResult]
-else:
-    TFeedbackResultFuture = Future
-
-
-class FeedbackDefinition(WithClassInfo, SerialModel):
-    # Serialized parts of a feedback function. The non-serialized parts are in
-    # the feedback.py:Feedback class.
+class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
+    """Serialized parts of a feedback function. 
+    
+    The non-serialized parts are in the
+    [Feedback][trulens_eval.feedback.feedback.Feedback] class.
+    """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    # Implementation serialization info.
-    implementation: Optional[Union[Function, Method]] = None
+    implementation: Optional[Union[pyschema.Function, pyschema.Method]] = None
+    """Implementation serialization."""
 
-    # Aggregator method for serialization.
-    aggregator: Optional[Union[Function, Method]] = None
+    aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None
+    """Aggregator method serialization."""
 
-    # Id, if not given, unique determined from _json below.
     feedback_definition_id: FeedbackDefinitionID
+    """Id, if not given, uniquely determined from content."""
 
-    # Selectors, pointers into Records of where to get
-    # arguments for `imp`.
-    selectors: Dict[str, Lens]
+    selectors: Dict[str, serial.Lens]
+    """Selectors; pointers into Records of where to get arguments for `imp`."""
 
     supplied_name: Optional[str] = None
+    """An optional name. Only will affect displayed tables."""
+
+    higher_is_better: Optional[bool] = None
+    """Feedback result magnitude interpretation."""
 
     def __init__(
         self,
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        implementation: Optional[Union[Function, Method]] = None,
-        aggregator: Optional[Union[Function, Method]] = None,
-        selectors: Optional[Dict[str, Lens]] = None,
-        supplied_name: Optional[str] = None,
+        implementation: Optional[Union[pyschema.Function, pyschema.Method]] = None,
+        aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
+        selectors: Optional[Dict[str, serial.Lens]] = None,
+        name: Optional[str] = None,
+        higher_is_better: Optional[bool] = None,
         **kwargs
     ):
-        """
-        - selectors: Optional[Dict[str, Lens]] -- mapping of implementation
-          argument names to where to get them from a record.
-
-        - feedback_definition_id: Optional[str] - unique identifier.
-
-        - implementation: Optional[Union[Function, Method]] -- the serialized
-          implementation function.
-
-        - aggregator: Optional[Union[Function, Method]] -- serialized
-          aggregation function.
-        """
-
         selectors = selectors or dict()
+
+        if name is not None:
+            kwargs['supplied_name'] = name
 
         super().__init__(
             feedback_definition_id="temporary",
             selectors=selectors,
             implementation=implementation,
             aggregator=aggregator,
-            supplied_name=supplied_name,
             **kwargs
         )
+
+        # By default, higher score is better
+        if higher_is_better is None:
+            self.higher_is_better = True
+        else:
+            self.higher_is_better = higher_is_better
 
         if feedback_definition_id is None:
             if implementation is not None:
@@ -573,64 +627,97 @@ class FeedbackDefinition(WithClassInfo, SerialModel):
 
         self.feedback_definition_id = feedback_definition_id
 
+    def __hash__(self):
+        return hash(self.feedback_definition_id)
+
+    @property
+    def name(self) -> str:
+        """Name of the feedback function.
+        
+        Derived from the name of the serialized implementation function if name
+        was not provided.
+        """
+
+        if self.supplied_name is not None:
+            return self.supplied_name
+
+        if self.implementation is None:
+            raise RuntimeError("This feedback function has no implementation.")
+
+        return self.implementation.name
+
 
 # App related:
 
 
 class FeedbackMode(str, Enum):
-    # No evaluation will happen even if feedback functions are specified.
     NONE = "none"
+    """No evaluation will happen even if feedback functions are specified."""
 
-    # Try to run feedback functions immediately and before app returns a
-    # record.
     WITH_APP = "with_app"
+    """Try to run feedback functions immediately and before app returns a
+    record."""
 
-    # Try to run feedback functions in the same process as the app but after
-    # it produces a record.
     WITH_APP_THREAD = "with_app_thread"
+    """Try to run feedback functions in the same process as the app but after
+    it produces a record."""
 
-    # Evaluate later via the process started by
-    # `tru.start_deferred_feedback_evaluator`.
     DEFERRED = "deferred"
+    """Evaluate later via the process started by
+    `tru.start_deferred_feedback_evaluator`."""
 
 
-class AppDefinition(WithClassInfo, SerialModel):
-    # Serialized fields here whereas app.py:App contains
-    # non-serialized fields.
+class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
+    """Serialized fields of an app here whereas [App][trulens_eval.app.App]
+    contains non-serialized fields."""
 
     app_id: AppID  # str
+    """Unique identifier for this app."""
+
     tags: Tags  # str
+    """Tags for the app."""
+
     metadata: Metadata  # dict  # TODO: rename to meta for consistency with other metas
+    """Metadata for the app."""
 
-    # Feedback functions to evaluate on each record. Unlike the above, these are
-    # meant to be serialized.
     feedback_definitions: Sequence[FeedbackDefinition] = []
+    """Feedback functions to evaluate on each record."""
 
-    # NOTE: Custom feedback functions cannot be run deferred and will be run as
-    # if "withappthread" was set.
     feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
+    """How to evaluate feedback functions upon producing a record."""
 
-    # Class of the main instrumented object. Ideally this would be a ClassVar
-    # but since we want to check this without instantiating the subclass of
-    # AppDefinition that would define it, we cannot use ClassVar.
-    root_class: Class
+    root_class: pyschema.Class
+    """Class of the main instrumented object.
+    
+    Ideally this would be a [ClassVar][] but since we want to check this without
+    instantiating the subclass of
+    [AppDefinition][trulens_eval.schema.AppDefinition] that would define it, we
+    cannot use [ClassVar][].
+    """
 
-    # App's main method. To be filled in by subclass. Want to make this abstract
-    # but this causes problems when trying to load an AppDefinition from json.
-    root_callable: ClassVar[FunctionOrMethod]
+    root_callable: ClassVar[pyschema.FunctionOrMethod]
+    """App's main method. 
+    
+    This is to be filled in by subclass.
+    """
 
-    # Wrapped app in jsonized form.
-    app: JSON
+    app: serial.JSONized[AppDefinition]
+    """Wrapped app in jsonized form."""
 
-    # EXPERIMENTAL
-    # NOTE: temporary unsafe serialization of function that loads the app:
-    # Dump of the initial app before any invocations. Can be used to create a new session.
-    initial_app_loader_dump: Optional[SerialBytes] = None
+    initial_app_loader_dump: Optional[serial.SerialBytes] = None
+    """EXPERIMENTAL: serialization of a function that loads an app.
 
-    # Info to store about the app and to display in dashboard. This is useful if
-    # app itself cannot be serialized. `app_extra_json`, then, can stand in place for
-    # whatever the user might want to see about the app.
-    app_extra_json: JSON
+    Dump is of the initial app state before any invocations. This can be used to
+    create a new session.
+    """
+
+    app_extra_json: serial.JSON
+    """Info to store about the app and to display in dashboard. 
+    
+    This can be used even if app itself cannot be serialized. `app_extra_json`,
+    then, can stand in place for whatever data the user might want to keep track
+    of about the app.
+    """
 
     def __init__(
         self,
@@ -638,7 +725,7 @@ class AppDefinition(WithClassInfo, SerialModel):
         tags: Optional[Tags] = None,
         metadata: Optional[Metadata] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
-        app_extra_json: JSON = None,
+        app_extra_json: serial.JSON = None,
         **kwargs
     ):
 
@@ -675,7 +762,7 @@ class AppDefinition(WithClassInfo, SerialModel):
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`."
                     )
                 else:
-                    self.initial_app_loader_dump = SerialBytes(data=dump)
+                    self.initial_app_loader_dump = serial.SerialBytes(data=dump)
 
                     # This is an older serialization approach that saved things
                     # in local files instead of the DB. Leaving here for now as
@@ -702,52 +789,60 @@ class AppDefinition(WithClassInfo, SerialModel):
 
     @staticmethod
     def continue_session(
-        app_definition_json: JSON, app: Any
-    ) -> 'AppDefinition':
+        app_definition_json: serial.JSON, app: Any
+    ) -> AppDefinition:
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
-        """
-        Create a copy of the json serialized app with the enclosed app being
-        initialized to its initial state before any records are produced (i.e.
-        blank memory).
+        """EXPERIMENTAL: Instantiate the given `app` with the given state
+        `app_definition_json`.
+        
+        Args:
+            app_definition_json: The json serialized app.
+
+            app: The app to continue the session with.
+        
+        Returns:
+            A new `AppDefinition` instance with the given `app` and the given
+                `app_definition_json` state.
         """
 
         app_definition_json['app'] = app
 
-        cls = WithClassInfo.get_class(app_definition_json)
+        cls = pyschema.WithClassInfo.get_class(app_definition_json)
 
         return cls(**app_definition_json)
 
     @staticmethod
     def new_session(
-        app_definition_json: JSON,
+        app_definition_json: serial.JSON,
         initial_app_loader: Optional[Callable] = None
-    ) -> 'AppDefinition':
-        """
+    ) -> AppDefinition:
+        """EXPERIMENTAL: Create an app instance at the start of a session.
+        
         Create a copy of the json serialized app with the enclosed app being
         initialized to its initial state before any records are produced (i.e.
         blank memory).
         """
 
-        serial_bytes_json: Optional[JSON] = app_definition_json[
+        serial_bytes_json: Optional[serial.JSON] = app_definition_json[
             'initial_app_loader_dump']
 
         if initial_app_loader is None:
             assert serial_bytes_json is not None, "Cannot create new session without `initial_app_loader`."
 
-            serial_bytes = SerialBytes.model_validate(serial_bytes_json)
+            serial_bytes = serial.SerialBytes.model_validate(serial_bytes_json)
 
             app = dill.loads(serial_bytes.data)()
 
         else:
             app = initial_app_loader()
             data = dill.dumps(initial_app_loader, recurse=True)
-            serial_bytes = SerialBytes(data=data)
+            serial_bytes = serial.SerialBytes(data=data)
             serial_bytes_json = serial_bytes.model_dump()
 
         app_definition_json['app'] = app
         app_definition_json['initial_app_loader_dump'] = serial_bytes_json
 
-        cls: Type[App] = WithClassInfo.get_class(app_definition_json)
+        cls: Type[App] = pyschema.WithClassInfo.get_class(app_definition_json)
 
         return cls.model_validate_json(app_definition_json)
 
@@ -761,10 +856,9 @@ class AppDefinition(WithClassInfo, SerialModel):
 
     @staticmethod
     def get_loadable_apps():
-        # EXPERIMENTAL
-        """
-        Gets a list of all of the loadable apps. This is those that have
-        `initial_app_loader_dump` set.
+        """EXPERIMENTAL: Gets a list of all of the loadable apps.
+        
+        This is those that have `initial_app_loader_dump` set.
         """
 
         rets = []
@@ -786,14 +880,14 @@ class AppDefinition(WithClassInfo, SerialModel):
         # it is considered an `AppDefinition` and is thus using this definition
         # of `dict` instead of the one in `app.App`.
 
-        from trulens_eval.trulens_eval import app
+        from trulens_eval import app
         if isinstance(self, app.App):
             return jsonify(self, instrument=self.instrument)
         else:
             return jsonify(self)
 
     @classmethod
-    def select_inputs(cls) -> Lens:
+    def select_inputs(cls) -> serial.Lens:
         """
         Get the path to the main app's call inputs.
         """
@@ -804,7 +898,7 @@ class AppDefinition(WithClassInfo, SerialModel):
         ).args
 
     @classmethod
-    def select_outputs(cls) -> Lens:
+    def select_outputs(cls) -> serial.Lens:
         """
         Get the path to the main app's call outputs.
         """
@@ -814,13 +908,13 @@ class AppDefinition(WithClassInfo, SerialModel):
             cls.root_callable.default_factory().name
         ).rets
 
-
-class App(AppDefinition):
-
-    def __init__(self, *args, **kwargs):
-        # Since 0.2.0
-        logger.warning(
-            "Class trulens_eval.schema.App is deprecated, "
-            "use trulens_eval.schema.AppDefinition instead."
-        )
-        super().__init__(*args, **kwargs)
+# HACK013: Need these if using __future__.annotations .
+RecordAppCallMethod.model_rebuild()
+Cost.model_rebuild()
+Perf.model_rebuild()
+Record.model_rebuild()
+RecordAppCall.model_rebuild()
+FeedbackResult.model_rebuild()
+FeedbackCall.model_rebuild()
+FeedbackDefinition.model_rebuild()
+AppDefinition.model_rebuild()

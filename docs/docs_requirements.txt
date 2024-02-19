@@ -1,9 +1,13 @@
-mkdocs==1.4.2
-python-markdown-math==0.8
-mkdocs-material==9.1.4
-mkdocstrings-python
-mkdocstrings==0.20.0
-mkdocs-jupyter
-jupyter_contrib_nbextensions
-notebook<7
-markdown-include
+# Packages required for building documentation pages.
+
+mkdocs               >= 1.5.3
+mkdocs-material      >= 9.5.8
+mkdocstrings-python  >= 1.8.0
+mkdocstrings         >= 0.24.0
+mkdocs-jupyter       >= 0.24.6
+
+python-markdown-math >= 0.8
+markdown-include     >= 0.8.1
+
+jupyter_contrib_nbextensions >= 0.7.0
+notebook <7

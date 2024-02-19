@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Langchain Quickstart
+# # 📓 Langchain Quickstart
 # 
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
 # 
@@ -13,7 +13,7 @@
 
 
 
-# ! pip install trulens_eval==0.22.0 openai==1.3.7 langchain chromadb langchainhub bs4
+# ! pip install trulens_eval==0.23.0 openai==1.3.7 langchain chromadb langchainhub bs4
 
 
 
@@ -27,8 +27,7 @@ os.environ["OPENAI_API_KEY"] = "sk-..."
 
 
 # Imports main tools:
-from trulens_eval import TruChain, Feedback, Huggingface, Tru
-from trulens_eval.schema import FeedbackResult
+from trulens_eval import TruChain, Feedback, Tru
 tru = Tru()
 tru.reset_database()
 
@@ -63,11 +62,17 @@ docs = loader.load()
 
 
 
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200
+)
+
 splits = text_splitter.split_documents(docs)
 
-vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings(
-))
+vectorstore = Chroma.from_documents(
+    documents=splits,
+    embedding=OpenAIEmbeddings()
+)
 
 
 # ### Create RAG
@@ -129,7 +134,7 @@ f_context_relevance = (
     .on_input()
     .on(context)
     .aggregate(np.mean)
-    )
+)
 
 
 # ## Instrument chain for logging with TruLens
@@ -163,19 +168,17 @@ print(rec)
 
 
 
-# The results of the feedback functions can be rertireved from the record. These
-# are `Future` instances (see `concurrent.futures`). You can use `as_completed`
-# to wait until they have finished evaluating.
+# The results of the feedback functions can be rertireved from
+# `Record.feedback_results` or using the `wait_for_feedback_result` method. The
+# results if retrieved directly are `Future` instances (see
+# `concurrent.futures`). You can use `as_completed` to wait until they have
+# finished evaluating or use the utility method:
 
-from concurrent.futures import as_completed
-
-for feedback_future in  as_completed(rec.feedback_results):
-    feedback, feedback_result = feedback_future.result()
-    
-    feedback: Feedback
-    feedbac_result: FeedbackResult
-
+for feedback, feedback_result in rec.wait_for_feedback_results().items():
     print(feedback.name, feedback_result.result)
+
+# See more about wait_for_feedback_results:
+# help(rec.wait_for_feedback_results)
 
 
 
@@ -203,7 +206,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 
-# # Llama-Index Quickstart
+# # 📓 Llama-Index Quickstart
 # 
 # In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
 # 
@@ -218,7 +221,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 
 
-# pip install trulens_eval==0.22.0 llama_index>=0.9.15post2 html2text>=2020.1.16 
+# pip install trulens_eval==0.23.0 llama_index>=0.9.15post2 html2text>=2020.1.16 
 
 
 # ### Add API keys
@@ -333,21 +336,17 @@ print(rec)
 
 
 
-# The results of the feedback functions can be rertireved from the record. These
-# are `Future` instances (see `concurrent.futures`). You can use `as_completed`
-# to wait until they have finished evaluating.
+# The results of the feedback functions can be rertireved from
+# `Record.feedback_results` or using the `wait_for_feedback_result` method. The
+# results if retrieved directly are `Future` instances (see
+# `concurrent.futures`). You can use `as_completed` to wait until they have
+# finished evaluating or use the utility method:
 
-from trulens_eval.schema import FeedbackResult
-
-from concurrent.futures import as_completed
-
-for feedback_future in  as_completed(rec.feedback_results):
-    feedback, feedback_result = feedback_future.result()
-    
-    feedback: Feedback
-    feedbac_result: FeedbackResult
-
+for feedback, feedback_result in rec.wait_for_feedback_results().items():
     print(feedback.name, feedback_result.result)
+
+# See more about wait_for_feedback_results:
+# help(rec.wait_for_feedback_results)
 
 
 
@@ -375,7 +374,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 
-# # TruLens Quickstart
+# # 📓 TruLens Quickstart
 # 
 # In this quickstart you will create a RAG from scratch and learn how to log it and get feedback on an LLM response.
 # 
@@ -385,13 +384,13 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 
 
-# ! pip install trulens_eval==0.22.0 chromadb==0.4.18 openai==1.3.7
+# ! pip install trulens_eval==0.23.0 chromadb==0.4.18 openai==1.3.7
 
 
 
 
 import os
-os.environ["OPENAI_API_KEY"] = "..."
+os.environ["OPENAI_API_KEY"] = "sk-..."
 
 
 # ## Get Data
@@ -585,7 +584,7 @@ tru.run_dashboard()
 
 
 
-# ! pip install trulens_eval==0.22.0
+# ! pip install trulens_eval==0.23.0
 
 
 
@@ -603,7 +602,7 @@ tru.run_dashboard()
 
 
 import os
-os.environ["OPENAI_API_KEY"] = "..."
+os.environ["OPENAI_API_KEY"] = "sk-..."
 
 
 # ## Build the app
@@ -672,7 +671,7 @@ with tru_app as recording:
 tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 
-# ## Logging Human Feedback
+# # 📓 Logging Human Feedback
 # 
 # In many situations, it can be useful to log human feedback from your users about your LLM app's performance. Combining human feedback along with automated feedback can help you drill down on subsets of your app that underperform, and uncover new failure modes. This example will walk you through a simple example of recording human feedback with TruLens.
 # 
@@ -680,7 +679,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 
 
-# ! pip install trulens_eval==0.22.0 openai==1.3.7
+# ! pip install trulens_eval==0.23.0 openai==1.3.7
 
 
 
@@ -699,7 +698,7 @@ tru = Tru()
 
 
 
-os.environ["OPENAI_API_KEY"] = "..."
+os.environ["OPENAI_API_KEY"] = "sk-..."
 
 
 # ## Set up your app
@@ -794,7 +793,7 @@ tru.add_feedback(
 tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 
-# # Ground Truth Evaluations
+# # 📓 Ground Truth Evaluations
 # 
 # In this quickstart you will create a evaluate a LangChain app using ground truth. Ground truth evaluation can be especially useful during early LLM experiments when you have a small set of example queries that are critical to get right.
 # 
@@ -807,7 +806,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 
 
-# ! pip install trulens_eval==0.22.0 openai==1.3.7
+# ! pip install trulens_eval==0.23.0 openai==1.3.7
 
 
 
@@ -912,7 +911,7 @@ tru = Tru()
 Tru().migrate_database()
 
 from langchain.chains import LLMChain
-from langchain.llms import OpenAI
+from langchain_community.llms import OpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.prompts import HumanMessagePromptTemplate
 from langchain.prompts import PromptTemplate
@@ -1072,7 +1071,7 @@ tru.start_evaluator()
 # tru.stop_evaluator()
 
 
-# # Custom Functions
+# # 📓 Custom Feedback Functions
 # 
 # Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating `trulens_eval/feedback.py`, or simply creating a new provider class and feedback function in youre notebook. If your contributions would be useful for others, we encourage you to contribute to TruLens!
 # 

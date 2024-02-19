@@ -22,7 +22,7 @@ the rest matching their synchronous version. Example:
 Due to how python handles such functions and how they are executed, it is
 relatively difficult to reshare code between the two versions. Asynchronous
 functions are executed by an async loop (see
-[https://docs.python.org/3/library/asyncio-eventloop.html](Event Loop)). Python
+[EventLoop](https://docs.python.org/3/library/asyncio-eventloop.html)). Python
 prevents any threads from having more than one running loop meaning one may not
 be able to create one to run some async code if one has already been
 created/running in the thread. The method `sync` here, used to convert an async
@@ -57,15 +57,25 @@ logger = logging.getLogger(__name__)
 A = TypeVar("A")
 B = TypeVar("B")
 
-# Awaitable or not. May be checked with inspect.isawaitable .
 MaybeAwaitable = Union[T, Awaitable[T]]
+"""Awaitable or not.
 
-# Function or coroutine function. May be checked with
-# is_really_coroutinefunction .
+May be checked with [isawaitable][inspect.isawaitable].
+"""
+
 CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]
+"""Function or coroutine function.
 
-# Thunk or coroutine thunk. May be checked with is_really_coroutinefunction .
+May be checked with [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction]."""
+
+CallableAwaitable = Callable[[A], Awaitable[B]]
+"""Function that produces an awaitable / coroutine function."""
+
 ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
+"""Thunk or coroutine thunk. 
+
+May be checked with [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].
+"""
 
 
 async def desync(
@@ -113,6 +123,13 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             # If not, we can create one here and run it until completion.
             loop = asyncio.new_event_loop()
             return loop.run_until_complete(awaitable)
+
+        try:
+            # If have nest_asyncio, can run in current thread.
+            import nest_asyncio
+            return loop.run_until_complete(awaitable)
+        except:
+            pass
 
         try:
             # If have nest_asyncio, can run in current thread.

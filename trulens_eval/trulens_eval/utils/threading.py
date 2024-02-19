@@ -1,9 +1,9 @@
 """
 # Threading Utilities
-
 """
 
-from concurrent.futures import Future
+from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
 import contextvars
@@ -15,6 +15,7 @@ from typing import Callable, Optional, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import T
@@ -23,13 +24,14 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
-
 A = TypeVar("A")
 
+
 class Thread(fThread):
-    """
-    Thread that wraps target with our stack/context tracking.
-    """
+    """Thread that wraps target with stack/context tracking.
+    
+    App components that do not use this thread class might not be properly
+    tracked."""
 
     def __init__(
         self,
@@ -61,9 +63,10 @@ threading.Thread = Thread
 
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
-    """
-    A ThreadPoolExecutor that keeps track of the stack prior to each thread's
+    """A ThreadPoolExecutor that keeps track of the stack prior to each thread's
     invocation.
+    
+    Apps that do not use this thread pool might not be properly tracked.
     """
 
     def __init__(self, *args, **kwargs):
@@ -105,15 +108,17 @@ except Exception:
     pass
 
 
-class TP(SingletonPerName['TP']):  # "thread processing"
+class TP(SingletonPerName):  # "thread processing"
+    """Manager of thread pools.
 
-    # Store here stacks of calls to various thread starting methods so that we
-    # can retrieve the trace of calls that caused a thread to start.
+    Singleton.
+    """
 
     MAX_THREADS: int = 128
+    """Maximum number of threads to run concurrently."""
 
-    # How long to wait for any task before restarting it.
     DEBUG_TIMEOUT: Optional[float] = 600.0  # [seconds], None to disable
+    """How long to wait (seconds) for any task before restarting it."""
 
     def __init__(self):
         if safe_hasattr(self, "thread_pool"):
@@ -148,7 +153,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
-        fut: 'Future[T]' = self.thread_pool.submit(func, *args, **kwargs)
+        fut: Future[T] = self.thread_pool.submit(func, *args, **kwargs)
 
         try:
             res: T = fut.result(timeout=timeout)
@@ -174,7 +179,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         *args,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> 'Future[T]':
+    ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
@@ -192,7 +197,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         *args,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> 'Future[T]':
+    ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 

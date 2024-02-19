@@ -5,33 +5,94 @@ Utilities related to core python functionalities.
 from __future__ import annotations
 
 import asyncio
+from concurrent import futures
 import inspect
 import logging
 from pprint import PrettyPrinter
-from queue import Queue
-from typing import (
-    Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
-    TypeVar
-)
+import queue
+import sys
+from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
+                    Sequence, Type, TypeVar)
+
+
+if sys.version_info >= (3, 9):
+    Future = futures.Future
+    """Alias for [concurrent.futures.Future][].
+    
+    In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+    `Generic[A]` is used instead.
+    """
+
+    Queue = queue.Queue
+    """Alias for [queue.Queue][] .
+    
+    In python < 3.9, a sublcass of [queue.Queue][] with
+    `Generic[A]` is used instead.
+    """
+
+else:
+    # Fake classes which can have type args. In python earlier than 3.9, the
+    # classes imported above cannot have type args which is annoying for type
+    # annotations. We use these fake ones instead.
+
+    A = TypeVar("A")
+
+    # HACK011
+    class Future(Generic[A], futures.Future):
+        """Alias for [concurrent.futures.Future][].
+    
+        In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+        `Generic[A]` is used instead.
+        """
+
+    # HACK012
+    class Queue(Generic[A], queue.Queue):
+        """Alias for [queue.Queue][] .
+    
+        In python < 3.9, a sublcass of [queue.Queue][] with
+        `Generic[A]` is used instead.
+        """
+
+if sys.version_info >= (3, 10):
+    import types
+    NoneType = types.NoneType
+    """Alias for [types.NoneType][] .
+    
+    In python < 3.10, it is defined as `type(None)` instead.
+    """
+
+else:
+    NoneType = type(None)
+    """Alias for [types.NoneType][] .
+    
+    In python < 3.10, it is defined as `type(None)` instead.
+    """
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
+
 Thunk = Callable[[], T]
+"""A function that takes no arguments."""
 
 # Reflection utilities.
 
 
 def is_really_coroutinefunction(func) -> bool:
-    # NOTE(piotrm): inspect checkers for async functions do not work on openai
-    # clients, perhaps because they use @typing.overload. Because of that, we
-    # detect them by checking __wrapped__ attribute instead. Note that the
-    # inspect docs suggest they should be able to handle wrapped functions but
-    # perhaps they handle different type of wrapping? See
-    # https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction
-    # . Another place they do not work is the decorator langchain uses to mark
-    # deprecated functions.
+    """Determine whether the given function is a coroutine function.
+
+    !!! Warning
+     
+        Inspect checkers for async functions do not work on openai clients,
+        perhaps because they use `@typing.overload`. Because of that, we detect
+        them by checking `__wrapped__` attribute instead. Note that the inspect
+        docs suggest they should be able to handle wrapped functions but perhaps
+        they handle different type of wrapping? See
+        https://docs.python.org/3/library/inspect.html#inspect.iscoroutinefunction
+        . Another place they do not work is the decorator langchain uses to mark
+        deprecated functions.
+    """
 
     if inspect.iscoroutinefunction(func):
         return True
@@ -205,24 +266,10 @@ def stack_with_tasks() -> Sequence['frame']:
 
     ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_task_stack
 
-    # Need a more verbose debug mode for these:
-    #logger.debug("Getting cross-Task stacks. Current stack:")
-    #for f in ret:
-    #    logger.debug(f"\t{f}")
-
     try:
         task_stack = get_task_stack(asyncio.current_task())
 
-        #logger.debug(f"Merging in stack from {asyncio.current_task()}:")
-        #for s in task_stack:
-        #    logger.debug(f"\t{s}")
-
-        temp = merge_stacks(ret, task_stack)
-        #logger.debug(f"Complete stack:")
-        #for f in temp:
-        #    logger.debug(f"\t{f}")
-
-        return temp
+        return merge_stacks(ret, task_stack)
 
     except:
         return ret
@@ -242,7 +289,6 @@ def _future_target_wrapper(stack, context, func, *args, **kwargs):
     pre_start_stack = stack
 
     for var, value in context.items():
-        logger.debug(f"Copying context var {var} to thread.")
         var.set(value)
 
     return func(*args, **kwargs)
@@ -269,34 +315,19 @@ def get_all_local_in_call_stack(
     with async tasks. In those cases, the `skip` argument is more reliable.
     """
 
-    # TODO: Need a more verbose mode for these:
-    # logger.debug(f"Looking for local '{key}' in the stack.")
-
-    if skip is not None:
-        pass
-        # TODO: verbose debug
-        # logger.debug(f"Will be skipping {skip}.")
-
     frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
     # NOTE: skipping offset frames is done below since the full stack may need
     # to be reconstructed there.
 
     # Using queue for frames as additional frames may be added due to handling threads.
-    q = Queue()
+    q = queue.Queue()
     for f in frames:
         q.put(f)
 
     while not q.empty():
         f = q.get()
 
-        # TODO: verbose debug
-        # logger.debug(f"{f.f_code}")
-
         if id(f.f_code) == id(_future_target_wrapper.__code__):
-            logger.debug(
-                "Found thread starter frame. "
-                "Will walk over frames prior to thread start."
-            )
             locs = f.f_locals
             assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
             for fi in locs['pre_start_stack']:
@@ -353,6 +384,7 @@ def get_first_local_in_call_stack(
             )
         )
     except StopIteration:
+        logger.debug("no frames found")
         return None
 
 
@@ -371,6 +403,11 @@ class SingletonPerName(Generic[T]):
     # Hold singleton instances here.
     _instances: Dict[Hashable, SingletonPerName] = dict()
 
+    # Need some way to look up the name of the singleton instance. Cannot attach
+    # a new attribute to instance since some metaclasses don't allow this (like
+    # pydantic). We instead create a map from instance address to name.
+    _id_to_name_map: Dict[int, Optional[str]] = dict()
+
     def __new__(
         cls: Type[SingletonPerName[T]],
         *args,
@@ -387,8 +424,25 @@ class SingletonPerName(Generic[T]):
             logger.debug(
                 f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
             )
-            SingletonPerName._instances[k] = super().__new__(cls)
+            # If exception happens here, the instance should not be added to
+            # _instances.
+            instance = super().__new__(cls)
+
+            SingletonPerName._id_to_name_map[id(instance)] = name
+            SingletonPerName._instances[k] = instance
 
         obj: cls = SingletonPerName._instances[k]
 
         return obj
+
+    def delete_singleton(self):
+        """
+        Delete the singleton instance. Can be used for testing to create another
+        singleton.
+        """
+        if id(self) in SingletonPerName._id_to_name_map:
+            name = SingletonPerName._id_to_name_map[id(self)]
+            del SingletonPerName._id_to_name_map[id(self)]
+            del SingletonPerName._instances[self.__class__.__name__, name]
+        else:
+            logger.warning(f"Instance {self} not found in our records.")

@@ -1,21 +1,7 @@
-import logging
-from typing import Any, Callable, Dict, Iterable, Tuple, TypeVar, Union
-
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
-
-logger = logging.getLogger(__name__)
-
-A = TypeVar("A")
-
-# Signature of feedback implementations. Take in any number of arguments
-# and return either a single float or a float and a dictionary (of metadata).
-ImpCallable = Callable[[A], Union[float, Tuple[float, Dict[str, Any]]]]
-
-# Signature of aggregation functions.
-AggCallable = Callable[[Iterable[float]], float]
 
 # Specific feedback functions:
 from trulens_eval.feedback.embeddings import Embeddings
@@ -45,7 +31,6 @@ __all__ = [
     "OpenAI",
     "AzureOpenAI",
     "Huggingface",
-    "Cohere",
     "LiteLLM",
     "Bedrock",
     "Langchain",

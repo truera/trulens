@@ -224,7 +224,6 @@ from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
-from trulens_eval.schema import Select
 from trulens_eval.utils.asynchro import desync
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.containers import dict_merge_with
@@ -559,7 +558,7 @@ class Instrument(object):
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
                 rets, cost = await Endpoint.atrack_all_costs_tally(
-                    lambda: desync(func, *args, **kwargs)
+                    func, *args, **kwargs
                 )
 
             except BaseException as e:
@@ -742,6 +741,13 @@ class Instrument(object):
         # attributes that are not fields:
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
+
+        # Recursively instrument inner components
+        if hasattr(obj, '__dict__'):
+            for attr_name, attr_value in obj.__dict__.items():
+                if any(isinstance(attr_value, cls) for cls in self.include_classes):
+                    inner_query = query[attr_name]
+                    self.instrument_object(attr_value, inner_query, done)
 
         for base in mro:
             logger.debug(f"\t{query}: considering base {base.__name__}")
