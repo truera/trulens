@@ -29,27 +29,23 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.core.chat_engine.types import AgentChatResponse
     from llama_index.core.chat_engine.types import BaseChatEngine
     from llama_index.core.chat_engine.types import StreamingAgentChatResponse
-    from llama_index.core.embeddings import BaseEmbedding
+    from llama_index.core.base.embeddings.base import BaseEmbedding
     from llama_index.core.indices.base import BaseIndex
         # misc
     from llama_index.core.retrievers import BaseRetriever
-    from llama_index.core import PromptHelper
+    from llama_index.core.indices.prompt_helper import PromptHelper
     from llama_index.core.query_engine import BaseQueryEngine
-    from llama_index.core import QueryBundle
-    from llama_index.core.indices.query.schema import QueryType
-    from llama_index.core import ServiceContext
-    from llama_index.core.llm_predictor import LLMPredictor
-    from llama_index.core.llm_predictor.base import BaseLLMPredictor
-    from llama_index.core.llms import LLMMetadata
+    from llama_index.core.schema import QueryBundle
+    from llama_index.legacy.llm_predictor import LLMPredictor
+    from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
+    from llama_index.core.base.llms.types import LLMMetadata
         # LLMs
     from llama_index.core.llms.base import BaseLLM  # subtype of BaseComponent
         # memory
     from llama_index.core.memory import BaseMemory
     from llama_index.core.node_parser import NodeParser
-    from llama_index.core import Prompt
     from llama_index.core.question_gen.types import BaseQuestionGenerator
-    from llama_index.core import Response
-    from llama_index.core.response.schema import RESPONSE_TYPE
+    from llama_index.core.base.response.schema import Response
     from llama_index.core.response.schema import StreamingResponse
     from llama_index.core.response_synthesizers import BaseSynthesizer
     from llama_index.core.response_synthesizers import Refine
@@ -89,8 +85,6 @@ class LlamaInstrument(Instrument):
             BaseRetriever,
             BaseIndex,
             BaseChatEngine,
-            Prompt,
-            # llama_index.prompts.prompt_type.PromptType, # enum
             BaseQuestionGenerator,
             BaseSynthesizer,
             Refine,
@@ -98,7 +92,6 @@ class LlamaInstrument(Instrument):
             LLMMetadata,
             BaseLLMPredictor,
             VectorStore,
-            ServiceContext,
             PromptHelper,
             BaseEmbedding,
             NodeParser,
