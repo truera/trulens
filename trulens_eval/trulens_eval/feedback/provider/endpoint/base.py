@@ -654,9 +654,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             # Get the result of the wrapped function:
 
-            print(f"calling {func}")
             response = func(*args, **kwargs)
-            print("response=", response)
             if isinstance(response, Awaitable):
                 response = await response
 

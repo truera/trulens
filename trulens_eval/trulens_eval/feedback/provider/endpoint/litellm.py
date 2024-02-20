@@ -35,8 +35,8 @@ class LiteLLMCallback(EndpointCallback):
 
         usage = response['usage']
 
-        if self.endpoint.litellm_provider not in ["openai", "azure"]:
-            # We are already tracking costs from the openai endpoint so we
+        if self.endpoint.litellm_provider not in ["openai", "azure", "bedrock"]:
+            # We are already tracking costs from the openai or bedrock endpoint so we
             # should not double count here.
 
             # Incremente number of requests.

@@ -113,7 +113,7 @@ class TestStatic(TestCase):
                 # First make sure the optional package is not installed.
                 self.assertFalse(
                     module_installed(opt),
-                    msg=f"Module {opt} was not supposed to be installed."
+                    msg=f"Module {opt} was not supposed to be installed for this test."
                 )
 
                 for mod in mods:
@@ -128,7 +128,7 @@ class TestStatic(TestCase):
                         self.assertIn(
                             "You should be able to install",
                             context.exception.args[0],
-                            msg="Exception did not have the expected content."
+                            msg="Exception message did not have the expected content."
                         )
 
     @optional_test
@@ -143,7 +143,7 @@ class TestStatic(TestCase):
                 # First make sure the optional package is installed.
                 self.assertTrue(
                     module_installed(opt),
-                    f"Module {opt} was supposed to be installed."
+                    f"Module {opt} was supposed to be installed for this test."
                 )
 
                 for mod in mods:

@@ -127,11 +127,7 @@ class Bedrock(LLMProvider):
         accept = "application/json"
         content_type = "application/json"
 
-        print("will request")
-
         response = self.endpoint.client.invoke_model(body=body, modelId=modelId, accept=accept, contentType=content_type)
-        
-        print("response=", response)
 
         if self.model_id.startswith("amazon"):
             response_body = json.loads(response.get('body').read()

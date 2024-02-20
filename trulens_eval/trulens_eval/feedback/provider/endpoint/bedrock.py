@@ -207,7 +207,7 @@ class BedrockEndpoint(Endpoint):
 
         else:
             # This one will be instrumented by our hacks onto _create_api_method above:
-
+            
             self.client = boto3.client(
                 service_name='bedrock-runtime', **client_kwargs
             )

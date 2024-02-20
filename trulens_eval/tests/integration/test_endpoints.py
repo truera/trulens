@@ -1,12 +1,14 @@
 """
-Tests for Endpoints. 
+# Tests endpoints.
+
+These tests make use of potentially non-free apis and require
+various secrets configured. See `setUp` below.
 """
 
 import os
 from pprint import PrettyPrinter
 from unittest import main
 from unittest import TestCase
-import unittest
 
 from tests.unit.test import optional_test
 
@@ -21,11 +23,19 @@ class TestEndpoints(TestCase):
 
     def setUp(self):
         check_keys(
+            # for non-azure openai tests
             "OPENAI_API_KEY",
+
+            # for huggingface tests
             "HUGGINGFACE_API_KEY",
-            #"AWS_ACCESS_KEY_ID",
-            #"AWS_SECRET_ACCESS_KEY",
-            #"AWS_SESSION_TOKEN",
+
+            # for bedrock tests
+            "AWS_REGION_NAME",
+            "AWS_ACCESS_KEY_ID",
+            "AWS_SECRET_ACCESS_KEY",
+            "AWS_SESSION_TOKEN",
+
+            # for azure openai tests
             "AZURE_OPENAI_API_KEY",
             "AZURE_OPENAI_ENDPOINT",
             "AZURE_OPENAI_DEPLOYMENT_NAME"
@@ -49,7 +59,6 @@ class TestEndpoints(TestCase):
                 cost.cost, 0.0, "Expected non-zero cost."
             )
 
-    @unittest.skip("temp")
     @optional_test
     def test_hugs(self):
         """Check that cost tracking works for the huggingface endpoint."""
@@ -70,7 +79,6 @@ class TestEndpoints(TestCase):
 
         self.assertEqual(cost.cost, 0.0, "Expected zero cost for huggingface endpoint.")
 
-    @unittest.skip("temp")
     @optional_test
     def test_openai(self):
         """Check that cost tracking works for openai models."""
@@ -86,7 +94,6 @@ class TestEndpoints(TestCase):
 
         self._test_llm_provider_endpoint(provider)
 
-    @unittest.skip("temp")
     @optional_test
     def test_litellm_openai(self):
         """Check that cost tracking works for openai models through litellm."""
@@ -105,7 +112,6 @@ class TestEndpoints(TestCase):
 
         self._test_llm_provider_endpoint(provider)
 
-    @unittest.skip("temp")
     @optional_test
     def test_openai_azure(self):
         """Check that cost tracking works for openai azure models."""
@@ -122,7 +128,6 @@ class TestEndpoints(TestCase):
 
         self._test_llm_provider_endpoint(provider)
 
-    @unittest.skip("temp")
     @optional_test
     def test_litellm_openai_azure(self):
         """Check that cost tracking works for openai models through litellm."""
@@ -130,7 +135,6 @@ class TestEndpoints(TestCase):
         os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
         os.environ["OPENAI_API_TYPE"] = "azure"
 
-        
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
         Endpoint.delete_singleton_by_name("litellm")
@@ -146,7 +150,6 @@ class TestEndpoints(TestCase):
 
         self._test_llm_provider_endpoint(provider)
 
-    @unittest.skip("temp")
     @optional_test
     def test_bedrock(self):
         """Check that cost tracking works for bedrock models."""
@@ -158,9 +161,8 @@ class TestEndpoints(TestCase):
         )
 
         # We don't have USD cost tracking for bedrock or anything beyond openai.
-        self._test_llm_provider_endpoint(provider, with_cost=False) 
+        self._test_llm_provider_endpoint(provider, with_cost=False)
 
-    # @unittest.skip("temp")
     @optional_test
     def test_litellm_bedrock(self):
         """Check that cost tracking works for bedrock models through litellm."""
@@ -174,8 +176,9 @@ class TestEndpoints(TestCase):
 
         provider = LiteLLM(f"bedrock/{Bedrock.DEFAULT_MODEL_ID}")
 
-        # We don't have USD cost tracking for bedrock or anything beyond openai.
-        self._test_llm_provider_endpoint(provider, with_cost=False) 
+        # Litellm comes with cost tracking for bedrock though it may be inaccurate.
+        self._test_llm_provider_endpoint(provider)
+
 
 if __name__ == '__main__':
     main()
