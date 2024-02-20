@@ -85,16 +85,23 @@ class SqlAlchemyDB(DB):
     @classmethod
     def from_db_url(cls, url: str, redact_keys: bool = False) -> "SqlAlchemyDB":
         # Params needed for https://github.com/truera/trulens/issues/470
-        # Params are from https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
+        # Params are from
+        # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
+
+        engine_params = {
+            "url": url,
+            "pool_size": 10,
+            "pool_recycle": 300,
+            "pool_pre_ping": True,
+        }
+
+        if not is_memory_sqlite(url=url):
+            # These params cannot be given to memory-based sqlite engine.
+            engine_params["max_overflow"] = 2
+            engine_params["pool_use_lifo"] = True
+
         return cls(
-            engine_params={
-                "url": url,
-                "pool_size": 10,
-                "max_overflow": 2,
-                "pool_recycle": 300,
-                "pool_pre_ping": True,
-                "pool_use_lifo": True
-            },
+            engine_params=engine_params,
             redact_keys=redact_keys
         )
 
@@ -549,8 +556,12 @@ class AppsExtractor:
                     self.feedback_columns.add(_res.name)
 
             row = {
-                **{k: np.mean(v) for k, v in values.items()},
-                **{k + "_calls": flatten(v) for k, v in calls.items()},
+                **{
+                    k: np.mean(v) for k, v in values.items()
+                },
+                **{
+                    k + "_calls": flatten(v) for k, v in calls.items()
+                },
             }
 
             for col in self.rec_cols:

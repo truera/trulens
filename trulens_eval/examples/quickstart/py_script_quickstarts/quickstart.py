@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # TruLens Quickstart
+# # 📓 TruLens Quickstart
 # 
 # In this quickstart you will create a RAG from scratch and learn how to log it and get feedback on an LLM response.
 # 
@@ -9,20 +9,22 @@
 # 
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
 
-# In[ ]:
 
-# ! pip install trulens_eval==0.22.2 chromadb==0.4.18 openai==1.3.7
 
-# In[ ]:
+# ! pip install trulens_eval==0.23.0 chromadb==0.4.18 openai==1.3.7
+
+
+
 
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
+
 
 # ## Get Data
 # 
 # In this case, we'll just initialize some simple text in the notebook.
 
-# In[ ]:
+
 
 university_info = """
 The University of Washington, founded in 1861 in Seattle, is a public research university
@@ -32,11 +34,12 @@ UW encompasses over 500 buildings and 20 million square feet of space,
 including one of the largest library systems in the world.
 """
 
+
 # ## Create Vector Store
 # 
 # Create a chromadb vector store in memory.
 
-# In[ ]:
+
 
 from openai import OpenAI
 oai_client = OpenAI()
@@ -46,7 +49,8 @@ oai_client.embeddings.create(
         input=university_info
     )
 
-# In[ ]:
+
+
 
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
@@ -54,27 +58,31 @@ from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'),
                                              model_name="text-embedding-ada-002")
 
+
 chroma_client = chromadb.Client()
 vector_store = chroma_client.get_or_create_collection(name="Universities",
                                                       embedding_function=embedding_function)
 
+
 # Add the university_info to the embedding database.
 
-# In[ ]:
+
 
 vector_store.add("uni_info", documents=university_info)
+
 
 # ## Build RAG from scratch
 # 
 # Build a custom RAG from scratch, and add TruLens custom instrumentation.
 
-# In[ ]:
+
 
 from trulens_eval import Tru
 from trulens_eval.tru_custom_app import instrument
 tru = Tru()
 
-# In[ ]:
+
+
 
 class RAG_from_scratch:
     @instrument
@@ -118,11 +126,12 @@ class RAG_from_scratch:
 
 rag = RAG_from_scratch()
 
+
 # ## Set up feedback functions.
 # 
 # Here we'll use groundedness, answer relevance and context relevance to detect hallucination.
 
-# In[ ]:
+
 
 from trulens_eval import Feedback, Select
 from trulens_eval.feedback import Groundedness
@@ -158,28 +167,33 @@ f_context_relevance = (
     .aggregate(np.mean)
 )
 
+
 # ## Construct the app
 # Wrap the custom RAG with TruCustomApp, add list of feedbacks for eval
 
-# In[ ]:
+
 
 from trulens_eval import TruCustomApp
 tru_rag = TruCustomApp(rag,
     app_id = 'RAG v1',
     feedbacks = [f_groundedness, f_qa_relevance, f_context_relevance])
 
+
 # ## Run the app
 # Use `tru_rag` as a context manager for the custom RAG-from-scratch app.
 
-# In[ ]:
+
 
 with tru_rag as recording:
     rag.query("When was the University of Washington founded?")
 
-# In[ ]:
+
+
 
 tru.get_leaderboard(app_ids=["RAG v1"])
 
-# In[ ]:
+
+
 
 tru.run_dashboard()
+

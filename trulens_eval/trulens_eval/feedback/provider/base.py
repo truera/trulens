@@ -1,10 +1,6 @@
-from abc import ABC
-from abc import abstractmethod
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
+from typing import ClassVar, Dict, Optional, Sequence, Tuple
 import warnings
-
-import pydantic
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -16,16 +12,37 @@ logger = logging.getLogger(__name__)
 
 
 class Provider(WithClassInfo, SerialModel):
+    """Base Provider class."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint] = None
+    """Endpoint supporting this provider.
+    
+    Remote API invocations are handled by the endpoint.
+    """
 
     def __init__(self, name: Optional[str] = None, **kwargs):
         super().__init__(name=name, **kwargs)
 
 
 class LLMProvider(Provider):
+    """An LLM-based provider.
+    
+    This is an abstract class and needs to be initialized as one of these:
+
+    * [OpenAI][trulens_eval.feedback.provider.openai.OpenAI] and subclass
+      [AzureOpenAI][trulens_eval.feedback.provider.openai.AzureOpenAI].
+
+    * [Bedrock][trulens_eval.feedback.provider.bedrock.Bedrock].
+
+    * [LiteLLM][trulens_eval.feedback.provider.litellm.LiteLLM]. LiteLLM provides an
+    interface to a [wide range of
+    models](https://docs.litellm.ai/docs/providers).
+    
+    * [Langchain][trulens_eval.feedback.provider.langchain.Langchain].
+
+"""
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any
@@ -122,9 +139,7 @@ class LLMProvider(Provider):
         normalize: float = 10.0
     ) -> float:
         """
-        Extractor for LLM prompts. If CoT is used; it will look for
-        "Supporting Evidence" template. Otherwise, it will look for the typical
-        0-10 scoring.
+        Base method to generate a score only, used for evaluation.
 
         Args:
             system_prompt (str): A pre-formated system prompt
@@ -151,14 +166,13 @@ class LLMProvider(Provider):
         normalize: float = 10.0
     ) -> Tuple[float, Dict]:
         """
-        Generator and extractor for LLM prompts. It will look for
-        "Supporting Evidence" template.
+        Base method to generate a score and reason, used for evaluation.
 
         Args:
             system_prompt (str): A pre-formated system prompt
 
         Returns:
-            The score (float): 0-1 scale and reason metadata (dict) if available.
+            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -176,14 +190,33 @@ class LLMProvider(Provider):
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_0_10_rating(line) / normalize
-                if "Criteria" in line:
-                    parts = line.split(":")
-                    if len(parts) > 1:
-                        criteria = ":".join(parts[1:]).strip()
-                if "Supporting Evidence" in line:
-                    supporting_evidence = line[
-                        line.index("Supporting Evidence:") +
-                        len("Supporting Evidence:"):].strip()
+                criteria_lines = []
+                supporting_evidence_lines = []
+                collecting_criteria = False
+                collecting_evidence = False
+
+                for line in response.split('\n'):
+                    if "Criteria:" in line:
+                        criteria_lines.append(line.split("Criteria:", 1)[1].strip())
+                        collecting_criteria = True
+                        collecting_evidence = False
+                    elif "Supporting Evidence:" in line:
+                        supporting_evidence_lines.append(line.split("Supporting Evidence:", 1)[1].strip())
+                        collecting_evidence = True
+                        collecting_criteria = False
+                    elif collecting_criteria:
+                        if "Supporting Evidence:" not in line:
+                            criteria_lines.append(line.strip())
+                        else:
+                            collecting_criteria = False
+                    elif collecting_evidence:
+                        if "Criteria:" not in line:
+                            supporting_evidence_lines.append(line.strip())
+                        else:
+                            collecting_evidence = False
+
+                criteria = "\n".join(criteria_lines).strip()
+                supporting_evidence = "\n".join(supporting_evidence_lines).strip()
             reasons = {
                 'reason':
                     (
@@ -358,21 +391,20 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the sentiment of some text.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.sentiment).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.sentiment).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+        Args:
+            text: The text to evaluate sentiment of.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1
-            being "positive sentiment".
+            A value between 0 and 1. 0 being "negative sentiment" and 1
+                being "positive sentiment".
         """
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT + text
         return self.generate_score(system_prompt=system_prompt)
@@ -488,21 +520,20 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
+        Usage:
+            ```python
+            feedback = Feedback(provider.conciseness).on_output() 
+            ```
 
-        ```python
-        feedback = Feedback(provider.conciseness).on_output() 
-        ```
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+        Args:
+            text: The text to evaluate the conciseness of.
 
         Returns:
-            float: A value between 0.0 (not concise) and 1.0 (concise).
+            A value between 0.0 (not concise) and 1.0 (concise).
+
         """
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
@@ -513,22 +544,21 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
+        Usage:
+            ```python
+            feedback = Feedback(provider.conciseness).on_output() 
+            ```
 
-        ```python
-        feedback = Feedback(provider.conciseness).on_output() 
-        ```
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+        Args:
+            text: The text to evaluate the conciseness of.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise),
-            and a string containing the reasons for the evaluation.
+            A value between 0.0 (not concise) and 1.0 (concise)
+            
+            A dictionary containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
@@ -539,20 +569,19 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.correctness).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.correctness).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Parameters:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text: A prompt to an agent.
 
         Returns:
-            float: A value between 0.0 (not correct) and 1.0 (correct).
+            A value between 0.0 (not correct) and 1.0 (correct).
         """
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
@@ -1008,9 +1037,6 @@ class LLMProvider(Provider):
 
         system_prompt = str.format(
             prompts.COMPREHENSIVENESS_PROMPT, source=source, summary=summary
-        )
-        system_prompt = system_prompt.replace(
-            "COMPREHENSIVENESS:", prompts.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(system_prompt)
 

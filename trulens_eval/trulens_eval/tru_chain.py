@@ -131,11 +131,9 @@ class LangChainInstrument(Instrument):
 
 
 class TruChain(App):
-    """
-    Instantiates the Langchain Wrapper.
+    """Instantiates the Langchain Wrapper.
         
-        **Usage:**
-
+    Example:
         Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)
 
         ```python
@@ -184,32 +182,27 @@ class TruChain(App):
             chain("Where do I download langchain?")
         ```
 
-        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+    See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
-        Args:
-            app (Chain): A langchain application.
+    Args:
+        app: A langchain application.
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     app: Any  # Chain
+    """The langchain app to be instrumented."""
 
     # TODO: what if _acall is being used instead?
     root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call)
     )
+    """The root callable of the wrapped app."""
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
-    def __init__(self, app: Chain, **kwargs):
-        """
-        Wrap a langchain chain for monitoring.
-
-        Arguments:
-        - app: Chain -- the chain to wrap.
-        - More args in App
-        - More args in AppDefinition
-        - More args in WithClassInfo
-        """
-
+    def __init__(self, app: Chain, **kwargs: dict):
         # TruChain specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
@@ -219,9 +212,7 @@ class TruChain(App):
 
     @classmethod
     def select_context(cls, app: Optional[Chain] = None) -> Lens:
-        """
-        Get the path to the context in the query output.
-        """
+        """Get the path to the context in the query output."""
 
         if app is None:
             raise ValueError(
@@ -368,4 +359,5 @@ class TruChain(App):
         )
 
 
-TruChain.model_rebuild()
+# from trulens_eval.utils import serial
+# TruChain.model_rebuild()

@@ -98,7 +98,9 @@ class LlamaInstrument(Instrument):
             ToolMetadata,
             BaseTool,
             BaseMemory,
-            WithFeedbackFilterNodes
+            WithFeedbackFilterNodes,
+            BaseNodePostprocessor,
+            QueryEngineComponent
         }.union(LangChainInstrument.Default.CLASSES())
 
         # Instrument only methods with these names and of these classes. Ok to
@@ -157,10 +159,31 @@ class LlamaInstrument(Instrument):
                             WithFeedbackFilterNodes
                         )
                     ),
-
+                "_retrieve":
+                    lambda o: isinstance(
+                        o, (
+                            BaseQueryEngine, BaseRetriever,
+                            WithFeedbackFilterNodes
+                        )
+                    ),
+                "_aretrieve":
+                    lambda o: isinstance(
+                        o, (
+                            BaseQueryEngine, BaseRetriever,
+                            WithFeedbackFilterNodes
+                        )
+                    ),
                 # BaseQueryEngine:
                 "synthesize":
                     lambda o: isinstance(o, BaseQueryEngine),
+
+                # BaseNodePostProcessor
+                "_postprocess_nodes":
+                    lambda o: isinstance(o, (BaseNodePostprocessor)),
+
+                # Components
+                "_run_component":
+                    lambda o: isinstance(o, (QueryEngineComponent, RetrieverComponent))
             },
             LangChainInstrument.Default.METHODS
         )
@@ -179,9 +202,10 @@ class TruLlama(App):
     """
     Instantiates the LLama Index Wrapper.
 
-        **Usage:**
-
-        LLama-Index code: [LLama Index Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
+    Example:
+        LLama-Index code: [LLama Index
+        Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
+    
         ```python
         from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
@@ -215,8 +239,11 @@ class TruLlama(App):
 
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
-        Args:
-            app (BaseQueryEngine | BaseChatEngine): A llama index application.
+    Args:
+        app: A llama index application.
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -227,7 +254,7 @@ class TruLlama(App):
         default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
     )
 
-    def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs):
+    def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict):
         # TruLlama specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
