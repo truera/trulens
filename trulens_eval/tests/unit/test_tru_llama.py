@@ -60,8 +60,8 @@ class TestLlamaIndex(JSONTestCase):
             print("llm_response_sync=", llm_response_sync)
         record_sync = recording.get()
 
-        # llm response is probabilistic, so just test if async is also a string. not that it is same as sync response.
-        self.assertIsInstance(llm_response_async, str)
+        # llm response is probabilistic, so just test if async response is also a string. not that it is same as sync response.
+        self.assertIsInstance(llm_response_async.response, str)
 
         self.assertJSONEqual(
             record_sync.model_dump(),
