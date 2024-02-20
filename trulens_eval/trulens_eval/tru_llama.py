@@ -183,12 +183,9 @@ class TruLlama(App):
 
         LLama-Index code: [LLama Index Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
         ```python
-from llama_index.core import VectorStoreIndex
-from llama_index.readers.web import SimpleWebPageReader
+        from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
-        documents = SimpleWebPageReader(
-            html_to_text=True
-        ).load_data(["http://paulgraham.com/worked.html"])
+        documents = SimpleDirectoryReader("data").load_data()
         index = VectorStoreIndex.from_documents(documents)
 
         query_engine = index.as_query_engine()
