@@ -35,10 +35,12 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.core.retrievers import BaseRetriever
     from llama_index.core.indices.prompt_helper import PromptHelper
     from llama_index.core.query_engine import BaseQueryEngine
+    from llama_index.core.base.base_query_engine import QueryEngineComponent
     from llama_index.core.schema import QueryBundle
     from llama_index.legacy.llm_predictor import LLMPredictor
     from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
     from llama_index.core.base.llms.types import LLMMetadata
+    from llama_index.core.postprocessor.types import BaseNodePostprocessor
         # LLMs
     from llama_index.core.llms.base import BaseLLM  # subtype of BaseComponent
         # memory
