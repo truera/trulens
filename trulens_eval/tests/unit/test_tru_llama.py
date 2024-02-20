@@ -74,7 +74,8 @@ class TestLlamaIndex(JSONTestCase):
                     "ts",
                     "start_time",
                     "end_time",
-                    "record_id"
+                    "record_id",
+                    "output" # response is not deterministic, so cannot easily compare across runs
                 ]
             )
         )
