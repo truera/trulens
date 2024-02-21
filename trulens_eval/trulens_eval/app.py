@@ -12,10 +12,8 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, Iterable, List, Optional, Sequence,
-    Set, Tuple, Type, TypeVar
-)
+from typing import (Any, Callable, ClassVar, Dict, Hashable, Iterable, List,
+                    Optional, Sequence, Set, Tuple, Type, TypeVar)
 
 import pydantic
 from pydantic import Field
@@ -38,9 +36,9 @@ from trulens_eval.utils.asynchro import desync
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
-from trulens_eval.utils.pyschema import callable_name
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
+from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import \
     Future  # can take type args with python < 3.9
 from trulens_eval.utils.python import \
@@ -661,18 +659,43 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         # If there is only one string arg, it is a pretty good guess that it is
         # the main input.
-        if len(all_args) == 1 and isinstance(all_args[0], str):
-            return all_args[0]
+
+        # if have only containers of length 1, find the innermost non-container
+        focus = all_args
+        while not isinstance(focus, JSON_BASES) and len(focus) == 1:
+            focus = focus[0]
+
+            if isinstance(focus, Dict):
+                focus = list(focus.values())
+
+        if isinstance(focus, JSON_BASES):
+            return str(focus)
 
         # Otherwise we are not sure.
         logger.warning(
-            f"Unsure what the main input string is for the call to {callable_name(func)} with args {all_args}."
+            "Unsure what the main input string is for the call to %s with args %s.",
+            callable_name(func), all_args
         )
 
-        if len(all_args) > 0:
-            return all_args[0]
-        else:
-            return None
+        # After warning, just take the first item in each container until a
+        # non-container is reached.
+        focus = all_args
+        while not isinstance(focus, JSON_BASES) and len(focus) >= 1:
+            focus = focus[0]
+
+            if isinstance(focus, Dict):
+                focus = list(focus.values())
+
+        if isinstance(focus, JSON_BASES):
+            return str(focus)
+
+        logger.warning(
+            "Could not determine main input string call to %s with args %s.",
+            callable_name(func), all_args
+        )
+
+    
+        return None
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -705,7 +728,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             return str(ret)
 
     # WithInstrumentCallbacks requirement
-    def _on_method_instrumented(self, obj: object, func: Callable, path: Lens):
+    def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
         """
         Called by instrumentation system for every function requested to be
         instrumented by this app.
@@ -736,28 +759,23 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             funcs[func] = path
 
     # WithInstrumentCallbacks requirement
-    def _get_methods_for_func(
+    def get_methods_for_func(
         self, func: Callable
     ) -> Iterable[Tuple[int, Callable, Lens]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
+
+        See [WithInstrumentCallbacks.get_methods_for_func][trulens_eval.instruments.WithInstrumentCallbacks.get_methods_for_func].
         """
 
         for _id, funcs in self.instrumented_methods.items():
             for f, path in funcs.items():
-                """
-                # TODO: wider wrapping support
-                if safe_hasattr(f, "__func__"):
-                    if method.__func__ == func:
-                        yield (method, path) 
-                else:
-                """
                 if f == func:
                     yield (_id, f, path)
 
     # WithInstrumentCallbacks requirement
-    def _get_method_path(self, obj: object, func: Callable) -> Lens:
+    def get_method_path(self, obj: object, func: Callable) -> Lens:
         """
         Get the path of the instrumented function `method` relative to this app.
         """
@@ -772,7 +790,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 "The path of this call may be incorrect."
             )
             try:
-                _id, f, path = next(iter(self._get_methods_for_func(func)))
+                _id, f, path = next(iter(self.get_methods_for_func(func)))
             except Exception:
                 logger.warning(
                     "No other objects use this function so cannot guess path."
@@ -797,7 +815,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 )
 
                 try:
-                    _id, f, path = next(iter(self._get_methods_for_func(func)))
+                    _id, f, path = next(iter(self.get_methods_for_func(func)))
                 except Exception:
                     logger.warning(
                         "No other objects use this function so cannot guess path."
@@ -815,6 +833,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 return funcs.get(func)
 
     def json(self, *args, **kwargs):
+        """Create a json string representation of this app."""
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
@@ -822,10 +841,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             self, *args, instrument=self.instrument, **kwargs
         )
 
-    def model_dump(self, redact_keys: bool = False):
+    def model_dump(self, *args, redact_keys: bool = False, **kwargs):
         # Same problem as in json.
         return jsonify(
-            self, instrument=self.instrument, redact_keys=redact_keys
+            self, instrument=self.instrument, redact_keys=redact_keys, *args, **kwargs
         )
 
     # For use as a context manager.
@@ -848,7 +867,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         return
 
     # WithInstrumentCallbacks requirement
-    def _on_new_record(self, func) -> Iterable[RecordingContext]:
+    def on_new_record(self, func) -> Iterable[RecordingContext]:
+        """Called at the start of record creation.
+
+        See
+        [WithInstrumentCallbacks.on_new_record][trulens_eval.instruments.WithInstrumentCallbacks.on_new_record].
+        """
         ctx = self.recording_contexts.get(contextvars.Token.MISSING)
 
         while ctx is not contextvars.Token.MISSING:
@@ -856,35 +880,18 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             ctx = ctx.token.old_value
 
     # WithInstrumentCallbacks requirement
-    def _on_add_record(
-        self, ctx: RecordingContext, func: Callable, sig: Signature,
-        bindings: BoundArguments, ret: Any, error: Any, perf: Perf, cost: Cost,
+    def on_add_record(
+        self,
+        ctx: RecordingContext,
+        func: Callable, sig: Signature,
+        bindings: BoundArguments,
+        ret: Any, error: Any,
+        perf: Perf, cost: Cost,
         existing_record: Optional[Record] = None
     ) -> Record:
-        """
-        Called by instrumented methods if they use _new_record to construct a
-        record call list. 
+        """Called by instrumented methods if they use _new_record to construct a record call list.
 
-        Args:
-            ctx: The context of the recording.
-
-            func: The function that was called.
-
-            sig: The signature of the function.
-
-            bindings: The bound arguments of the function.
-
-            ret: The return value of the function.
-
-            error: The error raised by the function if any.
-
-            perf: The performance of the function.
-
-            cost: The cost of the function.
-
-            existing_record: If the record has already been produced (i.e.
-                because it was an awaitable), it can be passed here to avoid
-                re-creating it.
+        See [WithInstrumentCallbacks.on_add_record][trulens_eval.instruments.WithInstrumentCallbacks.on_add_record].
         """
 
         def build_record(calls: Iterable[RecordAppCall], record_metadata: JSON, existing_record: Optional[Record] = None) -> Record:

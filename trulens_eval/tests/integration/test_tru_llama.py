@@ -58,7 +58,6 @@ class TestLlamaIndex(JSONTestCase):
             llm_response_async = sync(
                 query_engine.aquery, "What did the author do growing up?"
             )
-            print("llm_response_async=", llm_response_async)
 
         record_async = recording.get()
 
@@ -68,7 +67,6 @@ class TestLlamaIndex(JSONTestCase):
             llm_response_sync = query_engine.query(
                 "What did the author do growing up?"
             )
-            print("llm_response_sync=", llm_response_sync)
         record_sync = recording.get()
 
         self.assertJSONEqual(

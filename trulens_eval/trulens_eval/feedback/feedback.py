@@ -508,9 +508,8 @@ class Feedback(FeedbackDefinition):
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost = sync(
-                        Endpoint.atrack_all_costs_tally, self.imp, **ins
-                    )
+                    result_and_meta, part_cost = Endpoint.track_all_costs_tally(self.imp, **ins)
+                    
                     cost += part_cost
                 except Exception as e:
                     raise RuntimeError(

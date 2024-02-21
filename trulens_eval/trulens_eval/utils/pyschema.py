@@ -66,15 +66,6 @@ def noserio(obj, **extra: Dict) -> dict:
     return {NOSERIO: inner}
 
 
-def callable_name(c: Callable):
-    if safe_hasattr(c, "__name__"):
-        return c.__name__
-    elif safe_hasattr(c, "__call__"):
-        return callable_name(c.__call__)
-    else:
-        return str(c)
-
-
 # TODO: rename as functionality optionally produces JSONLike .
 def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
     """

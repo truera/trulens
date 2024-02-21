@@ -183,14 +183,14 @@ class TestTruChain(JSONTestCase):
             result = await chain.llm._agenerate(messages=[msg])
             return result
 
-        res1, costs1 = sync(Endpoint.atrack_all_costs, test1)
+        res1, costs1 = Endpoint.track_all_costs(test1)
 
         async def test2():
             # Creates a task internally via asyncio.gather:
             result = await chain._acall(inputs=dict(question="hello there"))
             return result
 
-        res2, costs2 = sync(Endpoint.atrack_all_costs, test2)
+        res2, costs2 = Endpoint.track_all_costs(test2)
 
         # Results are not the same as they involve different prompts but should
         # not be empty at least:

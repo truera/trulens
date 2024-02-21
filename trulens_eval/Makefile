@@ -13,7 +13,7 @@ trubot:
 test-%-optional:
 	TEST_OPTIONAL=1 make test-$*
 
-# Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently. 
+# Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
 test-unit:
 	$(CONDA); python -m unittest discover tests.unit
 
@@ -37,8 +37,12 @@ test-static:
 
 # Tests in the integration folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
+
+test-integrations:
+	$(CONDA); python -m unittest discover tests.integration
+
 test-tru:
-	$(CONDA); python -m unittest tests.unit.test_tru
+	$(CONDA); python -m unittest tests.integration.test_tru
 
 test-tru-chain:
 	$(CONDA); python -m unittest tests.integration.test_tru_chain

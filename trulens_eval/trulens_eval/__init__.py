@@ -88,7 +88,8 @@ TO PLACE
 
 """
 
-__version__ = "0.23.0"
+__version_info__ = (0, 23, 0)
+__version__ = '.'.join(map(str, __version_info__))
 
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Langchain
