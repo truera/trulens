@@ -12,11 +12,10 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (Any, Callable, ClassVar, Dict, Hashable, Iterable, List,
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
                     Optional, Sequence, Set, Tuple, Type, TypeVar)
 
 import pydantic
-from pydantic import Field
 
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
@@ -38,7 +37,7 @@ from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.python import callable_name
+from trulens_eval.utils.python import callable_name, class_name, id_str
 from trulens_eval.utils.python import \
     Future  # can take type args with python < 3.9
 from trulens_eval.utils.python import \
@@ -419,54 +418,57 @@ class RecordingContext():
 class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     """
     Generalization of a wrapped model.
+    
+    Non-serialized fields here while the serialized ones are defined in
+    [AppDefinition][trulens_eval.schema.AppDefinition].
     """
 
-    model_config: ClassVar[dict] = dict(
+    model_config: ClassVar[dict] = {
         # Tru, DB, most of the types on the excluded fields.
-        arbitrary_types_allowed=True
-    )
+        'arbitrary_types_allowed': True
+    }
 
-    # Non-serialized fields here while the serialized ones are defined in
-    # `schema.py:App`.
+    feedbacks: List[Feedback] = pydantic.Field(exclude=True, default_factory=list)
+    """Feedback functions to evaluate on each record."""
 
-    # Feedback functions to evaluate on each record.
-    feedbacks: List[Feedback] = Field(exclude=True, default_factory=list)
+    tru: Optional[Tru] = pydantic.Field(default=None, exclude=True)
+    """Workspace manager."""
 
-    # Database interfaces for models/records/feedbacks.
-    # NOTE: Maybe move to schema.App .
-    tru: Optional[Tru] = Field(None, exclude=True)
+    db: Optional[DB] = pydantic.Field(default=None, exclude=True)
+    """Database interfaces."""
 
-    # Database interfaces for models/records/feedbacks.
-    # NOTE: Maybe move to schema.AppDefinition .
-    db: Optional[DB] = Field(None, exclude=True)
+    app: Any = pydantic.Field(exclude=True)
+    """The app to be recorded."""
 
-    # The wrapped app.
-    app: Any = Field(exclude=True)
+    instrument: Optional[Instrument] = pydantic.Field(None, exclude=True)
+    """Instrumentation class.
+    
+    This is needed for serialization as it tells us which objects we want to be
+    included in the json representation of this app.
+    """
 
-    # Instrumentation class. This is needed for serialization as it tells us
-    # which objects we want to be included in the json representation of this
-    # app.
-    instrument: Optional[Instrument] = Field(None, exclude=True)
-
-    # Sequnces of records produced by the this class used as a context manager
-    # are stpred om a RecordingContext. Using a context var so that context
-    # managers can be nested.
     recording_contexts: contextvars.ContextVar[RecordingContext] \
-        = Field(None, exclude=True)
+        = pydantic.Field(None, exclude=True)
+    """Sequnces of records produced by the this class used as a context manager
+    are stored in a RecordingContext.
+    
+    Using a context var so that context managers can be nested.
+    """
 
-    # Mapping of instrumented methods (by id(.) of owner object and the
-    # function) to their path in this app:
     instrumented_methods: Dict[int, Dict[Callable, Lens]] = \
-        Field(exclude=True, default_factory=dict)
+        pydantic.Field(exclude=True, default_factory=dict)
+    """Mapping of instrumented methods (by id(.) of owner object and the
+    function) to their path in this app."""
 
-    # EXPRIMENTAL: Records produced by this app which might have yet to finish
-    # feedback runs.
     records_with_pending_feedback_results: Queue[Record] = \
         pydantic.Field(exclude=True, default_factory=lambda: queue.Queue(maxsize=1024))
-    # Thread for manager of pending feedback results queue. See
-    # _manage_pending_feedback_results.
+    """EXPRIMENTAL: Records produced by this app which might have yet to finish
+    feedback runs."""
+
     manage_pending_feedback_results_thread: Optional[threading.Thread] = \
         pydantic.Field(exclude=True, default=None)
+    """Thread for manager of pending feedback results queue. See
+    _manage_pending_feedback_results."""
 
     def __init__(
         self,
@@ -559,6 +561,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> Lens:
+        """
+        Try to find retriever components in the given `app` and return a lens to
+        access the retrieved contexts that would appear in a record were these
+        components to execute.
+        """
         if app is None:
             raise ValueError(
                 "Could not determine context selection without `app` argument."
@@ -569,13 +576,14 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if type(app).__module__.startswith("langchain"):
             from trulens_eval.tru_chain import TruChain
             return TruChain.select_context(app)
-        elif type(app).__module__.startswith("llama_index"):
+        
+        if type(app).__module__.startswith("llama_index"):
             from trulens_eval.tru_llama import TruLlama
             return TruLlama.select_context(app)
-        else:
-            raise ValueError(
-                f"Could not determine context from unrecognized `app` type {type(app)}."
-            )
+        
+        raise ValueError(
+            f"Could not determine context from unrecognized `app` type {type(app)}."
+        )
 
     def __hash__(self):
         return hash(id(self))
@@ -627,7 +635,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                     )
 
     def main_call(self, human: str) -> str:
-        # If available, a single text to a single text invocation of this app.
+        """If available, a single text to a single text invocation of this app."""
 
         if self.__class__.main_acall is not App.main_acall:
             # Use the async version if available.
@@ -636,7 +644,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         raise NotImplementedError()
 
     async def main_acall(self, human: str) -> str:
-        # If available, a single text to a single text invocation of this app.
+        """If available, a single text to a single text invocation of this app."""
 
         if self.__class__.main_call is not App.main_call:
             logger.warning("Using synchronous version of main call.")
@@ -786,11 +794,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         if funcs is None:
             logger.warning(
-                f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. "
-                "The path of this call may be incorrect."
+                "A new object of type %s at %s is calling an instrumented method %s. "
+                "The path of this call may be incorrect.", class_name(type(obj)), id_str(obj), callable_name(func)
             )
             try:
-                _id, f, path = next(iter(self.get_methods_for_func(func)))
+                _id, _, path = next(iter(self.get_methods_for_func(func)))
+
             except Exception:
                 logger.warning(
                     "No other objects use this function so cannot guess path."
@@ -798,7 +807,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 return None
 
             logger.warning(
-                f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
+                "Guessing path of new object is %s based on other object (%s) using this function.", path, id_str(_id)
             )
 
             funcs = {func: path}
@@ -810,12 +819,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         else:
             if func not in funcs:
                 logger.warning(
-                    f"A new object of type {type(obj)} at 0x{id(obj):x} is calling an instrumented method {func}. "
-                    "The path of this call may be incorrect."
+                    "A new object of type %s at %s is calling an instrumented method %s. "
+                    "The path of this call may be incorrect.", class_name(type(obj)), id_str(obj), callable_name(func)
                 )
 
                 try:
-                    _id, f, path = next(iter(self.get_methods_for_func(func)))
+                    _id, _, path = next(iter(self.get_methods_for_func(func)))
                 except Exception:
                     logger.warning(
                         "No other objects use this function so cannot guess path."
@@ -823,7 +832,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                     return None
 
                 logger.warning(
-                    f"Guessing path of new object is {path} based on other object (0x{_id:x}) using this function."
+                    "Guessing path of new object is %s based on other object (%s) using this function.", path, id_str(_id)
                 )
 
                 return path
@@ -957,13 +966,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         instrumented is being used in a `with_` call.
         """
 
-        if not safe_hasattr(func, "__name__"):
-            if safe_hasattr(func, "__call__"):
-                func = func.__call__
-            else:
-                raise TypeError(
-                    f"Unexpected type of callable `{type(func).__name__}`."
-                )
+        if not isinstance(func, Callable):
+            raise TypeError(
+                f"Expected `func` to be a callable, but got {class_name(type(func))}."
+            )
 
         if not safe_hasattr(func, Instrument.INSTRUMENT):
             if Instrument.INSTRUMENT in dir(func):
@@ -973,13 +979,14 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 # here. This is a temporary workaround.
                 return
 
-            logger.warning(
-                f"Function {func} has not been instrumented. "
-                f"This may be ok if it will call a function that has been instrumented exactly once. "
-                f"Otherwise unexpected results may follow. "
-                f"You can use `AddInstruments.method` of `trulens_eval.instruments` before you use the `{self.__class__.__name__}` wrapper "
-                f"to make sure `{func.__name__}` does get instrumented. "
-                f"`{self.__class__.__name__}` method `print_instrumented` may be used to see methods that have been instrumented. "
+            logger.warning("""
+Function %s has not been instrumented. This may be ok if it will call a function
+that has been instrumented exactly once. Otherwise unexpected results may
+follow. You can use `AddInstruments.method` of `trulens_eval.instruments` before
+you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
+`print_instrumented` may be used to see methods that have been instrumented.
+""",
+                func, class_name(self), callable_name(func), class_name(self)
             )
 
     async def awith_(
@@ -993,13 +1000,33 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         or the `App` as a context mananger instead.
         """
 
-        res, _ = await self.awith_record(func, *args, **kwargs)
+        awaitable, _ = self.with_record(func, *args, **kwargs)
+
+        if not isinstance(awaitable, Awaitable):
+            raise TypeError(
+                f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
+            )
+        
+        return await awaitable
+
+    async def with_(
+        self, func: Callable[[A], T], *args, **kwargs
+    ) -> T:
+        """
+        Call the given async `func` with the given `*args` and `**kwargs` while
+        recording, producing `func` results. The record of the computation is
+        available through other means like the database or dashboard. If you
+        need a record of this execution immediately, you can use `awith_record`
+        or the `App` as a context mananger instead.
+        """
+
+        res, _ = self.with_record(func, *args, **kwargs)
 
         return res
 
-    async def awith_record(
+    def with_record(
         self,
-        func: CallableMaybeAwaitable[A, T],
+        func: Callable[[A], T],
         *args,
         record_metadata: JSON = None,
         **kwargs
@@ -1013,7 +1040,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         with self as ctx:
             ctx.record_metadata = record_metadata
-            ret = await desync(func, *args, **kwargs)
+            ret = func(*args, **kwargs)
 
         assert len(ctx.records) > 0, (
             f"Did not create any records. "
@@ -1022,20 +1049,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         return ret, ctx.get()
 
-    def with_(self, func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
-        """
-        Call the given `func` with the given `*args` and `**kwargs` while
-        recording, producing `func` results. The record of the computation is
-        available through other means like the database or dashboard.  If you
-        need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context mananger instead.
-        """
-
-        return sync(self.awith_, func, *args, **kwargs)
-
-    def with_record(
+    async def awith_record(
         self,
-        func: CallableMaybeAwaitable[A, T],
+        func: Callable[[A], Awaitable[T]],
         *args,
         record_metadata: JSON = None,
         **kwargs
@@ -1045,13 +1061,13 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         its results as well as a record of the execution.
         """
 
-        return sync(
-            self.awith_record,
-            func,
-            *args,
-            record_metadata=record_metadata,
-            **kwargs
-        )
+        awaitable, record = self.with_record(func, *args, record_metadata=record_metadata, **kwargs)
+        if not isinstance(awaitable, Awaitable):
+            raise TypeError(
+                f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
+            )
+
+        return await awaitable, record
 
     def _throw_dep_message(
         self, method, is_async: bool = False, with_record: bool = False
@@ -1184,12 +1200,16 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             yield q, c
 
     def print_instrumented(self) -> None:
+        """Print the instrumented components and methods."""
+
         print("Components:")
         self.print_instrumented_components()
         print("\nMethods:")
         self.print_instrumented_methods()
 
-    def format_instrumented_methods(self) -> None:
+    def format_instrumented_methods(self) -> str:
+        """Build a string containing a listing of instrumented methods."""
+
         return "\n".join(
             f"Object at 0x{obj:x}:\n\t" + "\n\t".
             join(f"{m} with path {Select.App + path}"
@@ -1205,9 +1225,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         print(self.format_instrumented_methods())
 
     def print_instrumented_components(self) -> None:
-        """
-        Print instrumented components and their categories.
-        """
+        """Print instrumented components and their categories."""
 
         object_strings = []
 
