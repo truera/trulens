@@ -468,6 +468,39 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         )
 
     @staticmethod
+    def track_all_costs_tally(
+        __func: CallableMaybeAwaitable[A, T],
+        *args,
+        with_openai: bool = True,
+        with_hugs: bool = True,
+        with_litellm: bool = True,
+        with_bedrock: bool = True,
+        **kwargs
+    ) -> Tuple[T, Cost]:
+        """
+        Track costs of all of the apis we can currently track, over the
+        execution of thunk.
+        """
+
+        result, cbs = sync(Endpoint.atrack_all_costs,
+            __func,
+            *args,
+            with_openai=with_openai,
+            with_hugs=with_hugs,
+            with_litellm=with_litellm,
+            with_bedrock=with_bedrock,
+            **kwargs
+        )
+
+        if len(cbs) == 0:
+            # Otherwise sum returns "0" below.
+            costs = Cost()
+        else:
+            costs = sum(cb.cost for cb in cbs)
+
+        return result, costs
+
+    @staticmethod
     async def atrack_all_costs_tally(
         __func: CallableMaybeAwaitable[A, T],
         *args,
