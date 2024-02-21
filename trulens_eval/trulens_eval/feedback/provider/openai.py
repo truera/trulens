@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Optional, Sequence
+from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
 
@@ -43,16 +43,21 @@ class OpenAI(LLMProvider):
             and finally to the OpenAI client.
     """
 
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
+
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
     endpoint: Endpoint = pydantic.Field(exclude=True)
 
     def __init__(
-        self, *args, endpoint=None, model_engine: str = "gpt-3.5-turbo", **kwargs: dict
+        self, *args, endpoint=None, model_engine: Optional[str] = None, **kwargs: dict
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
+
+        if model_engine is None:
+            model_engine = self.DEFAULT_MODEL_ENGINE
 
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
@@ -426,6 +431,7 @@ class AzureOpenAI(OpenAI):
         client_kwargs = dict(kwargs)
         if CLASS_INFO in client_kwargs:
             del client_kwargs[CLASS_INFO]
+
         if "model_engine" in client_kwargs:
             # delete from client args
             del client_kwargs["model_engine"]
