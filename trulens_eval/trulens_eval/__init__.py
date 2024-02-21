@@ -90,6 +90,12 @@ TO PLACE
 
 __version__ = "0.23.0"
 
+# This check is intentionally done ahead of the other imports as we want to
+# print out a nice warning/error before an import error happens further down
+# this sequence.
+from trulens_eval.utils.imports import check_imports
+check_imports()
+
 from trulens_eval.feedback import Feedback
 from trulens_eval.feedback import Langchain
 from trulens_eval.feedback.provider import Provider
