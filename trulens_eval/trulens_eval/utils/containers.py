@@ -7,7 +7,7 @@ from __future__ import annotations
 import itertools
 import logging
 from pprint import PrettyPrinter
-from typing import Callable, Dict, Iterable, Sequence, Tuple, TypeVar
+from typing import Callable, Dict, Iterable, Sequence, Tuple, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -35,9 +35,29 @@ def is_empty(obj):
     except Exception:
         return False
 
+A = TypeVar("A")
+B = TypeVar("B")
 
-def dict_set_with(dict1: Dict, dict2: Dict):
+def dict_set_with(dict1: Dict[A, B], dict2: Dict[A, B]) -> Dict[A, B]:
+    """
+    Add the key/values from `dict2` to `dict1`. Mutates and returns `dict1`.
+    """
+
     dict1.update(dict2)
+    return dict1
+
+
+def dict_set_with_multikey(dict1: Dict[A, B], dict2: Dict[Union[A, Tuple[A, ...]], B]) -> Dict[A, B]:
+    """
+    Like `dict_set_with` except the second dict can have tuples as keys in which
+    case all of the listed keys are set to the given value.
+    """
+    for ks, v in dict2.items():
+        if isinstance(ks, tuple):
+            for k in ks:
+                dict1[k] = v
+        else:
+            dict1[ks] = v
     return dict1
 
 

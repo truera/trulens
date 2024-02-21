@@ -399,7 +399,7 @@ class RecordingContext():
             self.calls.append(call)
 
     def finish_record(
-        self, calls_to_record: Callable[[List[RecordAppCall], JSON], Record]
+        self, calls_to_record: Callable[[List[RecordAppCall], JSON], Record], existing_record: Optional[Record] = None
     ):
         """
         Run the given function to build a record from the tracked calls and any
@@ -407,9 +407,13 @@ class RecordingContext():
         """
 
         with self.lock:
-            record = calls_to_record(self.calls, self.record_metadata)
+            record = calls_to_record(self.calls, self.record_metadata, existing_record=existing_record)
             self.calls = []
-            self.records.append(record)
+
+            if existing_record is None:
+                # If existing record was given, we assume it was already
+                # inserted into this list.
+                self.records.append(record)
 
         return record
 
@@ -854,14 +858,36 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     # WithInstrumentCallbacks requirement
     def _on_add_record(
         self, ctx: RecordingContext, func: Callable, sig: Signature,
-        bindings: BoundArguments, ret: Any, error: Any, perf: Perf, cost: Cost
+        bindings: BoundArguments, ret: Any, error: Any, perf: Perf, cost: Cost,
+        existing_record: Optional[Record] = None
     ) -> Record:
         """
         Called by instrumented methods if they use _new_record to construct a
         record call list. 
+
+        Args:
+            ctx: The context of the recording.
+
+            func: The function that was called.
+
+            sig: The signature of the function.
+
+            bindings: The bound arguments of the function.
+
+            ret: The return value of the function.
+
+            error: The error raised by the function if any.
+
+            perf: The performance of the function.
+
+            cost: The cost of the function.
+
+            existing_record: If the record has already been produced (i.e.
+                because it was an awaitable), it can be passed here to avoid
+                re-creating it.
         """
 
-        def build_record(calls: Iterable[RecordAppCall], record_metadata: JSON):
+        def build_record(calls: Iterable[RecordAppCall], record_metadata: JSON, existing_record: Optional[Record] = None) -> Record:
             calls = list(calls)
 
             assert len(calls) > 0, "No information recorded in call."
@@ -869,7 +895,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             main_in = self.main_input(func, sig, bindings)
             main_out = self.main_output(func, sig, bindings, ret)
 
-            return Record(
+            updates = dict(
                 main_input=jsonify(main_in),
                 main_output=jsonify(main_out),
                 main_error=jsonify(error),
@@ -881,8 +907,15 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 meta=jsonify(record_metadata)
             )
 
+            if existing_record is not None:
+                existing_record.update(**updates)
+            else:
+                existing_record = Record(**updates)
+
+            return existing_record
+
         # Finishing record needs to be done in a thread lock, done there:
-        record = ctx.finish_record(build_record)
+        record = ctx.finish_record(build_record, existing_record=existing_record)
 
         if error is not None:
             # May block on DB.

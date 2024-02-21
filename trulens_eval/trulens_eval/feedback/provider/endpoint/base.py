@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 
 from collections import defaultdict
 from dataclasses import dataclass
@@ -421,6 +422,54 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         already_instrumented.add(method_name)
 
     @staticmethod
+    def track_all_costs(
+        __func: CallableMaybeAwaitable[A, T],
+        *args,
+        with_openai: bool = True,
+        with_hugs: bool = True,
+        with_litellm: bool = True,
+        with_bedrock: bool = True,
+        **kwargs
+    ) -> Tuple[T, Sequence[EndpointCallback]]:
+        """
+        Track costs of all of the apis we can currently track, over the
+        execution of thunk.
+        """
+
+        endpoints = []
+
+        for endpoint in Endpoint.ENDPOINT_SETUPS:
+            if locals().get(endpoint.arg_flag):
+                try:
+                    mod = __import__(
+                        endpoint.module_name, fromlist=[endpoint.class_name]
+                    )
+                    cls = safe_getattr(mod, endpoint.class_name)
+                except Exception:
+                    # If endpoint uses optional packages, will get either module
+                    # not found error, or we will have a dummy which will fail
+                    # at getattr. Skip either way.
+                    continue
+
+                try:
+                    e = cls()
+                    endpoints.append(e)
+
+                except Exception as e:
+                    logger.debug(
+                        "Could not initialize endpoint %s. "
+                        "Possibly missing key(s). "
+                        "trulens_eval will not track costs/usage of this endpoint. %s",
+                        cls.__name__,
+                        e,
+                    )
+
+        return Endpoint._track_costs(
+            __func, *args, with_endpoints=endpoints, **kwargs
+        )
+
+
+    @staticmethod
     async def atrack_all_costs(
         __func: CallableMaybeAwaitable[A, T],
         *args,
@@ -482,7 +531,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         execution of thunk.
         """
 
-        result, cbs = sync(Endpoint.atrack_all_costs,
+        result, cbs = Endpoint.track_all_costs(
             __func,
             *args,
             with_openai=with_openai,
@@ -599,6 +648,73 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # return others.
         return result, callbacks
 
+    @staticmethod
+    def _track_costs(
+        __func: CallableMaybeAwaitable[A, T],
+        *args,
+        with_endpoints: Optional[List[Endpoint]] = None,
+        **kwargs
+    ) -> Tuple[T, Sequence[EndpointCallback]]:
+        """
+        Root of all cost tracking methods. Runs the given `thunk`, tracking
+        costs using each of the provided endpoints' callbacks.
+        """
+
+        # Check to see if this call is within another _atrack_costs call:
+        endpoints: Dict[Type[EndpointCallback], List[Tuple[Endpoint, EndpointCallback]]] = \
+            get_first_local_in_call_stack(
+                key="endpoints",
+                func=Endpoint.__find_tracker,
+                offset=1
+            )
+
+        if endpoints is None:
+            # If not, lets start a new collection of endpoints here along with
+            # the callbacks for each. See type above.
+
+            endpoints = {}
+
+        else:
+            # We copy the dict here so that the outer call to _track_costs will
+            # have their own version unaffacted by our additions below. Once
+            # this frame returns, the outer frame will have its own endpoints
+            # again and any wrapped method will get that smaller set of
+            # endpoints.
+
+            # TODO: check if deep copy is needed given we are storing lists in
+            # the values and don't want to affect the existing ones here.
+            endpoints = dict(endpoints)
+
+        # Collect any new endpoints requested of us.
+        with_endpoints = with_endpoints or []
+
+        # Keep track of the new callback objects we create here for returning
+        # later.
+        callbacks = []
+
+        # Create the callbacks for the new requested endpoints only. Existing
+        # endpoints from other frames will keep their callbacks.
+        for endpoint in with_endpoints:
+            callback_class = endpoint.callback_class
+            callback = callback_class(endpoint=endpoint)
+
+            if callback_class not in endpoints:
+                endpoints[callback_class] = []
+
+            # And add them to the endpoints dict. This will be retrieved from
+            # locals of this frame later in the wrapped methods.
+            endpoints[callback_class].append((endpoint, callback))
+
+            callbacks.append(callback)
+
+        # Call the thunk and wait for result.
+        result: T = __func(*args, **kwargs)
+
+        # Return result and only the callbacks created here. Outer thunks might
+        # return others.
+        return result, callbacks
+
+
     async def atrack_cost(
         self, __func: CallableMaybeAwaitable[T], *args, **kwargs
     ) -> Tuple[T, EndpointCallback]:
@@ -614,9 +730,25 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         return result, callbacks[0]
 
+    def track_cost(
+        self, __func: CallableMaybeAwaitable[T], *args, **kwargs
+    ) -> Tuple[T, EndpointCallback]:
+        """
+        Tally only the usage performed within the execution of the given thunk.
+        Returns the thunk's result alongside the EndpointCallback object that
+        includes the usage information.
+        """
+
+        result, callbacks = Endpoint._track_costs(
+            __func, *args, with_endpoints=[self], **kwargs
+        )
+
+        return result, callbacks[0]
+
+
     @staticmethod
     def __find_tracker(f):
-        return id(f) == id(Endpoint._atrack_costs.__code__)
+        return id(f) == id(Endpoint._track_costs.__code__)
 
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
@@ -676,67 +808,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
         @functools.wraps(func)
-        async def tru_awrapper(*args, **kwargs):
-            logger.debug(
-                "Calling wrapped async %s for %s, iscoroutinefunction=%s, isasyncgenfunction=%s",
-                func.__name__,
-                self.name,
-                is_really_coroutinefunction(func),
-                inspect.isasyncgenfunction(func)
-            )
-
-            # Get the result of the wrapped function:
-
-            response = func(*args, **kwargs)
-            if isinstance(response, Awaitable):
-                response = await response
-
-            bindings = inspect.signature(func).bind(*args, **kwargs)
-
-            # Get all of the callback classes suitable for handling this call.
-            # Note that we stored this in the INSTRUMENT attribute of the
-            # wrapper method.
-            registered_callback_classes = getattr(tru_awrapper, INSTRUMENT)
-
-            # Look up the endpoints that are expecting to be notified and the
-            # callback tracking the tally. See Endpoint._atrack_costs for
-            # definition.
-            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-                get_first_local_in_call_stack(
-                    key="endpoints",
-                    func=self.__find_tracker,
-                    offset=0
-                )
-
-            # If wrapped method was not called from within _atrack_costs, we
-            # will get None here and do nothing but return wrapped function's
-            # response.
-            if endpoints is None:
-                logger.debug("No endpoints found.")
-                return response
-
-            for callback_class in registered_callback_classes:
-                logger.debug("Handling callback_class: %s.", callback_class)
-                if callback_class not in endpoints:
-                    logger.warning(
-                        "Callback class %s is registered for handling %s"
-                        " but there are no endpoints waiting to receive the result.",
-                        callback_class.__name__, func.__name__
-                    )
-                    continue
-
-                for endpoint, callback in endpoints[callback_class]:
-                    logger.debug("Handling endpoint %s.", endpoint)
-                    endpoint.handle_wrapped_call(
-                        func=func,
-                        bindings=bindings,
-                        response=response,
-                        callback=callback
-                    )
-
-            return response
-
-        @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
             logger.debug(
                 "Calling instrumented sync method %s of type %s, "
@@ -744,24 +815,79 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 "isasyncgeneratorfunction=%s",
                 func, type(func), is_really_coroutinefunction(func), inspect.isasyncgenfunction(func)
             )
-            return sync(tru_awrapper, *args, **kwargs)
 
-        for w in [tru_wrapper, tru_awrapper]:
-            # Set our tracking attribute to tell whether something is already
-            # instrumented onto both the sync and async version since either one
-            # could be returned from this method.
-            setattr(w, INSTRUMENT, [self.callback_class])
+            # Get the result of the wrapped function:
 
-        # Determine which of the wrapper variants to return and to annotate.
+            response = func(*args, **kwargs)
 
-        if is_really_coroutinefunction(func):
-            w = tru_awrapper
-        else:
-            w = tru_wrapper
+            def response_callback(response):
+                print(f"response_callback: {response}")
+
+                bindings = inspect.signature(func).bind(*args, **kwargs)
+
+                # Get all of the callback classes suitable for handling this call.
+                # Note that we stored this in the INSTRUMENT attribute of the
+                # wrapper method.
+                registered_callback_classes = getattr(tru_wrapper, INSTRUMENT)
+
+                # Look up the endpoints that are expecting to be notified and the
+                # callback tracking the tally. See Endpoint._atrack_costs for
+                # definition.
+                endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+                    get_first_local_in_call_stack(
+                        key="endpoints",
+                        func=self.__find_tracker,
+                        offset=0
+                    )
+
+                # If wrapped method was not called from within _atrack_costs, we
+                # will get None here and do nothing but return wrapped function's
+                # response.
+                if endpoints is None:
+                    logger.debug("No endpoints found.")
+                    return response
+
+                for callback_class in registered_callback_classes:
+                    logger.debug("Handling callback_class: %s.", callback_class)
+                    if callback_class not in endpoints:
+                        logger.warning(
+                            "Callback class %s is registered for handling %s"
+                            " but there are no endpoints waiting to receive the result.",
+                            callback_class.__name__, func.__name__
+                        )
+                        continue
+
+                    for endpoint, callback in endpoints[callback_class]:
+                        logger.debug("Handling endpoint %s.", endpoint)
+                        endpoint.handle_wrapped_call(
+                            func=func,
+                            bindings=bindings,
+                            response=response,
+                            callback=callback
+                        )
+
+            if isinstance(response, Awaitable):
+                async def capture_awaitable(response):
+                    response = await response
+                    response_callback(response)
+                    return response
+
+                return capture_awaitable(response)
+
+            else:
+                response_callback(response)
+                return response
+
+
+    
+        # Set our tracking attribute to tell whether something is already
+        # instrumented onto both the sync and async version since either one
+        # could be returned from this method.
+        setattr(tru_wrapper, INSTRUMENT, [self.callback_class])
 
         logger.debug("Instrumenting %s for %s.", func.__name__, self.name)
 
-        return w
+        return tru_wrapper
 
 
 class DummyEndpoint(Endpoint):
