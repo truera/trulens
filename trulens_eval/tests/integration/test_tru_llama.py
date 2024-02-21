@@ -23,7 +23,6 @@ class TestLlamaIndex(JSONTestCase):
 
     def setUp(self):
         check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
-
         from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
         import os
@@ -59,7 +58,7 @@ class TestLlamaIndex(JSONTestCase):
             )
             print("llm_response_sync=", llm_response_sync)
         record_sync = recording.get()
-
+        
         # llm response is probabilistic, so just test if async response is also a string. not that it is same as sync response.
         self.assertIsInstance(llm_response_async.response, str)
 
