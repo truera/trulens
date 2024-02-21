@@ -11,6 +11,7 @@ import logging
 from pprint import PrettyPrinter
 import queue
 import sys
+from types import ModuleType
 from typing import (Any, Awaitable, Callable, Dict, Generator, Generic,
                     Hashable, Iterator, Optional, Sequence, Type, TypeVar,
                     Union)
@@ -89,10 +90,10 @@ def class_name(obj: Union[Type, Any]) -> str:
 
     return str(obj)
 
-def module_name(obj: Union[types.ModuleType, Type, Any]) -> str:
+def module_name(obj: Union[ModuleType, Type, Any]) -> str:
     """Get the module name of the given module, class, or instance."""
 
-    if isinstance(obj, types.ModuleType):
+    if isinstance(obj, ModuleType):
         return obj.__name__
 
     if hasattr(obj, "__module__"):
