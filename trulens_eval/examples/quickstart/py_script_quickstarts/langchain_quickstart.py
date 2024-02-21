@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Langchain Quickstart
+# # 📓 Langchain Quickstart
 # 
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
 # 
@@ -11,11 +11,12 @@
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
-# In[ ]:
 
-# ! pip install trulens_eval==0.22.2 openai==1.3.7 langchain chromadb langchainhub bs4
 
-# In[ ]:
+# ! pip install trulens_eval==0.23.0 openai==1.3.7 langchain chromadb langchainhub bs4
+
+
+
 
 import os
 os.environ["OPENAI_API_KEY"] = "sk-..."
@@ -23,7 +24,7 @@ os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # ### Import from LangChain and TruLens
 
-# In[ ]:
+
 
 # Imports main tools:
 from trulens_eval import TruChain, Feedback, Tru
@@ -44,7 +45,7 @@ from langchain_core.runnables import RunnablePassthrough
 
 # ### Load documents
 
-# In[ ]:
+
 
 loader = WebBaseLoader(
     web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
@@ -59,7 +60,7 @@ docs = loader.load()
 
 # ### Create Vector Store
 
-# In[ ]:
+
 
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
@@ -76,7 +77,7 @@ vectorstore = Chroma.from_documents(
 
 # ### Create RAG
 
-# In[ ]:
+
 
 retriever = vectorstore.as_retriever()
 
@@ -96,14 +97,14 @@ rag_chain = (
 
 # ### Send your first request
 
-# In[ ]:
+
 
 rag_chain.invoke("What is Task Decomposition?")
 
 
 # ## Initialize Feedback Function(s)
 
-# In[ ]:
+
 
 from trulens_eval.feedback.provider import OpenAI
 import numpy as np
@@ -138,32 +139,31 @@ f_context_relevance = (
 
 # ## Instrument chain for logging with TruLens
 
-# In[ ]:
+
 
 tru_recorder = TruChain(rag_chain,
     app_id='Chain1_ChatApplication',
     feedbacks=[f_qa_relevance, f_context_relevance, f_groundedness])
 
-# In[ ]:
+
+
 
 with tru_recorder as recording:
     llm_response = rag_chain.invoke("What is Task Decomposition?")
 
-display(llm_response)
+print(llm_response)
 
 
 # ## Retrieve records and feedback
 
-# In[ ]:
+
 
 # The record of the app invocation can be retrieved from the `recording`:
 
 rec = recording.get() # use .get if only one record
 # recs = recording.records # use .records if multiple
 
-display(rec)
-
-# In[ ]:
+print(rec)
 
 
 
@@ -180,20 +180,22 @@ for feedback, feedback_result in rec.wait_for_feedback_results().items():
 # See more about wait_for_feedback_results:
 # help(rec.wait_for_feedback_results)
 
-# In[ ]:
+
+
 
 records, feedback = tru.get_records_and_feedback(app_ids=["Chain1_ChatApplication"])
 
 records.head()
 
-# In[ ]:
+
+
 
 tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])
 
 
 # ## Explore in a Dashboard
 
-# In[ ]:
+
 
 tru.run_dashboard() # open a local streamlit app to explore
 
