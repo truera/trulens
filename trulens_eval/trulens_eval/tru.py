@@ -14,8 +14,8 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Iterable, List, Optional,
-                    Sequence, Tuple, Union)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Union)
 import warnings
 
 import humanize
@@ -29,6 +29,7 @@ from trulens_eval import db
 from trulens_eval import schema
 from trulens_eval.database import sqlalchemy_db
 from trulens_eval.feedback import feedback
+from trulens_eval.utils import imports
 from trulens_eval.utils import notebook_utils
 from trulens_eval.utils import python
 from trulens_eval.utils import serial
@@ -144,22 +145,22 @@ class Tru(python.SingletonPerName):
         self,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
-        database_redact_keys: bool = False
+        database_redact_keys: bool = False,
     ):
 
         if python.safe_hasattr(self, "db"):
             if database_url is not None or database_file is not None:
                 logger.warning(
-                    f"Tru was already initialized. "
-                    f"Cannot change database_url={database_url} "
-                    f"or database_file={database_file} ."
+                    "Tru was already initialized. "
+                    "Cannot change database_url=%s "
+                    "or database_file=%s .", database_url, database_file
                 )
 
             # Already initialized by SingletonByName mechanism.
             return
 
-        assert None in (database_url, database_file), \
-            "Please specify at most one of `database_url` and `database_file`"
+        if None not in (database_url, database_file):
+            raise ValueError("Please specify at most one of `database_url` and `database_file`")
 
         if database_file:
             warnings.warn(
@@ -191,6 +192,7 @@ class Tru(python.SingletonPerName):
                 "See the `database_redact_keys` option of Tru` to prevent this."
             )
 
+    
     def Chain(
         self,
         chain: langchain.chains.base.Chain,
