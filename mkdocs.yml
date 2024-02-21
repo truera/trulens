@@ -62,13 +62,14 @@ plugins:
           options:
             extensions:
             - pydantic: {schema: true}
-            separate_signature: true
-            # show_signature: false
+
+            show_signature: true
             show_signature_annotations: true
             signature_crossrefs: true
+            separate_signature: true
 
-            # separate_signature: true
-            line_length: 80
+            line_length: 60
+
             docstring_style: google
             docstring_section_style: spacy
             
@@ -78,6 +79,7 @@ plugins:
             show_category_heading: true
             show_submodules: false
             group_by_category: true
+
             # summary: true
             show_source: false
             show_root_heading: true
@@ -87,18 +89,18 @@ plugins:
             allow_inspection: true
             # load_external_modules: true
             # unwrap_annotated: true
-            preload_modules:
-              # - __future__
-              # - builtins
-              # - datetime
-              # - pandas
+            #preload_modules:
+              #- __future__
+              #- builtins
+              #- datetime
+              #- pandas
               # - numpy # some error occurs
-              # - pydantic
-              # - llama_index
-              - typing
-              - typing_extensions
+              #- pydantic
+              #- llama_index
+              #- typing
+              #- typing_extensions
           paths:
-            #- trulens_explain
+            - trulens_explain
             - trulens_eval
           selection:
             filters:
@@ -222,9 +224,11 @@ nav:
             - Endpoint:
               - Base: trulens_eval/api/endpoint/base.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
+          - Instruments: trulens_eval/api/instruments.md
           - Utils: 
             - trulens_eval/api/utils/python.md
             - trulens_eval/api/utils/serial.md
+            - trulens_eval/api/utils/json.md
             - trulens_eval/api/utils/frameworks.md
             - trulens_eval/api/utils/utils.md
   - 🤝 Contributing:

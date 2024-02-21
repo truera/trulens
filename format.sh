@@ -12,4 +12,4 @@ fi
 
 echo "Formatting $FORMAT_PATH"
 isort $FORMAT_PATH
-yapf --style .style.yapf -r -i --verbose --parallel -r -i $FORMAT_PATH
+yapf --style .style.yapf -r -i --verbose --parallel -r -i $FORMAT_PATH -e .conda
