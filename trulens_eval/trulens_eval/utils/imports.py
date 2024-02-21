@@ -105,17 +105,26 @@ dependencies get installed and hopefully corrected:
         except DistributionNotFound as e:
             if is_optional:
                 logger.debug("""
-    Optional %s is not installed. Optional functionality will not be
-    available.
-    """, req.project_name
+Optional package %s is not installed. Related optional functionality will not be
+available.
+""", req.project_name
         )
 
             else:
                 raise ModuleNotFoundError(f"""
-Required package {req.project_name} is not installed. Please install it with:
-```bash
-pip install '{req}'
-```
+Required package {req.project_name} is not installed. Please install it with pip:
+
+    ```bash
+    pip install '{req}'
+    ```
+
+If your distribution is in a bad place beyond this package, you may need to
+reinstall trulens_eval so that all of the dependencies get installed:
+    
+    ```bash
+    pip uninstall -y trulens_eval
+    pip install trulens_eval
+    ```
 """) from e
 
 
