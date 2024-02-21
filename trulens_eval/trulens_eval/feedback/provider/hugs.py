@@ -473,12 +473,20 @@ class Huggingface(Provider):
         combined_input = f"{model_output} [SEP] {retrieved_text_chunks}"
         payload = {"inputs": combined_input}
 
-        response = self.endpoint.post(HUGS_HALLUCINATION_API_URL, json=payload)
-        if response.status_code != 200:
-            raise RuntimeError(f"Error in API request: {response.text} , please try again once the endpoint has restarted.")
-
-        output = response.json()
-        score = output[0][0]['score']
+        response = self.endpoint.post(url=HUGS_HALLUCINATION_API_URL, payload=payload)
+        if isinstance(response, list):
+            # Assuming the list contains the result, check if the first element has a 'score' key
+            if 'score' not in response[0]:
+                raise RuntimeError(f"Error in API request: {response}, please try again once the endpoint has restarted.")
+            # Extract the score from the first element
+            score = response[0]['score']
+        else:
+            # If response is not a list, check if it's a proper HTTP response object
+            if response.status_code != 200:
+                raise RuntimeError(f"Error in API request: {response.text}, please try again once the endpoint has restarted.")
+            # Extract the score from the JSON response
+            output = response.json()
+            score = output[0][0]['score']
         return score
 
 class Dummy(Huggingface):
