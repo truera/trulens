@@ -410,6 +410,101 @@ def get_llmprovider_tests(
     ]
 
 
+
+def get_huggingface_tests(h: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
+    return [
+        (
+            h.language_match,
+            dict(
+                text1="Brevity is the soul of wit",
+                text2="Brevity is the soul of wit"
+            ),1.0
+        ),
+        (
+            h.language_match,
+            dict(
+                text1="Brevity is the soul of wit",
+                text2="Amor, ch'a nullo amato amar perdona."
+            ),0.0
+        ),
+        (
+            h.positive_sentiment,
+            dict(
+                text="I like you,I love you"
+            ),1.0
+        ),
+        (
+            h.positive_sentiment,
+            dict(
+                text="I hate you."
+            ),0.0
+        ),
+        (
+            h.toxic,
+            dict(
+                text="I hate black people"
+            ),1.0
+        ),
+        (
+            h.toxic,
+            dict(
+                text="I love puppies"
+            ),0.0
+        ),
+        (
+            h._summarized_groundedness,
+            dict(
+                premise="A man, woman, and child enjoying themselves on a beach.",
+                hypothesis="A family of three is at the beach."
+            ),1.0
+        ),
+        (
+            h._summarized_groundedness,
+            dict(
+                premise="A man, woman, and child enjoying themselves on a beach.",
+                hypothesis="A family of three is at the mall shopping."
+            ),0.0
+        ),
+        (
+            h._doc_groundedness,
+            dict(
+                premise="I first thought that I liked the movie, but upon second thought it was actually disappointing. ",
+                hypothesis="The movie was bad."
+            ),1.0
+        ),
+        (
+            h._doc_groundedness,
+            dict(
+                premise="I first thought that I liked the movie, but upon second thought it was actually disappointing. ",
+                hypothesis="The movie was good."
+            ),0.0
+        ),
+        (
+            h.pii_detection,
+            dict(
+                text="John Doe's account is linked to the email address jane.doe@email.com"
+            ),1.0
+        ),
+        (
+            h.pii_detection,
+            dict(
+                text="sun is a star"
+            ),0.0
+        ),
+        (
+            h.pii_detection_with_cot_reasons,
+            dict(
+                text="John Doe's account is linked to the email address jane.doe@email.com"
+            ),1.0
+        ),
+        (
+            h.pii_detection_with_cot_reasons,
+            dict(
+                text="sun is a star"
+            ),0.0
+        ),
+    ]
+
 class TestProviders(TestCase):
 
     def setUp(self):
@@ -607,8 +702,113 @@ class TestProviders(TestCase):
                     f"{provider_name}-{model}: {total_tests}/{total_tests} tests passed."
                 )
 
+    @optional_test
     def test_hugs(self):
-        pass
+        """
+        Check that Huggingface moderation feedback functions produce a value in the
+        0-1 range only. And also make sure to check the reason of feedback function. 
+        Only checks each feedback function once.
+        """
+
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        h = Huggingface()
+
+        tests = get_huggingface_tests(h)
+        funcs = set()
+
+        for imp, args, _ in tests:
+
+            # only one test per feedback function:
+            if imp in funcs:
+                continue
+            funcs.add(imp)
+
+            with self.subTest(f"{imp.__name__}-{args}"):
+                if ("language_match" in imp.__name__) or ("pii_detection_with_cot_reasons" in imp.__name__):
+                    result = imp(**args)
+                    self.assertIsInstance(
+                        result, tuple, "Result should be a tuple."
+                    )
+                    self.assertEqual(
+                        len(result), 2,
+                        "Tuple should have two elements."
+                    )
+                    score, details = result
+                    self.assertIsInstance(
+                        score, float,
+                        "First element of tuple should be a float."
+                    )
+                    self.assertGreaterEqual(
+                        score, 0.0,
+                        "First element of tuple should be greater than or equal to 0.0."
+                    )
+                    self.assertLessEqual(
+                        score, 1.0,
+                        "First element of tuple should be less than or equal to 1.0."
+                    )
+                    self.assertIsInstance(
+                        details, dict,
+                        "Second element of tuple should be a dict."
+                    )
+                else:
+                    result = imp(**args)
+                    self.assertGreaterEqual(
+                        result, 0.0,
+                        "First element of tuple should be greater than or equal to 0.0."
+                    )
+                    self.assertLessEqual(
+                        result, 1.0,
+                        "First element of tuple should be less than or equal to 1.0."
+                    )
+
+    @optional_test
+    def test_hugs_calibration(self):
+        """
+        Check that Huggingface moderation feedback functions produce reasonable
+        values.
+        """
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        h = Huggingface()
+
+        tests = get_huggingface_tests(h)
+
+        failed_tests = 0
+        total_tests = 0
+        failed_subtests = []
+
+        for imp, args, expected in tests:
+            subtest_name = f"{imp.__name__}-{args}"
+            if ("language_match" in imp.__name__) or ("pii_detection_with_cot_reasons" in imp.__name__):
+                actual = imp(
+                    **args
+                )[0] 
+            else:
+                actual = imp(**args)
+            with self.subTest(subtest_name):
+                total_tests += 1
+                try:
+                    self.assertAlmostEqual(actual, expected, delta=0.2)
+                except AssertionError:
+                    failed_tests += 1
+                    failed_subtests.append(
+                        (subtest_name, actual, expected)
+                    )
+
+        if failed_tests > 0:
+            failed_subtests_str = ", ".join(
+                [
+                    f"{name} (actual: {act}, expected: {exp})"
+                    for name, act, exp in failed_subtests
+                ]
+            )
+            self.fail(
+                f"{h}: {failed_tests}/{total_tests} tests failed ({failed_subtests_str})"
+            )
+        else:
+            print(
+                f"{h}: {total_tests}/{total_tests} tests passed."
+            )
+
 
 
 if __name__ == '__main__':
