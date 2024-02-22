@@ -30,7 +30,7 @@ class LiteLLMCallback(EndpointCallback):
 
     def handle_generation(self, response: pydantic.BaseModel) -> None:
         """Get the usage information from litellm response's usage field."""
-        
+
         response = response.model_dump()
 
         usage = response['usage']
@@ -51,10 +51,7 @@ class LiteLLMCallback(EndpointCallback):
                 ("n_prompt_tokens", "prompt_tokens"),
                 ("n_completion_tokens", "completion_tokens"),
             ]:
-                setattr(
-                    self.cost, cost_field,
-                    usage.get(litellm_field, 0)
-                )
+                setattr(self.cost, cost_field, usage.get(litellm_field, 0))
 
         if self.endpoint.litellm_provider not in ["openai"]:
             # The total cost does not seem to be properly tracked except by
@@ -75,7 +72,6 @@ class LiteLLMEndpoint(Endpoint):
     there will be double counting.
     """
 
-
     def __init__(self, litellm_provider: str = "openai", **kwargs):
         if hasattr(self, "name"):
             # singleton already made
@@ -84,10 +80,7 @@ class LiteLLMEndpoint(Endpoint):
         kwargs['name'] = "litellm"
         kwargs['callback_class'] = LiteLLMCallback
 
-        super().__init__(
-            litellm_provider=litellm_provider,
-            **kwargs
-        )
+        super().__init__(litellm_provider=litellm_provider, **kwargs)
 
         import litellm
         self._instrument_module_members(litellm, "completion")

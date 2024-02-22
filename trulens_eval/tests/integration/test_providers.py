@@ -410,7 +410,6 @@ def get_llmprovider_tests(
     ]
 
 
-
 def get_huggingface_tests(h: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
     return [
         (
@@ -418,92 +417,69 @@ def get_huggingface_tests(h: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
             dict(
                 text1="Brevity is the soul of wit",
                 text2="Brevity is the soul of wit"
-            ),1.0
+            ), 1.0
         ),
         (
             h.language_match,
             dict(
                 text1="Brevity is the soul of wit",
                 text2="Amor, ch'a nullo amato amar perdona."
-            ),0.0
+            ), 0.0
         ),
-        (
-            h.positive_sentiment,
-            dict(
-                text="I like you,I love you"
-            ),1.0
-        ),
-        (
-            h.positive_sentiment,
-            dict(
-                text="I hate you."
-            ),0.0
-        ),
-        (
-            h.toxic,
-            dict(
-                text="I hate black people"
-            ),1.0
-        ),
-        (
-            h.toxic,
-            dict(
-                text="I love puppies"
-            ),0.0
-        ),
+        (h.positive_sentiment, dict(text="I like you,I love you"), 1.0),
+        (h.positive_sentiment, dict(text="I hate you."), 0.0),
+        (h.toxic, dict(text="I hate black people"), 1.0),
+        (h.toxic, dict(text="I love puppies"), 0.0),
         (
             h._summarized_groundedness,
             dict(
-                premise="A man, woman, and child enjoying themselves on a beach.",
+                premise=
+                "A man, woman, and child enjoying themselves on a beach.",
                 hypothesis="A family of three is at the beach."
-            ),1.0
+            ), 1.0
         ),
         (
             h._summarized_groundedness,
             dict(
-                premise="A man, woman, and child enjoying themselves on a beach.",
+                premise=
+                "A man, woman, and child enjoying themselves on a beach.",
                 hypothesis="A family of three is at the mall shopping."
-            ),0.0
+            ), 0.0
         ),
         (
             h._doc_groundedness,
             dict(
-                premise="I first thought that I liked the movie, but upon second thought it was actually disappointing. ",
+                premise=
+                "I first thought that I liked the movie, but upon second thought it was actually disappointing. ",
                 hypothesis="The movie was bad."
-            ),1.0
+            ), 1.0
         ),
         (
             h._doc_groundedness,
             dict(
-                premise="I first thought that I liked the movie, but upon second thought it was actually disappointing. ",
+                premise=
+                "I first thought that I liked the movie, but upon second thought it was actually disappointing. ",
                 hypothesis="The movie was good."
-            ),0.0
+            ), 0.0
         ),
         (
             h.pii_detection,
             dict(
-                text="John Doe's account is linked to the email address jane.doe@email.com"
-            ),1.0
+                text=
+                "John Doe's account is linked to the email address jane.doe@email.com"
+            ), 1.0
         ),
-        (
-            h.pii_detection,
-            dict(
-                text="sun is a star"
-            ),0.0
-        ),
+        (h.pii_detection, dict(text="sun is a star"), 0.0),
         (
             h.pii_detection_with_cot_reasons,
             dict(
-                text="John Doe's account is linked to the email address jane.doe@email.com"
-            ),1.0
+                text=
+                "John Doe's account is linked to the email address jane.doe@email.com"
+            ), 1.0
         ),
-        (
-            h.pii_detection_with_cot_reasons,
-            dict(
-                text="sun is a star"
-            ),0.0
-        ),
+        (h.pii_detection_with_cot_reasons, dict(text="sun is a star"), 0.0),
     ]
+
 
 class TestProviders(TestCase):
 
@@ -724,14 +700,15 @@ class TestProviders(TestCase):
             funcs.add(imp)
 
             with self.subTest(f"{imp.__name__}-{args}"):
-                if ("language_match" in imp.__name__) or ("pii_detection_with_cot_reasons" in imp.__name__):
+                if ("language_match"
+                        in imp.__name__) or ("pii_detection_with_cot_reasons"
+                                             in imp.__name__):
                     result = imp(**args)
                     self.assertIsInstance(
                         result, tuple, "Result should be a tuple."
                     )
                     self.assertEqual(
-                        len(result), 2,
-                        "Tuple should have two elements."
+                        len(result), 2, "Tuple should have two elements."
                     )
                     score, details = result
                     self.assertIsInstance(
@@ -778,10 +755,10 @@ class TestProviders(TestCase):
 
         for imp, args, expected in tests:
             subtest_name = f"{imp.__name__}-{args}"
-            if ("language_match" in imp.__name__) or ("pii_detection_with_cot_reasons" in imp.__name__):
-                actual = imp(
-                    **args
-                )[0] 
+            if ("language_match"
+                    in imp.__name__) or ("pii_detection_with_cot_reasons"
+                                         in imp.__name__):
+                actual = imp(**args)[0]
             else:
                 actual = imp(**args)
             with self.subTest(subtest_name):
@@ -790,9 +767,7 @@ class TestProviders(TestCase):
                     self.assertAlmostEqual(actual, expected, delta=0.2)
                 except AssertionError:
                     failed_tests += 1
-                    failed_subtests.append(
-                        (subtest_name, actual, expected)
-                    )
+                    failed_subtests.append((subtest_name, actual, expected))
 
         if failed_tests > 0:
             failed_subtests_str = ", ".join(
@@ -805,10 +780,7 @@ class TestProviders(TestCase):
                 f"{h}: {failed_tests}/{total_tests} tests failed ({failed_subtests_str})"
             )
         else:
-            print(
-                f"{h}: {total_tests}/{total_tests} tests passed."
-            )
-
+            print(f"{h}: {total_tests}/{total_tests} tests passed.")
 
 
 if __name__ == '__main__':

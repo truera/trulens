@@ -197,11 +197,15 @@ class LLMProvider(Provider):
 
                 for line in response.split('\n'):
                     if "Criteria:" in line:
-                        criteria_lines.append(line.split("Criteria:", 1)[1].strip())
+                        criteria_lines.append(
+                            line.split("Criteria:", 1)[1].strip()
+                        )
                         collecting_criteria = True
                         collecting_evidence = False
                     elif "Supporting Evidence:" in line:
-                        supporting_evidence_lines.append(line.split("Supporting Evidence:", 1)[1].strip())
+                        supporting_evidence_lines.append(
+                            line.split("Supporting Evidence:", 1)[1].strip()
+                        )
                         collecting_evidence = True
                         collecting_criteria = False
                     elif collecting_criteria:
@@ -216,7 +220,8 @@ class LLMProvider(Provider):
                             collecting_evidence = False
 
                 criteria = "\n".join(criteria_lines).strip()
-                supporting_evidence = "\n".join(supporting_evidence_lines).strip()
+                supporting_evidence = "\n".join(supporting_evidence_lines
+                                               ).strip()
             reasons = {
                 'reason':
                     (
