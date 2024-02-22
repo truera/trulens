@@ -31,14 +31,10 @@ jobs:
 
     strategy:
       matrix:
-        docs_notebooks:
+        latest:
+          pythonVersion: "3.11"
           condaEnvFileSuffix: "trulens-llm"
-          requirementsFile: "tests/docs_notebooks/requirements.txt"
-          testSubdirectory: "tests/docs_notebooks"
-        integrations:
-          condaEnvFileSuffix: "trulens-llm"
-          requirementsFile: "tests/docs_notebooks/requirements.txt"
-          testSubdirectory: "tests/integration"
+  
 
     steps:
       - checkout: self
@@ -65,7 +61,7 @@ jobs:
           source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
           pip install -e .
-          pip install -r $(requirementsFile)
+          pip install -r tests/docs_notebooks/requirements.txt
           pip install yapf==0.32.0
           pip install isort==5.10.1
           pip install ipykernel
@@ -107,6 +103,7 @@ jobs:
 
       - bash: |
           source activate $(condaEnvFileSuffix)
+          echo "$(python --version)"
           echo "$(pip list)"
         displayName: Pip list
 
@@ -114,8 +111,24 @@ jobs:
           source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
           
-          python -m pytest $(testSubdirectory)
-        displayName: Run tests
+          python -m pytest tests/integration
+
+        displayName: Run integration tests
+        env:
+          OPENAI_API_KEY: $(OPENAI_API_KEY)
+          HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
+          PINECONE_API_KEY: $(PINECONE_API_KEY)
+          PINECONE_ENV: $(PINECONE_ENV)
+          HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
+
+
+      - bash: |
+          source activate $(condaEnvFileSuffix)
+          cd ./trulens_eval
+          
+          python -m pytest tests/docs_notebooks
+
+        displayName: Run notebook tests
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
           HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
