@@ -15,6 +15,7 @@ from types import ModuleType
 from typing import (Any, Awaitable, Callable, Dict, Generator, Generic,
                     Hashable, Iterator, Optional, Sequence, Type, TypeVar,
                     Union)
+import typing
 
 T = TypeVar("T")
 
@@ -201,6 +202,14 @@ def safe_hasattr(obj: Any, k: str) -> bool:
     else:
         return True
 
+def safe_issubclass(cls: Type, parent: Type) -> bool:
+    """Check if the given class is a subclass of the given parent class."""
+
+    origin = typing.get_origin(cls)
+    if origin is None:
+        return issubclass(cls, parent)
+    
+    return issubclass(origin, parent)
 
 # Function utilities.
 
