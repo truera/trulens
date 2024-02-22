@@ -23,10 +23,13 @@ class TestLlamaIndex(JSONTestCase):
 
     def setUp(self):
         check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
-        from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
-
         import os
-        os.system('wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/')
+
+        from llama_index.core import SimpleDirectoryReader
+        from llama_index.core import VectorStoreIndex
+        os.system(
+            'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
+        )
 
         documents = SimpleDirectoryReader("data").load_data()
         self.index = VectorStoreIndex.from_documents(documents)
@@ -58,7 +61,7 @@ class TestLlamaIndex(JSONTestCase):
             )
             print("llm_response_sync=", llm_response_sync)
         record_sync = recording.get()
-        
+
         # llm response is probabilistic, so just test if async response is also a string. not that it is same as sync response.
         self.assertIsInstance(llm_response_async.response, str)
 
@@ -74,7 +77,7 @@ class TestLlamaIndex(JSONTestCase):
                     "start_time",
                     "end_time",
                     "record_id",
-                    "output" # response is not deterministic, so cannot easily compare across runs
+                    "output"  # response is not deterministic, so cannot easily compare across runs
                 ]
             )
         )

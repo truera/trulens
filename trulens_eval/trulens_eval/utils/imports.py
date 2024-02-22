@@ -17,7 +17,6 @@ from pkg_resources import DistributionNotFound
 from pkg_resources import get_distribution
 from pkg_resources import VersionConflict
 
-
 from trulens_eval import __name__ as trulens_name
 
 logger = logging.getLogger(__name__)
@@ -61,7 +60,7 @@ def check_imports(ignore_version_mismatch: bool = False):
             get_distribution(req)
 
         except VersionConflict as e:
-            
+
             message = f"Package {req.project_name} is installed but has a version conflict:\n\t{e}\n"
 
             if is_optional:
@@ -84,7 +83,7 @@ installing a compatible version with:
     pip install '{req}'
     ```
 """
-                
+
             message += """
 If you are running trulens_eval in a notebook, you may need to restart the
 kernel after resolving the conflict. If your distribution is in a bad place
@@ -104,14 +103,16 @@ dependencies get installed and hopefully corrected:
 
         except DistributionNotFound as e:
             if is_optional:
-                logger.debug("""
+                logger.debug(
+                    """
 Optional package %s is not installed. Related optional functionality will not be
 available.
 """, req.project_name
-        )
+                )
 
             else:
-                raise ModuleNotFoundError(f"""
+                raise ModuleNotFoundError(
+                    f"""
 Required package {req.project_name} is not installed. Please install it with pip:
 
     ```bash
@@ -125,7 +126,8 @@ reinstall trulens_eval so that all of the dependencies get installed:
     pip uninstall -y trulens_eval
     pip install trulens_eval
     ```
-""") from e
+"""
+                ) from e
 
 
 def pin_spec(r: pkg_resources.Requirement) -> pkg_resources.Requirement:
@@ -432,7 +434,7 @@ class OptionalImports(object):
             frame = inspect.currentframe().f_back
             while frame.f_code == self.__import__.__code__:
                 frame = frame.f_back
-            
+
             module_name = frame.f_globals["__name__"]
 
             logger.debug("Module not found %s in %s.", name, module_name)
@@ -478,14 +480,10 @@ class OptionalImports(object):
         # Re-raise appropriate exception.
 
         if isinstance(exc_value, ModuleNotFoundError):
-            exc_value = ModuleNotFoundError(
-                self.messages.module_not_found
-            )
+            exc_value = ModuleNotFoundError(self.messages.module_not_found)
 
         elif isinstance(exc_value, ImportError):
-            exc_value = ImportError(
-                self.messages.import_error
-            )
+            exc_value = ImportError(self.messages.import_error)
 
         else:
             raise exc_value

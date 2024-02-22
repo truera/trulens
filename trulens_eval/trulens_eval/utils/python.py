@@ -11,9 +11,10 @@ import logging
 from pprint import PrettyPrinter
 import queue
 import sys
-from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
-                    Sequence, Type, TypeVar)
-
+from typing import (
+    Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
+    TypeVar
+)
 
 if sys.version_info >= (3, 9):
     Future = futures.Future
@@ -52,6 +53,7 @@ else:
         In python < 3.9, a sublcass of [queue.Queue][] with
         `Generic[A]` is used instead.
         """
+
 
 if sys.version_info >= (3, 10):
     import types
@@ -392,6 +394,7 @@ def get_first_local_in_call_stack(
 
 T = TypeVar("T")
 
+
 def class_name(cls):
     """Get the class name of the given class or instance."""
 
@@ -399,6 +402,7 @@ def class_name(cls):
         return cls.__name__
     else:
         return cls.__class__.__name__
+
 
 class SingletonPerName(Generic[T]):
     """

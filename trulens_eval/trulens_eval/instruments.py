@@ -745,7 +745,8 @@ class Instrument(object):
         # Recursively instrument inner components
         if hasattr(obj, '__dict__'):
             for attr_name, attr_value in obj.__dict__.items():
-                if any(isinstance(attr_value, cls) for cls in self.include_classes):
+                if any(isinstance(attr_value, cls)
+                       for cls in self.include_classes):
                     inner_query = query[attr_name]
                     self.instrument_object(attr_value, inner_query, done)
 
