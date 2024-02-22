@@ -13,6 +13,10 @@ from pprint import PrettyPrinter
 from typing import Any, Dict, Optional, Sequence, Type, Union
 
 import pkg_resources
+from pkg_resources import DistributionNotFound
+from pkg_resources import get_distribution
+from pkg_resources import VersionConflict
+
 
 from trulens_eval import __name__ as trulens_name
 
@@ -39,6 +43,89 @@ optional_packages = requirements_of_file(
 )
 
 all_packages = {**required_packages, **optional_packages}
+
+
+def check_imports(ignore_version_mismatch: bool = False):
+    """Check required and optional package versions.
+
+    Args:
+        ignore_version_mismatch: If set, will not raise an error if a
+            version mismatch is found in a required package. Regardless of
+            this setting, mismatch in an optional package is a warning.
+    """
+
+    for n, req in all_packages.items():
+        is_optional = n in optional_packages
+
+        try:
+            get_distribution(req)
+
+        except VersionConflict as e:
+            
+            message = f"Package {req.project_name} is installed but has a version conflict:\n\t{e}\n"
+
+            if is_optional:
+                message += f"""
+This package is optional for trulens_eval so this may not be a problem but if
+you need to use the related optional features and find there are errors, you
+will need to resolve the conflict:
+
+    ```bash
+    pip install '{req}'
+    ```
+"""
+
+            else:
+                message += f"""
+This package is required for trulens_eval. Please resolve the conflict by
+installing a compatible version with:
+
+    ```bash
+    pip install '{req}'
+    ```
+"""
+                
+            message += """
+If you are running trulens_eval in a notebook, you may need to restart the
+kernel after resolving the conflict. If your distribution is in a bad place
+beyond this package, you may need to reinstall trulens_eval so that all of the
+dependencies get installed and hopefully corrected:
+    
+    ```bash
+    pip uninstall -y trulens_eval
+    pip install trulens_eval
+    ```
+"""
+
+            if (not is_optional) and (not ignore_version_mismatch):
+                raise VersionConflict(message) from e
+            else:
+                logger.warning(message)
+
+        except DistributionNotFound as e:
+            if is_optional:
+                logger.debug("""
+Optional package %s is not installed. Related optional functionality will not be
+available.
+""", req.project_name
+        )
+
+            else:
+                raise ModuleNotFoundError(f"""
+Required package {req.project_name} is not installed. Please install it with pip:
+
+    ```bash
+    pip install '{req}'
+    ```
+
+If your distribution is in a bad place beyond this package, you may need to
+reinstall trulens_eval so that all of the dependencies get installed:
+    
+    ```bash
+    pip uninstall -y trulens_eval
+    pip install trulens_eval
+    ```
+""") from e
 
 
 def pin_spec(r: pkg_resources.Requirement) -> pkg_resources.Requirement:
@@ -86,7 +173,7 @@ def format_import_errors(
             requirements.append(str(all_packages[pkg]))
             requirements_pinned.append(str(pin_spec(all_packages[pkg])))
         else:
-            print(f"WARNING: package {pkg} not present in requirements.")
+            logger.warning("Package %s not present in requirements.", pkg)
             requirements.append(pkg)
 
     packs = ','.join(packages)
@@ -100,7 +187,9 @@ def format_import_errors(
 {','.join(packages)} {pack_s} {is_are} required for {purpose}.
 You should be able to install {it_them} with pip:
 
+    ```bash
     pip install {' '.join(map(lambda a: f'"{a}"', requirements))}
+    ```
 """
     )
 
@@ -110,11 +199,15 @@ You have {packs} installed but we could not import the required
 components. There may be a version incompatibility. Please try installing {this_these}
 exact {pack_s} with pip: 
 
-  pip install {' '.join(map(lambda a: f'"{a}"', requirements_pinned))}
+    ```bash
+    pip install {' '.join(map(lambda a: f'"{a}"', requirements_pinned))}
+    ```
 
 Alternatively, if you do not need {packs}, uninstall {it_them}:
 
-  pip uninstall '{' '.join(packages)}'
+    ```bash
+    pip uninstall '{' '.join(packages)}'
+    ```
 """
     )
 
