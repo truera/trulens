@@ -63,9 +63,10 @@ various classes.
 
 Most if not all langchain components use pydantic which imposes some
 restrictions but also provides some utilities. Classes inheriting
-`pydantic.BaseModel` do not allow defining new attributes but existing
-attributes including those provided by pydantic itself can be overwritten (like
-dict, for example). Presently, we override methods with instrumented versions.
+[BaseModel][pydantic.BaseModel] do not allow defining new attributes but
+existing attributes including those provided by pydantic itself can be
+overwritten (like dict, for example). Presently, we override methods with
+instrumented versions.
 
 #### Alternatives
 
@@ -114,14 +115,15 @@ tools as App Data (see above).
 - The same method call with the same `path` may be recorded multiple times in a
   `Record` if the method makes use of multiple of its versions in the class
   hierarchy (i.e. an extended class calls its parents for part of its task). In
-  these circumstances, the `method` field of `RecordAppCallMethod` will
+  these circumstances, the `method` field of
+  [RecordAppCallMethod][trulens_eval.schema.RecordAppCallMethod] will
   distinguish the different versions of the method.
 
 - Thread-safety -- it is tricky to use global data to keep track of instrumented
   method calls in presence of multiple threads. For this reason we do not use
   global data and instead hide instrumenting data in the call stack frames of
   the instrumentation methods. See
-  `utils/python.py:get_all_local_in_call_stack`.
+  [get_all_local_in_call_stack][trulens_eval.utils.python.get_all_local_in_call_stack].
 
 - Generators and Awaitables -- If an instrumented call produces a generator or
   awaitable, we cannot produce the full record right away. We instead create a
@@ -135,29 +137,33 @@ tools as App Data (see above).
 Threads do not inherit call stacks from their creator. This is a problem due to
 our reliance on info stored on the stack. Therefore we have a limitation:
 
-- **Limitation**: Threads need to be started using the utility class `TP` or the
-  `ThreadPoolExecutor` also defined in `utils/threading.py` in order for
-  instrumented methods called in a thread to be tracked. As we rely on call
-  stack for call instrumentation we need to preserve the stack before a thread
-  start which python does not do. 
+- **Limitation**: Threads need to be started using the utility class
+  [TP][trulens_eval.utils.threading.TP] or
+  [ThreadPoolExecutor][trulens_eval.utils.threading.ThreadPoolExecutor] also
+  defined in `utils/threading.py` in order for instrumented methods called in a
+  thread to be tracked. As we rely on call stack for call instrumentation we
+  need to preserve the stack before a thread start which python does not do. 
 
 #### Async
 
-Similar to threads, code run as part of a `asyncio.Task` does not inherit the
-stack of the creator. Our current solution instruments `asyncio.new_event_loop`
-to make sure all tasks that get created in `async` track the stack of their
-creator. This is done in `utils/python.py:_new_event_loop` . The function
-`stack_with_tasks` is then used to integrate this information with the normal
-caller stack when needed. This may cause incompatibility issues when other tools
-use their own event loops or interfere with this instrumentation in other ways.
-Note that some async functions that seem to not involve `Task` do use tasks,
-such as `gather`.
+Similar to threads, code run as part of a [asyncio.Task][] does not inherit
+the stack of the creator. Our current solution instruments
+[asyncio.new_event_loop][] to make sure all tasks that get created
+in `async` track the stack of their creator. This is done in
+[tru_new_event_loop][trulens_eval.utils.python.tru_new_event_loop] . The
+function [stack_with_tasks][trulens_eval.utils.python.stack_with_tasks] is then
+used to integrate this information with the normal caller stack when needed.
+This may cause incompatibility issues when other tools use their own event loops
+or interfere with this instrumentation in other ways. Note that some async
+functions that seem to not involve [Task][asyncio.Task] do use tasks, such as
+[gather][asyncio.gather].
 
-- **Limitation**: `async.Tasks` must be created via our `task_factory` as per
-  `utils/python.py:task_factory_with_stack`. This includes tasks created by
-  function such as `gather`. This limitation is not expected to be a problem
-  given our instrumentation except if other tools are used that modify `async`
-  in some ways.
+- **Limitation**: [Task][asyncio.Task]s must be created via our `task_factory`
+  as per
+  [task_factory_with_stack][trulens_eval.utils.python.task_factory_with_stack].
+  This includes tasks created by function such as [asyncio.gather][]. This
+  limitation is not expected to be a problem given our instrumentation except if
+  other tools are used that modify `async` in some ways.
 
 #### Limitations
 
@@ -176,8 +182,9 @@ such as `gather`.
 - Some apps cannot be serialized/jsonized. Sequential app is an example. This is
   a limitation of langchain itself.
 
-- Instrumentation relies on CPython specifics, making heavy use of the `inspect`
-  module which is not expected to work with other Python implementations.
+- Instrumentation relies on CPython specifics, making heavy use of the
+  [inspect][] module which is not expected to work with other Python
+  implementations.
 
 #### Alternatives
 
@@ -208,20 +215,20 @@ stack for specific frames:
   special handling of each thread created to make sure it keeps a hold of the
   stack prior to thread creation. Right now we do this in our threading utility
   class TP but a more complete solution may be the instrumentation of
-  threading.Thread class.
+  [threading.Thread][] class.
 
 #### Alternatives
 
-- `contextvars` -- langchain uses these to manage contexts such as those used
+- [contextvars][] -- langchain uses these to manage contexts such as those used
   for instrumenting/tracking LLM usage. These can be used to manage call stack
   information like we do. The drawback is that these are not threadsafe or at
   least need instrumenting thread creation. We have to do a similar thing by
   requiring threads created by our utility package which does stack management
   instead of contextvar management.
 
-  TODO(piotrm): it seems to be standard thing to do to copy the contextvars into
-  new threads so it might be a better idea to use contextvars instead of stack
-  inspection.
+    NOTE(piotrm): it seems to be standard thing to do to copy the contextvars into
+    new threads so it might be a better idea to use contextvars instead of stack
+    inspection.
 """
 
 from __future__ import annotations

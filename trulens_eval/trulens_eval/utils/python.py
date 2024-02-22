@@ -263,6 +263,10 @@ def caller_frame(offset=0) -> 'frame':
 def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence['frame']:
     """
     A task factory that annotates created tasks with stacks of their parents.
+    
+    All of such annotated stacks can be retrieved with
+    [stack_with_tasks][trulens_eval.utils.python.stack_with_tasks] as one merged
+    stack.
     """
 
     parent_task = asyncio.current_task(loop=loop)
@@ -280,16 +284,21 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence['frame']:
 
 
 # Instrument new_event_loop to set the above task_factory upon creation:
-original_new_event_loop = asyncio.events.new_event_loop
+original_new_event_loop = asyncio.new_event_loop
 
 
-def _new_event_loop():
+def tru_new_event_loop():
+    """
+    Replacement for [new_event_loop][asyncio.new_event_loop] that sets
+    the task factory to make tasks that copy the stack from their creators.
+    """
+
     loop = original_new_event_loop()
     loop.set_task_factory(task_factory_with_stack)
     return loop
 
 
-asyncio.events.new_event_loop = _new_event_loop
+asyncio.new_event_loop = tru_new_event_loop
 
 
 def get_task_stack(task: asyncio.Task) -> Sequence['frame']:
@@ -371,19 +380,36 @@ def get_all_local_in_call_stack(
     offset: Optional[int] = 1,
     skip: Optional[Any] = None  # really frame
 ) -> Iterator[Any]:
-    """
-    Get the value of the local variable named `key` in the stack at all of the
-    frames executing a function which `func` recognizes (returns True on)
-    starting from the top of the stack except `offset` top frames. If `skip`
-    frame is provided, it is skipped as well. Returns None if `func` does not
-    recognize the correct function. Raises RuntimeError if a function is
-    recognized but does not have `key` in its locals.
+    """Find locals in call stack by name.
+    
+    Args:
+        key: The name of the local variable to look for.
+        
+        func: Recognizer of the function to find in the call stack.
+        
+        offset: The number of top frames to skip.
+        
+        skip: A frame to skip as well.
 
-    This method works across threads as long as they are started using the TP
-    class above.
+    !!! Note
+    
+        `offset` is unreliable for skipping the intended frame when operating
+        with async tasks. In those cases, the `skip` argument is more reliable.
 
-    NOTE: `offset` is unreliable for skipping the intended frame when operating
-    with async tasks. In those cases, the `skip` argument is more reliable.
+    Returns:
+        An iterator over the values of the local variable named `key` in the
+            stack at all of the frames executing a function which `func` recognizes
+            (returns True on) starting from the top of the stack except `offset` top
+            frames.
+
+            Returns None if `func` does not recognize any function in the stack.
+
+    Raises:
+        RuntimeError: Raised if a function is recognized but does not have `key`
+            in its locals.
+
+    This method works across threads as long as they are started using
+    [TP][trulens_eval.utils.threading.TP].
     """
 
     frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
@@ -601,4 +627,4 @@ class SingletonPerName(Generic[T]):
             del SingletonPerName._id_to_name_map[id(self)]
             del SingletonPerName._instances[self.__class__.__name__, name]
         else:
-            logger.warning(f"Instance {self} not found in our records.")
+            logger.warning("Instance %s not found in our records.", self)

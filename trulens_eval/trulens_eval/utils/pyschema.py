@@ -5,13 +5,14 @@ In order to serialize (and optionally deserialize) python entities while still
 being able to inspect them in their serialized form, we employ several storage
 classes that mimic basic python entities:
 
-Serializable representation | Python entity
-----------------------------+------------------
-Class                       | (python) class
-Module                      | (python) module
-Obj                         | (python) object
-Function                    | (python) function
-Method                      | (python) method
+| Serializable representation | Python entity |
+| --- | --- |
+| Class    | (python) class    |
+| Module   | (python) module   |
+| Obj      | (python) object   |
+| Function | (python) function |
+| Method   | (python) method   |
+
 """
 
 from __future__ import annotations
