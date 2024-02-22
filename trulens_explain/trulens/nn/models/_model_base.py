@@ -148,11 +148,10 @@ class ModelWrapper(AbstractBaseClass):
         attribution_cut: Optional[Cut] = None,
         intervention: InterventionLike = None,
         **kwargs
-    ) -> Union[
-            ArgsLike[TensorLike],  # attribution_cut is None
-            Tuple[ArgsLike[TensorLike],
-                  ArgsLike[TensorLike]]  # attribution_cut is not None
-    ]:
+    ) -> Union[ArgsLike[TensorLike],  # attribution_cut is None
+               Tuple[ArgsLike[TensorLike],
+                     ArgsLike[TensorLike]]  # attribution_cut is not None
+              ]:
         """
         **_Used internally by `AttributionMethod`._**
 

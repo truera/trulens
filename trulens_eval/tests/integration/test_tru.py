@@ -147,10 +147,13 @@ class TestTru(TestCase):
         # Starter example of
         # https://docs.llamaindex.ai/en/latest/getting_started/starter_example.html
 
-        from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
-
         import os
-        os.system('wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/')
+
+        from llama_index.core import SimpleDirectoryReader
+        from llama_index.core import VectorStoreIndex
+        os.system(
+            'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
+        )
 
         documents = SimpleDirectoryReader("data").load_data()
         index = VectorStoreIndex.from_documents(documents)

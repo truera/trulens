@@ -158,7 +158,6 @@ class BedrockEndpoint(Endpoint):
     def __repr__(self) -> str:
         return f"BedrockEndpoint(region_name={self.region_name})"
 
-
     def __init__(
         self,
         *args,
@@ -207,7 +206,7 @@ class BedrockEndpoint(Endpoint):
 
         else:
             # This one will be instrumented by our hacks onto _create_api_method above:
-            
+
             self.client = boto3.client(
                 service_name='bedrock-runtime', **client_kwargs
             )
