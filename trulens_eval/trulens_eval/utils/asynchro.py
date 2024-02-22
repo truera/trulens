@@ -122,7 +122,9 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         except Exception:
             # If not, we can create one here and run it until completion.
             loop = asyncio.new_event_loop()
-            return loop.run_until_complete(awaitable)
+            ret = loop.run_until_complete(awaitable)
+            loop.close()
+            return ret
 
         try:
             # If have nest_asyncio, can run in current thread.
@@ -150,6 +152,8 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             try:
                 loop = asyncio.new_event_loop()
                 th.ret = loop.run_until_complete(awaitable)
+                loop.close()
+
             except Exception as e:
                 th.error = e
 

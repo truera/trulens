@@ -133,7 +133,15 @@ class BedrockCallback(EndpointCallback):
 
 class BedrockEndpoint(Endpoint):
     """
-    Bedrock endpoint. Instruments "completion" methods in bedrock.* classes.
+    Bedrock endpoint.
+    
+    Instruments `invoke_model` and `invoke_model_with_response_stream` methods
+    created by `boto3.ClientCreator._create_api_method`.
+
+    Args:
+        region_name (str, optional): The specific AWS region name.
+            Defaults to "us-east-1"
+
     """
 
     region_name: str
@@ -144,6 +152,12 @@ class BedrockEndpoint(Endpoint):
     def __new__(cls, *args, **kwargs):
         return super().__new__(cls, *args, name="bedrock", **kwargs)
 
+    def __str__(self) -> str:
+        return f"BedrockEndpoint(region_name={self.region_name})"
+
+    def __repr__(self) -> str:
+        return f"BedrockEndpoint(region_name={self.region_name})"
+
     def __init__(
         self,
         *args,
@@ -151,13 +165,6 @@ class BedrockEndpoint(Endpoint):
         region_name: str = "us-east-1",
         **kwargs
     ):
-        """
-        Bedrock endpoint.
-
-        Args:
-            - region_name (str, optional): The specific AWS region name.
-              Defaults to "us-east-1"
-        """
 
         # SingletonPerName behaviour but only if client not provided.
         if hasattr(self, "region_name") and "client" not in kwargs:
@@ -228,9 +235,9 @@ class BedrockEndpoint(Endpoint):
 
             else:
                 logger.warning(
-                    f"No iterable body found in `invoke_model_with_response_stream` response."
+                    "No iterable body found in `invoke_model_with_response_stream` response."
                 )
 
         else:
 
-            logger.warning(f"Unhandled wrapped call to {func.__name__}.")
+            logger.warning(f"Unhandled wrapped call to %s.", func.__name__)

@@ -11,9 +11,10 @@ import logging
 from pprint import PrettyPrinter
 import queue
 import sys
-from typing import (Any, Callable, Dict, Generic, Hashable, Iterator, Optional,
-                    Sequence, Type, TypeVar)
-
+from typing import (
+    Any, Callable, Dict, Generic, Hashable, Iterator, Optional, Sequence, Type,
+    TypeVar
+)
 
 if sys.version_info >= (3, 9):
     Future = futures.Future
@@ -52,6 +53,7 @@ else:
         In python < 3.9, a sublcass of [queue.Queue][] with
         `Generic[A]` is used instead.
         """
+
 
 if sys.version_info >= (3, 10):
     import types
@@ -393,6 +395,15 @@ def get_first_local_in_call_stack(
 T = TypeVar("T")
 
 
+def class_name(cls):
+    """Get the class name of the given class or instance."""
+
+    if hasattr(cls, "__name__"):
+        return cls.__name__
+    else:
+        return cls.__class__.__name__
+
+
 class SingletonPerName(Generic[T]):
     """
     Class for creating singleton instances except there being one instance max,
@@ -434,6 +445,17 @@ class SingletonPerName(Generic[T]):
         obj: cls = SingletonPerName._instances[k]
 
         return obj
+
+    @staticmethod
+    def delete_singleton_by_name(name: str):
+        """
+        Delete the singleton instance with the given name. Can be used for testing
+        to create another singleton.
+        """
+        for k, v in list(SingletonPerName._instances.items()):
+            if k[1] == name:
+                del SingletonPerName._instances[k]
+                del SingletonPerName._id_to_name_map[id(v)]
 
     def delete_singleton(self):
         """
