@@ -18,13 +18,13 @@ Which steps should someone take to run into the same error? A small, reproducibl
 A clear and concise description of what you expected to happen.
 
 **Relevant Logs/Tracebacks**
-Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks. If the issue is related to the TruLens dashboard, please also include a screenshot.
 
 **Environment:**
  - OS: [e.g. MacOS, Windows]
  - Python Version
  - TruLens version
-- Versions of other relevant installed libraries
+ - Versions of other relevant installed libraries
 
 **Additional context**
 Add any other context about the problem here.
