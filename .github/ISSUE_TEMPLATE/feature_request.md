@@ -12,7 +12,7 @@ assignees: yuvneshtruera
 Describe the feature you are requesting. Try to reference existing implementations/papers/examples when possible.
 
 **Reason**
-What is stopping TruLens from supporting this feature today? What existing approaches have not worked for you?
+Why is this needed? Is there a workaround or another library/product you are using today to fulfill this gap?
 
-**Value of Feature**
-Why is this feature valuable?
+**Importance of Feature**
+What value does this feature unlock for you?
