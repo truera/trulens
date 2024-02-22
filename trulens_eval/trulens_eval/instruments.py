@@ -237,8 +237,9 @@ import os
 from pprint import PrettyPrinter
 import threading as th
 import traceback
-from typing import (Any, Awaitable, Callable, Dict, Generator, Iterable,
-                    Optional, Sequence, Set, Tuple, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple
+)
 import weakref
 
 import pydantic
@@ -256,9 +257,9 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import clean_attributes
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import class_name
-from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import id_str
 from trulens_eval.utils.python import is_really_coroutinefunction
@@ -476,9 +477,7 @@ class Instrument(object):
         if self.app is None:
             raise ValueError("Instrumentation requires an app but is None.")
 
-        if safe_hasattr(
-            func, "__func__"
-        ):
+        if safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
 
         if safe_hasattr(func, Instrument.INSTRUMENT):
@@ -498,7 +497,7 @@ class Instrument(object):
             existing_apps.add(self.app)  # weakref set
 
             return func
-    
+
         # Notify the app instrumenting this method where it is located:
         self.app.on_method_instrumented(obj, func, path=query)
 
@@ -518,7 +517,7 @@ class Instrument(object):
             logger.debug(
                 "%s: calling instrumented sync method %s of type %s, "
                 "iscoroutinefunction=%s, "
-                "isasyncgeneratorfunction=%s", query, func, type(func), 
+                "isasyncgeneratorfunction=%s", query, func, type(func),
                 is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func)
             )
@@ -609,7 +608,9 @@ class Instrument(object):
                 if path is None:
                     logger.warning(
                         "App of type %s no longer knows about object %s method %s. "
-                        "Something might be going wrong.", class_name(type(app)), id_str(args[0]), callable_name(func)
+                        "Something might be going wrong.",
+                        class_name(type(app)), id_str(args[0]),
+                        callable_name(func)
                     )
                     continue
 
@@ -649,7 +650,9 @@ class Instrument(object):
                 error = e
                 error_str = str(e)
 
-                logger.error("Error calling wrapped function %s.", callable_name(func))
+                logger.error(
+                    "Error calling wrapped function %s.", callable_name(func)
+                )
                 logger.error(traceback.format_exc())
 
             end_time = datetime.now()
@@ -707,7 +710,7 @@ class Instrument(object):
 
                 if error is not None:
                     raise error
-                
+
                 return records
 
             if isinstance(rets, Awaitable):
@@ -718,11 +721,12 @@ class Instrument(object):
                 # Placeholder:
                 records: Dict = handle_done(
                     rets=(
-f"""NOTE from trulens_eval:
+                        f"""NOTE from trulens_eval:
     This app produced an asynchronous response of type `{class_name(type(rets))}`. This record will be updated once
     the response is available. If this message persists, check that you are
     using the correct version of the app method and `await` any asynchronous
-    results."""),
+    results."""
+                    ),
                 )
 
                 return wrap_awaitable(rets, on_done=handle_done)
@@ -756,7 +760,8 @@ f"""NOTE from trulens_eval:
                 original_fun = getattr(base, method_name)
 
                 logger.debug(
-                    "\t\t%s: instrumenting %s.%s", query, class_name(base), method_name
+                    "\t\t%s: instrumenting %s.%s", query, class_name(base),
+                    method_name
                 )
                 setattr(
                     base, method_name,
@@ -791,7 +796,8 @@ f"""NOTE from trulens_eval:
         # @functools.wraps(func)
         def wrapped_new(cls, *args, **kwargs):
             logger.debug(
-                "Creating a new instance of instrumented class %s.", class_name(cls)
+                "Creating a new instance of instrumented class %s.",
+                class_name(cls)
             )
             # get deepest wrapped method here
             # get its self
@@ -816,7 +822,8 @@ f"""NOTE from trulens_eval:
         # Warning: cls.__mro__ sometimes returns an object that can be iterated through only once.
 
         logger.debug(
-            "%s: instrumenting object at %s of class %s", query, id_str(obj), class_name(cls)
+            "%s: instrumenting object at %s of class %s", query, id_str(obj),
+            class_name(cls)
         )
 
         if id(obj) in done:
@@ -834,7 +841,8 @@ f"""NOTE from trulens_eval:
         # Recursively instrument inner components
         if hasattr(obj, '__dict__'):
             for attr_name, attr_value in obj.__dict__.items():
-                if any(isinstance(attr_value, cls) for cls in self.include_classes):
+                if any(isinstance(attr_value, cls)
+                       for cls in self.include_classes):
                     inner_query = query[attr_name]
                     self.instrument_object(attr_value, inner_query, done)
 
@@ -847,21 +855,24 @@ f"""NOTE from trulens_eval:
             # the very base classes such as object:
             if not self.to_instrument_module(base.__module__):
                 logger.debug(
-                    "\tSkipping base; module %s is not to be instrumented.", python.module_name(base)
+                    "\tSkipping base; module %s is not to be instrumented.",
+                    python.module_name(base)
                 )
                 continue
 
             try:
                 if not self.to_instrument_class(base):
                     logger.debug(
-                        "\t\tSkipping base; class %s is not to be instrumented.", python.module_name(base)
+                        "\t\tSkipping base; class %s is not to be instrumented.",
+                        python.module_name(base)
                     )
                     continue
 
             except Exception as e:
                 # subclass check may raise exception
                 logger.debug(
-                    "\t\tWarning: checking whether %s should be instrumented resulted in an error: %s", python.module_name(base), e
+                    "\t\tWarning: checking whether %s should be instrumented resulted in an error: %s",
+                    python.module_name(base), e
                 )
                 # NOTE: Proceeding to instrument here as we don't want to miss
                 # anything. Unsure why some llama_index subclass checks fail.
@@ -953,7 +964,8 @@ f"""NOTE from trulens_eval:
 
                 else:
                     logger.debug(
-                        "Instrumentation of component %s (of type %s) is not yet supported.", v, class_name(type(v))
+                        "Instrumentation of component %s (of type %s) is not yet supported.",
+                        v, class_name(type(v))
                     )
 
                 # TODO: check if we want to instrument anything in langchain not
@@ -961,7 +973,8 @@ f"""NOTE from trulens_eval:
 
         else:
             logger.debug(
-                "%s: Do not know how to instrument object of type %s.", query, class_name(cls)
+                "%s: Do not know how to instrument object of type %s.", query,
+                class_name(cls)
             )
 
 

@@ -13,8 +13,10 @@ from ast import parse
 from copy import copy
 import logging
 from pprint import PrettyPrinter
-from typing import (Any, Callable, Dict, Generic, Hashable, Iterable, List,
-                    Optional, Sequence, Sized, Tuple, TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Generic, Hashable, Iterable, List, Optional, Sequence,
+    Sized, Tuple, TypeVar, Union
+)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -39,7 +41,7 @@ Can be used in `isinstance` checks.
 
 JSON_BASES_T = Union[\
     str, int, float, bytes, None
-]
+                    ]
 """
 Alias for JSON-able base types.
 """
@@ -48,7 +50,7 @@ JSON = Union[\
     JSON_BASES_T,
     Sequence[Any],
     Dict[str, Any]
-]
+            ]
 """Alias for (non-strict) JSON-able data (`Any` = `JSON`).
 
 If used with type argument, that argument indicates what the JSON represents and
@@ -65,6 +67,7 @@ Alias for (strictly) JSON-able data.
 Python object that is directly mappable to JSON.
 """
 
+
 class JSONized(dict, Generic[T]):  # really JSON_STRICT
     """JSON-encoded data the can be deserialized into a given type `T`.
     
@@ -79,7 +82,8 @@ class JSONized(dict, Generic[T]):  # really JSON_STRICT
     ) -> CoreSchema:
         """Make pydantic treat this class same as a `dict`."""
         return handler(core_schema.dict_schema())
-    
+
+
 mj = MerkleJson()
 
 

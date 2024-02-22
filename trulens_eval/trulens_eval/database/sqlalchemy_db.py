@@ -100,10 +100,7 @@ class SqlAlchemyDB(DB):
             engine_params["max_overflow"] = 2
             engine_params["pool_use_lifo"] = True
 
-        return cls(
-            engine_params=engine_params,
-            redact_keys=redact_keys
-        )
+        return cls(engine_params=engine_params, redact_keys=redact_keys)
 
     def migrate_database(self):
         """
@@ -556,12 +553,8 @@ class AppsExtractor:
                     self.feedback_columns.add(_res.name)
 
             row = {
-                **{
-                    k: np.mean(v) for k, v in values.items()
-                },
-                **{
-                    k + "_calls": flatten(v) for k, v in calls.items()
-                },
+                **{k: np.mean(v) for k, v in values.items()},
+                **{k + "_calls": flatten(v) for k, v in calls.items()},
             }
 
             for col in self.rec_cols:

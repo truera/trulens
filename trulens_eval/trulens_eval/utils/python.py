@@ -12,10 +12,11 @@ from pprint import PrettyPrinter
 import queue
 import sys
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, Dict, Generator, Generic,
-                    Hashable, Iterator, Optional, Sequence, Type, TypeVar,
-                    Union)
 import typing
+from typing import (
+    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator,
+    Optional, Sequence, Type, TypeVar, Union
+)
 
 T = TypeVar("T")
 
@@ -60,6 +61,7 @@ else:
         `Generic[A]` is used instead.
         """
 
+
 if sys.version_info >= (3, 10):
     import types
     NoneType = types.NoneType
@@ -80,6 +82,7 @@ pp = PrettyPrinter()
 
 # Reflection utilities.
 
+
 def class_name(obj: Union[Type, Any]) -> str:
     """Get the class name of the given object or instance."""
 
@@ -91,6 +94,7 @@ def class_name(obj: Union[Type, Any]) -> str:
 
     return str(obj)
 
+
 def module_name(obj: Union[ModuleType, Type, Any]) -> str:
     """Get the module name of the given module, class, or instance."""
 
@@ -98,15 +102,18 @@ def module_name(obj: Union[ModuleType, Type, Any]) -> str:
         return obj.__name__
 
     if hasattr(obj, "__module__"):
-        return obj.__module__ # already a string name
+        return obj.__module__  # already a string name
 
     return "unknown module"
+
 
 def callable_name(c: Callable):
     """Get the name of the given callable."""
 
     if not isinstance(c, Callable):
-        raise ValueError(f"Expected a callable. Got {class_name(type(c))} instead.")
+        raise ValueError(
+            f"Expected a callable. Got {class_name(type(c))} instead."
+        )
 
     if safe_hasattr(c, "__name__"):
         return c.__name__
@@ -121,6 +128,7 @@ def id_str(obj: Any) -> str:
     """Get the id of the given object as a string in hex."""
 
     return f"0x{id(obj):x}"
+
 
 def is_really_coroutinefunction(func) -> bool:
     """Determine whether the given function is a coroutine function.
@@ -202,14 +210,16 @@ def safe_hasattr(obj: Any, k: str) -> bool:
     else:
         return True
 
+
 def safe_issubclass(cls: Type, parent: Type) -> bool:
     """Check if the given class is a subclass of the given parent class."""
 
     origin = typing.get_origin(cls)
     if origin is None:
         return issubclass(cls, parent)
-    
+
     return issubclass(origin, parent)
+
 
 # Function utilities.
 
@@ -217,7 +227,7 @@ def safe_issubclass(cls: Type, parent: Type) -> bool:
 def code_line(func) -> Optional[str]:
     """Get a string representation of the location of the given function
     `func`."""
-    
+
     if safe_hasattr(func, "__code__"):
         code = func.__code__
         return f"{code.co_filename}:{code.co_firstlineno}"
@@ -448,8 +458,8 @@ def get_first_local_in_call_stack(
         logger.debug("no frames found")
         return None
 
+
 # Wrapping utilities
-    
 
 
 def wrap_awaitable(
@@ -485,6 +495,7 @@ def wrap_awaitable(
         return val
 
     return wrapper(awaitable)
+
 
 def wrap_generator(
     gen: Generator[T, None, None],
@@ -525,6 +536,7 @@ def wrap_generator(
 # Class utilities
 
 T = TypeVar("T")
+
 
 class SingletonPerName(Generic[T]):
     """

@@ -15,8 +15,8 @@ from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.asynchro import sync
+from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.json import jsonify
@@ -81,25 +81,31 @@ class LangChainInstrument(Instrument):
         }
 
         # Instrument only methods with these names and of these classes.
-        METHODS = dict_set_with_multikey({}, {
-            ("invoke", "ainvoke"):
-                lambda o: isinstance(o, RunnableSerializable),
-            ("save_context", "clear"):
-                lambda o: isinstance(o, BaseMemory),
-            ("run", "arun", "_call", "__call__", "_acall", "acall"):
-                lambda o: isinstance(o, Chain),
-            ("_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"):
-                lambda o: isinstance(o, (RunnableSerializable)),
-            
-            # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-            # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-            # the prompt calls might be too small to be interesting
-            ("plan", "aplan"):
-                lambda o:
-                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
-            ("_arun", "_run"):
-                lambda o: isinstance(o, BaseTool),
-        })
+        METHODS = dict_set_with_multikey(
+            {},
+            {
+                ("invoke", "ainvoke"):
+                    lambda o: isinstance(o, RunnableSerializable),
+                ("save_context", "clear"):
+                    lambda o: isinstance(o, BaseMemory),
+                ("run", "arun", "_call", "__call__", "_acall", "acall"):
+                    lambda o: isinstance(o, Chain),
+                (
+                    "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
+                ):
+                    lambda o: isinstance(o, (RunnableSerializable)),
+
+                # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                # the prompt calls might be too small to be interesting
+                ("plan", "aplan"):
+                    lambda o: isinstance(
+                        o, (BaseSingleActionAgent, BaseMultiActionAgent)
+                    ),
+                ("_arun", "_run"):
+                    lambda o: isinstance(o, BaseTool),
+            }
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(

@@ -12,8 +12,10 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
-                    Optional, Sequence, Set, Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
+    Optional, Sequence, Set, Tuple, Type, TypeVar
+)
 
 import pydantic
 
@@ -37,9 +39,11 @@ from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.python import callable_name, class_name, id_str
+from trulens_eval.utils.python import callable_name
+from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import \
     Future  # can take type args with python < 3.9
+from trulens_eval.utils.python import id_str
 from trulens_eval.utils.python import \
     Queue  # can take type args with python < 3.9
 from trulens_eval.utils.python import safe_hasattr
@@ -396,7 +400,9 @@ class RecordingContext():
             self.calls.append(call)
 
     def finish_record(
-        self, calls_to_record: Callable[[List[RecordAppCall], JSON], Record], existing_record: Optional[Record] = None
+        self,
+        calls_to_record: Callable[[List[RecordAppCall], JSON], Record],
+        existing_record: Optional[Record] = None
     ):
         """
         Run the given function to build a record from the tracked calls and any
@@ -404,7 +410,11 @@ class RecordingContext():
         """
 
         with self.lock:
-            record = calls_to_record(self.calls, self.record_metadata, existing_record=existing_record)
+            record = calls_to_record(
+                self.calls,
+                self.record_metadata,
+                existing_record=existing_record
+            )
             self.calls = []
 
             if existing_record is None:
@@ -428,7 +438,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         'arbitrary_types_allowed': True
     }
 
-    feedbacks: List[Feedback] = pydantic.Field(exclude=True, default_factory=list)
+    feedbacks: List[Feedback] = pydantic.Field(
+        exclude=True, default_factory=list
+    )
     """Feedback functions to evaluate on each record."""
 
     tru: Optional[Tru] = pydantic.Field(default=None, exclude=True)
@@ -576,11 +588,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if type(app).__module__.startswith("langchain"):
             from trulens_eval.tru_chain import TruChain
             return TruChain.select_context(app)
-        
+
         if type(app).__module__.startswith("llama_index"):
             from trulens_eval.tru_llama import TruLlama
             return TruLlama.select_context(app)
-        
+
         raise ValueError(
             f"Could not determine context from unrecognized `app` type {type(app)}."
         )
@@ -702,7 +714,6 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             callable_name(func), all_args
         )
 
-    
         return None
 
     def main_output(
@@ -795,7 +806,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if funcs is None:
             logger.warning(
                 "A new object of type %s at %s is calling an instrumented method %s. "
-                "The path of this call may be incorrect.", class_name(type(obj)), id_str(obj), callable_name(func)
+                "The path of this call may be incorrect.",
+                class_name(type(obj)), id_str(obj), callable_name(func)
             )
             try:
                 _id, _, path = next(iter(self.get_methods_for_func(func)))
@@ -807,7 +819,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 return None
 
             logger.warning(
-                "Guessing path of new object is %s based on other object (%s) using this function.", path, id_str(_id)
+                "Guessing path of new object is %s based on other object (%s) using this function.",
+                path, id_str(_id)
             )
 
             funcs = {func: path}
@@ -820,7 +833,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             if func not in funcs:
                 logger.warning(
                     "A new object of type %s at %s is calling an instrumented method %s. "
-                    "The path of this call may be incorrect.", class_name(type(obj)), id_str(obj), callable_name(func)
+                    "The path of this call may be incorrect.",
+                    class_name(type(obj)), id_str(obj), callable_name(func)
                 )
 
                 try:
@@ -832,7 +846,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                     return None
 
                 logger.warning(
-                    "Guessing path of new object is %s based on other object (%s) using this function.", path, id_str(_id)
+                    "Guessing path of new object is %s based on other object (%s) using this function.",
+                    path, id_str(_id)
                 )
 
                 return path
@@ -853,7 +868,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     def model_dump(self, *args, redact_keys: bool = False, **kwargs):
         # Same problem as in json.
         return jsonify(
-            self, instrument=self.instrument, redact_keys=redact_keys, *args, **kwargs
+            self,
+            instrument=self.instrument,
+            redact_keys=redact_keys,
+            *args,
+            **kwargs
         )
 
     # For use as a context manager.
@@ -892,10 +911,13 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     def on_add_record(
         self,
         ctx: RecordingContext,
-        func: Callable, sig: Signature,
+        func: Callable,
+        sig: Signature,
         bindings: BoundArguments,
-        ret: Any, error: Any,
-        perf: Perf, cost: Cost,
+        ret: Any,
+        error: Any,
+        perf: Perf,
+        cost: Cost,
         existing_record: Optional[Record] = None
     ) -> Record:
         """Called by instrumented methods if they use _new_record to construct a record call list.
@@ -903,7 +925,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         See [WithInstrumentCallbacks.on_add_record][trulens_eval.instruments.WithInstrumentCallbacks.on_add_record].
         """
 
-        def build_record(calls: Iterable[RecordAppCall], record_metadata: JSON, existing_record: Optional[Record] = None) -> Record:
+        def build_record(
+            calls: Iterable[RecordAppCall],
+            record_metadata: JSON,
+            existing_record: Optional[Record] = None
+        ) -> Record:
             calls = list(calls)
 
             assert len(calls) > 0, "No information recorded in call."
@@ -931,7 +957,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             return existing_record
 
         # Finishing record needs to be done in a thread lock, done there:
-        record = ctx.finish_record(build_record, existing_record=existing_record)
+        record = ctx.finish_record(
+            build_record, existing_record=existing_record
+        )
 
         if error is not None:
             # May block on DB.
@@ -942,7 +970,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         # FeedbackMode:
         record.feedback_and_future_results = self._handle_record(record=record)
         if record.feedback_and_future_results is not None:
-            record.feedback_results = [tup[1] for tup in record.feedback_and_future_results]
+            record.feedback_results = [
+                tup[1] for tup in record.feedback_and_future_results
+            ]
 
         if record.feedback_and_future_results is None:
             return record
@@ -979,14 +1009,14 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 # here. This is a temporary workaround.
                 return
 
-            logger.warning("""
+            logger.warning(
+                """
 Function %s has not been instrumented. This may be ok if it will call a function
 that has been instrumented exactly once. Otherwise unexpected results may
 follow. You can use `AddInstruments.method` of `trulens_eval.instruments` before
 you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 `print_instrumented` may be used to see methods that have been instrumented.
-""",
-                func, class_name(self), callable_name(func), class_name(self)
+""", func, class_name(self), callable_name(func), class_name(self)
             )
 
     async def awith_(
@@ -1006,12 +1036,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             raise TypeError(
                 f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
             )
-        
+
         return await awaitable
 
-    async def with_(
-        self, func: Callable[[A], T], *args, **kwargs
-    ) -> T:
+    async def with_(self, func: Callable[[A], T], *args, **kwargs) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
         recording, producing `func` results. The record of the computation is
@@ -1061,7 +1089,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         its results as well as a record of the execution.
         """
 
-        awaitable, record = self.with_record(func, *args, record_metadata=record_metadata, **kwargs)
+        awaitable, record = self.with_record(
+            func, *args, record_metadata=record_metadata, **kwargs
+        )
         if not isinstance(awaitable, Awaitable):
             raise TypeError(
                 f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."

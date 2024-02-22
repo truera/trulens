@@ -35,8 +35,10 @@ def is_empty(obj):
     except Exception:
         return False
 
+
 A = TypeVar("A")
 B = TypeVar("B")
+
 
 def dict_set_with(dict1: Dict[A, B], dict2: Dict[A, B]) -> Dict[A, B]:
     """
@@ -47,7 +49,9 @@ def dict_set_with(dict1: Dict[A, B], dict2: Dict[A, B]) -> Dict[A, B]:
     return dict1
 
 
-def dict_set_with_multikey(dict1: Dict[A, B], dict2: Dict[Union[A, Tuple[A, ...]], B]) -> Dict[A, B]:
+def dict_set_with_multikey(
+    dict1: Dict[A, B], dict2: Dict[Union[A, Tuple[A, ...]], B]
+) -> Dict[A, B]:
     """
     Like `dict_set_with` except the second dict can have tuples as keys in which
     case all of the listed keys are set to the given value.

@@ -95,6 +95,7 @@ __version__ = '.'.join(map(str, __version_info__))
 # print out a nice warning/error before an import error happens further down
 # this sequence.
 from trulens_eval.utils.imports import check_imports
+
 check_imports()
 
 from trulens_eval.feedback import Feedback

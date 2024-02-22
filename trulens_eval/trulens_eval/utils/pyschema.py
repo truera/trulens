@@ -26,7 +26,8 @@ import warnings
 
 import pydantic
 
-from trulens_eval.utils.python import safe_hasattr, safe_issubclass
+from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.python import safe_issubclass
 from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)

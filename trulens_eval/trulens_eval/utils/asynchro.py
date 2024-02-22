@@ -143,7 +143,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
                 loop = asyncio.new_event_loop()
                 th.ret = loop.run_until_complete(awaitable)
                 loop.close()
-                
+
             except Exception as e:
                 th.error = e
 

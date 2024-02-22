@@ -8,7 +8,9 @@ import json
 import logging
 import pprint
 import traceback
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
+)
 import warnings
 
 import numpy as np
@@ -508,8 +510,10 @@ class Feedback(FeedbackDefinition):
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost = Endpoint.track_all_costs_tally(self.imp, **ins)
-                    
+                    result_and_meta, part_cost = Endpoint.track_all_costs_tally(
+                        self.imp, **ins
+                    )
+
                     cost += part_cost
                 except Exception as e:
                     raise RuntimeError(
@@ -669,7 +673,7 @@ class Feedback(FeedbackDefinition):
 
         if self.imp is not None:
             return self.imp.__name__
-        
+
         return super().name
 
     def extract_selection(
@@ -714,6 +718,7 @@ class Feedback(FeedbackDefinition):
 
         for assignment in assignments:
             yield {k: v for k, v in zip(keys, assignment)}
+
 
 # HACK013:
 Feedback.model_rebuild()

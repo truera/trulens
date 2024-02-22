@@ -10,25 +10,27 @@ import random
 import sys
 from time import sleep
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
-                    Sequence, Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
+    Type, TypeVar
+)
 
 from pydantic import Field
 import requests
-
 
 from trulens_eval.schema import Cost
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.python import class_name, wrap_awaitable
+from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
+from trulens_eval.utils.python import wrap_awaitable
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
@@ -45,6 +47,7 @@ INSTRUMENT = "__tru_instrument"
 
 DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
+
 
 class EndpointCallback(SerialModel):
     """
@@ -239,7 +242,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             logger.error("Waiting for %s (%s) second(s).", j, wait_time)
             sleep(wait_time + 2)
             return self.post(url, payload)
-        
+
         elif isinstance(j, Dict) and "error" in j:
             error = j['error']
             logger.error("API error: %s.", j)
@@ -281,11 +284,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             except Exception as e:
                 retries -= 1
                 logger.error(
-                    "%s request failed %s=%s. Retries remaining=%s.",
-                    self.name,
-                    type(e),
-                    e,
-                    retries
+                    "%s request failed %s=%s. Retries remaining=%s.", self.name,
+                    type(e), e, retries
                 )
                 errors.append(e)
                 if retries > 0:
@@ -312,9 +312,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
         if safe_hasattr(mod, method_name):
             logger.debug(
-                "Instrumenting %s.%s for %s",
-                mod.__name__,
-                method_name,
+                "Instrumenting %s.%s for %s", mod.__name__, method_name,
                 self.name
             )
             func = getattr(mod, method_name)
@@ -327,9 +325,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def _instrument_class(self, cls, method_name: str) -> None:
         if safe_hasattr(cls, method_name):
             logger.debug(
-                "Instrumenting %s.%s for %s",
-                class_name(cls),
-                method_name,
+                "Instrumenting %s.%s for %s", class_name(cls), method_name,
                 self.name
             )
             func = getattr(cls, method_name)
@@ -348,8 +344,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(
-                wrapped_thing if wrapped_thing !=
-                object else "unknown dynamically generated class(es)"
+                wrapped_thing if wrapped_thing != object else
+                "unknown dynamically generated class(es)"
             )
             for original, _, endpoint in wrappers:
                 print(
@@ -368,10 +364,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """
         if safe_hasattr(cls, wrapper_method_name):
             logger.debug(
-                "Instrumenting method creator %s.%s for %s",
-                cls.__name__,
-                wrapper_method_name,
-                self.name
+                "Instrumenting method creator %s.%s for %s", cls.__name__,
+                wrapper_method_name, self.name
             )
             func = getattr(cls, wrapper_method_name)
 
@@ -406,13 +400,15 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         already_instrumented = safe_getattr(mod, INSTRUMENT)
 
         if method_name in already_instrumented:
-            logger.debug("module %s already instrumented for %s", mod, method_name)
+            logger.debug(
+                "module %s already instrumented for %s", mod, method_name
+            )
             return
 
         for m in dir(mod):
             logger.debug(
-                "instrumenting module %s member %s for method %s",
-                mod, m, method_name
+                "instrumenting module %s member %s for method %s", mod, m,
+                method_name
             )
             if safe_hasattr(mod, m):
                 obj = safe_getattr(mod, m)
@@ -566,9 +562,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # return others.
         return result, callbacks
 
-    def track_cost(
-        self, __func: CallableMaybeAwaitable[T], *args, **kwargs
-    ) -> Tuple[T, EndpointCallback]:
+    def track_cost(self, __func: CallableMaybeAwaitable[T], *args,
+                   **kwargs) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.
         Returns the thunk's result alongside the EndpointCallback object that
@@ -580,7 +575,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         )
 
         return result, callbacks[0]
-
 
     @staticmethod
     def __find_tracker(f):
@@ -628,8 +622,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
                 logger.debug(
                     "%s already instrumented for callbacks of type %s",
-                    func.__name__,
-                    self.callback_class.__name__
+                    func.__name__, self.callback_class.__name__
                 )
 
                 return func
@@ -648,8 +641,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             logger.debug(
                 "Calling instrumented sync method %s of type %s, "
                 "iscoroutinefunction=%s, "
-                "isasyncgeneratorfunction=%s",
-                func, type(func), is_really_coroutinefunction(func), inspect.isasyncgenfunction(func)
+                "isasyncgeneratorfunction=%s", func, type(func),
+                is_really_coroutinefunction(func),
+                inspect.isasyncgenfunction(func)
             )
 
             # Get the result of the wrapped function:
@@ -705,7 +699,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             response_callback(response)
             return response
-    
+
         # Set our tracking attribute to tell whether something is already
         # instrumented onto both the sync and async version since either one
         # could be returned from this method.
@@ -722,7 +716,6 @@ class DummyEndpoint(Endpoint):
     Does not make any network calls and just pretends to.
     """
 
-    
     loading_prob: float
     """How often to produce the "model loading" response that huggingface api
     sometimes produces."""
@@ -788,12 +781,8 @@ class DummyEndpoint(Endpoint):
     ) -> None:
         """Dummy handler does nothing."""
 
-
     def post(
-        self,
-        url: str,
-        payload: JSON,
-        timeout: Optional[float] = None
+        self, url: str, payload: JSON, timeout: Optional[float] = None
     ) -> Any:
         """Pretend to make a classification request similar to huggingface API.
         
@@ -874,8 +863,9 @@ class DummyEndpoint(Endpoint):
         if "estimated_time" in j:
             wait_time = j['estimated_time']
             logger.warning(
-                "Waiting for %s (%s) second(s).", 
-                j, wait_time,
+                "Waiting for %s (%s) second(s).",
+                j,
+                wait_time,
             )
             sleep(wait_time + 2)
             return self.post(url, payload)
@@ -888,7 +878,7 @@ class DummyEndpoint(Endpoint):
                 )
                 sleep(10)
                 return self.post(url, payload)
-            
+
             raise RuntimeError(error)
 
         assert isinstance(
