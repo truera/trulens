@@ -42,19 +42,19 @@ test-e2e:
 	$(CONDA); python -m unittest discover tests.e2e
 
 test-tru:
-	$(CONDA); python -m unittest tests.integration.test_tru
+	$(CONDA); python -m unittest tests.e2e.test_tru
 
 test-tru-chain:
-	$(CONDA); python -m unittest tests.integration.test_tru_chain
+	$(CONDA); python -m unittest tests.e2e.test_tru_chain
 
 test-tru-llama:
-	$(CONDA); python -m unittest tests.integration.test_tru_llama
+	$(CONDA); python -m unittest tests.e2e.test_tru_llama
 
 test-providers:
-	$(CONDA); python -m unittest tests.integration.test_providers
+	$(CONDA); python -m unittest tests.e2e.test_providers
 
 test-endpoints:
-	$(CONDA); python -m unittest tests.integration.test_endpoints
+	$(CONDA); python -m unittest tests.e2e.test_endpoints
 
 # Database integration tests for various database types supported by sqlaclhemy.
 # While those don't use costly endpoints, they may be more computation intensive.
