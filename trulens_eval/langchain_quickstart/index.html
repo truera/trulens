@@ -2038,6 +2038,8 @@
       
         
       
+        
+      
     
     
     
@@ -2682,8 +2684,30 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../api/instruments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Instruments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
     
     
+      
+        
       
         
       
@@ -2705,10 +2729,10 @@
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
         
           
-          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2719,8 +2743,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -2757,6 +2781,26 @@
   
   <span class="md-ellipsis">
     Serialization Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/utils/json/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    JSON Utilities
   </span>
   
 
@@ -3830,9 +3874,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># ! pip install trulens_eval==0.23.0 openai==1.3.7 langchain chromadb langchainhub bs4</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># ! pip install trulens_eval openai langchain chromadb langchainhub bs4</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1"># ! pip install trulens_eval==0.23.0 openai==1.3.7 langchain chromadb langchainhub bs4</div>
+<div class="clipboard-copy-txt" id="cell-1"># ! pip install trulens_eval openai langchain chromadb langchainhub bs4</div>
 </div>
 </div>
 </div>
@@ -4302,12 +4346,217 @@ f_context_relevance = (
 </div>
 </clipboard-copy>
 </div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">response</span><span class="p">,</span> <span class="n">tru_record</span> <span class="o">=</span> <span class="n">tru_recorder</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="n">rag_chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">,</span> <span class="s2">"What is Task Decomposition?"</span><span class="p">)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-10">response, tru_record = tru_recorder.with_record(rag_chain.invoke, "What is Task Decomposition?")</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-11">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">json_like</span> <span class="o">=</span> <span class="n">tru_record</span><span class="o">.</span><span class="n">layout_calls_as_app</span><span class="p">()</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-11">json_like = tru_record.layout_calls_as_app()</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-12">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">json_like</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-12">json_like</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-13">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">ipytree</span> <span class="kn">import</span> <span class="n">Tree</span><span class="p">,</span> <span class="n">Node</span>
+
+<span class="k">def</span> <span class="nf">display_call_stack</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">Tree</span><span class="p">()</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">'Record ID: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'record_id'</span><span class="p">])))</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">'App ID: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'app_id'</span><span class="p">])))</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">'Cost: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'cost'</span><span class="p">])))</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">'Performance: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'perf'</span><span class="p">])))</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">'Timestamp: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'ts'</span><span class="p">])))</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">'Tags: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'tags'</span><span class="p">])))</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">'Main Input: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'main_input'</span><span class="p">])))</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">'Main Output: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'main_output'</span><span class="p">])))</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">'Main Error: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">'main_error'</span><span class="p">])))</span>
+    
+    <span class="n">calls_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="s1">'Calls'</span><span class="p">)</span>
+    <span class="n">tree</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">calls_node</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">call</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">'calls'</span><span class="p">]:</span>
+        <span class="n">call_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="s1">'Call'</span><span class="p">)</span>
+        <span class="n">calls_node</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">call_node</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">call</span><span class="p">[</span><span class="s1">'stack'</span><span class="p">]:</span>
+            <span class="n">step_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="s1">'Step: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">step</span><span class="p">[</span><span class="s1">'path'</span><span class="p">]))</span>
+            <span class="n">call_node</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">step_node</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">'expanded'</span> <span class="ow">in</span> <span class="n">step</span><span class="p">:</span>
+                <span class="n">expanded_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="s1">'Expanded'</span><span class="p">)</span>
+                <span class="n">step_node</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">expanded_node</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">expanded_step</span> <span class="ow">in</span> <span class="n">step</span><span class="p">[</span><span class="s1">'expanded'</span><span class="p">]:</span>
+                    <span class="n">expanded_step_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="s1">'Step: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">expanded_step</span><span class="p">[</span><span class="s1">'path'</span><span class="p">]))</span>
+                    <span class="n">expanded_node</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">expanded_step_node</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">tree</span>
+
+<span class="c1"># Usage</span>
+<span class="n">tree</span> <span class="o">=</span> <span class="n">display_call_stack</span><span class="p">(</span><span class="n">json_like</span><span class="p">)</span>
+<span class="n">tree</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-13">from ipytree import Tree, Node
+
+def display_call_stack(data):
+    tree = Tree()
+    tree.add_node(Node('Record ID: {}'.format(data['record_id'])))
+    tree.add_node(Node('App ID: {}'.format(data['app_id'])))
+    tree.add_node(Node('Cost: {}'.format(data['cost'])))
+    tree.add_node(Node('Performance: {}'.format(data['perf'])))
+    tree.add_node(Node('Timestamp: {}'.format(data['ts'])))
+    tree.add_node(Node('Tags: {}'.format(data['tags'])))
+    tree.add_node(Node('Main Input: {}'.format(data['main_input'])))
+    tree.add_node(Node('Main Output: {}'.format(data['main_output'])))
+    tree.add_node(Node('Main Error: {}'.format(data['main_error'])))
+    
+    calls_node = Node('Calls')
+    tree.add_node(calls_node)
+    
+    for call in data['calls']:
+        call_node = Node('Call')
+        calls_node.add_node(call_node)
+        
+        for step in call['stack']:
+            step_node = Node('Step: {}'.format(step['path']))
+            call_node.add_node(step_node)
+            if 'expanded' in step:
+                expanded_node = Node('Expanded')
+                step_node.add_node(expanded_node)
+                for expanded_step in step['expanded']:
+                    expanded_step_node = Node('Step: {}'.format(expanded_step['path']))
+                    expanded_node.add_node(expanded_step_node)
+    
+    return tree
+
+# Usage
+tree = display_call_stack(json_like)
+tree</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-14">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tree</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-14">tree</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-15">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
     <span class="n">llm_response</span> <span class="o">=</span> <span class="n">rag_chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"What is Task Decomposition?"</span><span class="p">)</span>
 
 <span class="n">display</span><span class="p">(</span><span class="n">llm_response</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-10">with tru_recorder as recording:
+<div class="clipboard-copy-txt" id="cell-15">with tru_recorder as recording:
     llm_response = rag_chain.invoke("What is Task Decomposition?")
 
 display(llm_response)</div>
@@ -4336,7 +4585,7 @@ display(llm_response)</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-11">
+<clipboard-copy for="cell-16">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4353,7 +4602,7 @@ display(llm_response)</div>
 
 <span class="n">display</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11"># The record of the app invocation can be retrieved from the `recording`:
+<div class="clipboard-copy-txt" id="cell-16"># The record of the app invocation can be retrieved from the `recording`:
 
 rec = recording.get() # use .get if only one record
 # recs = recording.records # use .records if multiple
@@ -4373,7 +4622,7 @@ display(rec)</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-12">
+<clipboard-copy for="cell-17">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4395,7 +4644,7 @@ display(rec)</div>
 <span class="c1"># See more about wait_for_feedback_results:</span>
 <span class="c1"># help(rec.wait_for_feedback_results)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-12"># The results of the feedback functions can be rertireved from
+<div class="clipboard-copy-txt" id="cell-17"># The results of the feedback functions can be rertireved from
 # `Record.feedback_results` or using the `wait_for_feedback_result` method. The
 # results if retrieved directly are `Future` instances (see
 # `concurrent.futures`). You can use `as_completed` to wait until they have
@@ -4420,7 +4669,7 @@ for feedback, feedback_result in rec.wait_for_feedback_results().items():
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-13">
+<clipboard-copy for="cell-18">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4434,7 +4683,7 @@ for feedback, feedback_result in rec.wait_for_feedback_results().items():
 
 <span class="n">records</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13">records, feedback = tru.get_records_and_feedback(app_ids=["Chain1_ChatApplication"])
+<div class="clipboard-copy-txt" id="cell-18">records, feedback = tru.get_records_and_feedback(app_ids=["Chain1_ChatApplication"])
 
 records.head()</div>
 </div>
@@ -4451,7 +4700,7 @@ records.head()</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-14">
+<clipboard-copy for="cell-19">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4463,7 +4712,7 @@ records.head()</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_leaderboard</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[</span><span class="s2">"Chain1_ChatApplication"</span><span class="p">])</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-14">tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])</div>
+<div class="clipboard-copy-txt" id="cell-19">tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])</div>
 </div>
 </div>
 </div>
@@ -4489,7 +4738,7 @@ records.head()</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-15">
+<clipboard-copy for="cell-20">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4503,7 +4752,7 @@ records.head()</div>
 
 <span class="c1"># tru.stop_dashboard() # stop if needed</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-15">tru.run_dashboard() # open a local streamlit app to explore
+<div class="clipboard-copy-txt" id="cell-20">tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed</div>
 </div>

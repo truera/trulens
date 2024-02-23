@@ -1905,6 +1905,8 @@
       
         
       
+        
+      
     
     
     
@@ -2549,8 +2551,30 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../api/instruments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Instruments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
     
     
+      
+        
       
         
       
@@ -2572,10 +2596,10 @@
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
         
           
-          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2586,8 +2610,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -2624,6 +2648,26 @@
   
   <span class="md-ellipsis">
     Serialization Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/utils/json/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    JSON Utilities
   </span>
   
 
@@ -3624,9 +3668,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">trulens_eval</span> <span class="n">llama_index</span> <span class="n">llama_hub</span> <span class="n">llmsherpa</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">trulens_eval</span> <span class="n">llama_index</span> <span class="n">llama</span><span class="o">-</span><span class="n">index</span><span class="o">-</span><span class="n">llms</span><span class="o">-</span><span class="n">openai</span> <span class="n">llama_hub</span> <span class="n">llmsherpa</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">!pip install trulens_eval llama_index llama_hub llmsherpa</div>
+<div class="clipboard-copy-txt" id="cell-1">!pip install trulens_eval llama_index llama-index-llms-openai llama_hub llmsherpa</div>
 </div>
 </div>
 </div>
@@ -3792,19 +3836,15 @@ documents = pdf_loader.load_data("https://www.iii.org/sites/default/files/docs/p
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">Document</span>
-
-<span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">ServiceContext</span><span class="p">,</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">StorageContext</span>
-
-<span class="kn">from</span> <span class="nn">llama_index.llms</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index.legacy</span> <span class="kn">import</span> <span class="n">ServiceContext</span>
+<span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">StorageContext</span><span class="p">,</span> <span class="n">Document</span>
+<span class="kn">from</span> <span class="nn">llama_index.llms.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 
 <span class="c1"># initialize llm</span>
 <span class="n">llm</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"gpt-3.5-turbo"</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 
 <span class="c1"># knowledge store</span>
 <span class="n">document</span> <span class="o">=</span> <span class="n">Document</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">doc</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]))</span>
-
-<span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
 
 <span class="c1"># service context for index</span>
 <span class="n">service_context</span> <span class="o">=</span> <span class="n">ServiceContext</span><span class="o">.</span><span class="n">from_defaults</span><span class="p">(</span>
@@ -3825,19 +3865,15 @@ documents = pdf_loader.load_data("https://www.iii.org/sites/default/files/docs/p
 <span class="c1"># basic rag query engine</span>
 <span class="n">rag_basic</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">(</span><span class="n">text_qa_template</span> <span class="o">=</span> <span class="n">system_prompt</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6">from llama_index import Document
-
-from llama_index import ServiceContext, VectorStoreIndex, StorageContext
-
-from llama_index.llms import OpenAI
+<div class="clipboard-copy-txt" id="cell-6">from llama_index.legacy import ServiceContext
+from llama_index.core import VectorStoreIndex, StorageContext, Document
+from llama_index.llms.openai import OpenAI
 
 # initialize llm
 llm = OpenAI(model="gpt-3.5-turbo", temperature=0.5)
 
 # knowledge store
 document = Document(text="\n\n".join([doc.text for doc in documents]))
-
-from llama_index import VectorStoreIndex
 
 # service context for index
 service_context = ServiceContext.from_defaults(

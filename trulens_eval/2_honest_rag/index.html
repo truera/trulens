@@ -1905,6 +1905,8 @@
       
         
       
+        
+      
     
     
     
@@ -2549,8 +2551,30 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../api/instruments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Instruments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
     
     
+      
+        
       
         
       
@@ -2572,10 +2596,10 @@
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
         
           
-          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2586,8 +2610,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -2624,6 +2648,26 @@
   
   <span class="md-ellipsis">
     Serialization Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/utils/json/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    JSON Utilities
   </span>
   
 
@@ -3617,9 +3661,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">trulens_eval</span> <span class="n">llama_index</span><span class="o">==</span><span class="mf">0.9.10</span> <span class="n">llama_hub</span> <span class="n">llmsherpa</span> <span class="n">sentence</span><span class="o">-</span><span class="n">transformers</span> <span class="n">sentencepiece</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">trulens_eval</span> <span class="n">llama_index</span> <span class="n">llama_hub</span> <span class="n">llmsherpa</span> <span class="n">sentence</span><span class="o">-</span><span class="n">transformers</span> <span class="n">sentencepiece</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">!pip install trulens_eval llama_index==0.9.10 llama_hub llmsherpa sentence-transformers sentencepiece</div>
+<div class="clipboard-copy-txt" id="cell-1">!pip install trulens_eval llama_index llama_hub llmsherpa sentence-transformers sentencepiece</div>
 </div>
 </div>
 </div>
@@ -3910,13 +3954,10 @@ honest_feedbacks = [qa_relevance, qs_relevance, f_embed_dist, f_groundedness]</d
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index.node_parser</span> <span class="kn">import</span> <span class="n">SentenceWindowNodeParser</span>
-<span class="kn">from</span> <span class="nn">llama_index.indices.postprocessor</span> <span class="kn">import</span> <span class="n">MetadataReplacementPostProcessor</span>
-<span class="kn">from</span> <span class="nn">llama_index.indices.postprocessor</span> <span class="kn">import</span> <span class="n">SentenceTransformerRerank</span>
-<span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">load_index_from_storage</span>
-<span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">Document</span>
-<span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">ServiceContext</span><span class="p">,</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">StorageContext</span>
-<span class="kn">from</span> <span class="nn">llama_index.llms</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index.core.node_parser</span> <span class="kn">import</span> <span class="n">SentenceWindowNodeParser</span>
+<span class="kn">from</span> <span class="nn">llama_index.core.indices.postprocessor</span> <span class="kn">import</span> <span class="n">SentenceTransformerRerank</span><span class="p">,</span> <span class="n">MetadataReplacementPostProcessor</span>
+<span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">ServiceContext</span><span class="p">,</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">StorageContext</span><span class="p">,</span> <span class="n">Document</span><span class="p">,</span> <span class="n">load_index_from_storage</span>
+<span class="kn">from</span> <span class="nn">llama_index.llms.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
 <span class="c1"># initialize llm</span>
@@ -3989,13 +4030,10 @@ honest_feedbacks = [qa_relevance, qs_relevance, f_embed_dist, f_groundedness]</d
         <span class="n">feedbacks</span><span class="o">=</span><span class="n">honest_feedbacks</span>
     <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5">from llama_index.node_parser import SentenceWindowNodeParser
-from llama_index.indices.postprocessor import MetadataReplacementPostProcessor
-from llama_index.indices.postprocessor import SentenceTransformerRerank
-from llama_index import load_index_from_storage
-from llama_index import Document
-from llama_index import ServiceContext, VectorStoreIndex, StorageContext
-from llama_index.llms import OpenAI
+<div class="clipboard-copy-txt" id="cell-5">from llama_index.core.node_parser import SentenceWindowNodeParser
+from llama_index.core.indices.postprocessor import SentenceTransformerRerank, MetadataReplacementPostProcessor
+from llama_index.core import ServiceContext, VectorStoreIndex, StorageContext, Document, load_index_from_storage
+from llama_index.llms.openai import OpenAI
 import os
 
 # initialize llm

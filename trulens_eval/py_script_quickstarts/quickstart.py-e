@@ -11,7 +11,7 @@
 
 
 
-# ! pip install trulens_eval==0.23.0 chromadb==0.4.18 openai==1.3.7
+# ! pip install trulens_eval chromadb openai
 
 
 

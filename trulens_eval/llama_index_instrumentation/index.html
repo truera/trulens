@@ -2005,6 +2005,8 @@
       
         
       
+        
+      
     
     
     
@@ -2649,8 +2651,30 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../api/instruments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Instruments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
     
     
+      
+        
       
         
       
@@ -2672,10 +2696,10 @@
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
         
           
-          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2686,8 +2710,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -2724,6 +2748,26 @@
   
   <span class="md-ellipsis">
     Serialization Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/utils/json/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    JSON Utilities
   </span>
   
 
@@ -3770,7 +3814,7 @@ evaluations re-usable across different apps.</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
 <span class="kn">from</span> <span class="nn">llama_index.readers.web</span> <span class="kn">import</span> <span class="n">SimpleWebPageReader</span>
 
 <span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleWebPageReader</span><span class="p">(</span><span class="n">html_to_text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span>
@@ -3780,7 +3824,7 @@ evaluations re-usable across different apps.</p>
 
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from llama_index import VectorStoreIndex
+<div class="clipboard-copy-txt" id="cell-1">from llama_index.core import VectorStoreIndex
 from llama_index.readers.web import SimpleWebPageReader
 
 documents = SimpleWebPageReader(html_to_text=True).load_data(
@@ -3919,7 +3963,7 @@ applciations.</p>
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruLlama</span><span class="p">,</span> <span class="n">Tru</span>
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 
-<span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
+<span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
 <span class="kn">from</span> <span class="nn">llama_index.readers.web</span> <span class="kn">import</span> <span class="n">SimpleWebPageReader</span>
 
 <span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleWebPageReader</span><span class="p">(</span><span class="n">html_to_text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span>
@@ -3933,7 +3977,7 @@ applciations.</p>
 from trulens_eval import TruLlama, Tru
 tru = Tru()
 
-from llama_index import VectorStoreIndex
+from llama_index.core import VectorStoreIndex
 from llama_index.readers.web import SimpleWebPageReader
 
 documents = SimpleWebPageReader(html_to_text=True).load_data(
@@ -4026,7 +4070,7 @@ print(llm_response_async)</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
 <span class="kn">from</span> <span class="nn">llama_index.readers.web</span> <span class="kn">import</span> <span class="n">SimpleWebPageReader</span>
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruLlama</span>
 
@@ -4037,7 +4081,7 @@ print(llm_response_async)</div>
 
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">(</span><span class="n">streaming</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5">from llama_index import VectorStoreIndex
+<div class="clipboard-copy-txt" id="cell-5">from llama_index.core import VectorStoreIndex
 from llama_index.readers.web import SimpleWebPageReader
 from trulens_eval import TruLlama
 

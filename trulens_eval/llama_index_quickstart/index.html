@@ -686,6 +686,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#download-data" class="md-nav__link">
+    Download data
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#create-simple-llm-application" class="md-nav__link">
     Create Simple LLM Application
   </a>
@@ -2031,6 +2038,8 @@
       
         
       
+        
+      
     
     
     
@@ -2675,8 +2684,30 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../api/instruments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Instruments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
     
     
+      
+        
       
         
       
@@ -2698,10 +2729,10 @@
         
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
         
           
-          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -2712,8 +2743,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -2750,6 +2781,26 @@
   
   <span class="md-ellipsis">
     Serialization Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/utils/json/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    JSON Utilities
   </span>
   
 
@@ -3310,6 +3361,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#download-data" class="md-nav__link">
+    Download data
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#create-simple-llm-application" class="md-nav__link">
     Create Simple LLM Application
   </a>
@@ -3781,7 +3839,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="llama-index-quickstart">📓 Llama-Index Quickstart<a class="anchor-link" href="#llama-index-quickstart">¶</a></h1><p>In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.</p>
+<h1 id="llama-index-quickstart">📓 Llama-Index Quickstart<a class="anchor-link" href="#llama-index-quickstart">¶</a></h1><p>In this quickstart you will create a simple Llama Index app and learn how to log it and get feedback on an LLM response.</p>
 <p>For evaluation, we will leverage the "hallucination triad" of groundedness, context relevance and answer relevance.</p>
 <p><a href="https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"/></a></p>
 </div>
@@ -3817,9 +3875,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># pip install trulens_eval==0.23.0 llama_index&gt;=0.9.15post2 html2text&gt;=2020.1.16</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># pip install trulens_eval llama_index openai</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1"># pip install trulens_eval==0.23.0 llama_index&gt;=0.9.15post2 html2text&gt;=2020.1.16 </div>
+<div class="clipboard-copy-txt" id="cell-1"># pip install trulens_eval llama_index openai</div>
 </div>
 </div>
 </div>
@@ -3912,7 +3970,8 @@ tru = Tru()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="create-simple-llm-application">Create Simple LLM Application<a class="anchor-link" href="#create-simple-llm-application">¶</a></h3><p>This example uses LlamaIndex which internally uses an OpenAI LLM.</p>
+<h3 id="download-data">Download data<a class="anchor-link" href="#download-data">¶</a></h3><p>This example uses the text of Paul Graham’s essay, <a href="https://paulgraham.com/worked.html">“What I Worked On”</a>, and is the canonical llama-index example.</p>
+<p>The easiest way to get it is to <a href="https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt">download it via this link</a> and save it in a folder called data. You can do so with the following command:</p>
 </div>
 </div>
 </div>
@@ -3935,22 +3994,54 @@ tru = Tru()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span>
-<span class="kn">from</span> <span class="nn">llama_index.readers.web</span> <span class="kn">import</span> <span class="n">SimpleWebPageReader</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">raw</span><span class="o">.</span><span class="n">githubusercontent</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">run</span><span class="o">-</span><span class="n">llama</span><span class="o">/</span><span class="n">llama_index</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">docs</span><span class="o">/</span><span class="n">examples</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">paul_graham</span><span class="o">/</span><span class="n">paul_graham_essay</span><span class="o">.</span><span class="n">txt</span> <span class="o">-</span><span class="n">P</span> <span class="n">data</span><span class="o">/</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-4">!wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="create-simple-llm-application">Create Simple LLM Application<a class="anchor-link" href="#create-simple-llm-application">¶</a></h3><p>This example uses LlamaIndex which internally uses an OpenAI LLM.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-5">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">SimpleDirectoryReader</span>
 
-<span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleWebPageReader</span><span class="p">(</span>
-    <span class="n">html_to_text</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">([</span><span class="s2">"http://paulgraham.com/worked.html"</span><span class="p">])</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleDirectoryReader</span><span class="p">(</span><span class="s2">"data"</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
 <span class="n">index</span> <span class="o">=</span> <span class="n">VectorStoreIndex</span><span class="o">.</span><span class="n">from_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
 
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4">from llama_index import VectorStoreIndex
-from llama_index.readers.web import SimpleWebPageReader
+<div class="clipboard-copy-txt" id="cell-5">from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
-documents = SimpleWebPageReader(
-    html_to_text=True
-).load_data(["http://paulgraham.com/worked.html"])
+documents = SimpleDirectoryReader("data").load_data()
 index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()</div>
@@ -3979,7 +4070,7 @@ query_engine = index.as_query_engine()</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-5">
+<clipboard-copy for="cell-6">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3992,7 +4083,7 @@ query_engine = index.as_query_engine()</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">response</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"What did the author do growing up?"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5">response = query_engine.query("What did the author do growing up?")
+<div class="clipboard-copy-txt" id="cell-6">response = query_engine.query("What did the author do growing up?")
 print(response)</div>
 </div>
 </div>
@@ -4019,7 +4110,7 @@ print(response)</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-6">
+<clipboard-copy for="cell-7">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4063,7 +4154,7 @@ print(response)</div>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6">import numpy as np
+<div class="clipboard-copy-txt" id="cell-7">import numpy as np
 
 # Initialize provider class
 from trulens_eval.feedback.provider.openai import OpenAI
@@ -4121,7 +4212,7 @@ f_qs_relevance = (
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-7">
+<clipboard-copy for="cell-8">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4136,7 +4227,7 @@ f_qs_relevance = (
     <span class="n">app_id</span><span class="o">=</span><span class="s1">'LlamaIndex_App1'</span><span class="p">,</span>
     <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundedness</span><span class="p">,</span> <span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_qs_relevance</span><span class="p">])</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-7">from trulens_eval import TruLlama
+<div class="clipboard-copy-txt" id="cell-8">from trulens_eval import TruLlama
 tru_query_engine_recorder = TruLlama(query_engine,
     app_id='LlamaIndex_App1',
     feedbacks=[f_groundedness, f_qa_relevance, f_qs_relevance])</div>
@@ -4154,7 +4245,7 @@ tru_query_engine_recorder = TruLlama(query_engine,
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-8">
+<clipboard-copy for="cell-9">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4168,7 +4259,7 @@ tru_query_engine_recorder = TruLlama(query_engine,
 <span class="k">with</span> <span class="n">tru_query_engine_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
     <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"What did the author do growing up?"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8"># or as context manager
+<div class="clipboard-copy-txt" id="cell-9"># or as context manager
 with tru_query_engine_recorder as recording:
     query_engine.query("What did the author do growing up?")</div>
 </div>
@@ -4196,7 +4287,7 @@ with tru_query_engine_recorder as recording:
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-9">
+<clipboard-copy for="cell-10">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4213,59 +4304,12 @@ with tru_query_engine_recorder as recording:
 
 <span class="n">display</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9"># The record of the app invocation can be retrieved from the `recording`:
+<div class="clipboard-copy-txt" id="cell-10"># The record of the app invocation can be retrieved from the `recording`:
 
 rec = recording.get() # use .get if only one record
 # recs = recording.records # use .records if multiple
 
 display(rec)</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy for="cell-10">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># The results of the feedback functions can be rertireved from</span>
-<span class="c1"># `Record.feedback_results` or using the `wait_for_feedback_result` method. The</span>
-<span class="c1"># results if retrieved directly are `Future` instances (see</span>
-<span class="c1"># `concurrent.futures`). You can use `as_completed` to wait until they have</span>
-<span class="c1"># finished evaluating or use the utility method:</span>
-
-<span class="k">for</span> <span class="n">feedback</span><span class="p">,</span> <span class="n">feedback_result</span> <span class="ow">in</span> <span class="n">rec</span><span class="o">.</span><span class="n">wait_for_feedback_results</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">feedback</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">feedback_result</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>
-
-<span class="c1"># See more about wait_for_feedback_results:</span>
-<span class="c1"># help(rec.wait_for_feedback_results)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-10"># The results of the feedback functions can be rertireved from
-# `Record.feedback_results` or using the `wait_for_feedback_result` method. The
-# results if retrieved directly are `Future` instances (see
-# `concurrent.futures`). You can use `as_completed` to wait until they have
-# finished evaluating or use the utility method:
-
-for feedback, feedback_result in rec.wait_for_feedback_results().items():
-    print(feedback.name, feedback_result.result)
-
-# See more about wait_for_feedback_results:
-# help(rec.wait_for_feedback_results)</div>
 </div>
 </div>
 </div>
@@ -4290,13 +4334,9 @@ for feedback, feedback_result in rec.wait_for_feedback_results().items():
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">records</span><span class="p">,</span> <span class="n">feedback</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">get_records_and_feedback</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[</span><span class="s2">"LlamaIndex_App1"</span><span class="p">])</span>
-
-<span class="n">records</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11">records, feedback = tru.get_records_and_feedback(app_ids=["LlamaIndex_App1"])
-
-records.head()</div>
+<div class="clipboard-copy-txt" id="cell-11">tru.run_dashboard()</div>
 </div>
 </div>
 </div>
@@ -4321,9 +4361,87 @@ records.head()</div>
 </div>
 </clipboard-copy>
 </div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># The results of the feedback functions can be rertireved from</span>
+<span class="c1"># `Record.feedback_results` or using the `wait_for_feedback_result` method. The</span>
+<span class="c1"># results if retrieved directly are `Future` instances (see</span>
+<span class="c1"># `concurrent.futures`). You can use `as_completed` to wait until they have</span>
+<span class="c1"># finished evaluating or use the utility method:</span>
+
+<span class="k">for</span> <span class="n">feedback</span><span class="p">,</span> <span class="n">feedback_result</span> <span class="ow">in</span> <span class="n">rec</span><span class="o">.</span><span class="n">wait_for_feedback_results</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">feedback</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">feedback_result</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>
+
+<span class="c1"># See more about wait_for_feedback_results:</span>
+<span class="c1"># help(rec.wait_for_feedback_results)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-12"># The results of the feedback functions can be rertireved from
+# `Record.feedback_results` or using the `wait_for_feedback_result` method. The
+# results if retrieved directly are `Future` instances (see
+# `concurrent.futures`). You can use `as_completed` to wait until they have
+# finished evaluating or use the utility method:
+
+for feedback, feedback_result in rec.wait_for_feedback_results().items():
+    print(feedback.name, feedback_result.result)
+
+# See more about wait_for_feedback_results:
+# help(rec.wait_for_feedback_results)</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-13">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">records</span><span class="p">,</span> <span class="n">feedback</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">get_records_and_feedback</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[</span><span class="s2">"LlamaIndex_App1"</span><span class="p">])</span>
+
+<span class="n">records</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-13">records, feedback = tru.get_records_and_feedback(app_ids=["LlamaIndex_App1"])
+
+records.head()</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-14">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_leaderboard</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[</span><span class="s2">"LlamaIndex_App1"</span><span class="p">])</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-12">tru.get_leaderboard(app_ids=["LlamaIndex_App1"])</div>
+<div class="clipboard-copy-txt" id="cell-14">tru.get_leaderboard(app_ids=["LlamaIndex_App1"])</div>
 </div>
 </div>
 </div>
@@ -4349,7 +4467,7 @@ records.head()</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-13">
+<clipboard-copy for="cell-15">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4363,7 +4481,7 @@ records.head()</div>
 
 <span class="c1"># tru.stop_dashboard() # stop if needed</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13">tru.run_dashboard() # open a local streamlit app to explore
+<div class="clipboard-copy-txt" id="cell-15">tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed</div>
 </div>
@@ -4379,17 +4497,6 @@ records.head()</div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p>Alternatively, you can run <code>trulens-eval</code> from a command line in the same folder to start the dashboard.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.</p>
 </div>
 </div>
 </div>
