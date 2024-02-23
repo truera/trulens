@@ -639,7 +639,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
             logger.debug(
-                "Calling instrumented sync method %s of type %s, "
+                "Calling instrumented method %s of type %s, "
                 "iscoroutinefunction=%s, "
                 "isasyncgeneratorfunction=%s", func, type(func),
                 is_really_coroutinefunction(func),

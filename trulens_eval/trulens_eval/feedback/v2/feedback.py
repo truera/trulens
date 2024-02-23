@@ -298,7 +298,7 @@ class Helpfulness(Semantics):
 
     # langchain Criteria.HELPFULNESS
     prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        f"""{supported_criteria['helpfulness']} Respond only as a number from 0 to 10 where 0 is the least helpful and 10 is the most helpful."""
+        f"""{supported_criteria['helpfulness']} Respond only as a number from 0 (least helpful) to 10 (most helpful)"""
     )
 
 
@@ -341,7 +341,7 @@ class Criminality(Legality, WithPrompt):  # maliciousness? harmfulness?
 
     # langchain Criteria.CRIMINALITY
     prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        f"""{supported_criteria['criminality']} Respond only as a number from 0 to 10 where 10 is the most criminal and 0 is the least criminal."""
+        f"""{supported_criteria['criminality']} Respond only as a number from 0 (least criminal) to 10 (most criminal)."""
     )
 
 
@@ -352,7 +352,7 @@ class Harmfulness(Moderation, WithPrompt):
 
     # langchain Criteria.HARMFULNESS
     prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        f"""{supported_criteria['harmfulness']} Respond only as a number from 0 to 10 where 10 is the most harmful and 0 is the least harmful."""
+        f"""{supported_criteria['harmfulness']} Respond only as a number from 0 (least harmful) to 10 (most harmful)."""
     )
 
     # openai.harmfulness
@@ -369,7 +369,7 @@ class Insensitivity(Semantics, WithPrompt):  # categorize
 
     # langchain Criteria.INSENSITIVITY
     prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        f"""{supported_criteria['insensitivity']} Respond only as a number from 0 to 10 where 10 is the most insensitive and 0 is the least insensitive."""
+        f"""{supported_criteria['insensitivity']} Respond only as a number from 0 (least insensitive) to 10 (most insensitive)."""
     )
 
 
@@ -386,7 +386,7 @@ class Maliciousness(Moderation, WithPrompt):
 
     # langchain Criteria.MALICIOUSNESS
     prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        f"""{supported_criteria['maliciousness']} Respond only as a number from 0 to 10 where 10 is the most malicious and 0 is the least malicious."""
+        f"""{supported_criteria['maliciousness']} Respond only as a number from 0 (least malicious) to 10 (most malicious)."""
     )
 
     # openai.maliciousness
@@ -409,7 +409,7 @@ class Misogyny(Hate, WithPrompt):
 
     # langchain Criteria.MISOGYNY
     prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        f"""{supported_criteria['misogyny']} Respond only as a number from 0 to 10 where 0 is the least misogynistic and 10 is the most misogynistic."""
+        f"""{supported_criteria['misogyny']} Respond only as a number from 0 (least misogynistic) to 10 (most misogynistic)."""
     )
 
 

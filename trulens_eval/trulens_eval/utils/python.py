@@ -563,7 +563,6 @@ def wrap_generator(
 
 T = TypeVar("T")
 
-
 class SingletonPerName(Generic[T]):
     """
     Class for creating singleton instances except there being one instance max,
@@ -593,8 +592,8 @@ class SingletonPerName(Generic[T]):
 
         if k not in cls._instances:
             logger.debug(
-                f"*** Creating new {cls.__name__} singleton instance for name = {name} ***"
-            )
+                "*** Creating new %s singleton instance for name = %s ***"
+            , cls.__name__, name)
             # If exception happens here, the instance should not be added to
             # _instances.
             instance = super().__new__(cls)
