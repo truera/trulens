@@ -13,7 +13,7 @@ with OptionalImports(messages=REQUIREMENT_SKLEARN):
     import sklearn
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
-    from llama_index import ServiceContext
+    from llama_index.legacy import ServiceContext
 
 
 class Embeddings(WithClassInfo, SerialModel):
