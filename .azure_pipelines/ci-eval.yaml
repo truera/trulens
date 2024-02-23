@@ -111,16 +111,15 @@ jobs:
           source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
           
-          python -m pytest tests/integration
+          python -m pytest tests/e2e
 
-        displayName: Run integration tests
+        displayName: Run e2e tests
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
           HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
           PINECONE_API_KEY: $(PINECONE_API_KEY)
           PINECONE_ENV: $(PINECONE_ENV)
           HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
-
 
       - bash: |
           source activate $(condaEnvFileSuffix)

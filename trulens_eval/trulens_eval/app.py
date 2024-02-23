@@ -682,11 +682,24 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         # if have only containers of length 1, find the innermost non-container
         focus = all_args
+
+        print(f"focus={focus}")
         while not isinstance(focus, JSON_BASES) and len(focus) == 1:
+            print(f"focus={focus}")
+
             focus = focus[0]
 
+            if isinstance(focus, pydantic.BaseModel):
+                focus = list(focus.model_dump().values())
+                continue
+            
             if isinstance(focus, Dict):
                 focus = list(focus.values())
+                continue
+
+            if not isinstance(focus, Sequence):
+                print(f"focus {focus} is not a sequence")
+                break
 
         if isinstance(focus, JSON_BASES):
             return str(focus)
@@ -703,8 +716,17 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         while not isinstance(focus, JSON_BASES) and len(focus) >= 1:
             focus = focus[0]
 
+            if isinstance(focus, pydantic.BaseModel):
+                focus = list(focus.model_dump().values())
+                continue
+            
             if isinstance(focus, Dict):
                 focus = list(focus.values())
+                continue
+
+            if not isinstance(focus, Sequence):
+                print(f"focus {focus} is not a sequence")
+                break
 
         if isinstance(focus, JSON_BASES):
             return str(focus)
@@ -736,7 +758,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         elif isinstance(ret, Sequence):
             if len(ret) > 0:
-                return ret[0]
+                return str(ret[0])
             else:
                 return None
 

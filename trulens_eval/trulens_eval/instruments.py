@@ -683,7 +683,7 @@ class Instrument(object):
                     perf=Perf(start_time=start_time, end_time=end_time),
                     pid=os.getpid(),
                     tid=th.get_native_id(),
-                    rets=rets,
+                    rets=jsonify(rets),
                     error=error_str if error is not None else None
                 )
                 # End of run wrapped block.
@@ -741,7 +741,7 @@ class Instrument(object):
 
                 return wrap_awaitable(rets, on_done=handle_done)
 
-            handle_done(rets=jsonify(rets))
+            handle_done(rets=rets)
             return rets
 
         # Create a new set of apps expecting to be notified about calls to the

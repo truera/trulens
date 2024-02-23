@@ -35,11 +35,11 @@ test-tru-custom:
 test-static:
 	$(CONDA); python -m unittest tests.unit.static.test_static
 
-# Tests in the integration folder make use of possibly costly endpoints. They
+# Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
-test-integrations:
-	$(CONDA); python -m unittest discover tests.integration
+test-e2e:
+	$(CONDA); python -m unittest discover tests.e2e
 
 test-tru:
 	$(CONDA); python -m unittest tests.integration.test_tru
