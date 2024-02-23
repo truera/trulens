@@ -17,8 +17,6 @@ import numpy as np
 import pandas
 import pydantic
 
-from trulens_eval.feedback import AggCallable
-from trulens_eval.feedback import ImpCallable
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.schema import AppDefinition

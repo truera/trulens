@@ -616,7 +616,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
         higher_is_better: Optional[bool] = None,
         **kwargs
     ):
-        selectors = selectors or dict()
+        selectors = selectors or {}
 
         if name is not None:
             kwargs['supplied_name'] = name
@@ -625,6 +625,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             feedback_definition_id="temporary",
             implementation=implementation,
             aggregator=aggregator,
+            selectors=selectors,
             **kwargs
         )
 
