@@ -177,6 +177,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         name = name or cls.__name__
         return super().__new__(cls, *args, name=name, **kwargs)
 
+    def __str__(self):
+        # Have to override str/repr due to pydantic issue with recursive models.
+        return f"Endpoint({self.name})"
+
+    def __repr__(self):
+        # Have to override str/repr due to pydantic issue with recursive models.
+        return f"Endpoint({self.name})"
+
     def __init__(
         self,
         *args,

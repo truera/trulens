@@ -12,7 +12,7 @@ from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.utils.containers import dict_set_with
+from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
@@ -137,88 +137,59 @@ class LlamaInstrument(Instrument):
 
         # Instrument only methods with these names and of these classes. Ok to
         # include llama_index inside methods.
-        METHODS = dict_set_with(
+        METHODS = dict_set_with_multikey(
+            dict(LangChainInstrument.Default.METHODS),
             {
                 # LLM:
-                "complete":
-                    lambda o: isinstance(o, BaseLLM),
-                "stream_complete":
-                    lambda o: isinstance(o, BaseLLM),
-                "acomplete":
-                    lambda o: isinstance(o, BaseLLM),
-                "astream_complete":
+                ("complete", "stream_complete", "acomplete", "astream_complete"):
                     lambda o: isinstance(o, BaseLLM),
 
                 # BaseTool/AsyncBaseTool:
-                "__call__":
+                ("__call__", "call"):
                     lambda o: isinstance(o, BaseTool),
-                "call":
-                    lambda o: isinstance(o, BaseTool),
-                "acall":
+                ("acall"):
                     lambda o: isinstance(o, AsyncBaseTool),
 
                 # Memory:
-                "put":
+                ("put"):
                     lambda o: isinstance(o, BaseMemory),
 
                 # Misc.:
-                "get_response":
+                ("get_response"):
                     lambda o: isinstance(o, Refine),
-                "predict":
+                ("predict"):
                     lambda o: isinstance(o, BaseLLMPredictor),
 
                 # BaseQueryEngine:
-                "query":
+                ("query", "aquery"):
                     lambda o: isinstance(o, BaseQueryEngine),
-                "aquery":
-                    lambda o: isinstance(o, BaseQueryEngine),
-
+            
                 # BaseChatEngine/LLM:
-                "chat":
-                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
-                "achat":
-                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
-                "stream_chat":
-                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
-                "astream_achat":
+                ("chat", "achat", "stream_chat", "astream_achat"):
                     lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
 
                 # BaseRetriever/BaseQueryEngine:
-                "retrieve":
+                ("retrieve", "_retrieve", "_aretrieve"):
                     lambda o: isinstance(
                         o, (
                             BaseQueryEngine, BaseRetriever,
                             WithFeedbackFilterNodes
                         )
                     ),
-                "_retrieve":
-                    lambda o: isinstance(
-                        o, (
-                            BaseQueryEngine, BaseRetriever,
-                            WithFeedbackFilterNodes
-                        )
-                    ),
-                "_aretrieve":
-                    lambda o: isinstance(
-                        o, (
-                            BaseQueryEngine, BaseRetriever,
-                            WithFeedbackFilterNodes
-                        )
-                    ),
+                
                 # BaseQueryEngine:
-                "synthesize":
+                ("synthesize"):
                     lambda o: isinstance(o, BaseQueryEngine),
 
                 # BaseNodePostProcessor
-                "_postprocess_nodes":
+                ("_postprocess_nodes"):
                     lambda o: isinstance(o, (BaseNodePostprocessor)),
 
                 # Components
-                "_run_component":
+                ("_run_component"):
                     lambda o:
                     isinstance(o, (QueryEngineComponent, RetrieverComponent))
-            },
-            LangChainInstrument.Default.METHODS
+            }
         )
 
     def __init__(self, *args, **kwargs):
