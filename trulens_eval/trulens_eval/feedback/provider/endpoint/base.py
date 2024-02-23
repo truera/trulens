@@ -190,9 +190,12 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             return
 
         if callback_class is None:
-            raise ValueError(
-                "Endpoint has to be extended by class that can set `callback_class`."
-            )
+            # Some old databases do not have this serialized so lets set it to
+            # the parent of callbacks and hope it never gets used.
+            callback_class = EndpointCallback
+            #raise ValueError(
+            #    "Endpoint has to be extended by class that can set `callback_class`."
+            #)
 
         if rpm is None:
             rpm = DEFAULT_RPM
