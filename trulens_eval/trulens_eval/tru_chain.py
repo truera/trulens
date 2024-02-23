@@ -6,16 +6,14 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
+from typing import Any, Callable, ClassVar, Dict, Optional
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
@@ -88,7 +86,7 @@ class LangChainInstrument(Instrument):
                     lambda o: isinstance(o, RunnableSerializable),
                 ("save_context", "clear"):
                     lambda o: isinstance(o, BaseMemory),
-                ("run", "arun", "_call", "__call__", "_acall", "acall"):
+                ("run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"):
                     lambda o: isinstance(o, Chain),
                 (
                     "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
@@ -236,12 +234,31 @@ class TruChain(App):
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> str:
+    ) -> str: # might have to relax to JSON output
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
+
+        if "input" in bindings.arguments:
+            temp = bindings.arguments['input']
+            if isinstance(temp, str):
+                return temp
+
+            if isinstance(temp, dict):
+                vals = list(temp.values())
+            elif isinstance(temp, list):
+                vals = temp
+
+            if len(vals) == 0:
+                return None
+            
+            if len(vals) == 1:
+                return vals[0]
+            
+            if len(vals) > 1:
+                return vals[0]
 
         if 'inputs' in bindings.arguments \
             and safe_hasattr(self.app, "input_keys") \
