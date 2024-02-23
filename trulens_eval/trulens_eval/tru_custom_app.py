@@ -422,7 +422,7 @@ class TruCustomApp(App):
         # Check that any functions marked with `TruCustomApp.instrument` has been
         # instrumented as a method under some object.
         for f in TruCustomApp.functions_to_instrument:
-            obj_ids_methods_and_full_paths = list(self._get_methods_for_func(f))
+            obj_ids_methods_and_full_paths = list(self.get_methods_for_func(f))
 
             if len(obj_ids_methods_and_full_paths) == 0:
                 logger.warning(

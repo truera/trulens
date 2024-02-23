@@ -13,7 +13,7 @@ trubot:
 test-%-optional:
 	TEST_OPTIONAL=1 make test-$*
 
-# Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently. 
+# Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
 test-unit:
 	$(CONDA); python -m unittest discover tests.unit
 
@@ -35,22 +35,26 @@ test-tru-custom:
 test-static:
 	$(CONDA); python -m unittest tests.unit.static.test_static
 
-# Tests in the integration folder make use of possibly costly endpoints. They
+# Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
+
+test-e2e:
+	$(CONDA); python -m unittest discover tests.e2e
+
 test-tru:
-	$(CONDA); python -m unittest tests.unit.test_tru
+	$(CONDA); python -m unittest tests.e2e.test_tru
 
 test-tru-chain:
-	$(CONDA); python -m unittest tests.integration.test_tru_chain
+	$(CONDA); python -m unittest tests.e2e.test_tru_chain
 
 test-tru-llama:
-	$(CONDA); python -m unittest tests.integration.test_tru_llama
+	$(CONDA); python -m unittest tests.e2e.test_tru_llama
 
 test-providers:
-	$(CONDA); python -m unittest tests.integration.test_providers
+	$(CONDA); python -m unittest tests.e2e.test_providers
 
 test-endpoints:
-	$(CONDA); python -m unittest tests.integration.test_endpoints
+	$(CONDA); python -m unittest tests.e2e.test_endpoints
 
 # Database integration tests for various database types supported by sqlaclhemy.
 # While those don't use costly endpoints, they may be more computation intensive.
