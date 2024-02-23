@@ -721,7 +721,6 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 continue
 
             if not isinstance(focus, Sequence):
-                print(f"focus {focus} is not a sequence")
                 break
 
         if isinstance(focus, JSON_BASES):
