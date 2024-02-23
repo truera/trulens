@@ -736,6 +736,9 @@ class Instrument(object):
                     ),
                 )
 
+                # TODO(piotrm): need to track costs of awaiting the ret in the
+                # below.
+
                 return wrap_awaitable(rets, on_done=handle_done)
 
             handle_done(rets=jsonify(rets))
@@ -854,25 +857,15 @@ class Instrument(object):
                     self.instrument_object(attr_value, inner_query, done)
 
         for base in mro:
-            logger.debug("\t%s: considering base %s", query, class_name(base))
-
             # Some top part of mro() may need instrumentation here if some
             # subchains call superchains, and we want to capture the
             # intermediate steps. On the other hand we don't want to instrument
             # the very base classes such as object:
             if not self.to_instrument_module(base.__module__):
-                logger.debug(
-                    "\tSkipping base; module %s is not to be instrumented.",
-                    python.module_name(base)
-                )
                 continue
 
             try:
                 if not self.to_instrument_class(base):
-                    logger.debug(
-                        "\t\tSkipping base; class %s is not to be instrumented.",
-                        python.module_name(base)
-                    )
                     continue
 
             except Exception as e:
@@ -970,10 +963,7 @@ class Instrument(object):
                             )
 
                 else:
-                    logger.debug(
-                        "Instrumentation of component %s (of type %s) is not yet supported.",
-                        v, class_name(type(v))
-                    )
+                    pass
 
                 # TODO: check if we want to instrument anything in langchain not
                 # accessible through model_fields .

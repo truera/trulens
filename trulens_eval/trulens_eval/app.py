@@ -5,6 +5,7 @@ Generalized root type for various libraries like llama_index and langchain .
 from abc import ABC
 from abc import abstractmethod
 import contextvars
+import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
@@ -12,10 +13,9 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
-    Optional, Sequence, Set, Tuple, Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
+                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
+                    TypeVar)
 
 import pydantic
 
@@ -1000,6 +1000,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             raise TypeError(
                 f"Expected `func` to be a callable, but got {class_name(type(func))}."
             )
+
+        # If func is actually an object that implements __call__, check __call__
+        # instead.
+        if not (inspect.isfunction(func) or inspect.ismethod(func)):
+            func = func.__call__
 
         if not safe_hasattr(func, Instrument.INSTRUMENT):
             if Instrument.INSTRUMENT in dir(func):

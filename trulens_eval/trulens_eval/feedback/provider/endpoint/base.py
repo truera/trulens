@@ -10,10 +10,8 @@ import random
 import sys
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
-    Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
+                    Sequence, Tuple, Type, TypeVar)
 
 from pydantic import Field
 import requests
@@ -23,10 +21,12 @@ from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import locals_except
+from trulens_eval.utils.python import module_name
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
@@ -312,7 +312,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
         if safe_hasattr(mod, method_name):
             logger.debug(
-                "Instrumenting %s.%s for %s", mod.__name__, method_name,
+                "Instrumenting %s.%s for %s", module_name(mod), method_name,
                 self.name
             )
             func = getattr(mod, method_name)
@@ -375,7 +375,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
                 if wrapped_method_filter(produced_func):
 
-                    logger.debug("Instrumenting %s", produced_func.__name__)
+                    logger.debug("Instrumenting %s", callable_name(produced_func))
 
                     instrumented_produced_func = self.wrap_function(
                         produced_func
@@ -555,7 +555,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             callbacks.append(callback)
 
-        # Call the thunk and wait for result.
+        # Call the function.
         result: T = __func(*args, **kwargs)
 
         # Return result and only the callbacks created here. Outer thunks might
@@ -604,6 +604,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         )
 
     def wrap_function(self, func):
+        """Create a wrapper of the given function to perform cost tracking."""
+
         if safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
             # wrapped function in the INSTRUMENT attribute. This will be used to
@@ -650,31 +652,31 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             response = func(*args, **kwargs)
 
+            bindings = inspect.signature(func).bind(*args, **kwargs)
+
+            # Get all of the callback classes suitable for handling this
+            # call. Note that we stored this in the INSTRUMENT attribute of
+            # the wrapper method.
+            registered_callback_classes = getattr(tru_wrapper, INSTRUMENT)
+
+            # Look up the endpoints that are expecting to be notified and the
+            # callback tracking the tally. See Endpoint._track_costs for
+            # definition.
+            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
+                get_first_local_in_call_stack(
+                    key="endpoints",
+                    func=self.__find_tracker,
+                    offset=0
+                )
+
+            # If wrapped method was not called from within _track_costs, we
+            # will get None here and do nothing but return wrapped
+            # function's response.
+            if endpoints is None:
+                logger.debug("No endpoints found.")
+                return response
+
             def response_callback(response):
-                bindings = inspect.signature(func).bind(*args, **kwargs)
-
-                # Get all of the callback classes suitable for handling this
-                # call. Note that we stored this in the INSTRUMENT attribute of
-                # the wrapper method.
-                registered_callback_classes = getattr(tru_wrapper, INSTRUMENT)
-
-                # Look up the endpoints that are expecting to be notified and the
-                # callback tracking the tally. See Endpoint._track_costs for
-                # definition.
-                endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-                    get_first_local_in_call_stack(
-                        key="endpoints",
-                        func=self.__find_tracker,
-                        offset=0
-                    )
-
-                # If wrapped method was not called from within _track_costs, we
-                # will get None here and do nothing but return wrapped
-                # function's response.
-                if endpoints is None:
-                    logger.debug("No endpoints found.")
-                    return response
-
                 for callback_class in registered_callback_classes:
                     logger.debug("Handling callback_class: %s.", callback_class)
                     if callback_class not in endpoints:
@@ -686,7 +688,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         continue
 
                     for endpoint, callback in endpoints[callback_class]:
-                        logger.debug("Handling endpoint %s.", endpoint)
+                        logger.debug("Handling endpoint %s.", endpoint.name)
                         endpoint.handle_wrapped_call(
                             func=func,
                             bindings=bindings,
