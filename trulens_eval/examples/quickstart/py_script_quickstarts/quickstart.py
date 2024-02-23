@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # TruLens Quickstart
+# # 📓 TruLens Quickstart
 #
 # In this quickstart you will create a RAG from scratch and learn how to log it and get feedback on an LLM response.
 #
@@ -9,11 +9,11 @@
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
 
-# ! pip install trulens_eval==0.21.0 chromadb==0.4.18 openai==1.3.7
+# ! pip install trulens_eval==0.23.0 chromadb==0.4.18 openai==1.3.7
 
 import os
 
-os.environ["OPENAI_API_KEY"] = "..."
+os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # ## Get Data
 #

@@ -7,22 +7,12 @@ NOTE: we cannot name a module "async" as it is a python keyword.
 
 Some functions in trulens_eval come with asynchronous versions. Those use "async
 def" instead of "def" and typically start with the letter "a" in their name with
-the rest matching their synchronous version. Example:
-
-```python
-    @staticmethod
-    def track_all_costs(
-        ...
-
-    @staticmethod
-    async def atrack_all_costs(
-        ...
-```
+the rest matching their synchronous version.
 
 Due to how python handles such functions and how they are executed, it is
 relatively difficult to reshare code between the two versions. Asynchronous
 functions are executed by an async loop (see
-[https://docs.python.org/3/library/asyncio-eventloop.html](Event Loop)). Python
+[EventLoop](https://docs.python.org/3/library/asyncio-eventloop.html)). Python
 prevents any threads from having more than one running loop meaning one may not
 be able to create one to run some async code if one has already been
 created/running in the thread. The method `sync` here, used to convert an async
@@ -43,29 +33,43 @@ import logging
 from threading import current_thread
 from typing import Awaitable, Callable, TypeVar, Union
 
+import nest_asyncio
+
 from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import T
 from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.threading import Thread
+
+nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
 
 A = TypeVar("A")
 B = TypeVar("B")
 
-# Awaitable or not. May be checked with inspect.isawaitable .
 MaybeAwaitable = Union[T, Awaitable[T]]
+"""Awaitable or not.
 
-# Function or coroutine function. May be checked with
-# is_really_coroutinefunction .
+May be checked with [isawaitable][inspect.isawaitable].
+"""
+
 CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]
+"""Function or coroutine function.
 
-# Thunk or coroutine thunk. May be checked with is_really_coroutinefunction .
+May be checked with [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction]."""
+
+CallableAwaitable = Callable[[A], Awaitable[B]]
+"""Function that produces an awaitable / coroutine function."""
+
 ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
+"""Thunk or coroutine thunk. 
+
+May be checked with [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].
+"""
 
 
 async def desync(
-    func: CallableMaybeAwaitable[..., T], *args, **kwargs
+    func: CallableMaybeAwaitable[A, T], *args, **kwargs
 ) -> T:  # effectively Awaitable[T]:
     """
     Run the given function asynchronously with the given args. If it is not
@@ -88,14 +92,14 @@ async def desync(
             return res
 
 
-def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
+def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
     """
     Get result of calling function on the given args. If it is awaitable, will
     block until it is finished. Runs in a new thread in such cases.
     """
 
     if is_really_coroutinefunction(func):
-        func: Callable[..., Awaitable[T]]
+        func: Callable[[A], Awaitable[T]]
         awaitable: Awaitable[T] = func(*args, **kwargs)
 
         # HACK010: Debugging here to make sure it is awaitable.
@@ -103,17 +107,30 @@ def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
 
         # Check if there is a running loop.
         try:
-            asyncio.get_running_loop()
-            in_loop = True
-        except Exception:
-            in_loop = False
+            loop = asyncio.get_running_loop()
 
-        if not in_loop:
+        except Exception:
             # If not, we can create one here and run it until completion.
             loop = asyncio.new_event_loop()
-            return loop.run_until_complete(awaitable)
+            ret = loop.run_until_complete(awaitable)
+            loop.close()
+            return ret
 
-        # Otherwise we cannot create a new one in this thread so we create a
+        try:
+            # If have nest_asyncio, can run in current thread.
+            import nest_asyncio
+            return loop.run_until_complete(awaitable)
+        except:
+            pass
+
+        try:
+            # If have nest_asyncio, can run in current thread.
+            import nest_asyncio
+            return loop.run_until_complete(awaitable)
+        except:
+            pass
+
+        # Otherwise we cannot run a new loop in this thread so we create a
         # new thread to run the awaitable until completion.
 
         def run_in_new_loop():
@@ -125,6 +142,8 @@ def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
             try:
                 loop = asyncio.new_event_loop()
                 th.ret = loop.run_until_complete(awaitable)
+                loop.close()
+
             except Exception as e:
                 th.error = e
 
@@ -141,7 +160,7 @@ def sync(func: CallableMaybeAwaitable[..., T], *args, **kwargs) -> T:
             return thread.ret
 
     else:
-        func: Callable[..., T]
+        func: Callable[[A], T]
         # Not a coroutine function, so do not need to sync anything.
         # HACK010: TODO: What if the inspect fails here too? We do some checks
         # in desync but not here.

@@ -14,13 +14,16 @@ from copy import copy
 import logging
 from pprint import PrettyPrinter
 from typing import (
-    Any, Callable, Dict, Hashable, Iterable, List, Optional, Sequence, Sized,
-    Tuple, TypeVar, Union
+    Any, Callable, Dict, Generic, Hashable, Iterable, List, Optional, Sequence,
+    Sized, Tuple, TypeVar, Union
 )
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema
+from pydantic_core import CoreSchema
 
 from trulens_eval.utils.containers import iterable_peek
 
@@ -29,17 +32,57 @@ pp = PrettyPrinter()
 
 T = TypeVar("T")
 
-# JSON types
+JSON_BASES: Tuple[type, ...] = (str, int, float, bytes, type(None))
+"""
+Tuple of JSON-able base types.
 
-JSON_BASES = (str, int, float, bytes, type(None))
-JSON_BASES_T = Union[str, int, float, bytes, type(None)]
+Can be used in `isinstance` checks.
+"""
 
-# TODO: rename to "JSON_LIKE" as it is not stringly json.
-# JSON = Union[JSON_BASES_T, Sequence['JSON'], Dict[str, 'JSON']]
-JSON = Union[JSON_BASES_T, Sequence[Any], Dict[str, Any]]  # Any = JSON
+JSON_BASES_T = Union[\
+    str, int, float, bytes, None
+                    ]
+"""
+Alias for JSON-able base types.
+"""
 
-# TODO: rename to "JSON".
+JSON = Union[\
+    JSON_BASES_T,
+    Sequence[Any],
+    Dict[str, Any]
+            ]
+"""Alias for (non-strict) JSON-able data (`Any` = `JSON`).
+
+If used with type argument, that argument indicates what the JSON represents and
+can be desererialized into.
+
+Formal JSON must be a `dict` at the root but non-strict here means that the root
+can be a basic type or a sequence as well.
+"""
+
 JSON_STRICT = Dict[str, JSON]
+"""
+Alias for (strictly) JSON-able data.
+
+Python object that is directly mappable to JSON.
+"""
+
+
+class JSONized(dict, Generic[T]):  # really JSON_STRICT
+    """JSON-encoded data the can be deserialized into a given type `T`.
+    
+    This class is meant only for type annotations. Any
+    serialization/deserialization logic is handled by different classes, usually
+    subclasses of `pydantic.BaseModel`.
+    """
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> CoreSchema:
+        """Make pydantic treat this class same as a `dict`."""
+        return handler(core_schema.dict_schema())
+
 
 mj = MerkleJson()
 
@@ -948,7 +991,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             # NOTE(piotrm): when displaying objects, ipython checks whether they
             # have overwritten __getattr__ by looking up this attribute. If it
             # does not result in AttributeError or None, IPython knows it was
-            # overwritten and it will not try to use any of the _repr_*_ methdos
+            # overwritten and it will not try to use any of the _repr_*_ methods
             # to display the object. In our case, this will result Lenses being
             # constructed with this canary attribute name. We instead return
             # None here to let ipython know we have overwritten __getattr__ but
@@ -1085,3 +1128,19 @@ def matching_objects(obj: Any, match: Callable) -> Iterable[Tuple[Lens, Any]]:
 def matching_queries(obj: Any, match: Callable) -> Iterable[Lens]:
     for q, _ in matching_objects(obj, match=match):
         yield q
+
+
+# HACK013:
+SerialModel.model_rebuild()
+SerialBytes.model_rebuild()
+Step.model_rebuild()
+Collect.model_rebuild()
+StepItemOrAttribute.model_rebuild()
+GetAttribute.model_rebuild()
+GetIndex.model_rebuild()
+GetItem.model_rebuild()
+GetItemOrAttribute.model_rebuild()
+GetSlice.model_rebuild()
+GetIndices.model_rebuild()
+GetItems.model_rebuild()
+Lens.model_rebuild()

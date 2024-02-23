@@ -12,7 +12,22 @@ logger = logging.getLogger(__name__)
 
 
 class Langchain(LLMProvider):
-    """Out of the box feedback functions using Langchain LLMs and ChatModels"""
+    """Out of the box feedback functions using Langchain LLMs and ChatModels
+
+    Create a Langchain Provider with out of the box feedback functions.
+
+    Usage:
+        ```python
+        from trulens_eval.feedback.provider.langchain import Langchain
+        from langchain_community.llms import OpenAI
+
+        gpt3_llm = OpenAI(model="gpt-3.5-turbo-instruct")
+        langchain_provider = Langchain(chain = gpt3_llm)
+        ```
+
+    Args:
+        chain: Langchain LLM.
+    """
 
     endpoint: LangchainEndpoint
 
@@ -23,21 +38,6 @@ class Langchain(LLMProvider):
         model_engine: str = "",
         **kwargs
     ):
-        """
-        Create a Langchain Provider with out of the box feedback functions.
-
-        **Usage:**
-        ```
-        from trulens_eval.feedback.provider.langchain import Langchain
-        from langchain.llms import OpenAI
-
-        gpt3_llm = OpenAI(model="gpt-3.5-turbo-instruct")
-        langchain_provider = Langchain(chain = gpt3_llm)
-        ```
-
-        Args:
-            chain (Union[BaseLLM, BaseChatModel]): Langchain LLMs or chat models
-        """
         self_kwargs = dict(kwargs)
         self_kwargs["model_engine"] = model_engine or type(chain).__name__
         self_kwargs["endpoint"] = LangchainEndpoint(

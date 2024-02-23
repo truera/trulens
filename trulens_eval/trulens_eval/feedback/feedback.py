@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from concurrent.futures import Future
 from datetime import datetime
 from inspect import Signature
 from inspect import signature
@@ -9,10 +8,13 @@ import json
 import logging
 import pprint
 import traceback
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
+)
 import warnings
 
 import numpy as np
+import pandas
 import pydantic
 
 from trulens_eval.feedback import AggCallable
@@ -29,19 +31,28 @@ from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 
-from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.python import Future, callable_name
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import UNICODE_CHECK
-from trulens_eval.utils.text import UNICODE_CLOCK
-from trulens_eval.utils.text import UNICODE_YIELD
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+A = TypeVar("A")
+
+ImpCallable = Callable[[A], Union[float, Tuple[float, Dict[str, Any]]]]
+"""Signature of feedback implementations.
+
+Those take in any number of arguments and return either a single float or a
+float and a dictionary (of metadata)."""
+
+AggCallable = Callable[[Iterable[float]], float]
+"""Signature of aggregation functions."""
 
 
 def RAG_triad(
@@ -50,25 +61,24 @@ def RAG_triad(
     answer: Optional[Lens] = None,
     context: Optional[Lens] = None
 ) -> Dict[str, Feedback]:
-    """
-    Creates a triad of feedback functions for evaluating context retrieval
-    generation steps. If a particular lens is not provided, the relevant
-    selectors will be missing. These can be filled in later or the triad can be
-    used for rails feedback actions whick fill in the selectors based on
-    specification from within colang.
-
-    Parameters:
+    """Create a triad of feedback functions for evaluating context retrieval
+    generation steps.
     
-    - provider: LLMProvider -- the provider to use for implementing the feedback
-      functions,
+    If a particular lens is not provided, the relevant selectors will be
+    missing. These can be filled in later or the triad can be used for rails
+    feedback actions whick fill in the selectors based on specification from
+    within colang.
+
+    Args:
     
-    - question: Optional[Lens] -- a selector for the question,
+        provider: The provider to use for implementing the feedback functions.
+    
+        question: Selector for the question part.
 
-    - answer: Optional[Lens] -- a selector for the answer,
+        answer: Selector for the answer part.
 
-    - context: Optional[Lens] -- a selector for the context.
+        context: Selector for the context part.
     """
-
 
     assert hasattr(provider, "relevance"), "Need a provider with the `relevance` feedback function."
     assert hasattr(provider, "qs_relevance"), "Need a provider with the `qs_relevance` feedback function."
@@ -123,81 +133,38 @@ def RAG_triad(
 #  Feedback -> FeedbackRunner
 #  FeedbackDefinition -> FeedbackRunnerDefinition
 class Feedback(FeedbackDefinition):
-    """
-    Feedback function container. Typical usage is to specify a feedback
-    implementation function from a `Provider` and the mapping of selectors
-    describing how to construct the arguments to the implementation:
-
-    ```python
-    from trulens_eval import Feedback
-    from trulens_eval import Huggingface
-    hugs = Huggingface()
+    """Feedback function container. 
     
-    # Create a feedback function from a provider:
-    feedback = Feedback(
-        hugs.language_match # the implementation
-    ).on_input_output() # selectors shorthand
-    ```
+    Typical usage is to specify a feedback implementation function from a
+    `Provider` and the mapping of selectors describing how to construct the
+    arguments to the implementation:
 
-    Attributes include:
-
-        - `imp: Callable` -- an implementation,
-
-        - `agg: Callable` -- an aggregator implementation for handling selectors
-          that name more than one value,
-
-        - `higher_is_better: bool` -- whether higher score is better,
-
-        - attributes via parent `FeedbackDefinition`:
-
-            - `feedback_definition_id: str` -- a unique id,
-
-            - `implementation: FunctionOrMethod` -- A serialized version of
-              `imp`.
-
-            - `aggregator: FunctionOrMethod` -- A serialized version of `agg`.
-
-            - `supplied_name: str` -- an optional name,
-
-            - `selectors: Dict[str, Lens]` mapping of implementation arguments
-              to selectors.
+    Example:
+        ```python
+        from trulens_eval import Feedback
+        from trulens_eval import Huggingface
+        hugs = Huggingface()
+        
+        # Create a feedback function from a provider:
+        feedback = Feedback(
+            hugs.language_match # the implementation
+        ).on_input_output() # selectors shorthand
+        ```
     """
 
-    # Implementation, not serializable, note that FeedbackDefinition contains
-    # `implementation` meant to serialize the below.
     imp: Optional[ImpCallable] = pydantic.Field(None, exclude=True)
+    """Implementation callable. A serialized version is stored at `FeedbackDefinition.implementation`."""
 
-    # Aggregator method for feedback functions that produce more than one
-    # result.
     agg: Optional[AggCallable] = pydantic.Field(None, exclude=True)
-
-    # An optional name. Only will affect display tables
-    supplied_name: Optional[str] = None
-
-    # feedback direction
-    higher_is_better: Optional[bool] = None
+    """Aggregator method for feedback functions that produce more than one
+    result. A serialized version is stored at `FeedbackDefinition.aggregator`."""
 
     def __init__(
         self,
         imp: Optional[Callable] = None,
         agg: Optional[Callable] = None,
-        name: Optional[str] = None,
-        higher_is_better: Optional[bool] = None,
         **kwargs
     ):
-        """
-        A Feedback function container.
-
-        Parameters:
-        
-        - imp: Optional[Callable] -- implementation of the feedback function.
-
-        - agg: Optional[Callable] -- aggregation function for producing a single
-          float for feedback implementations that are run more than once.
-        """
-
-        if name is not None:
-            kwargs['supplied_name'] = name
 
         # imp is the python function/method while implementation is a serialized
         # json structure. Create the one that is missing based on the one that
@@ -212,8 +179,8 @@ class Feedback(FeedbackDefinition):
 
                 except Exception as e:
                     logger.warning(
-                        f"Feedback implementation {imp} cannot be serialized: {e} "
-                        f"This may be ok unless you are using the deferred feedback mode."
+                        "Feedback implementation %s cannot be serialized: %s "
+                        "This may be ok unless you are using the deferred feedback mode.", imp, e
                     )
 
                     kwargs['implementation'] = FunctionOrMethod.of_callable(
@@ -237,10 +204,10 @@ class Feedback(FeedbackDefinition):
                 except Exception as e:
                     # User defined functions in script do not have a module so cannot be serialized
                     logger.warning(
-                        f"Cannot serialize aggregator {agg}. "
-                        f"Deferred mode will default to `np.mean` as aggregator. "
-                        f"If you are not using FeedbackMode.DEFERRED, you can safely ignore this warning. "
-                        f"{e}"
+                        "Cannot serialize aggregator %s. "
+                        "Deferred mode will default to `np.mean` as aggregator. "
+                        "If you are not using `FeedbackMode.DEFERRED`, you can safely ignore this warning. "
+                        "%s", agg, e
                     )
                     # These are for serialization to/from json and for db storage.
                     kwargs['aggregator'] = FunctionOrMethod.of_callable(
@@ -262,12 +229,6 @@ class Feedback(FeedbackDefinition):
         self.imp = imp
         self.agg = agg
 
-        # By default, higher score is better
-        if higher_is_better is None:
-            self.higher_is_better = True
-        else:
-            self.higher_is_better = higher_is_better
-
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
             sig: Signature = signature(self.imp)
@@ -277,7 +238,7 @@ class Feedback(FeedbackDefinition):
                     f"Its arguments are {list(sig.parameters.keys())}."
                 )
 
-    def on_input_output(self):
+    def on_input_output(self) -> Feedback:
         """
         Specifies that the feedback implementation arguments are to be the main
         app input and output in that order.
@@ -286,7 +247,7 @@ class Feedback(FeedbackDefinition):
         """
         return self.on_input().on_output()
 
-    def on_default(self):
+    def on_default(self) -> Feedback:
         """
         Specifies that one argument feedbacks should be evaluated on the main
         app output and two argument feedbacks should be evaluates on main input
@@ -358,16 +319,33 @@ class Feedback(FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(
-        tru: 'Tru'
-    ) -> List['Future[Tuple[Feedback, FeedbackResult]]']:
-        """
-        Evaluates feedback functions that were specified to be deferred. Returns
-        an integer indicating how many evaluates were run.
+        tru: Tru,
+        limit: Optional[int] = None,
+        shuffle: bool = False
+    ) -> List[Tuple[pandas.Series, Future[FeedbackResult]]]:
+        """Evaluates feedback functions that were specified to be deferred.
+        
+        Returns a list of tuples with the DB row containing the Feedback and
+        initial FeedbackResult as well as the Future which will contain the
+        actual result.
+        
+        Args:
+            limit: The maximum number of evals to start.
+
+            shuffle: Shuffle the order of the feedbacks to evaluate.
+        
+        Constants that govern behaviour:
+
+        - Tru.RETRY_RUNNING_SECONDS: How long to time before restarting a feedback
+          that was started but never failed (or failed without recording that
+          fact).
+
+        - Tru.RETRY_FAILED_SECONDS: How long to wait to retry a failed feedback.
         """
 
         db = tru.db
 
-        def prepare_feedback(row):
+        def prepare_feedback(row) -> Optional[FeedbackResultStatus]:
             record_json = row.record_json
             record = Record.model_validate(record_json)
 
@@ -376,69 +354,61 @@ class Feedback(FeedbackDefinition):
             if row.get("feedback_json") is None:
                 logger.warning(
                     "Cannot evaluate feedback without `feedback_json`. "
-                    "This might have come from an old database. \n"
-                    f"{row}"
+                    "This might have come from an old database. \n%s", row
                 )
-                return None, None
+                return None
 
             feedback = Feedback.model_validate(row.feedback_json)
 
-            return feedback, feedback.run_and_log(
+            return feedback.run_and_log(
                 record=record,
                 app=app_json,
                 tru=tru,
                 feedback_result_id=row.feedback_result_id
             )
 
-        feedbacks = db.get_feedback()
+        # Get the different status feedbacks except those marked DONE.
+        feedbacks_not_done = db.get_feedback(
+            status=[
+                FeedbackResultStatus.NONE, FeedbackResultStatus.FAILED,
+                FeedbackResultStatus.RUNNING
+            ],
+            limit=limit,
+            shuffle=shuffle,
+        )
 
         tp = TP()
 
-        futures: List[Future[Tuple[Feedback, FeedbackResult]]] = []
+        futures: List[Tuple[pandas.Series, Future[FeedbackResult]]] = []
 
-        for i, row in feedbacks.iterrows():
-            feedback_ident = f"{row.fname} for app {row.app_json['app_id']}, record {row.record_id}"
+        for _, row in feedbacks_not_done.iterrows():
+            now = datetime.now().timestamp()
+            elapsed = now - row.last_ts
+
+            # TODO: figure out useful things to print.
+            # feedback_ident = (
+            #     f"[last seen {humanize.naturaldelta(elapsed)} ago] "
+            #    f"{row.fname} for app {row.app_json['app_id']}"
+            # )
 
             if row.status == FeedbackResultStatus.NONE:
+                futures.append((row, tp.submit(prepare_feedback, row)))
 
-                print(
-                    f"{UNICODE_YIELD} Feedback task starting: {feedback_ident}"
-                )
+            elif row.status == FeedbackResultStatus.RUNNING:
 
-                futures.append(tp.submit(prepare_feedback, row))
-
-            elif row.status in [FeedbackResultStatus.RUNNING]:
-                now = datetime.now().timestamp()
-                if now - row.last_ts > 30:
-                    print(
-                        f"{UNICODE_YIELD} Feedback task last made progress over 30 seconds ago. "
-                        f"Retrying: {feedback_ident}"
-                    )
-                    futures.append(tp.submit(prepare_feedback, row))
+                if elapsed > tru.RETRY_RUNNING_SECONDS:
+                    futures.append((row, tp.submit(prepare_feedback, row)))
 
                 else:
-                    print(
-                        f"{UNICODE_CLOCK} Feedback task last made progress less than 30 seconds ago. "
-                        f"Giving it more time: {feedback_ident}"
-                    )
+                    pass
 
-            elif row.status in [FeedbackResultStatus.FAILED]:
-                now = datetime.now().timestamp()
-                if now - row.last_ts > 60 * 5:
-                    print(
-                        f"{UNICODE_YIELD} Feedback task last made progress over 5 minutes ago. "
-                        f"Retrying: {feedback_ident}"
-                    )
-                    futures.append(tp.submit(prepare_feedback, row))
+            elif row.status == FeedbackResultStatus.FAILED:
+
+                if elapsed > tru.RETRY_FAILED_SECONDS:
+                    futures.append((row, tp.submit(prepare_feedback, row)))
 
                 else:
-                    print(
-                        f"{UNICODE_CLOCK} Feedback task last made progress less than 5 minutes ago. "
-                        f"Not touching it for now: {feedback_ident}"
-                    )
-
-            elif row.status == FeedbackResultStatus.DONE:
-                pass
+                    pass
 
         return futures
 
@@ -446,7 +416,7 @@ class Feedback(FeedbackDefinition):
         assert self.imp is not None, "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
 
-    def aggregate(self, func: Callable) -> 'Feedback':
+    def aggregate(self, func: AggCallable) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
         generate more than one value for implementation argument(s).
@@ -487,8 +457,8 @@ class Feedback(FeedbackDefinition):
             )
             if "self" in par_names:
                 logger.warning(
-                    f"Feedback function `{self.imp.__name__}` has `self` as argument. "
-                    "Perhaps it is static method or its Provider class was not initialized?"
+                    "Feedback function `%s` has `self` as argument. "
+                    "Perhaps it is static method or its Provider class was not initialized?", callable_name(self.imp)
                 )
             if len(par_names) == 0:
                 raise TypeError(
@@ -502,7 +472,7 @@ class Feedback(FeedbackDefinition):
                 "Cannot determine name of feedback function parameter without its definition."
             )
 
-    def on_prompt(self, arg: Optional[str] = None):
+    def on_prompt(self, arg: Optional[str] = None) -> Feedback:
         """
         Create a variant of `self` that will take in the main app input or
         "prompt" as input, sending it as an argument `arg` to implementation.
@@ -524,7 +494,7 @@ class Feedback(FeedbackDefinition):
 
     on_input = on_prompt
 
-    def on_response(self, arg: Optional[str] = None):
+    def on_response(self, arg: Optional[str] = None) -> Feedback:
         """
         Create a variant of `self` that will take in the main app output or
         "response" as input, sending it as an argument `arg` to implementation.
@@ -546,7 +516,7 @@ class Feedback(FeedbackDefinition):
 
     on_output = on_response
 
-    def on(self, *args, **kwargs):
+    def on(self, *args, **kwargs) -> Feedback:
         """
         Create a variant of `self` with the same implementation but the given
         selectors. Those provided positionally get their implementation argument
@@ -604,7 +574,7 @@ class Feedback(FeedbackDefinition):
 
         if self.if_exists is not None:
             if not self.if_exists.exists(source_data):
-                logger.warning(f"Feedback {self.name} skipped as {self.if_exists} does not exist.")
+                logger.warning(f"Feedback %s skipped as %s does not exist.", self.name, self.if_exists)
                 return feedback_result
 
         # Separate try block for extracting inputs from records/apps in case a
@@ -625,21 +595,21 @@ class Feedback(FeedbackDefinition):
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost = sync(
-                        Endpoint.atrack_all_costs_tally,
-                        lambda: self.imp(**ins)
+                    result_and_meta, part_cost = Endpoint.track_all_costs_tally(
+                        self.imp, **ins
                     )
+
                     cost += part_cost
                 except Exception as e:
                     raise RuntimeError(
-                        f"Evaluation of {self.name} failed on inputs: \n{pp.pformat(ins)[0:128]}\n{e}."
-                    )
+                        f"Evaluation of {self.name} failed on inputs: \n{pp.pformat(ins)[0:128]}."
+                    ) from e
 
                 if isinstance(result_and_meta, Tuple):
                     # If output is a tuple of two, we assume it is the float/multifloat and the metadata.
                     assert len(result_and_meta) == 2, (
-                        f"Feedback functions must return either a single float, "
-                        f"a float-valued dict, or these in combination with a dictionary as a tuple."
+                        "Feedback functions must return either a single float, "
+                        "a float-valued dict, or these in combination with a dictionary as a tuple."
                     )
                     result_val, meta = result_and_meta
 
@@ -718,7 +688,7 @@ class Feedback(FeedbackDefinition):
 
         except:
             exc_tb = traceback.format_exc()
-            logger.warning(f"Feedback Function exception caught: {exc_tb}")
+            logger.warning(f"Feedback Function exception caught: %s", exc_tb)
             feedback_result.update(
                 error=exc_tb, status=FeedbackResultStatus.FAILED
             )
@@ -731,6 +701,7 @@ class Feedback(FeedbackDefinition):
         app: Union[AppDefinition, JSON] = None,
         feedback_result_id: Optional[FeedbackResultID] = None
     ) -> Optional[FeedbackResult]:
+
         record_id = record.record_id
         app_id = record.app_id
 
@@ -759,7 +730,7 @@ class Feedback(FeedbackDefinition):
                 app=app, record=record
             ).update(feedback_result_id=feedback_result_id)
 
-        except Exception as e:
+        except Exception:
             exc_tb = traceback.format_exc()
             db.insert_feedback(
                 feedback_result.update(
@@ -768,22 +739,27 @@ class Feedback(FeedbackDefinition):
             )
             return
 
-        # Otherwise update based on what Feedback.run produced (could be success or failure).
+        # Otherwise update based on what Feedback.run produced (could be success
+        # or failure).
         db.insert_feedback(feedback_result)
 
         return feedback_result
 
     @property
-    def name(self):
-        """
-        Name of the feedback function. Presently derived from the name of the
-        function implementing it.
+    def name(self) -> str:
+        """Name of the feedback function.
+        
+        Derived from the name of the function implementing it if no supplied
+        name provided.
         """
 
-        if self.imp is None:
-            raise RuntimeError("This feedback function has no implementation.")
+        if self.supplied_name is not None:
+            return self.supplied_name
 
-        return self.imp.__name__
+        if self.imp is not None:
+            return self.imp.__name__
+
+        return super().name
 
     def _extract_selection(
         self, source_data: Dict
@@ -797,7 +773,7 @@ class Feedback(FeedbackDefinition):
             except Exception as e:
                 raise RuntimeError(
                     f"Could not locate {q} in recorded data."
-                )
+                ) from e
 
         keys = arg_vals.keys()
         vals = arg_vals.values()
@@ -855,4 +831,4 @@ class Feedback(FeedbackDefinition):
             )
         )
 
-        
+Feedback.model_rebuild()

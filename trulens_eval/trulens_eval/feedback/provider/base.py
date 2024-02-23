@@ -1,10 +1,6 @@
-from abc import ABC
-from abc import abstractmethod
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
+from typing import ClassVar, Dict, Optional, Sequence, Tuple
 import warnings
-
-import pydantic
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -16,16 +12,37 @@ logger = logging.getLogger(__name__)
 
 
 class Provider(WithClassInfo, SerialModel):
+    """Base Provider class."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint] = None
+    """Endpoint supporting this provider.
+    
+    Remote API invocations are handled by the endpoint.
+    """
 
     def __init__(self, name: Optional[str] = None, **kwargs):
         super().__init__(name=name, **kwargs)
 
 
 class LLMProvider(Provider):
+    """An LLM-based provider.
+    
+    This is an abstract class and needs to be initialized as one of these:
+
+    * [OpenAI][trulens_eval.feedback.provider.openai.OpenAI] and subclass
+      [AzureOpenAI][trulens_eval.feedback.provider.openai.AzureOpenAI].
+
+    * [Bedrock][trulens_eval.feedback.provider.bedrock.Bedrock].
+
+    * [LiteLLM][trulens_eval.feedback.provider.litellm.LiteLLM]. LiteLLM provides an
+    interface to a [wide range of
+    models](https://docs.litellm.ai/docs/providers).
+    
+    * [Langchain][trulens_eval.feedback.provider.langchain.Langchain].
+
+"""
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any
@@ -60,14 +77,15 @@ class LLMProvider(Provider):
         pass
 
     def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
-        return self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=str.format(
-                    prompts.SYSTEM_FIND_SUPPORTING,
-                    prompt=full_source,
-                ) + "\n" + str.
-                format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
-            )
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        return self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            prompt=str.format(
+                prompts.SYSTEM_FIND_SUPPORTING,
+                prompt=full_source,
+            ) + "\n" +
+            str.format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
         )
 
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
@@ -82,17 +100,13 @@ class LLMProvider(Provider):
         Returns:
             float: Information Overlap
         """
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=str.format(
-                        prompts.LLM_GROUNDEDNESS,
-                        premise=premise,
-                        hypothesis=hypothesis,
-                    )
-                )
+        return self.generate_score(
+            system_prompt=str.format(
+                prompts.LLM_GROUNDEDNESS,
+                premise=premise,
+                hypothesis=hypothesis,
             )
-        ) / 10.0
+        )
 
     def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
         """
@@ -106,56 +120,108 @@ class LLMProvider(Provider):
         Returns:
             str: An LLM response using a scorecard template
         """
-        return self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) + str.
-                format(
-                    prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                    premise=premise,
-                    hypothesis=hypothesis
-                )
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        return self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
+            str.format(
+                prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                premise=premise,
+                hypothesis=hypothesis
             )
         )
 
-    def _extract_score_and_reasons_from_response(
+    def generate_score(
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
         normalize: float = 10.0
-    ) -> Union[float, Tuple[float, Dict]]:
+    ) -> float:
         """
-        Extractor for LLM prompts. If CoT is used; it will look for
-        "Supporting Evidence" template. Otherwise, it will look for the typical
-        0-10 scoring.
+        Base method to generate a score only, used for evaluation.
 
         Args:
             system_prompt (str): A pre-formated system prompt
 
         Returns:
-            The score and reason metadata if available.
+            The score (float): 0-1 scale.
         """
+        assert self.endpoint is not None, "Endpoint is not set."
+
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
-        response = self.endpoint.run_me(
-            lambda: self._create_chat_completion(messages=llm_messages)
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion, messages=llm_messages
+        )
+
+        return re_0_10_rating(response) / normalize
+
+    def generate_score_and_reasons(
+        self,
+        system_prompt: str,
+        user_prompt: Optional[str] = None,
+        normalize: float = 10.0
+    ) -> Tuple[float, Dict]:
+        """
+        Base method to generate a score and reason, used for evaluation.
+
+        Args:
+            system_prompt (str): A pre-formated system prompt
+
+        Returns:
+            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
+        """
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        if user_prompt is not None:
+            llm_messages.append({"role": "user", "content": user_prompt})
+
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion, messages=llm_messages
         )
         if "Supporting Evidence" in response:
-            score = 0.0
+            score = -1
             supporting_evidence = None
             criteria = None
             for line in response.split('\n'):
                 if "Score" in line:
                     score = re_0_10_rating(line) / normalize
-                if "Criteria" in line:
-                    parts = line.split(":")
-                    if len(parts) > 1:
-                        criteria = ":".join(parts[1:]).strip()
-                if "Supporting Evidence" in line:
-                    supporting_evidence = line[
-                        line.index("Supporting Evidence:") +
-                        len("Supporting Evidence:"):].strip()
+                criteria_lines = []
+                supporting_evidence_lines = []
+                collecting_criteria = False
+                collecting_evidence = False
+
+                for line in response.split('\n'):
+                    if "Criteria:" in line:
+                        criteria_lines.append(
+                            line.split("Criteria:", 1)[1].strip()
+                        )
+                        collecting_criteria = True
+                        collecting_evidence = False
+                    elif "Supporting Evidence:" in line:
+                        supporting_evidence_lines.append(
+                            line.split("Supporting Evidence:", 1)[1].strip()
+                        )
+                        collecting_evidence = True
+                        collecting_criteria = False
+                    elif collecting_criteria:
+                        if "Supporting Evidence:" not in line:
+                            criteria_lines.append(line.strip())
+                        else:
+                            collecting_criteria = False
+                    elif collecting_evidence:
+                        if "Criteria:" not in line:
+                            supporting_evidence_lines.append(line.strip())
+                        else:
+                            collecting_evidence = False
+
+                criteria = "\n".join(criteria_lines).strip()
+                supporting_evidence = "\n".join(supporting_evidence_lines
+                                               ).strip()
             reasons = {
                 'reason':
                     (
@@ -164,8 +230,14 @@ class LLMProvider(Provider):
                     )
             }
             return score, reasons
+
         else:
-            return re_0_10_rating(response) / normalize
+            score = re_0_10_rating(response) / normalize
+            warnings.warn(
+                "No supporting evidence provided. Returning score only.",
+                UserWarning
+            )
+            return score, {}
 
     def qs_relevance(self, question: str, statement: str) -> float:
         """
@@ -196,21 +268,14 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=str.format(
-                        prompts.QS_RELEVANCE,
-                        question=question,
-                        statement=statement
-                    )
-                )
+        return self.generate_score(
+            system_prompt=str.format(
+                prompts.QS_RELEVANCE, question=question, statement=statement
             )
-        ) / 10
+        )
 
-    def qs_relevance_with_cot_reasons(
-        self, question: str, statement: str
-    ) -> float:
+    def qs_relevance_with_cot_reasons(self, question: str,
+                                      statement: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the statement to the question.
@@ -245,10 +310,7 @@ class LLMProvider(Provider):
         system_prompt = system_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
-        return self.endpoint.run_me(
-            lambda: self.
-            _extract_score_and_reasons_from_response(system_prompt)
-        )
+        return self.generate_score_and_reasons(system_prompt)
 
     def relevance(self, prompt: str, response: str) -> float:
         """
@@ -282,17 +344,13 @@ class LLMProvider(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
             "relevant".
         """
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=str.format(
-                        prompts.PR_RELEVANCE, prompt=prompt, response=response
-                    )
-                )
-            )
-        ) / 10.0
+        return self.generate_score(
+            system_prompt=str.
+            format(prompts.PR_RELEVANCE, prompt=prompt, response=response)
+        )
 
-    def relevance_with_cot_reasons(self, prompt: str, response: str) -> float:
+    def relevance_with_cot_reasons(self, prompt: str,
+                                   response: str) -> Tuple[float, Dict]:
         """
         Uses chat completion Model. A function that completes a template to
         check the relevance of the response to a prompt. Also uses chain of
@@ -331,39 +389,32 @@ class LLMProvider(Provider):
         system_prompt = system_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
-        return self._extract_score_and_reasons_from_response(system_prompt)
+        return self.generate_score_and_reasons(system_prompt)
 
     def sentiment(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the sentiment of some text.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.sentiment).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.sentiment).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+        Args:
+            text: The text to evaluate sentiment of.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1
-            being "positive sentiment".
+            A value between 0 and 1. 0 being "negative sentiment" and 1
+                being "positive sentiment".
         """
+        system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT + text
+        return self.generate_score(system_prompt=system_prompt)
 
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=prompts.SENTIMENT_SYSTEM_PROMPT + text
-                )
-            )
-        ) / 10.0
-
-    def sentiment_with_cot_reasons(self, text: str) -> float:
+    def sentiment_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the sentiment of some text.
@@ -384,12 +435,9 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
-
         system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT
         system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self._extract_score_and_reasons_from_response(
-            system_prompt, user_prompt=text
-        )
+        return self.generate_score_and_reasons(system_prompt, user_prompt=text)
 
     def model_agreement(self, prompt: str, response: str) -> float:
         """
@@ -441,21 +489,17 @@ class LLMProvider(Provider):
             evaluation.
         """
 
-        return re_0_10_rating(
-            self.endpoint.run_me(
-                lambda: self._create_chat_completion(
-                    prompt=str.format(
-                        prompts.LANGCHAIN_PROMPT_TEMPLATE,
-                        criteria=criteria,
-                        submission=text
-                    )
-                )
-            )
-        ) / 10.0
+        system_prompt = str.format(
+            prompts.LANGCHAIN_PROMPT_TEMPLATE,
+            criteria=criteria,
+            submission=text
+        )
+
+        return self.generate_score(system_prompt=system_prompt)
 
     def _langchain_evaluate_with_cot_reasons(
         self, text: str, criteria: str
-    ) -> Tuple[float, str]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
@@ -469,63 +513,57 @@ class LLMProvider(Provider):
             evaluation, and a string containing the reasons for the evaluation.
         """
 
-        score, reasons = self.endpoint.run_me(
-            lambda: self._extract_score_and_reasons_from_response(
-                str.format(
-                    prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS,
-                    criteria=criteria,
-                    submission=text
-                )
-            )
+        system_prompt = str.format(
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS,
+            criteria=criteria,
+            submission=text
         )
-        return re_0_10_rating(str(score)) / 10.0, reasons
+        return self.generate_score_and_reasons(system_prompt=system_prompt)
 
     def conciseness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
+        Usage:
+            ```python
+            feedback = Feedback(provider.conciseness).on_output() 
+            ```
 
-        ```python
-        feedback = Feedback(provider.conciseness).on_output() 
-        ```
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+        Args:
+            text: The text to evaluate the conciseness of.
 
         Returns:
-            float: A value between 0.0 (not concise) and 1.0 (concise).
+            A value between 0.0 (not concise) and 1.0 (concise).
+
         """
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
         )
 
-    def conciseness_with_cot_reasons(self, text: str) -> Tuple[float, str]:
+    def conciseness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
+        Usage:
+            ```python
+            feedback = Feedback(provider.conciseness).on_output() 
+            ```
 
-        ```python
-        feedback = Feedback(provider.conciseness).on_output() 
-        ```
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Parameters:
-            text (str): A prompt to an agent.
-            response (str): The agent's response to the prompt.
+        Args:
+            text: The text to evaluate the conciseness of.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise),
-            and a string containing the reasons for the evaluation.
+            A value between 0.0 (not concise) and 1.0 (concise)
+            
+            A dictionary containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
@@ -536,25 +574,25 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.correctness).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.correctness).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Parameters:
-            text (str): A prompt to an agent. response (str): The agent's
-            response to the prompt.
+            text: A prompt to an agent.
 
         Returns:
-            flo"""
+            A value between 0.0 (not correct) and 1.0 (correct).
+        """
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
         )
 
-    def correctness_with_cot_reasons(self, text: str) -> float:
+    def correctness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to Langchain Eval.
@@ -601,7 +639,7 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_COHERENCE_PROMPT
         )
 
-    def coherence_with_cot_reasons(self, text: str) -> float:
+    def coherence_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the coherence of some text. Prompt credit to Langchain Eval. Also
@@ -648,7 +686,7 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_HARMFULNESS_PROMPT
         )
 
-    def harmfulness_with_cot_reasons(self, text: str) -> float:
+    def harmfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the harmfulness of some text. Prompt credit to Langchain Eval.
@@ -693,7 +731,7 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
         )
 
-    def maliciousness_with_cot_reasons(self, text: str) -> float:
+    def maliciousness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat compoletion model. A function that completes a
         template to check the maliciousness of some text. Prompt credit to Langchain Eval.
@@ -740,7 +778,7 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_PROMPT
         )
 
-    def helpfulness_with_cot_reasons(self, text: str) -> float:
+    def helpfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the helpfulness of some text. Prompt credit to Langchain Eval.
@@ -758,7 +796,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.o (not helpful) and 1.0 (helpful).
+            float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_PROMPT
@@ -789,7 +827,8 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
         )
 
-    def controversiality_with_cot_reasons(self, text: str) -> float:
+    def controversiality_with_cot_reasons(self,
+                                          text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the controversiality of some text. Prompt credit to Langchain
@@ -809,8 +848,8 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0.0 (not controversial) and 1.0 (controversial).
         """
-        return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_PROMPT
+        return self._langchain_evaluate_with_cot_reasons(
+            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
         )
 
     def misogyny(self, text: str) -> float:
@@ -836,7 +875,7 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_MISOGYNY_PROMPT
         )
 
-    def misogyny_with_cot_reasons(self, text: str) -> float:
+    def misogyny_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the misogyny of some text. Prompt credit to Langchain Eval. Also
@@ -884,7 +923,7 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_PROMPT
         )
 
-    def criminality_with_cot_reasons(self, text: str) -> float:
+    def criminality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the criminality of some text. Prompt credit to Langchain Eval.
@@ -931,7 +970,7 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_PROMPT
         )
 
-    def insensitivity_with_cot_reasons(self, text: str) -> float:
+    def insensitivity_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the insensitivity of some text. Prompt credit to Langchain Eval.
@@ -971,17 +1010,16 @@ class LLMProvider(Provider):
             str
         """
 
-        return self.endpoint.run_me(
-            lambda: self._create_chat_completion(
-                prompt=
-                (prompts.AGREEMENT_SYSTEM_PROMPT %
-                 (prompt, check_response)) + response
-            )
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        return self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            prompt=(prompts.AGREEMENT_SYSTEM_PROMPT %
+                    (prompt, check_response)) + response
         )
 
-    def comprehensiveness_with_cot_reasons(
-        self, source: str, summary: str
-    ) -> float:
+    def comprehensiveness_with_cot_reasons(self, source: str,
+                                           summary: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
         and compares a summary against those main points. This feedback function
@@ -1005,14 +1043,10 @@ class LLMProvider(Provider):
         system_prompt = str.format(
             prompts.COMPREHENSIVENESS_PROMPT, source=source, summary=summary
         )
-        system_prompt = system_prompt.replace(
-            "COMPREHENSIVENESS:", prompts.COT_REASONS_TEMPLATE
-        )
-        return self._extract_score_and_reasons_from_response(system_prompt)
+        return self.generate_score_and_reasons(system_prompt)
 
-    def summarization_with_cot_reasons(
-        self, source: str, summary: str
-    ) -> float:
+    def summarization_with_cot_reasons(self, source: str,
+                                       summary: str) -> Tuple[float, Dict]:
         """
         Summarization is deprecated in place of comprehensiveness. Defaulting to comprehensiveness_with_cot_reasons.
         """
@@ -1044,10 +1078,10 @@ class LLMProvider(Provider):
         system_prompt = str.format(
             prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
         )
+        return self.generate_score(system_prompt)
 
-        return self._extract_score_and_reasons_from_response(system_prompt)
-
-    def stereotypes_with_cot_reasons(self, prompt: str, response: str) -> float:
+    def stereotypes_with_cot_reasons(self, prompt: str,
+                                     response: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check adding assumed stereotypes in the response when not present in the
@@ -1068,7 +1102,6 @@ class LLMProvider(Provider):
         """
         system_prompt = str.format(
             prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
-        )
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
+        ) + prompts.COT_REASONS_TEMPLATE
 
-        return self._extract_score_and_reasons_from_response(system_prompt)
+        return self.generate_score_and_reasons(system_prompt)

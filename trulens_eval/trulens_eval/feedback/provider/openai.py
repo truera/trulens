@@ -1,8 +1,6 @@
 import logging
-from typing import Dict, Optional, Sequence
+from typing import ClassVar, Dict, Optional, Sequence
 
-# optional package
-import openai as oai
 import pydantic
 
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -13,6 +11,9 @@ from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import CLASS_INFO
 
+with OptionalImports(messages=REQUIREMENT_OPENAI):
+    import openai as oai
+
 # check that the optional imports are not dummies:
 OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(oai)
 
@@ -22,32 +23,46 @@ logger = logging.getLogger(__name__)
 class OpenAI(LLMProvider):
     """
     Out of the box feedback functions calling OpenAI APIs.
+
+    Create an OpenAI Provider with out of the box feedback functions.
+
+    Usage:
+        ```python
+        from trulens_eval.feedback.provider.openai import OpenAI
+        openai_provider = OpenAI()
+        ```
+
+    Args:
+        model_engine: The OpenAI completion model. Defaults to
+            `gpt-3.5-turbo`
+
+        **kwargs: Additional arguments to pass to the
+            [OpenAIEndpoint][trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint]
+            which are then passed to
+            [OpenAIClient][trulens_eval.feedback.provider.endpoint.openai.OpenAIClient]
+            and finally to the OpenAI client.
     """
 
-    # model_engine: str # LLMProvider
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
     endpoint: Endpoint = pydantic.Field(exclude=True)
 
     def __init__(
-        self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
+        self,
+        *args,
+        endpoint=None,
+        model_engine: Optional[str] = None,
+        **kwargs: dict
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-        """
-        Create an OpenAI Provider with out of the box feedback functions.
 
-        **Usage:** ```python from trulens_eval.feedback.provider.openai import
-        OpenAI openai_provider = OpenAI() ```
+        if model_engine is None:
+            model_engine = self.DEFAULT_MODEL_ENGINE
 
-        Args:
-            model_engine (str): The OpenAI completion model. Defaults to
-              `gpt-3.5-turbo`
-            endpoint (Endpoint): Internal Usage for DB serialization. This
-              argument is intentionally ignored.
-        """
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
@@ -94,8 +109,8 @@ class OpenAI(LLMProvider):
 
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
-        moderation_response = self.endpoint.run_me(
-            lambda: self.endpoint.client.moderations.create(input=text)
+        moderation_response = self.endpoint.run_in_pace(
+            func=self.endpoint.client.moderations.create, input=text
         )
         return moderation_response.results[0]
 
@@ -105,19 +120,19 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is hate
         speech.
 
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+            openai_provider = OpenAI()
 
-        feedback = Feedback(
-            openai_provider.moderation_hate, higher_is_better=False
-        ).on_output()
-        ```
+            feedback = Feedback(
+                openai_provider.moderation_hate, higher_is_better=False
+            ).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -134,19 +149,19 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is
         threatening speech.
 
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+            openai_provider = OpenAI()
 
-        feedback = Feedback(
-            openai_provider.moderation_hatethreatening, higher_is_better=False
-        ).on_output()
-        ```
+            feedback = Feedback(
+                openai_provider.moderation_hatethreatening, higher_is_better=False
+            ).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -164,19 +179,19 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         self harm.
 
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+            openai_provider = OpenAI()
 
-        feedback = Feedback(
-            openai_provider.moderation_selfharm, higher_is_better=False
-        ).on_output()
-        ```
+            feedback = Feedback(
+                openai_provider.moderation_selfharm, higher_is_better=False
+            ).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -194,16 +209,17 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is sexual
         speech.
 
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+            openai_provider = OpenAI()
 
-        feedback = Feedback(
-            openai_provider.moderation_sexual, higher_is_better=False
-        ).on_output()
-        ```
+            feedback = Feedback(
+                openai_provider.moderation_sexual, higher_is_better=False
+            ).on_output()
+            ```
+
         The `on_output()` selector can be changed. See [Feedback Function
         Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -223,19 +239,19 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         sexual minors.
 
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+            openai_provider = OpenAI()
 
-        feedback = Feedback(
-            openai_provider.moderation_sexualminors, higher_is_better=False
-        ).on_output()
-        ```
+            feedback = Feedback(
+                openai_provider.moderation_sexualminors, higher_is_better=False
+            ).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -255,19 +271,19 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         violence.
 
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+            openai_provider = OpenAI()
 
-        feedback = Feedback(
-            openai_provider.moderation_violence, higher_is_better=False
-        ).on_output()
-        ```
+            feedback = Feedback(
+                openai_provider.moderation_violence, higher_is_better=False
+            ).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -285,19 +301,19 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+            openai_provider = OpenAI()
 
-        feedback = Feedback(
-            openai_provider.moderation_violencegraphic, higher_is_better=False
-        ).on_output()
-        ```
+            feedback = Feedback(
+                openai_provider.moderation_violencegraphic, higher_is_better=False
+            ).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -316,19 +332,19 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+            openai_provider = OpenAI()
 
-        feedback = Feedback(
-            openai_provider.moderation_harassment, higher_is_better=False
-        ).on_output()
-        ```
+            feedback = Feedback(
+                openai_provider.moderation_harassment, higher_is_better=False
+            ).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -345,19 +361,19 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.openai import OpenAI
-        openai_provider = OpenAI()
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+            openai_provider = OpenAI()
 
-        feedback = Feedback(
-            openai_provider.moderation_harassment_threatening, higher_is_better=False
-        ).on_output()
-        ```
+            feedback = Feedback(
+                openai_provider.moderation_harassment_threatening, higher_is_better=False
+            ).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -373,28 +389,17 @@ class OpenAI(LLMProvider):
 class AzureOpenAI(OpenAI):
     """
     Out of the box feedback functions calling AzureOpenAI APIs. Has the same
-    functionality as OpenAI out of the box feedback functions.
-    """
+    functionality as OpenAI out of the box feedback functions. Please export the
+    following env variables. These can be retrieved from https://oai.azure.com/
+    .
 
-    # Sent to our openai client wrapper but need to keep here as well so that it
-    # gets dumped when jsonifying.
-    deployment_name: str = pydantic.Field(alias="model_engine")
+    - AZURE_OPENAI_ENDPOINT
+    - AZURE_OPENAI_API_KEY
+    - OPENAI_API_VERSION
 
-    def __init__(self, deployment_name: str, endpoint=None, **kwargs):
-        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
-        # constructor if we don't include it explicitly, even though we set it
-        # down below. Adding it as None here as a temporary hack.
-        """
-        Wrapper to use Azure OpenAI. Please export the following env variables.
-        These can be retrieved from https://oai.azure.com/ .
+    Deployment name below is also found on the oai azure page.
 
-        - AZURE_OPENAI_ENDPOINT
-        - AZURE_OPENAI_API_KEY
-        - OPENAI_API_VERSION
-
-        Deployment name below is also found on the oai azure page.
-
-        **Usage:**
+    Example:
         ```python
         from trulens_eval.feedback.provider.openai import AzureOpenAI
         openai_provider = AzureOpenAI(deployment_name="...")
@@ -405,12 +410,23 @@ class AzureOpenAI(OpenAI):
         ) # low relevance
         ```
 
-        Args:
-            - deployment_name (str, required): The name of the deployment.
+    Args:
+        deployment_name: The name of the deployment.
+    """
 
-            - endpoint (Optional[Endpoint]): Internal Usage for DB
-              serialization. This argument is intentionally ignored.
-        """
+    # Sent to our openai client wrapper but need to keep here as well so that it
+    # gets dumped when jsonifying.
+    deployment_name: str = pydantic.Field(alias="model_engine")
+
+    def __init__(
+        self,
+        deployment_name: str,
+        endpoint: Optional[Endpoint] = None,
+        **kwargs: dict
+    ):
+        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
 
         # Make a dict of args to pass to AzureOpenAI client. Remove any we use
         # for our needs. Note that model name / deployment name is not set in
@@ -419,6 +435,7 @@ class AzureOpenAI(OpenAI):
         client_kwargs = dict(kwargs)
         if CLASS_INFO in client_kwargs:
             del client_kwargs[CLASS_INFO]
+
         if "model_engine" in client_kwargs:
             # delete from client args
             del client_kwargs["model_engine"]

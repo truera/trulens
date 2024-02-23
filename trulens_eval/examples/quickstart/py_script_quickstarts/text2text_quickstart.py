@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Text to Text Quickstart
+# # 📓 Text to Text Quickstart
 #
 # In this quickstart you will create a simple text to text application and learn how to log it and get feedback.
 #
@@ -11,11 +11,11 @@
 # ### Add API keys
 # For this quickstart you will need an OpenAI Key.
 
-# ! pip install trulens_eval==0.21.0 openai==1.3.1
+# ! pip install trulens_eval==0.23.0 openai==1.3.1
 
 import os
 
-os.environ["OPENAI_API_KEY"] = "..."
+os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # ### Import from TruLens
 

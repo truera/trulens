@@ -1,3 +1,6 @@
+# This a definition for azure pipelines, not github pipelines. There are
+# differences between these systems.
+
 pr:
   branches:
     include:
@@ -6,59 +9,56 @@ pr:
   paths:
     include:
       - trulens_eval
-      - docs/trulens_eval/*.ipynb
 
 jobs:
-  - job: PRBranchProtect
+  - job: PRBranchProtect # name seems to be important but cannot figure out why
     pool:
-      vmImage: "ubuntu-latest"
+      vmImage: ubuntu-latest
     timeoutInMinutes: 30
 
     strategy:
       matrix:
-        default:
-          condaEnvFileSuffix: "trulens-llm"
-          testSubdirectory: "tests/unit"
+        default: # name is important
+          python-version: 3.11
+          tests-folder: tests/unit
+        py308-static:
+          python-version: 3.8
+          tests-folder: tests/unit/static
+        py309-static:
+          python-version: 3.9
+          tests-folder: tests/unit/static
+        py310-static:
+          python-version: 3.10
+          tests-folder: tests/unit/static
 
     steps:
       - checkout: self
         clean: true
 
-      - bash: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: Add conda to PATH
-
       - bash: |
+          echo "##vso[task.prependpath]$CONDA/bin"
+
           set -e
-          conda create  -y --quiet -n $(condaEnvFileSuffix) python=3.11
+          conda create -y --quiet \
+            -n $(python-version) \
+            python=$(python-version)
+
           conda init bash
-        displayName: Create Anaconda environment
+
+        displayName: Setup conda
 
       - bash: |
           set -e
-          source activate $(condaEnvFileSuffix)
-          which python
-          python --version
-        displayName: Which Python
+          source activate $(python-version)
 
-      - bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
-          cd ./trulens_eval
-          pip install -e .
           pip install yapf==0.32.0
           pip install isort==5.10.1
-          pip install ipykernel
-          python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
-        displayName: Install pip package
 
-      - bash: |
-          set -e
-          source activate $(condaEnvFileSuffix)
-          echo Using $(yapf --version) isort $(isort --vn)
+          yapf --version
+          isort --vn
+
           ./format.sh --eval
-        displayName: Format Code
 
-      - bash: |
           num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
           if [ $num_changed_files -ne 0 ]; then
             echo "The following files have changed after running format.sh. Please format your code and update the PR."
@@ -66,26 +66,75 @@ jobs:
             echo "\n\nOutputting git diff for checked in files.\n"
             git diff
           fi
-        displayName: NoDiffCheck
+        condition: eq(variables['python-version'], 3.11) # only run format check with latest python version
+        displayName: Format diffs
 
       - bash: |
-          source activate $(condaEnvFileSuffix)
+          set -e
+          source activate $(python-version)
+
+          cd ./trulens_eval
+          pip install -e .
+
+          python --version
+          pip --version
+          pip list
+        displayName: Install trulens
+
+      - bash: |
+          set -e
+          source activate $(python-version)
+
+          pip install \
+            pytest==7.0.1 pytest-subtests pytest-azurepipelines
+
+        displayName: Install testing packages
+
+      - bash: |
+          set -e
+          source activate $(python-version)
+
+          cd ./trulens_eval
+          python -m pytest --test-run-title="Required $(python-version) unit tests" $(tests-folder)
+
+        displayName: Unit tests with required packages
+
+      - bash: |
+          set -e
+          source activate $(python-version)
 
           cd ./trulens_eval
 
-          pip install pytest==7.0.1 pytest-azurepipelines
-          pip install -r trulens_eval/requirements.optional.txt
-          
-          echo '::group::piplist'
-          echo "$(pip list)"
-          echo '::endgroup::'
-          
-          python -m pytest $(testSubdirectory)
-        displayName: Run unit tests
+          # Once we start running notebooks in these tests, might have to do this again:
+          # pip install ipykernel
+          # python -m ipykernel install --user \
+          #  --name $(python-version) \
+          #  --display-name $(python-version)
 
+          pip install -r trulens_eval/requirements.optional.txt
+
+          python --version
+          pip --version
+          pip list
+        displayName: Install optional packages
+
+      - bash: |
+          set -e
+          source activate $(python-version)
+
+          cd ./trulens_eval
+
+          python -m pytest  --test-run-title="Optional $(python-version) unit tests" $(tests-folder)
         env:
+          # enables optional tests, see tests/unit/test.py
+          TEST_OPTIONAL: true
+  
+          # tests make use of various APIs:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
           HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
           PINECONE_API_KEY: $(PINECONE_API_KEY)
           PINECONE_ENV: $(PINECONE_ENV)
           HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
+
+        displayName: Unit tests with optional packages
+

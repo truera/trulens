@@ -1,5 +1,7 @@
-"""
-Utilities for importing python modules and optional importing.
+"""Import utilities for required and optional imports.
+
+Utilities for importing python modules and optional importing. This is some long line. Hopefully
+this wraps automatically. 
 """
 
 import builtins
@@ -11,6 +13,9 @@ from pprint import PrettyPrinter
 from typing import Any, Dict, Optional, Sequence, Type, Union
 
 import pkg_resources
+from pkg_resources import DistributionNotFound
+from pkg_resources import get_distribution
+from pkg_resources import VersionConflict
 
 from trulens_eval import __name__ as trulens_name
 
@@ -39,6 +44,92 @@ optional_packages = requirements_of_file(
 all_packages = {**required_packages, **optional_packages}
 
 
+def check_imports(ignore_version_mismatch: bool = False):
+    """Check required and optional package versions.
+
+    Args:
+        ignore_version_mismatch: If set, will not raise an error if a
+            version mismatch is found in a required package. Regardless of
+            this setting, mismatch in an optional package is a warning.
+    """
+
+    for n, req in all_packages.items():
+        is_optional = n in optional_packages
+
+        try:
+            get_distribution(req)
+
+        except VersionConflict as e:
+
+            message = f"Package {req.project_name} is installed but has a version conflict:\n\t{e}\n"
+
+            if is_optional:
+                message += f"""
+This package is optional for trulens_eval so this may not be a problem but if
+you need to use the related optional features and find there are errors, you
+will need to resolve the conflict:
+
+    ```bash
+    pip install '{req}'
+    ```
+"""
+
+            else:
+                message += f"""
+This package is required for trulens_eval. Please resolve the conflict by
+installing a compatible version with:
+
+    ```bash
+    pip install '{req}'
+    ```
+"""
+
+            message += """
+If you are running trulens_eval in a notebook, you may need to restart the
+kernel after resolving the conflict. If your distribution is in a bad place
+beyond this package, you may need to reinstall trulens_eval so that all of the
+dependencies get installed and hopefully corrected:
+    
+    ```bash
+    pip uninstall -y trulens_eval
+    pip install trulens_eval
+    ```
+"""
+
+            if (not is_optional) and (not ignore_version_mismatch):
+                raise VersionConflict(message) from e
+            else:
+                logger.warning(message)
+
+        except DistributionNotFound as e:
+            if is_optional:
+                logger.debug(
+                    """
+Optional package %s is not installed. Related optional functionality will not be
+available.
+""", req.project_name
+                )
+
+            else:
+                raise ModuleNotFoundError(
+                    f"""
+Required package {req.project_name} is not installed. Please install it with pip:
+
+    ```bash
+    pip install '{req}'
+    ```
+
+If your distribution is in a bad place beyond this package, you may need to
+reinstall trulens_eval so that all of the dependencies get installed:
+    
+    ```bash
+    pip uninstall -y trulens_eval
+    pip install trulens_eval
+    ```
+"""
+                ) from e
+
+
 def pin_spec(r: pkg_resources.Requirement) -> pkg_resources.Requirement:
     """
     Pin the requirement to the version assuming it is lower bounded by a
@@ -65,10 +156,9 @@ def format_import_errors(
     throw: Union[bool, Exception] = False
 ) -> ImportErrorMessages:
     """
-    Format two messages for missing optional package or bad import from an
-    optional package.. Throws an `ImportError` with the formatted message if
-    `throw` flag is set. If `throw` is already an exception, throws that instead
-    after printing the message.
+    Format two messages for missing optional package or bad import from an optional package. Throws
+    an `ImportError` with the formatted message if `throw` flag is set. If `throw` is already an
+    exception, throws that instead after printing the message.
     """
 
     if purpose is None:
@@ -85,7 +175,7 @@ def format_import_errors(
             requirements.append(str(all_packages[pkg]))
             requirements_pinned.append(str(pin_spec(all_packages[pkg])))
         else:
-            print(f"WARNING: package {pkg} not present in requirements.")
+            logger.warning("Package %s not present in requirements.", pkg)
             requirements.append(pkg)
 
     packs = ','.join(packages)
@@ -99,7 +189,9 @@ def format_import_errors(
 {','.join(packages)} {pack_s} {is_are} required for {purpose}.
 You should be able to install {it_them} with pip:
 
+    ```bash
     pip install {' '.join(map(lambda a: f'"{a}"', requirements))}
+    ```
 """
     )
 
@@ -109,11 +201,15 @@ You have {packs} installed but we could not import the required
 components. There may be a version incompatibility. Please try installing {this_these}
 exact {pack_s} with pip: 
 
-  pip install {' '.join(map(lambda a: f'"{a}"', requirements_pinned))}
+    ```bash
+    pip install {' '.join(map(lambda a: f'"{a}"', requirements_pinned))}
+    ```
 
 Alternatively, if you do not need {packs}, uninstall {it_them}:
 
-  pip uninstall '{' '.join(packages)}'
+    ```bash
+    pip uninstall '{' '.join(packages)}'
+    ```
 """
     )
 
@@ -138,6 +234,11 @@ REQUIREMENT_LANGCHAIN = format_import_errors(
 
 REQUIREMENT_RAILS = format_import_errors(
     "nemoguardrails", purpose="instrumenting nemo guardrails apps"
+    
+REQUIREMENT_PINECONE = format_import_errors(
+    # package name is "pinecone-client" but module is "pinecone"
+    'pinecone-client',
+    purpose="running TruBot"
 )
 
 REQUIREMENT_SKLEARN = format_import_errors(
@@ -176,8 +277,11 @@ REQUIREMENT_NOTEBOOK = format_import_errors(
 # Try to pretend to be a type as well as an instance.
 class Dummy(type, object):
     """
-    Class to pretend to be a module or some other imported object. Will raise an
-    error if accessed in any way.
+    Class to pretend to be a module or some other imported object. Will raise an error if accessed
+    in some dynamic way. Accesses that are "static-ish" will try not to raise the exception so
+    things like defining subclasses of a missing class should not raise exception. Dynamic uses are
+    things like calls, use in expressions. Looking up an attribute is static-ish so we don't throw
+    the error at that point but instead make more dummies.
     """
 
     def __new__(cls, name, *args, **kwargs):
@@ -209,16 +313,36 @@ class Dummy(type, object):
     def __subclasscheck__(self, __subclass: type) -> bool:
         return True
 
+    def _wasused(self, *args, **kwargs):
+        raise self.exception_class(self.message)
+
+    # If someone tries to use dummy in an expression, raise our usage exception:
+    __add__ = _wasused
+    __sub__ = _wasused
+    __mul__ = _wasused
+    __truediv__ = _wasused
+    __floordiv__ = _wasused
+    __mod__ = _wasused
+    __divmod__ = _wasused
+    __pow__ = _wasused
+    __lshift__ = _wasused
+    __rshift__ = _wasused
+    __and__ = _wasused
+    __xor__ = _wasused
+    __or__ = _wasused
+    __radd__ = _wasused
+    __rsub__ = _wasused
+
     def __getattr__(self, name):
-        # If in OptionalImport context, create a new dummy for the requested
-        # attribute. Otherwise raise error.
+        # If in OptionalImport context, create a new dummy for the requested attribute. Otherwise
+        # raise error.
 
         # Pretend to be object for generic attributes.
         if hasattr(object, name):
             return getattr(object, name)
 
-        # Prevent pydantic inspecting this object as if it were a type from
-        # triggering the exception message below.
+        # Prevent pydantic inspecting this object as if it were a type from triggering the exception
+        # message below.
         if name in ["__pydantic_generic_metadata__",
                     "__get_pydantic_core_schema__", "__get_validators__",
                     "__get_pydantic_json_schema__", "__modify_schema__",
@@ -282,13 +406,11 @@ class OptionalImports(object):
         try:
             mod = self.imp(name, globals, locals, fromlist, level)
 
-            # NOTE(piotrm): commented block attempts to check module contents
-            # for required attributes so we can offer a message without raising
-            # an exception later. It is commented out for now it is catching
-            # some things we don't watch to catch. Need to check how attributes
-            # are normally looked up in a module to fix this. Specifically, the
-            # code that raises these messages: "ImportError: cannot import name
-            # ..."
+            # NOTE(piotrm): commented block attempts to check module contents for required
+            # attributes so we can offer a message without raising an exception later. It is
+            # commented out for now it is catching some things we don't watch to catch. Need to
+            # check how attributes are normally looked up in a module to fix this. Specifically, the
+            # code that raises these messages: "ImportError: cannot import name ..."
             """
             if isinstance(fromlist, Iterable):
                 for i in fromlist:
@@ -307,18 +429,30 @@ class OptionalImports(object):
             # Check if the import error was from an import in trulens_eval as
             # otherwise we don't want to intercept the error as some modules
             # rely on import failures for various things.
-            module_name = inspect.currentframe().f_back.f_globals["__name__"]
+            # HACK012: we have to step back a frame or two here to check where
+            # the original import come from. We skip any frames that refer to
+            # our overwritten __import__. We have to step back multiple times if
+            # we accidentally nest our OptionalImport context manager.
+
+            frame = inspect.currentframe().f_back
+            while frame.f_code == self.__import__.__code__:
+                frame = frame.f_back
+
+            module_name = frame.f_globals["__name__"]
+
+            logger.debug("Module not found %s in %s.", name, module_name)
+
             if self.fail or not module_name.startswith(trulens_name):
                 raise e
-            logger.debug(f"Module not found {name}.")
+
             return Dummy(
                 name=name,
                 message=self.messages.module_not_found,
                 importer=self
             )
 
-        # NOTE(piotrm): This below seems to never be caught. It might be that a
-        # different import method is being used once a module is found.
+        # NOTE(piotrm): This below seems to never be caught. It might be that a different import
+        # method is being used once a module is found.
         """
         except ImportError as e:
             module_name = inspect.currentframe().f_back.f_globals["__name__"]

@@ -14,6 +14,7 @@ from trulens_eval.tru_custom_app import TruCustomApp
 
 class TestTruCustonApp(JSONTestCase):
 
+    @staticmethod
     def setUpClass():
         Tru().reset_database()
 

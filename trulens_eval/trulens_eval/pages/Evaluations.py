@@ -162,7 +162,7 @@ else:
     else:
         app = apps
 
-    st.experimental_set_query_params(app=app)
+    st.query_params['app'] = app
 
     options = st.multiselect("Filter Applications", apps, default=app)
 
@@ -332,6 +332,10 @@ else:
                 metadata_dict = json.loads(record_json).get("meta", None)
                 if metadata_dict is None:
                     st.write("No record metadata available")
+                elif not isinstance(metadata_dict, dict):
+                    st.write(
+                        "Invalid metadata format: expected a dictionary (dict) type"
+                    )
                 else:
                     metadata_cols = list(metadata_dict.keys())
 

@@ -1,15 +1,18 @@
 import logging
-from typing import Dict, Optional, Sequence
+from typing import ClassVar, Dict, Optional, Sequence
 
-# optional package
-import litellm
-from litellm import completion
+import pydantic
 
 from trulens_eval.feedback.provider.base import LLMProvider
-from trulens_eval.feedback.provider.endpoint import LiteLLMEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
+
+with OptionalImports(messages=REQUIREMENT_LITELLM):
+    import litellm
+    from litellm import completion
+
+    from trulens_eval.feedback.provider.endpoint import LiteLLMEndpoint
 
 # check that the optional imports are not dummies:
 OptionalImports(messages=REQUIREMENT_LITELLM).assert_installed(litellm)
@@ -19,35 +22,72 @@ logger = logging.getLogger(__name__)
 
 class LiteLLM(LLMProvider):
     """Out of the box feedback functions calling LiteLLM API.
+
+    Create an LiteLLM Provider with out of the box feedback functions.
+
+    Usage:
+        ```python
+        from trulens_eval.feedback.provider.litellm import LiteLLM
+        litellm_provider = LiteLLM()
+        ```
     """
+
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
+
     model_engine: str
+    """The LiteLLM completion model. Defaults to `gpt-3.5-turbo`."""
+
+    completion_args: Dict[str, str] = pydantic.Field(default_factory=dict)
+    """Additional arguments to pass to the `litellm.completion` as needed for chosen api."""
+
     endpoint: Endpoint
 
     def __init__(
-        self, *args, endpoint=None, model_engine="gpt-3.5-turbo", **kwargs
+        self,
+        model_engine: Optional[str] = None,
+        completion_kwargs: Optional[Dict] = None,
+        endpoint: Optional[Endpoint] = None,
+        **kwargs: dict
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-        """
-        Create an LiteLLM Provider with out of the box feedback functions.
 
-        **Usage:**
-        ```
-        from trulens_eval.feedback.provider.litellm import LiteLLM
-        litellm_provider = LiteLLM()
+        if model_engine is None:
+            model_engine = self.DEFAULT_MODEL_ENGINE
 
-        ```
+        from litellm.utils import get_llm_provider
+        litellm_provider = get_llm_provider(model_engine)[1]
 
-        Args:
-            model_engine (str): The LiteLLM completion model.Defaults to `gpt-3.5-turbo`
-            endpoint (Endpoint): Internal Usage for DB serialization
-        """
-        # TODO: why was self_kwargs required here independently of kwargs?
+        if completion_kwargs is None:
+            completion_kwargs = {}
+
+        if model_engine.startswith("azure/") and (completion_kwargs is None or
+                                                  "api_base"
+                                                  not in completion_kwargs):
+            raise ValueError(
+                "Azure model engine requires 'api_base' parameter to litellm completions. "
+                "Provide it to LiteLLM provider in the 'completion_kwargs' parameter:"
+                """
+```python
+provider = LiteLLM(
+    "azure/your_deployment_name",
+    completion_kwargs={
+        "api_base": "https://yourendpoint.openai.azure.com/"
+    }
+)
+```
+                """
+            )
+
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
         self_kwargs['model_engine'] = model_engine
-        self_kwargs['endpoint'] = LiteLLMEndpoint(*args, **kwargs)
+        self_kwargs['litellm_provider'] = litellm_provider
+        self_kwargs['completion_args'] = completion_kwargs
+        self_kwargs['endpoint'] = LiteLLMEndpoint(
+            litellm_provider=litellm_provider, **kwargs
+        )
 
         super().__init__(
             **self_kwargs
@@ -67,11 +107,15 @@ class LiteLLM(LLMProvider):
                     "role": "system",
                     "content": prompt
                 }],
-                **kwargs
+                **kwargs,
+                **self.completion_args
             )
         elif messages is not None:
             comp = completion(
-                model=self.model_engine, messages=messages, **kwargs
+                model=self.model_engine,
+                messages=messages,
+                **kwargs,
+                **self.completion_args
             )
 
         else:
