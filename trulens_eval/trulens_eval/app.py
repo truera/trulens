@@ -13,9 +13,10 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
-                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
-                    TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
+    Optional, Sequence, Set, Tuple, Type, TypeVar
+)
 
 import pydantic
 
@@ -689,7 +690,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             if isinstance(focus, pydantic.BaseModel):
                 focus = list(focus.model_dump().values())
                 continue
-            
+
             if isinstance(focus, Dict):
                 focus = list(focus.values())
                 continue
@@ -715,7 +716,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             if isinstance(focus, pydantic.BaseModel):
                 focus = list(focus.model_dump().values())
                 continue
-            
+
             if isinstance(focus, Dict):
                 focus = list(focus.values())
                 continue

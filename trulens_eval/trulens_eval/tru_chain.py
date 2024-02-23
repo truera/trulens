@@ -86,7 +86,9 @@ class LangChainInstrument(Instrument):
                     lambda o: isinstance(o, RunnableSerializable),
                 ("save_context", "clear"):
                     lambda o: isinstance(o, BaseMemory),
-                ("run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"):
+                (
+                    "run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"
+                ):
                     lambda o: isinstance(o, Chain),
                 (
                     "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
@@ -234,7 +236,7 @@ class TruChain(App):
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> str: # might have to relax to JSON output
+    ) -> str:  # might have to relax to JSON output
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
@@ -253,10 +255,10 @@ class TruChain(App):
 
             if len(vals) == 0:
                 return None
-            
+
             if len(vals) == 1:
                 return vals[0]
-            
+
             if len(vals) > 1:
                 return vals[0]
 
