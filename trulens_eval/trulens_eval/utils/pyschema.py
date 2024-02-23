@@ -5,13 +5,14 @@ In order to serialize (and optionally deserialize) python entities while still
 being able to inspect them in their serialized form, we employ several storage
 classes that mimic basic python entities:
 
-Serializable representation | Python entity
-----------------------------+------------------
-Class                       | (python) class
-Module                      | (python) module
-Obj                         | (python) object
-Function                    | (python) function
-Method                      | (python) method
+| Serializable representation | Python entity |
+| --- | --- |
+| Class    | (python) class    |
+| Module   | (python) module   |
+| Obj      | (python) object   |
+| Function | (python) function |
+| Method   | (python) method   |
+
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ import warnings
 import pydantic
 
 from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.python import safe_issubclass
 from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
@@ -64,15 +66,6 @@ def noserio(obj, **extra: Dict) -> dict:
         inner['len'] = len(obj)
 
     return {NOSERIO: inner}
-
-
-def callable_name(c: Callable):
-    if safe_hasattr(c, "__name__"):
-        return c.__name__
-    elif safe_hasattr(c, "__call__"):
-        return callable_name(c.__call__)
-    else:
-        return str(c)
 
 
 # TODO: rename as functionality optionally produces JSONLike .
@@ -596,9 +589,12 @@ class WithClassInfo(pydantic.BaseModel):
     without having to load them.
     """
 
-    # Using this odd key to not pollute attribute names in whatever class we mix
-    # this into. Should be the same as CLASS_INFO.
-    tru_class_info: Class  # = Field(None, exclude=False)
+    tru_class_info: Class
+    """Class information of this pydantic object for use in deserialization.
+    
+    Using this odd key to not pollute attribute names in whatever class we mix
+    this into. Should be the same as CLASS_INFO.
+    """
 
     # NOTE(piotrm): HACK005: for some reason, model_validate is not called for
     # nested models but the method decorated as such below is called. We use
@@ -612,6 +608,8 @@ class WithClassInfo(pydantic.BaseModel):
     @pydantic.model_validator(mode='before')
     @staticmethod
     def load(obj, *args, **kwargs):
+        """Deserialize/load this object using the class information in
+        tru_class_info to lookup the actual class that will do the deserialization."""
 
         if not isinstance(obj, dict):
             return obj
@@ -627,7 +625,8 @@ class WithClassInfo(pydantic.BaseModel):
         except RuntimeError:
             return obj
 
-        validated = dict()
+        validated = {}
+
         for k, finfo in cls.model_fields.items():
             typ = finfo.annotation
             val = finfo.get_default(call_default_factory=True)
@@ -635,10 +634,16 @@ class WithClassInfo(pydantic.BaseModel):
             if k in obj:
                 val = obj[k]
 
-            if isinstance(val, dict) and CLASS_INFO in val \
-            and inspect.isclass(typ) and issubclass(typ, WithClassInfo):
-                subcls = Class.model_validate(val[CLASS_INFO]).load()
-                val = subcls.model_validate(val)
+            try:
+                if (isinstance(val, dict)) and (CLASS_INFO in val) \
+                and inspect.isclass(typ) and safe_issubclass(typ, WithClassInfo):
+                    subcls = Class.model_validate(val[CLASS_INFO]).load()
+
+                    val = subcls.model_validate(val)
+            except Exception as e:
+                print(f"raised exception {e}")
+                print(f"on typ={typ}")
+                print(f"on val={val}")
 
             validated[k] = val
 
