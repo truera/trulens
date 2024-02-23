@@ -224,9 +224,11 @@ nav:
             - Endpoint:
               - Base: trulens_eval/api/endpoint/base.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
+          - Instruments: trulens_eval/api/instruments.md
           - Utils: 
             - trulens_eval/api/utils/python.md
             - trulens_eval/api/utils/serial.md
+            - trulens_eval/api/utils/json.md
             - trulens_eval/api/utils/frameworks.md
             - trulens_eval/api/utils/utils.md
   - 🤝 Contributing:
