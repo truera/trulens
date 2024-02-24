@@ -1,0 +1,704 @@
+[33mcommit 525bea94a27776883022f5099d792e2bcc8c4cea[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: MN-Noor <mn05052002@gmail.com>
+Date:   Fri Feb 23 23:18:37 2024 +0500
+
+    bearer
+
+[33mcommit 1ec6633e6bc8f9282e37e996db01bf0ed2bc2fcd[m
+Author: MN-Noor <mn05052002@gmail.com>
+Date:   Fri Feb 23 22:04:07 2024 +0500
+
+    RAG evaluation with hugging face models
+
+[33mcommit 7d0b648cce8c4ac13b02aa19697215c148398e55[m
+Author: MN-Noor <mn05052002@gmail.com>
+Date:   Fri Feb 23 01:14:20 2024 +0500
+
+    e5+mistral+vectraHHEM
+
+[33mcommit 4cf0664fc56bc7f21abce81a57a9cd9d00787c9b[m
+Author: MN-Noor <mn05052002@gmail.com>
+Date:   Thu Feb 22 00:54:57 2024 +0500
+
+    added  notebook using vectra hallucination to evaluuate llm responces and citations
+
+[33mcommit b1d0f1dc7ce730f3e20fead8936619393e852728[m
+Author: MN-Noor <mn05052002@gmail.com>
+Date:   Thu Feb 22 00:33:04 2024 +0500
+
+    responce handling
+
+[33mcommit 9cdcfb69d19c61f49978f31998a72432c2106da6[m
+Author: tonic <josephp@tuta.io>
+Date:   Mon Feb 19 22:15:12 2024 +0100
+
+    started on the notebook example
+
+[33mcommit ee84bff8b5381a35a2e9ca56f7da027ae23e421b[m
+Author: tonic <josephp@tuta.io>
+Date:   Mon Feb 19 20:22:16 2024 +0100
+
+    removed tonic quickstart notebook
+
+[33mcommit a5f577051e54ec5d57a470a1f0b7fa2199c67242[m
+Author: tonic <josephp@tuta.io>
+Date:   Mon Feb 19 20:19:20 2024 +0100
+
+    started to add a simple example for vectara evaluation
+
+[33mcommit df2802f86eb7f7b70f9af22643795ef59ed97c99[m
+Merge: 1dae581 deced20
+Author: Tonic <josephrichardpollack@gmail.com>
+Date:   Mon Feb 19 17:05:12 2024 +0100
+
+    Merge branch 'truera:main' into main
+
+[33mcommit deced20f5770e2186c6e68c83b2e308ac76707e9[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Fri Feb 16 16:27:31 2024 -0500
+
+    Releases/rc trulens eval 0.23.0 (#908)
+    
+    * ensemble retriever example
+    
+    * instrument BaseNodePostprocessor
+    
+    * instrument more methods
+    
+    * find all subcomponents called and instrument them
+    
+    * more instrumentation
+    
+    * llama-index hybrid retriever example
+    
+    * bump notebook versions
+    
+    * bump backage version
+    
+    * bump pyscripts
+
+[33mcommit 5b3e8fc81c2d97395a35d4e9ac253209f9ccdffd[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Fri Feb 16 12:54:41 2024 -0800
+
+    various documentation fixes (#907)
+    
+    * wrong level for doc page
+    
+    * doc fixes
+    
+    * more fixes
+    
+    * upper bound broken litellm
+
+[33mcommit 28fbf600f5319e8225f66467b022fb5ff6073fc4[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Fri Feb 16 15:33:32 2024 -0500
+
+    Deeper Instrumentation for Hybrid Retrievers + examples (#873)
+    
+    * ensemble retriever example
+    
+    * instrument BaseNodePostprocessor
+    
+    * instrument more methods
+    
+    * find all subcomponents called and instrument them
+    
+    * more instrumentation
+    
+    * llama-index hybrid retriever example
+    
+    * add importlib requirement temporarily for python 3.8
+    
+    * typo
+    
+    * cap litellm version
+
+[33mcommit 3c31e71360eee4758d822c323e699e609c81ae64[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Thu Feb 15 14:49:15 2024 -0800
+
+    model rebuilds as necessary (#905)
+    
+    Co-authored-by: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+
+[33mcommit 895d0f673d489bd48fbbd4a4ce259b7859e63878[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Thu Feb 15 16:14:10 2024 -0500
+
+    comprehensiveness updates (#901)
+    
+    * comprehensiveness updates
+    
+    * remove print
+    
+    * allow multiline criteria and reasons
+    
+    * prompts updates
+    
+    * differentiate between hi and lo importance points
+
+[33mcommit f5f3b1d44d5645fcc3684bfe50ce74d9dfff5c1a[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Thu Feb 15 03:43:20 2024 -0800
+
+    few site-related fixes to recently merged pr (#903)
+    
+    * first
+    
+    * fix pinecone package name
+    
+    * adjust progress and add dummy provider delay option
+    
+    * cleanup phase 1
+    
+    * adding more sections to api docs
+    
+    * added more pages
+    
+    * Add backwards compatible Record.feedback_results .
+    
+    * version bump
+    
+    * misssed version bump
+    
+    * bump py_script quickstarts
+    
+    * typo
+    
+    * finished first pass over Tru class doc standardization.
+    
+    * a bit more
+    
+    * nits
+    
+    * another nit
+    
+    * more
+    
+    * fix links
+    
+    * nonetype for python 3.9
+    
+    * fix class nav not working
+    
+    * update generate_score and generate_score_and_reason docstrings
+    
+    * remove bad js
+    
+    * adding record to api docs
+    
+    * adjust providers nav and pages
+    
+    * forgot one provider
+    
+    * move things
+    
+    * piepline fixes
+    
+    * nits
+    
+    * nits
+    
+    * remove app.js
+    
+    * 2 more fixes
+    
+    * nits
+    
+    ---------
+    
+    Co-authored-by: Josh Reini <joshreini1@gmail.com>
+    Co-authored-by: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+
+[33mcommit a72aca1a3a95023accd08bbddca9e5e85f9f7b44[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Wed Feb 14 21:44:26 2024 -0500
+
+    Fix use case colab links (#900)
+    
+    * Update moderation.ipynb colab link
+    
+    * Update language_verification.ipynb colab link
+    
+    * Update pii_detection.ipynb
+    
+    * Update summarization_eval.ipynb
+
+[33mcommit 05e1d5e60161c2674810c34f50d8b2bb761cb9dd[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Wed Feb 14 18:27:16 2024 -0800
+
+    fix for in-memory sqlite params (#904)
+
+[33mcommit fe3d79ab3173d5a6825be509be5661b0bdc32104[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Wed Feb 14 15:29:47 2024 -0800
+
+    cleanup (#880)
+    
+    * first
+    
+    * fix pinecone package name
+    
+    * adjust progress and add dummy provider delay option
+    
+    * cleanup phase 1
+    
+    * adding more sections to api docs
+    
+    * added more pages
+    
+    * Add backwards compatible Record.feedback_results .
+    
+    * version bump
+    
+    * misssed version bump
+    
+    * bump py_script quickstarts
+    
+    * typo
+    
+    * finished first pass over Tru class doc standardization.
+    
+    * a bit more
+    
+    * nits
+    
+    * another nit
+    
+    * more
+    
+    * fix links
+    
+    * nonetype for python 3.9
+    
+    * fix class nav not working
+    
+    * update generate_score and generate_score_and_reason docstrings
+    
+    * remove bad js
+    
+    * adding record to api docs
+    
+    * adjust providers nav and pages
+    
+    * forgot one provider
+    
+    * move things
+    
+    * piepline fixes
+    
+    ---------
+    
+    Co-authored-by: Josh Reini <joshreini1@gmail.com>
+    Co-authored-by: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+
+[33mcommit 0d7035a56e970618ff9a869f37ef8098db4b12f8[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Tue Feb 13 14:04:13 2024 -0500
+
+    TruLens-Eval 0.22.2 (#894)
+    
+    * bump 0.22.2 init
+    
+    * version bump quickstart
+    
+    * bump py scripts
+
+[33mcommit 848898eab841c96b3be0aae952cc8020c0afc195[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Tue Feb 13 13:11:09 2024 -0500
+
+    bedrock provider branching fix (#887)
+
+[33mcommit 6b70a12d2ecb5678b310cf2d875076d2f1980f22[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Tue Feb 13 09:51:51 2024 -0800
+
+    first (#892)
+    
+    Co-authored-by: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+
+[33mcommit 8758d7c19970c785495aa29c7766e0dea10cd815[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Tue Feb 13 12:24:32 2024 -0500
+
+    pin llama-index temp (#893)
+    
+    * pin llama-index temp
+    
+    Pin llama-index until migrating to 0.10 to unblock PRs
+    
+    * Update requirements.optional.txt
+
+[33mcommit 2198b3a34ac3a1372e11e9ac279de7a12fba9e32[m
+Author: Daniel <dah0417912@gmail.com>
+Date:   Mon Feb 12 13:16:09 2024 -0800
+
+    ensure agreement prompt outputs integer score as the last part of the sentence (#884)
+    
+    Co-authored-by: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+
+[33mcommit 9afa1627d17da296279f6e851976d95ff331e84c[m
+Author: Aaron Varghese <48355037+aaronvarghese@users.noreply.github.com>
+Date:   Sun Feb 11 03:02:05 2024 +0530
+
+    metadata datatype validation fix (#888)
+
+[33mcommit 3a9d0d408517ead48710fc4d54d2c35401a62216[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Fri Feb 9 14:08:30 2024 -0500
+
+    TruLens-Eval v0.22.1 (#882)
+    
+    * version bump
+    
+    * misssed version bump
+    
+    * bump py_script quickstarts
+    
+    * typo
+    
+    ---------
+    
+    Co-authored-by: Piotr Mardziel <piotrm@gmail.com>
+
+[33mcommit c044a88c059f1fb72fc9d3be3287e80fdb20b3a1[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Fri Feb 9 12:18:31 2024 -0500
+
+    fix st.query_params (#883)
+    
+    * fix st.query_params
+    
+    * bump streamlit version
+
+[33mcommit 326d5358d184b1a3707267ece5e6917e4fc3741a[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Fri Feb 9 06:25:43 2024 -0800
+
+    pull from other branch (#881)
+
+[33mcommit f51315742188c9f3f2e936fdab4c5725d672feab[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Thu Feb 8 17:39:25 2024 -0500
+
+    Allow different schemas for Bedrock provider calls (#878)
+    
+    * input/output schema depend on model provider within bedrock
+    
+    * fix ai21, change meta to not implemented due to inability to complete task
+    
+    * remove unneeded
+    
+    * change meta not implemented to else condition
+    
+    * more helpful error message
+
+[33mcommit 603972d338b8db346a951e71ef1eb95d9070b5d4[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Thu Feb 8 14:09:40 2024 -0800
+
+    deferred progress status (#879)
+    
+    * first
+    
+    * fix pinecone package name
+    
+    * adjust progress and add dummy provider delay option
+    
+    ---------
+    
+    Co-authored-by: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+
+[33mcommit b2a979a897e5a5f04255db873e4a5ba7131110f7[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Thu Feb 8 16:42:57 2024 -0500
+
+    streamlit experimental query params -> query params (#860)
+    
+    streamlit deprecating in april, producing ugly warning now
+
+[33mcommit 2e9c9cf18e7938187d2c18fde03ef3c73132cfbf[m
+Author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+Date:   Thu Feb 8 06:05:38 2024 -0500
+
+    Automated File Generation from Docs Notebook Changes (#876)
+    
+    Co-authored-by: piotrm0 <piotrm0@users.noreply.github.com>
+
+[33mcommit 703cdaf3849b2f760a9a4c78d96ccedef1f8e73d[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Wed Feb 7 22:53:35 2024 -0800
+
+    better deferred evaluation (#807)
+    
+    * added more fake behaviour to dummy app and dummy endpoint
+    
+    * dummy testing
+    
+    * typo
+    
+    * update feedback_result usage in notebooks
+    
+    * clean up imports
+    
+    * revert unneeded
+    
+    * make format
+    
+    * nits to dummy example testing
+    
+    * format
+    
+    * nits to satisfy pydantic
+    
+    * adding a wait for pending feedback for entire app
+    
+    * renamed
+    
+    * bugfix race
+    
+    * reenable tests that were async and never awaited
+    
+    * remove dotdotdot for python 3.9
+    
+    * more dotdotdots
+    
+    * adding nest_asyncio to reqs and trying to use fewer desync calls
+    
+    * adding unit tests
+    
+    * cleanup
+    
+    * forgot typevar
+    
+    * add fake parameterizable Queue type
+    
+    * more unit tests
+    
+    * more Tru class testing
+    
+    * fix bad merge
+    
+    * nits
+    
+    * change llama test example
+    
+    * nits and move chain tests to optional requirements
+    
+    * nits
+    
+    * update langchain usage
+    
+    * several more outdated uses
+    
+    * update optional requirements
+    
+    * organize imports
+    
+    * remove old
+    
+    * cleanup requirements files
+    
+    * fix ipywidgets import test
+    
+    * add note
+    
+    * typo again ...
+    
+    * another deprecating call
+    
+    * fighting the import organizer
+    
+    * make pending feedback manager non-parent-blocking
+    
+    * remove thread
+    
+    * remove another non-needed
+    
+    * revert accidental delete
+    
+    ---------
+    
+    Co-authored-by: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+
+[33mcommit ace1f5b97f17eaa3eeec07ea6c6ed19dfea60fb2[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Wed Feb 7 19:35:29 2024 -0800
+
+    non-threaded pacer (#874)
+    
+    * replaced threaded pacer
+    
+    * remove unused method
+    
+    * dep note
+    
+    * revert nonneeded
+    
+    * typo
+    
+    * typo
+    
+    * args/kwargs debugging
+    
+    * add api env to pipeline definition for when running optional tests
+    
+    * typos
+    
+    * typo
+
+[33mcommit 99d747c669b618ee757af93eed4e5c5a20f4bbf6[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Wed Feb 7 14:12:08 2024 -0800
+
+    Fix typo and adjust some debug printouts. (#866)
+
+[33mcommit 9f917edc0ec92529f7258125f1a7d93df526ec9f[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Tue Feb 6 13:23:56 2024 -0500
+
+    fix typo (#857)
+
+[33mcommit 29d93a80e4408ccdd7d807d38c109760f171fd82[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Mon Feb 5 22:32:58 2024 -0500
+
+    Randomly run evals based on record_id hash (#850)
+    
+    * prototype
+    
+    * update md
+    
+    * fix run_feedback
+    
+    * update
+    
+    * update
+    
+    * update
+
+[33mcommit 47f806c570f26b67cfeba6cf7f6acb4e4a548deb[m
+Author: Piotr Mardziel <piotrm@gmail.com>
+Date:   Mon Feb 5 13:19:39 2024 -0800
+
+    init cleanup (#852)
+    
+    * debug why static tests did not fail
+    
+    * check more base modules
+    
+    * update module hierarchy doc and delete another deprecated module
+    
+    * trubot is optional
+    
+    * don't try to run a script in static tests
+    
+    * Don't try to import migrations env
+    
+    * typo
+    
+    * nit
+    
+    * cleanup and assertion failure messages
+    
+    * pinecone optional message
+    
+    * update pinecone usage
+    
+    * note
+
+[33mcommit 5e558467fcbb72032ee23614a5a93d210882ba3e[m
+Author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+Date:   Mon Feb 5 09:47:20 2024 -0500
+
+    Automated File Generation from Docs Notebook Changes (#853)
+    
+    Co-authored-by: joshreini1 <joshreini1@users.noreply.github.com>
+
+[33mcommit 1dae58188e44d251e5418bcd7cfdff10d9662785[m
+Merge: d78f2dd 7eea89d
+Author: Tonic <josephrichardpollack@gmail.com>
+Date:   Sun Feb 4 12:23:04 2024 +0100
+
+    Merge branch 'main' into main
+
+[33mcommit 7eea89d5867b3d5ba44d90b50d770d1179166f6c[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Sat Feb 3 09:47:50 2024 -0500
+
+    TruLens-Eval v0.22.0 release (#851)
+    
+    * bump
+    
+    * bump
+
+[33mcommit 5e2421cf7fa9b65e36a6e365accbacdd1e7e6f6d[m
+Author: Josh Reini <60949774+joshreini1@users.noreply.github.com>
+Date:   Fri Feb 2 17:26:07 2024 -0500
+
+    Integration Testing (#838)
+    
+    * make more tests pass
+    
+    * small changes
+    
+    * more tests working
+    
+    * skip moderation
+    
+    * test for multiple models
+    
+    * more passing
+    
+    * unused e removed
+    
+    * fix typing issues
+    
+    * more cot tests
+    
+    * incorrect prompt
+    
+    * more cot reasons tests
+    
+    * stereotypes more extreme
+    
+    * improve stereotyping prompt
+    
+    * typo
+    
+    * unittest only gpt-3.5-turbo
+    
+    * add missing import
+    
+    * mark calibration as optional test
+    
+    * fix typo
+    
+    * move oai import to top[]
+    
+    * oai imports for all testss
+
+[33mcommit d6682bd6e88414abc92290e730bd4980128cb15b[m
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Fri Feb 2 10:45:15 2024 -0800
+
+    Bump vite in /trulens_eval/trulens_eval/react_components/record_viewer (#839)
+    
+    Bumps [vite](https://github.com/vitejs/vite/tree/HEAD/packages/vite) from 4.4.2 to 4.5.2.
+    - [Release notes](https://github.com/vitejs/vite/releases)
+    - [Changelog](https://github.com/vitejs/vite/blob/v4.5.2/packages/vite/CHANGELOG.md)
+    - [Commits](https://github.com/vitejs/vite/commits/v4.5.2/packages/vite)
+    
+    ---
+    updated-dependencies:
+    - dependency-name: vite
+      dependency-type: direct:development
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+    Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+    Co-authored-by: Josh Reini <60949774+joshreini1@users.noreply.github.com>
