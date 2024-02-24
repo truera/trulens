@@ -98,7 +98,7 @@ class FeedbackActions():
     @action(name="feedback")
     @staticmethod
     async def feedback(
-        events: Optional[List[Dict]] = None, 
+        events: Optional[List[Dict]] = None,
         context: Optional[Dict] = None,
         llm: Optional[BaseLanguageModel] = None,
         config: Optional[RailsConfig] = None,
@@ -112,49 +112,54 @@ class FeedbackActions():
         it needs to be registered with your rails app and feedback functions
         themselves need to be registered with this function.
         
-        ```python
-        rails: LLMRails = ... # your app
-        language_match: Feedback = Feedback(...) # your feedback function
+        Usage:
+            ```python
+            rails: LLMRails = ... # your app
+            language_match: Feedback = Feedback(...) # your feedback function
 
-        # First we register some feedback functions with the custom action:
-        FeedbackAction.register_feedback_functions(language_match)
+            # First we register some feedback functions with the custom action:
+            FeedbackAction.register_feedback_functions(language_match)
 
-        # Can also use kwargs expansion from dict like produced  by RAG_triad:
-        # FeedbackAction.register_feedback_functions(**RAG_triad(...))
+            # Can also use kwargs expansion from dict like produced by rag_triad:
+            # FeedbackAction.register_feedback_functions(**rag_triad(...))
 
-        # Then the feedback method needs to be registered with the rails app:
-        rails.register_action(FeedbackAction.feedback)
-        ```
+            # Then the feedback method needs to be registered with the rails app:
+            rails.register_action(FeedbackAction.feedback)
+            ```
 
         Args:
-            - function: str -- the feedback function to run.
-            
-            - selectors: Dict[str, Union[str, Lens]] -- the selectors for the
-              function. Can be provided either as strings to be parsed into lenses
-              or lenses themselves.
-            
-            - verbose: bool -- whether to print the values of the selectors
-              before running feedback and print the result after running
-              feedback.
+            events: See [Action parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
 
-            - the other args are action defaults args.
+            context: See [Action parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
+
+            llm: See [Action parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
+
+            config: See [Action parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
+                            
+            function: Name of the feedback function to run.
+            
+            selectors: Selectors for the function. Can be provided either as
+                strings to be parsed into lenses or lenses themselves.
+            
+            verbose: Print the values of the selectors before running feedback
+                and print the result after running feedback.
 
         Returns:
             ActionResult: An action result containing the result of the feedback.
 
         Example:
             ```colang
-                define subflow check language match
-                    $result = execute feedback(\
-                        function="language_match",\
-                        selectors={\
-                        "text1":"action.context.last_user_message",\
-                        "text2":"action.context.bot_message"\
-                        }\
-                    )
-                    if $result < 0.8
-                        bot inform language mismatch
-                        stop
+            define subflow check language match
+                $result = execute feedback(\\
+                    function="language_match",\\
+                    selectors={\\
+                    "text1":"action.context.last_user_message",\\
+                    "text2":"action.context.bot_message"\\
+                    }\\
+                )
+                if $result < 0.8
+                    bot inform language mismatch
+                    stop
             ```
         """
 
@@ -203,7 +208,7 @@ class FeedbackActions():
             if verbose:
                 print(f"  {fname} result = {result.result}")
 
-        except Exception as e:
+        except Exception:
             context_updates["result"] = None
 
             return ActionResult(
@@ -218,19 +223,24 @@ class FeedbackActions():
 
 
 class RailsInstrument(Instrument):
+    """Instrumentation specification for NEMO guardrails apps."""
 
     class Default:
+        """Default instrumentation specification."""
+
         MODULES = {"nemoguardrails"}.union(
             LangChainInstrument.Default.MODULES
-        )  # NOTE: nemo uses langchain internally for some things
+        )
+        """Modules to instrument by name prefix.
+        
+        Note that nemo uses langchain internally for some things.
+        """
 
-        # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
             LLMRails, KnowledgeBase, LLMGenerationActions, Runtime, ActionDispatcher, FeedbackActions
         }.union(LangChainInstrument.Default.CLASSES())
+        """Instrument only these classes."""
 
-        # Instrument only methods with these names and of these classes. Ok to
-        # include llama_index inside methods.
         METHODS = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS), # copy
             {
@@ -258,6 +268,7 @@ class RailsInstrument(Instrument):
                 "feedback": lambda o: isinstance(o, FeedbackActions), 
             }
         )
+        """Instrument only methods with these names and of these classes."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -273,11 +284,11 @@ class TruRails(App):
     """
     Recorder for apps defined using NEMO guardrails.
 
-        Args:
-            app -- A nemo guardrails application.
+    Args:
+        app: A nemo guardrails application.
     """
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[dict] = {'arbitrary_types_allowed': True}
 
     app: LLMRails
 
@@ -348,5 +359,3 @@ class TruRails(App):
             )
         else:
             raise RuntimeError(f"TruRails has no attribute named {__name}.")
-
-TruRails.model_rebuild()

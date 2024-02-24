@@ -611,6 +611,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
         implementation: Optional[Union[pyschema.Function,
                                        pyschema.Method]] = None,
         aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
+        if_exists: Optional[serial.Lens] = None,
         selectors: Optional[Dict[str, serial.Lens]] = None,
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
@@ -626,6 +627,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             implementation=implementation,
             aggregator=aggregator,
             selectors=selectors,
+            if_exists=if_exists,
             **kwargs
         )
 
@@ -646,8 +648,11 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
         self.feedback_definition_id = feedback_definition_id
 
     def __repr__(self):
-        return f"FeedbackDefinition({self.name})"
+        return f"FeedbackDefinition({self.name},\n\tselectors={self.selectors},\n\tif_exists={self.if_exists}\n)"
     
+    def __str__(self):
+        return repr(self)
+
     def __hash__(self):
         return hash(self.feedback_definition_id)
 

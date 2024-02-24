@@ -241,7 +241,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 import os
-from pprint import PrettyPrinter
+from pprint import pformat
 import threading as th
 import traceback
 from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
@@ -275,7 +275,6 @@ from trulens_eval.utils.python import wrap_awaitable
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
-pp = PrettyPrinter()
 
 
 class WithInstrumentCallbacks:
@@ -287,9 +286,8 @@ class WithInstrumentCallbacks:
 
     # Called during instrumentation.
     def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
-        """
-        Called by instrumentation system for every function requested to be
-        instrumented.
+        """Callback to be called by instrumentation system for every function
+        requested to be instrumented.
         
         Given are the object of the class in which `func` belongs
         (i.e. the "self" for that function), the `func` itsels, and the `path`
@@ -727,11 +725,17 @@ class Instrument(object):
                 # Placeholder:
                 records: Dict = handle_done(
                     rets=(
-                        f"""NOTE from trulens_eval:
-    This app produced an asynchronous response of type `{class_name(type(rets))}`. This record will be updated once
-    the response is available. If this message persists, check that you are
-    using the correct version of the app method and `await` any asynchronous
-    results."""
+                        f"""
+NOTE from trulens_eval:
+This app produced an asynchronous response of type `{class_name(type(rets))}`. This record will be updated once
+the response is available. If this message persists, check that you are
+using the correct version of the app method and `await` any asynchronous
+results. Additional information about this call: 
+    
+```
+{pformat(locals())}
+```
+    """
                     ),
                 )
 

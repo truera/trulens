@@ -53,7 +53,7 @@ AggCallable = Callable[[Iterable[float]], float]
 """Signature of aggregation functions."""
 
 
-def RAG_triad(
+def rag_triad(
     provider: LLMProvider,
     question: Optional[Lens] = None,
     answer: Optional[Lens] = None,
@@ -68,7 +68,6 @@ def RAG_triad(
     within colang.
 
     Args:
-    
         provider: The provider to use for implementing the feedback functions.
     
         question: Selector for the question part.
@@ -126,16 +125,12 @@ def RAG_triad(
     return ret
 
 
-# TODO Rename:
-# Option:
-#  Feedback -> FeedbackRunner
-#  FeedbackDefinition -> FeedbackRunnerDefinition
 class Feedback(FeedbackDefinition):
     """Feedback function container. 
     
     Typical usage is to specify a feedback implementation function from a
-    `Provider` and the mapping of selectors describing how to construct the
-    arguments to the implementation:
+    [Provider][trulens_eval.feedback.provider.Provider] and the mapping of
+    selectors describing how to construct the arguments to the implementation:
 
     Example:
         ```python
@@ -151,11 +146,17 @@ class Feedback(FeedbackDefinition):
     """
 
     imp: Optional[ImpCallable] = pydantic.Field(None, exclude=True)
-    """Implementation callable. A serialized version is stored at `FeedbackDefinition.implementation`."""
+    """Implementation callable.
+    
+    A serialized version is stored at `FeedbackDefinition.implementation`.
+    """
 
     agg: Optional[AggCallable] = pydantic.Field(None, exclude=True)
     """Aggregator method for feedback functions that produce more than one
-    result. A serialized version is stored at `FeedbackDefinition.aggregator`."""
+    result.
+    
+    A serialized version is stored at `FeedbackDefinition.aggregator`.
+    """
 
     def __init__(
         self,
@@ -422,12 +423,10 @@ class Feedback(FeedbackDefinition):
         Returns a new Feedback object with the given aggregation function.
         """
 
-        return Feedback(
-            imp=self.imp,
-            selectors=self.selectors,
-            agg=func,
-            name=self.supplied_name,
-            higher_is_better=self.higher_is_better
+        return Feedback.model_copy(
+            self, update=dict(
+                agg=func
+            ) # does this run __init__ ?
         )
 
     @staticmethod

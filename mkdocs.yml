@@ -207,6 +207,7 @@ nav:
             - TruBasicApp: trulens_eval/api/app/trubasicapp.md
             - 🦜️🔗 TruChain: trulens_eval/api/app/truchain.md
             - 🦙 TruLlama: trulens_eval/api/app/trullama.md
+            - TruRails: trulens_eval/api/app/trurails.md
             - TruCustom: trulens_eval/api/app/trucustom.md
             - TruVirtual: trulens_eval/api/app/truvirtual.md
           - Feedback: trulens_eval/api/feedback.md
