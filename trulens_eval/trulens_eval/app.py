@@ -665,6 +665,36 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         raise NotImplementedError()
 
+    def _extract_content(self, value):
+        if isinstance(value, pydantic.BaseModel):
+            # Check for 'content' attribute directly
+            content = getattr(value, 'content', None)
+            if content is not None:
+                return content
+            else:
+                # If 'content' is not found, check for 'choices' attribute which indicates a ChatResponse
+                choices = getattr(value, 'choices', None)
+                if choices is not None:
+                    # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
+                    return [self._extract_content(choice.message) for choice in choices]
+                else:
+                    # Recursively extract content from nested pydantic models
+                    return {k: self._extract_content(v) if isinstance(v, (pydantic.BaseModel, dict, list)) else v
+                            for k, v in value.dict().items()}
+        elif isinstance(value, dict):
+            # Check for 'content' key in the dictionary
+            content = value.get('content')
+            if content is not None:
+                return content
+            else:
+                # Recursively extract content from nested dictionaries
+                return {k: self._extract_content(v) if isinstance(v, (dict, list)) else v for k, v in value.items()}
+        elif isinstance(value, list):
+            # Handle lists by extracting content from each item
+            return [self._extract_content(item) for item in value]
+        else:
+            return value
+
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
@@ -685,16 +715,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         while not isinstance(focus, JSON_BASES) and len(focus) == 1:
             focus = focus[0]
-
-            if isinstance(focus, pydantic.BaseModel):
-                focus = list(focus.model_dump().values())
-                continue
-            
-            if isinstance(focus, Dict):
-                focus = list(focus.values())
-                continue
+            focus = self._extract_content(focus)
 
             if not isinstance(focus, Sequence):
+                print(f"focus {focus} is not a sequence")
                 break
 
         if isinstance(focus, JSON_BASES):
@@ -711,16 +735,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         focus = all_args
         while not isinstance(focus, JSON_BASES) and len(focus) >= 1:
             focus = focus[0]
-
-            if isinstance(focus, pydantic.BaseModel):
-                focus = list(focus.model_dump().values())
-                continue
-            
-            if isinstance(focus, Dict):
-                focus = list(focus.values())
-                continue
+            focus = self._extract_content(focus)
 
             if not isinstance(focus, Sequence):
+                print(f"focus {focus} is not a sequence")
                 break
 
         if isinstance(focus, JSON_BASES):
@@ -731,7 +749,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             callable_name(func), all_args
         )
 
-        return None
+        return ""
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -742,26 +760,29 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         returned `ret`.
         """
 
-        if isinstance(ret, str):
-            return ret
+        # Use _extract_content to get the content out of the return value
+        content = self._extract_content(ret)
 
-        if isinstance(ret, float):
-            return str(ret)
+        if isinstance(content, str):
+            return content
 
-        if isinstance(ret, Dict):
-            return next(iter(ret.values()))
+        if isinstance(content, float):
+            return str(content)
 
-        elif isinstance(ret, Sequence):
-            if len(ret) > 0:
-                return str(ret[0])
+        if isinstance(content, Dict):
+            return str(next(iter(content.values()), ''))
+
+        elif isinstance(content, Sequence):
+            if len(content) > 0:
+                return str(content[0])
             else:
-                return None
+                return ""
 
         else:
             logger.warning(
-                f"Unsure what the main output string is for the call to {callable_name(func)} with return type {type(ret)}."
+                f"Unsure what the main output string is for the call to {callable_name(func)} with return type {type(content)}."
             )
-            return str(ret)
+            return str(content) if content is not None else ""
 
     # WithInstrumentCallbacks requirement
     def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
