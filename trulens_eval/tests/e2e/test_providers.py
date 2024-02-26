@@ -462,22 +462,23 @@ def get_huggingface_tests(h: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
                 hypothesis="The movie was good."
             ), 0.0
         ),
-        (
-            h.pii_detection,
-            dict(
-                text=
-                "John Doe's account is linked to the email address jane.doe@email.com"
-            ), 1.0
-        ),
-        (h.pii_detection, dict(text="sun is a star"), 0.0),
-        (
-            h.pii_detection_with_cot_reasons,
-            dict(
-                text=
-                "John Doe's account is linked to the email address jane.doe@email.com"
-            ), 1.0
-        ),
-        (h.pii_detection_with_cot_reasons, dict(text="sun is a star"), 0.0),
+        # NOTE: cannot run this one without access to moodel
+        #(
+        #    h.pii_detection,
+        #    dict(
+        #        text=
+        #        "John Doe's account is linked to the email address jane.doe@email.com"
+        #    ), 1.0
+        #),
+        #(h.pii_detection, dict(text="sun is a star"), 0.0),
+        #(
+        #    h.pii_detection_with_cot_reasons,
+        #    dict(
+        #        text=
+        #        "John Doe's account is linked to the email address jane.doe@email.com"
+        #    ), 1.0
+        #),
+        #(h.pii_detection_with_cot_reasons, dict(text="sun is a star"), 0.0),
     ]
 
 

@@ -2,28 +2,32 @@
 # coding: utf-8
 
 # # 📓 Langchain Quickstart
-#
+# 
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
-#
+# 
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
 
 # ## Setup
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
-# ! pip install trulens_eval==0.23.0 openai==1.3.7 langchain chromadb langchainhub bs4
+
+
+# ! pip install trulens_eval openai langchain chromadb langchainhub bs4
+
+
+
 
 import os
-
 os.environ["OPENAI_API_KEY"] = "sk-..."
+
 
 # ### Import from LangChain and TruLens
 
-# Imports main tools:
-from trulens_eval import Feedback
-from trulens_eval import Tru
-from trulens_eval import TruChain
 
+
+# Imports main tools:
+from trulens_eval import TruChain, Feedback, Tru
 tru = Tru()
 tru.reset_database()
 
@@ -38,7 +42,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough
 
+
 # ### Load documents
+
+
 
 loader = WebBaseLoader(
     web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
@@ -50,93 +57,176 @@ loader = WebBaseLoader(
 )
 docs = loader.load()
 
+
 # ### Create Vector Store
 
+
+
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000, chunk_overlap=200
+    chunk_size=1000,
+    chunk_overlap=200
 )
 
 splits = text_splitter.split_documents(docs)
 
 vectorstore = Chroma.from_documents(
-    documents=splits, embedding=OpenAIEmbeddings()
+    documents=splits,
+    embedding=OpenAIEmbeddings()
 )
 
+
 # ### Create RAG
+
+
 
 retriever = vectorstore.as_retriever()
 
 prompt = hub.pull("rlm/rag-prompt")
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
 
-
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
-
 rag_chain = (
-    {
-        "context": retriever | format_docs,
-        "question": RunnablePassthrough()
-    } | prompt | llm | StrOutputParser()
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
 )
+
 
 # ### Send your first request
 
+
+
 rag_chain.invoke("What is Task Decomposition?")
+
 
 # ## Initialize Feedback Function(s)
 
-import numpy as np
+
 
 from trulens_eval.feedback.provider import OpenAI
+import numpy as np
 
 # Initialize provider class
 openai = OpenAI()
 
 # select context to be used in feedback. the location of context is app specific.
 from trulens_eval.app import App
-
 context = App.select_context(rag_chain)
 
 from trulens_eval.feedback import Groundedness
-
 grounded = Groundedness(groundedness_provider=OpenAI())
 # Define a groundedness feedback function
 f_groundedness = (
-    Feedback(grounded.groundedness_measure_with_cot_reasons
-            ).on(context.collect())  # collect context chunks into a list
-    .on_output().aggregate(grounded.grounded_statements_aggregator)
+    Feedback(grounded.groundedness_measure_with_cot_reasons)
+    .on(context.collect()) # collect context chunks into a list
+    .on_output()
+    .aggregate(grounded.grounded_statements_aggregator)
 )
 
 # Question/answer relevance between overall question and answer.
 f_qa_relevance = Feedback(openai.relevance).on_input_output()
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(openai.qs_relevance).on_input().on(context).aggregate(np.mean)
+    Feedback(openai.qs_relevance)
+    .on_input()
+    .on(context)
+    .aggregate(np.mean)
 )
+
 
 # ## Instrument chain for logging with TruLens
 
-tru_recorder = TruChain(
-    rag_chain,
+
+
+tru_recorder = TruChain(rag_chain,
     app_id='Chain1_ChatApplication',
-    feedbacks=[f_qa_relevance, f_context_relevance, f_groundedness]
-)
+    feedbacks=[f_qa_relevance, f_context_relevance, f_groundedness])
+
+
+
+
+response, tru_record = tru_recorder.with_record(rag_chain.invoke, "What is Task Decomposition?")
+
+
+
+
+json_like = tru_record.layout_calls_as_app()
+
+
+
+
+json_like
+
+
+
+
+from ipytree import Tree, Node
+
+def print_call_stack(data):
+    tree = Tree()
+    tree.add_node(Node('Record ID: {}'.format(data['record_id'])))
+    tree.add_node(Node('App ID: {}'.format(data['app_id'])))
+    tree.add_node(Node('Cost: {}'.format(data['cost'])))
+    tree.add_node(Node('Performance: {}'.format(data['perf'])))
+    tree.add_node(Node('Timestamp: {}'.format(data['ts'])))
+    tree.add_node(Node('Tags: {}'.format(data['tags'])))
+    tree.add_node(Node('Main Input: {}'.format(data['main_input'])))
+    tree.add_node(Node('Main Output: {}'.format(data['main_output'])))
+    tree.add_node(Node('Main Error: {}'.format(data['main_error'])))
+    
+    calls_node = Node('Calls')
+    tree.add_node(calls_node)
+    
+    for call in data['calls']:
+        call_node = Node('Call')
+        calls_node.add_node(call_node)
+        
+        for step in call['stack']:
+            step_node = Node('Step: {}'.format(step['path']))
+            call_node.add_node(step_node)
+            if 'expanded' in step:
+                expanded_node = Node('Expanded')
+                step_node.add_node(expanded_node)
+                for expanded_step in step['expanded']:
+                    expanded_step_node = Node('Step: {}'.format(expanded_step['path']))
+                    expanded_node.add_node(expanded_step_node)
+    
+    return tree
+
+# Usage
+tree = print_call_stack(json_like)
+tree
+
+
+
+
+tree
+
+
+
 
 with tru_recorder as recording:
     llm_response = rag_chain.invoke("What is Task Decomposition?")
 
 print(llm_response)
 
+
 # ## Retrieve records and feedback
+
+
 
 # The record of the app invocation can be retrieved from the `recording`:
 
-rec = recording.get()  # use .get if only one record
+rec = recording.get() # use .get if only one record
 # recs = recording.records # use .records if multiple
 
 print(rec)
+
+
+
 
 # The results of the feedback functions can be rertireved from
 # `Record.feedback_results` or using the `wait_for_feedback_result` method. The
@@ -150,19 +240,27 @@ for feedback, feedback_result in rec.wait_for_feedback_results().items():
 # See more about wait_for_feedback_results:
 # help(rec.wait_for_feedback_results)
 
-records, feedback = tru.get_records_and_feedback(
-    app_ids=["Chain1_ChatApplication"]
-)
+
+
+
+records, feedback = tru.get_records_and_feedback(app_ids=["Chain1_ChatApplication"])
 
 records.head()
 
+
+
+
 tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])
+
 
 # ## Explore in a Dashboard
 
-tru.run_dashboard()  # open a local streamlit app to explore
+
+
+tru.run_dashboard() # open a local streamlit app to explore
 
 # tru.stop_dashboard() # stop if needed
+
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
