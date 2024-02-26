@@ -156,7 +156,7 @@ class SqlAlchemyDB(DB):
         _rec = orm.Record.parse(record, redact_keys=self.redact_keys)
         with self.Session.begin() as session:
             if session.query(orm.Record).filter_by(record_id=record.record_id
-                                                  ).first():
+                                                   ).first():
                 session.merge(_rec)  # update existing
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
@@ -168,7 +168,7 @@ class SqlAlchemyDB(DB):
     def get_app(self, app_id: str) -> Optional[JSON]:
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition).filter_by(app_id=app_id
-                                                                 ).first():
+                                                                  ).first():
                 return json.loads(_app.app_json)
 
     def get_apps(self) -> Iterable[JSON]:
@@ -181,7 +181,7 @@ class SqlAlchemyDB(DB):
 
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition
-                                    ).filter_by(app_id=app.app_id).first():
+                                     ).filter_by(app_id=app.app_id).first():
 
                 _app.app_json = app.model_dump_json()
             else:
@@ -194,8 +194,35 @@ class SqlAlchemyDB(DB):
 
             return _app.app_id
 
+    def list_records(self, app_id) -> List[int]:
+        data = []
+        with self.Session.begin() as session:
+            data = [i.id for i in session.query(orm.Record).filter_by(app_id=app_id)]
+
+        return data
+
+    def get_record_and_feedback(self, record_id) -> [pd.DataFrame]:
+        data = []
+        with self.Session.begin() as session:
+            data = [i.id for i in session.query(orm.FeedbackResult).filter_by(record_id=record_id)]
+
+        return pd.DataFrame(data)
+
+    def delete_record(self, record_id):
+        with self.Session.begin() as session:
+            session.query(orm.FeedbackResult).filter_by(record_id=record_id).delete()
+            session.query(orm.Record).filter_by(id=record_id).delete()
+
+    def delete_app(self, app_id):
+        with self.Session.begin() as session:
+            record = session.query(orm.Record).filter_by(app_id=app_id)
+            if record:
+                session.query(orm.FeedbackResult).filter_by(record__in = [i.id for i in record]).delete()
+                record.delete()
+                session.query(orm.AppDefinition).filter_by(id=app_id).delete()
+
     def insert_feedback_definition(
-        self, feedback_definition: schema.FeedbackDefinition
+            self, feedback_definition: schema.FeedbackDefinition
     ) -> schema.FeedbackDefinitionID:
         # TODO: thread safety
 
@@ -217,7 +244,7 @@ class SqlAlchemyDB(DB):
             return _fb_def.feedback_definition_id
 
     def get_feedback_defs(
-        self, feedback_definition_id: Optional[str] = None
+            self, feedback_definition_id: Optional[str] = None
     ) -> pd.DataFrame:
         with self.Session.begin() as session:
             q = select(orm.FeedbackDefinition)
@@ -233,7 +260,7 @@ class SqlAlchemyDB(DB):
             )
 
     def insert_feedback(
-        self, feedback_result: schema.FeedbackResult
+            self, feedback_result: schema.FeedbackResult
     ) -> schema.FeedbackResultID:
         # TODO: thread safety
 
@@ -269,17 +296,17 @@ class SqlAlchemyDB(DB):
             return _feedback_result.feedback_result_id
 
     def _feedback_query(
-        self,
-        count: bool = False,
-        shuffle: bool = False,
-        record_id: Optional[RecordID] = None,
-        feedback_result_id: Optional[FeedbackResultID] = None,
-        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        status: Optional[Union[FeedbackResultStatus,
-                               Sequence[FeedbackResultStatus]]] = None,
-        last_ts_before: Optional[datetime] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+            self,
+            count: bool = False,
+            shuffle: bool = False,
+            record_id: Optional[RecordID] = None,
+            feedback_result_id: Optional[FeedbackResultID] = None,
+            feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+            status: Optional[Union[FeedbackResultStatus,
+            Sequence[FeedbackResultStatus]]] = None,
+            last_ts_before: Optional[datetime] = None,
+            offset: Optional[int] = None,
+            limit: Optional[int] = None
     ):
         if count:
             q = func.count(orm.FeedbackResult.feedback_result_id)
@@ -318,16 +345,16 @@ class SqlAlchemyDB(DB):
         return q
 
     def get_feedback_count_by_status(
-        self,
-        record_id: Optional[RecordID] = None,
-        feedback_result_id: Optional[FeedbackResultID] = None,
-        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        status: Optional[Union[FeedbackResultStatus,
-                               Sequence[FeedbackResultStatus]]] = None,
-        last_ts_before: Optional[datetime] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-        shuffle: bool = False
+            self,
+            record_id: Optional[RecordID] = None,
+            feedback_result_id: Optional[FeedbackResultID] = None,
+            feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+            status: Optional[Union[FeedbackResultStatus,
+            Sequence[FeedbackResultStatus]]] = None,
+            last_ts_before: Optional[datetime] = None,
+            offset: Optional[int] = None,
+            limit: Optional[int] = None,
+            shuffle: bool = False
     ) -> Dict[FeedbackResultStatus, int]:
         """
         Get the number of feedback results that match the given criteria grouped by status.
@@ -344,16 +371,16 @@ class SqlAlchemyDB(DB):
             return {FeedbackResultStatus(row[0]): row[1] for row in results}
 
     def get_feedback(
-        self,
-        record_id: Optional[RecordID] = None,
-        feedback_result_id: Optional[FeedbackResultID] = None,
-        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        status: Optional[Union[FeedbackResultStatus,
-                               Sequence[FeedbackResultStatus]]] = None,
-        last_ts_before: Optional[datetime] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-        shuffle: Optional[bool] = False
+            self,
+            record_id: Optional[RecordID] = None,
+            feedback_result_id: Optional[FeedbackResultID] = None,
+            feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+            status: Optional[Union[FeedbackResultStatus,
+            Sequence[FeedbackResultStatus]]] = None,
+            last_ts_before: Optional[datetime] = None,
+            offset: Optional[int] = None,
+            limit: Optional[int] = None,
+            shuffle: Optional[bool] = False
     ) -> pd.DataFrame:
         """
         See abstract trulens_eval.db:DB.get_feedback for documentation.
@@ -367,8 +394,8 @@ class SqlAlchemyDB(DB):
             return _extract_feedback_results(results)
 
     def get_records_and_feedback(
-        self,
-        app_ids: Optional[List[str]] = None
+            self,
+            app_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         with self.Session.begin() as session:
             stmt = select(orm.AppDefinition)
@@ -386,9 +413,8 @@ no_perf = schema.Perf(
 
 
 def _extract_feedback_results(
-    results: Iterable[orm.FeedbackResult]
+        results: Iterable[orm.FeedbackResult]
 ) -> pd.DataFrame:
-
     def _extract(_result: orm.FeedbackResult):
         app_json = json.loads(_result.record.app.app_json)
         _type = schema.AppDefinition.model_validate(app_json).root_class
@@ -441,9 +467,8 @@ def _extract_feedback_results(
 
 
 def _extract_latency(
-    series: Iterable[Union[str, dict, schema.Perf]]
+        series: Iterable[Union[str, dict, schema.Perf]]
 ) -> pd.Series:
-
     def _extract(perf_json: Union[str, dict, schema.Perf]) -> int:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
@@ -466,7 +491,6 @@ def _extract_latency(
 
 
 def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
-
     def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
@@ -495,7 +519,7 @@ class AppsExtractor:
         self.feedback_columns = set()
 
     def get_df_and_cols(
-        self, apps: Iterable[orm.AppDefinition]
+            self, apps: Iterable[orm.AppDefinition]
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         df = pd.concat(self.extract_apps(apps))
         df["latency"] = _extract_latency(df["perf_json"])
@@ -506,7 +530,7 @@ class AppsExtractor:
         return df, list(self.feedback_columns)
 
     def extract_apps(
-        self, apps: Iterable[orm.AppDefinition]
+            self, apps: Iterable[orm.AppDefinition]
     ) -> Iterable[pd.DataFrame]:
         yield pd.DataFrame(
             [], columns=self.app_cols + self.rec_cols
@@ -540,9 +564,9 @@ class AppsExtractor:
             for _res in _rec.feedback_results:
                 calls[_res.name].append(json.loads(_res.calls_json)["calls"])
                 if _res.multi_result is not None and (multi_result :=
-                                                      json.loads(
-                                                          _res.multi_result
-                                                      )) is not None:
+                json.loads(
+                    _res.multi_result
+                )) is not None:
                     for key, val in multi_result.items():
                         if val is not None:  # avoid getting Nones into np.mean
                             name = f"{_res.name}:::{key}"
@@ -566,7 +590,6 @@ class AppsExtractor:
 
 
 def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
-
     def _flatten(_nested):
         for iterable in _nested:
             for element in iterable:

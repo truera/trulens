@@ -21,6 +21,7 @@ import warnings
 
 import humanize
 import pandas
+import pandas as pd
 import pkg_resources
 from tqdm.auto import tqdm
 from typing_extensions import Annotated
@@ -37,6 +38,8 @@ from trulens_eval.utils import serial
 from trulens_eval.utils import text
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.python import Future  # code style exception
+
+from trulens_eval.trulens_eval.database.orm import Record, FeedbackResult
 
 pp = PrettyPrinter()
 
@@ -144,10 +147,10 @@ class Tru(python.SingletonPerName):
     """Event for stopping the deferred evaluator which runs in another thread."""
 
     def __init__(
-        self,
-        database_url: Optional[str] = None,
-        database_file: Optional[str] = None,
-        database_redact_keys: bool = False,
+            self,
+            database_url: Optional[str] = None,
+            database_file: Optional[str] = None,
+            database_redact_keys: bool = False,
     ):
 
         if python.safe_hasattr(self, "db"):
@@ -197,7 +200,7 @@ class Tru(python.SingletonPerName):
             )
 
     def Chain(
-        self, chain: langchain.chains.base.Chain, **kwargs: dict
+            self, chain: langchain.chains.base.Chain, **kwargs: dict
     ) -> trulens_eval.tru_chain.TruChain:
         """Create a langchain app recorder with database managed by self.
 
@@ -213,9 +216,9 @@ class Tru(python.SingletonPerName):
         return TruChain(tru=self, app=chain, **kwargs)
 
     def Llama(
-        self, engine: Union[llama_index.indices.query.base.BaseQueryEngine,
-                            llama_index.chat_engine.types.BaseChatEngine],
-        **kwargs: dict
+            self, engine: Union[llama_index.indices.query.base.BaseQueryEngine,
+            llama_index.chat_engine.types.BaseChatEngine],
+            **kwargs: dict
     ) -> trulens_eval.tru_llama.TruLlama:
         """Create a llama-index app recorder with database managed by self.
 
@@ -232,7 +235,7 @@ class Tru(python.SingletonPerName):
         return TruLlama(tru=self, app=engine, **kwargs)
 
     def Basic(
-        self, text_to_text: Callable[[str], str], **kwargs: dict
+            self, text_to_text: Callable[[str], str], **kwargs: dict
     ) -> trulens_eval.tru_basic_app.TruBasicApp:
         """Create a basic app recorder with database managed by self.
 
@@ -250,7 +253,7 @@ class Tru(python.SingletonPerName):
         return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
 
     def Custom(
-        self, app: Any, **kwargs: dict
+            self, app: Any, **kwargs: dict
     ) -> trulens_eval.tru_custom_app.TruCustomApp:
         """Create a custom app recorder with database managed by self.
 
@@ -266,8 +269,8 @@ class Tru(python.SingletonPerName):
         return TruCustomApp(tru=self, app=app, **kwargs)
 
     def Virtual(
-        self, app: Union[trulens_eval.tru_virtual.VirtualApp, Dict],
-        **kwargs: dict
+            self, app: Union[trulens_eval.tru_virtual.VirtualApp, Dict],
+            **kwargs: dict
     ) -> trulens_eval.tru_virtual.TruVirtual:
         """Create a virtual app recorder with database managed by self.
 
@@ -300,9 +303,9 @@ class Tru(python.SingletonPerName):
         self.db.migrate_database()
 
     def add_record(
-        self,
-        record: Optional[schema.Record] = None,
-        **kwargs: dict
+            self,
+            record: Optional[schema.Record] = None,
+            **kwargs: dict
     ) -> schema.RecordID:
         """Add a record to the database.
 
@@ -329,12 +332,12 @@ class Tru(python.SingletonPerName):
     # TODO: this method is used by app.py, which represents poor code
     # organization.
     def _submit_feedback_functions(
-        self,
-        record: schema.Record,
-        feedback_functions: Sequence[feedback.Feedback],
-        app: Optional[schema.AppDefinition] = None,
-        on_done: Optional[Callable[[Future[schema.FeedbackResult]],
-                                   None]] = None
+            self,
+            record: schema.Record,
+            feedback_functions: Sequence[feedback.Feedback],
+            app: Optional[schema.AppDefinition] = None,
+            on_done: Optional[Callable[[Future[schema.FeedbackResult]],
+            None]] = None
     ) -> List[Tuple[feedback.Feedback, Future[schema.FeedbackResult]]]:
         """Schedules to run the given feedback functions.
         
@@ -395,13 +398,13 @@ class Tru(python.SingletonPerName):
         return feedbacks_and_futures
 
     def run_feedback_functions(
-        self,
-        record: schema.Record,
-        feedback_functions: Sequence[feedback.Feedback],
-        app: Optional[schema.AppDefinition] = None,
-        wait: bool = True
+            self,
+            record: schema.Record,
+            feedback_functions: Sequence[feedback.Feedback],
+            app: Optional[schema.AppDefinition] = None,
+            wait: bool = True
     ) -> Union[Iterable[schema.FeedbackResult],
-               Iterable[Future[schema.FeedbackResult]]]:
+    Iterable[Future[schema.FeedbackResult]]]:
         """Run a collection of feedback functions and report their result.
 
         Args:
@@ -444,14 +447,14 @@ class Tru(python.SingletonPerName):
             raise ValueError("wait must be a bool.")
 
         future_feedback_map: Dict[Future[schema.FeedbackResult],
-                                  feedback.Feedback] = {
-                                      p[1]: p[0]
-                                      for p in self._submit_feedback_functions(
-                                          record=record,
-                                          feedback_functions=feedback_functions,
-                                          app=app
-                                      )
-                                  }
+        feedback.Feedback] = {
+            p[1]: p[0]
+            for p in self._submit_feedback_functions(
+                record=record,
+                feedback_functions=feedback_functions,
+                app=app
+            )
+        }
 
         if wait:
             # In blocking mode, wait for futures to complete.
@@ -487,11 +490,11 @@ class Tru(python.SingletonPerName):
         return self.db.insert_app(app=app)
 
     def add_feedback(
-        self,
-        feedback_result_or_future: Optional[Union[schema.FeedbackResult,
-                                                  Future[schema.FeedbackResult]]
-                                           ] = None,
-        **kwargs: dict
+            self,
+            feedback_result_or_future: Optional[Union[schema.FeedbackResult,
+            Future[schema.FeedbackResult]]
+            ] = None,
+            **kwargs: dict
     ) -> schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
         
@@ -540,8 +543,8 @@ class Tru(python.SingletonPerName):
         )
 
     def add_feedbacks(
-        self, feedback_results: Iterable[Union[schema.FeedbackResult,
-                                               Future[schema.FeedbackResult]]]
+            self, feedback_results: Iterable[Union[schema.FeedbackResult,
+            Future[schema.FeedbackResult]]]
     ) -> List[schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
         
@@ -602,9 +605,24 @@ class Tru(python.SingletonPerName):
 
         return self.db.get_apps()
 
+    def list_records(self, app_id) -> List[int]:
+        return self.db.list_records(app_id)
+
+    def get_record_and_feedback(self, record_id) -> [pd.DataFrame]:
+
+        return self.db.get_record_and_feedback(record_id)
+
+    def delete_record(self, record_id):
+        return self.db.delete_record(record_id)
+
+    def delete_app(self, app_id):
+        return self.db.delete_app(app_id)
+
+
+
     def get_records_and_feedback(
-        self,
-        app_ids: Optional[List[schema.AppID]] = None
+            self,
+            app_ids: Optional[List[schema.AppID]] = None
     ) -> Tuple[pandas.DataFrame, List[str]]:
         """Get records, their feeback results, and feedback names.
         
@@ -626,7 +644,7 @@ class Tru(python.SingletonPerName):
         return df, feedback_columns
 
     def get_leaderboard(
-        self, app_ids: Optional[List[schema.AppID]] = None
+            self, app_ids: Optional[List[schema.AppID]] = None
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
@@ -741,7 +759,7 @@ class Tru(python.SingletonPerName):
             runs_stats = defaultdict(int)
 
             futures_map: Dict[Future[schema.FeedbackResult],
-                              pandas.Series] = dict()
+            pandas.Series] = dict()
 
             while fork or not self._evaluator_stop.is_set():
 
@@ -750,7 +768,7 @@ class Tru(python.SingletonPerName):
                     new_futures: List[Tuple[pandas.Series, Future[schema.FeedbackResult]]] = \
                         feedback.Feedback.evaluate_deferred(
                             tru=self,
-                            limit=self.DEFERRED_NUM_RUNS-len(futures_map),
+                            limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                             shuffle=True
                         )
 
@@ -880,11 +898,11 @@ class Tru(python.SingletonPerName):
         self._evaluator_proc = None
 
     def run_dashboard(
-        self,
-        port: Optional[int] = 8501,
-        address: Optional[str] = None,
-        force: bool = False,
-        _dev: Optional[Path] = None
+            self,
+            port: Optional[int] = 8501,
+            address: Optional[str] = None,
+            force: bool = False,
+            _dev: Optional[Path] = None
     ) -> Process:
         """Run a streamlit dashboard to view logged results and apps.
 
@@ -951,7 +969,7 @@ class Tru(python.SingletonPerName):
         else:
             print("Credentials file already exists. Skipping writing process.")
 
-        #run leaderboard with subprocess
+        # run leaderboard with subprocess
         leaderboard_path = pkg_resources.resource_filename(
             'trulens_eval', 'Leaderboard.py'
         )
@@ -1033,7 +1051,7 @@ class Tru(python.SingletonPerName):
             Tru.tunnel_listener_stdout.start()
             Tru.tunnel_listener_stderr.start()
             if not tunnel_started.wait(timeout=DASHBOARD_START_TIMEOUT
-                                      ):  # This might not work on windows.
+                                       ):  # This might not work on windows.
                 raise RuntimeError("Tunnel failed to start in time. ")
 
         def listen_to_dashboard(proc: subprocess.Popen, pipe, out, started):
