@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from inspect import Signature
 from inspect import signature
+import inspect
 import itertools
 import json
 import logging
@@ -535,18 +536,43 @@ class Feedback(FeedbackDefinition):
 
         return ret
 
+    @property
+    def sig(self) -> inspect.Signature:
+        """Signature of the feedback function implementation."""
+
+        if self.imp is None:
+            raise RuntimeError(
+                "Cannot determine signature of feedback function without its definition."
+            )
+        
+        return signature(self.imp)
+
     def run(
         self,
         app: Optional[Union[AppDefinition, JSON]] = None,
         record: Optional[Record] = None,
-        source_data: Optional[Dict] = None
+        source_data: Optional[Dict] = None,
+        **kwargs: dict
     ) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
         produced the record is also required to determine input/output argument
         names.
 
-        Might not have a AppDefinitionhere but only the serialized app_json .
+        Args:
+            app: The app that produced the record. This can be AppDefinition or a jsonized
+                AppDefinition. It will be jsonized if it is not already.
+
+            record: The record to evaluate the feedback on.
+
+            source_data: Additional data to select from when extracting feedback
+                function arguments.
+
+            **kwargs: Any additional keyword arguments are used to set or override
+                selected feedback function inputs.
+            
+        Returns:
+            A FeedbackResult object with the result of the feedback function.
         """
 
         if isinstance(app, AppDefinition):
@@ -591,6 +617,8 @@ class Feedback(FeedbackDefinition):
             multi_result = None
 
             for ins in input_combinations:
+                ins = dict(ins, **kwargs)
+
                 try:
                     result_and_meta, part_cost = Endpoint.track_all_costs_tally(
                         self.imp, **ins
@@ -786,17 +814,32 @@ class Feedback(FeedbackDefinition):
         self,
         app: Optional[Union[AppDefinition, JSON]] = None,
         record: Optional[Record] = None,
-        source_data: Optional[Dict] = None
+        source_data: Optional[Dict] = None,
+        **kwargs: dict
     ) -> Dict:
-        """
-        Combine sources of data to be selected over from three sources: `app`
-        structure, `record`, and any extras in a dict `source_data`.
+        """Combine sources of data to be selected over for feedback function inputs.
+
+        Args:
+            app: The app that produced the record.
+
+            record: The record to evaluate the feedback on.
+
+            source_data: Additional data to select from when extracting feedback
+                function arguments.
+
+            **kwargs: Any additional keyword arguments are merged into
+                source_data.
+
+        Returns:
+            A dictionary with the combined data.
         """
                 
         if source_data is None:
             source_data = dict()
         else:
             source_data = dict(source_data) # copy
+
+        source_data.update(kwargs)
 
         if app is not None:
             source_data["__app__"] = app

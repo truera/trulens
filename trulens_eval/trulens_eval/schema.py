@@ -27,6 +27,7 @@ import datetime
 from enum import Enum
 import logging
 from pprint import PrettyPrinter
+from pprint import pformat
 from typing import (
     Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
     Type, TypeVar, Union
@@ -37,6 +38,7 @@ import humanize
 from munch import Munch as Bunch
 import pydantic
 import typing_extensions
+from trulens_eval.utils.text import retab
 
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
@@ -489,6 +491,20 @@ class FeedbackCall(serial.SerialModel):
     # alongside its float result.
     meta: Dict[str, Any] = pydantic.Field(default_factory=dict)
 
+    def __str__(self) -> str:
+        out = ""
+        tab = "  "
+        for k, v in self.args.items():
+            out += f"{tab}{k} = {v}\n"
+        out += f"{tab}ret = {self.ret}\n"
+        if self.meta:
+            out += f"{tab}meta = \n{retab(tab=tab*2, s=pformat(self.meta))}\n"
+
+        return out
+    
+    def __repr__(self) -> str:
+        return str(self)
+
 
 class FeedbackResult(serial.SerialModel):
     """Feedback results for a single [Feedback][trulens_eval.feedback.feedback.Feedback] instance.
@@ -569,6 +585,16 @@ class FeedbackResult(serial.SerialModel):
             )
 
         self.feedback_result_id = feedback_result_id
+
+    def __str__(self):
+        out = f"{self.name} ({self.status}) = {self.result}\n"
+        for call in self.calls:
+            out += pformat(call)
+
+        return out
+
+    def __repr__(self):
+        return str(self)
 
 
 class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):

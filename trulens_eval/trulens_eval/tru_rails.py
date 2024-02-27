@@ -40,7 +40,7 @@ with OptionalImports(messages=REQUIREMENT_RAILS):
     from nemoguardrails.flows.runtime import Runtime
     from nemoguardrails.kb.kb import KnowledgeBase
     from nemoguardrails.rails.llm.llmrails import LLMRails
-    
+
 OptionalImports(messages=REQUIREMENT_RAILS).assert_installed(nemoguardrails)
 
 
@@ -81,9 +81,10 @@ class FeedbackActions():
 
     @staticmethod
     def register_feedback_functions(*args, **kwargs):
-        """
-        Register one or more feedback functions to use in rails "feedback"
-        action. All keyword arguments indicate the key as the keyword. All
+        """Register one or more feedback functions to use in rails "feedback"
+        action.
+        
+        All keyword arguments indicate the key as the keyword. All
         positional arguments use the feedback name as the key.
         """
 
@@ -94,6 +95,36 @@ class FeedbackActions():
         for feedback in args:
             print(f"registered feedback function under name {feedback.name}")
             registered_feedback_functions[feedback.name] = feedback
+
+    @staticmethod
+    def action_of_feedback(feedback, verbose: bool=False):
+        """Create a custom rails action for the given feedback function.
+        
+        Args:
+            feedback: A feedback function to register as an action.
+
+            verbose: Print out info on invocation upon invocation.
+
+        Returns:
+            A custom action that will run the feedback function. The name is
+                the same as the feedback function's name.
+        """
+
+        @action(name=feedback.name)
+        async def run_feedback(*args, **kwargs):
+            if verbose:
+                print(f"Running feedback function {feedback.name} with:")
+                print(f"  args = {args}")
+                print(f"  kwargs = {kwargs}")
+
+            res = feedback.run(*args, **kwargs).result
+
+            if verbose:
+                print(f"  result = {res}")
+
+            return res
+
+        return run_feedback
 
     @action(name="feedback")
     @staticmethod
@@ -107,10 +138,10 @@ class FeedbackActions():
         verbose: bool = False
     ) -> ActionResult:
 
-        """
-        Run the specified feedback function from trulens_eval. To use this action,
-        it needs to be registered with your rails app and feedback functions
-        themselves need to be registered with this function.
+        """Run the specified feedback function from trulens_eval.
+        
+        To use this action, it needs to be registered with your rails app and
+        feedback functions themselves need to be registered with this function.
         
         Usage:
             ```python
@@ -128,13 +159,17 @@ class FeedbackActions():
             ```
 
         Args:
-            events: See [Action parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
+            events: See [Action
+                parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
 
-            context: See [Action parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
+            context: See [Action
+                parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
 
-            llm: See [Action parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
+            llm: See [Action
+                parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
 
-            config: See [Action parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
+            config: See [Action
+                parameters](https://github.com/NVIDIA/NeMo-Guardrails/blob/develop/docs/user_guides/python-api.md#special-parameters).
                             
             function: Name of the feedback function to run.
             
