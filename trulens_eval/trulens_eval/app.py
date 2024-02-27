@@ -761,11 +761,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             return str(focus)
 
         logger.warning(
-            "Could not determine main input string call to %s with args %s.",
-            callable_name(func), all_args
+            "Could not determine main input/output of %s.",
+            str(all_args)
         )
 
-        return ""
+        return "Could not determine main input from " + str(all_args)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -792,13 +792,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             if len(content) > 0:
                 return str(content[0])
             else:
-                return ""
+                return "Could not determine main output from " + str(content)
 
         else:
-            logger.warning(
-                f"Unsure what the main output string is for the call to {callable_name(func)} with return type {type(content)}."
-            )
-            return str(content) if content is not None else ""
+            logger.warning("Could not determine main output from %s.", content)
+            return str(content) if content is not None else "Could not determine main output from " + str(content)
 
     # WithInstrumentCallbacks requirement
     def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
