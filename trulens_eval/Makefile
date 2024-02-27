@@ -105,3 +105,22 @@ react:
 	$(CONDA); \
 		npm i --prefix trulens_eval/react_components/record_viewer; \
 		npm run --prefix trulens_eval/react_components/record_viewer build
+
+# Release Steps:
+
+# Step: Clean repo:
+clean:
+	git clean -fxd
+
+# Step: Packages trulens into .whl file 
+build:
+	python setup.py bdist_wheel
+	
+# Step: Uploads .whl file to PyPI, run make with:
+# https://portal.azure.com/#@truera.com/asset/Microsoft_Azure_KeyVault/Secret/https://trulenspypi.vault.azure.net/secrets/trulens-pypi-api-token/abe0d9a3a5aa470e84c12335c9c04c72
+
+# TOKEN=... make upload
+upload:
+	twine upload -u __token__ -p $(TOKEN) dist/*.whl
+
+# Then follow steps from ../Makefile about updating the docs.
