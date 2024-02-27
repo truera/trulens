@@ -324,34 +324,39 @@ class Select:
     Utilities for creating selectors using Lens and aliases/shortcuts.
     """
 
-    # Typing for type hints.
     # TODEP
     Query = serial.Lens
+    """Selector type."""
 
-    # The tru wrapper (TruLlama, TruChain, etc.)
-    Tru: Query = Query()
+    Tru: serial.Lens = Query()
+    """Selector for the tru wrapper (TruLlama, TruChain, etc.)."""
 
-    # Instance for constructing queries for record json like `Record.app.llm`.
     Record: Query = Query().__record__
+    """Selector for the record."""
 
-    # Instance for constructing queries for app json.
     App: Query = Query().__app__
+    """Selector for the app."""
 
-    # A App's main input and main output.
-    # TODO: App input/output generalization.
-    RecordInput: Query = Record.main_input  # type: ignore
-    RecordOutput: Query = Record.main_output  # type: ignore
+    RecordInput: Query = Record.main_input
+    """Selector for the main app input."""
 
-    # The calls made by the wrapped app. Layed out by path into components.
+    RecordOutput: Query = Record.main_output
+    """Selector for the main app output."""
+
     RecordCalls: Query = Record.app  # type: ignore
+    """Selector for the calls made by the wrapped app.
+    
+    Layed out by path into components.
+    """
 
-    # The first called method (last to return).
     RecordCall: Query = Record.calls[-1]
+    """Selector for the first called method (last to return)."""
 
-    # The whole set of inputs/arguments to the first called / last method call.
     RecordArgs: Query = RecordCall.args
-    # The whole output of the first called / last returned method call.
+    """Selector for the whole set of inputs/arguments to the first called / last method call."""
+    
     RecordRets: Query = RecordCall.rets
+    """Selector for the whole output of the first called / last returned method call."""
 
     @staticmethod
     def path_and_method(select: Select.Query) -> Tuple[Select.Query, str]:
@@ -380,10 +385,7 @@ class Select:
 
     @staticmethod
     def dequalify(select: Select.Query) -> Select.Query:
-        """
-        If the given selector qualifies record or app, remove that
-        qualification.
-        """
+        """If the given selector qualifies record or app, remove that qualification."""
 
         if len(select.path) == 0:
             return select
@@ -409,10 +411,7 @@ class Select:
 
     @staticmethod
     def render_for_dashboard(query: Select.Query) -> str:
-        """
-        Render the given query for use in dashboard to help user specify
-        feedback functions.
-        """
+        """Render the given query for use in dashboard to help user specify feedback functions."""
 
         if len(query) == 0:
             return "Select.Query()"
@@ -458,38 +457,35 @@ class Select:
 
 
 class FeedbackResultStatus(Enum):
-    """
-    For deferred feedback evaluation, these values indicate status of evaluation.
-    """
+    """For deferred feedback evaluation, these values indicate status of evaluation."""
 
-    # Initial value is none.
     NONE = "none"
+    """Initial value is none."""
 
-    # Once queued/started, status is updated to "running".
     RUNNING = "running"
+    """Once queued/started, status is updated to "running"."""
 
-    # If run failed.
     FAILED = "failed"
+    """Run failed."""
 
-    # If run completed successfully.
     DONE = "done"
+    """Run completed successfully."""
 
 
 class FeedbackCall(serial.SerialModel):
-    """
-    Invocations of feedback function results in one of these instances. Note
-    that a single `Feedback` instance might require more than one call.
+    """Invocations of feedback function results in one of these instances.
+    
+    Note that a single `Feedback` instance might require more than one call.
     """
 
-    # Arguments to the feedback function.
     args: Dict[str, Optional[serial.JSON]]
+    """Arguments to the feedback function."""
 
-    # Return value.
     ret: float
+    """Return value."""
 
-    # New in 0.6.0: Any additional data a feedback function returns to display
-    # alongside its float result.
     meta: Dict[str, Any] = pydantic.Field(default_factory=dict)
+    """Any additional data a feedback function returns to display alongside its float result."""
 
     def __str__(self) -> str:
         out = ""
@@ -701,8 +697,13 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
 # App related:
 
-
 class FeedbackMode(str, Enum):
+    """Mode of feedback evaluation.
+
+    Specify this using the `feedback_mode` to [App][trulens_eval.app.App] constructors.
+    """
+
+
     NONE = "none"
     """No evaluation will happen even if feedback functions are specified."""
 
@@ -941,9 +942,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @classmethod
     def select_inputs(cls) -> serial.Lens:
-        """
-        Get the path to the main app's call inputs.
-        """
+        """Get the path to the main app's call inputs."""
 
         return getattr(
             Select.RecordCalls,
@@ -952,9 +951,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @classmethod
     def select_outputs(cls) -> serial.Lens:
-        """
-        Get the path to the main app's call outputs.
-        """
+        """Get the path to the main app's call outputs."""
 
         return getattr(
             Select.RecordCalls,

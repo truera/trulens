@@ -149,14 +149,16 @@ class Feedback(FeedbackDefinition):
     imp: Optional[ImpCallable] = pydantic.Field(None, exclude=True)
     """Implementation callable.
     
-    A serialized version is stored at `FeedbackDefinition.implementation`.
+    A serialized version is stored at
+    [FeedbackDefinition.implementation][trulens_eval.schema.FeedbackDefinition.implementation].
     """
 
     agg: Optional[AggCallable] = pydantic.Field(None, exclude=True)
     """Aggregator method for feedback functions that produce more than one
     result.
     
-    A serialized version is stored at `FeedbackDefinition.aggregator`.
+    A serialized version is stored at
+    [FeedbackDefinition.aggregator][trulens_eval.schema.FeedbackDefinition.aggregator].
     """
 
     def __init__(

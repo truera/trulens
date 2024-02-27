@@ -1,5 +1,5 @@
 """
-# NEMO Guardrails instrumentation and monitoring. 
+NEMO Guardrails instrumentation and monitoring. 
 """
 
 import inspect
@@ -7,12 +7,13 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import pformat
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 from langchain_core.language_models.base import BaseLanguageModel
 from pydantic import Field
 
 from trulens_eval.app import App
+from trulens_eval.feedback import feedback
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Select
 from trulens_eval.tru_chain import LangChainInstrument
@@ -53,21 +54,49 @@ class RailsActionSelect(Select):
     """
 
     Action = Lens().action
+    """Selector for action call parameters."""
 
-    # default action function arguments
     Events = Action.events
-    Context = Action.context # NOTE: this is not the same "context" as in RAG
+    """Selector for events in action call parameters."""
+
+    Context = Action.context
+    """Selector for context in action call parameters.
+    
+    !!! Warning
+        This is not the same "context" as in RAG triad. This is a parameter to rails
+        actions that stores context of the rails app execution.
+    """
+
     LLM = Action.llm
+    """Selector for the language model in action call parameters."""
+
     Config = Action.config
+    """Selector for the configuration in action call parameters."""
 
     RetrievalContexts = Context.relevant_chunks_sep
+    """Selector for the retrieved contexts chunks returned from a KB search.
+    
+    Equivalent to `$relevant_chunks_sep` in colang."""
 
     UserMessage = Context.user_message
+    """Selector for the user message.
+     
+    Equivalent to `$user_message` in colang."""
+
     BotMessage = Context.bot_message
+    """Selector for the bot message.
+    
+    Equivalent to `$bot_message` in colang."""
 
     LastUserMessage = Context.last_user_message
-    LastBotMessage = Context.last_bot_message
+    """Selector for the last user message.
+    
+    Equivalent to `$last_user_message` in colang."""
 
+    LastBotMessage = Context.last_bot_message
+    """Selector for the last bot message.
+    
+    Equivalent to `$last_bot_message` in colang."""
 
 # NOTE(piotrm): Cannot have this inside FeedbackActions presently due to perhaps
 # some closure-related issues with the @action decorator below.
@@ -80,28 +109,41 @@ class FeedbackActions():
     """
 
     @staticmethod
-    def register_feedback_functions(*args, **kwargs):
-        """Register one or more feedback functions to use in rails "feedback"
+    def register_feedback_functions(
+        *args: Tuple[feedback.Feedback, ...],
+        **kwargs: Dict[str, feedback.Feedback]
+    ):
+        """Register one or more feedback functions to use in rails `feedback`
         action.
         
         All keyword arguments indicate the key as the keyword. All
         positional arguments use the feedback name as the key.
         """
 
-        for name, feedback in kwargs.items():
+        for name, feedback_instance in kwargs.items():
+            if not isinstance(feedback_instance, feedback.Feedback):
+                raise ValueError(
+                    f"Invalid feedback function: {feedback_instance}; "
+                    f"expected a Feedback class instance."
+                )
             print(f"registered feedback function under name {name}")
-            registered_feedback_functions[name] = feedback
+            registered_feedback_functions[name] = feedback_instance
 
-        for feedback in args:
-            print(f"registered feedback function under name {feedback.name}")
-            registered_feedback_functions[feedback.name] = feedback
+        for feedback_instance in args:
+            if not isinstance(feedback_instance, feedback.Feedback):
+                raise ValueError(
+                    f"Invalid feedback function: {feedback_instance}; "
+                    f"expected a Feedback class instance."
+                )
+            print(f"registered feedback function under name {feedback_instance.name}")
+            registered_feedback_functions[feedback_instance.name] = feedback
 
     @staticmethod
-    def action_of_feedback(feedback, verbose: bool=False):
+    def action_of_feedback(feedback_instance: feedback.Feedback, verbose: bool=False) -> Callable:
         """Create a custom rails action for the given feedback function.
         
         Args:
-            feedback: A feedback function to register as an action.
+            feedback_instance: A feedback function to register as an action.
 
             verbose: Print out info on invocation upon invocation.
 
@@ -110,14 +152,20 @@ class FeedbackActions():
                 the same as the feedback function's name.
         """
 
-        @action(name=feedback.name)
+        if not isinstance(feedback_instance, feedback.Feedback):
+            raise ValueError(
+                f"Invalid feedback function: {feedback_instance}; "
+                f"expected a Feedback class instance."
+            )
+
+        @action(name=feedback_instance.name)
         async def run_feedback(*args, **kwargs):
             if verbose:
-                print(f"Running feedback function {feedback.name} with:")
+                print(f"Running feedback function {feedback_instance.name} with:")
                 print(f"  args = {args}")
                 print(f"  kwargs = {kwargs}")
 
-            res = feedback.run(*args, **kwargs).result
+            res = feedback_instance.run(*args, **kwargs).result
 
             if verbose:
                 print(f"  result = {res}")
@@ -128,20 +176,25 @@ class FeedbackActions():
 
     @action(name="feedback")
     @staticmethod
-    async def feedback(
+    async def feedback_action(
+
+        # Default action arguments:
         events: Optional[List[Dict]] = None,
         context: Optional[Dict] = None,
         llm: Optional[BaseLanguageModel] = None,
         config: Optional[RailsConfig] = None,
+
+        # Rest of arguments are specific to this action.
         function: Optional[str] = None,
         selectors: Optional[Dict[str, Union[str, Lens]]] = None,
         verbose: bool = False
-    ) -> ActionResult:
 
+    ) -> ActionResult:
         """Run the specified feedback function from trulens_eval.
         
         To use this action, it needs to be registered with your rails app and
         feedback functions themselves need to be registered with this function.
+        The name under which this action is registered for rails is `feedback`.
         
         Usage:
             ```python
