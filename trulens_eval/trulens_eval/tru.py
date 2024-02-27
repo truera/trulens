@@ -39,7 +39,7 @@ from trulens_eval.utils import text
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.python import Future  # code style exception
 
-from trulens_eval.trulens_eval.database.orm import Record, FeedbackResult
+
 
 pp = PrettyPrinter()
 
