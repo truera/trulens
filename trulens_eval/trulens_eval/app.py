@@ -666,8 +666,24 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         raise NotImplementedError()
 
     def _extract_content(self, value):
+        """
+        Extracts the 'content' from various data types commonly used by libraries
+        like OpenAI, Canopy, LiteLLM, etc. This method navigates nested data
+        structures (pydantic models, dictionaries, lists) to retrieve the
+        'content' field. If 'content' is not directly available, it attempts to
+        extract from known structures like 'choices' in a ChatResponse. This
+        standardizes extracting relevant text or data from complex API responses
+        or internal data representations.
+        
+        Args:
+            value: The input data to extract content from. Can be a pydantic
+                   model, dictionary, list, or basic data type.
+        
+        Returns:
+            The extracted content, which may be a single value, a list of values,
+            or a nested structure with content extracted from all levels.
+        """
         if isinstance(value, pydantic.BaseModel):
-            # Check for 'content' attribute directly
             content = getattr(value, 'content', None)
             if content is not None:
                 return content
