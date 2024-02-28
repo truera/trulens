@@ -96,10 +96,10 @@ class Huggingface(LLMProvider):
         Create a Huggingface Provider with out of the box feedback functions.
 
         Usage:
-            ```python
+            \`\`\`python
             from trulens_eval.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
-            ```
+            \`\`\`
         """
 
         kwargs['name'] = name
@@ -121,7 +121,6 @@ class Huggingface(LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    # TODEP
     @_tci
     def language_match(self, text1: str, text2: str) -> Tuple[float, Dict]:
         """
@@ -132,13 +131,13 @@ class Huggingface(LLMProvider):
         probit_language_text1(text2))`
         
         **Usage:**
-        ```python
+        \`\`\`python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
         feedback = Feedback(huggingface_provider.language_match).on_input_output() 
-        ```
+        \`\`\`
         The `on_input_output()` selector can be changed. See [Feedback Function
         Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -182,7 +181,6 @@ class Huggingface(LLMProvider):
 
         return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
-    # TODEP
     @_tci
     def positive_sentiment(self, text: str) -> float:
         """
@@ -190,13 +188,13 @@ class Huggingface(LLMProvider):
         function that uses a sentiment classifier on `text`.
         
         **Usage:**
-        ```python
+        \`\`\`python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
         feedback = Feedback(huggingface_provider.positive_sentiment).on_output() 
-        ```
+        \`\`\`
         The `on_output()` selector can be changed. See [Feedback Function
         Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -222,7 +220,6 @@ class Huggingface(LLMProvider):
 
         raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
-    # TODEP
     @_tci
     def toxic(self, text: str) -> float:
         """
@@ -230,16 +227,15 @@ class Huggingface(LLMProvider):
         uses a toxic comment classifier on `text`.
         
         **Usage:**
-        ```python
+        \`\`\`python
         from trulens_eval import Feedback
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
 
         feedback = Feedback(huggingface_provider.not_toxic).on_output() 
-        ```
+        \`\`\`
         The `on_output()` selector can be changed. See [Feedback Function
         Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         
         Args:
             text (str): Text to evaluate.
@@ -264,10 +260,9 @@ class Huggingface(LLMProvider):
 
         raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
-    # TODEP
     @_tci
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
-        """ A groundedness measure best used for summarized premise against simple hypothesis.
+        " A groundedness measure best used for summarized premise against simple hypothesis.
         This Huggingface implementation uses NLI.
 
         Args:
@@ -276,7 +271,7 @@ class Huggingface(LLMProvider):
 
         Returns:
             float: NLI Entailment
-        """
+        "
 
         if not '.' == premise[len(premise) - 1]:
             premise = premise + '.'
@@ -290,7 +285,6 @@ class Huggingface(LLMProvider):
 
         raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
-    # TODEP
     @_tci
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
         """
@@ -320,12 +314,12 @@ class Huggingface(LLMProvider):
         NER model to detect PII.
 
         Usage:
-            ```python
+            \`\`\`python
             hugs = Huggingface()
 
             # Define a pii_detection feedback function using HuggingFace.
             f_pii_detection = Feedback(hugs.pii_detection).on_input()
-            ```
+            \`\`\`
             
             The `on(...)` selector can be changed. See [Feedback Function Guide:
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
@@ -380,12 +374,12 @@ class Huggingface(LLMProvider):
         NER model to detect PII, with reasons.
 
         **Usage:**
-        ```
+        \`\`\`
         hugs = Huggingface()
 
         # Define a pii_detection feedback function using HuggingFace.
         f_pii_detection = Feedback(hugs.pii_detection).on_input()
-        ```
+        \`\`\`
         The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
         """
 
@@ -447,6 +441,13 @@ class Huggingface(LLMProvider):
 
         return score, reasons
 
+    @_tci
+    def _create_chat_completion(self, prompt, model_name='mistralai/Mixtral-8x7B-v0.1', max_length=100, temperature=0.7):
+        model = self.load_model(model_name)
+        input = self.tokenizer.encode(prompt, return_tensors='pt')
+        output = model.generate(input, max_length=max_length, temperature=temperature)
+        completion = self.tokenizer.decode(output[:, input.shape[-1]:][0], skip_special_tokens=True)
+        return completion
 
 class Dummy(Huggingface):
 
