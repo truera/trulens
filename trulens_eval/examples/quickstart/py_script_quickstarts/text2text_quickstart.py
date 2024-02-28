@@ -13,7 +13,7 @@
 
 
 
-# ! pip install trulens_eval==0.23.0 openai==1.3.1
+# ! pip install trulens_eval openai
 
 
 

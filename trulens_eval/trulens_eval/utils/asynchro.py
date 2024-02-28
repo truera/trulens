@@ -7,17 +7,7 @@ NOTE: we cannot name a module "async" as it is a python keyword.
 
 Some functions in trulens_eval come with asynchronous versions. Those use "async
 def" instead of "def" and typically start with the letter "a" in their name with
-the rest matching their synchronous version. Example:
-
-```python
-    @staticmethod
-    def track_all_costs(
-        ...
-
-    @staticmethod
-    async def atrack_all_costs(
-        ...
-```
+the rest matching their synchronous version.
 
 Due to how python handles such functions and how they are executed, it is
 relatively difficult to reshare code between the two versions. Asynchronous
@@ -153,7 +143,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
                 loop = asyncio.new_event_loop()
                 th.ret = loop.run_until_complete(awaitable)
                 loop.close()
-                
+
             except Exception as e:
                 th.error = e
 

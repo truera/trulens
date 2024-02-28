@@ -3,7 +3,7 @@
 
 # # 📓 Llama-Index Quickstart
 # 
-# In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
+# In this quickstart you will create a simple Llama Index app and learn how to log it and get feedback on an LLM response.
 # 
 # For evaluation, we will leverage the "hallucination triad" of groundedness, context relevance and answer relevance.
 # 
@@ -16,7 +16,7 @@
 
 
 
-# pip install trulens_eval==0.23.0 llama_index>=0.9.15post2 html2text>=2020.1.16 
+# pip install trulens_eval llama_index openai
 
 
 # ### Add API keys
@@ -36,18 +36,26 @@ from trulens_eval import Tru
 tru = Tru()
 
 
+# ### Download data
+# 
+# This example uses the text of Paul Graham’s essay, [“What I Worked On”](https://paulgraham.com/worked.html), and is the canonical llama-index example.
+# 
+# The easiest way to get it is to [download it via this link](https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt) and save it in a folder called data. You can do so with the following command:
+
+
+
+get_ipython().system('wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/')
+
+
 # ### Create Simple LLM Application
 # 
 # This example uses LlamaIndex which internally uses an OpenAI LLM.
 
 
 
-from llama_index import VectorStoreIndex
-from llama_index.readers.web import SimpleWebPageReader
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
-documents = SimpleWebPageReader(
-    html_to_text=True
-).load_data(["http://paulgraham.com/worked.html"])
+documents = SimpleDirectoryReader("data").load_data()
 index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()
@@ -131,6 +139,11 @@ print(rec)
 
 
 
+tru.run_dashboard()
+
+
+
+
 # The results of the feedback functions can be rertireved from
 # `Record.feedback_results` or using the `wait_for_feedback_result` method. The
 # results if retrieved directly are `Future` instances (see
@@ -166,5 +179,3 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
-
-# Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.

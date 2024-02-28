@@ -268,7 +268,6 @@ class OpenAIEndpoint(Endpoint):
         self._instrument_module_members(resources, "create")
         self._instrument_module_members(chat, "create")
 
-
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="openai")
 

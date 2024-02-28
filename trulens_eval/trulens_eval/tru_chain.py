@@ -6,16 +6,15 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
+from typing import Any, Callable, ClassVar, Dict, Optional
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval.utils.asynchro import sync
+from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.json import jsonify
@@ -80,45 +79,31 @@ class LangChainInstrument(Instrument):
         }
 
         # Instrument only methods with these names and of these classes.
-        METHODS = {
-            "invoke":
-                lambda o: isinstance(o, RunnableSerializable),
-            "ainvoke":
-                lambda o: isinstance(o, RunnableSerializable),
-            "save_context":
-                lambda o: isinstance(o, BaseMemory),
-            "clear":
-                lambda o: isinstance(o, BaseMemory),
-            "_call":
-                lambda o: isinstance(o, Chain),
-            "__call__":
-                lambda o: isinstance(o, Chain),
-            "_acall":
-                lambda o: isinstance(o, Chain),
-            "acall":
-                lambda o: isinstance(o, Chain),
-            "_get_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            "_aget_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            "get_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            "aget_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-            # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-            # the prompt calls might be too small to be interesting
-            "plan":
-                lambda o:
-                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
-            "aplan":
-                lambda o:
-                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
-            "_arun":
-                lambda o: isinstance(o, BaseTool),
-            "_run":
-                lambda o: isinstance(o, BaseTool),
-        }
+        METHODS = dict_set_with_multikey(
+            {},
+            {
+                ("invoke", "ainvoke"):
+                    lambda o: isinstance(o, RunnableSerializable),
+                ("save_context", "clear"):
+                    lambda o: isinstance(o, BaseMemory),
+                ("run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"):
+                    lambda o: isinstance(o, Chain),
+                (
+                    "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
+                ):
+                    lambda o: isinstance(o, (RunnableSerializable)),
+
+                # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                # the prompt calls might be too small to be interesting
+                ("plan", "aplan"):
+                    lambda o: isinstance(
+                        o, (BaseSingleActionAgent, BaseMultiActionAgent)
+                    ),
+                ("_arun", "_run"):
+                    lambda o: isinstance(o, BaseTool),
+            }
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -249,12 +234,31 @@ class TruChain(App):
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> str:
+    ) -> str: # might have to relax to JSON output
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
+
+        if "input" in bindings.arguments:
+            temp = bindings.arguments['input']
+            if isinstance(temp, str):
+                return temp
+
+            if isinstance(temp, dict):
+                vals = list(temp.values())
+            elif isinstance(temp, list):
+                vals = temp
+
+            if len(vals) == 0:
+                return None
+            
+            if len(vals) == 1:
+                return vals[0]
+            
+            if len(vals) > 1:
+                return vals[0]
 
         if 'inputs' in bindings.arguments \
             and safe_hasattr(self.app, "input_keys") \

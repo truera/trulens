@@ -13,7 +13,7 @@
 
 
 
-# ! pip install trulens_eval==0.23.0 openai==1.3.7 langchain chromadb langchainhub bs4
+# ! pip install trulens_eval openai langchain chromadb langchainhub bs4
 
 
 
@@ -148,6 +148,66 @@ tru_recorder = TruChain(rag_chain,
 
 
 
+response, tru_record = tru_recorder.with_record(rag_chain.invoke, "What is Task Decomposition?")
+
+
+
+
+json_like = tru_record.layout_calls_as_app()
+
+
+
+
+json_like
+
+
+
+
+from ipytree import Tree, Node
+
+def print_call_stack(data):
+    tree = Tree()
+    tree.add_node(Node('Record ID: {}'.format(data['record_id'])))
+    tree.add_node(Node('App ID: {}'.format(data['app_id'])))
+    tree.add_node(Node('Cost: {}'.format(data['cost'])))
+    tree.add_node(Node('Performance: {}'.format(data['perf'])))
+    tree.add_node(Node('Timestamp: {}'.format(data['ts'])))
+    tree.add_node(Node('Tags: {}'.format(data['tags'])))
+    tree.add_node(Node('Main Input: {}'.format(data['main_input'])))
+    tree.add_node(Node('Main Output: {}'.format(data['main_output'])))
+    tree.add_node(Node('Main Error: {}'.format(data['main_error'])))
+    
+    calls_node = Node('Calls')
+    tree.add_node(calls_node)
+    
+    for call in data['calls']:
+        call_node = Node('Call')
+        calls_node.add_node(call_node)
+        
+        for step in call['stack']:
+            step_node = Node('Step: {}'.format(step['path']))
+            call_node.add_node(step_node)
+            if 'expanded' in step:
+                expanded_node = Node('Expanded')
+                step_node.add_node(expanded_node)
+                for expanded_step in step['expanded']:
+                    expanded_step_node = Node('Step: {}'.format(expanded_step['path']))
+                    expanded_node.add_node(expanded_step_node)
+    
+    return tree
+
+# Usage
+tree = print_call_stack(json_like)
+tree
+
+
+
+
+tree
+
+
+
+
 with tru_recorder as recording:
     llm_response = rag_chain.invoke("What is Task Decomposition?")
 
@@ -208,7 +268,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 # # 📓 Llama-Index Quickstart
 # 
-# In this quickstart you will create a simple Llama Index App and learn how to log it and get feedback on an LLM response.
+# In this quickstart you will create a simple Llama Index app and learn how to log it and get feedback on an LLM response.
 # 
 # For evaluation, we will leverage the "hallucination triad" of groundedness, context relevance and answer relevance.
 # 
@@ -221,7 +281,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 
 
-# pip install trulens_eval==0.23.0 llama_index>=0.9.15post2 html2text>=2020.1.16 
+# pip install trulens_eval llama_index openai
 
 
 # ### Add API keys
@@ -241,18 +301,26 @@ from trulens_eval import Tru
 tru = Tru()
 
 
+# ### Download data
+# 
+# This example uses the text of Paul Graham’s essay, [“What I Worked On”](https://paulgraham.com/worked.html), and is the canonical llama-index example.
+# 
+# The easiest way to get it is to [download it via this link](https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt) and save it in a folder called data. You can do so with the following command:
+
+
+
+get_ipython().system('wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/')
+
+
 # ### Create Simple LLM Application
 # 
 # This example uses LlamaIndex which internally uses an OpenAI LLM.
 
 
 
-from llama_index import VectorStoreIndex
-from llama_index.readers.web import SimpleWebPageReader
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
-documents = SimpleWebPageReader(
-    html_to_text=True
-).load_data(["http://paulgraham.com/worked.html"])
+documents = SimpleDirectoryReader("data").load_data()
 index = VectorStoreIndex.from_documents(documents)
 
 query_engine = index.as_query_engine()
@@ -336,6 +404,11 @@ print(rec)
 
 
 
+tru.run_dashboard()
+
+
+
+
 # The results of the feedback functions can be rertireved from
 # `Record.feedback_results` or using the `wait_for_feedback_result` method. The
 # results if retrieved directly are `Future` instances (see
@@ -372,8 +445,6 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 # Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
 
-# Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
-
 # # 📓 TruLens Quickstart
 # 
 # In this quickstart you will create a RAG from scratch and learn how to log it and get feedback on an LLM response.
@@ -384,7 +455,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 
 
 
-# ! pip install trulens_eval==0.23.0 chromadb==0.4.18 openai==1.3.7
+# ! pip install trulens_eval chromadb openai
 
 
 
@@ -584,7 +655,7 @@ tru.run_dashboard()
 
 
 
-# ! pip install trulens_eval==0.23.0
+# ! pip install trulens_eval
 
 
 
@@ -679,7 +750,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 
 
-# ! pip install trulens_eval==0.23.0 openai==1.3.7
+# ! pip install trulens_eval openai
 
 
 
@@ -806,7 +877,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 
 
-# ! pip install trulens_eval==0.23.0 openai==1.3.7
+# ! pip install trulens_eval openai
 
 
 

@@ -18,6 +18,7 @@ from trulens_eval.utils.asynchro import sync
 
 pp = PrettyPrinter()
 
+
 class TestEndpoints(TestCase):
     """Tests for cost tracking of endpoints."""
 
@@ -43,21 +44,34 @@ class TestEndpoints(TestCase):
 
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
         """Cost checks for endpoints whose providers implement LLMProvider."""
-        
-        _, cost = sync(Endpoint.atrack_all_costs_tally, provider.sentiment, text="This rocks!")
+
+        _, cost = Endpoint.track_all_costs_tally(
+            provider.sentiment, text="This rocks!"
+        )
 
         self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
-        self.assertEqual(cost.n_successful_requests, 1, "Expected exactly one successful request.")
-        self.assertEqual(cost.n_classes, 0, "Expected zero classes for LLM-based endpoints.")
-        self.assertEqual(cost.n_stream_chunks, 0, "Expected zero chunks when not using streaming mode.")
+        self.assertEqual(
+            cost.n_successful_requests, 1,
+            "Expected exactly one successful request."
+        )
+        self.assertEqual(
+            cost.n_classes, 0, "Expected zero classes for LLM-based endpoints."
+        )
+        self.assertEqual(
+            cost.n_stream_chunks, 0,
+            "Expected zero chunks when not using streaming mode."
+        )
         self.assertGreater(cost.n_tokens, 0, "Expected non-zero tokens.")
-        self.assertGreater(cost.n_prompt_tokens, 0, "Expected non-zero prompt tokens.")
-        self.assertGreater(cost.n_completion_tokens, 0.0, "Expected non-zero completion tokens.")
+        self.assertGreater(
+            cost.n_prompt_tokens, 0, "Expected non-zero prompt tokens."
+        )
+        self.assertGreater(
+            cost.n_completion_tokens, 0.0,
+            "Expected non-zero completion tokens."
+        )
 
         if with_cost:
-            self.assertGreater(
-                cost.cost, 0.0, "Expected non-zero cost."
-            )
+            self.assertGreater(cost.cost, 0.0, "Expected non-zero cost.")
 
     @optional_test
     def test_hugs(self):
@@ -67,17 +81,34 @@ class TestEndpoints(TestCase):
 
         hugs = Huggingface()
 
-        _, cost = sync(Endpoint.atrack_all_costs_tally, hugs.positive_sentiment, text="This rocks!")
+        _, cost = Endpoint.track_all_costs_tally(
+            hugs.positive_sentiment, text="This rocks!"
+        )
 
         self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
-        self.assertEqual(cost.n_successful_requests, 1, "Expected exactly one successful request.")
-        self.assertEqual(cost.n_classes, 3, "Expected exactly three classes for sentiment classification.")
-        self.assertEqual(cost.n_stream_chunks, 0, "Expected zero chunks for classification endpoints.")
+        self.assertEqual(
+            cost.n_successful_requests, 1,
+            "Expected exactly one successful request."
+        )
+        self.assertEqual(
+            cost.n_classes, 3,
+            "Expected exactly three classes for sentiment classification."
+        )
+        self.assertEqual(
+            cost.n_stream_chunks, 0,
+            "Expected zero chunks for classification endpoints."
+        )
         self.assertEqual(cost.n_tokens, 0, "Expected zero tokens.")
-        self.assertEqual(cost.n_prompt_tokens, 0, "Expected zero prompt tokens.")
-        self.assertEqual(cost.n_completion_tokens, 0.0, "Expected zero completion tokens.")
+        self.assertEqual(
+            cost.n_prompt_tokens, 0, "Expected zero prompt tokens."
+        )
+        self.assertEqual(
+            cost.n_completion_tokens, 0.0, "Expected zero completion tokens."
+        )
 
-        self.assertEqual(cost.cost, 0.0, "Expected zero cost for huggingface endpoint.")
+        self.assertEqual(
+            cost.cost, 0.0, "Expected zero cost for huggingface endpoint."
+        )
 
     @optional_test
     def test_openai(self):
@@ -88,9 +119,7 @@ class TestEndpoints(TestCase):
 
         from trulens_eval.feedback.provider.openai import OpenAI
 
-        provider = OpenAI(
-            model_engine=OpenAI.DEFAULT_MODEL_ENGINE
-        )
+        provider = OpenAI(model_engine=OpenAI.DEFAULT_MODEL_ENGINE)
 
         self._test_llm_provider_endpoint(provider)
 
@@ -101,9 +130,9 @@ class TestEndpoints(TestCase):
         os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
         os.environ["OPENAI_API_TYPE"] = "openai"
 
-        from trulens_eval.feedback.provider.openai import OpenAI
         from trulens_eval.feedback.provider import LiteLLM
-        
+        from trulens_eval.feedback.provider.openai import OpenAI
+
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
         Endpoint.delete_singleton_by_name("litellm")
@@ -156,9 +185,7 @@ class TestEndpoints(TestCase):
 
         from trulens_eval.feedback.provider.bedrock import Bedrock
 
-        provider = Bedrock(
-            model_id=Bedrock.DEFAULT_MODEL_ID
-        )
+        provider = Bedrock(model_id=Bedrock.DEFAULT_MODEL_ID)
 
         # We don't have USD cost tracking for bedrock or anything beyond openai.
         self._test_llm_provider_endpoint(provider, with_cost=False)
@@ -167,8 +194,8 @@ class TestEndpoints(TestCase):
     def test_litellm_bedrock(self):
         """Check that cost tracking works for bedrock models through litellm."""
 
-        from trulens_eval.feedback.provider.bedrock import Bedrock
         from trulens_eval.feedback.provider import LiteLLM
+        from trulens_eval.feedback.provider.bedrock import Bedrock
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.

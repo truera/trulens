@@ -13,7 +13,7 @@
 
 
 
-# ! pip install trulens_eval==0.23.0 openai==1.3.7 langchain chromadb langchainhub bs4
+# ! pip install trulens_eval openai langchain chromadb langchainhub bs4
 
 
 
@@ -144,6 +144,66 @@ f_context_relevance = (
 tru_recorder = TruChain(rag_chain,
     app_id='Chain1_ChatApplication',
     feedbacks=[f_qa_relevance, f_context_relevance, f_groundedness])
+
+
+
+
+response, tru_record = tru_recorder.with_record(rag_chain.invoke, "What is Task Decomposition?")
+
+
+
+
+json_like = tru_record.layout_calls_as_app()
+
+
+
+
+json_like
+
+
+
+
+from ipytree import Tree, Node
+
+def print_call_stack(data):
+    tree = Tree()
+    tree.add_node(Node('Record ID: {}'.format(data['record_id'])))
+    tree.add_node(Node('App ID: {}'.format(data['app_id'])))
+    tree.add_node(Node('Cost: {}'.format(data['cost'])))
+    tree.add_node(Node('Performance: {}'.format(data['perf'])))
+    tree.add_node(Node('Timestamp: {}'.format(data['ts'])))
+    tree.add_node(Node('Tags: {}'.format(data['tags'])))
+    tree.add_node(Node('Main Input: {}'.format(data['main_input'])))
+    tree.add_node(Node('Main Output: {}'.format(data['main_output'])))
+    tree.add_node(Node('Main Error: {}'.format(data['main_error'])))
+    
+    calls_node = Node('Calls')
+    tree.add_node(calls_node)
+    
+    for call in data['calls']:
+        call_node = Node('Call')
+        calls_node.add_node(call_node)
+        
+        for step in call['stack']:
+            step_node = Node('Step: {}'.format(step['path']))
+            call_node.add_node(step_node)
+            if 'expanded' in step:
+                expanded_node = Node('Expanded')
+                step_node.add_node(expanded_node)
+                for expanded_step in step['expanded']:
+                    expanded_step_node = Node('Step: {}'.format(expanded_step['path']))
+                    expanded_node.add_node(expanded_step_node)
+    
+    return tree
+
+# Usage
+tree = print_call_stack(json_like)
+tree
+
+
+
+
+tree
 
 
 

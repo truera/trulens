@@ -128,14 +128,14 @@ You can access the JSON structure with `with_record` methods and then calling
 for example
 
 ```python
-response = my_llm_app(query)
+rag_chain.invoke("What is Task Decomposition?")
 
 from trulens_eval import TruChain
 tru_recorder = TruChain(
-    my_llm_app,
+    rag_chain,
     app_id='Chain1_ChatApplication')
 
-response, tru_record = tru_recorder.with_record(my_llm_app, query)
+response, tru_record = tru_recorder.with_record(rag_chain.invoke, "What is Task Decomposition?")
 json_like = tru_record.layout_calls_as_app()
 ```
 

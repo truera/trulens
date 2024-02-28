@@ -43,9 +43,9 @@ def streamlit_app():
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
-            row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
-        ):
-            row.feedback_json.get("higher_is_better", True)
+            row.feedback_json.get("supplied_name", "") or
+            row.feedback_json["implementation"]["name"]
+        ): row.feedback_json.get("higher_is_better", True)
         for _, row in feedback_defs.iterrows()
     }
 
