@@ -734,7 +734,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             focus = self._extract_content(focus)
 
             if not isinstance(focus, Sequence):
-                print(f"focus {focus} is not a sequence")
+                logger.warning(f"focus {focus} is not a sequence")
                 break
 
         if isinstance(focus, JSON_BASES):
@@ -754,7 +754,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             focus = self._extract_content(focus)
 
             if not isinstance(focus, Sequence):
-                print(f"focus {focus} is not a sequence")
+                logger.warning(f"focus {focus} is not a sequence")
                 break
 
         if isinstance(focus, JSON_BASES):
