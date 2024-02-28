@@ -68,7 +68,7 @@ Python object that is directly mappable to JSON.
 """
 
 
-class JSONized(JSON_STRICT, Generic[T]):  # really JSON_STRICT
+class JSONized(dict, Generic[T]):  # really JSON_STRICT
     """JSON-encoded data the can be deserialized into a given type `T`.
     
     This class is meant only for type annotations. Any
@@ -81,7 +81,7 @@ class JSONized(JSON_STRICT, Generic[T]):  # really JSON_STRICT
         cls, source_type: Any, handler: GetCoreSchemaHandler
     ) -> CoreSchema:
         """Make pydantic treat this class same as a `dict`."""
-        return core_schema.no_info_after_validator_function(cls, handler(dict))
+        return handler(core_schema.dict_schema())
 
 
 mj = MerkleJson()

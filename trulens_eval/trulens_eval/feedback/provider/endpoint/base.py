@@ -10,28 +10,27 @@ import random
 import sys
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
-    Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
+                    Sequence, Tuple, Type, TypeVar)
 
 from pydantic import Field
 import requests
 
 from trulens_eval.schema import Cost
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
-from trulens_eval.utils.asynchro import desync
-from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import locals_except
+from trulens_eval.utils.python import module_name
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
+from trulens_eval.utils.python import wrap_awaitable
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
@@ -92,7 +91,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     class EndpointSetup():
         """Class for storing supported endpoint information.
         
-        See [atrack_all_costs][trulens_eval.feedback.provider.endpoint.base.Endpoint.atrack_all_costs]
+        See [track_all_costs][trulens_eval.feedback.provider.endpoint.base.Endpoint.track_all_costs]
         for usage.
         """
         arg_flag: str
@@ -161,7 +160,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     global_callback: EndpointCallback = Field(
         exclude=True
     )  # of type _callback_class
-    """Track costs not run inside "atrack_cost" here. 
+    """Track costs not run inside "track_cost" here. 
     
     Also note that Endpoints are singletons (one for each unique name argument)
     hence this global callback will track all requests for the named api even if
@@ -178,6 +177,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         name = name or cls.__name__
         return super().__new__(cls, *args, name=name, **kwargs)
 
+    def __str__(self):
+        # Have to override str/repr due to pydantic issue with recursive models.
+        return f"Endpoint({self.name})"
+
+    def __repr__(self):
+        # Have to override str/repr due to pydantic issue with recursive models.
+        return f"Endpoint({self.name})"
+
     def __init__(
         self,
         *args,
@@ -191,9 +198,12 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             return
 
         if callback_class is None:
-            raise ValueError(
-                "Endpoint has to be extended by class that can set `callback_class`."
-            )
+            # Some old databases do not have this serialized so lets set it to
+            # the parent of callbacks and hope it never gets used.
+            callback_class = EndpointCallback
+            #raise ValueError(
+            #    "Endpoint has to be extended by class that can set `callback_class`."
+            #)
 
         if rpm is None:
             rpm = DEFAULT_RPM
@@ -313,7 +323,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
         if safe_hasattr(mod, method_name):
             logger.debug(
-                "Instrumenting %s.%s for %s", mod.__name__, method_name,
+                "Instrumenting %s.%s for %s", module_name(mod), method_name,
                 self.name
             )
             func = getattr(mod, method_name)
@@ -376,7 +386,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
                 if wrapped_method_filter(produced_func):
 
-                    logger.debug("Instrumenting %s", produced_func.__name__)
+                    logger.debug("Instrumenting %s", callable_name(produced_func))
 
                     instrumented_produced_func = self.wrap_function(
                         produced_func
@@ -418,7 +428,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         already_instrumented.add(method_name)
 
     @staticmethod
-    async def atrack_all_costs(
+    def track_all_costs(
         __func: CallableMaybeAwaitable[A, T],
         *args,
         with_openai: bool = True,
@@ -460,12 +470,12 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         e,
                     )
 
-        return await Endpoint._atrack_costs(
+        return Endpoint._track_costs(
             __func, *args, with_endpoints=endpoints, **kwargs
         )
 
     @staticmethod
-    async def atrack_all_costs_tally(
+    def track_all_costs_tally(
         __func: CallableMaybeAwaitable[A, T],
         *args,
         with_openai: bool = True,
@@ -479,7 +489,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         execution of thunk.
         """
 
-        result, cbs = await Endpoint.atrack_all_costs(
+        result, cbs = Endpoint.track_all_costs(
             __func,
             *args,
             with_openai=with_openai,
@@ -498,7 +508,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         return result, costs
 
     @staticmethod
-    async def _atrack_costs(
+    def _track_costs(
         __func: CallableMaybeAwaitable[A, T],
         *args,
         with_endpoints: Optional[List[Endpoint]] = None,
@@ -509,7 +519,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         costs using each of the provided endpoints' callbacks.
         """
 
-        # Check to see if this call is within another _atrack_costs call:
+        # Check to see if this call is within another _track_costs call:
         endpoints: Dict[Type[EndpointCallback], List[Tuple[Endpoint, EndpointCallback]]] = \
             get_first_local_in_call_stack(
                 key="endpoints",
@@ -556,23 +566,22 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             callbacks.append(callback)
 
-        # Call the thunk and wait for result.
-        result: T = await desync(__func, *args, **kwargs)
+        # Call the function.
+        result: T = __func(*args, **kwargs)
 
         # Return result and only the callbacks created here. Outer thunks might
         # return others.
         return result, callbacks
 
-    async def atrack_cost(
-        self, __func: CallableMaybeAwaitable[T], *args, **kwargs
-    ) -> Tuple[T, EndpointCallback]:
+    def track_cost(self, __func: CallableMaybeAwaitable[T], *args,
+                   **kwargs) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.
         Returns the thunk's result alongside the EndpointCallback object that
         includes the usage information.
         """
 
-        result, callbacks = await Endpoint._atrack_costs(
+        result, callbacks = Endpoint._track_costs(
             __func, *args, with_endpoints=[self], **kwargs
         )
 
@@ -580,7 +589,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def __find_tracker(f):
-        return id(f) == id(Endpoint._atrack_costs.__code__)
+        return id(f) == id(Endpoint._track_costs.__code__)
 
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
@@ -598,14 +607,16 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             response: whatever the wrapped function returned.
 
             callback: the callback set up by
-                `atrack_cost` if the wrapped method was called and returned within an
-                 invocation of `atrack_cost`.
+                `track_cost` if the wrapped method was called and returned within an
+                 invocation of `track_cost`.
         """
         raise NotImplementedError(
             "Subclasses of Endpoint must implement handle_wrapped_call."
         )
 
     def wrap_function(self, func):
+        """Create a wrapper of the given function to perform cost tracking."""
+
         if safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
             # wrapped function in the INSTRUMENT attribute. This will be used to
@@ -639,28 +650,28 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
         @functools.wraps(func)
-        async def tru_awrapper(*args, **kwargs):
+        def tru_wrapper(*args, **kwargs):
             logger.debug(
-                "Calling wrapped async %s for %s, iscoroutinefunction=%s, isasyncgenfunction=%s",
-                func.__name__, self.name, is_really_coroutinefunction(func),
+                "Calling instrumented method %s of type %s, "
+                "iscoroutinefunction=%s, "
+                "isasyncgeneratorfunction=%s", func, type(func),
+                is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func)
             )
 
             # Get the result of the wrapped function:
 
             response = func(*args, **kwargs)
-            if isinstance(response, Awaitable):
-                response = await response
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
-            # Get all of the callback classes suitable for handling this call.
-            # Note that we stored this in the INSTRUMENT attribute of the
-            # wrapper method.
-            registered_callback_classes = getattr(tru_awrapper, INSTRUMENT)
+            # Get all of the callback classes suitable for handling this
+            # call. Note that we stored this in the INSTRUMENT attribute of
+            # the wrapper method.
+            registered_callback_classes = getattr(tru_wrapper, INSTRUMENT)
 
             # Look up the endpoints that are expecting to be notified and the
-            # callback tracking the tally. See Endpoint._atrack_costs for
+            # callback tracking the tally. See Endpoint._track_costs for
             # definition.
             endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
                 get_first_local_in_call_stack(
@@ -669,61 +680,47 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     offset=0
                 )
 
-            # If wrapped method was not called from within _atrack_costs, we
-            # will get None here and do nothing but return wrapped function's
-            # response.
+            # If wrapped method was not called from within _track_costs, we
+            # will get None here and do nothing but return wrapped
+            # function's response.
             if endpoints is None:
                 logger.debug("No endpoints found.")
                 return response
 
-            for callback_class in registered_callback_classes:
-                logger.debug("Handling callback_class: %s.", callback_class)
-                if callback_class not in endpoints:
-                    logger.warning(
-                        "Callback class %s is registered for handling %s"
-                        " but there are no endpoints waiting to receive the result.",
-                        callback_class.__name__, func.__name__
-                    )
-                    continue
+            def response_callback(response):
+                for callback_class in registered_callback_classes:
+                    logger.debug("Handling callback_class: %s.", callback_class)
+                    if callback_class not in endpoints:
+                        logger.warning(
+                            "Callback class %s is registered for handling %s"
+                            " but there are no endpoints waiting to receive the result.",
+                            callback_class.__name__, func.__name__
+                        )
+                        continue
 
-                for endpoint, callback in endpoints[callback_class]:
-                    logger.debug("Handling endpoint %s.", endpoint)
-                    endpoint.handle_wrapped_call(
-                        func=func,
-                        bindings=bindings,
-                        response=response,
-                        callback=callback
-                    )
+                    for endpoint, callback in endpoints[callback_class]:
+                        logger.debug("Handling endpoint %s.", endpoint.name)
+                        endpoint.handle_wrapped_call(
+                            func=func,
+                            bindings=bindings,
+                            response=response,
+                            callback=callback
+                        )
 
+            if isinstance(response, Awaitable):
+                return wrap_awaitable(response, on_done=response_callback)
+
+            response_callback(response)
             return response
 
-        @functools.wraps(func)
-        def tru_wrapper(*args, **kwargs):
-            logger.debug(
-                "Calling instrumented sync method %s of type %s, "
-                "iscoroutinefunction=%s, "
-                "isasyncgeneratorfunction=%s", func, type(func),
-                is_really_coroutinefunction(func),
-                inspect.isasyncgenfunction(func)
-            )
-            return sync(tru_awrapper, *args, **kwargs)
-
-        for w in [tru_wrapper, tru_awrapper]:
-            # Set our tracking attribute to tell whether something is already
-            # instrumented onto both the sync and async version since either one
-            # could be returned from this method.
-            setattr(w, INSTRUMENT, [self.callback_class])
-
-        # Determine which of the wrapper variants to return and to annotate.
-
-        if is_really_coroutinefunction(func):
-            w = tru_awrapper
-        else:
-            w = tru_wrapper
+        # Set our tracking attribute to tell whether something is already
+        # instrumented onto both the sync and async version since either one
+        # could be returned from this method.
+        setattr(tru_wrapper, INSTRUMENT, [self.callback_class])
 
         logger.debug("Instrumenting %s for %s.", func.__name__, self.name)
 
-        return w
+        return tru_wrapper
 
 
 class DummyEndpoint(Endpoint):
@@ -819,10 +816,10 @@ class DummyEndpoint(Endpoint):
         # allocate some data to pretend we are doing hard work
         temporary = [0x42] * self.alloc
 
-        from numpy import random
+        from numpy import random as np_random
 
         if self.delay > 0.0:
-            sleep(max(0.0, random.normal(self.delay, self.delay / 2)))
+            sleep(max(0.0, np_random.normal(self.delay, self.delay / 2)))
 
         r = random.random()
         j: Optional[JSON] = None
@@ -845,13 +842,13 @@ class DummyEndpoint(Endpoint):
         if r < self.loading_prob:
             # Simulated loading model outcome.
 
-            j = dict(estimated_time=self.loading_time())
+            j = {'estimated_time': self.loading_time()}
         r -= self.loading_prob
 
         if r < self.overloaded_prob:
             # Simulated overloaded outcome.
 
-            j = dict(error="overloaded")
+            j = {'error': "overloaded"}
         r -= self.overloaded_prob
 
         if j is None:
@@ -894,8 +891,8 @@ class DummyEndpoint(Endpoint):
                 )
                 sleep(10)
                 return self.post(url, payload)
-            else:
-                raise RuntimeError(error)
+
+            raise RuntimeError(error)
 
         assert isinstance(
             j, Sequence
