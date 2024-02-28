@@ -175,6 +175,22 @@ class DB(SerialModel, abc.ABC):
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def list_records(self, app_id) -> List[int]:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_record_and_feedback(self, record_id) -> [pd.DataFrame]:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def delete_record(self, record_id):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def delete_app(self, app_id):
+        raise NotImplementedError()
+
 
 def versioning_decorator(func):
     """A function decorator that checks if a DB can be used before using it.
