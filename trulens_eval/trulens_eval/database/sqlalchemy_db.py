@@ -204,7 +204,7 @@ class SqlAlchemyDB(DB):
     def get_record_and_feedback(self, record_id) -> [pd.DataFrame]:
         data = []
         with self.Session.begin() as session:
-            data = [i.id for i in session.query(orm.FeedbackResult).filter_by(record_id=record_id)]
+            data = [i.__dict__ for i in session.query(orm.FeedbackResult).filter_by(record_id=record_id)]
 
         return pd.DataFrame(data)
 
