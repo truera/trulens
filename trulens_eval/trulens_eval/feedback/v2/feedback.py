@@ -460,7 +460,11 @@ class GraphicViolence(Violence):
 
     - `openai` package: `openai.moderation` category `violence/graphic`.
     """
-
+class HallucinationEvaluator(Relevance,PromptTemplate)
+    """
+    pass
+    """
+    pass
 
 # Level 2 abstraction
 
