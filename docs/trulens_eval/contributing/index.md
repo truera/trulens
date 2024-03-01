@@ -5,7 +5,7 @@ Interested in contributing to TruLens? Here's how to get started!
 ## What can you work on?
 
 1. 💪 Add new [feedback
-   functions](https://www.trulens.org/trulens_eval/api/providers)
+functions](https://www.trulens.org/trulens_eval/api/providers)
 2. 🤝 Add new feedback function providers.
 3. 🐛 Fix bugs
 4. 🎉 Add usage examples
@@ -27,7 +27,7 @@ functions library so others can benefit!
   feedback function in this
   [guide](https://www.trulens.org/trulens_eval/custom_feedback_functions/).
 - New methods can either take a single text (str) as a parameter or two
-  different texts (str), such as prompt and retrieved context. It should return
+different texts (str), such as prompt and retrieved context. It should return
   a float, or a dict of multiple floats. Each output value should be a float on
   the scale of 0 (worst) to 1 (best).
 - Make sure to add its definition to this
@@ -82,7 +82,7 @@ understandable. If you find something confusing, it most likely is for other
 people as well. Help us be better!
 
 Big parts of the code base currently do not follow the code standards outlined
-in [Standards index](standards). Many good contributions can be made in adapting
+in [Standards index](/trulens_eval/contributing/standards). Many good contributions can be made in adapting
 us to the standards.
 
 ## 👀 Things to be Aware Of
@@ -90,7 +90,7 @@ us to the standards.
 ### ✅ Standards
 
 We try to respect various code, testing, and documentation
-standards outlined in the [Standards index](standards).
+standards outlined in the [Standards index](/trulens_eval/contributing/standards).
 
 ### 💣 Tech Debt
 
