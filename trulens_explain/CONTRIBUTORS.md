@@ -1,4 +1,4 @@
-# TruLens contributors (alphabetical)
+# TruLens Explain Contributors (alphabetical)
 
 * Anupam: <au@truera.com>
 * Matt Fredrikson: <matt@truera.com>
