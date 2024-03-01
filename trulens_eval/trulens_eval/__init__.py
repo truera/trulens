@@ -117,8 +117,7 @@ from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.imports import REQUIREMENT_RAILS
 from trulens_eval.utils.threading import TP
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
-    from trulens_eval.tru_llama import TruLlama
+# Optional provider types.
 
 with OptionalImports(messages=REQUIREMENT_LITELLM):
     from trulens_eval.feedback.provider.litellm import LiteLLM
@@ -131,6 +130,7 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import OpenAI
 
 # Optional app types.
+
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     from trulens_eval.tru_llama import TruLlama
 
