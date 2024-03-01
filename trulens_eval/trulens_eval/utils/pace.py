@@ -14,43 +14,50 @@ logger = logging.getLogger(__name__)
 
 
 class Pace(BaseModel):
-    """
-    Keep a given pace. Calls to `Pace.mark` may block until the pace of its
-    returns is kept to a constraint: the number of returns in the given period
-    of time cannot exceed `marks_per_second * seconds_per_period`. This means
-    the average number of returns in that period is bounded above exactly by
-    `marks_per_second`. some period of time. 
+    """Keep a given pace.
+    
+    Calls to `Pace.mark` may block until the pace of its returns is kept to a
+    constraint: the number of returns in the given period of time cannot exceed
+    `marks_per_second * seconds_per_period`. This means the average number of
+    returns in that period is bounded above exactly by `marks_per_second`.
     """
 
-    # The pace in number of mark returns per second.
     marks_per_second: float = 1.0
+    """The pace in number of mark returns per second."""
 
-    # Evaluate pace as overage over this period. Assumes that prior to
-    # construction of this Pace instance, the period did not have any marks
-    # called. The longer this period is, the bigger burst of marks will be
-    # allowed initially and after long periods of no marks.
     seconds_per_period: float = 60.0
+    """Evaluate pace as overage over this period.
+    
+    Assumes that prior to construction of this Pace instance, the period did not
+    have any marks called. The longer this period is, the bigger burst of marks
+    will be allowed initially and after long periods of no marks.
+    """
 
-    # The above period as a timedelta.
     seconds_per_period_timedelta: timedelta = Field(
         default_factory=lambda: timedelta(seconds=60.0)
     )
+    """The above period as a timedelta."""
 
-    # Keep track of returns that happened in the last `period` seconds. Store
-    # the datetime at which they expire (they become longer than `period` seconds
-    # old).
     mark_expirations: Deque[datetime] = Field(default_factory=deque)
+    """Keep track of returns that happened in the last `period` seconds.
+    
+    Store the datetime at which they expire (they become longer than `period`
+    seconds old).
+    """
 
-    # The maximum number of marks to keep track in the above deque. It will be
-    # set to (seconds_per_period * returns_per_second) so that the average
-    # returns per second over period is no more than exactly returns_per_second.
     max_marks: int
+    """The maximum number of marks to keep track in the above deque.
+    
+    It is set to (seconds_per_period * returns_per_second) so that the
+    average returns per second over period is no more than exactly
+    returns_per_second.
+    """
 
-    # Time of the last mark return.
     last_mark: datetime = Field(default_factory=datetime.now)
+    """Time of the last mark return."""
 
-    # Thread Lock to ensure mark content runs only one at a time.
     lock: LockType = Field(default_factory=Lock)
+    """Thread Lock to ensure mark method details run only one at a time."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 

@@ -3,6 +3,7 @@
 mkdocs               >= 1.5.3
 mkdocs-material      >= 9.5.8
 mkdocstrings-python  >= 1.8.0
+mkdocs-include-markdown-plugin >= 6.0.4
 mkdocstrings         >= 0.24.0
 mkdocs-jupyter       >= 0.24.6
 
