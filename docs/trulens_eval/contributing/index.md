@@ -5,7 +5,7 @@ Interested in contributing to TruLens? Here's how to get started!
 ## What can you work on?
 
 1. 💪 Add new [feedback
-   functions](https://www.trulens.org/trulens_eval/api/providers)
+functions](https://www.trulens.org/trulens_eval/api/providers)
 2. 🤝 Add new feedback function providers.
 3. 🐛 Fix bugs
 4. 🎉 Add usage examples
@@ -23,15 +23,15 @@ may require new evaluations. We'd love your contribution to extend the feedback
 functions library so others can benefit!
 
 - To add a feedback function for an existing model provider, you can add it to
-  an existing provider module. You can read more about the structure of a
-  feedback function in this
-  [guide](https://www.trulens.org/trulens_eval/custom_feedback_functions/).
+an existing provider module. You can read more about the structure of a
+feedback function in this
+[guide](https://www.trulens.org/trulens_eval/custom_feedback_functions/).
 - New methods can either take a single text (str) as a parameter or two
-  different texts (str), such as prompt and retrieved context. It should return
-  a float, or a dict of multiple floats. Each output value should be a float on
-  the scale of 0 (worst) to 1 (best).
+different texts (str), such as prompt and retrieved context. It should return
+a float, or a dict of multiple floats. Each output value should be a float on
+the scale of 0 (worst) to 1 (best).
 - Make sure to add its definition to this
-  [list](https://github.com/truera/trulens/blob/main/docs/trulens_eval/api/providers.md).
+[list](https://github.com/truera/trulens/blob/main/docs/trulens_eval/api/providers.md).
 
 ## 🤝 Add new feedback function providers.
 
@@ -65,7 +65,7 @@ All example notebooks are expected to:
 
 - Start with a title and description of the example
 - Include a commented out list of dependencies and their versions, e.g. `# ! pip
-  install trulens==0.10.0 langchain==0.0.268`
+install trulens==0.10.0 langchain==0.0.268`
 - Include a linked button to a Google colab version of the notebook
 - Add any additional requirements
 
@@ -82,7 +82,7 @@ understandable. If you find something confusing, it most likely is for other
 people as well. Help us be better!
 
 Big parts of the code base currently do not follow the code standards outlined
-in [Standards index](standards). Many good contributions can be made in adapting
+in [Standards index](/contributing/standards). Many good contributions can be made in adapting
 us to the standards.
 
 ## 👀 Things to be Aware Of
@@ -90,7 +90,7 @@ us to the standards.
 ### ✅ Standards
 
 We try to respect various code, testing, and documentation
-standards outlined in the [Standards index](standards).
+standards outlined in the [Standards index](/contributing/standards).
 
 ### 💣 Tech Debt
 
@@ -101,12 +101,12 @@ problematic designs. See [Tech debt index](techdebt).
 ## Contributors
 
 {%
-   include-markdown "../../../trulens_eval/CONTRIBUTORS.md"
-   heading-offset=2
+include-markdown "../../../trulens_eval/CONTRIBUTORS.md"
+heading-offset=2
 %}
 
 
 {%
-   include-markdown "../../../trulens_explain/CONTRIBUTORS.md"
-   heading-offset=2
+include-markdown "../../../trulens_explain/CONTRIBUTORS.md"
+heading-offset=2
 %}
