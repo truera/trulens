@@ -259,6 +259,7 @@ from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import RecordAppCallMethod
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
+from trulens_eval.utils.imports import Dummy
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import clean_attributes
 from trulens_eval.utils.pyschema import Method
@@ -413,6 +414,28 @@ class Instrument(object):
         
         Methods matching name have to pass the filter to be instrumented.
         """
+
+
+    def print_instrumentation(self) -> None:
+        """Print out description of the modules, classes, methods this class
+        will instrument."""
+
+        print("Modules (with prefix of):")
+        for mod in self.include_modules:
+            print(f"\t{mod}")
+
+        print("Classes (or subclasses of):")
+        for cls in self.include_classes:
+            print(f"\t{cls}")
+
+            if isinstance(cls, Dummy):
+                print("\tWARNING: this class could not be imported. It may have been removed from its library.")
+                continue
+
+            for method, filter_class in self.include_methods.items():
+                if filter_class(cls) and safe_hasattr(cls, method):
+                    f = getattr(cls, method)
+                    print(f"\t\t{method}: {inspect.signature(f)}")
 
     def to_instrument_object(self, obj: object) -> bool:
         """Determine whether the given object should be instrumented."""
@@ -1039,7 +1062,7 @@ results. Additional information about this call:
     def instrument_bound_methods(self, obj: object, query: Lens):
         # TODO: Work in progress. Bugfixing rails instrumentation missing some important methods.
 
-        for method_name in self.include_methods:
+        for method_name, _ in self.include_methods.items():
             if not (safe_hasattr(obj, method_name) and self.include_methods[method_name](obj)):
                 pass
             else:

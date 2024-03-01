@@ -12,6 +12,7 @@ from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
+from trulens_eval.trulens_eval.db import NoneType
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
@@ -63,6 +64,9 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
         from llama_index.core.tools.types import \
             ToolMetadata  # all of the readable info regarding tools is in this class
         from llama_index.core.vector_stores.types import VectorStore
+
+        # These exist in the bridge but not here so define placeholders.
+        RetrieverComponent = NoneType
 
         from trulens_eval.utils.llama import WithFeedbackFilterNodes
     except ImportError:  # bridge for versions < 0.10
@@ -132,7 +136,7 @@ class LlamaInstrument(Instrument):
             LLMPredictor, LLMMetadata, BaseLLMPredictor, VectorStore,
             PromptHelper, BaseEmbedding, NodeParser, ToolMetadata, BaseTool,
             BaseMemory, WithFeedbackFilterNodes, BaseNodePostprocessor,
-            QueryEngineComponent
+            QueryEngineComponent, RetrieverComponent
         }.union(LangChainInstrument.Default.CLASSES())
 
         # Instrument only methods with these names and of these classes. Ok to
@@ -183,7 +187,7 @@ class LlamaInstrument(Instrument):
 
                 # BaseNodePostProcessor
                 ("_postprocess_nodes"):
-                    lambda o: isinstance(o, (BaseNodePostprocessor)),
+                    lambda o: isinstance(o, BaseNodePostprocessor),
 
                 # Components
                 ("_run_component"):
