@@ -1,6 +1,7 @@
 # Contributing to TruLens
 
 Interested in contributing to TruLens? Here's how to get started!
+
 ## What can you work on?
 
 1. 💪 Add new [feedback
@@ -45,6 +46,7 @@ Alternatively, we also appreciate if you open a GitHub Issue if there's a model
 provider you need!
 
 ## 🐛 Fix Bugs
+
 Most bugs are reported and tracked in the Github Issues Page. We try our best in
 triaging and tagging these issues:
 
@@ -53,6 +55,7 @@ issues tagged with good first issue. Please feel free to open an issue and/or
 assign an issue to yourself.
 
 ## 🎉 Add Usage Examples
+
 If you have applied TruLens to track and evalaute a unique use-case, we would
 love your contribution in the form of an example notebook: e.g. [Evaluating
 Pinecone Configuration Choices on Downstream App
@@ -67,16 +70,27 @@ All example notebooks are expected to:
 - Add any additional requirements
 
 ## 🧪 Add Experimental Features
+
 If you have a crazy idea, make a PR for it! Whether if it's the latest research,
 or what you thought of in the shower, we'd love to see creative ways to improve
 TruLens.
 
 ## 📄 Improve Code Quality & Documentation
+
 We would love your help in making the project cleaner, more robust, and more
 understandable. If you find something confusing, it most likely is for other
 people as well. Help us be better!
 
-## Standards
+Big parts of the code base currently do not follow the code standards outlined
+in [Standards index](standards). Many good contributions can be made in adapting
+us to the standards.
 
-We try to respect various code, testing, and documentation standards outlined in
-`trulens_eval/STANDARDS.md`. 
+## 👀 Things to be Aware Of
+
+✅ **Standards**: We try to respect various code, testing, and documentation
+standards outlined in the [Standards index](standards).
+
+💣 **Tech Debt**: Parts of the code are nuanced in ways should be avoided by new
+contributors. Discussions of these points are welcome to help the project rid
+itself of these problematic designs. See [Tech debt
+index](techdebt).

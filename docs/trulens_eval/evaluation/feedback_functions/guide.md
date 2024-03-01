@@ -1,71 +1,29 @@
 # Specification Guide
 
-The [Feedback][trulens_eval.feedback.feedback.Feedback] class contains the
-starting point for feedback function specification and evaluation. A typical
-use-case looks like this:
-
-```python
-from trulens_eval import feedback, Select, Feedback
-
-hugs = feedback.Huggingface()
-
-f_lang_match = Feedback(hugs.language_match)
-    .on_input_output()
-```
-
-The components of this specifications are:
-
-- **Provider classes**:
-  [feedback.provider.OpenAI][trulens_eval.feedback.provider.openai.OpenAI]
-  contains feedback function implementations like `qs_relevance`. Other classes
-  subtyping [feedback.Provider][trulens_eval.feedback.provider.base.Provider]
-  are discussed in [Feedback Providers].
-
-- **Feedback implementations**: `openai.qs_relevance` is a feedback function
-  implementation. Feedback implementations are simple callables that can be run
-  on any arguments matching their signatures. In the example, the implementation
-  has the following signature: 
-
-    ```python
-    def language_match(self, text1: str, text2: str) -> float:
-    ```
-
-  That is, `language_match` is a plain python method that accepts two pieces
-  of text, both strings, and produces a float (assumed to be between 0.0 and
-  1.0).
-
-- **Feedback constructor**: The line `Feedback(openai.language_match)`
-  constructs a Feedback object with a feedback implementation. 
-
-- **Argument specification** -- The next line, `on_input_output`, specifies how
-  the `language_match` arguments are to be determined from an app record or app
-  definition. The general form of this specification is done using `on` but
-  several shorthands are provided. `on_input_output` states that the first two
-  argument to `language_match` (`text1` and `text2`) are to be the main app
-  input and the main output, respectively.
+## Argument specification
 
   Several utility methods starting with `.on` provide shorthands:
 
-    - `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
+  - `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
     unspecified argument or `arg` should be the main app input.
 
-    - `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
+  - `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
     argument or `arg` should be the main app output.
 
-    - `on_input_output() == on_input().on_output()` -- specifies that the first
+  - `on_input_output() == on_input().on_output()` -- specifies that the first
     two arguments of implementation should be the main app input and main app
     output, respectively.
 
-    - `on_default()` -- depending on signature of implementation uses either
+  - `on_default()` -- depending on signature of implementation uses either
     `on_output()` if it has a single argument, or `on_input_output` if it has
     two arguments.
 
-    Some wrappers include additional shorthands:
+  Some wrappers include additional shorthands:
 
-    ### llama_index-specific selectors
+### llama_index-specific selectors
 
-    - `TruLlama.select_source_nodes()` -- outputs the selector of the source
-        documents part of the engine output.
+- `TruLlama.select_source_nodes()` -- outputs the selector of the source
+    documents part of the engine output.
 
 ## Fine-grained Selection and Aggregation
 

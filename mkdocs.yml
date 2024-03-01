@@ -43,6 +43,13 @@ watch:
     - trulens_eval/trulens_eval
 
 plugins:
+  - include-markdown:
+      preserve_includer_indent: false
+      dedent: false
+      trailing_newlines: true
+      comments: true
+      rewrite_relative_urls: true
+      heading_offset: 0
   - search
   - mkdocs-jupyter
   - mkdocstrings:
@@ -134,13 +141,13 @@ theme:
     - content.code.copy
 
 nav:
-# - 🏠 Docs: docs.md
-  - 🏠 Docs: trulens_eval/getting_started/install.md
+  - 🏠 Home: index.md
+  # - 🏠 Home: docs.md
   - 🚀 Getting Started:
     - trulens_eval/getting_started/index.md
     - Installation: trulens_eval/getting_started/install.md
     - 📓 Quickstarts:
-      - trulens_eval/getting_started/quickstarts/index.md
+      # - trulens_eval/getting_started/quickstarts/index.md
       # Title labels of these notebooks come from within the notebooks
       # themselves and will be overridden if specified here.
       - trulens_eval/getting_started/quickstarts/quickstart.ipynb
@@ -150,24 +157,24 @@ nav:
       - trulens_eval/getting_started/quickstarts/groundtruth_evals.ipynb
       - trulens_eval/getting_started/quickstarts/human_feedback.ipynb
     - Core Concepts:
-      - trulens_eval/getting_started/core_concepts/index.md
+      # PLACEHOLDER: - trulens_eval/getting_started/core_concepts/index.md
       - Feedback Functions: trulens_eval/getting_started/core_concepts/feedback_functions.md
       - RAG Triad: trulens_eval/getting_started/core_concepts/rag_triad.md
       - Honest, Harmless, Helpful Evals: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
   - 🎯 Evaluation:
-    - trulens_eval/evaluation/index.md
+    # PLACEHOLDER: - trulens_eval/evaluation/index.md
     - Feedback Functions:
       - trulens_eval/evaluation/feedback_functions/index.md
       - Anatomy of a Feedback Function: trulens_eval/evaluation/feedback_functions/anatomy.md
       - Specification Guide: trulens_eval/evaluation/feedback_functions/guide.md
     - Running Feedback Functions:
-      - trulens_eval/evaluation/running_feedback_functions/index.md
+      # PLACEHOLDER: - trulens_eval/evaluation/running_feedback_functions/index.md
       - Running with your app: trulens_eval/evaluation/running_feedback_functions/with_app.md
       - Running on existing data: trulens_eval/evaluation/running_feedback_functions/existing_data.md
     - Feedback Selectors:
       - trulens_eval/evaluation/feedback_selectors/index.md
       - Selecting Components: trulens_eval/evaluation/feedback_selectors/selecting_components.md
-      - Available shortcuts: trulens_eval/evaluation/feedback_selectors/selector_shortcuts.md
+      - Shortcuts: trulens_eval/evaluation/feedback_selectors/selector_shortcuts.md
     - Feedback Implementations:
       - trulens_eval/evaluation/feedback_implementations/index.md
       - 🧰 Stock Feedback Functions: trulens_eval/evaluation/feedback_implementations/stock.md
@@ -175,29 +182,29 @@ nav:
     - Generating Test Cases: trulens_eval/evaluation/generate_test_cases.md
     - Feedback Evaluations:
       # Titles come from notebook and will be overridden if specified here.
-      - trulens_eval/evaluation/feedback_evaluations/index.md
+      # PLACEHOLDER: - trulens_eval/evaluation/feedback_evaluations/index.md
       - trulens_eval/evaluation/feedback_evaluations/answer_relevance_smoke_tests.ipynb
       - trulens_eval/evaluation/feedback_evaluations/context_relevance_smoke_tests.ipynb
       - trulens_eval/evaluation/feedback_evaluations/groundedness_smoke_tests.ipynb
   - 🎺 Tracking:
-    - trulens_eval/tracking/index.md
+    # PLACEHOLDER: - trulens_eval/tracking/index.md
     - Instrumentation:
       - trulens_eval/tracking/instrumentation/index.ipynb
       # Titles set inside notebooks and will be overridden if provider here.
       - trulens_eval/tracking/instrumentation/langchain.ipynb
       - trulens_eval/tracking/instrumentation/llama_index.ipynb
     - Logging:
-      - trulens_eval/tracking/logging/index.md
+      # PLACEHOLDER: - trulens_eval/tracking/logging/index.md
       - Where to Log: trulens_eval/tracking/logging/where_to_log.md
       - 📓 Logging Methods: trulens_eval/tracking/logging/logging.ipynb
   - 🔍 Guides:
-    - trulens_eval/guides/index.md
+    # PLACEHOLDER: - trulens_eval/guides/index.md
     - Any LLM App: trulens_eval/guides/use_cases_any.md
     - RAGs: trulens_eval/guides/use_cases_rag.md
     - LLM Agents: trulens_eval/guides/use_cases_agent.md
     - Dev to Prod: trulens_eval/guides/use_cases_production.md
   - ☕ API Reference:
-    - trulens_eval/api/index.md
+    # - trulens_eval/api/index.md
     - 🦑 Tru: trulens_eval/api/tru.md
     - App:
       - trulens_eval/api/app/index.md
@@ -223,7 +230,8 @@ nav:
         - trulens_eval/api/endpoint/index.md
         - OpenAI: trulens_eval/api/endpoint/openai.md
     - Instruments: trulens_eval/api/instruments.md
-    - Utils: 
+    - Utils:
+      - trulens_eval/api/utils/index.md
       - trulens_eval/api/utils/python.md
       - trulens_eval/api/utils/serial.md
       - trulens_eval/api/utils/json.md
@@ -231,16 +239,17 @@ nav:
       - trulens_eval/api/utils/utils.md
   - 🤝 Contributing:
     - trulens_eval/contributing/index.md
-    - Contribution Guidelines: trulens_eval/contributing/CONTRIBUTING.md
-    - Standards: trulens_eval/contributing/STANDARDS.md
+    - ✅ Standards: trulens_eval/contributing/standards.md
+    - 💣 Tech Debt: trulens_eval/contributing/techdebt.md
   - ❓ Explain:
     - trulens_explain/index.md
     - Getting Started:
       - trulens_explain/getting_started/index.md
       - Installation: trulens_explain/getting_started/install.md
       - Quickstart: trulens_explain/getting_started/quickstart.md
-    - Attributions: trulens_explain/getting_started/attribution_parameterization.md
+    - Attributions: trulens_explain/attribution_parameterization.md
     - ☕ API Reference:
+      - trulens_explain/api/index.md
       - Attribution: trulens_explain/api/attribution.md
       - Models: trulens_explain/api/model_wrappers.md
       - Slices: trulens_explain/api/slices.md

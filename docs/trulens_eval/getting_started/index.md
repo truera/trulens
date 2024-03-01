@@ -1,5 +1,24 @@
-# Getting Started
+# 🚀 Getting Started
 
-This is a section heading page. It is presently unused. We can add summaries of
-the content in this section here then uncomment out the appropriate line in
-`mkdocs.yml` to include this section summary in the navigation bar.
+{%
+   include-markdown "./install.md"
+   heading-offset=1
+%}
+
+## 🤿 Ready to dive in?
+
+* Try one of the quickstart notebooks: [quick starts](quickstarts/quickstart).
+
+* Learn about the [core concepts](core_concepts/feedback_functions).
+
+* Dive deeper; how we do [evaluation](../evaluation/feedback_functions).
+
+* Have an App to evaluate? [Tracking your app](../tracking/instrumentation).
+
+* Let us take you on a tour; the [guides](../guides/use_cases_any).
+
+* Shed the floaties and proceed to the [API reference](../api/tru).
+
+## 😍 Community
+
+* 🙋 [Slack](https://communityinviter.com/apps/aiqualityforum/josh).

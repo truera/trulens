@@ -1,4 +1,4 @@
-# Feedback Functions
+# Anatomy of Feedback Functions
 
 The `Feedback` class contains the starting point for feedback function
 specification and evaluation. A typical use-case looks like this:

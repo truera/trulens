@@ -1,15 +1,13 @@
-# TruLens
+# [🦑 TruLens Eval](/trulens_eval)
 
-## 🚀 Getting Started
+## [🚀 Getting Started](/trulens_eval/getting_started)
 
-## 🎯 Evaluation
+## [🎯 Evaluation](/trulens_eval/evaluation)
 
-## 🎺 Tracking
+## [🎺 Tracking](/trulens_eval/tracking)
 
-## 🔍 Guides
+## [🔍 Guides](/trulens_eval/guides)
 
-## ☕ API Reference
+## [☕ API Reference](/trulens_eval/api)
 
-## 🤝 Contributing
-
-## ❓ TruLens Explain Documentation
+## [🤝 Contributing](/trulens_eval/contributin)

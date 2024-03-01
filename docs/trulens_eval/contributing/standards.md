@@ -1,4 +1,4 @@
-# Style, Documentation, Testing Standards
+# ✅ Standards
 
 Enumerations of standards for code and its documentation to be maintained in
 `trulens_eval`. Ongoing work aims at adapting these standards to existing code.

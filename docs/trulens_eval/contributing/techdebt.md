@@ -1,4 +1,4 @@
-# Index of hacks and other forms of tech debt
+# 💣 Tech Debt
 
 This is a (likely incomplete) list of hacks present in the trulens_eval library.
 They are likely a source of debugging problems so ideally they can be
