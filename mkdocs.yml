@@ -145,7 +145,7 @@ nav:
   # - 🏠 Home: docs.md
   - 🚀 Getting Started:
     - trulens_eval/getting_started/index.md
-    - Installation: trulens_eval/getting_started/install.md
+    - 🔨 Installation: trulens_eval/getting_started/install.md
     - 📓 Quickstarts:
       # - trulens_eval/getting_started/quickstarts/index.md
       # Title labels of these notebooks come from within the notebooks
@@ -188,7 +188,7 @@ nav:
       - trulens_eval/evaluation/feedback_evaluations/groundedness_smoke_tests.ipynb
   - 🎺 Tracking:
     # PLACEHOLDER: - trulens_eval/tracking/index.md
-    - Instrumentation:
+    - Instrumentation Overview:
       - trulens_eval/tracking/instrumentation/index.ipynb
       # Titles set inside notebooks and will be overridden if provider here.
       - trulens_eval/tracking/instrumentation/langchain.ipynb
