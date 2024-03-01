@@ -204,14 +204,14 @@ nav:
     - LLM Agents: trulens_eval/guides/use_cases_agent.md
     - Dev to Prod: trulens_eval/guides/use_cases_production.md
   - ☕ API Reference:
-    # - trulens_eval/api/index.md
+    # PLACEHOLDER: - trulens_eval/api/index.md
     - 🦑 Tru: trulens_eval/api/tru.md
     - App:
       - trulens_eval/api/app/index.md
       - TruBasicApp: trulens_eval/api/app/trubasicapp.md
       - 🦜️🔗 TruChain: trulens_eval/api/app/truchain.md
       - 🦙 TruLlama: trulens_eval/api/app/trullama.md
-      # - TruRails: trulens_eval/api/app/trurails.md
+      # NOT RELEASED YET: - TruRails: trulens_eval/api/app/trurails.md
       - TruCustom: trulens_eval/api/app/trucustom.md
       - TruVirtual: trulens_eval/api/app/truvirtual.md
     - Feedback: trulens_eval/api/feedback.md
@@ -242,14 +242,14 @@ nav:
     - ✅ Standards: trulens_eval/contributing/standards.md
     - 💣 Tech Debt: trulens_eval/contributing/techdebt.md
   - ❓ Explain:
-    - trulens_explain/index.md
+    # PLACEHOLDER: - trulens_explain/index.md
     - Getting Started:
-      - trulens_explain/getting_started/index.md
+      # PLACEHOLDER: - trulens_explain/getting_started/index.md
       - Installation: trulens_explain/getting_started/install.md
       - Quickstart: trulens_explain/getting_started/quickstart.md
     - Attributions: trulens_explain/attribution_parameterization.md
     - ☕ API Reference:
-      - trulens_explain/api/index.md
+      # PLACEHOLDER: - trulens_explain/api/index.md
       - Attribution: trulens_explain/api/attribution.md
       - Models: trulens_explain/api/model_wrappers.md
       - Slices: trulens_explain/api/slices.md

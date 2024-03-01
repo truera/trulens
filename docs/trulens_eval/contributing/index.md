@@ -1,4 +1,4 @@
-# Contributing to TruLens
+# 🤝 Contributing to TruLens
 
 Interested in contributing to TruLens? Here's how to get started!
 
@@ -87,10 +87,26 @@ us to the standards.
 
 ## 👀 Things to be Aware Of
 
-✅ **Standards**: We try to respect various code, testing, and documentation
+### ✅ Standards
+
+We try to respect various code, testing, and documentation
 standards outlined in the [Standards index](standards).
 
-💣 **Tech Debt**: Parts of the code are nuanced in ways should be avoided by new
-contributors. Discussions of these points are welcome to help the project rid
-itself of these problematic designs. See [Tech debt
-index](techdebt).
+### 💣 Tech Debt
+
+Parts of the code are nuanced in ways should be avoided by new contributors.
+Discussions of these points are welcome to help the project rid itself of these
+problematic designs. See [Tech debt index](techdebt).
+
+## Contributors
+
+{%
+   include-markdown "../../../trulens_eval/CONTRIBUTORS.md"
+   heading-offset=2
+%}
+
+
+{%
+   include-markdown "../../../trulens_explain/CONTRIBUTORS.md"
+   heading-offset=2
+%}
