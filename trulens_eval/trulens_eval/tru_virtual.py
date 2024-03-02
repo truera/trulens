@@ -180,10 +180,6 @@ class VirtualRecord(Record):
         for lens, call in calls.items():
             substart_time = datetime.datetime.now()
 
-            # NOTE(piotrm for garrett): that the dashboard timeline has problems
-            # with calls that span too little time so we add some delays to the
-            # recorded perf.
-
             if "stack" not in call:
                 path, method_name = Select.path_and_method(
                     Select.dequalify(lens)
@@ -205,8 +201,10 @@ class VirtualRecord(Record):
 
             subend_time = datetime.datetime.now()
 
-            # Make sure time spans are not zero duration.
-            if subend_time - substart_time == 0:
+            # NOTE(piotrm for garrett): that the dashboard timeline has problems
+            # with calls that span too little time so we add some delays to the
+            # recorded perf.
+            if (subend_time - substart_time).total_seconds() == 0.0:
                 subend_time += datetime.timedelta(microseconds=1)
 
             if "perf" not in call:
@@ -219,8 +217,10 @@ class VirtualRecord(Record):
 
         end_time = datetime.datetime.now()
 
-        # Make sure time spans are not zero duration.
-        if end_time - start_time == 0:
+        # NOTE(piotrm for garrett): that the dashboard timeline has problems
+        # with calls that span too little time so we add some delays to the
+        # recorded perf.
+        if (end_time - start_time).total_seconds() == 0.0:
             end_time += datetime.timedelta(microseconds=1)
 
         if "cost" not in kwargs:
