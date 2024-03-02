@@ -13,9 +13,10 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
-                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
-                    TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
+    Optional, Sequence, Set, Tuple, Type, TypeVar
+)
 
 import pydantic
 
@@ -692,11 +693,19 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 choices = getattr(value, 'choices', None)
                 if choices is not None:
                     # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
-                    return [self._extract_content(choice.message) for choice in choices]
+                    return [
+                        self._extract_content(choice.message)
+                        for choice in choices
+                    ]
                 else:
                     # Recursively extract content from nested pydantic models
-                    return {k: self._extract_content(v) if isinstance(v, (pydantic.BaseModel, dict, list)) else v
-                            for k, v in value.dict().items()}
+                    return {
+                        k:
+                            self._extract_content(v) if
+                            isinstance(v,
+                                       (pydantic.BaseModel, dict, list)) else v
+                        for k, v in value.dict().items()
+                    }
         elif isinstance(value, dict):
             # Check for 'content' key in the dictionary
             content = value.get('content')
@@ -704,7 +713,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 return content
             else:
                 # Recursively extract content from nested dictionaries
-                return {k: self._extract_content(v) if isinstance(v, (dict, list)) else v for k, v in value.items()}
+                return {
+                    k:
+                        self._extract_content(v) if isinstance(v, (dict,
+                                                                   list)) else v
+                    for k, v in value.items()
+                }
         elif isinstance(value, list):
             # Handle lists by extracting content from each item
             return [self._extract_content(item) for item in value]
@@ -761,8 +775,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             return str(focus)
 
         logger.warning(
-            "Could not determine main input/output of %s.",
-            str(all_args)
+            "Could not determine main input/output of %s.", str(all_args)
         )
 
         return "Could not determine main input from " + str(all_args)
@@ -796,7 +809,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         else:
             logger.warning("Could not determine main output from %s.", content)
-            return str(content) if content is not None else "Could not determine main output from " + str(content)
+            return str(
+                content
+            ) if content is not None else "Could not determine main output from " + str(
+                content
+            )
 
     # WithInstrumentCallbacks requirement
     def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
