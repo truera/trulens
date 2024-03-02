@@ -1,7 +1,7 @@
 from concurrent.futures import wait
 import logging
 from typing import Dict, get_args, get_origin, Optional, Tuple, Union
-
+import requests
 import numpy as np
 
 from trulens_eval.feedback.provider.base import Provider
@@ -480,13 +480,16 @@ class Huggingface(Provider):
                 raise RuntimeError(f"Error in API request: {response}, please try again once the endpoint has restarted.")
             # Extract the score from the first element
             score = response[0]['score']
-        else:
-            # If response is not a list, check if it's a proper HTTP response object
+        elif isinstance(response, requests.Response):  # Check if it's an HTTP response
             if response.status_code != 200:
                 raise RuntimeError(f"Error in API request: {response.text}, please try again once the endpoint has restarted.")
-            # Extract the score from the JSON response
             output = response.json()
             score = output[0][0]['score']
+        else:
+            # If neither list nor HTTP response, raise an error
+            raise RuntimeError("Unexpected response type. Please check the API endpoint.")
+                    
+        
         return score
 
 class Dummy(Huggingface):
