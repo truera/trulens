@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Iterable, Tuple
+from typing import Dict, Iterable, Tuple
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -474,7 +474,11 @@ else:
                                 with st.expander(
                                         "Uninstrumented app component details."
                                 ):
-                                    st.json(app_component_json)
+                                    if isinstance(app_component_json, Dict):
+                                        st.json(app_component_json)
+                                    else:
+                                        st.write(app_component_json)
+                                    
                         except Exception:
                             st.write(
                                 f"Recorded invocation by component `{match_query}` but cannot find this component in the app json."
