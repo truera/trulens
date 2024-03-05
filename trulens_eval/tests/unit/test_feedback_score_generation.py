@@ -15,7 +15,7 @@ PATTERN_0_10_ENHANCED: re.Pattern = PATTERN_0_10
 
 test_data = [
     ("The relevance score is 7.", "7"),
-    ("I rate this an 8 out of 10.", "10"),
+    ("I rate this an 8 out of 10.", "10"),  # note that even with the enhanced pattern, this will still fail to extract 8.
     ("This should be a 10!", "10"),
     ("The score is 5", "5"),
     ("A perfect score: 10.", "10"),
