@@ -1202,7 +1202,6 @@ tru.add_feedbacks(feedback_results)
 
 
 from trulens_eval.feedback.provider import AzureOpenAI
-from trulens_eval.utils.generated import re_0_10_rating
 
 class Custom_AzureOpenAI(AzureOpenAI):
     def style_check_professional(self, response: str) -> float:
