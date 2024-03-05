@@ -68,8 +68,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
         # These exist in the bridge but not here so define placeholders.
         RetrieverComponent = EmptyType
 
-        # WithFeedbackFilterNodes = EmptyType
-
         from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
     except ImportError:  # bridge for versions < 0.10
@@ -111,8 +109,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
         from llama_index.tools.types import \
             ToolMetadata  # all of the readable info regarding tools is in this class
         from llama_index.vector_stores.types import VectorStore
-
-        # WithFeedbackFilterNodes = EmptyType
 
         from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
