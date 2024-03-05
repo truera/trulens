@@ -6,18 +6,19 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from pydantic import Field
 
 from trulens_eval.app import App
+from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
+from trulens_eval.utils.python import EmptyType
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
@@ -27,35 +28,33 @@ pp = PrettyPrinter()
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     try:
         import llama_index
+        # misc
+        from llama_index.core.base.base_query_engine import \
+            QueryEngineComponent
         from llama_index.core.base.embeddings.base import BaseEmbedding
+        from llama_index.core.base.llms.types import LLMMetadata
+        # memory
+        from llama_index.core.base.response.schema import Response
         from llama_index.core.chat_engine.types import AgentChatResponse
         from llama_index.core.chat_engine.types import BaseChatEngine
         from llama_index.core.chat_engine.types import \
             StreamingAgentChatResponse
         from llama_index.core.indices.base import BaseIndex
-        # misc
-        from llama_index.core.base.base_query_engine import \
-            QueryEngineComponent
-        from llama_index.core.base.llms.types import LLMMetadata
         from llama_index.core.indices.prompt_helper import PromptHelper
-        from llama_index.core.postprocessor.types import BaseNodePostprocessor
-        from llama_index.core.query_engine import BaseQueryEngine
-        from llama_index.core.retrievers import BaseRetriever
-        from llama_index.core.schema import QueryBundle
-        from llama_index.legacy.llm_predictor import LLMPredictor
-        from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
         # LLMs
         from llama_index.core.llms.base import \
             BaseLLM  # subtype of BaseComponent
-        # memory
-        from llama_index.core.base.response.schema import Response
         from llama_index.core.memory import BaseMemory
         from llama_index.core.node_parser import NodeParser
+        from llama_index.core.postprocessor.types import BaseNodePostprocessor
+        from llama_index.core.query_engine import BaseQueryEngine
         from llama_index.core.question_gen.types import BaseQuestionGenerator
         from llama_index.core.response.schema import StreamingResponse
         from llama_index.core.response_synthesizers import BaseSynthesizer
         from llama_index.core.response_synthesizers import Refine
+        from llama_index.core.retrievers import BaseRetriever
         from llama_index.core.schema import BaseComponent
+        from llama_index.core.schema import QueryBundle
         # agents
         from llama_index.core.tools import BaseTool
         from llama_index.core.tools.types import \
@@ -63,8 +62,16 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
         from llama_index.core.tools.types import \
             ToolMetadata  # all of the readable info regarding tools is in this class
         from llama_index.core.vector_stores.types import VectorStore
+        from llama_index.legacy.llm_predictor import LLMPredictor
+        from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
+
+        # These exist in the bridge but not here so define placeholders.
+        RetrieverComponent = EmptyType
+
+        # WithFeedbackFilterNodes = EmptyType
 
         from trulens_eval.utils.llama import WithFeedbackFilterNodes
+
     except ImportError:  # bridge for versions < 0.10
         import llama_index
         from llama_index.chat_engine.types import AgentChatResponse
@@ -105,6 +112,8 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
             ToolMetadata  # all of the readable info regarding tools is in this class
         from llama_index.vector_stores.types import VectorStore
 
+        # WithFeedbackFilterNodes = EmptyType
+
         from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
 # Need to `from ... import ...` for the below as referring to some of these
@@ -132,63 +141,60 @@ class LlamaInstrument(Instrument):
             LLMPredictor, LLMMetadata, BaseLLMPredictor, VectorStore,
             PromptHelper, BaseEmbedding, NodeParser, ToolMetadata, BaseTool,
             BaseMemory, WithFeedbackFilterNodes, BaseNodePostprocessor,
-            QueryEngineComponent
+            QueryEngineComponent, RetrieverComponent
         }.union(LangChainInstrument.Default.CLASSES())
 
         # Instrument only methods with these names and of these classes. Ok to
         # include llama_index inside methods.
-        METHODS = dict_set_with_multikey(
+        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS),
             {
                 # LLM:
                 ("complete", "stream_complete", "acomplete", "astream_complete"):
-                    lambda o: isinstance(o, BaseLLM),
+                    BaseLLM,
 
                 # BaseTool/AsyncBaseTool:
                 ("__call__", "call"):
-                    lambda o: isinstance(o, BaseTool),
+                    BaseTool,
                 ("acall"):
-                    lambda o: isinstance(o, AsyncBaseTool),
+                    AsyncBaseTool,
 
                 # Memory:
                 ("put"):
-                    lambda o: isinstance(o, BaseMemory),
+                    BaseMemory,
 
                 # Misc.:
                 ("get_response"):
-                    lambda o: isinstance(o, Refine),
+                    Refine,
                 ("predict"):
-                    lambda o: isinstance(o, BaseLLMPredictor),
+                    BaseLLMPredictor,
 
                 # BaseQueryEngine:
                 ("query", "aquery"):
-                    lambda o: isinstance(o, BaseQueryEngine),
+                    BaseQueryEngine,
             
                 # BaseChatEngine/LLM:
                 ("chat", "achat", "stream_chat", "astream_achat"):
-                    lambda o: isinstance(o, (BaseLLM, BaseChatEngine)),
+                    (BaseLLM, BaseChatEngine),
 
                 # BaseRetriever/BaseQueryEngine:
                 ("retrieve", "_retrieve", "_aretrieve"):
-                    lambda o: isinstance(
-                        o, (
+                    (
                             BaseQueryEngine, BaseRetriever,
                             WithFeedbackFilterNodes
-                        )
                     ),
                 
                 # BaseQueryEngine:
                 ("synthesize"):
-                    lambda o: isinstance(o, BaseQueryEngine),
+                    BaseQueryEngine,
 
                 # BaseNodePostProcessor
                 ("_postprocess_nodes"):
-                    lambda o: isinstance(o, (BaseNodePostprocessor)),
+                    BaseNodePostprocessor,
 
                 # Components
                 ("_run_component"):
-                    lambda o:
-                    isinstance(o, (QueryEngineComponent, RetrieverComponent))
+                    (QueryEngineComponent, RetrieverComponent)
             }
         )
 

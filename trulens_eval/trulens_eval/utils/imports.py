@@ -10,7 +10,7 @@ import inspect
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Any, Dict, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Type, Union
 
 import pkg_resources
 from pkg_resources import DistributionNotFound
@@ -273,42 +273,84 @@ REQUIREMENT_NOTEBOOK = format_import_errors(
 
 # Try to pretend to be a type as well as an instance.
 class Dummy(type, object):
+    """Class to pretend to be a module or some other imported object.
+    
+    Will raise an error if accessed in some dynamic way. Accesses that are
+    "static-ish" will try not to raise the exception so things like defining
+    subclasses of a missing class should not raise exception. Dynamic uses are
+    things like calls, use in expressions. Looking up an attribute is static-ish
+    so we don't throw the error at that point but instead make more dummies.
+
+
+    !!! Warning:
+
+        While dummies can be used as types, they return false to all `isinstance`
+        and `issubclass` checks. Further, the use of a dummy in subclassing
+        produces unreliable results with some of the debugging information such
+        as `original_exception` may be inaccassible.
     """
-    Class to pretend to be a module or some other imported object. Will raise an error if accessed
-    in some dynamic way. Accesses that are "static-ish" will try not to raise the exception so
-    things like defining subclasses of a missing class should not raise exception. Dynamic uses are
-    things like calls, use in expressions. Looking up an attribute is static-ish so we don't throw
-    the error at that point but instead make more dummies.
-    """
+
+    def __str__(self) -> str:
+        return(f"Dummy({self.name})")
+
+    def __repr__(self) -> str:
+        return str(self)
 
     def __new__(cls, name, *args, **kwargs):
         if len(args) >= 2 and isinstance(args[1],
                                          dict) and "__classcell__" in args[1]:
-            # (used as type)
+            # Used as type, for subclassing for example.
+
             return type.__new__(cls, name, args[0], args[1])
         else:
-            return type.__new__(cls, name, (object,), {})
+            
+            return type.__new__(cls, name, (cls,), kwargs)
 
     def __init__(
         self,
         name: str,
-        message: str,
-        exception_class: Type[Exception] = ModuleNotFoundError,
-        importer=None
+        *args, **kwargs
     ):
+        
+        if len(args) >= 2 and isinstance(args[1], dict):
+            # Used as type, in subclassing for example.
+
+            src = args[0][0]
+
+            message = src.message
+            importer = src.importer
+            original_exception = src.original_exception
+            exception_class = src.exception_class
+
+        else:
+            message: str = kwargs.get('message', None)
+            exception_class: Type[Exception] = kwargs.get("exception_class", ModuleNotFoundError)
+            importer = kwargs.get("importer", None)
+            original_exception: Optional[Exception] = kwargs.get("original_exception", None)
+
         self.name = name
         self.message = message
         self.importer = importer
         self.exception_class = exception_class
+        self.original_exception = original_exception
 
     def __call__(self, *args, **kwargs):
         raise self.exception_class(self.message)
 
     def __instancecheck__(self, __instance: Any) -> bool:
-        return True
+        """Nothing is an instance of this dummy.
+        
+        !!! Warning:
+            This is to make sure that if something optional gets imported as a
+            dummy and is a class to be instrumented, it will not automatically make
+            the instrumentation class check succeed on all objects.
+        """
+        return False
 
     def __subclasscheck__(self, __subclass: type) -> bool:
-        return True
+        """Nothing is a subclass of this dummy."""
+
+        return False
 
     def _wasused(self, *args, **kwargs):
         raise self.exception_class(self.message)
@@ -353,11 +395,14 @@ class Dummy(type, object):
             return Dummy(
                 name=self.name + "." + name,
                 message=self.message,
-                importer=self.importer
+                importer=self.importer,
+                original_exception=self.original_exception,
+                exception_class=ModuleNotFoundError
             )
 
         # If we are no longer in optional imports context or context said to
         # fail anyway, raise the exception with the optional package message.
+
         raise self.exception_class(self.message)
 
 
@@ -427,9 +472,9 @@ class OptionalImports(object):
             # otherwise we don't want to intercept the error as some modules
             # rely on import failures for various things.
             # HACK012: we have to step back a frame or two here to check where
-            # the original import come from. We skip any frames that refer to
+            # the original import came from. We skip any frames that refer to
             # our overwritten __import__. We have to step back multiple times if
-            # we accidentally nest our OptionalImport context manager.
+            # we (accidentally) nest our OptionalImport context manager.
 
             frame = inspect.currentframe().f_back
             while frame.f_code == self.__import__.__code__:
@@ -445,7 +490,9 @@ class OptionalImports(object):
             return Dummy(
                 name=name,
                 message=self.messages.module_not_found,
-                importer=self
+                importer=self,
+                original_exception=e,
+                exception_class=ModuleNotFoundError
             )
 
         # NOTE(piotrm): This below seems to never be caught. It might be that a different import
