@@ -198,7 +198,7 @@ class SqlAlchemyDB(DB):
         data = []
         with self.Session.begin() as session:
             data = [
-                i.id
+                i.record_id
                 for i in session.query(orm.Record).filter_by(app_id=app_id)
             ]
 
