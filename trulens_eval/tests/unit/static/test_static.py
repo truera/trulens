@@ -93,8 +93,7 @@ class TestStatic(TestCase):
         pass
 
     def test_import_base(self):
-        """
-        Check that all of the base modules that do not depend on optional
+        """Check that all of the base modules that do not depend on optional
         packages can be imported.
         """
 
@@ -108,7 +107,9 @@ class TestStatic(TestCase):
         - All classes mentioned are loaded/importable.
         - All methods associated with a class are actually methods of that
           class.
-        - No class is an alias for a builtin type like Callable.
+        - All classes belong to modules that are to be instrumented. Otherwise
+          this may be a sign that a class is an alias for things like builtin
+          types like functions/callables or None.
         """
 
         for cls in i.include_classes:
