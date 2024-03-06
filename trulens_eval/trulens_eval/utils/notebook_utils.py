@@ -42,7 +42,7 @@ def setup_widget_stdout_stderr():
     display(acc)
     return out_stdout, out_stderr
 
-if not isinstance(register_line_cell_magic, Dummy):
+if not isinstance(register_line_cell_magic, Dummy) and is_notebook():
     @register_line_cell_magic
     def writefileinterpolated(line, cell):
         caller_frame = inspect.stack()[2]
