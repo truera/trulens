@@ -8,7 +8,6 @@ from concurrent import futures
 import datetime
 import logging
 from pprint import PrettyPrinter
-import time
 from typing import Any, ClassVar, Dict, Optional, Union
 
 from pydantic import Field
@@ -37,9 +36,10 @@ pp = PrettyPrinter()
 
 
 class VirtualApp(dict):
-    """
-    A dictionary meant to represent the components of a virtual app. `TruVirtual`
-    will refer to this class as the wrapped app. All calls will be under `VirtualApp.root` 
+    """A dictionary meant to represent the components of a virtual app.
+    
+    `TruVirtual` will refer to this class as the wrapped app. All calls will be
+    under `VirtualApp.root` 
     """
 
     def __setitem__(
@@ -66,25 +66,46 @@ class VirtualApp(dict):
         self.update(temp)
 
     def root(self):
-        # All virtual calls will have this on top of the stack as if their app
-        # was called using this as the main/root method.
+        """All virtual calls will have this on top of the stack as if their app
+        was called using this as the main/root method."""
+
         pass
 
 
-# Create some pyschema instances to refer to things that are either in the
-# virtual app.
 virtual_module = Module(
     package_name="trulens_eval", module_name="trulens_eval.tru_virtual"
 )
-virtual_class = Class(module=virtual_module, name="VirtualApp")
-virtual_object = Obj(cls=virtual_class, id=0)
-virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name="root")
+"""Module to represent the module of virtual apps.
 
-# Method name will be replaced by the last attribute in the selector provided by
-# user:
+Virtual apps will record this as their module.
+"""
+
+virtual_class = Class(module=virtual_module, name="VirtualApp")
+"""Class to represent the class of virtual apps.
+
+Virtual apps will record this as their class.
+"""
+
+virtual_object = Obj(cls=virtual_class, id=0)
+"""Object to represent instances of virtual apps.
+
+Virtual apps will record this as their instance.
+"""
+
+virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name="root")
+"""Method call to represent the root call of virtual apps.
+
+Virtual apps will record this as their root call.
+"""
+
 virtual_method_call = Method(
     cls=virtual_class, obj=virtual_object, name="method_name_not_set"
 )
+"""Method call to represent virtual app calls that do not provide this
+information.
+
+Method name will be replaced by the last attribute in the selector provided by user.
+"""
 
 
 class VirtualRecord(Record):
@@ -117,6 +138,36 @@ class VirtualRecord(Record):
     """
 
     def __init__(self, calls: Dict[serial.Lens, Dict], **kwargs: dict):
+        """Create a record for a virtual app.
+        
+        Many arguments are filled in by default values if not provided. See
+        [Record][trulens_eval.schema.Record] for all arguments. Listing here is
+        only for those which are required for this method or filled with default values.
+
+        Args:
+            calls: A dictionary of calls to be recorded. The keys are selectors
+                and the values are dictionaries with the keys listed in the next
+                section.
+
+            cost: Defaults to zero cost.
+
+            perf: Defaults to time spanning the processing of this virtual
+                record. Note that individual calls also include perf. Time span
+                is extended to make sure it is not of duration zero.
+
+        Call values are dictionaries containing arguments to
+        [RecordAppCall][trulens_eval.schema.RecordAppCall] constructor. The
+        following defaults are used if not provided.
+
+        | PARAMETER | TYPE |DEFAULT |
+        | --- | ---| --- |
+        | `stack` | [List][][[RecordAppCallMethod][trulens_eval.schema.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. | 
+        | `args` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
+        | `rets` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
+        | `perf` | [Perf][trulens_eval.schema.Perf] | Time spanning the processing of this virtual call. |
+        | `pid` | [int][] | `0` |
+        | `tid` | [int][] | `0` |
+        """
         root_call = RecordAppCallMethod(
             path=serial.Lens(), method=virtual_method_root
         )
@@ -127,11 +178,6 @@ class VirtualRecord(Record):
 
         for lens, call in calls.items():
             substart_time = datetime.datetime.now()
-
-            # NOTE(piotrm for garrett): that the dashboard timeline has problems
-            # with calls that span too little time so we add some delays to the
-            # recorded perf.
-            time.sleep(0.1)
 
             if "stack" not in call:
                 path, method_name = Select.path_and_method(
@@ -154,6 +200,12 @@ class VirtualRecord(Record):
 
             subend_time = datetime.datetime.now()
 
+            # NOTE(piotrm for garrett): that the dashboard timeline has problems
+            # with calls that span too little time so we add some delays to the
+            # recorded perf.
+            if (subend_time - substart_time).total_seconds() == 0.0:
+                subend_time += datetime.timedelta(microseconds=1)
+
             if "perf" not in call:
                 call['perf'] = Perf(
                     start_time=substart_time, end_time=subend_time
@@ -163,6 +215,12 @@ class VirtualRecord(Record):
             record_calls.append(rinfo)
 
         end_time = datetime.datetime.now()
+
+        # NOTE(piotrm for garrett): that the dashboard timeline has problems
+        # with calls that span too little time so we add some delays to the
+        # recorded perf.
+        if (end_time - start_time).total_seconds() == 0.0:
+            end_time += datetime.timedelta(microseconds=1)
 
         if "cost" not in kwargs:
             kwargs['cost'] = Cost()

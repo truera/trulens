@@ -12,7 +12,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 from pydantic import Field
 
 from trulens_eval.app import App
-from trulens_eval.instruments import Instrument
+from trulens_eval.instruments import Instrument, ClassFilter
 from trulens_eval.schema import Select
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
@@ -79,29 +79,21 @@ class LangChainInstrument(Instrument):
         }
 
         # Instrument only methods with these names and of these classes.
-        METHODS = dict_set_with_multikey(
+        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             {},
             {
-                ("invoke", "ainvoke"):
-                    lambda o: isinstance(o, RunnableSerializable),
-                ("save_context", "clear"):
-                    lambda o: isinstance(o, BaseMemory),
-                ("run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"):
-                    lambda o: isinstance(o, Chain),
+                ("invoke", "ainvoke"): RunnableSerializable,
+                ("save_context", "clear"): BaseMemory,
+                ("run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"): Chain,
                 (
                     "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
-                ):
-                    lambda o: isinstance(o, (RunnableSerializable)),
+                ): RunnableSerializable,
 
                 # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # the prompt calls might be too small to be interesting
-                ("plan", "aplan"):
-                    lambda o: isinstance(
-                        o, (BaseSingleActionAgent, BaseMultiActionAgent)
-                    ),
-                ("_arun", "_run"):
-                    lambda o: isinstance(o, BaseTool),
+                ("plan", "aplan"): (BaseSingleActionAgent, BaseMultiActionAgent),
+                ("_arun", "_run"): BaseTool,
             }
         )
 

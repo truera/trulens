@@ -7,11 +7,12 @@ from inspect import signature
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Callable, ClassVar, Optional
+from typing import Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
 
 from trulens_eval.app import App
+from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
@@ -21,29 +22,19 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-class TruBasicCallableInstrument(Instrument):
-
-    class Default:
-        CLASSES = lambda: {TruWrapperApp}
-
-        # Instrument only methods with these names and of these classes.
-        METHODS = {"_call": lambda o: isinstance(o, TruWrapperApp)}
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            include_classes=TruBasicCallableInstrument.Default.CLASSES(),
-            include_methods=TruBasicCallableInstrument.Default.METHODS,
-            *args,
-            **kwargs
-        )
-
-
 class TruWrapperApp(object):
-    # This will be wrapped by instrumentation. Because TruWrapperApp may wrap
-    # different types of callables, we cannot patch the signature to anything
-    # consistent. Because of this, the dashboard/record for this call will have
-    # *args, **kwargs instead of what the app actually uses. We also need to
-    # adjust the main_input lookup to get the correct signature. See note there.
+    """Wrapper of basic apps.
+
+    This will be wrapped by instrumentation. 
+
+    !!! Warning:
+        Because TruWrapperApp may wrap different types of callables, we cannot
+        patch the signature to anything consistent. Because of this, the
+        dashboard/record for this call will have *args, **kwargs instead of what
+        the app actually uses. We also need to adjust the main_input lookup to
+        get the correct signature. See note there.
+    """
+
     def _call(self, *args, **kwargs):
         return self._call_fn(*args, **kwargs)
 
@@ -52,6 +43,26 @@ class TruWrapperApp(object):
 
     def __init__(self, call_fn: Callable):
         self._call_fn = call_fn
+
+
+class TruBasicCallableInstrument(Instrument):
+    """Basic app instrumentation."""
+
+    class Default:
+        """Default instrumentation specification for basic apps."""
+
+        CLASSES = lambda: {TruWrapperApp}
+
+        # Instrument only methods with these names and of these classes.
+        METHODS: Dict[str, ClassFilter] = {"_call": TruWrapperApp}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            include_classes=TruBasicCallableInstrument.Default.CLASSES(),
+            include_methods=TruBasicCallableInstrument.Default.METHODS,
+            *args,
+            **kwargs
+        )
 
 
 class TruBasicApp(App):
