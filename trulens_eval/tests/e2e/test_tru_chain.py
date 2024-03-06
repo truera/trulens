@@ -302,7 +302,8 @@ class TestTruChain(JSONTestCase):
                     "end_time",
                     "record_id",
                     "tid",
-                    "pid"
+                    "pid",
+                    "run_id"
                 ]
             )
         )

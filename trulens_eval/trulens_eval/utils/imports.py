@@ -246,6 +246,10 @@ REQUIREMENT_LANGCHAIN = format_import_errors(
     'langchain', purpose="instrumenting langchain apps"
 )
 
+REQUIREMENT_RAILS = format_import_errors(
+    "nemoguardrails", purpose="instrumenting nemo guardrails apps"
+)
+
 REQUIREMENT_PINECONE = format_import_errors(
     # package name is "pinecone-client" but module is "pinecone"
     'pinecone-client',
