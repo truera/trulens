@@ -28,14 +28,11 @@ printf "\n\n" >> break.md
 cat gh_top_intro.md break.md ../trulens_explain/gh_top_intro.md > TOP_README.md
 
 # Create non-jupyter scripts
-OUT_DIR=./getting_started/quickstarts/py_script_quickstarts
-for NOTEBOOK in ${NOTEBOOKS[@]}
-do
-    if [ "$NOTEBOOK" = "all_tools.ipynb" ]; then
-        echo "converting notebook $NOTEBOOK to script"
-        jupyter nbconvert --to script --output-dir $OUT_DIR $NOTEBOOK
-    fi
-done
+OUT_DIR=./getting_started/quickstarts/
+if [ -f "all_tools.ipynb" ]; then
+    echo "converting notebook all_tools.ipynb to script"
+    jupyter nbconvert --to script --output-dir $OUT_DIR all_tools.ipynb
+fi
 # gnu sed/gsed needed on mac:
 SED=`which -a gsed sed | head -n1`
 echo "sed=$SED"
@@ -43,27 +40,24 @@ echo "sed=$SED"
 # Fix nbmerge ids field invalid for ipynb
 $SED -i -e '/\"id\":/d' all_tools.ipynb
 
-for NOTEBOOK in ${NOTEBOOKS[@]}
-do
-    echo "converting notebook $NOTEBOOK to script"
-    jupyter nbconvert --to script --output-dir $OUT_DIR $NOTEBOOK
-done
+if [ -f "all_tools.ipynb" ]; then
+    echo "converting notebook all_tools.ipynb to script"
+    jupyter nbconvert --to script --output-dir $OUT_DIR all_tools.ipynb
+fi
 
-for FILE in ${PY_FILES[@]}
-do
-    echo "fixing $FILE"
+if [ -f "all_tools.py" ]; then
+    echo "fixing all_tools.py"
     ## Remove ipynb JSON calls
-    $SED'' -i -e "/JSON/d" $FILE
+    $SED'' -i -e "/JSON/d" all_tools.py
     ## Replace jupyter display with python print
-    $SED'' -i -e  "s/display/print/g" $FILE
+    $SED'' -i -e  "s/display/print/g" all_tools.py
     ## Remove cell metadata
-    $SED'' -i -e  "/\# In\[/d" $FILE
+    $SED'' -i -e  "/\# In\[/d" all_tools.py
     ## Remove single # lines
-    $SED'' -i -e  "/\#$/d" $FILE
+    $SED'' -i -e  "/\#$/d" all_tools.py
     ## Collapse multiple empty line from sed replacements with a single line
-    $SED'' -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" $FILE
-done
-
+    $SED'' -i -e "/./b" -e ":n" -e "N;s/\\n$//;tn" all_tools.py
+fi
 # Move generated files to their end locations
 
 # EVERYTHING BELOW IS LINKED TO DOCUMENTATION OR TESTS; MAKE SURE YOU UPDATE
@@ -74,4 +68,4 @@ mv README.md ../../trulens_eval/README.md
 mv TOP_README.md ../../README.md
 
 # Trulens tests run off of these files
-mv ./getting_started/quickstarts/py_script_quickstarts/all_tools* ../../trulens_eval/generated_files/
+mv ./getting_started/quickstarts/all_tools* ../../trulens_eval/generated_files/
