@@ -13,7 +13,8 @@ from tests.unit.test import optional_test
 from tests.unit.test import requiredonly_test
 
 import trulens_eval
-from trulens_eval.instruments import Instrument, class_filter_matches
+from trulens_eval.instruments import class_filter_matches
+from trulens_eval.instruments import Instrument
 from trulens_eval.utils.imports import Dummy
 
 # Importing any of these should throw ImportError (or its sublcass
@@ -40,9 +41,7 @@ optional_mods = dict(
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
     ],
-    nemoguardrails=[
-        "trulens_eval.tru_rails"
-    ]
+    nemoguardrails=["trulens_eval.tru_rails"]
 )
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
@@ -117,7 +116,7 @@ class TestStatic(TestCase):
 
         for cls in i.include_classes:
             with self.subTest(cls=cls):
-                if isinstance(cls, Dummy): # (1)
+                if isinstance(cls, Dummy):  # (1)
                     original_exception = cls.original_exception
                     self.fail(
                         f"Instrumented class {cls.name} is dummy meaning it was not importable. Original expception={original_exception}"
@@ -135,9 +134,10 @@ class TestStatic(TestCase):
                             )
                 """
 
-                if not i.to_instrument_module(cls.__module__): #(3)
-                    self.fail(f"Instrumented class {cls} is in module {cls.__module__} which is not to be instrumented.")
-
+                if not i.to_instrument_module(cls.__module__):  #(3)
+                    self.fail(
+                        f"Instrumented class {cls} is in module {cls.__module__} which is not to be instrumented."
+                    )
 
     def test_instrumentation_langchain(self):
         """Check that the langchain instrumentation is up to date."""
