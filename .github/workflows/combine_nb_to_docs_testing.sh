@@ -28,16 +28,14 @@ printf "\n\n" >> break.md
 cat gh_top_intro.md break.md ../trulens_explain/gh_top_intro.md > TOP_README.md
 
 # Create non-jupyter scripts
-OUT_DIR=./py_script_quickstarts
-mkdir -p $OUT_DIR
-NOTEBOOKS=(
-    quickstart.ipynb
-    langchain_quickstart.ipynb
-    llama_index_quickstart.ipynb
-    text2text_quickstart.ipynb
-    all_tools.ipynb
-)
-
+OUT_DIR=./getting_started/quickstarts/py_script_quickstarts
+for NOTEBOOK in ${NOTEBOOKS[@]}
+do
+    if [ "$NOTEBOOK" = "all_tools.ipynb" ]; then
+        echo "converting notebook $NOTEBOOK to script"
+        jupyter nbconvert --to script --output-dir $OUT_DIR $NOTEBOOK
+    fi
+done
 # gnu sed/gsed needed on mac:
 SED=`which -a gsed sed | head -n1`
 echo "sed=$SED"
@@ -50,14 +48,6 @@ do
     echo "converting notebook $NOTEBOOK to script"
     jupyter nbconvert --to script --output-dir $OUT_DIR $NOTEBOOK
 done
-
-PY_FILES=(
-    $OUT_DIR/quickstart.py
-    $OUT_DIR/langchain_quickstart.py
-    $OUT_DIR/llama_index_quickstart.py
-    $OUT_DIR/text2text_quickstart.py
-    $OUT_DIR/all_tools.py
-)
 
 for FILE in ${PY_FILES[@]}
 do
@@ -83,10 +73,5 @@ done
 mv README.md ../../trulens_eval/README.md
 mv TOP_README.md ../../README.md
 
-# Links are referenced in intro.md and gh_intro.md
-# There are symlinks from ../../trulens_eval/generated_files/ to these scripts for testing
-mkdir -p ../../trulens_eval/examples/quickstart/py_script_quickstarts/
-mv ./py_script_quickstarts/*.py ../../trulens_eval/examples/quickstart/py_script_quickstarts/
-
 # Trulens tests run off of these files
-mv ./py_script_quickstarts/all_tools* ../../trulens_eval/generated_files/
+mv ./getting_started/quickstarts/py_script_quickstarts/all_tools* ../../trulens_eval/generated_files/
