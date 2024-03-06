@@ -158,9 +158,13 @@ class Module(SerialModel):
             # running in notebook
             raise ImportError(f"Module {module_name} is not importable.")
 
-        mod = importlib.import_module(module_name)
-        package_name = mod.__package__
-        return Module(package_name=package_name, module_name=module_name)
+        try:
+            mod = importlib.import_module(module_name)
+            package_name = mod.__package__
+            return Module(package_name=package_name, module_name=module_name)
+        
+        except ImportError:
+            return Module(package_name=None, module_name=module_name)
 
     def load(self) -> ModuleType:
         return importlib.import_module(
@@ -584,8 +588,7 @@ CLASS_INFO = "tru_class_info"
 
 
 class WithClassInfo(pydantic.BaseModel):
-    """
-    Mixin to track class information to aid in querying serialized components
+    """Mixin to track class information to aid in querying serialized components
     without having to load them.
     """
 
@@ -625,6 +628,9 @@ class WithClassInfo(pydantic.BaseModel):
         except RuntimeError:
             return obj
 
+        # TODO: We shouldn't be doing a lot of these pydantic details but could
+        # not find how to integrate with existing pydantic functionality. Please
+        # figure it out.
         validated = {}
 
         for k, finfo in cls.model_fields.items():
@@ -641,9 +647,7 @@ class WithClassInfo(pydantic.BaseModel):
 
                     val = subcls.model_validate(val)
             except Exception as e:
-                print(f"raised exception {e}")
-                print(f"on typ={typ}")
-                print(f"on val={val}")
+                pass
 
             validated[k] = val
 
@@ -660,6 +664,7 @@ class WithClassInfo(pydantic.BaseModel):
         cls: Optional[type] = None,
         **kwargs
     ):
+
         if obj is not None:
             warnings.warn(
                 "`obj` does not need to be provided to WithClassInfo any more",

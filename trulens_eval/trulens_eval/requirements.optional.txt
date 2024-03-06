@@ -19,6 +19,9 @@ nbconvert   >= 7.14.2  # for llama_index example using SimlpleDirectoryReader
 llama-index-readers-file >= 0.1.5 # tests and notebooks
 llama-index-readers-web  >= 0.1.6 # tests and notebooks
 
+# Apps: NEMO Guardrails
+nemoguardrails >= 0.7.1
+
 # Models: openai
 openai >= 1.1.1, <2
 httpx  >= 0.23.3  # for openai client serialization
