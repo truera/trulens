@@ -12,3 +12,4 @@ Quickstart notebooks in this section:
 - trulens_eval/text2text_quickstart.ipynb
 - trulens_eval/groundtruth_evals.ipynb
 - trulens_eval/human_feedback.ipynb
+- trulens_eval/prototype_evals.ipynb
