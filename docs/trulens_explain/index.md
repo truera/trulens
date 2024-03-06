@@ -1,2 +1,1 @@
-# [❓ TruLens Explain](/trulens_explain)
-
+# [❓ TruLens Explain](index.md)
