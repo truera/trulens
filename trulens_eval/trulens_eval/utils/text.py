@@ -23,11 +23,13 @@ UNICODE_LOCK = "🔒"
 
 
 def make_retab(tab):
+
     def retab(s):
         lines = s.split("\n")
         return tab + f"\n{tab}".join(lines)
 
     return retab
+
 
 def retab(s: str, tab: str = "\t"):
     return make_retab(tab)(s)
