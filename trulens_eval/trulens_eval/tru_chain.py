@@ -12,7 +12,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 from pydantic import Field
 
 from trulens_eval.app import App
-from trulens_eval.instruments import Instrument
+from trulens_eval.instruments import Instrument, ClassFilter
 from trulens_eval.schema import Select
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
@@ -45,9 +45,10 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     from langchain.schema import BaseMemory  # no methods instrumented
     from langchain.schema import BaseRetriever
     from langchain.schema.document import Document
-    from langchain.schema.language_model import BaseLanguageModel
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
+    # from langchain.schema.language_model import BaseLanguageModel
+    from langchain_core.language_models.base import BaseLanguageModel
     from langchain_core.runnables.base import RunnableSerializable
 
 
@@ -55,8 +56,8 @@ class LangChainInstrument(Instrument):
 
     class Default:
         MODULES = {"langchain"}
+        """Filter for module name prefix for modules to be instrumented."""
 
-        # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
             RunnableSerializable,
             Serializable,
@@ -77,33 +78,30 @@ class LangChainInstrument(Instrument):
             BaseTool,
             WithFeedbackFilterDocuments
         }
+        """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
-        METHODS = dict_set_with_multikey(
+        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             {},
             {
-                ("invoke", "ainvoke"):
-                    lambda o: isinstance(o, RunnableSerializable),
-                ("save_context", "clear"):
-                    lambda o: isinstance(o, BaseMemory),
-                ("run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"):
-                    lambda o: isinstance(o, Chain),
+                ("invoke", "ainvoke"): RunnableSerializable,
+                ("save_context", "clear"): BaseMemory,
+                ("run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"): Chain,
                 (
                     "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
-                ):
-                    lambda o: isinstance(o, (RunnableSerializable)),
+                ): RunnableSerializable,
 
                 # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # the prompt calls might be too small to be interesting
-                ("plan", "aplan"):
-                    lambda o: isinstance(
-                        o, (BaseSingleActionAgent, BaseMultiActionAgent)
-                    ),
-                ("_arun", "_run"):
-                    lambda o: isinstance(o, BaseTool),
+                ("plan", "aplan"): (BaseSingleActionAgent, BaseMultiActionAgent),
+                ("_arun", "_run"): BaseTool,
             }
         )
+        """Methods to be instrumented.
+        
+        Key is method name and value is filter for objects that need those
+        methods instrumented"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(
