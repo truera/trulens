@@ -11,7 +11,7 @@ ALL_NOTEBOOKS=(
     ./getting_started/quickstarts/langchain_quickstart.ipynb
     ./getting_started/quickstarts/llama_index_quickstart.ipynb
     ./getting_started/quickstarts/quickstart.ipynb
-    ./prototype_evals.ipynb
+    ./getting_started/quickstarts/prototype_evals.ipynb
     ./getting_started/quickstarts/human_feedback.ipynb
     ./getting_started/quickstarts/groundtruth_evals.ipynb
     ./tracking/logging/logging.ipynb
