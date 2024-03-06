@@ -39,6 +39,9 @@ optional_mods = dict(
     openai=[
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
+    ],
+    nemoguardrails=[
+        "trulens_eval.tru_rails"
     ]
 )
 
