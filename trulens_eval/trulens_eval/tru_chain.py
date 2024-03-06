@@ -12,7 +12,8 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 from pydantic import Field
 
 from trulens_eval.app import App
-from trulens_eval.instruments import Instrument, ClassFilter
+from trulens_eval.instruments import ClassFilter
+from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Select
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
@@ -84,18 +85,26 @@ class LangChainInstrument(Instrument):
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             {},
             {
-                ("invoke", "ainvoke"): RunnableSerializable,
-                ("save_context", "clear"): BaseMemory,
-                ("run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"): Chain,
+                ("invoke", "ainvoke"):
+                    RunnableSerializable,
+                ("save_context", "clear"):
+                    BaseMemory,
+                (
+                    "run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"
+                ):
+                    Chain,
                 (
                     "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
-                ): RunnableSerializable,
+                ):
+                    RunnableSerializable,
 
                 # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # the prompt calls might be too small to be interesting
-                ("plan", "aplan"): (BaseSingleActionAgent, BaseMultiActionAgent),
-                ("_arun", "_run"): BaseTool,
+                ("plan", "aplan"):
+                    (BaseSingleActionAgent, BaseMultiActionAgent),
+                ("_arun", "_run"):
+                    BaseTool,
             }
         )
         """Methods to be instrumented.
@@ -232,7 +241,7 @@ class TruChain(App):
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> str: # might have to relax to JSON output
+    ) -> str:  # might have to relax to JSON output
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
@@ -251,10 +260,10 @@ class TruChain(App):
 
             if len(vals) == 0:
                 return None
-            
+
             if len(vals) == 1:
                 return vals[0]
-            
+
             if len(vals) > 1:
                 return vals[0]
 

@@ -46,7 +46,7 @@ optional_packages = requirements_of_file(
 all_packages = {**required_packages, **optional_packages}
 
 
-def get_package_version(name: str): # cannot find return type
+def get_package_version(name: str):  # cannot find return type
     """Get the version of a package by its name.
     
     Returns None if not installed.
@@ -54,10 +54,11 @@ def get_package_version(name: str): # cannot find return type
 
     try:
         return parse_version(get_distribution(name).version)
-    
+
     except DistributionNotFound:
         return None
-    
+
+
 def check_imports(ignore_version_mismatch: bool = False):
     """Check required and optional package versions.
 
@@ -328,15 +329,11 @@ class Dummy(type, object):
 
             return type.__new__(cls, name, args[0], args[1])
         else:
-            
+
             return type.__new__(cls, name, (cls,), kwargs)
 
-    def __init__(
-        self,
-        name: str,
-        *args, **kwargs
-    ):
-        
+    def __init__(self, name: str, *args, **kwargs):
+
         if len(args) >= 2 and isinstance(args[1], dict):
             # Used as type, in subclassing for example.
 
@@ -349,9 +346,13 @@ class Dummy(type, object):
 
         else:
             message: str = kwargs.get('message', None)
-            exception_class: Type[Exception] = kwargs.get("exception_class", ModuleNotFoundError)
+            exception_class: Type[Exception] = kwargs.get(
+                "exception_class", ModuleNotFoundError
+            )
             importer = kwargs.get("importer", None)
-            original_exception: Optional[Exception] = kwargs.get("original_exception", None)
+            original_exception: Optional[Exception] = kwargs.get(
+                "original_exception", None
+            )
 
         self.name = name
         self.message = message
@@ -543,7 +544,9 @@ class OptionalImports(object):
         # and just let the already-overridden one do its thing.
 
         if "trulens_eval" in str(builtins.__import__):
-            logger.debug("Nested optional imports context used. This context will be ignored.")
+            logger.debug(
+                "Nested optional imports context used. This context will be ignored."
+            )
         else:
             builtins.__import__ = self.__import__
 
@@ -570,19 +573,23 @@ class OptionalImports(object):
             if exc_value.msg.startswith(self.messages.module_not_found):
                 # Don't add more to the message if it already includes our instructions.
                 raise exc_value
-            
+
             raise ModuleNotFoundError(
-                self.messages.module_not_found + "\nError that caused this problem:\n\n" + retab(tab="    ", s=repr(exc_value))
+                self.messages.module_not_found +
+                "\nError that caused this problem:\n\n" +
+                retab(tab="    ", s=repr(exc_value))
             ) from exc_value
 
         elif isinstance(exc_value, ImportError):
             if exc_value.msg.startswith(self.messages.import_error):
                 # Don't add more to the message if it already includes our instructions.
                 raise exc_value
-            
+
             raise ImportError(
-                self.messages.import_error + "\nError that caused this problem:\n\n" + retab(tab="    ", s=repr(exc_value))
+                self.messages.import_error +
+                "\nError that caused this problem:\n\n" +
+                retab(tab="    ", s=repr(exc_value))
             ) from exc_value
-        
+
         else:
             raise exc_value

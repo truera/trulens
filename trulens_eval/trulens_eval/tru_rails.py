@@ -14,7 +14,8 @@ from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.feedback import feedback
-from trulens_eval.instruments import ClassFilter, Instrument
+from trulens_eval.instruments import ClassFilter
+from trulens_eval.instruments import Instrument
 from trulens_eval.schema import Select
 from trulens_eval.tru_chain import LangChainInstrument
 from trulens_eval.utils.containers import dict_set_with_multikey
@@ -98,9 +99,11 @@ class RailsActionSelect(Select):
     
     Equivalent to `$last_bot_message` in colang."""
 
+
 # NOTE(piotrm): Cannot have this inside FeedbackActions presently due to perhaps
 # some closure-related issues with the @action decorator below.
 registered_feedback_functions = {}
+
 
 class FeedbackActions():
     """
@@ -110,8 +113,8 @@ class FeedbackActions():
 
     @staticmethod
     def register_feedback_functions(
-        *args: Tuple[feedback.Feedback, ...],
-        **kwargs: Dict[str, feedback.Feedback]
+        *args: Tuple[feedback.Feedback, ...], **kwargs: Dict[str,
+                                                             feedback.Feedback]
     ):
         """Register one or more feedback functions to use in rails `feedback`
         action.
@@ -135,11 +138,16 @@ class FeedbackActions():
                     f"Invalid feedback function: {feedback_instance}; "
                     f"expected a Feedback class instance."
                 )
-            print(f"registered feedback function under name {feedback_instance.name}")
+            print(
+                f"registered feedback function under name {feedback_instance.name}"
+            )
             registered_feedback_functions[feedback_instance.name] = feedback
 
     @staticmethod
-    def action_of_feedback(feedback_instance: feedback.Feedback, verbose: bool=False) -> Callable:
+    def action_of_feedback(
+        feedback_instance: feedback.Feedback,
+        verbose: bool = False
+    ) -> Callable:
         """Create a custom rails action for the given feedback function.
         
         Args:
@@ -161,7 +169,9 @@ class FeedbackActions():
         @action(name=feedback_instance.name)
         async def run_feedback(*args, **kwargs):
             if verbose:
-                print(f"Running feedback function {feedback_instance.name} with:")
+                print(
+                    f"Running feedback function {feedback_instance.name} with:"
+                )
                 print(f"  args = {args}")
                 print(f"  kwargs = {kwargs}")
 
@@ -188,7 +198,6 @@ class FeedbackActions():
         function: Optional[str] = None,
         selectors: Optional[Dict[str, Union[str, Lens]]] = None,
         verbose: bool = False
-
     ) -> ActionResult:
         """Run the specified feedback function from trulens_eval.
         
@@ -252,13 +261,12 @@ class FeedbackActions():
         """
 
         feedback_function = registered_feedback_functions.get(function)
-        
 
         if feedback_function is None:
             raise ValueError(
                 f"Invalid feedback function: {function}; "
-                f"there is/are {len(registered_feedback_functions)} registered function(s):\n\t" + 
-                "\n\t".join(registered_feedback_functions.keys()) + "\n"
+                f"there is/are {len(registered_feedback_functions)} registered function(s):\n\t"
+                + "\n\t".join(registered_feedback_functions.keys()) + "\n"
             )
 
         fname = feedback_function.name
@@ -268,9 +276,10 @@ class FeedbackActions():
                 f"Need selectors for feedback function: {fname} "
                 f"with signature {inspect.signature(feedback_function.imp)}"
             )
-        
+
         selectors = {
-            argname: (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
+            argname:
+            (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
             for argname, arglens in selectors.items()
         }
 
@@ -285,10 +294,14 @@ class FeedbackActions():
             for argname, lens in feedback_function.selectors.items():
                 print(f"  {argname} = ", end=None)
                 # use pretty print for the potentially big thing here:
-                print(retab(tab="    ", s=pformat(lens.get_sole_item(source_data))))
-    
+                print(
+                    retab(
+                        tab="    ", s=pformat(lens.get_sole_item(source_data))
+                    )
+                )
+
         context_updates = {}
-        
+
         try:
             result = feedback_function.run(source_data=source_data)
             context_updates["result"] = result.result
@@ -316,39 +329,37 @@ class RailsInstrument(Instrument):
     class Default:
         """Default instrumentation specification."""
 
-        MODULES = {"nemoguardrails"}.union(
-            LangChainInstrument.Default.MODULES
-        )
+        MODULES = {"nemoguardrails"}.union(LangChainInstrument.Default.MODULES)
         """Modules to instrument by name prefix.
         
         Note that nemo uses langchain internally for some things.
         """
 
         CLASSES = lambda: {
-            LLMRails, KnowledgeBase, LLMGenerationActions, ActionDispatcher, FeedbackActions
+            LLMRails, KnowledgeBase, LLMGenerationActions, ActionDispatcher,
+            FeedbackActions
         }.union(LangChainInstrument.Default.CLASSES())
         """Instrument only these classes."""
 
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
-            dict(LangChainInstrument.Default.METHODS), # copy
+            dict(LangChainInstrument.Default.METHODS),  # copy
             {
-                ("execute_action"): ActionDispatcher,
+                ("execute_action"):
+                    ActionDispatcher,
                 (
-                    "generate", "generate_async",
-                    "stream_async",
-                    "generate_events", "generate_events_async", "_get_events_for_messages"
-                ): LLMRails,
-                "search_relevant_chunks": KnowledgeBase,
+                    "generate", "generate_async", "stream_async", "generate_events", "generate_events_async", "_get_events_for_messages"
+                ):
+                    LLMRails,
+                "search_relevant_chunks":
+                    KnowledgeBase,
                 (
-                    "generate_user_intent",
-                    "generate_next_step",
-                    "generate_bot_message",
-                    "generate_value",
-                    "generate_intent_steps_message"
-                ): LLMGenerationActions,
+                    "generate_user_intent", "generate_next_step", "generate_bot_message", "generate_value", "generate_intent_steps_message"
+                ):
+                    LLMGenerationActions,
                 # TODO: Include feedback method in FeedbackActions, currently
                 # bugged and will not be logged.
-                "feedback": FeedbackActions, 
+                "feedback":
+                    FeedbackActions,
             }
         )
         """Instrument only methods with these names and of these classes."""
@@ -420,12 +431,8 @@ class TruRails(App):
 
         return jsonify(bindings.arguments)
 
-
     @classmethod
-    def select_context(
-        cls,
-        app: Optional[LLMRails] = None
-    ) -> Lens:
+    def select_context(cls, app: Optional[LLMRails] = None) -> Lens:
         """
         Get the path to the context in the query output.
         """

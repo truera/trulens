@@ -15,7 +15,8 @@ from trulens_eval.app import App
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.containers import dict_set_with_multikey
-from trulens_eval.utils.imports import Dummy, get_package_version
+from trulens_eval.utils.imports import Dummy
+from trulens_eval.utils.imports import get_package_version
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
@@ -26,7 +27,6 @@ from trulens_eval.utils.serial import Lens
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
-
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     import llama_index
@@ -43,7 +43,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     if not legacy:
         # Check if llama_index is new enough.
 
-        if version  < parse_version("0.10.0"):
+        if version < parse_version("0.10.0"):
             legacy = True
 
     if not legacy:
@@ -158,7 +158,9 @@ class LlamaInstrument(Instrument):
             dict(LangChainInstrument.Default.METHODS),
             {
                 # LLM:
-                ("complete", "stream_complete", "acomplete", "astream_complete"):
+                (
+                    "complete", "stream_complete", "acomplete", "astream_complete"
+                ):
                     BaseLLM,
 
                 # BaseTool/AsyncBaseTool:
@@ -180,18 +182,15 @@ class LlamaInstrument(Instrument):
                 # BaseQueryEngine:
                 ("query", "aquery"):
                     BaseQueryEngine,
-            
+
                 # BaseChatEngine/LLM:
                 ("chat", "achat", "stream_chat", "astream_achat"):
                     (BaseLLM, BaseChatEngine),
 
                 # BaseRetriever/BaseQueryEngine:
                 ("retrieve", "_retrieve", "_aretrieve"):
-                    (
-                            BaseQueryEngine, BaseRetriever,
-                            WithFeedbackFilterNodes
-                    ),
-                
+                    (BaseQueryEngine, BaseRetriever, WithFeedbackFilterNodes),
+
                 # BaseQueryEngine:
                 ("synthesize"):
                     BaseQueryEngine,
@@ -201,8 +200,7 @@ class LlamaInstrument(Instrument):
                     BaseNodePostprocessor,
 
                 # Components
-                ("_run_component"):
-                    (QueryEngineComponent, RetrieverComponent)
+                ("_run_component"): (QueryEngineComponent, RetrieverComponent)
             }
         )
 
