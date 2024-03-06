@@ -137,7 +137,13 @@ class VirtualRecord(Record):
         ```
     """
 
-    def __init__(self, calls: Dict[serial.Lens, Dict], **kwargs: dict):
+    def __init__(
+        self,
+        calls: Dict[serial.Lens, Dict],
+        cost: Optional[Cost]=None,
+        perf: Optional[Perf]=None,
+        **kwargs: dict
+    ):
         """Create a record for a virtual app.
         
         Many arguments are filled in by default values if not provided. See
@@ -168,6 +174,11 @@ class VirtualRecord(Record):
         | `pid` | [int][] | `0` |
         | `tid` | [int][] | `0` |
         """
+
+
+        kwargs['cost'] = cost
+        kwargs['perf'] = perf
+
         root_call = RecordAppCallMethod(
             path=serial.Lens(), method=virtual_method_root
         )

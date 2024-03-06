@@ -82,7 +82,7 @@ understandable. If you find something confusing, it most likely is for other
 people as well. Help us be better!
 
 Big parts of the code base currently do not follow the code standards outlined
-in [Standards index](standards). Many good contributions can be made in adapting
+in [Standards index](standards.md). Many good contributions can be made in adapting
 us to the standards.
 
 ## 👀 Things to be Aware Of
@@ -90,13 +90,13 @@ us to the standards.
 ### ✅ Standards
 
 We try to respect various code, testing, and documentation
-standards outlined in the [Standards index](standards).
+standards outlined in the [Standards index](standards.md).
 
 ### 💣 Tech Debt
 
 Parts of the code are nuanced in ways should be avoided by new contributors.
 Discussions of these points are welcome to help the project rid itself of these
-problematic designs. See [Tech debt index](techdebt).
+problematic designs. See [Tech debt index](techdebt.md).
 
 ## Contributors
 
