@@ -162,7 +162,7 @@ class Module(SerialModel):
             mod = importlib.import_module(module_name)
             package_name = mod.__package__
             return Module(package_name=package_name, module_name=module_name)
-        
+
         except ImportError:
             return Module(package_name=None, module_name=module_name)
 

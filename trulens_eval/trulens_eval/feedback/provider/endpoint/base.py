@@ -10,8 +10,10 @@ import random
 import sys
 from time import sleep
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
-                    Sequence, Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
+    Type, TypeVar
+)
 
 from pydantic import Field
 import requests
@@ -386,7 +388,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
                 if wrapped_method_filter(produced_func):
 
-                    logger.debug("Instrumenting %s", callable_name(produced_func))
+                    logger.debug(
+                        "Instrumenting %s", callable_name(produced_func)
+                    )
 
                     instrumented_produced_func = self.wrap_function(
                         produced_func
