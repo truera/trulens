@@ -8,32 +8,51 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
+from pkg_resources import parse_version
 from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
-from trulens_eval.utils.python import EmptyType
 from trulens_eval.utils.containers import dict_set_with_multikey
+from trulens_eval.utils.imports import Dummy, get_package_version
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.python import EmptyType
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
+
 with OptionalImports(messages=REQUIREMENT_LLAMA):
-    try:
-        import llama_index
-        # misc
+    import llama_index
+
+    version = get_package_version("llama_index")
+
+    # If llama index is not installed, will get a dummy for llama_index. In that
+    # case or if it is installed and sufficiently new version, continue with
+    # this set of imports. We don't want to partially run the new imports and
+    # fail midway to continue with the legacy imports.
+
+    legacy: bool = isinstance(llama_index, Dummy)
+
+    if not legacy:
+        # Check if llama_index is new enough.
+
+        if version  < parse_version("0.10.0"):
+            legacy = True
+
+    if not legacy:
+        from llama_index.core.base.base_query_engine import BaseQueryEngine
         from llama_index.core.base.base_query_engine import \
             QueryEngineComponent
         from llama_index.core.base.embeddings.base import BaseEmbedding
+        from llama_index.core.base.llms.base import BaseLLM
         from llama_index.core.base.llms.types import LLMMetadata
-        # memory
         from llama_index.core.base.response.schema import Response
         from llama_index.core.chat_engine.types import AgentChatResponse
         from llama_index.core.chat_engine.types import BaseChatEngine
@@ -41,13 +60,9 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
             StreamingAgentChatResponse
         from llama_index.core.indices.base import BaseIndex
         from llama_index.core.indices.prompt_helper import PromptHelper
-        # LLMs
-        from llama_index.core.llms.base import \
-            BaseLLM  # subtype of BaseComponent
-        from llama_index.core.memory import BaseMemory
-        from llama_index.core.node_parser import NodeParser
+        from llama_index.core.memory.types import BaseMemory
+        from llama_index.core.node_parser.interface import NodeParser
         from llama_index.core.postprocessor.types import BaseNodePostprocessor
-        from llama_index.core.query_engine import BaseQueryEngine
         from llama_index.core.question_gen.types import BaseQuestionGenerator
         from llama_index.core.response.schema import StreamingResponse
         from llama_index.core.response_synthesizers import BaseSynthesizer
@@ -55,12 +70,9 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
         from llama_index.core.retrievers import BaseRetriever
         from llama_index.core.schema import BaseComponent
         from llama_index.core.schema import QueryBundle
-        # agents
-        from llama_index.core.tools import BaseTool
-        from llama_index.core.tools.types import \
-            AsyncBaseTool  # subtype of BaseTool
-        from llama_index.core.tools.types import \
-            ToolMetadata  # all of the readable info regarding tools is in this class
+        from llama_index.core.tools.types import AsyncBaseTool
+        from llama_index.core.tools.types import BaseTool
+        from llama_index.core.tools.types import ToolMetadata
         from llama_index.core.vector_stores.types import VectorStore
         from llama_index.legacy.llm_predictor import LLMPredictor
         from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
@@ -70,28 +82,31 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
 
         from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
-    except ImportError:  # bridge for versions < 0.10
-        import llama_index
+    else:
+        # Otherwise llama_index is installed but is old so we have to use older imports.
+        # Bridge for versions < 0.10
+
+        logger.warning(
+            "Using legacy llama_index version %s. Consider upgrading to 0.10.0 or later.",
+            version
+        )
+
         from llama_index.chat_engine.types import AgentChatResponse
         from llama_index.chat_engine.types import BaseChatEngine
         from llama_index.chat_engine.types import StreamingAgentChatResponse
         from llama_index.core.base_query_engine import BaseQueryEngine
         from llama_index.core.base_query_engine import QueryEngineComponent
-        # retriever
         from llama_index.core.base_retriever import BaseRetriever
         from llama_index.core.base_retriever import RetrieverComponent
         from llama_index.embeddings.base import BaseEmbedding
         from llama_index.indices.base import BaseIndex
-        # misc
         from llama_index.indices.prompt_helper import PromptHelper
         from llama_index.indices.query.schema import QueryBundle
         from llama_index.indices.service_context import ServiceContext
         from llama_index.llm_predictor import LLMPredictor
         from llama_index.llm_predictor.base import BaseLLMPredictor
         from llama_index.llm_predictor.base import LLMMetadata
-        # LLMs
-        from llama_index.llms.base import BaseLLM  # subtype of BaseComponent
-        # memory
+        from llama_index.llms.base import BaseLLM
         from llama_index.memory import BaseMemory
         from llama_index.node_parser.interface import NodeParser
         from llama_index.postprocessor.types import BaseNodePostprocessor
@@ -102,12 +117,9 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
         from llama_index.response_synthesizers.base import BaseSynthesizer
         from llama_index.response_synthesizers.refine import Refine
         from llama_index.schema import BaseComponent
-        # agents
-        from llama_index.tools.types import \
-            AsyncBaseTool  # subtype of BaseTool
+        from llama_index.tools.types import AsyncBaseTool
         from llama_index.tools.types import BaseTool
-        from llama_index.tools.types import \
-            ToolMetadata  # all of the readable info regarding tools is in this class
+        from llama_index.tools.types import ToolMetadata
         from llama_index.vector_stores.types import VectorStore
 
         from trulens_eval.utils.llama import WithFeedbackFilterNodes
