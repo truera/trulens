@@ -479,8 +479,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     manage_pending_feedback_results_thread: Optional[threading.Thread] = \
         pydantic.Field(exclude=True, default=None)
-    """Thread for manager of pending feedback results queue. See
-    _manage_pending_feedback_results."""
+    """Thread for manager of pending feedback results queue.
+    
+    See _manage_pending_feedback_results."""
 
     def __init__(
         self,
@@ -513,12 +514,6 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             pass
 
         if self.feedback_mode == FeedbackMode.WITH_APP_THREAD:
-            # EXPERIMENTAL: Start the thread that manages the queue of records
-            # with pending feedback results. This is meant to be run
-            # permentantly in a separate thread. It will remove records from the
-            # queue `records_with_pending_feedback_results` as their feedback
-            # results are computed and makes sure the queue does not keep
-            # growing.
             self._start_manage_pending_feedback_results()
 
         self._tru_post_init()
@@ -528,12 +523,13 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         pass
 
     def _start_manage_pending_feedback_results(self) -> None:
-        """
-        EXPERIMENTAL: Start the thread that manages the queue of records with
-        pending feedback results. This is meant to be run permentantly in a
-        separate thread. It will remove records from the queue
-        `records_with_pending_feedback_results` as their feedback results are
-        computed and makes sure the queue does not keep growing.
+        """Start the thread that manages the queue of records with
+        pending feedback results.
+        
+        This is meant to be run permentantly in a separate thread. It will
+        remove records from the queue `records_with_pending_feedback_results` as
+        their feedback results are computed and makes sure the queue does not
+        keep growing.
         """
 
         if self.manage_pending_feedback_results_thread is not None:
@@ -546,8 +542,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         self.manage_pending_feedback_results_thread.start()
 
     def _manage_pending_feedback_results(self) -> None:
-        """
-        EXPERIMENTAL: Manage the queue of records with pending feedback results.
+        """Manage the queue of records with pending feedback results.
+
         This is meant to be run permentantly in a separate thread. It will
         remove records from the queue records_with_pending_feedback_results as
         their feedback results are computed and makes sure the queue does not
@@ -602,7 +598,17 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     def _tru_post_init(self):
         """
-        Database-related initialization.
+        Database-related initialization and additional data checks.
+
+        DB:
+            - Insert the app into the database.
+            - Insert feedback function definitions into the database.
+
+        Checks:
+            - In deferred mode, try to serialize and deserialize feedback functions.
+            - Check that feedback function selectors are likely to refer to expected
+                app or record components.
+        
         """
 
         if self.tru is None:
@@ -645,6 +651,15 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                     raise Exception(
                         f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
                     )
+                
+        for feedback in self.feedbacks:
+            feedback.check_selectors(
+                app=self, 
+                # Don't have a record yet, but use an empty one for the non-call related fields.
+                record=Record(), 
+                source_data={'__record__': {'app': self.app}} # And use self.app for the calls. 
+                # Note: record.layout_calls_as_app will produce the same structure near the root of the record as the app.
+            )
 
     def main_call(self, human: str) -> str:
         """If available, a single text to a single text invocation of this app."""
@@ -734,7 +749,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             focus = self._extract_content(focus)
 
             if not isinstance(focus, Sequence):
-                logger.warning(f"focus {focus} is not a sequence")
+                logger.warning("Focus %s is not a sequence.", focus)
                 break
 
         if isinstance(focus, JSON_BASES):
@@ -754,7 +769,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             focus = self._extract_content(focus)
 
             if not isinstance(focus, Sequence):
-                logger.warning(f"focus {focus} is not a sequence")
+                logger.warning("Focus %s is not a sequence.", focus)
                 break
 
         if isinstance(focus, JSON_BASES):
@@ -814,8 +829,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
                 if path != old_path:
                     logger.warning(
-                        f"Method {func} was already instrumented on path {old_path}. "
-                        f"Calls at {path} may not be recorded."
+                        "Method %s was already instrumented on path %s. "
+                        "Calls at %s may not be recorded.", func, old_path, path
                     )
 
                 return
@@ -1275,7 +1290,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
         """
-        Enumerate instrumented components and their categories.
+        Iteration over instrumented components and their categories.
         """
 
         for q, c in instrumented_component_views(self.model_dump()):
@@ -1305,9 +1320,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         )
 
     def print_instrumented_methods(self) -> None:
-        """
-        Print instrumented methods.
-        """
+        """Print instrumented methods."""
 
         print(self.format_instrumented_methods())
 

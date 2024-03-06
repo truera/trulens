@@ -378,8 +378,8 @@ class Feedback(FeedbackDefinition):
             )
             if "self" in par_names:
                 logger.warning(
-                    f"Feedback function `{self.imp.__name__}` has `self` as argument. "
-                    "Perhaps it is static method or its Provider class was not initialized?"
+                    "Feedback function `%s` has `self` as argument. "
+                    "Perhaps it is static method or its Provider class was not initialized?", self.imp.__name__
                 )
             if len(par_names) == 0:
                 raise TypeError(
@@ -415,6 +415,7 @@ class Feedback(FeedbackDefinition):
             higher_is_better=self.higher_is_better
         )
 
+    # alias
     on_input = on_prompt
 
     def on_response(self, arg: Optional[str] = None) -> Feedback:
@@ -439,6 +440,7 @@ class Feedback(FeedbackDefinition):
             higher_is_better=self.higher_is_better
         )
 
+    # alias
     on_output = on_response
 
     def on(self, *args, **kwargs) -> Feedback:
@@ -464,6 +466,17 @@ class Feedback(FeedbackDefinition):
             name=self.supplied_name,
             higher_is_better=self.higher_is_better
         )
+
+    def check_selectors(
+        self,
+        app: Union[AppDefinition, JSON],
+        record: Record,
+        source_data: Dict[str, Any]
+    ) -> bool:
+        """
+        Check that the selectors are valid for the given app and record.
+        """
+        return True
 
     def run(
         self, app: Union[AppDefinition, JSON], record: Record
