@@ -161,7 +161,7 @@ class VirtualRecord(Record):
 
         | PARAMETER | TYPE |DEFAULT |
         | --- | ---| --- |
-        | `stack` | [List][][[RecordAppCallMethod][trulens_eval.schema.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. | 
+        | `stack` | [List][typing.List][[RecordAppCallMethod][trulens_eval.schema.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. | 
         | `args` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
         | `rets` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
         | `perf` | [Perf][trulens_eval.schema.Perf] | Time spanning the processing of this virtual call. |
