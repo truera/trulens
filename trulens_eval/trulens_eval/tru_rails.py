@@ -14,7 +14,7 @@ from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.feedback import feedback
-from trulens_eval.instruments import Instrument
+from trulens_eval.instruments import ClassFilter, Instrument
 from trulens_eval.schema import Select
 from trulens_eval.tru_chain import LangChainInstrument
 from trulens_eval.utils.containers import dict_set_with_multikey
@@ -38,7 +38,6 @@ with OptionalImports(messages=REQUIREMENT_RAILS):
     from nemoguardrails.actions.actions import action
     from nemoguardrails.actions.actions import ActionResult
     from nemoguardrails.actions.llm.generation import LLMGenerationActions
-    from nemoguardrails.flows.runtime import Runtime
     from nemoguardrails.kb.kb import KnowledgeBase
     from nemoguardrails.rails.llm.llmrails import LLMRails
 
@@ -46,11 +45,12 @@ OptionalImports(messages=REQUIREMENT_RAILS).assert_installed(nemoguardrails)
 
 
 class RailsActionSelect(Select):
-    """
-    Selector shorthands for NEMO guardrails apps when used for evaluating
-    feedback in actions. These should not be used for feedback functions given
-    to `TruRails` but instead for selectors in the `FeedbackActions` action
-    invoked from with a rails app.
+    """Selector shorthands for NEMO guardrails apps when used for evaluating
+    feedback in actions.
+    
+    These should not be used for feedback functions given to `TruRails` but
+    instead for selectors in the `FeedbackActions` action invoked from with a
+    rails app.
     """
 
     Action = Lens().action
@@ -325,35 +325,30 @@ class RailsInstrument(Instrument):
         """
 
         CLASSES = lambda: {
-            LLMRails, KnowledgeBase, LLMGenerationActions, Runtime, ActionDispatcher, FeedbackActions
+            LLMRails, KnowledgeBase, LLMGenerationActions, ActionDispatcher, FeedbackActions
         }.union(LangChainInstrument.Default.CLASSES())
         """Instrument only these classes."""
 
-        METHODS = dict_set_with_multikey(
+        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS), # copy
             {
-                ("execute_action"): lambda o: isinstance(o, ActionDispatcher),
+                ("execute_action"): ActionDispatcher,
                 (
                     "generate", "generate_async",
                     "stream_async",
                     "generate_events", "generate_events_async", "_get_events_for_messages"
-                ): lambda o: isinstance(o, LLMRails),
-                "search_relevant_chunks": lambda o: isinstance(o, KnowledgeBase),
+                ): LLMRails,
+                "search_relevant_chunks": KnowledgeBase,
                 (
                     "generate_user_intent",
                     "generate_next_step",
                     "generate_bot_message",
                     "generate_value",
                     "generate_intent_steps_message"
-                ): lambda o: isinstance(o, LLMGenerationActions),
-                (
-                    "generate_events",
-                    "compute_next_steps"
-                ): lambda o: isinstance(o, Runtime),
-
+                ): LLMGenerationActions,
                 # TODO: Include feedback method in FeedbackActions, currently
                 # bugged and will not be logged.
-                "feedback": lambda o: isinstance(o, FeedbackActions), 
+                "feedback": FeedbackActions, 
             }
         )
         """Instrument only methods with these names and of these classes."""
