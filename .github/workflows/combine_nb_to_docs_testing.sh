@@ -8,14 +8,14 @@ rm -rf all_tools.ipynb
 # IF MOVING ANY IPYNB, MAKE SURE TO RE-SYMLINK. MANY IPYNB REFERENCED HERE LIVE
 # IN OTHER PATHS
 ALL_NOTEBOOKS=(
-    langchain_quickstart.ipynb
-    llama_index_quickstart.ipynb
-    quickstart.ipynb
-    prototype_evals.ipynb
-    human_feedback.ipynb
-    groundtruth_evals.ipynb
-    logging.ipynb
-    custom_feedback_functions.ipynb
+    ./getting_started/quickstarts/langchain_quickstart.ipynb
+    ./getting_started/quickstarts/llama_index_quickstart.ipynb
+    ./getting_started/quickstarts/quickstart.ipynb
+    ./prototype_evals.ipynb
+    ./getting_started/quickstarts/human_feedback.ipynb
+    ./getting_started/quickstarts/groundtruth_evals.ipynb
+    ./tracking/logging/logging.ipynb
+    ./evaluation/feedback_implementations/custom_feedback_functions.ipynb
 )
 echo "Merging notebooks to all_tools.ipynb: ${ALL_NOTEBOOKS[@]}"
 nbmerge ${ALL_NOTEBOOKS[@]} --output all_tools.ipynb
@@ -58,6 +58,7 @@ PY_FILES=(
     $OUT_DIR/text2text_quickstart.py
     $OUT_DIR/all_tools.py
 )
+
 for FILE in ${PY_FILES[@]}
 do
     echo "fixing $FILE"
@@ -88,4 +89,4 @@ mkdir -p ../../trulens_eval/examples/quickstart/py_script_quickstarts/
 mv ./py_script_quickstarts/*.py ../../trulens_eval/examples/quickstart/py_script_quickstarts/
 
 # Trulens tests run off of these files
-mv all_tools* ../../trulens_eval/generated_files/
+mv ./py_script_quickstarts/all_tools* ../../trulens_eval/generated_files/
