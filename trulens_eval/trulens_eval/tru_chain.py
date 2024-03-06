@@ -45,9 +45,10 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     from langchain.schema import BaseMemory  # no methods instrumented
     from langchain.schema import BaseRetriever
     from langchain.schema.document import Document
-    from langchain.schema.language_model import BaseLanguageModel
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
+    # from langchain.schema.language_model import BaseLanguageModel
+    from langchain_core.language_models.base import BaseLanguageModel
     from langchain_core.runnables.base import RunnableSerializable
 
 
@@ -55,8 +56,8 @@ class LangChainInstrument(Instrument):
 
     class Default:
         MODULES = {"langchain"}
+        """Filter for module name prefix for modules to be instrumented."""
 
-        # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
             RunnableSerializable,
             Serializable,
@@ -77,6 +78,7 @@ class LangChainInstrument(Instrument):
             BaseTool,
             WithFeedbackFilterDocuments
         }
+        """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
@@ -96,6 +98,10 @@ class LangChainInstrument(Instrument):
                 ("_arun", "_run"): BaseTool,
             }
         )
+        """Methods to be instrumented.
+        
+        Key is method name and value is filter for objects that need those
+        methods instrumented"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(

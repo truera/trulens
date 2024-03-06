@@ -103,7 +103,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         """
 
         super().__init__(
-            feedback=feedback, threshold=threshold, *args, **kwargs
+            *args, feedback=feedback, threshold=threshold, **kwargs
         )
 
     # Signature must match
