@@ -39,6 +39,9 @@ optional_mods = dict(
     openai=[
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
+    ],
+    nemoguardrails=[
+        "trulens_eval.tru_rails"
     ]
 )
 
@@ -151,6 +154,13 @@ class TestStatic(TestCase):
 
         self._test_instrumentation(LlamaInstrument())
 
+    @optional_test
+    def test_instrumentation_nemo(self):
+        """Check that the nemo guardrails instrumentation is up to date."""
+
+        from trulens_eval.tru_rails import RailsInstrument
+
+        self._test_instrumentation(RailsInstrument())
 
     @requiredonly_test
     def test_import_optional_fail(self):

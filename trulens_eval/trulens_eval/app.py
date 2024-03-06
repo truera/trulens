@@ -592,10 +592,15 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         if type(app).__module__.startswith("llama_index"):
             from trulens_eval.tru_llama import TruLlama
             return TruLlama.select_context(app)
-
-        raise ValueError(
-            f"Could not determine context from unrecognized `app` type {type(app)}."
-        )
+        
+        elif type(app).__module__.startswith("nemoguardrails"):
+            from trulens_eval.tru_rails import TruRails
+            return TruRails.select_context(app)
+        
+        else:
+            raise ValueError(
+                f"Could not determine context from unrecognized `app` type {type(app)}."
+            )
 
     def __hash__(self):
         return hash(id(self))
@@ -713,7 +718,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> str:
+    ) -> JSON:
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
@@ -769,7 +774,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> str:
+    ) -> JSON:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has

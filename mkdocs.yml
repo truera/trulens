@@ -193,6 +193,7 @@ nav:
       # Titles set inside notebooks and will be overridden if provider here.
       - trulens_eval/tracking/instrumentation/langchain.ipynb
       - trulens_eval/tracking/instrumentation/llama_index.ipynb
+      - trulens_eval/tracking/instrumentation/nemo.ipynb
     - Logging:
       # PLACEHOLDER: - trulens_eval/tracking/logging/index.md
       - Where to Log: trulens_eval/tracking/logging/where_to_log.md
@@ -211,7 +212,7 @@ nav:
       - TruBasicApp: trulens_eval/api/app/trubasicapp.md
       - 🦜️🔗 TruChain: trulens_eval/api/app/truchain.md
       - 🦙 TruLlama: trulens_eval/api/app/trullama.md
-      # NOT RELEASED YET: - TruRails: trulens_eval/api/app/trurails.md
+      - TruRails: trulens_eval/api/app/trurails.md
       - TruCustom: trulens_eval/api/app/trucustom.md
       - TruVirtual: trulens_eval/api/app/truvirtual.md
     - Feedback: trulens_eval/api/feedback.md

@@ -1,9 +1,11 @@
-from trulens_eval.utils.imports import OptionalImports
+import inspect
+from trulens_eval.utils.imports import Dummy, OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_NOTEBOOK
 
 with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
     from IPython import get_ipython
     from IPython.display import display
+    from IPython.core.magic import register_line_cell_magic
     from ipywidgets import widgets
 
 
@@ -21,7 +23,6 @@ def is_notebook() -> bool:
 
 
 def setup_widget_stdout_stderr():
-
     out_stdout = widgets.Output()
     out_stderr = widgets.Output()
 
@@ -40,3 +41,12 @@ def setup_widget_stdout_stderr():
 
     display(acc)
     return out_stdout, out_stderr
+
+if not isinstance(register_line_cell_magic, Dummy) and is_notebook():
+    @register_line_cell_magic
+    def writefileinterpolated(line, cell):
+        caller_frame = inspect.stack()[2]
+        caller_globals = caller_frame.frame.f_globals
+
+        with open(line, 'w') as f:
+            f.write(cell.format(**caller_globals))
