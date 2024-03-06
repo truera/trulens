@@ -742,10 +742,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     root_class: pyschema.Class
     """Class of the main instrumented object.
     
-    Ideally this would be a [ClassVar][] but since we want to check this without
+    Ideally this would be a [ClassVar][typing.ClassVar] but since we want to check this without
     instantiating the subclass of
     [AppDefinition][trulens_eval.schema.AppDefinition] that would define it, we
-    cannot use [ClassVar][].
+    cannot use [ClassVar][typing.ClassVar].
     """
 
     root_callable: ClassVar[pyschema.FunctionOrMethod]
