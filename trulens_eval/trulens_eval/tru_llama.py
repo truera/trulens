@@ -14,7 +14,6 @@ from pydantic import Field
 from trulens_eval.app import App
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
-from trulens_eval.trulens_eval.db import NoneType
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import Dummy, get_package_version
 from trulens_eval.utils.imports import OptionalImports
@@ -80,9 +79,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
 
         # These exist in the bridge but not here so define placeholders.
         RetrieverComponent = EmptyType
-
-        # These exist in the bridge but not here so define placeholders.
-        RetrieverComponent = NoneType
 
         from trulens_eval.utils.llama import WithFeedbackFilterNodes
 
