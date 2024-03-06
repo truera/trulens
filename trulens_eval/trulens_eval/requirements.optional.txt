@@ -14,7 +14,7 @@ langchain_community >= 0.0.17  # example notebooks, now required for pinecone, o
 langchain_openai    >= 0.0.5  # unit tests, sample apps
 
 # Apps: LlamaIndex
-llama-index >= 0.10.0
+llama-index >= 0.10.16
 nbconvert   >= 7.14.2  # for llama_index example using SimlpleDirectoryReader
 llama-index-readers-file >= 0.1.5 # tests and notebooks
 llama-index-readers-web  >= 0.1.6 # tests and notebooks

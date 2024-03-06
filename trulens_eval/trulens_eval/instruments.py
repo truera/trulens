@@ -245,7 +245,7 @@ from pprint import pformat
 import threading as th
 import traceback
 from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
-                    Sequence, Set, Tuple)
+                    Sequence, Set, Tuple, Type, Union)
 import weakref
 
 import pydantic
@@ -274,6 +274,7 @@ from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import safe_signature
 from trulens_eval.utils.python import wrap_awaitable
 from trulens_eval.utils.serial import Lens
+from trulens_eval.utils.text import retab
 
 logger = logging.getLogger(__name__)
 
@@ -387,6 +388,54 @@ class WithInstrumentCallbacks:
 
         raise NotImplementedError
 
+ClassFilter = Union[Type, Tuple[Type, ...]]
+
+def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
+    """Create a disjunction of two class filters.
+    
+    Args:
+        f1: The first filter.
+        
+        f2: The second filter.
+    """
+
+    if not isinstance(f1, Tuple):
+        f1 = (f1,)
+
+    if not isinstance(f2, Tuple):
+        f2 = (f2,)
+
+    return f1 + f2
+
+def class_filter_matches(
+    f: ClassFilter,
+    obj: Union[Type, object]
+) -> bool:
+    """Check whether given object matches a class-based filter.
+    
+    A class-based filter here means either a type to match against object
+    (isinstance if object is not a type or issubclass if object is a type),
+    or a tuple of types to match against interpreted disjunctively.
+
+    Args:
+        f: The filter to match against. 
+
+        obj: The object to match against. If type, uses `issubclass` to
+            match. If object, uses `isinstance` to match against `filters`
+            of `Type` or `Tuple[Type]`.
+    """
+
+    if isinstance(f, Type):
+        if isinstance(obj, Type):
+            return issubclass(obj, f)
+    
+        return isinstance(obj, f)
+        
+    if isinstance(f, Tuple):
+        return any(class_filter_matches(f, obj) for f in f)
+    
+    raise ValueError(f"Invalid filter {f}. Type, or a Tuple of Types expected.")
+
 
 class Instrument(object):
     """Instrumentation tools."""
@@ -409,33 +458,38 @@ class Instrument(object):
         CLASSES = set([Feedback])
         """Classes to instrument."""
 
-        METHODS = {"__call__": lambda o: isinstance(o, Feedback)}
+        METHODS: Dict[str, ClassFilter] = {"__call__": Feedback}
         """Methods to instrument.
         
         Methods matching name have to pass the filter to be instrumented.
         """
 
-
     def print_instrumentation(self) -> None:
         """Print out description of the modules, classes, methods this class
         will instrument."""
 
-        print("Modules (with prefix of):")
-        for mod in self.include_modules:
-            print(f"\t{mod}")
+        t = "  "
 
-        print("Classes (or subclasses of):")
-        for cls in self.include_classes:
-            print(f"\t{cls}")
+        for mod in sorted(self.include_modules):
+            print(f"Module {mod}*")
 
-            if isinstance(cls, Dummy):
-                print("\tWARNING: this class could not be imported. It may have been removed from its library.")
-                continue
+            for cls in sorted(self.include_classes, key=lambda c: (c.__module__, c.__qualname__)):
+                if not cls.__module__.startswith(mod):
+                    continue
 
-            for method, filter_class in self.include_methods.items():
-                if filter_class(cls) and safe_hasattr(cls, method):
-                    f = getattr(cls, method)
-                    print(f"\t\t{method}: {inspect.signature(f)}")
+                if isinstance(cls, Dummy):
+                    print(f"{t*1}Class {cls.__module__}.{cls.__qualname__}\n{t*2}WARNING: this class could not be imported. It may have been (re)moved. Error:")
+                    print(retab(tab=f"{t*3}> ", s=str(cls.original_exception)))
+                    continue
+
+                print(f"{t*1}Class {cls.__module__}.{cls.__qualname__}")
+
+                for method, class_filter in self.include_methods.items():
+                    if class_filter_matches(f=class_filter, obj=cls) and safe_hasattr(cls, method):
+                        f = getattr(cls, method)
+                        print(f"{t*2}Method {method}: {inspect.signature(f)}")
+
+            print()
 
     def to_instrument_object(self, obj: object) -> bool:
         """Determine whether the given object should be instrumented."""
@@ -469,7 +523,7 @@ class Instrument(object):
         self,
         include_modules: Optional[Iterable[str]] = None,
         include_classes: Optional[Iterable[type]] = None,
-        include_methods: Optional[Dict[str, Callable]] = None,
+        include_methods: Optional[Dict[str, ClassFilter]] = None,
         app: Optional[WithInstrumentCallbacks] = None
     ):
         if include_modules is None:
@@ -490,7 +544,7 @@ class Instrument(object):
         self.include_methods = dict_merge_with(
             dict1=Instrument.Default.METHODS,
             dict2=include_methods,
-            merge=lambda f1, f2: lambda o: f1(o) or f2(o)
+            merge=class_filter_disjunction
         )
 
         self.app = app
@@ -905,10 +959,10 @@ results. Additional information about this call:
 
                 # continue
 
-            for method_name, check_class in self.include_methods.items():
+            for method_name, class_filter in self.include_methods.items():
 
                 if safe_hasattr(base, method_name):
-                    if not check_class(obj):
+                    if not class_filter_matches(f=class_filter, obj=obj):
                         continue
 
                     original_fun = getattr(base, method_name)
@@ -1057,13 +1111,18 @@ results. Additional information about this call:
             )
 
         # Check whether bound methods are instrumented properly.
-        
 
     def instrument_bound_methods(self, obj: object, query: Lens):
-        # TODO: Work in progress. Bugfixing rails instrumentation missing some important methods.
+        """Instrument functions that may be bound methods.
+
+        Some apps include either anonymous functions or manipulates methods that
+        have self bound already. Our other instrumentation cannot handle those cases.
+    
+        EXPERIMENTAL: Work in progress.
+        """
 
         for method_name, _ in self.include_methods.items():
-            if not (safe_hasattr(obj, method_name) and self.include_methods[method_name](obj)):
+            if not safe_hasattr(obj, method_name):
                 pass
             else:
                 method = safe_getattr(obj, method_name)
@@ -1118,9 +1177,8 @@ class AddInstruments():
         Instrument.Default.MODULES.add(of_cls.__module__)
         Instrument.Default.CLASSES.add(of_cls)
 
-        check_o = Instrument.Default.METHODS.get(name, lambda o: False)
-        Instrument.Default.METHODS[
-            name] = lambda o: check_o(o) or isinstance(o, of_cls)
+        check_o: ClassFilter = Instrument.Default.METHODS.get(name, ())
+        Instrument.Default.METHODS[name] = class_filter_disjunction(check_o, of_cls)
 
     @classmethod
     def methods(cls, of_cls: type, names: Iterable[str]) -> None:

@@ -62,6 +62,19 @@ else:
         """
 
 
+class EmptyType(type):
+    """A type that cannot be instantiated or subclassed."""
+
+    def __new__(mcs, *args, **kwargs):
+        raise ValueError("EmptyType cannot be instantiated.")
+
+    def __instancecheck__(cls, __instance: Any) -> bool:
+        return False
+    
+    def __subclasscheck__(cls, __subclass: Type) -> bool:
+        return False
+
+
 if sys.version_info >= (3, 10):
     import types
     NoneType = types.NoneType
