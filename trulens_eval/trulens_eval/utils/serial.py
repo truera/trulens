@@ -619,19 +619,34 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         super().__init__(path=tuple(path))
 
+    def existing_prefix(self, obj: Any) -> Lens:
+        """Get the Lens representing the longest prefix of the path that exists
+        in the given object.
+        """
+
+        last_lens = Lens()
+        current_lens = last_lens
+
+        for i, step in enumerate(self.path):
+            last_lens = current_lens
+            current_lens = current_lens._append(step)
+            if not current_lens.exists(obj):
+                return last_lens
+
+        return current_lens
+
     def exists(self, obj: Any) -> bool:
-        """
-        Check whether the path exists in the given object.
-        """
+        """Check whether the path exists in the given object."""
 
         try:
             for _ in self.get(obj):
-                return True
+                # Check that all named values exist, not just the first one.
+                pass
 
         except (KeyError, IndexError, ValueError):
             return False
         
-        return False
+        return True
 
     @staticmethod
     def of_string(s: str) -> Lens:
@@ -958,7 +973,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                 for last_selection in last_step.get(start_selection):
                     yield last_selection
 
-    def _append(self, step: Step) -> 'Lens':
+    def _append(self, step: Step) -> Lens:
         return Lens(path=self.path + (step,))
 
     def __getitem__(

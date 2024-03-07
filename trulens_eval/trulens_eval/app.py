@@ -483,6 +483,20 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     
     See _manage_pending_feedback_results."""
 
+    selector_check_warning: bool = False
+    """Issue warnings when selectors are not found in the app with a placeholder
+    record.
+    
+    If False, constructor will raise an error instead.
+    """
+
+    selector_nocheck: bool = False
+    """Ignore selector checks entirely.
+    
+    This may be necessary if the expected record content cannot be determined
+    before it is produced.
+    """
+
     def __init__(
         self,
         tru: Optional[Tru] = None,
@@ -655,16 +669,19 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 except Exception as e:
                     raise Exception(
                         f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
-                    )
-                
-        for feedback in self.feedbacks:
-            feedback.check_selectors(
-                app=self, 
-                # Don't have a record yet, but use an empty one for the non-call related fields.
-                record=Record(), 
-                source_data={'__record__': {'app': self.app}} # And use self.app for the calls. 
-                # Note: record.layout_calls_as_app will produce the same structure near the root of the record as the app.
-            )
+                    ) from e
+        
+        if not self.selector_nocheck:
+            for feedback in self.feedbacks:
+                feedback.check_selectors(
+                    app=self, 
+                    # Don't have a record yet, but use an empty one for the non-call related fields.
+                    record=Record(app_id=self.app_id), 
+                    source_data={'__record__': {'app': self.app}}, # And use self.app for the calls. 
+                    # Note: record.layout_calls_as_app will produce the same
+                    # structure near the root of the record as the app.
+                    warning=self.selector_check_warning
+                )
 
     def main_call(self, human: str) -> str:
         """If available, a single text to a single text invocation of this app."""

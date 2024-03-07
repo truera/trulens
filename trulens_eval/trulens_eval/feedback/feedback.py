@@ -13,6 +13,7 @@ from typing import (
     Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
 )
 import warnings
+import munch
 
 import numpy as np
 import pandas
@@ -35,7 +36,7 @@ from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import Future, callable_name
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.text import UNICODE_CHECK
+from trulens_eval.utils.text import UNICODE_CHECK, retab
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
@@ -555,11 +556,91 @@ class Feedback(FeedbackDefinition):
         self,
         app: Union[AppDefinition, JSON],
         record: Record,
-        source_data: Dict[str, Any]
+        source_data: Dict[str, Any],
+        warning: bool = False
     ) -> bool:
+        """Check that the selectors are valid for the given app and record.
+
+        Args:
+            app: The app that produced the record.
+
+            record: The record that the feedback will run on. This can be a
+                mostly empty record for checking ahead of producing one.
+
+            source_data: Additional data to select from when extracting feedback
+                function arguments.
+
+            warning: Issue a warning instead of raising an error if a selector is
+                invalid. As some parts of a Record cannot be known ahead of
+                producing it, it may be necessary to not raise exception here
+                and only issue a warning. 
+
+        Returns:
+            True if the selectors are valid. False if not (if warning is set).
+
+        Raises:
+            ValueError: If a selector is invalid and warning is not set.
         """
-        Check that the selectors are valid for the given app and record.
-        """
+
+        from trulens_eval.app import App
+
+        app_type = "trulens recorder (`TruChain`, `TruLlama`, etc)"
+    
+        if isinstance(app, App):
+            app_type = f"`{type(app).__name__}`"
+            app = jsonify(app, instrument=app.instrument, skip_specials=True, redact_keys=True)
+
+        elif isinstance(app, AppDefinition):
+            app = jsonify(app, skip_specials=True, redact_keys=True)
+
+        source_data = self._construct_source_data(
+            app=app, record=record, source_data=source_data
+        )
+
+        for k, q in self.selectors.items():
+            if not q.exists(source_data):
+                prefix = q.existing_prefix(source_data)
+
+                obj_dump = ""
+
+                try:
+                    for prefix_obj in prefix.get(source_data):
+
+                        if isinstance(prefix_obj, munch.Munch):
+                            prefix_obj = prefix_obj.toDict()
+
+                        obj_dump += f"  Object of type {type(prefix_obj).__name__} starting with:\n"
+                        obj_dump += retab(tab="    ", s=pprint.pformat(prefix_obj, depth=2) + "\n\n")
+                except Exception as e:
+                    obj_dump += f"  Some non-existant object because: {repr(e)}"
+
+
+                msg =f"""
+Source of argument `{k}` to `{self.name}` does not exist in app or expected
+record:\n
+  `{q}`
+
+The data used to make this check may be incomplete. If you expect records
+produced by your app to contain the selected content, you can ignore this error
+by setting `selectors_nocheck` in the {app_type} constructor. Alternatively,
+setting `selectors_check_warning` will print out this message but will not raise
+an error.
+
+Additional information:
+
+Feedback function signature: `{self.sig}`
+
+The prefix `{prefix}` selects this data that exists in your app or typical records:
+
+{obj_dump}
+"""
+                if warning:
+                    logger.warning(msg)
+                    return False
+                else:
+
+                    raise ValueError(msg)
+
         return True
 
     def run(
@@ -848,7 +929,7 @@ class Feedback(FeedbackDefinition):
         Returns:
             A dictionary with the combined data.
         """
-                
+
         if source_data is None:
             source_data = dict()
         else:
