@@ -3267,6 +3267,26 @@ matching their signatures like so:</p>
 </code></pre></div>
 <h3 id="truvirtual">TruVirtual<a class="headerlink" href="#truvirtual" title="Permanent link">&para;</a></h3>
 <p>If your application was run (and logged) outside of TruLens, <code>TruVirtual</code> can be used to ingest and evaluate the logs.</p>
+<p>The first step to loading your app logs into TruLens is creating a virtual app. This virtual app can be a plain dictionary or use our <code>VirtualApp</code> class to store any information you would like. You can refer to these values for evaluating feedback.</p>
+<div class="highlight"><pre><span></span><code><span class="n">virtual_app</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">llm</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">modelname</span><span class="o">=</span><span class="s2">&quot;some llm component model name&quot;</span>
+    <span class="p">),</span>
+    <span class="n">template</span><span class="o">=</span><span class="s2">&quot;information about the template I used in my app&quot;</span><span class="p">,</span>
+    <span class="n">debug</span><span class="o">=</span><span class="s2">&quot;all of these fields are completely optional&quot;</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Select</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.tru_virtual</span> <span class="kn">import</span> <span class="n">VirtualApp</span>
+
+<span class="n">virtual_app</span> <span class="o">=</span> <span class="n">VirtualApp</span><span class="p">(</span><span class="n">virtual_app</span><span class="p">)</span> <span class="c1"># can start with the prior dictionary</span>
+<span class="n">virtual_app</span><span class="p">[</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">maxtokens</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1024</span>
+</code></pre></div>
+<p>When setting up the virtual app, you should also include any components that you would like to evaluate in the virtual app. This can be done using the <code>Select</code> class. Using selectors here lets use reuse the setup you use to define feedback functions. Below you can see how to set up a virtual app with a retriever component, which will be used later in the example for feedback evaluation.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Select</span>
+<span class="n">retriever_component</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retriever</span>
+<span class="n">virtual_app</span><span class="p">[</span><span class="n">retriever_component</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;this is the retriever component&quot;</span>
+</code></pre></div>
+<p>Now that you've set up your virtual app, you can use it to store your logged data.</p>
 <p>To incorporate your data into TruLens, you have two options. You can either create a <code>Record</code> directly, or you can use the <code>VirtualRecord</code> class, which is designed to help you build records so they can be ingested to TruLens.</p>
 <p>The parameters you'll use with <code>VirtualRecord</code> are the same as those for <code>Record</code>, with one key difference: calls are specified using selectors.</p>
 <p>In the example below, we add two records. Each record includes the inputs and outputs for a context retrieval component. Remember, you only need to provide the information that you want to track or evaluate. The selectors are references to methods that can be selected for feedback, as we'll demonstrate below.</p>
