@@ -45,16 +45,17 @@ class TestLlamaIndex(JSONTestCase):
         # `sync` to convert to sync.
 
         tru_query_engine_recorder = TruLlama(query_engine)
-        llm_response_async, record_async = sync(tru_query_engine_recorder.awith_record,
-            query_engine.aquery, "What did the author do growing up?"
+        llm_response_async, record_async = sync(
+            tru_query_engine_recorder.awith_record, query_engine.aquery,
+            "What did the author do growing up?"
         )
 
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
-        llm_response_sync, record_sync = tru_query_engine_recorder.with_record(query_engine.query,
-            "What did the author do growing up?"
+        llm_response_sync, record_sync = tru_query_engine_recorder.with_record(
+            query_engine.query, "What did the author do growing up?"
         )
-    
+
         # llm response is probabilistic, so just test if async response is also a string. not that it is same as sync response.
         self.assertIsInstance(llm_response_async.response, str)
 
@@ -70,7 +71,7 @@ class TestLlamaIndex(JSONTestCase):
                     "start_time",
                     "end_time",
                     "record_id",
-                    "cost", # cost is not being correctly tracked in async
+                    "cost",  # cost is not being correctly tracked in async
                     "main_output"  # response is not deterministic, so cannot easily compare across runs
                 ]
             )

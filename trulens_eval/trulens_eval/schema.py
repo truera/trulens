@@ -26,8 +26,8 @@ from __future__ import annotations
 import datetime
 from enum import Enum
 import logging
-from pprint import PrettyPrinter
 from pprint import pformat
+from pprint import PrettyPrinter
 from typing import (
     Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
     Type, TypeVar, Union
@@ -38,13 +38,13 @@ import humanize
 from munch import Munch as Bunch
 import pydantic
 import typing_extensions
-from trulens_eval.utils.text import retab
 
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.python import Future
+from trulens_eval.utils.text import retab
 
 T = TypeVar("T")
 
@@ -354,7 +354,7 @@ class Select:
 
     RecordArgs: Query = RecordCall.args
     """Selector for the whole set of inputs/arguments to the first called / last method call."""
-    
+
     RecordRets: Query = RecordCall.rets
     """Selector for the whole output of the first called / last returned method call."""
 
@@ -497,7 +497,7 @@ class FeedbackCall(serial.SerialModel):
             out += f"{tab}meta = \n{retab(tab=tab*2, s=pformat(self.meta))}\n"
 
         return out
-    
+
     def __repr__(self) -> str:
         return str(self)
 
@@ -671,7 +671,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
     def __repr__(self):
         return f"FeedbackDefinition({self.name},\n\tselectors={self.selectors},\n\tif_exists={self.if_exists}\n)"
-    
+
     def __str__(self):
         return repr(self)
 
@@ -697,12 +697,12 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
 # App related:
 
+
 class FeedbackMode(str, Enum):
     """Mode of feedback evaluation.
 
     Specify this using the `feedback_mode` to [App][trulens_eval.app.App] constructors.
     """
-
 
     NONE = "none"
     """No evaluation will happen even if feedback functions are specified."""
@@ -742,10 +742,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     root_class: pyschema.Class
     """Class of the main instrumented object.
     
-    Ideally this would be a [ClassVar][] but since we want to check this without
+    Ideally this would be a [ClassVar][typing.ClassVar] but since we want to check this without
     instantiating the subclass of
     [AppDefinition][trulens_eval.schema.AppDefinition] that would define it, we
-    cannot use [ClassVar][].
+    cannot use [ClassVar][typing.ClassVar].
     """
 
     root_callable: ClassVar[pyschema.FunctionOrMethod]
@@ -813,7 +813,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                     logger.warning(
                         "`initial_app_loader` dump is too big (%s) > %s bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
-                        humanize.naturalsize(len(dump)), humanize.naturalsize(MAX_DILL_SIZE)
+                        humanize.naturalsize(len(dump)),
+                        humanize.naturalsize(MAX_DILL_SIZE)
                     )
                 else:
                     self.initial_app_loader_dump = serial.SerialBytes(data=dump)

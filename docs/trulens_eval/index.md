@@ -1,13 +1,13 @@
-# [🦑 TruLens Eval](/trulens_eval)
+# [🦑 TruLens Eval](index.md)
 
-## [🚀 Getting Started](/trulens_eval/getting_started)
+## [🚀 Getting Started](getting_started/index.md)
 
-## [🎯 Evaluation](/trulens_eval/evaluation)
+## [🎯 Evaluation](evaluation/index.md)
 
-## [🎺 Tracking](/trulens_eval/tracking)
+## [🎺 Tracking](tracking/index.md)
 
-## [🔍 Guides](/trulens_eval/guides)
+## [🔍 Guides](guides/index.md)
 
-## [☕ API Reference](/trulens_eval/api)
+## [☕ API Reference](api/index.md)
 
-## [🤝 Contributing](/trulens_eval/contributin)
+## [🤝 Contributing](contributing/index.md)

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
+import inspect
 from inspect import Signature
 from inspect import signature
-import inspect
 import itertools
 import json
 import logging
@@ -29,10 +29,10 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.python import Future, callable_name
+from trulens_eval.utils.python import callable_name
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import UNICODE_CHECK
@@ -78,8 +78,12 @@ def rag_triad(
         context: Selector for the context part.
     """
 
-    assert hasattr(provider, "relevance"), "Need a provider with the `relevance` feedback function."
-    assert hasattr(provider, "qs_relevance"), "Need a provider with the `qs_relevance` feedback function."
+    assert hasattr(
+        provider, "relevance"
+    ), "Need a provider with the `relevance` feedback function."
+    assert hasattr(
+        provider, "qs_relevance"
+    ), "Need a provider with the `qs_relevance` feedback function."
 
     from trulens_eval.feedback.groundedness import Groundedness
     groudedness_provider = Groundedness(groundedness_provider=provider)
@@ -88,22 +92,14 @@ def rag_triad(
 
     ret = {}
 
-    for f_imp, f_agg, arg1name, arg1lens, arg2name, arg2lens in [(
-        groudedness_provider.groundedness_measure_with_cot_reasons,
-        groudedness_provider.grounded_statements_aggregator,
-        "source", context,
-        "statement", answer
-    ), (
-        provider.relevance,
-        np.mean,
-        "prompt", question,
-        "response", context
-    ), (
-        provider.qs_relevance,
-        np.mean,
-        "question", question,
-        "statement", answer
-    )]:
+    for f_imp, f_agg, arg1name, arg1lens, arg2name, arg2lens in [
+        (groudedness_provider.groundedness_measure_with_cot_reasons,
+         groudedness_provider.grounded_statements_aggregator, "source", context,
+         "statement", answer),
+        (provider.relevance, np.mean, "prompt", question, "response", context),
+        (provider.qs_relevance, np.mean, "question", question, "statement",
+         answer)
+    ]:
         f = Feedback(f_imp, if_exists=context).aggregate(f_agg)
         if arg1lens is not None:
             f = f.on(**{arg1name: arg1lens})
@@ -182,7 +178,8 @@ class Feedback(FeedbackDefinition):
                 except Exception as e:
                     logger.warning(
                         "Feedback implementation %s cannot be serialized: %s "
-                        "This may be ok unless you are using the deferred feedback mode.", imp, e
+                        "This may be ok unless you are using the deferred feedback mode.",
+                        imp, e
                     )
 
                     kwargs['implementation'] = FunctionOrMethod.of_callable(
@@ -427,9 +424,8 @@ class Feedback(FeedbackDefinition):
         """
 
         return Feedback.model_copy(
-            self, update=dict(
-                agg=func
-            ) # does this run __init__ ?
+            self,
+            update=dict(agg=func)  # does this run __init__ ?
         )
 
     @staticmethod
@@ -458,7 +454,8 @@ class Feedback(FeedbackDefinition):
             if "self" in par_names:
                 logger.warning(
                     "Feedback function `%s` has `self` as argument. "
-                    "Perhaps it is static method or its Provider class was not initialized?", callable_name(self.imp)
+                    "Perhaps it is static method or its Provider class was not initialized?",
+                    callable_name(self.imp)
                 )
             if len(par_names) == 0:
                 raise TypeError(
@@ -488,7 +485,7 @@ class Feedback(FeedbackDefinition):
 
         ret = self.model_copy()
 
-        ret.selectors=new_selectors
+        ret.selectors = new_selectors
 
         return ret
 
@@ -511,7 +508,7 @@ class Feedback(FeedbackDefinition):
 
         ret = self.model_copy()
 
-        ret.selectors=new_selectors
+        ret.selectors = new_selectors
 
         return ret
 
@@ -536,7 +533,7 @@ class Feedback(FeedbackDefinition):
 
         ret = self.model_copy()
 
-        ret.selectors=new_selectors
+        ret.selectors = new_selectors
 
         return ret
 
@@ -548,7 +545,7 @@ class Feedback(FeedbackDefinition):
             raise RuntimeError(
                 "Cannot determine signature of feedback function without its definition."
             )
-        
+
         return signature(self.imp)
 
     def check_selectors(
@@ -612,14 +609,19 @@ class Feedback(FeedbackDefinition):
 
         if self.if_exists is not None:
             if not self.if_exists.exists(source_data):
-                logger.warning(f"Feedback %s skipped as %s does not exist.", self.name, self.if_exists)
+                logger.warning(
+                    f"Feedback %s skipped as %s does not exist.", self.name,
+                    self.if_exists
+                )
                 return feedback_result
 
         # Separate try block for extracting inputs from records/apps in case a
         # user specified something that does not exist. We want to fail and give
         # a warning earlier than later.
         try:
-            input_combinations = list(self._extract_selection(source_data=source_data))
+            input_combinations = list(
+                self._extract_selection(source_data=source_data)
+            )
 
         except Exception as e:
             # TODO: Block here to remind us that we may want to do something
@@ -801,10 +803,8 @@ class Feedback(FeedbackDefinition):
 
         return super().name
 
-    def _extract_selection(
-        self, source_data: Dict
-    ) -> Iterable[Dict[str, Any]]:
-        
+    def _extract_selection(self, source_data: Dict) -> Iterable[Dict[str, Any]]:
+
         arg_vals = {}
 
         for k, q in self.selectors.items():
@@ -848,11 +848,11 @@ class Feedback(FeedbackDefinition):
         Returns:
             A dictionary with the combined data.
         """
-                
+
         if source_data is None:
             source_data = dict()
         else:
-            source_data = dict(source_data) # copy
+            source_data = dict(source_data)  # copy
 
         source_data.update(kwargs)
 
@@ -863,7 +863,6 @@ class Feedback(FeedbackDefinition):
             source_data["__record__"] = record.layout_calls_as_app()
 
         return source_data
-    
 
     def extract_selection(
         self,
@@ -885,5 +884,6 @@ class Feedback(FeedbackDefinition):
                 app=app, record=record, source_data=source_data
             )
         )
+
 
 Feedback.model_rebuild()
