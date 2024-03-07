@@ -1,0 +1,4936 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Evaluate and track LLM applications. Explain Deep Neural Nets.">
+      
+      
+      
+      
+        <link rel="prev" href="../tru/">
+      
+      
+        <link rel="next" href="trubasicapp/">
+      
+      
+      <link rel="icon" href="../../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.3">
+    
+    
+      
+        <title>App(Definition) - 🦑 TruLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.79e020e9.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.a5377069.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#appdefinition" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="🦑 TruLens" class="md-header__button md-logo" aria-label="🦑 TruLens" data-md-component="logo">
+      
+  <img src="../../../img/squid.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            🦑 TruLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              App(Definition)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    truera/trulens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+    
+  
+  🏠 Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/" class="md-tabs__link">
+          
+  
+    
+  
+  🚀 Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../evaluation/feedback_functions/" class="md-tabs__link">
+          
+  
+    
+  
+  🎯 Evaluation
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tracking/instrumentation/" class="md-tabs__link">
+          
+  
+    
+  
+  🎺 Tracking
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guides/use_cases_any/" class="md-tabs__link">
+          
+  
+    
+  
+  🔍 Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../tru/" class="md-tabs__link">
+          
+  
+    
+  
+  ☕ API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/" class="md-tabs__link">
+          
+  
+    
+  
+  🤝 Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../trulens_explain/getting_started/install/" class="md-tabs__link">
+          
+  
+    
+  
+  ❓ Explain
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="🦑 TruLens" class="md-nav__button md-logo" aria-label="🦑 TruLens" data-md-component="logo">
+      
+  <img src="../../../img/squid.png" alt="logo">
+
+    </a>
+    🦑 TruLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    truera/trulens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🏠 Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting_started/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    🚀 Getting Started
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            🚀 Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🔨 Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    📓 Quickstarts
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            📓 Quickstarts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/langchain_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Langchain Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/llama_index_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Llama-Index Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/text2text_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Text to Text Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/groundtruth_evals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Ground Truth Evaluations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/human_feedback/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Core Concepts
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Core Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/core_concepts/feedback_functions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feedback Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/core_concepts/rag_triad/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RAG Triad
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/core_concepts/honest_harmless_helpful_evals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Honest, Harmless, Helpful Evals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    🎯 Evaluation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            🎯 Evaluation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../evaluation/feedback_functions/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Feedback Functions
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_1" id="__nav_3_1_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            Feedback Functions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_functions/anatomy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Anatomy of a Feedback Function
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_functions/guide/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Specification Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Running Feedback Functions
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Running Feedback Functions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/running_feedback_functions/with_app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running with your app
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/running_feedback_functions/existing_data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running on existing data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../evaluation/feedback_selectors/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Feedback Selectors
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Feedback Selectors
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_selectors/selecting_components/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Selecting Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_selectors/selector_shortcuts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shortcuts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../evaluation/feedback_implementations/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Feedback Implementations
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Feedback Implementations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_implementations/stock/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🧰 Stock Feedback Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_implementations/custom_feedback_functions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Custom Feedback Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/generate_test_cases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Generating Test Cases
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Feedback Evaluations
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            Feedback Evaluations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_evaluations/answer_relevance_smoke_tests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Answer Relevance Feedback Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_evaluations/context_relevance_smoke_tests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Context Relevance Evaluations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_evaluations/groundedness_smoke_tests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundedness Evaluations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    🎺 Tracking
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            🎺 Tracking
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tracking/instrumentation/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Instrumentation Overview
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_1" id="__nav_4_1_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            Instrumentation Overview
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tracking/instrumentation/langchain/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 🦜️🔗 LangChain Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tracking/instrumentation/llama_index/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 🦙 Llama-Index Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tracking/instrumentation/nemo/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 NeMo Guardrails Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Logging
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Logging
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tracking/logging/where_to_log/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Where to Log
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tracking/logging/logging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logging Methods
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    🔍 Guides
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            🔍 Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/use_cases_any/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Any LLM App
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/use_cases_rag/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RAGs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/use_cases_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LLM Agents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/use_cases_production/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev to Prod
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    ☕ API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            ☕ API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tru/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🦑 Tru
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="./" class="md-nav__link md-nav__link--active">
+              
+  
+  <span class="md-ellipsis">
+    App
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link md-nav__link--active" for="__nav_6_2" id="__nav_6_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            App
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="trubasicapp/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruBasicApp
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="truchain/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🦜️🔗 TruChain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="trullama/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🦙 TruLlama
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="trurails/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruRails
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="trucustom/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruCustom
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="truvirtual/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruVirtual
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feedback/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../record/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Record
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../provider/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Provider
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6_5" id="__nav_6_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            Provider
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../provider/llmprovider/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LLMProvider
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../provider/openai/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6_5_3" id="__nav_6_5_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            OpenAI
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../provider/openai/azureopenai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AzureOpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../provider/bedrock/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS Bedrock
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../provider/litellm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LiteLLM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../provider/langchain/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🦜️🔗 Langchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../provider/huggingface/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🤗 HuggingFace
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_8" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../endpoint/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Endpoint
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6_5_8" id="__nav_6_5_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Endpoint
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../endpoint/openai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../instruments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Instruments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../utils/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Utils
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            Utils
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/python/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/serial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Serialization Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/json/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    JSON Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/frameworks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Framework Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/utils/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Misc. Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../contributing/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    🤝 Contributing
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            🤝 Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/standards/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ✅ Standards
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/techdebt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    💣 Tech Debt
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    ❓ Explain
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            ❓ Explain
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_1" id="__nav_8_1_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_1">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/getting_started/install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/getting_started/quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/attribution_parameterization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Attributions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_3" id="__nav_8_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    ☕ API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_3">
+            <span class="md-nav__icon md-icon"></span>
+            ☕ API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/attribution/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Attribution
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/model_wrappers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/slices/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Slices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/quantities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quantities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/distributions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Distributions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trulens_explain/api/visualizations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visualizations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition" class="md-nav__link">
+    AppDefinition
+  </a>
+  
+    <nav class="md-nav" aria-label="AppDefinition">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition-attributes" class="md-nav__link">
+    Attributes
+  </a>
+  
+    <nav class="md-nav" aria-label="Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.feedback_definitions" class="md-nav__link">
+    feedback_definitions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.feedback_mode" class="md-nav__link">
+    feedback_mode
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.root_class" class="md-nav__link">
+    root_class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.root_callable" class="md-nav__link">
+    root_callable
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.app" class="md-nav__link">
+    app
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.initial_app_loader_dump" class="md-nav__link">
+    initial_app_loader_dump
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.app_extra_json" class="md-nav__link">
+    app_extra_json
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.app_id" class="md-nav__link">
+    app_id
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.tags" class="md-nav__link">
+    tags
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.metadata" class="md-nav__link">
+    metadata
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition-functions" class="md-nav__link">
+    Functions
+  </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.continue_session" class="md-nav__link">
+    continue_session()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.new_session" class="md-nav__link">
+    new_session()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.get_loadable_apps" class="md-nav__link">
+    get_loadable_apps()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.select_inputs" class="md-nav__link">
+    select_inputs()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.schema.AppDefinition.select_outputs" class="md-nav__link">
+    select_outputs()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trulens_eval.app.App" class="md-nav__link">
+    App
+  </a>
+  
+    <nav class="md-nav" aria-label="App">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App-attributes" class="md-nav__link">
+    Attributes
+  </a>
+  
+    <nav class="md-nav" aria-label="Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.feedbacks" class="md-nav__link">
+    feedbacks
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.tru" class="md-nav__link">
+    tru
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.db" class="md-nav__link">
+    db
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.instrument" class="md-nav__link">
+    instrument
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.recording_contexts" class="md-nav__link">
+    recording_contexts
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.instrumented_methods" class="md-nav__link">
+    instrumented_methods
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.records_with_pending_feedback_results" class="md-nav__link">
+    records_with_pending_feedback_results
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.manage_pending_feedback_results_thread" class="md-nav__link">
+    manage_pending_feedback_results_thread
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.app" class="md-nav__link">
+    app
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App-functions" class="md-nav__link">
+    Functions
+  </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.wait_for_feedback_results" class="md-nav__link">
+    wait_for_feedback_results()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.select_context" class="md-nav__link">
+    select_context()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.main_call" class="md-nav__link">
+    main_call()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.main_acall" class="md-nav__link">
+    main_acall()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.main_input" class="md-nav__link">
+    main_input()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.main_output" class="md-nav__link">
+    main_output()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.on_method_instrumented" class="md-nav__link">
+    on_method_instrumented()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.get_methods_for_func" class="md-nav__link">
+    get_methods_for_func()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.get_method_path" class="md-nav__link">
+    get_method_path()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.json" class="md-nav__link">
+    json()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.on_new_record" class="md-nav__link">
+    on_new_record()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.on_add_record" class="md-nav__link">
+    on_add_record()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.awith_" class="md-nav__link">
+    awith_()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.with_" class="md-nav__link">
+    with_()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.with_record" class="md-nav__link">
+    with_record()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.awith_record" class="md-nav__link">
+    awith_record()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.instrumented" class="md-nav__link">
+    instrumented()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.print_instrumented" class="md-nav__link">
+    print_instrumented()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.format_instrumented_methods" class="md-nav__link">
+    format_instrumented_methods()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.print_instrumented_methods" class="md-nav__link">
+    print_instrumented_methods()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.app.App.print_instrumented_components" class="md-nav__link">
+    print_instrumented_components()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="appdefinition">App(Definition)<a class="headerlink" href="#appdefinition" title="Permanent link">&para;</a></h1>
+<p>Apps in trulens derive from two classes,
+<a class="autorefs autorefs-internal" href="#trulens_eval.schema.AppDefinition">AppDefinition</a> and
+<a class="autorefs autorefs-internal" href="#trulens_eval.app.App">App</a>. The first contains only serialized or serializable
+components in a JSON-like format while the latter contains the executable apps
+that may or may not be serializable.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+<h2 id="trulens_eval.schema.AppDefinition" class="doc doc-heading">
+          <span class="doc doc-object-name doc-class-name">trulens_eval.schema.AppDefinition</span>
+
+
+<a href="#trulens_eval.schema.AppDefinition" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.utils.pyschema.WithClassInfo" href="../utils/python/#trulens_eval.utils.pyschema.WithClassInfo">WithClassInfo</a></code>, <code><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.SerialModel" href="../utils/serial/#trulens_eval.utils.serial.SerialModel">SerialModel</a></code></p>
+
+  
+      <p>Serialized fields of an app here whereas <a class="autorefs autorefs-internal" href="#trulens_eval.app.App">App</a>
+contains non-serialized fields.</p>
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+<h3 id="trulens_eval.schema.AppDefinition-attributes">Attributes<a href="#trulens_eval.schema.AppDefinition-attributes" class="headerlink" title="Permanent link">&para;</a></h3>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.feedback_definitions" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">feedback_definitions</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.feedback_definitions" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_definitions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FeedbackDefinition</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Feedback functions to evaluate on each record.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.feedback_mode" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">feedback_mode</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.feedback_mode" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_mode</span><span class="p">:</span> <span class="n">FeedbackMode</span> <span class="o">=</span> <span class="n">FeedbackMode</span><span class="o">.</span><span class="n">WITH_APP_THREAD</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>How to evaluate feedback functions upon producing a record.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.root_class" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">root_class</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.root_class" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">root_class</span><span class="p">:</span> <span class="n">pyschema</span><span class="o">.</span><span class="n">Class</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Class of the main instrumented object.</p>
+<p>Ideally this would be a <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar">ClassVar</a> but since we want to check this without
+instantiating the subclass of
+<a class="autorefs autorefs-internal" href="#trulens_eval.schema.AppDefinition">AppDefinition</a> that would define it, we
+cannot use <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar">ClassVar</a>.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.root_callable" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">root_callable</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.root_callable" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">root_callable</span><span class="p">:</span> <span class="n">pyschema</span><span class="o">.</span><span class="n">FunctionOrMethod</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>App's main method. </p>
+<p>This is to be filled in by subclass.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.app" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">app</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.app" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">app</span><span class="p">:</span> <span class="n">serial</span><span class="o">.</span><span class="n">JSONized</span><span class="p">[</span><span class="n">AppDefinition</span><span class="p">]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Wrapped app in jsonized form.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.initial_app_loader_dump" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">initial_app_loader_dump</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.initial_app_loader_dump" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">initial_app_loader_dump</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">serial</span><span class="o">.</span><span class="n">SerialBytes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>EXPERIMENTAL: serialization of a function that loads an app.</p>
+<p>Dump is of the initial app state before any invocations. This can be used to
+create a new session.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.app_extra_json" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">app_extra_json</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.app_extra_json" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">app_extra_json</span><span class="p">:</span> <span class="n">serial</span><span class="o">.</span><span class="n">JSON</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Info to store about the app and to display in dashboard. </p>
+<p>This can be used even if app itself cannot be serialized. <code>app_extra_json</code>,
+then, can stand in place for whatever data the user might want to keep track
+of about the app.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.app_id" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">app_id</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.app_id" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">app_id</span><span class="p">:</span> <span class="n">AppID</span> <span class="o">=</span> <span class="n">app_id</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Unique identifier for this app.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.tags" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">tags</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.tags" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">tags</span><span class="p">:</span> <span class="n">Tags</span> <span class="o">=</span> <span class="n">tags</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Tags for the app.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.metadata" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">metadata</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.metadata" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">metadata</span><span class="p">:</span> <span class="n">Metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Metadata for the app.</p>
+  </div>
+
+</div>
+
+<h3 id="trulens_eval.schema.AppDefinition-functions">Functions<a href="#trulens_eval.schema.AppDefinition-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.continue_session" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">continue_session</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.continue_session" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">continue_session</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">:</span> <span class="n">serial</span><span class="o">.</span><span class="n">JSON</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppDefinition</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>EXPERIMENTAL: Instantiate the given <code>app</code> with the given state
+<code>app_definition_json</code>.</p>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>app_definition_json</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>The json serialized app.</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>app</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>The app to continue the session with.</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <span class="doc-returns-annotation">
+                  <code><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition" href="#trulens_eval.schema.AppDefinition">AppDefinition</a></code>
+              </span>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>A new <code>AppDefinition</code> instance with the given <code>app</code> and the given
+<code>app_definition_json</code> state.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.new_session" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">new_session</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.new_session" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">new_session</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">:</span> <span class="n">serial</span><span class="o">.</span><span class="n">JSON</span><span class="p">,</span> <span class="n">initial_app_loader</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppDefinition</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>EXPERIMENTAL: Create an app instance at the start of a session.</p>
+<p>Create a copy of the json serialized app with the enclosed app being
+initialized to its initial state before any records are produced (i.e.
+blank memory).</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.get_loadable_apps" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">get_loadable_apps</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.get_loadable_apps" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_loadable_apps</span><span class="p">()</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>EXPERIMENTAL: Gets a list of all of the loadable apps.</p>
+<p>This is those that have <code>initial_app_loader_dump</code> set.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.select_inputs" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">select_inputs</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.select_inputs" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">select_inputs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">serial</span><span class="o">.</span><span class="n">Lens</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the path to the main app's call inputs.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.schema.AppDefinition.select_outputs" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">select_outputs</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#trulens_eval.schema.AppDefinition.select_outputs" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">select_outputs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">serial</span><span class="o">.</span><span class="n">Lens</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the path to the main app's call outputs.</p>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+
+<h2 id="trulens_eval.app.App" class="doc doc-heading">
+          <span class="doc doc-object-name doc-class-name">trulens_eval.app.App</span>
+
+
+<a href="#trulens_eval.app.App" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents first">
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition" href="#trulens_eval.schema.AppDefinition">AppDefinition</a></code>, <code><a class="autorefs autorefs-internal" title="trulens_eval.instruments.WithInstrumentCallbacks" href="../instruments/#trulens_eval.instruments.WithInstrumentCallbacks">WithInstrumentCallbacks</a></code>, <code><a class="autorefs autorefs-external" title="typing.Hashable" href="https://docs.python.org/3/library/typing.html#typing.Hashable">Hashable</a></code></p>
+
+  
+      <p>Generalization of a wrapped model.</p>
+<p>Non-serialized fields here while the serialized ones are defined in
+<a class="autorefs autorefs-internal" href="#trulens_eval.schema.AppDefinition">AppDefinition</a>.</p>
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+<h3 id="trulens_eval.app.App-attributes">Attributes<a href="#trulens_eval.app.App-attributes" class="headerlink" title="Permanent link">&para;</a></h3>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.app.App.feedbacks" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">feedbacks</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.feedbacks" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedbacks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Feedback</span><span class="p">]</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Feedback functions to evaluate on each record.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.app.App.tru" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">tru</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.tru" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tru</span><span class="p">]</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Workspace manager.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.app.App.db" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">db</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.db" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">db</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DB</span><span class="p">]</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Database interfaces.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.app.App.instrument" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">instrument</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.instrument" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">instrument</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Instrument</span><span class="p">]</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Instrumentation class.</p>
+<p>This is needed for serialization as it tells us which objects we want to be
+included in the json representation of this app.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.app.App.recording_contexts" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">recording_contexts</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.recording_contexts" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">recording_contexts</span><span class="p">:</span> <span class="n">contextvars</span><span class="o">.</span><span class="n">ContextVar</span><span class="p">[</span><span class="n">RecordingContext</span><span class="p">]</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Sequnces of records produced by the this class used as a context manager
+are stored in a RecordingContext.</p>
+<p>Using a context var so that context managers can be nested.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.app.App.instrumented_methods" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">instrumented_methods</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.instrumented_methods" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">instrumented_methods</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Lens</span><span class="p">]]</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Mapping of instrumented methods (by id(.) of owner object and the
+function) to their path in this app.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.app.App.records_with_pending_feedback_results" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">records_with_pending_feedback_results</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.records_with_pending_feedback_results" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">records_with_pending_feedback_results</span><span class="p">:</span> <span class="n">Queue</span><span class="p">[</span><span class="n">Record</span><span class="p">]</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span> <span class="p">:</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1024</span><span class="p">))</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>EXPRIMENTAL: Records produced by this app which might have yet to finish
+feedback runs.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.app.App.manage_pending_feedback_results_thread" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">manage_pending_feedback_results_thread</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.manage_pending_feedback_results_thread" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">manage_pending_feedback_results_thread</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">]</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Thread for manager of pending feedback results queue. See
+_manage_pending_feedback_results.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+
+<h4 id="trulens_eval.app.App.app" class="doc doc-heading">
+          <span class="doc doc-object-name doc-attribute-name">app</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.app" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">app</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">app</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>The app to be recorded.</p>
+  </div>
+
+</div>
+
+<h3 id="trulens_eval.app.App-functions">Functions<a href="#trulens_eval.app.App-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.wait_for_feedback_results" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">wait_for_feedback_results</span>
+
+
+<a href="#trulens_eval.app.App.wait_for_feedback_results" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">wait_for_feedback_results</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Wait for all feedbacks functions to complete.</p>
+<p>This applies to all feedbacks on all records produced by this app. This
+call will block until finished and if new records are produced while
+this is running, it will include them.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.select_context" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">select_context</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.select_context" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">select_context</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lens</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Try to find retriever components in the given <code>app</code> and return a lens to
+access the retrieved contexts that would appear in a record were these
+components to execute.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.main_call" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">main_call</span>
+
+
+<a href="#trulens_eval.app.App.main_call" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">main_call</span><span class="p">(</span><span class="n">human</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>If available, a single text to a single text invocation of this app.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.main_acall" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">main_acall</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.main_acall" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">main_acall</span><span class="p">(</span><span class="n">human</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>If available, a single text to a single text invocation of this app.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.main_input" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">main_input</span>
+
+
+<a href="#trulens_eval.app.App.main_input" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">main_input</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSON</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Determine the main input string for the given function <code>func</code> with
+signature <code>sig</code> if it is to be called with the given bindings
+<code>bindings</code>.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.main_output" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">main_output</span>
+
+
+<a href="#trulens_eval.app.App.main_output" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">main_output</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span><span class="p">,</span> <span class="n">ret</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JSON</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Determine the main out string for the given function <code>func</code> with
+signature <code>sig</code> after it is called with the given <code>bindings</code> and has
+returned <code>ret</code>.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.on_method_instrumented" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">on_method_instrumented</span>
+
+
+<a href="#trulens_eval.app.App.on_method_instrumented" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">on_method_instrumented</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Lens</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Called by instrumentation system for every function requested to be
+instrumented by this app.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.get_methods_for_func" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">get_methods_for_func</span>
+
+
+<a href="#trulens_eval.app.App.get_methods_for_func" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_methods_for_func</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Lens</span><span class="p">]]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the methods (rather the inner functions) matching the given <code>func</code>
+and the path of each.</p>
+<p>See <a class="autorefs autorefs-internal" href="../instruments/#trulens_eval.instruments.WithInstrumentCallbacks.get_methods_for_func">WithInstrumentCallbacks.get_methods_for_func</a>.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.get_method_path" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">get_method_path</span>
+
+
+<a href="#trulens_eval.app.App.get_method_path" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_method_path</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Lens</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the path of the instrumented function <code>method</code> relative to this app.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.json" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">json</span>
+
+
+<a href="#trulens_eval.app.App.json" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">json</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Create a json string representation of this app.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.on_new_record" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">on_new_record</span>
+
+
+<a href="#trulens_eval.app.App.on_new_record" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">on_new_record</span><span class="p">(</span><span class="n">func</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">RecordingContext</span><span class="p">]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Called at the start of record creation.</p>
+<p>See
+<a class="autorefs autorefs-internal" href="../instruments/#trulens_eval.instruments.WithInstrumentCallbacks.on_new_record">WithInstrumentCallbacks.on_new_record</a>.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.on_add_record" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">on_add_record</span>
+
+
+<a href="#trulens_eval.app.App.on_add_record" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">on_add_record</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">RecordingContext</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n">BoundArguments</span><span class="p">,</span> <span class="n">ret</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">perf</span><span class="p">:</span> <span class="n">Perf</span><span class="p">,</span> <span class="n">cost</span><span class="p">:</span> <span class="n">Cost</span><span class="p">,</span> <span class="n">existing_record</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Record</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Record</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Called by instrumented methods if they use _new_record to construct a record call list.</p>
+<p>See <a class="autorefs autorefs-internal" href="../instruments/#trulens_eval.instruments.WithInstrumentCallbacks.on_add_record">WithInstrumentCallbacks.on_add_record</a>.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.awith_" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">awith_</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.awith_" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">awith_</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">CallableMaybeAwaitable</span><span class="p">[</span><span class="n">A</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Call the given async <code>func</code> with the given <code>*args</code> and <code>**kwargs</code> while
+recording, producing <code>func</code> results. The record of the computation is
+available through other means like the database or dashboard. If you
+need a record of this execution immediately, you can use <code>awith_record</code>
+or the <code>App</code> as a context mananger instead.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.with_" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">with_</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.with_" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">with_</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">A</span><span class="p">],</span> <span class="n">T</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Call the given async <code>func</code> with the given <code>*args</code> and <code>**kwargs</code> while
+recording, producing <code>func</code> results. The record of the computation is
+available through other means like the database or dashboard. If you
+need a record of this execution immediately, you can use <code>awith_record</code>
+or the <code>App</code> as a context mananger instead.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.with_record" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">with_record</span>
+
+
+<a href="#trulens_eval.app.App.with_record" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">with_record</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">A</span><span class="p">],</span> <span class="n">T</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">record_metadata</span><span class="p">:</span> <span class="n">JSON</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">Record</span><span class="p">]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Call the given <code>func</code> with the given <code>*args</code> and <code>**kwargs</code>, producing
+its results as well as a record of the execution.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.awith_record" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">awith_record</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#trulens_eval.app.App.awith_record" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">awith_record</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">A</span><span class="p">],</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">T</span><span class="p">]],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">record_metadata</span><span class="p">:</span> <span class="n">JSON</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">Record</span><span class="p">]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Call the given <code>func</code> with the given <code>*args</code> and <code>**kwargs</code>, producing
+its results as well as a record of the execution.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.instrumented" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">instrumented</span>
+
+
+<a href="#trulens_eval.app.App.instrumented" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">instrumented</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Lens</span><span class="p">,</span> <span class="n">ComponentView</span><span class="p">]]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Enumerate instrumented components and their categories.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.print_instrumented" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">print_instrumented</span>
+
+
+<a href="#trulens_eval.app.App.print_instrumented" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">print_instrumented</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Print the instrumented components and methods.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.format_instrumented_methods" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">format_instrumented_methods</span>
+
+
+<a href="#trulens_eval.app.App.format_instrumented_methods" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">format_instrumented_methods</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Build a string containing a listing of instrumented methods.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.print_instrumented_methods" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">print_instrumented_methods</span>
+
+
+<a href="#trulens_eval.app.App.print_instrumented_methods" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">print_instrumented_methods</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Print instrumented methods.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.app.App.print_instrumented_components" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">print_instrumented_components</span>
+
+
+<a href="#trulens_eval.app.App.print_instrumented_components" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">print_instrumented_components</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Print instrumented components and their categories.</p>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.a264c092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.6eac0284.min.js"></script>
+      
+        <script src="../../../javascript/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+      
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      
+    
+  </body>
+</html>

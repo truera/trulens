@@ -1,0 +1,2185 @@
+{
+ "cells": [
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 📓 Langchain Quickstart\n",
+    "\n",
+    "In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.\n",
+    "\n",
+    "[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Setup\n",
+    "### Add API keys\n",
+    "For this quickstart you will need Open AI and Huggingface keys"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ! pip install trulens_eval openai langchain chromadb langchainhub bs4"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "os.environ[\"OPENAI_API_KEY\"] = \"sk-...\""
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Import from LangChain and TruLens"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Imports main tools:\n",
+    "from trulens_eval import TruChain, Feedback, Tru\n",
+    "tru = Tru()\n",
+    "tru.reset_database()\n",
+    "\n",
+    "# Imports from langchain to build app\n",
+    "import bs4\n",
+    "from langchain import hub\n",
+    "from langchain.chat_models import ChatOpenAI\n",
+    "from langchain.document_loaders import WebBaseLoader\n",
+    "from langchain.embeddings import OpenAIEmbeddings\n",
+    "from langchain.schema import StrOutputParser\n",
+    "from langchain.text_splitter import RecursiveCharacterTextSplitter\n",
+    "from langchain.vectorstores import Chroma\n",
+    "from langchain_core.runnables import RunnablePassthrough"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Load documents"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "loader = WebBaseLoader(\n",
+    "    web_paths=(\"https://lilianweng.github.io/posts/2023-06-23-agent/\",),\n",
+    "    bs_kwargs=dict(\n",
+    "        parse_only=bs4.SoupStrainer(\n",
+    "            class_=(\"post-content\", \"post-title\", \"post-header\")\n",
+    "        )\n",
+    "    ),\n",
+    ")\n",
+    "docs = loader.load()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Create Vector Store"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "text_splitter = RecursiveCharacterTextSplitter(\n",
+    "    chunk_size=1000,\n",
+    "    chunk_overlap=200\n",
+    ")\n",
+    "\n",
+    "splits = text_splitter.split_documents(docs)\n",
+    "\n",
+    "vectorstore = Chroma.from_documents(\n",
+    "    documents=splits,\n",
+    "    embedding=OpenAIEmbeddings()\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Create RAG"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "retriever = vectorstore.as_retriever()\n",
+    "\n",
+    "prompt = hub.pull(\"rlm/rag-prompt\")\n",
+    "llm = ChatOpenAI(model_name=\"gpt-3.5-turbo\", temperature=0)\n",
+    "\n",
+    "def format_docs(docs):\n",
+    "    return \"\\n\\n\".join(doc.page_content for doc in docs)\n",
+    "\n",
+    "rag_chain = (\n",
+    "    {\"context\": retriever | format_docs, \"question\": RunnablePassthrough()}\n",
+    "    | prompt\n",
+    "    | llm\n",
+    "    | StrOutputParser()\n",
+    ")"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Send your first request"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "rag_chain.invoke(\"What is Task Decomposition?\")"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Initialize Feedback Function(s)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval.feedback.provider import OpenAI\n",
+    "import numpy as np\n",
+    "\n",
+    "# Initialize provider class\n",
+    "openai = OpenAI()\n",
+    "\n",
+    "# select context to be used in feedback. the location of context is app specific.\n",
+    "from trulens_eval.app import App\n",
+    "context = App.select_context(rag_chain)\n",
+    "\n",
+    "from trulens_eval.feedback import Groundedness\n",
+    "grounded = Groundedness(groundedness_provider=OpenAI())\n",
+    "# Define a groundedness feedback function\n",
+    "f_groundedness = (\n",
+    "    Feedback(grounded.groundedness_measure_with_cot_reasons)\n",
+    "    .on(context.collect()) # collect context chunks into a list\n",
+    "    .on_output()\n",
+    "    .aggregate(grounded.grounded_statements_aggregator)\n",
+    ")\n",
+    "\n",
+    "# Question/answer relevance between overall question and answer.\n",
+    "f_qa_relevance = Feedback(openai.relevance).on_input_output()\n",
+    "# Question/statement relevance between question and each context chunk.\n",
+    "f_context_relevance = (\n",
+    "    Feedback(openai.qs_relevance)\n",
+    "    .on_input()\n",
+    "    .on(context)\n",
+    "    .aggregate(np.mean)\n",
+    ")"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Instrument chain for logging with TruLens"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru_recorder = TruChain(rag_chain,\n",
+    "    app_id='Chain1_ChatApplication',\n",
+    "    feedbacks=[f_qa_relevance, f_context_relevance, f_groundedness])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "response, tru_record = tru_recorder.with_record(rag_chain.invoke, \"What is Task Decomposition?\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "json_like = tru_record.layout_calls_as_app()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "json_like"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from ipytree import Tree, Node\n",
+    "\n",
+    "def display_call_stack(data):\n",
+    "    tree = Tree()\n",
+    "    tree.add_node(Node('Record ID: {}'.format(data['record_id'])))\n",
+    "    tree.add_node(Node('App ID: {}'.format(data['app_id'])))\n",
+    "    tree.add_node(Node('Cost: {}'.format(data['cost'])))\n",
+    "    tree.add_node(Node('Performance: {}'.format(data['perf'])))\n",
+    "    tree.add_node(Node('Timestamp: {}'.format(data['ts'])))\n",
+    "    tree.add_node(Node('Tags: {}'.format(data['tags'])))\n",
+    "    tree.add_node(Node('Main Input: {}'.format(data['main_input'])))\n",
+    "    tree.add_node(Node('Main Output: {}'.format(data['main_output'])))\n",
+    "    tree.add_node(Node('Main Error: {}'.format(data['main_error'])))\n",
+    "    \n",
+    "    calls_node = Node('Calls')\n",
+    "    tree.add_node(calls_node)\n",
+    "    \n",
+    "    for call in data['calls']:\n",
+    "        call_node = Node('Call')\n",
+    "        calls_node.add_node(call_node)\n",
+    "        \n",
+    "        for step in call['stack']:\n",
+    "            step_node = Node('Step: {}'.format(step['path']))\n",
+    "            call_node.add_node(step_node)\n",
+    "            if 'expanded' in step:\n",
+    "                expanded_node = Node('Expanded')\n",
+    "                step_node.add_node(expanded_node)\n",
+    "                for expanded_step in step['expanded']:\n",
+    "                    expanded_step_node = Node('Step: {}'.format(expanded_step['path']))\n",
+    "                    expanded_node.add_node(expanded_step_node)\n",
+    "    \n",
+    "    return tree\n",
+    "\n",
+    "# Usage\n",
+    "tree = display_call_stack(json_like)\n",
+    "tree"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tree"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "with tru_recorder as recording:\n",
+    "    llm_response = rag_chain.invoke(\"What is Task Decomposition?\")\n",
+    "\n",
+    "display(llm_response)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Retrieve records and feedback"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# The record of the app invocation can be retrieved from the `recording`:\n",
+    "\n",
+    "rec = recording.get() # use .get if only one record\n",
+    "# recs = recording.records # use .records if multiple\n",
+    "\n",
+    "display(rec)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# The results of the feedback functions can be rertireved from\n",
+    "# `Record.feedback_results` or using the `wait_for_feedback_result` method. The\n",
+    "# results if retrieved directly are `Future` instances (see\n",
+    "# `concurrent.futures`). You can use `as_completed` to wait until they have\n",
+    "# finished evaluating or use the utility method:\n",
+    "\n",
+    "for feedback, feedback_result in rec.wait_for_feedback_results().items():\n",
+    "    print(feedback.name, feedback_result.result)\n",
+    "\n",
+    "# See more about wait_for_feedback_results:\n",
+    "# help(rec.wait_for_feedback_results)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "records, feedback = tru.get_records_and_feedback(app_ids=[\"Chain1_ChatApplication\"])\n",
+    "\n",
+    "records.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.get_leaderboard(app_ids=[\"Chain1_ChatApplication\"])"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Explore in a Dashboard"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.run_dashboard() # open a local streamlit app to explore\n",
+    "\n",
+    "# tru.stop_dashboard() # stop if needed"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard."
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Note: Feedback functions evaluated in the deferred manner can be seen in the \"Progress\" page of the TruLens dashboard."
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 📓 Llama-Index Quickstart\n",
+    "\n",
+    "In this quickstart you will create a simple Llama Index app and learn how to log it and get feedback on an LLM response.\n",
+    "\n",
+    "For evaluation, we will leverage the \"hallucination triad\" of groundedness, context relevance and answer relevance.\n",
+    "\n",
+    "[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Setup\n",
+    "\n",
+    "### Install dependencies\n",
+    "Let's install some of the dependencies for this notebook if we don't have them already"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# pip install trulens_eval llama_index openai"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Add API keys\n",
+    "For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "os.environ[\"OPENAI_API_KEY\"] = \"sk-...\""
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Import from TruLens"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval import Tru\n",
+    "tru = Tru()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Download data\n",
+    "\n",
+    "This example uses the text of Paul Graham’s essay, [“What I Worked On”](https://paulgraham.com/worked.html), and is the canonical llama-index example.\n",
+    "\n",
+    "The easiest way to get it is to [download it via this link](https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt) and save it in a folder called data. You can do so with the following command:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "!wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Create Simple LLM Application\n",
+    "\n",
+    "This example uses LlamaIndex which internally uses an OpenAI LLM."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\n",
+    "\n",
+    "documents = SimpleDirectoryReader(\"data\").load_data()\n",
+    "index = VectorStoreIndex.from_documents(documents)\n",
+    "\n",
+    "query_engine = index.as_query_engine()"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Send your first request"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "response = query_engine.query(\"What did the author do growing up?\")\n",
+    "print(response)"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Initialize Feedback Function(s)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "\n",
+    "# Initialize provider class\n",
+    "from trulens_eval.feedback.provider.openai import OpenAI\n",
+    "openai = OpenAI()\n",
+    "\n",
+    "# select context to be used in feedback. the location of context is app specific.\n",
+    "from trulens_eval.app import App\n",
+    "context = App.select_context(query_engine)\n",
+    "\n",
+    "# imports for feedback\n",
+    "from trulens_eval import Feedback\n",
+    "\n",
+    "# Define a groundedness feedback function\n",
+    "from trulens_eval.feedback import Groundedness\n",
+    "grounded = Groundedness(groundedness_provider=OpenAI())\n",
+    "f_groundedness = (\n",
+    "    Feedback(grounded.groundedness_measure_with_cot_reasons)\n",
+    "    .on(context.collect()) # collect context chunks into a list\n",
+    "    .on_output()\n",
+    "    .aggregate(grounded.grounded_statements_aggregator)\n",
+    ")\n",
+    "\n",
+    "# Question/answer relevance between overall question and answer.\n",
+    "f_qa_relevance = Feedback(openai.relevance).on_input_output()\n",
+    "\n",
+    "# Question/statement relevance between question and each context chunk.\n",
+    "f_qs_relevance = (\n",
+    "    Feedback(openai.qs_relevance)\n",
+    "    .on_input()\n",
+    "    .on(context)\n",
+    "    .aggregate(np.mean)\n",
+    ")"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Instrument app for logging with TruLens"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval import TruLlama\n",
+    "tru_query_engine_recorder = TruLlama(query_engine,\n",
+    "    app_id='LlamaIndex_App1',\n",
+    "    feedbacks=[f_groundedness, f_qa_relevance, f_qs_relevance])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# or as context manager\n",
+    "with tru_query_engine_recorder as recording:\n",
+    "    query_engine.query(\"What did the author do growing up?\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Retrieve records and feedback"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# The record of the app invocation can be retrieved from the `recording`:\n",
+    "\n",
+    "rec = recording.get() # use .get if only one record\n",
+    "# recs = recording.records # use .records if multiple\n",
+    "\n",
+    "display(rec)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.run_dashboard()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# The results of the feedback functions can be rertireved from\n",
+    "# `Record.feedback_results` or using the `wait_for_feedback_result` method. The\n",
+    "# results if retrieved directly are `Future` instances (see\n",
+    "# `concurrent.futures`). You can use `as_completed` to wait until they have\n",
+    "# finished evaluating or use the utility method:\n",
+    "\n",
+    "for feedback, feedback_result in rec.wait_for_feedback_results().items():\n",
+    "    print(feedback.name, feedback_result.result)\n",
+    "\n",
+    "# See more about wait_for_feedback_results:\n",
+    "# help(rec.wait_for_feedback_results)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "records, feedback = tru.get_records_and_feedback(app_ids=[\"LlamaIndex_App1\"])\n",
+    "\n",
+    "records.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.get_leaderboard(app_ids=[\"LlamaIndex_App1\"])"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Explore in a Dashboard"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.run_dashboard() # open a local streamlit app to explore\n",
+    "\n",
+    "# tru.stop_dashboard() # stop if needed"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 📓 TruLens Quickstart\n",
+    "\n",
+    "In this quickstart you will create a RAG from scratch and learn how to log it and get feedback on an LLM response.\n",
+    "\n",
+    "For evaluation, we will leverage the \"hallucination triad\" of groundedness, context relevance and answer relevance.\n",
+    "\n",
+    "[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ! pip install trulens_eval chromadb openai"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "os.environ[\"OPENAI_API_KEY\"] = \"sk-...\""
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Get Data\n",
+    "\n",
+    "In this case, we'll just initialize some simple text in the notebook."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "university_info = \"\"\"\n",
+    "The University of Washington, founded in 1861 in Seattle, is a public research university\n",
+    "with over 45,000 students across three campuses in Seattle, Tacoma, and Bothell.\n",
+    "As the flagship institution of the six public universities in Washington state,\n",
+    "UW encompasses over 500 buildings and 20 million square feet of space,\n",
+    "including one of the largest library systems in the world.\n",
+    "\"\"\""
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Create Vector Store\n",
+    "\n",
+    "Create a chromadb vector store in memory."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from openai import OpenAI\n",
+    "oai_client = OpenAI()\n",
+    "\n",
+    "oai_client.embeddings.create(\n",
+    "        model=\"text-embedding-ada-002\",\n",
+    "        input=university_info\n",
+    "    )"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import chromadb\n",
+    "from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction\n",
+    "\n",
+    "embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'),\n",
+    "                                             model_name=\"text-embedding-ada-002\")\n",
+    "\n",
+    "\n",
+    "chroma_client = chromadb.Client()\n",
+    "vector_store = chroma_client.get_or_create_collection(name=\"Universities\",\n",
+    "                                                      embedding_function=embedding_function)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "collapsed": false
+   },
+   "source": [
+    "Add the university_info to the embedding database."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "vector_store.add(\"uni_info\", documents=university_info)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Build RAG from scratch\n",
+    "\n",
+    "Build a custom RAG from scratch, and add TruLens custom instrumentation."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval import Tru\n",
+    "from trulens_eval.tru_custom_app import instrument\n",
+    "tru = Tru()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "class RAG_from_scratch:\n",
+    "    @instrument\n",
+    "    def retrieve(self, query: str) -> list:\n",
+    "        \"\"\"\n",
+    "        Retrieve relevant text from vector store.\n",
+    "        \"\"\"\n",
+    "        results = vector_store.query(\n",
+    "        query_texts=query,\n",
+    "        n_results=2\n",
+    "    )\n",
+    "        return results['documents'][0]\n",
+    "\n",
+    "    @instrument\n",
+    "    def generate_completion(self, query: str, context_str: list) -> str:\n",
+    "        \"\"\"\n",
+    "        Generate answer from context.\n",
+    "        \"\"\"\n",
+    "        completion = oai_client.chat.completions.create(\n",
+    "        model=\"gpt-3.5-turbo\",\n",
+    "        temperature=0,\n",
+    "        messages=\n",
+    "        [\n",
+    "            {\"role\": \"user\",\n",
+    "            \"content\": \n",
+    "            f\"We have provided context information below. \\n\"\n",
+    "            f\"---------------------\\n\"\n",
+    "            f\"{context_str}\"\n",
+    "            f\"\\n---------------------\\n\"\n",
+    "            f\"Given this information, please answer the question: {query}\"\n",
+    "            }\n",
+    "        ]\n",
+    "        ).choices[0].message.content\n",
+    "        return completion\n",
+    "\n",
+    "    @instrument\n",
+    "    def query(self, query: str) -> str:\n",
+    "        context_str = self.retrieve(query)\n",
+    "        completion = self.generate_completion(query, context_str)\n",
+    "        return completion\n",
+    "\n",
+    "rag = RAG_from_scratch()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Set up feedback functions.\n",
+    "\n",
+    "Here we'll use groundedness, answer relevance and context relevance to detect hallucination."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval import Feedback, Select\n",
+    "from trulens_eval.feedback import Groundedness\n",
+    "from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI\n",
+    "\n",
+    "import numpy as np\n",
+    "\n",
+    "# Initialize provider class\n",
+    "fopenai = fOpenAI()\n",
+    "\n",
+    "grounded = Groundedness(groundedness_provider=fopenai)\n",
+    "\n",
+    "# Define a groundedness feedback function\n",
+    "f_groundedness = (\n",
+    "    Feedback(grounded.groundedness_measure_with_cot_reasons, name = \"Groundedness\")\n",
+    "    .on(Select.RecordCalls.retrieve.rets.collect())\n",
+    "    .on_output()\n",
+    "    .aggregate(grounded.grounded_statements_aggregator)\n",
+    ")\n",
+    "\n",
+    "# Question/answer relevance between overall question and answer.\n",
+    "f_qa_relevance = (\n",
+    "    Feedback(fopenai.relevance_with_cot_reasons, name = \"Answer Relevance\")\n",
+    "    .on(Select.RecordCalls.retrieve.args.query)\n",
+    "    .on_output()\n",
+    ")\n",
+    "\n",
+    "# Question/statement relevance between question and each context chunk.\n",
+    "f_context_relevance = (\n",
+    "    Feedback(fopenai.qs_relevance_with_cot_reasons, name = \"Context Relevance\")\n",
+    "    .on(Select.RecordCalls.retrieve.args.query)\n",
+    "    .on(Select.RecordCalls.retrieve.rets.collect())\n",
+    "    .aggregate(np.mean)\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Construct the app\n",
+    "Wrap the custom RAG with TruCustomApp, add list of feedbacks for eval"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval import TruCustomApp\n",
+    "tru_rag = TruCustomApp(rag,\n",
+    "    app_id = 'RAG v1',\n",
+    "    feedbacks = [f_groundedness, f_qa_relevance, f_context_relevance])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Run the app\n",
+    "Use `tru_rag` as a context manager for the custom RAG-from-scratch app."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "with tru_rag as recording:\n",
+    "    rag.query(\"When was the University of Washington founded?\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.get_leaderboard(app_ids=[\"RAG v1\"])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.run_dashboard()"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Prototype Evals\n",
+    "This notebook shows the use of the dummy feedback function provider which\n",
+    "behaves like the huggingface provider except it does not actually perform any\n",
+    "network calls and just produces constant results. It can be used to prototype\n",
+    "feedback function wiring for your apps before invoking potentially slow (to\n",
+    "run/to load) feedback functions.\n",
+    "\n",
+    "[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/prototype_evals.ipynb)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Import libraries"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ! pip install trulens_eval"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval import Feedback\n",
+    "from trulens_eval import Tru\n",
+    "\n",
+    "tru = Tru()\n",
+    "\n",
+    "tru.run_dashboard()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Set keys"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "os.environ[\"OPENAI_API_KEY\"] = \"sk-...\""
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Build the app"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from openai import OpenAI\n",
+    "oai_client = OpenAI()\n",
+    "\n",
+    "from trulens_eval.tru_custom_app import instrument\n",
+    "\n",
+    "class APP:\n",
+    "    @instrument\n",
+    "    def completion(self, prompt):\n",
+    "        completion = oai_client.chat.completions.create(\n",
+    "                model=\"gpt-3.5-turbo\",\n",
+    "                temperature=0,\n",
+    "                messages=\n",
+    "                [\n",
+    "                    {\"role\": \"user\",\n",
+    "                    \"content\": \n",
+    "                    f\"Please answer the question: {prompt}\"\n",
+    "                    }\n",
+    "                ]\n",
+    "                ).choices[0].message.content\n",
+    "        return completion\n",
+    "    \n",
+    "llm_app = APP()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Create dummy feedback\n",
+    "\n",
+    "By setting the provider as `Dummy()`, you can erect your evaluation suite and then easily substitute in a real model provider (e.g. OpenAI) later."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval.feedback.provider.hugs import Dummy\n",
+    "\n",
+    "# hugs = Huggingface()\n",
+    "hugs = Dummy()\n",
+    "\n",
+    "f_positive_sentiment = Feedback(hugs.positive_sentiment).on_output()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Create the app"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# add trulens as a context manager for llm_app with dummy feedback\n",
+    "from trulens_eval import TruCustomApp\n",
+    "tru_app = TruCustomApp(llm_app,\n",
+    "                       app_id = 'LLM App v1',\n",
+    "                       feedbacks = [f_positive_sentiment])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Run the app"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "with tru_app as recording:\n",
+    "    llm_app.completion('give me a good name for a colorful sock company')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.get_leaderboard(app_ids=[tru_app.app_id])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 📓 Logging Human Feedback\n",
+    "\n",
+    "In many situations, it can be useful to log human feedback from your users about your LLM app's performance. Combining human feedback along with automated feedback can help you drill down on subsets of your app that underperform, and uncover new failure modes. This example will walk you through a simple example of recording human feedback with TruLens.\n",
+    "\n",
+    "[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/human_feedback.ipynb)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ! pip install trulens_eval openai"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "\n",
+    "from trulens_eval import Tru\n",
+    "from trulens_eval import TruCustomApp\n",
+    "\n",
+    "tru = Tru()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Set Keys\n",
+    "\n",
+    "For this example, you need an OpenAI key."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "os.environ[\"OPENAI_API_KEY\"] = \"sk-...\""
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Set up your app\n",
+    "\n",
+    "Here we set up a custom application using just an OpenAI chat completion. The process for logging human feedback is the same however you choose to set up your app."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from openai import OpenAI\n",
+    "oai_client = OpenAI()\n",
+    "\n",
+    "from trulens_eval.tru_custom_app import instrument\n",
+    "\n",
+    "class APP:\n",
+    "    @instrument\n",
+    "    def completion(self, prompt):\n",
+    "        completion = oai_client.chat.completions.create(\n",
+    "                model=\"gpt-3.5-turbo\",\n",
+    "                temperature=0,\n",
+    "                messages=\n",
+    "                [\n",
+    "                    {\"role\": \"user\",\n",
+    "                    \"content\": \n",
+    "                    f\"Please answer the question: {prompt}\"\n",
+    "                    }\n",
+    "                ]\n",
+    "                ).choices[0].message.content\n",
+    "        return completion\n",
+    "    \n",
+    "llm_app = APP()\n",
+    "\n",
+    "# add trulens as a context manager for llm_app\n",
+    "tru_app = TruCustomApp(llm_app, app_id = 'LLM App v1')\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Run the app"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "with tru_app as recording:\n",
+    "    llm_app.completion(\"Give me 10 names for a colorful sock company\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Get the record to add the feedback to.\n",
+    "record = recording.get()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Create a mechamism for recording human feedback.\n",
+    "\n",
+    "Be sure to click an emoji in the record to record `human_feedback` to log."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from ipywidgets import Button, HBox, VBox\n",
+    "\n",
+    "thumbs_up_button = Button(description='👍')\n",
+    "thumbs_down_button = Button(description='👎')\n",
+    "\n",
+    "human_feedback = None\n",
+    "\n",
+    "def on_thumbs_up_button_clicked(b):\n",
+    "    global human_feedback\n",
+    "    human_feedback = 1\n",
+    "\n",
+    "def on_thumbs_down_button_clicked(b):\n",
+    "    global human_feedback\n",
+    "    human_feedback = 0\n",
+    "\n",
+    "thumbs_up_button.on_click(on_thumbs_up_button_clicked)\n",
+    "thumbs_down_button.on_click(on_thumbs_down_button_clicked)\n",
+    "\n",
+    "HBox([thumbs_up_button, thumbs_down_button])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# add the human feedback to a particular app and record\n",
+    "tru.add_feedback(\n",
+    "    name=\"Human Feedack\",\n",
+    "    record_id=record.record_id,\n",
+    "    app_id=tru_app.app_id,\n",
+    "    result=human_feedback\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## See the result logged with your app."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.get_leaderboard(app_ids=[tru_app.app_id])"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# 📓 Ground Truth Evaluations\n",
+    "\n",
+    "In this quickstart you will create a evaluate a LangChain app using ground truth. Ground truth evaluation can be especially useful during early LLM experiments when you have a small set of example queries that are critical to get right.\n",
+    "\n",
+    "Ground truth evaluation works by comparing the similarity of an LLM response compared to its matching verified response.\n",
+    "\n",
+    "[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/groundtruth_evals.ipynb)"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Add API keys\n",
+    "For this quickstart, you will need Open AI keys."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ! pip install trulens_eval openai"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os\n",
+    "os.environ[\"OPENAI_API_KEY\"] = \"sk-...\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval import Tru\n",
+    "\n",
+    "tru = Tru()"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Create Simple LLM Application"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from openai import OpenAI\n",
+    "oai_client = OpenAI()\n",
+    "\n",
+    "from trulens_eval.tru_custom_app import instrument\n",
+    "\n",
+    "class APP:\n",
+    "    @instrument\n",
+    "    def completion(self, prompt):\n",
+    "        completion = oai_client.chat.completions.create(\n",
+    "                model=\"gpt-3.5-turbo\",\n",
+    "                temperature=0,\n",
+    "                messages=\n",
+    "                [\n",
+    "                    {\"role\": \"user\",\n",
+    "                    \"content\": \n",
+    "                    f\"Please answer the question: {prompt}\"\n",
+    "                    }\n",
+    "                ]\n",
+    "                ).choices[0].message.content\n",
+    "        return completion\n",
+    "    \n",
+    "llm_app = APP()"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Initialize Feedback Function(s)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "✅ In Ground Truth, input prompt will be set to __record__.main_input or `Select.RecordInput` .\n",
+      "✅ In Ground Truth, input response will be set to __record__.main_output or `Select.RecordOutput` .\n"
+     ]
+    }
+   ],
+   "source": [
+    "from trulens_eval import Feedback\n",
+    "from trulens_eval.feedback import GroundTruthAgreement\n",
+    "\n",
+    "golden_set = [\n",
+    "    {\"query\": \"who invented the lightbulb?\", \"response\": \"Thomas Edison\"},\n",
+    "    {\"query\": \"¿quien invento la bombilla?\", \"response\": \"Thomas Edison\"}\n",
+    "]\n",
+    "\n",
+    "f_groundtruth = Feedback(GroundTruthAgreement(golden_set).agreement_measure, name = \"Ground Truth\").on_input_output()"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Instrument chain for logging with TruLens"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# add trulens as a context manager for llm_app\n",
+    "from trulens_eval import TruCustomApp\n",
+    "tru_app = TruCustomApp(llm_app, app_id = 'LLM App v1', feedbacks = [f_groundtruth])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Instrumented query engine can operate as a context manager:\n",
+    "with tru_app as recording:\n",
+    "    llm_app.completion(\"¿quien invento la bombilla?\")\n",
+    "    llm_app.completion(\"who invented the lightbulb?\")"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## See results"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Ground Truth</th>\n",
+       "      <th>positive_sentiment</th>\n",
+       "      <th>Human Feedack</th>\n",
+       "      <th>latency</th>\n",
+       "      <th>total_cost</th>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>app_id</th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "      <th></th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>LLM App v1</th>\n",
+       "      <td>1.0</td>\n",
+       "      <td>0.38994</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>1.75</td>\n",
+       "      <td>0.000076</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "            Ground Truth  positive_sentiment  Human Feedack  latency  \\\n",
+       "app_id                                                                 \n",
+       "LLM App v1           1.0             0.38994            1.0     1.75   \n",
+       "\n",
+       "            total_cost  \n",
+       "app_id                  \n",
+       "LLM App v1    0.000076  "
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "tru.get_leaderboard(app_ids=[tru_app.app_id])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "454903c2",
+   "metadata": {},
+   "source": [
+    "# Logging Methods\n",
+    "\n",
+    "## Automatic Logging\n",
+    "\n",
+    "The simplest method for logging with TruLens is by wrapping with TruChain and\n",
+    "including the tru argument, as shown in the quickstart.\n",
+    "\n",
+    "This is done like so:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "26fa21b6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Imports main tools:\n",
+    "from trulens_eval import Feedback\n",
+    "from trulens_eval import Huggingface\n",
+    "from trulens_eval import Tru\n",
+    "from trulens_eval import TruChain\n",
+    "\n",
+    "tru = Tru()\n",
+    "\n",
+    "Tru().migrate_database()\n",
+    "\n",
+    "from langchain.chains import LLMChain\n",
+    "from langchain_community.llms import OpenAI\n",
+    "from langchain.prompts import ChatPromptTemplate\n",
+    "from langchain.prompts import HumanMessagePromptTemplate\n",
+    "from langchain.prompts import PromptTemplate\n",
+    "\n",
+    "full_prompt = HumanMessagePromptTemplate(\n",
+    "    prompt=PromptTemplate(\n",
+    "        template=\n",
+    "        \"Provide a helpful response with relevant background information for the following: {prompt}\",\n",
+    "        input_variables=[\"prompt\"],\n",
+    "    )\n",
+    ")\n",
+    "\n",
+    "chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])\n",
+    "\n",
+    "llm = OpenAI(temperature=0.9, max_tokens=128)\n",
+    "\n",
+    "chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)\n",
+    "\n",
+    "truchain = TruChain(\n",
+    "    chain,\n",
+    "    app_id='Chain1_ChatApplication',\n",
+    "    tru=tru\n",
+    ")\n",
+    "with truchain:\n",
+    "    chain(\"This will be automatically logged.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3d382033",
+   "metadata": {},
+   "source": [
+    "Feedback functions can also be logged automatically by providing them in a list\n",
+    "to the feedbacks arg."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "3d382034",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Initialize Huggingface-based feedback function collection class:\n",
+    "hugs = Huggingface()\n",
+    "\n",
+    "# Define a language match feedback function using HuggingFace.\n",
+    "f_lang_match = Feedback(hugs.language_match).on_input_output()\n",
+    "# By default this will check language match on the main app input and main app\n",
+    "# output."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "f9152cae",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "truchain = TruChain(\n",
+    "    chain,\n",
+    "    app_id='Chain1_ChatApplication',\n",
+    "    feedbacks=[f_lang_match], # feedback functions\n",
+    "    tru=tru\n",
+    ")\n",
+    "with truchain:\n",
+    "    chain(\"This will be automatically logged.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3a562298",
+   "metadata": {},
+   "source": [
+    "## Manual Logging\n",
+    "\n",
+    "### Wrap with TruChain to instrument your chain"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "de9b7589",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tc = TruChain(chain, app_id='Chain1_ChatApplication')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4e25e0f9",
+   "metadata": {},
+   "source": [
+    "### Set up logging and instrumentation\n",
+    "\n",
+    "Making the first call to your wrapped LLM Application will now also produce a log or \"record\" of the chain execution.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c67a07d6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "prompt_input = 'que hora es?'\n",
+    "gpt3_response, record = tc.with_record(chain.__call__, prompt_input)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7a8a9435",
+   "metadata": {},
+   "source": [
+    "We can log the records but first we need to log the chain itself."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c8b2c12a",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.add_app(app=truchain)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e381d0f1",
+   "metadata": {},
+   "source": [
+    "Then we can log the record:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "15cf1da6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.add_record(record)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "211d94f6",
+   "metadata": {},
+   "source": [
+    "### Log App Feedback\n",
+    "Capturing app feedback such as user feedback of the responses can be added with\n",
+    "one call."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "b9a1393f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "thumb_result = True\n",
+    "tru.add_feedback(\n",
+    "    name=\"👍 (1) or 👎 (0)\", \n",
+    "    record_id=record.record_id, \n",
+    "    result=thumb_result\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "dfa0b62c",
+   "metadata": {},
+   "source": [
+    "### Evaluate Quality\n",
+    "\n",
+    "Following the request to your app, you can then evaluate LLM quality using\n",
+    "feedback functions. This is completed in a sequential call to minimize latency\n",
+    "for your application, and evaluations will also be logged to your local machine.\n",
+    "\n",
+    "To get feedback on the quality of your LLM, you can use any of the provided\n",
+    "feedback functions or add your own.\n",
+    "\n",
+    "To assess your LLM quality, you can provide the feedback functions to\n",
+    "`tru.run_feedback()` in a list provided to `feedback_functions`.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "e8db8fc2",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "feedback_results = tru.run_feedback_functions(\n",
+    "    record=record,\n",
+    "    feedback_functions=[f_lang_match]\n",
+    ")\n",
+    "for result in feedback_results:\n",
+    "    display(result)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "997ace16",
+   "metadata": {},
+   "source": [
+    "After capturing feedback, you can then log it to your local database."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "75a23831",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru.add_feedbacks(feedback_results)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b0ecdc2b",
+   "metadata": {},
+   "source": [
+    "### Out-of-band Feedback evaluation\n",
+    "\n",
+    "In the above example, the feedback function evaluation is done in the same\n",
+    "process as the chain evaluation. The alternative approach is the use the\n",
+    "provided persistent evaluator started via\n",
+    "`tru.start_deferred_feedback_evaluator`. Then specify the `feedback_mode` for\n",
+    "`TruChain` as `deferred` to let the evaluator handle the feedback functions.\n",
+    "\n",
+    "For demonstration purposes, we start the evaluator here but it can be started in\n",
+    "another process."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "0e5c2ea7",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "truchain: TruChain = TruChain(\n",
+    "    chain,\n",
+    "    app_id='Chain1_ChatApplication',\n",
+    "    feedbacks=[f_lang_match],\n",
+    "    tru=tru,\n",
+    "    feedback_mode=\"deferred\"\n",
+    ")\n",
+    "\n",
+    "with truchain:\n",
+    "    chain(\"This will be logged by deferred evaluator.\")\n",
+    "\n",
+    "tru.start_evaluator()\n",
+    "# tru.stop_evaluator()"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "id": "691ec232",
+   "metadata": {},
+   "source": [
+    "# 📓 Custom Feedback Functions\n",
+    "\n",
+    "Feedback functions are an extensible framework for evaluating LLMs. You can add your own feedback functions to evaluate the qualities required by your application by updating `trulens_eval/feedback.py`, or simply creating a new provider class and feedback function in youre notebook. If your contributions would be useful for others, we encourage you to contribute to TruLens!\n",
+    "\n",
+    "Feedback functions are organized by model provider into Provider classes.\n",
+    "\n",
+    "The process for adding new feedback functions is:\n",
+    "1. Create a new Provider class or locate an existing one that applies to your feedback function. If your feedback function does not rely on a model provider, you can create a standalone class. Add the new feedback function method to your selected class. Your new method can either take a single text (str) as a parameter or both prompt (str) and response (str). It should return a float between 0 (worst) and 1 (best)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "b32ec934",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval import Provider, Feedback, Select, Tru\n",
+    "\n",
+    "class StandAlone(Provider):\n",
+    "    def custom_feedback(self, my_text_field: str) -> float:\n",
+    "        \"\"\"\n",
+    "        A dummy function of text inputs to float outputs.\n",
+    "\n",
+    "        Parameters:\n",
+    "            my_text_field (str): Text to evaluate.\n",
+    "\n",
+    "        Returns:\n",
+    "            float: square length of the text\n",
+    "        \"\"\"\n",
+    "        return 1.0 / (1.0 + len(my_text_field) * len(my_text_field))\n"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "id": "4056c677",
+   "metadata": {},
+   "source": [
+    "2. Instantiate your provider and feedback functions. The feedback function is wrapped by the trulens-eval Feedback class which helps specify what will get sent to your function parameters (For example: Select.RecordInput or Select.RecordOutput)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "db77781f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "standalone = StandAlone()\n",
+    "f_custom_function = Feedback(standalone.custom_feedback).on(\n",
+    "    my_text_field=Select.RecordOutput\n",
+    ")"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "id": "66987343",
+   "metadata": {},
+   "source": [
+    "3. Your feedback function is now ready to use just like the out of the box feedback functions. Below is an example of it being used."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "8db425de",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tru = Tru()\n",
+    "feedback_results = tru.run_feedback_functions(\n",
+    "    record=record,\n",
+    "    feedback_functions=[f_custom_function]\n",
+    ")\n",
+    "tru.add_feedbacks(feedback_results)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "171cc0b7",
+   "metadata": {},
+   "source": [
+    "## Extending existing providers.\n",
+    "\n",
+    "In addition to calling your own methods, you can also extend stock feedback providers (such as `OpenAI`, `AzureOpenAI`, `Bedrock`) to custom feedback implementations. This can be especially useful for tweaking stock feedback functions, or running custom feedback function prompts while letting TruLens handle the backend LLM provider.\n",
+    "\n",
+    "This is done by subclassing the provider you wish to extend, and using the `generate_score` method that runs the provided prompt with your specified provider, and extracts a float score from 0-1. Your prompt should request the LLM respond on the scale from 0 to 10, then the `generate_score` method will normalize to 0-1.\n",
+    "\n",
+    "See below for example usage:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "25d420d6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from trulens_eval.feedback.provider import AzureOpenAI\n",
+    "from trulens_eval.utils.generated import re_0_10_rating\n",
+    "\n",
+    "class Custom_AzureOpenAI(AzureOpenAI):\n",
+    "    def style_check_professional(self, response: str) -> float:\n",
+    "        \"\"\"\n",
+    "        Custom feedback function to grade the professional style of the resposne, extending AzureOpenAI provider.\n",
+    "\n",
+    "        Args:\n",
+    "            response (str): text to be graded for professional style.\n",
+    "\n",
+    "        Returns:\n",
+    "            float: A value between 0 and 1. 0 being \"not professional\" and 1 being \"professional\".\n",
+    "        \"\"\"\n",
+    "        professional_prompt = str.format(\"Please rate the professionalism of the following text on a scale from 0 to 10, where 0 is not at all professional and 10 is extremely professional: \\n\\n{}\", response)\n",
+    "        return self.generate_score(system_prompt=professional_prompt)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3d621d70",
+   "metadata": {},
+   "source": [
+    "Running \"chain of thought evaluations\" is another use case for extending providers. Doing so follows a similar process as above, where the base provider (such as `AzureOpenAI`) is subclassed.\n",
+    "\n",
+    "For this case, the method `generate_score_and_reasons` can be used to extract both the score and chain of thought reasons from the LLM response.\n",
+    "\n",
+    "To use this method, the prompt used should include the `COT_REASONS_TEMPLATE` available from the TruLens prompts library (`trulens_eval.feedback.prompts`).\n",
+    "\n",
+    "See below for example usage:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "bc024c6e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from typing import Tuple, Dict\n",
+    "from trulens_eval.feedback import prompts\n",
+    "\n",
+    "class Custom_AzureOpenAI(AzureOpenAI):\n",
+    "    def qs_relevance_with_cot_reasons_extreme(self, question: str, statement: str) -> Tuple[float, Dict]:\n",
+    "        \"\"\"\n",
+    "        Tweaked version of question statement relevance, extending AzureOpenAI provider.\n",
+    "        A function that completes a template to check the relevance of the statement to the question.\n",
+    "        Scoring guidelines for scores 5-8 are removed to push the LLM to more extreme scores.\n",
+    "        Also uses chain of thought methodology and emits the reasons.\n",
+    "\n",
+    "        Args:\n",
+    "            question (str): A question being asked. \n",
+    "            statement (str): A statement to the question.\n",
+    "\n",
+    "        Returns:\n",
+    "            float: A value between 0 and 1. 0 being \"not relevant\" and 1 being \"relevant\".\n",
+    "        \"\"\"\n",
+    "\n",
+    "        system_prompt = str.format(prompts.QS_RELEVANCE, question = question, statement = statement)\n",
+    "\n",
+    "        # remove scoring guidelines around middle scores\n",
+    "        system_prompt = system_prompt.replace(\n",
+    "        \"- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.\\n\\n\", \"\")\n",
+    "        \n",
+    "        system_prompt = system_prompt.replace(\n",
+    "            \"RELEVANCE:\", prompts.COT_REASONS_TEMPLATE\n",
+    "        )\n",
+    "\n",
+    "        return self.generate_score_and_reasons(system_prompt)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0383846e",
+   "metadata": {},
+   "source": [
+    "## Multi-Output Feedback functions\n",
+    "Trulens also supports multi-output feedback functions. As a typical feedback function will output a float between 0 and 1, multi-output should output a dictionary of `output_key` to a float between 0 and 1. The feedbacks table will display the feedback with column `feedback_name:::outputkey`"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "5e6d785b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name=\"multi\").on(\n",
+    "    input_param=Select.RecordOutput\n",
+    ")\n",
+    "feedback_results = tru.run_feedback_functions(\n",
+    "    record=record,\n",
+    "    feedback_functions=[multi_output_feedback]\n",
+    ")\n",
+    "tru.add_feedbacks(feedback_results)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a8f9fb6c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Aggregators will run on the same dict keys.\n",
+    "import numpy as np\n",
+    "multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name=\"multi-agg\").on(\n",
+    "    input_param=Select.RecordOutput\n",
+    ").aggregate(np.mean)\n",
+    "feedback_results = tru.run_feedback_functions(\n",
+    "    record=record,\n",
+    "    feedback_functions=[multi_output_feedback]\n",
+    ")\n",
+    "tru.add_feedbacks(feedback_results)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "d18c9331",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# For multi-context chunking, an aggregator can operate on a list of multi output dictionaries.\n",
+    "def dict_aggregator(list_dict_input):\n",
+    "    agg = 0\n",
+    "    for dict_input in list_dict_input:\n",
+    "        agg += dict_input['output_key1']\n",
+    "    return agg\n",
+    "multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name=\"multi-agg-dict\").on(\n",
+    "    input_param=Select.RecordOutput\n",
+    ").aggregate(dict_aggregator)\n",
+    "feedback_results = tru.run_feedback_functions(\n",
+    "    record=record,\n",
+    "    feedback_functions=[multi_output_feedback]\n",
+    ")\n",
+    "tru.add_feedbacks(feedback_results)\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.7"
+  },
+  "vscode": {
+   "interpreter": {
+    "hash": "d5737f6101ac92451320b0e41890107145710b89f85909f3780d702e7818f973"
+   }
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

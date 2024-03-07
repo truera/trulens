@@ -1,0 +1,3745 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Evaluate and track LLM applications. Explain Deep Neural Nets.">
+      
+      
+      
+      
+        <link rel="prev" href="../anatomy/">
+      
+      
+        <link rel="next" href="../../running_feedback_functions/with_app/">
+      
+      
+      <link rel="icon" href="../../../../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.3">
+    
+    
+      
+        <title>Specification Guide - 🦑 TruLens</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.79e020e9.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.a5377069.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="trulens" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#specification-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="🦑 TruLens" class="md-header__button md-logo" aria-label="🦑 TruLens" data-md-component="logo">
+      
+  <img src="../../../../img/squid.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            🦑 TruLens
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Specification Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    truera/trulens
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+    
+  
+  🏠 Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../getting_started/" class="md-tabs__link">
+          
+  
+    
+  
+  🚀 Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+    
+  
+  🎯 Evaluation
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../tracking/instrumentation/" class="md-tabs__link">
+          
+  
+    
+  
+  🎺 Tracking
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../guides/use_cases_any/" class="md-tabs__link">
+          
+  
+    
+  
+  🔍 Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api/tru/" class="md-tabs__link">
+          
+  
+    
+  
+  ☕ API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../contributing/" class="md-tabs__link">
+          
+  
+    
+  
+  🤝 Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../trulens_explain/getting_started/install/" class="md-tabs__link">
+          
+  
+    
+  
+  ❓ Explain
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="🦑 TruLens" class="md-nav__button md-logo" aria-label="🦑 TruLens" data-md-component="logo">
+      
+  <img src="../../../../img/squid.png" alt="logo">
+
+    </a>
+    🦑 TruLens
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    truera/trulens
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🏠 Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../getting_started/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    🚀 Getting Started
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            🚀 Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🔨 Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    📓 Quickstarts
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            📓 Quickstarts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/langchain_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Langchain Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/llama_index_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Llama-Index Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/text2text_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Text to Text Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/groundtruth_evals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Ground Truth Evaluations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/human_feedback/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Core Concepts
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            Core Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/core_concepts/feedback_functions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feedback Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/core_concepts/rag_triad/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RAG Triad
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/core_concepts/honest_harmless_helpful_evals/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Honest, Harmless, Helpful Evals
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    🎯 Evaluation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            🎯 Evaluation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Feedback Functions
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_1" id="__nav_3_1_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            Feedback Functions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../anatomy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Anatomy of a Feedback Function
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Specification Guide
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Specification Guide
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#argument-specification" class="md-nav__link">
+    Argument specification
+  </a>
+  
+    <nav class="md-nav" aria-label="Argument specification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#llama_index-specific-selectors" class="md-nav__link">
+    llama_index-specific selectors
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fine-grained-selection-and-aggregation" class="md-nav__link">
+    Fine-grained Selection and Aggregation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#specifying-implementation-function-and-aggregate" class="md-nav__link">
+    Specifying Implementation Function and Aggregate
+  </a>
+  
+    <nav class="md-nav" aria-label="Specifying Implementation Function and Aggregate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import-requirement-deferred-feedback-mode-only" class="md-nav__link">
+    Import requirement (DEFERRED feedback mode only)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#specifying-arguments" class="md-nav__link">
+    Specifying Arguments
+  </a>
+  
+    <nav class="md-nav" aria-label="Specifying Arguments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-feedback" class="md-nav__link">
+    Running Feedback
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selector-details" class="md-nav__link">
+    Selector Details
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-inputs-per-argument" class="md-nav__link">
+    Multiple Inputs Per Argument
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apprecord-organization-what-can-be-selected" class="md-nav__link">
+    App/Record Organization (What can be selected)
+  </a>
+  
+    <nav class="md-nav" aria-label="App/Record Organization (What can be selected)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calls-made-by-app-components" class="md-nav__link">
+    Calls made by App Components
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Running Feedback Functions
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Running Feedback Functions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../running_feedback_functions/with_app/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running with your app
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../running_feedback_functions/existing_data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running on existing data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../feedback_selectors/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Feedback Selectors
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Feedback Selectors
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feedback_selectors/selecting_components/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Selecting Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feedback_selectors/selector_shortcuts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shortcuts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../feedback_implementations/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Feedback Implementations
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Feedback Implementations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feedback_implementations/stock/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🧰 Stock Feedback Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feedback_implementations/custom_feedback_functions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Custom Feedback Functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../generate_test_cases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Generating Test Cases
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Feedback Evaluations
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            Feedback Evaluations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feedback_evaluations/answer_relevance_smoke_tests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Answer Relevance Feedback Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feedback_evaluations/context_relevance_smoke_tests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Context Relevance Evaluations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feedback_evaluations/groundedness_smoke_tests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundedness Evaluations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    🎺 Tracking
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            🎺 Tracking
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../tracking/instrumentation/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Instrumentation Overview
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4_1" id="__nav_4_1_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            Instrumentation Overview
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tracking/instrumentation/langchain/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 🦜️🔗 LangChain Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tracking/instrumentation/llama_index/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 🦙 Llama-Index Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tracking/instrumentation/nemo/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 NeMo Guardrails Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Logging
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Logging
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tracking/logging/where_to_log/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Where to Log
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tracking/logging/logging/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Logging Methods
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    🔍 Guides
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            🔍 Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/use_cases_any/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Any LLM App
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/use_cases_rag/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RAGs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/use_cases_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LLM Agents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../guides/use_cases_production/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev to Prod
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    ☕ API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            ☕ API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/tru/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🦑 Tru
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../api/app/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    App
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6_2" id="__nav_6_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            App
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/app/trubasicapp/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruBasicApp
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/app/truchain/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🦜️🔗 TruChain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/app/trullama/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🦙 TruLlama
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/app/trurails/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruRails
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/app/trucustom/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruCustom
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/app/truvirtual/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    TruVirtual
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/feedback/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/record/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Record
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../api/provider/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Provider
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6_5" id="__nav_6_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            Provider
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/provider/llmprovider/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LLMProvider
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_3" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../api/provider/openai/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6_5_3" id="__nav_6_5_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            OpenAI
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/provider/openai/azureopenai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AzureOpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/provider/bedrock/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS Bedrock
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/provider/litellm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LiteLLM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/provider/langchain/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🦜️🔗 Langchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/provider/huggingface/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🤗 HuggingFace
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_5_8" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../api/endpoint/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Endpoint
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6_5_8" id="__nav_6_5_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_5_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5_8">
+            <span class="md-nav__icon md-icon"></span>
+            Endpoint
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/endpoint/openai/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/instruments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Instruments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../api/utils/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Utils
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            Utils
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/utils/python/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/utils/serial/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Serialization Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/utils/json/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    JSON Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/utils/frameworks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Framework Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/utils/utils/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Misc. Utilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../contributing/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    🤝 Contributing
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            🤝 Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/standards/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ✅ Standards
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/techdebt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    💣 Tech Debt
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    ❓ Explain
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            ❓ Explain
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_1" id="__nav_8_1_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_1">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../trulens_explain/getting_started/install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../trulens_explain/getting_started/quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../trulens_explain/attribution_parameterization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Attributions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_3" id="__nav_8_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    ☕ API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_3">
+            <span class="md-nav__icon md-icon"></span>
+            ☕ API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../trulens_explain/api/attribution/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Attribution
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../trulens_explain/api/model_wrappers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Models
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../trulens_explain/api/slices/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Slices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../trulens_explain/api/quantities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quantities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../trulens_explain/api/distributions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Distributions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../trulens_explain/api/visualizations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visualizations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#argument-specification" class="md-nav__link">
+    Argument specification
+  </a>
+  
+    <nav class="md-nav" aria-label="Argument specification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#llama_index-specific-selectors" class="md-nav__link">
+    llama_index-specific selectors
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fine-grained-selection-and-aggregation" class="md-nav__link">
+    Fine-grained Selection and Aggregation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#specifying-implementation-function-and-aggregate" class="md-nav__link">
+    Specifying Implementation Function and Aggregate
+  </a>
+  
+    <nav class="md-nav" aria-label="Specifying Implementation Function and Aggregate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import-requirement-deferred-feedback-mode-only" class="md-nav__link">
+    Import requirement (DEFERRED feedback mode only)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#specifying-arguments" class="md-nav__link">
+    Specifying Arguments
+  </a>
+  
+    <nav class="md-nav" aria-label="Specifying Arguments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-feedback" class="md-nav__link">
+    Running Feedback
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selector-details" class="md-nav__link">
+    Selector Details
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-inputs-per-argument" class="md-nav__link">
+    Multiple Inputs Per Argument
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apprecord-organization-what-can-be-selected" class="md-nav__link">
+    App/Record Organization (What can be selected)
+  </a>
+  
+    <nav class="md-nav" aria-label="App/Record Organization (What can be selected)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calls-made-by-app-components" class="md-nav__link">
+    Calls made by App Components
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="specification-guide">Specification Guide<a class="headerlink" href="#specification-guide" title="Permanent link">&para;</a></h1>
+<h2 id="argument-specification">Argument specification<a class="headerlink" href="#argument-specification" title="Permanent link">&para;</a></h2>
+<p>Several utility methods starting with <code>.on</code> provide shorthands:</p>
+<ul>
+<li>
+<p><code>on_input(arg) == on_prompt(arg: Optional[str])</code> -- both specify that the next
+    unspecified argument or <code>arg</code> should be the main app input.</p>
+</li>
+<li>
+<p><code>on_output(arg) == on_response(arg: Optional[str])</code> -- specify that the next
+    argument or <code>arg</code> should be the main app output.</p>
+</li>
+<li>
+<p><code>on_input_output() == on_input().on_output()</code> -- specifies that the first
+    two arguments of implementation should be the main app input and main app
+    output, respectively.</p>
+</li>
+<li>
+<p><code>on_default()</code> -- depending on signature of implementation uses either
+    <code>on_output()</code> if it has a single argument, or <code>on_input_output</code> if it has
+    two arguments.</p>
+</li>
+</ul>
+<p>Some wrappers include additional shorthands:</p>
+<h3 id="llama_index-specific-selectors">llama_index-specific selectors<a class="headerlink" href="#llama_index-specific-selectors" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>TruLlama.select_source_nodes()</code> -- outputs the selector of the source
+    documents part of the engine output.</li>
+</ul>
+<h2 id="fine-grained-selection-and-aggregation">Fine-grained Selection and Aggregation<a class="headerlink" href="#fine-grained-selection-and-aggregation" title="Permanent link">&para;</a></h2>
+<p>For more advanced control on the feedback function operation, we allow data
+selection and aggregation. Consider this feedback example:</p>
+<div class="highlight"><pre><span></span><code><span class="n">f_qs_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">Record</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">combine_docs_chain</span><span class="o">.</span><span class="n">_call</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">input_documents</span><span class="p">[:]</span><span class="o">.</span><span class="n">page_content</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">min</span><span class="p">)</span>
+
+<span class="c1"># Implementation signature:</span>
+<span class="c1"># def qs_relevance(self, question: str, statement: str) -&gt; float:</span>
+</code></pre></div>
+<ul>
+<li>
+<p><strong>Argument Selection specification</strong> -- Where we previously set,
+  <code>on_input_output</code> , the <code>on(Select...)</code> line enables specification of where
+  the statement argument to the implementation comes from. The form of the
+  specification will be discussed in further details in the Specifying Arguments
+  section.</p>
+</li>
+<li>
+<p><strong>Aggregation specification</strong> -- The last line <code>aggregate(numpy.min)</code> specifies
+  how feedback outputs are to be aggregated. This only applies to cases where
+  the argument specification names more than one value for an input. The second
+  specification, for <code>statement</code> was of this type. The input to <code>aggregate</code> must
+  be a method which can be imported globally. This requirement is further
+  elaborated in the next section. This function is called on the <code>float</code> results
+  of feedback function evaluations to produce a single float. The default is
+  <code>numpy.mean</code>.</p>
+</li>
+</ul>
+<p>The result of these lines is that <code>f_qs_relevance</code> can be now be run on
+app/records and will automatically select the specified components of those
+apps/records:</p>
+<div class="highlight"><pre><span></span><code><span class="n">record</span><span class="p">:</span> <span class="n">Record</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">app</span><span class="p">:</span> <span class="n">App</span> <span class="o">=</span> <span class="o">...</span>
+
+<span class="n">feedback_result</span><span class="p">:</span> <span class="n">FeedbackResult</span> <span class="o">=</span> <span class="n">f_qs_relevance</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">,</span> <span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span>
+</code></pre></div>
+<p>The object can also be provided to an app wrapper for automatic evaluation:</p>
+<div class="highlight"><pre><span></span><code><span class="n">app</span><span class="p">:</span> <span class="n">App</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">Chain</span><span class="p">(</span><span class="o">....</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_qs_relevance</span><span class="p">])</span>
+</code></pre></div>
+<h2 id="specifying-implementation-function-and-aggregate">Specifying Implementation Function and Aggregate<a class="headerlink" href="#specifying-implementation-function-and-aggregate" title="Permanent link">&para;</a></h2>
+<p>The function or method provided to the <code>Feedback</code> constructor is the
+implementation of the feedback function which does the actual work of producing
+a float indicating some quantity of interest. </p>
+<p><strong>Note regarding FeedbackMode.DEFERRED</strong> -- Any function or method (not static
+or class methods presently supported) can be provided here but there are
+additional requirements if your app uses the "deferred" feedback evaluation mode
+(when <code>feedback_mode=FeedbackMode.DEFERRED</code> are specified to app constructor).
+In those cases the callables must be functions or methods that are importable
+(see the next section for details). The function/method performing the
+aggregation has the same requirements.</p>
+<h3 id="import-requirement-deferred-feedback-mode-only">Import requirement (DEFERRED feedback mode only)<a class="headerlink" href="#import-requirement-deferred-feedback-mode-only" title="Permanent link">&para;</a></h3>
+<p>If using deferred evaluation, the feedback function implementations and
+aggregation implementations must be functions or methods from a Provider
+subclass that is importable. That is, the callables must be accessible were you
+to evaluate this code:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">somepackage.</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="kn">import</span> <span class="nn">someproviderclass</span>
+<span class="kn">from</span> <span class="nn">somepackage.</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="kn">import</span> <span class="nn">somefunction</span>
+
+<span class="c1"># [...] means optionally further package specifications</span>
+
+<span class="n">provider</span> <span class="o">=</span> <span class="n">someproviderclass</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="c1"># constructor arguments can be included</span>
+<span class="n">feedback_implementation1</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">somemethod</span>
+<span class="n">feedback_implementation2</span> <span class="o">=</span> <span class="n">somefunction</span>
+</code></pre></div>
+<p>For provided feedback functions, <code>somepackage</code> is <code>trulens_eval.feedback</code> and
+<code>someproviderclass</code> is <code>OpenAI</code> or one of the other <code>Provider</code> subclasses.
+Custom feedback functions likewise need to be importable functions or methods of
+a provider subclass that can be imported. Critically, functions or classes
+defined locally in a notebook will not be importable this way.</p>
+<h2 id="specifying-arguments">Specifying Arguments<a class="headerlink" href="#specifying-arguments" title="Permanent link">&para;</a></h2>
+<p>The mapping between app/records to feedback implementation arguments is
+specified by the <code>on...</code> methods of the <code>Feedback</code> objects. The general form is:</p>
+<div class="highlight"><pre><span></span><code><span class="n">feedback</span><span class="p">:</span> <span class="n">Feedback</span> <span class="o">=</span> <span class="n">feedback</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">argname1</span><span class="o">=</span><span class="n">selector1</span><span class="p">,</span> <span class="n">argname2</span><span class="o">=</span><span class="n">selector2</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+<p>That is, <code>Feedback.on(...)</code> returns a new <code>Feedback</code> object with additional
+argument mappings, the source of <code>argname1</code> is <code>selector1</code> and so on for further
+argument names. The types of <code>selector1</code> is <code>JSONPath</code> which we elaborate on in
+the "Selector Details".</p>
+<p>If argument names are ommitted, they are taken from the feedback function
+implementation signature in order. That is, </p>
+<div class="highlight"><pre><span></span><code><span class="n">Feedback</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">argname1</span><span class="o">=</span><span class="n">selector1</span><span class="p">,</span> <span class="n">argname2</span><span class="o">=</span><span class="n">selector2</span><span class="p">)</span>
+</code></pre></div>
+<p>and</p>
+<div class="highlight"><pre><span></span><code><span class="n">Feedback</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">selector1</span><span class="p">,</span> <span class="n">selector2</span><span class="p">)</span>
+</code></pre></div>
+<p>are equivalent assuming the feedback implementation has two arguments,
+<code>argname1</code> and <code>argname2</code>, in that order.</p>
+<h3 id="running-feedback">Running Feedback<a class="headerlink" href="#running-feedback" title="Permanent link">&para;</a></h3>
+<p>Feedback implementations are simple callables that can be run on any arguments
+matching their signatures. However, once wrapped with <code>Feedback</code>, they are meant
+to be run on outputs of app evaluation (the "Records"). Specifically,
+<code>Feedback.run</code> has this definition:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+    <span class="n">app</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">AppDefinition</span><span class="p">,</span> <span class="n">JSON</span><span class="p">],</span> 
+    <span class="n">record</span><span class="p">:</span> <span class="n">Record</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeedbackResult</span><span class="p">:</span>
+</code></pre></div>
+<p>That is, the context of a Feedback evaluation is an app (either as
+<code>AppDefinition</code> or a JSON-like object) and a <code>Record</code> of the execution of the
+aforementioned app. Both objects are indexable using "Selectors". By indexable
+here we mean that their internal components can be specified by a Selector and
+subsequently that internal component can be extracted using that selector.
+Selectors for Feedback start by specifying whether they are indexing into an App
+or a Record via the <code>__app__</code> and <code>__record__</code> special
+attributes (see <strong>Selectors</strong> section below).</p>
+<h3 id="selector-details">Selector Details<a class="headerlink" href="#selector-details" title="Permanent link">&para;</a></h3>
+<p>Apps and Records will be converted to JSON-like structures representing their callstack.</p>
+<p>Selectors are of type <code>JSONPath</code> defined in <code>utils/serial.py</code> help specify paths into JSON-like
+structures (enumerating <code>Record</code> or <code>App</code> contents). </p>
+<p>In most cases, the Select object produces only a single item but can also
+address multiple items.</p>
+<p>You can access the JSON structure with <code>with_record</code> methods and then calling <code>layout_calls_as_app</code>.</p>
+<p>for example</p>
+<div class="highlight"><pre><span></span><code><span class="n">response</span> <span class="o">=</span> <span class="n">my_llm_app</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span>
+<span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span>
+    <span class="n">my_llm_app</span><span class="p">,</span>
+    <span class="n">app_id</span><span class="o">=</span><span class="s1">&#39;Chain1_ChatApplication&#39;</span><span class="p">)</span>
+
+<span class="n">response</span><span class="p">,</span> <span class="n">tru_record</span> <span class="o">=</span> <span class="n">tru_recorder</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="n">my_llm_app</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+<span class="n">json_like</span> <span class="o">=</span> <span class="n">tru_record</span><span class="o">.</span><span class="n">layout_calls_as_app</span><span class="p">()</span>
+</code></pre></div>
+<p>If a selector looks like the below</p>
+<div class="highlight"><pre><span></span><code><span class="n">Select</span><span class="o">.</span><span class="n">Record</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">combine_documents_chain</span><span class="o">.</span><span class="n">_call</span>
+</code></pre></div>
+<p>It can be accessed via the JSON-like via</p>
+<div class="highlight"><pre><span></span><code><span class="n">json_like</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">][</span><span class="s1">&#39;combine_documents_chain&#39;</span><span class="p">][</span><span class="s1">&#39;_call&#39;</span><span class="p">]</span>
+</code></pre></div>
+<p>The top level record also contains these helper accessors</p>
+<ul>
+<li>
+<p><code>RecordInput = Record.main_input</code> -- points to the main input part of a
+    Record. This is the first argument to the root method of an app (for
+    langchain Chains this is the <code>__call__</code> method).</p>
+</li>
+<li>
+<p><code>RecordOutput = Record.main_output</code> -- points to the main output part of a
+    Record. This is the output of the root method of an app (i.e. <code>__call__</code>
+    for langchain Chains).</p>
+</li>
+<li>
+<p><code>RecordCalls = Record.app</code> -- points to the root of the app-structured
+    mirror of calls in a record. See <strong>App-organized Calls</strong> Section above.</p>
+</li>
+</ul>
+<h2 id="multiple-inputs-per-argument">Multiple Inputs Per Argument<a class="headerlink" href="#multiple-inputs-per-argument" title="Permanent link">&para;</a></h2>
+<p>As in the <code>f_qs_relevance</code> example, a selector for a <em>single</em> argument may point
+to more than one aspect of a record/app. These are specified using the slice or
+lists in key/index poisitions. In that case, the feedback function is evaluated
+multiple times, its outputs collected, and finally aggregated into a main
+feedback result.</p>
+<p>The collection of values for each argument of feedback implementation is
+collected and every combination of argument-to-value mapping is evaluated with a
+feedback definition. This may produce a large number of evaluations if more than
+one argument names multiple values. In the dashboard, all individual invocations
+of a feedback implementation are shown alongside the final aggregate result.</p>
+<h2 id="apprecord-organization-what-can-be-selected">App/Record Organization (What can be selected)<a class="headerlink" href="#apprecord-organization-what-can-be-selected" title="Permanent link">&para;</a></h2>
+<p>The top level JSON attributes are defined by the class structures.</p>
+<p>For a Record:</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Record</span><span class="p">(</span><span class="n">SerialModel</span><span class="p">):</span>
+    <span class="n">record_id</span><span class="p">:</span> <span class="n">RecordID</span>
+    <span class="n">app_id</span><span class="p">:</span> <span class="n">AppID</span>
+
+    <span class="n">cost</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Cost</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">perf</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Perf</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">ts</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">pydantic</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">main_input</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">JSON</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">main_output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">JSON</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># if no error</span>
+    <span class="n">main_error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">JSON</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># if error</span>
+
+    <span class="c1"># The collection of calls recorded. Note that these can be converted into a</span>
+    <span class="c1"># json structure with the same paths as the app that generated this record</span>
+    <span class="c1"># via `layout_calls_as_app`.</span>
+    <span class="n">calls</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">RecordAppCall</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</code></pre></div>
+<p>For an App:</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">AppDefinition</span><span class="p">(</span><span class="n">WithClassInfo</span><span class="p">,</span> <span class="n">SerialModel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="n">app_id</span><span class="p">:</span> <span class="n">AppID</span>
+
+    <span class="n">feedback_definitions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FeedbackDefinition</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">feedback_mode</span><span class="p">:</span> <span class="n">FeedbackMode</span> <span class="o">=</span> <span class="n">FeedbackMode</span><span class="o">.</span><span class="n">WITH_APP_THREAD</span>
+
+    <span class="n">root_class</span><span class="p">:</span> <span class="n">Class</span>
+
+    <span class="n">root_callable</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">FunctionOrMethod</span><span class="p">]</span>
+
+    <span class="n">app</span><span class="p">:</span> <span class="n">JSON</span>
+</code></pre></div>
+<p>For your app, you can inspect the JSON-like structure by using the <code>dict</code>
+method:</p>
+<div class="highlight"><pre><span></span><code><span class="n">tru</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># your app, extending App</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tru</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+</code></pre></div>
+<h3 id="calls-made-by-app-components">Calls made by App Components<a class="headerlink" href="#calls-made-by-app-components" title="Permanent link">&para;</a></h3>
+<p>When evaluating a feedback function, Records are augmented with
+app/component calls. For example, if the instrumented app
+contains a component <code>combine_docs_chain</code> then <code>app.combine_docs_chain</code> will
+contain calls to methods of this component. <code>app.combine_docs_chain._call</code> will 
+contain a <code>RecordAppCall</code> (see schema.py) with information about the inputs/outputs/metadata
+regarding the <code>_call</code> call to that component. Selecting this information is the
+reason behind the <code>Select.RecordCalls</code> alias.</p>
+<p>You can inspect the components making up your app via the <code>App</code> method
+<code>print_instrumented</code>.</p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.a264c092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.6eac0284.min.js"></script>
+      
+        <script src="../../../../javascript/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="../../../../javascript/tex-mml-chtml-3.0.0.js"></script>
+      
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      
+    
+  </body>
+</html>
