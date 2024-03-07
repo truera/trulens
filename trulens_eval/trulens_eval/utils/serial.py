@@ -630,7 +630,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         except (KeyError, IndexError, ValueError):
             return False
-        
+
         return False
 
     @staticmethod

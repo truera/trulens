@@ -88,7 +88,7 @@ TO PLACE
 
 """
 
-__version_info__ = (0, 24, 1)
+__version_info__ = (0, 25, 0)
 __version__ = '.'.join(map(str, __version_info__))
 
 # This check is intentionally done ahead of the other imports as we want to
@@ -136,7 +136,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
 
 with OptionalImports(messages=REQUIREMENT_RAILS):
     from trulens_eval.tru_rails import TruRails
-
 
 __all__ = [
     "Tru",  # main interface
