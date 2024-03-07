@@ -478,7 +478,7 @@ else:
                                         st.json(app_component_json)
                                     else:
                                         st.write(app_component_json)
-                                    
+
                         except Exception:
                             st.write(
                                 f"Recorded invocation by component `{match_query}` but cannot find this component in the app json."

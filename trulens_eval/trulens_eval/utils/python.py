@@ -62,6 +62,19 @@ else:
         """
 
 
+class EmptyType(type):
+    """A type that cannot be instantiated or subclassed."""
+
+    def __new__(mcs, *args, **kwargs):
+        raise ValueError("EmptyType cannot be instantiated.")
+
+    def __instancecheck__(cls, __instance: Any) -> bool:
+        return False
+
+    def __subclasscheck__(cls, __subclass: Type) -> bool:
+        return False
+
+
 if sys.version_info >= (3, 10):
     import types
     NoneType = types.NoneType
@@ -563,6 +576,7 @@ def wrap_generator(
 
 T = TypeVar("T")
 
+
 class SingletonPerName(Generic[T]):
     """
     Class for creating singleton instances except there being one instance max,
@@ -592,8 +606,9 @@ class SingletonPerName(Generic[T]):
 
         if k not in cls._instances:
             logger.debug(
-                "*** Creating new %s singleton instance for name = %s ***"
-            , cls.__name__, name)
+                "*** Creating new %s singleton instance for name = %s ***",
+                cls.__name__, name
+            )
             # If exception happens here, the instance should not be added to
             # _instances.
             instance = super().__new__(cls)
