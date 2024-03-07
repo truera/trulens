@@ -244,8 +244,10 @@ import os
 from pprint import pformat
 import threading as th
 import traceback
-from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
-                    Sequence, Set, Tuple, Type, Union)
+from typing import (
+    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
+    Type, Union
+)
 import weakref
 
 import pydantic
@@ -388,7 +390,9 @@ class WithInstrumentCallbacks:
 
         raise NotImplementedError
 
+
 ClassFilter = Union[Type, Tuple[Type, ...]]
+
 
 def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
     """Create a disjunction of two class filters.
@@ -407,10 +411,8 @@ def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
 
     return f1 + f2
 
-def class_filter_matches(
-    f: ClassFilter,
-    obj: Union[Type, object]
-) -> bool:
+
+def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
     """Check whether given object matches a class-based filter.
     
     A class-based filter here means either a type to match against object
@@ -428,12 +430,12 @@ def class_filter_matches(
     if isinstance(f, Type):
         if isinstance(obj, Type):
             return issubclass(obj, f)
-    
+
         return isinstance(obj, f)
-        
+
     if isinstance(f, Tuple):
         return any(class_filter_matches(f, obj) for f in f)
-    
+
     raise ValueError(f"Invalid filter {f}. Type, or a Tuple of Types expected.")
 
 
@@ -473,19 +475,24 @@ class Instrument(object):
         for mod in sorted(self.include_modules):
             print(f"Module {mod}*")
 
-            for cls in sorted(self.include_classes, key=lambda c: (c.__module__, c.__qualname__)):
+            for cls in sorted(self.include_classes, key=lambda c:
+                              (c.__module__, c.__qualname__)):
                 if not cls.__module__.startswith(mod):
                     continue
 
                 if isinstance(cls, Dummy):
-                    print(f"{t*1}Class {cls.__module__}.{cls.__qualname__}\n{t*2}WARNING: this class could not be imported. It may have been (re)moved. Error:")
+                    print(
+                        f"{t*1}Class {cls.__module__}.{cls.__qualname__}\n{t*2}WARNING: this class could not be imported. It may have been (re)moved. Error:"
+                    )
                     print(retab(tab=f"{t*3}> ", s=str(cls.original_exception)))
                     continue
 
                 print(f"{t*1}Class {cls.__module__}.{cls.__qualname__}")
 
                 for method, class_filter in self.include_methods.items():
-                    if class_filter_matches(f=class_filter, obj=cls) and safe_hasattr(cls, method):
+                    if class_filter_matches(f=class_filter,
+                                            obj=cls) and safe_hasattr(cls,
+                                                                      method):
                         f = getattr(cls, method)
                         print(f"{t*2}Method {method}: {inspect.signature(f)}")
 
@@ -1130,14 +1137,20 @@ results. Additional information about this call:
 
                 if safe_hasattr(method, "__func__"):
                     func = safe_getattr(method, "__func__")
-                    print(f"\t\t{query}: Looking at bound method {method_name} with func {func}")
+                    print(
+                        f"\t\t{query}: Looking at bound method {method_name} with func {func}"
+                    )
 
                     if safe_hasattr(func, Instrument.INSTRUMENT):
-                        print(f"\t\t\t{query} Bound method {func} is instrumented.")
+                        print(
+                            f"\t\t\t{query} Bound method {func} is instrumented."
+                        )
 
                     else:
-                        print(f"\t\t\t{query} Bound method {func} is not instrumented. Trying to instrument it")
-                    
+                        print(
+                            f"\t\t\t{query} Bound method {func} is not instrumented. Trying to instrument it"
+                        )
+
                         try:
                             unbound = self.tracked_method_wrapper(
                                 query=query,
@@ -1147,23 +1160,29 @@ results. Additional information about this call:
                                 obj=obj
                             )
                             if inspect.iscoroutinefunction(func):
+
                                 async def bound(*args, **kwargs):
                                     return await unbound(obj, *args, **kwargs)
                             else:
+
                                 def bound(*args, **kwargs):
                                     return unbound(obj, *args, **kwargs)
-                                
-                            setattr(
-                                obj, method_name, bound
-                            )
+
+                            setattr(obj, method_name, bound)
                         except Exception as e:
-                            logger.debug(f"\t\t\t{query}: cound not instrument because {e}")
-                        
+                            logger.debug(
+                                f"\t\t\t{query}: cound not instrument because {e}"
+                            )
+
                 else:
                     if safe_hasattr(method, Instrument.INSTRUMENT):
-                        print(f"\t\t{query} Bound method {method} is instrumented.")
+                        print(
+                            f"\t\t{query} Bound method {method} is instrumented."
+                        )
                     else:
-                        print(f"\t\t{query} Bound method {method} is NOT instrumented.")
+                        print(
+                            f"\t\t{query} Bound method {method} is NOT instrumented."
+                        )
 
 
 class AddInstruments():
@@ -1178,7 +1197,9 @@ class AddInstruments():
         Instrument.Default.CLASSES.add(of_cls)
 
         check_o: ClassFilter = Instrument.Default.METHODS.get(name, ())
-        Instrument.Default.METHODS[name] = class_filter_disjunction(check_o, of_cls)
+        Instrument.Default.METHODS[name] = class_filter_disjunction(
+            check_o, of_cls
+        )
 
     @classmethod
     def methods(cls, of_cls: type, names: Iterable[str]) -> None:

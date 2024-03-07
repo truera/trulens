@@ -16,7 +16,6 @@ T = TypeVar("T")
 A = TypeVar("A")
 B = TypeVar("B")
 
-
 # Collection utilities
 
 
