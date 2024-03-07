@@ -219,15 +219,13 @@ class SqlAlchemyDB(DB):
         with self.Session.begin() as session:
             session.query(orm.FeedbackResult).filter_by(record_id=record_id
                                                        ).delete()
-            session.query(orm.Record).filter_by(id=record_id).delete()
+            session.query(orm.Record).filter_by(record_id=record_id).delete()
 
     def delete_app(self, app_id):
         with self.Session.begin() as session:
             record = session.query(orm.Record).filter_by(app_id=app_id)
             if record:
-                session.query(orm.FeedbackResult
-                             ).filter_by(record__in=[i.id for i in record]
-                                        ).delete()
+                session.query(orm.FeedbackResult).filter_by(record__in=[i.record_id for i in record]).delete()
                 record.delete()
                 session.query(orm.AppDefinition).filter_by(id=app_id).delete()
 
@@ -614,3 +612,6 @@ def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
                 yield element
 
     return list(_flatten(nested))
+
+
+
