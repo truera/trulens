@@ -25,6 +25,33 @@ tru.add_feedbacks(feedback_results)
 
 If your application was run (and logged) outside of TruLens, `TruVirtual` can be used to ingest and evaluate the logs.
 
+The first step to loading your app logs into TruLens is creating a virtual app. This virtual app can be a plain dictionary or use our `VirtualApp` class to store any information you would like. You can refer to these values for evaluating feedback.
+
+```python
+virtual_app = dict(
+    llm=dict(
+        modelname="some llm component model name"
+    ),
+    template="information about the template I used in my app",
+    debug="all of these fields are completely optional"
+)
+from trulens_eval import Select
+from trulens_eval.tru_virtual import VirtualApp
+
+virtual_app = VirtualApp(virtual_app) # can start with the prior dictionary
+virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
+```
+
+When setting up the virtual app, you should also include any components that you would like to evaluate in the virtual app. This can be done using the `Select` class. Using selectors here lets use reuse the setup you use to define feedback functions. Below you can see how to set up a virtual app with a retriever component, which will be used later in the example for feedback evaluation.
+
+```python
+from trulens_eval import Select
+retriever_component = Select.RecordCalls.retriever
+virtual_app[retriever_component] = "this is the retriever component"
+```
+
+Now that you've set up your virtual app, you can use it to store your logged data.
+
 To incorporate your data into TruLens, you have two options. You can either create a `Record` directly, or you can use the `VirtualRecord` class, which is designed to help you build records so they can be ingested to TruLens.
 
 The parameters you'll use with `VirtualRecord` are the same as those for `Record`, with one key difference: calls are specified using selectors.
