@@ -31,17 +31,18 @@ class LLMProvider(Provider):
     This is an abstract class and needs to be initialized as one of these:
 
     * [OpenAI][trulens_eval.feedback.provider.openai.OpenAI] and subclass
-      [AzureOpenAI][trulens_eval.feedback.provider.openai.AzureOpenAI].
+      [AzureOpenAI][trulens_eval.feedback.provider.openai.AzureOpenAI]
 
-    * [Bedrock][trulens_eval.feedback.provider.bedrock.Bedrock].
+    * [Bedrock][trulens_eval.feedback.provider.bedrock.Bedrock]
 
     * [LiteLLM][trulens_eval.feedback.provider.litellm.LiteLLM]. LiteLLM provides an
     interface to a [wide range of
     models](https://docs.litellm.ai/docs/providers).
     
-    * [Langchain][trulens_eval.feedback.provider.langchain.Langchain].
+    * [Langchain][trulens_eval.feedback.provider.langchain.Langchain]
 
-"""
+    * [Lamini][trulens_eval.feedback.provider.lamini.Lamini]
+    """
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any
@@ -59,7 +60,7 @@ class LLMProvider(Provider):
         )  # need to include pydantic.BaseModel.__init__
 
     #@abstractmethod
-    def _create_chat_completion(
+    def create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
@@ -78,7 +79,7 @@ class LLMProvider(Provider):
         assert self.endpoint is not None, "Endpoint is not set."
 
         return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
+            func=self.create_chat_completion,
             prompt=str.format(
                 prompts.SYSTEM_FIND_SUPPORTING,
                 prompt=full_source,
@@ -120,15 +121,40 @@ class LLMProvider(Provider):
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
-        return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
-            str.format(
-                prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                premise=premise,
-                hypothesis=hypothesis
+        if isinstance(self, WithOutputType):
+            comp = self.endpoint.run_in_pace(
+                func=self.create_chat_completion,
+                prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
+                str.format(
+                    prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                    premise=premise,
+                    hypothesis=hypothesis
+                ),
+                output_type={
+                    'Sentence': "string",
+                    'Evidence': "string",
+                    'Score': "int"
+                }
             )
-        )
+            # Inefficient conversion back to string but that is what user of
+            # this method expects.
+
+            return """
+Statement: {comp['Sentence']}
+Evidence: {comp['Evidence']}
+Score: {comp['Score']}
+"""
+
+        else:
+            return self.endpoint.run_in_pace(
+                func=self.create_chat_completion,
+                prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
+                str.format(
+                    prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                    premise=premise,
+                    hypothesis=hypothesis
+                )
+            )
 
     def generate_score(
         self,
@@ -158,7 +184,7 @@ class LLMProvider(Provider):
             extra_args = {'output_type': "int"}
 
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages, **extra_args
+            func=self.create_chat_completion, messages=llm_messages, **extra_args
         )
 
         return re_0_10_rating(response) / normalize
@@ -185,7 +211,7 @@ class LLMProvider(Provider):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
+            func=self.create_chat_completion, messages=llm_messages
         )
         if "Supporting Evidence" in response:
             score = -1
@@ -479,7 +505,7 @@ class LLMProvider(Provider):
             "Use `GroundTruthAgreement(ground_truth)` instead.",
             DeprecationWarning
         )
-        chat_response = self._create_chat_completion(
+        chat_response = self.create_chat_completion(
             prompt=prompts.CORRECT_SYSTEM_PROMPT
         )
         agreement_txt = self._get_answer_agreement(
@@ -1025,7 +1051,7 @@ class LLMProvider(Provider):
         assert self.endpoint is not None, "Endpoint is not set."
 
         return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
+            func=self.create_chat_completion,
             prompt=(prompts.AGREEMENT_SYSTEM_PROMPT %
                     (prompt, check_response)) + response
         )
@@ -1121,11 +1147,11 @@ class LLMProvider(Provider):
 OutputType = Union[Literal["string"], Literal['int'], Literal['float']]
 
 class WithOutputType(LLMProvider):
-    """A mixin to LLMProvider that indicates it can accept required output type
-    for generation.
+    """A mixin to [LLMProvider][trulens_eval.feedback.provider.base.LLMProvider]
+    that indicates it can accept required output type for generation.
     
-    The classes that mixin in this type should implement the
-    [_create_chat_completion][trulens_eval.feedback.provider.WithOutputType._create_chat_completion]
+    The classes that mixin in this type should implement
+    [create_chat_completion_with_output_type][trulens_eval.feedback.provider.base.WithOutputType.create_chat_completion_with_output_type]
     method that accepts the `output_type` argument.
     """
 
@@ -1150,13 +1176,13 @@ class WithOutputType(LLMProvider):
         # TODO: implement this
         return super().generate_score_and_reasons(system_prompt, user_prompt, normalize)
 
-    def _create_chat_completion(
+    def create_chat_completion_with_output_type(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        output_type: Optional[OutputType] = "string",
+        output_type: Optional[Dict[str, OutputType]] = {'output': 'string'},
         **kwargs
-    ) -> str:
+    ) -> Dict[str, Union[str, int, float]]:
         """
         Run a completion. This version should accept a requested output type.
 
@@ -1169,6 +1195,6 @@ class WithOutputType(LLMProvider):
                 types are "int" and "float".
 
         Returns:
-            str: Completion model response. 
+            Outputs in a dictionary format as specified by output_type.
         """
         raise NotImplementedError()

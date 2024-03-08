@@ -46,7 +46,7 @@ class Langchain(LLMProvider):
 
         super().__init__(**self_kwargs)
 
-    def _create_chat_completion(
+    def create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,

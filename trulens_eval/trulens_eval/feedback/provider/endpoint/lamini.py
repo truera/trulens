@@ -53,10 +53,6 @@ class LaminiEndpoint(Endpoint):
         self._instrument_module_members(lamini, "generate")
 
     def __new__(cls, **kwargs):
-        # Problem here if someone uses lamini with different providers. Only a
-        # single one will be made. Cannot make a fix just here as
-        # track_all_costs creates endpoints via the singleton mechanism.
-
         return super(Endpoint, cls).__new__(cls, name="lamini")
 
     def handle_wrapped_call(

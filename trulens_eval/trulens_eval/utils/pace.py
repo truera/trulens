@@ -38,7 +38,7 @@ class Pace(BaseModel):
     )
     """The above period as a timedelta."""
 
-    mark_expirations: Deque[datetime] = Field(default_factory=deque)
+    mark_expirations: Deque[datetime] = Field(default_factory=deque, exclude=True)
     """Keep track of returns that happened in the last `period` seconds.
     
     Store the datetime at which they expire (they become longer than `period`
@@ -53,10 +53,10 @@ class Pace(BaseModel):
     returns_per_second.
     """
 
-    last_mark: datetime = Field(default_factory=datetime.now)
+    last_mark: datetime = Field(default_factory=datetime.now, exclude=True)
     """Time of the last mark return."""
 
-    lock: LockType = Field(default_factory=Lock)
+    lock: LockType = Field(default_factory=Lock, exclude=True)
     """Thread Lock to ensure mark method details run only one at a time."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -104,7 +104,7 @@ class Pace(BaseModel):
                 delay = (self.mark_expirations[0] -
                          datetime.now()).total_seconds()
 
-                if delay >= self.seconds_per_period * 0.5:
+                if delay >= max(30, self.seconds_per_period * 0.8):
                     logger.warning(
                         f"""
 Pace has a long delay of {delay} seconds. There might have been a burst of

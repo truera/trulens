@@ -58,7 +58,8 @@ def rag_triad(
     provider: LLMProvider,
     question: Optional[Lens] = None,
     answer: Optional[Lens] = None,
-    context: Optional[Lens] = None
+    context: Optional[Lens] = None,
+    with_cot_reasons: bool = False
 ) -> Dict[str, Feedback]:
     """Create a triad of feedback functions for evaluating context retrieval
     generation steps.
@@ -76,6 +77,9 @@ def rag_triad(
         answer: Selector for the answer part.
 
         context: Selector for the context part.
+
+        with_cot_reasons: Whether to include the COT reasons in the groundedness
+            feedback.
     """
 
     assert hasattr(
@@ -94,8 +98,9 @@ def rag_triad(
 
     for f_imp, f_agg, arg1name, arg1lens, arg2name, arg2lens in [
         (groudedness_provider.groundedness_measure_with_cot_reasons,
-         groudedness_provider.grounded_statements_aggregator, "source", context,
-         "statement", answer),
+         groudedness_provider.grounded_statements_aggregator, 
+         "source", context, "statement", answer) if with_cot_reasons else 
+         (groudedness_provider.groundedness_measure, np.mean, "source", context, "statement", answer),
         (provider.relevance, np.mean, "prompt", question, "response", context),
         (provider.qs_relevance, np.mean, "question", question, "statement",
          answer)

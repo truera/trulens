@@ -8,7 +8,7 @@ import pydantic
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.base import OutputType
 from trulens_eval.feedback.provider.base import WithOutputType
-from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.feedback.provider.endpoint.base import Endpoint, EndpointDelayError
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LAMINI
 
@@ -47,10 +47,12 @@ class Lamini(WithOutputType, LLMProvider):
     """
 
     model_name: str = DEFAULT_MODEL_NAME
-    """The Lamini completion model. Defaults to `mistralai/Mistral-7B-Instruct-v0.1`.
+    """The Lamini completion model. 
     
-    List can be found in (lamini model docs
-    page)[https://lamini-ai.github.io/inference/models_list/].
+    Defaults to `mistralai/Mistral-7B-Instruct-v0.1`.
+    
+    List can be found in [Lamini model list
+    page](https://lamini-ai.github.io/inference/models_list/).
     
     """
 
@@ -103,11 +105,11 @@ class Lamini(WithOutputType, LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    def _create_chat_completion(
+    def create_chat_completion_with_output_type(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        output_type: Optional[OutputType] = "string",
+        output_type: Optional[Dict[str, OutputType]] = None
         **kwargs
     ) -> str:
 
@@ -117,7 +119,7 @@ class Lamini(WithOutputType, LLMProvider):
         lamini_instance = lamini.Lamini(model_name=self.model_name)
 
         if output_type is None:
-            output_type = "string"
+            output_type = {'output': "string"}
 
         if prompt is not None:
             pass
@@ -132,19 +134,24 @@ class Lamini(WithOutputType, LLMProvider):
             raise ValueError("`prompt` or `messages` must be specified.")
 
         all_args = dict(
-                output_type={'output': output_type},
+                output_type=output_type,
                 **kwargs,
                 **self.generation_args
             )
 
-        comp = lamini_instance.generate(prompt, **all_args)
+        def invoke_endpoint(prompt, **args):
+            try:
+                comp = lamini_instance.generate(prompt=prompt, **args)
+            except lamini.error.APIError as e:
+                if "Please try again in a few minutes." in str(e):
+                    raise EndpointDelayError(delay=60) from e
+                raise e
 
-        if "output" not in comp:
-            raise ValueError(f"Unexpected response from lamini: {comp}")
+            return comp
+        
+        comp = self.endpoint.run_in_pace(invoke_endpoint, prompt=prompt, **all_args)
 
-        comp = comp['output']
-
-        if output_type != "string":
-            comp = str(comp)
+        if all("output" not in comp:
+            raise RuntimeError(f"Unexpected response from lamini: {comp}")
 
         return comp

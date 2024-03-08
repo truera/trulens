@@ -93,7 +93,7 @@ provider = LiteLLM(
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    def _create_chat_completion(
+    def create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,

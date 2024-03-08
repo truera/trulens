@@ -25,6 +25,7 @@ Providers which use large language models for feedback evaluation:
 - [Bedrock provider][trulens_eval.feedback.provider.bedrock.Bedrock]
 - [LiteLLM provider][trulens_eval.feedback.provider.litellm.LiteLLM]
 - [Langchain provider][trulens_eval.feedback.provider.langchain.Langchain]
+- [Lamini provider][trulens_eval.feedback.provider.lamini.Lamini]
 
 Feedback functions in common across these providers are in their abstract class
 [LLMProvider][trulens_eval.feedback.provider.base.LLMProvider].
@@ -36,5 +37,4 @@ Feedback functions in common across these providers are in their abstract class
 ## Provider Combinations
 
 - [Groundedness][trulens_eval.feedback.groundedness.Groundedness]
-
 - [Groundtruth][trulens_eval.feedback.groundtruth.GroundTruthAgreement]
