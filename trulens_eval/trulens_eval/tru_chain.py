@@ -90,7 +90,7 @@ class LangChainInstrument(Instrument):
                 ("save_context", "clear"):
                     BaseMemory,
                 (
-                    "run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"
+                    "run", "arun", "_call", "__call__", "_acall", "acall"
                 ):
                     Chain,
                 (
