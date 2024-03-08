@@ -239,23 +239,22 @@ class LLMProvider(Provider):
             )
             return score, {}
 
-    def qs_relevance(self, question: str, statement: str) -> float:
+    def context_relevance(self, question: str, context: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the relevance of the statement to the question.
-
-        ```python
-        feedback = Feedback(provider.qs_relevance).on_input_output() 
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        check the relevance of the context to the question.
         
         Usage on RAG Contexts:
 
         ```python
-        feedback = Feedback(provider.qs_relevance).on_input().on(
-            TruLlama.select_source_nodes().node.text # See note below
-        ).aggregate(np.mean) 
+        from trulens_eval.app import App
+        context = App.select_context(rag_app)
+        feedback = (
+            Feedback(provider.context_relevance_with_cot_reasons)
+            .on_input()
+            .on(context)
+            .aggregate(np.mean)
+            )
         ```
 
         The `on(...)` selector can be changed. See [Feedback Function Guide :
@@ -263,53 +262,136 @@ class LLMProvider(Provider):
 
         Args:
             question (str): A question being asked. 
-            statement (str): A statement to the question.
+            context (str): Context related to the question.
 
         Returns:
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
+        
         return self.generate_score(
             system_prompt=str.format(
-                prompts.QS_RELEVANCE, question=question, statement=statement
+                prompts.CONTEXT_RELEVANCE, question=question, context=context
+            )
+        )
+    def qs_relevance(self, question: str, context: str) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        check the relevance of the statement to the question.
+        
+        Usage on RAG Contexts:
+
+        ```python
+        from trulens_eval.app import App
+        context = App.select_context(rag_app)
+        feedback = (
+            Feedback(provider.context_relevance_with_cot_reasons)
+            .on_input()
+            .on(context)
+            .aggregate(np.mean)
+            )
+        ```
+
+        The `on(...)` selector can be changed. See [Feedback Function Guide :
+        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+        Args:
+            question (str): A question being asked. 
+            context (str): A context to the question.
+
+        Returns:
+            float: A value between 0.0 (not relevant) and 1.0 (relevant).
+        """
+
+        warnings.warn(
+            "The method 'qs_relevance' is deprecated and will be removed in future versions. "
+            "Please use 'context_relevance' instead.", DeprecationWarning
+        )
+        
+        return self.generate_score(
+            system_prompt=str.format(
+                prompts.CONTEXT_RELEVANCE, question=question, context=context
             )
         )
 
-    def qs_relevance_with_cot_reasons(self, question: str,
-                                      statement: str) -> Tuple[float, Dict]:
+    def context_relevance_with_cot_reasons(self, question: str,
+                                           context: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
-        template to check the relevance of the statement to the question.
+        template to check the relevance of the context to the question.
         Also uses chain of thought methodology and emits the reasons.
 
         **Usage:**
-        ```
-        feedback = Feedback(provider.qs_relevance_with_cot_reasons).on_input_output() 
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-        
         Usage on RAG Contexts:
-        ```
-        feedback = Feedback(provider.qs_relevance_with_cot_reasons).on_input().on(
-            TruLlama.select_source_nodes().node.text # See note below
-        ).aggregate(np.mean) 
 
+        ```
+        from trulens_eval.app import App
+        context = App.select_context(rag_app)
+        feedback = (
+            Feedback(provider.context_relevance_with_cot_reasons)
+            .on_input()
+            .on(context)
+            .aggregate(np.mean)
+            )
         ```
         The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
 
         Args:
             question (str): A question being asked. 
-            statement (str): A statement to the question.
+            context (str): Context related to the question.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         system_prompt = str.format(
-            prompts.QS_RELEVANCE, question=question, statement=statement
+            prompts.CONTEXT_RELEVANCE, question=question, context=context
         )
         system_prompt = system_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
+        return self.generate_score_and_reasons(system_prompt)
+    
+    def qs_relevance_with_cot_reasons(self, question: str,
+                                           context: str) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a
+        template to check the relevance of the context to the question.
+        Also uses chain of thought methodology and emits the reasons.
+
+        **Usage:**
+        Usage on RAG Contexts:
+        ```
+        from trulens_eval.app import App
+        context = App.select_context(rag_app)
+        feedback = (
+            Feedback(provider.qs_relevance_with_cot_reasons)
+            .on_input()
+            .on(context)
+            .aggregate(np.mean)
+            )
+        ```
+        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+
+        Args:
+            question (str): A question being asked. 
+            context (str): Context related to the question.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+        """
+        system_prompt = str.format(
+            prompts.CONTEXT_RELEVANCE, question=question, context=context
+        )
+        system_prompt = system_prompt.replace(
+            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+        )
+
+        warnings.warn(
+            "The method 'qs_relevance_with_cot_reasons' is deprecated and will be removed in future versions. "
+            "Please use 'context_relevance_with_cot_reasons' instead.", DeprecationWarning
+        )
+
         return self.generate_score_and_reasons(system_prompt)
 
     def relevance(self, prompt: str, response: str) -> float:

@@ -46,7 +46,7 @@ SOURCE: {premise}
 STATEMENT: {hypothesis}
 """
 
-QS_RELEVANCE = v2.QuestionStatementRelevance.prompt.template
+CONTEXT_RELEVANCE = v2.ContextRelevance.prompt.template
 PR_RELEVANCE = v2.PromptResponseRelevance.prompt.template
 
 SYSTEM_FIND_SUPPORTING = """
