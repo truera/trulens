@@ -30,10 +30,13 @@ httpx  >= 0.23.3  # for openai client serialization
 boto3    >= 1.33.6
 botocore >= 1.33.6
 
-# Models API
+# Models: various models provided via litellm
 litellm     >= 1.11.1, <=1.24.0
 # have to upper bound due to py3.8 incompatibility:
 # https://github.com/BerriAI/litellm/issues/2005
+
+# Models: various models provided by lamini
+lamini      >= 2.1.1
 
 # Local models
 transformers  >= 4.10.0
@@ -58,7 +61,6 @@ slack-sdk  >= 3.21.3
 ipython    >= 8.12.0  # for notebooks
 ipywidgets >= 8.0.6  # for some example notebooks
 ipytree    >= 0.2.2 # for some example notebooks
-
 
 # Chunking/parsing
 sentencepiece  >= 0.1.97

@@ -120,6 +120,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             arg_flag="with_bedrock",
             module_name="trulens_eval.feedback.provider.endpoint.bedrock",
             class_name="BedrockEndpoint"
+        ),
+        EndpointSetup(
+            arg_flag="with_lamini",
+            module_name="trulens_eval.feedback.provider.endpoint.lamini",
+            class_name="LaminiEndpoint"
         )
     ]
 
@@ -439,6 +444,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        with_lamini: bool = True,
         **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -486,6 +492,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        with_lamini: bool = True,
         **kwargs
     ) -> Tuple[T, Cost]:
         """
@@ -500,6 +507,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             with_hugs=with_hugs,
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
+            with_lamini=with_lamini,
             **kwargs
         )
 

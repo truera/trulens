@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple
+from typing import ClassVar, Dict, Literal, Optional, Sequence, Tuple, Union
 import warnings
 
 from trulens_eval.feedback import prompts
@@ -24,7 +24,6 @@ class Provider(WithClassInfo, SerialModel):
 
     def __init__(self, name: Optional[str] = None, **kwargs):
         super().__init__(name=name, **kwargs)
-
 
 class LLMProvider(Provider):
     """An LLM-based provider.
@@ -74,7 +73,6 @@ class LLMProvider(Provider):
         """
         # text
         raise NotImplementedError()
-        pass
 
     def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
         assert self.endpoint is not None, "Endpoint is not set."
@@ -153,8 +151,14 @@ class LLMProvider(Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
+        extra_args = {}
+        if isinstance(self, WithOutputType):
+            # If have output type capability, add output type to request an int
+            # from the completion model.
+            extra_args = {'output_type': "int"}
+
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
+            func=self._create_chat_completion, messages=llm_messages, **extra_args
         )
 
         return re_0_10_rating(response) / normalize
@@ -276,33 +280,41 @@ class LLMProvider(Provider):
 
     def qs_relevance_with_cot_reasons(self, question: str,
                                       statement: str) -> Tuple[float, Dict]:
-        """
-        Uses chat completion model. A function that completes a
-        template to check the relevance of the statement to the question.
+        """Check the relevance of the statement to the question.
+        
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```
-        feedback = Feedback(provider.qs_relevance_with_cot_reasons).on_input_output() 
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        !!! Usage:
+            ```python
+            feedback = Feedback(
+                provider.qs_relevance_with_cot_reasons
+            ).on_input_output()
+            ```
+            
+            The `on_input_output()` selector can be changed. See [Feedback
+            Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
         
-        Usage on RAG Contexts:
-        ```
-        feedback = Feedback(provider.qs_relevance_with_cot_reasons).on_input().on(
-            TruLlama.select_source_nodes().node.text # See note below
-        ).aggregate(np.mean) 
+        !!! Usage on RAG Contexts:
+            ```python
+            feedback = Feedback(
+                provider.qs_relevance_with_cot_reasons
+            ).on_input().on(
+                TruLlama.select_source_nodes().node.text # See note below
+            ).aggregate(np.mean) 
+            ```
 
-        ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
+            The `on(...)` selector can be changed. See [Feedback Function Guide
+            :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
-            statement (str): A statement to the question.
+            question: A question being asked. 
+            statement: A statement to the question.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being
+                "relevant".
         """
         system_prompt = str.format(
             prompts.QS_RELEVANCE, question=question, statement=statement
@@ -1105,3 +1117,58 @@ class LLMProvider(Provider):
         ) + prompts.COT_REASONS_TEMPLATE
 
         return self.generate_score_and_reasons(system_prompt)
+
+OutputType = Union[Literal["string"], Literal['int'], Literal['float']]
+
+class WithOutputType(LLMProvider):
+    """A mixin to LLMProvider that indicates it can accept required output type
+    for generation.
+    
+    The classes that mixin in this type should implement the
+    [_create_chat_completion][trulens_eval.feedback.provider.WithOutputType._create_chat_completion]
+    method that accepts the `output_type` argument.
+    """
+
+    def generate_score_and_reasons(
+        self,
+        system_prompt: str,
+        user_prompt: Optional[str] = None,
+        normalize: float = 10.0
+    ) -> Tuple[float, Dict]:
+        """
+        Base method to generate a score and reason, used for evaluation.
+
+        Uses a chat model that can handle `output_data`.
+
+        Args:
+            system_prompt: A pre-formated system prompt.
+
+        Returns:
+            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
+        """
+
+        # TODO: implement this
+        return super().generate_score_and_reasons(system_prompt, user_prompt, normalize)
+
+    def _create_chat_completion(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[Sequence[Dict]] = None,
+        output_type: Optional[OutputType] = "string",
+        **kwargs
+    ) -> str:
+        """
+        Run a completion. This version should accept a requested output type.
+
+        Args:
+            prompt: A prompt to the model. One of prompt or messages is required.
+            
+            messages: A list of messages. One of prompt or messages is required.
+
+            output_type: The requested output type. Defaults to "string". Other
+                types are "int" and "float".
+
+        Returns:
+            str: Completion model response. 
+        """
+        raise NotImplementedError()

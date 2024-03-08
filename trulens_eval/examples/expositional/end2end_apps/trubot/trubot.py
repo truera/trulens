@@ -1,16 +1,16 @@
 import logging
 import os
 from pprint import PrettyPrinter
-from typing import Dict, Set, Tuple
+from typing import Dict, Optional, Set, Tuple
 
 from langchain.chains import ConversationalRetrievalChain
-from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.memory import ConversationSummaryBufferMemory
-from langchain_community.llms import OpenAI
-from langchain_community.vectorstores import Pinecone
+from langchain_community.vectorstores import Pinecone as PineconeVS
+from langchain_openai import OpenAI
+from langchain_openai import OpenAIEmbeddings
 import numpy as np
 import openai
-import pinecone
+from pinecone import Pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
 
@@ -18,6 +18,7 @@ from trulens_eval import feedback
 from trulens_eval import Select
 from trulens_eval import Tru
 from trulens_eval.feedback import Feedback
+from trulens_eval.feedback import provider
 from trulens_eval.keys import check_keys
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.tru_chain import TruChain
@@ -37,7 +38,8 @@ verb = False
 # create a conversational app with relevant models and vector store
 
 # Pinecone configuration.
-pinecone.init(
+
+pc = Pinecone(
     api_key=os.environ.get("PINECONE_API_KEY"),  # find at app.pinecone.io
     environment=os.environ.get("PINECONE_ENV")  # next to api key in console
 )
@@ -65,29 +67,12 @@ app_ids = {
 
 # Construct feedback functions.
 hugs = feedback.Huggingface()
-openai = feedback.OpenAI(client=openai.OpenAI())
-
-# Language match between question/answer.
-f_lang_match = Feedback(hugs.language_match).on_input_output()
-# By default this will evaluate feedback on main app input and main app output.
-
-# Question/answer relevance between overall question and answer.
-f_qa_relevance = Feedback(openai.relevance).on_input_output()
-# By default this will evaluate feedback on main app input and main app output.
-
-# Question/statement relevance between question and each context chunk.
-f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
-    Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].
-    page_content
-).aggregate(np.min)
-# First feedback argument is set to main app input, and the second is taken from
-# the context sources as passed to an internal `combine_docs_chain._call`.
-
 
 def get_or_make_app(
     cid: str,
+    llmprovider: Optional[provider.Provider] = None,
     selector: int = 0,
-    feedback_mode=FeedbackMode.DEFERRED
+    feedback_mode=FeedbackMode.DEFERRED,
 ) -> TruChain:
     """
     Create a new app for the given conversation id `cid` or return an existing
@@ -97,6 +82,20 @@ def get_or_make_app(
 
     # NOTE(piotrm): Unsure about the thread safety of the various components so
     # making new ones for each conversation.
+
+    if llmprovider is None:
+         llmprovider = feedback.OpenAI(client=openai.OpenAI())
+
+    # Language match between question/answer.
+    f_lang_match = Feedback(hugs.language_match).on_input_output()
+    # By default this will evaluate feedback on main app input and main app output.
+
+    fs_rag = feedback.feedback.rag_triad(
+        provider=llmprovider,
+        question=Select.RecordInput,
+        answer=Select.RecordOutput,
+        context=Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].page_content    
+    )
 
     if cid in convos:
         return convos[cid]
@@ -110,7 +109,7 @@ def get_or_make_app(
 
     # Embedding needed for Pinecone vector db.
     embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
-    docsearch = Pinecone.from_existing_index(
+    docsearch = PineconeVS.from_existing_index(
         index_name="llmdemo", embedding=embedding
     )
 
@@ -119,7 +118,7 @@ def get_or_make_app(
     if "filtered" in app_id:
         # Better contexts fix, filter contexts with relevance:
         retriever = WithFeedbackFilterDocuments.of_retriever(
-            retriever=retriever, feedback=f_qs_relevance, threshold=0.5
+            retriever=retriever, feedback=fs_rag['qs_relevance'], threshold=0.5
         )
 
     # LLM for completing prompts, and other tasks.
@@ -185,7 +184,7 @@ def get_or_make_app(
     tc = tru.Chain(
         chain=app,
         app_id=app_id,
-        feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance],
+        feedbacks=[f_lang_match, *fs_rag.values()],
         feedback_mode=feedback_mode
     )
 
@@ -200,7 +199,8 @@ def get_answer(app: TruChain, question: str) -> Tuple[str, str]:
     sources elaboration text.
     """
 
-    outs = app.with_(app.app, dict(question=question))
+    with app as recorder:
+        outs = app.app(dict(question=question))
 
     result = outs['answer']
     sources = outs['source_documents']

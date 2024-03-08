@@ -238,6 +238,9 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
 
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
+# Optional imports
+
+# apps
 
 REQUIREMENT_LLAMA = format_import_errors(
     'llama-index', purpose="instrumenting llama_index apps"
@@ -251,18 +254,22 @@ REQUIREMENT_RAILS = format_import_errors(
     "nemoguardrails", purpose="instrumenting nemo guardrails apps"
 )
 
+# vector dbs
+
 REQUIREMENT_PINECONE = format_import_errors(
     # package name is "pinecone-client" but module is "pinecone"
     'pinecone-client',
     purpose="running TruBot"
 )
 
-REQUIREMENT_SKLEARN = format_import_errors(
-    "scikit-learn", purpose="using embedding vector distances"
-)
+# providers/endpoints
 
 REQUIREMENT_LITELLM = format_import_errors(
     ['litellm'], purpose="using LiteLLM models"
+)
+
+REQUIREMENT_LAMINI = format_import_errors(
+    ['lamini'], purpose="using Lamini models"
 )
 
 REQUIREMENT_BEDROCK = format_import_errors(
@@ -273,8 +280,14 @@ REQUIREMENT_OPENAI = format_import_errors(
     'openai', purpose="using OpenAI models"
 )
 
+# provider requirements
+
 REQUIREMENT_GROUNDEDNESS = format_import_errors(
     'nltk', purpose="using some groundedness feedback functions"
+)
+
+REQUIREMENT_SKLEARN = format_import_errors(
+    "scikit-learn", purpose="using embedding vector distances"
 )
 
 REQUIREMENT_BERT_SCORE = format_import_errors(
@@ -285,10 +298,11 @@ REQUIREMENT_EVALUATE = format_import_errors(
     "evaluate", purpose="using certain metrics"
 )
 
+# misc
+
 REQUIREMENT_NOTEBOOK = format_import_errors(
     ["ipython", "ipywidgets"], purpose="using trulens_eval in a notebook"
 )
-
 
 # Try to pretend to be a type as well as an instance.
 class Dummy(type, object):
