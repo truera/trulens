@@ -60,10 +60,14 @@ logger = logging.getLogger(__name__)
     ]
 )
 class SqlAlchemyDB(DB):
+    """DB implementation using sqlalchemy."""
+
+    version_table: str = "trulens_version_table"
+
     engine_params: dict = Field(default_factory=dict)
     session_params: dict = Field(default_factory=dict)
-    engine: Engine = None
-    Session: sessionmaker = None
+    engine: Optional[Engine] = None
+    Session: Optional[sessionmaker] = None
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 

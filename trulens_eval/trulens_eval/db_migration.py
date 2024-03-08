@@ -75,9 +75,13 @@ def _update_db_json_col(
 
     Args:
         db (DB): the db object
+
         table (str): the table to update (from the current DB)
+
         old_entry (tuple): the db tuple to update
+
         json_db_col_idx (int): the tuple idx to update
+        
         new_json (dict): the new json object to be put in the DB
     """
     migrate_record = list(old_entry)

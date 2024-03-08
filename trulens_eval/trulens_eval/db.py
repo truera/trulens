@@ -53,8 +53,14 @@ class DBMeta(pydantic.BaseModel):
 
 
 class DB(SerialModel, abc.ABC):
-    # Whether db will redact secrets before writing out data.
+    """Abstract base class for database methods."""
+
     redact_keys: bool = False
+    """Whether db will redact secrets before writing out data."""
+
+    version_table: str = "trulens_version_table"
+    """For databases that support versioning (alembic), the name of table where
+    versioning data is stored."""
 
     def _json_str_of_obj(self, obj: Any) -> str:
         return json_str_of_obj(obj, redact_keys=self.redact_keys)

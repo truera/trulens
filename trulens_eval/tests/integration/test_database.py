@@ -192,10 +192,10 @@ def clean_db(alias: str) -> SqlAlchemyDB:
 
         downgrade_db(
             db.engine, revision="base"
-        )  # drops all tables except `alembic_version`
+        )  # drops all tables except `db.version_table`
 
         with db.engine.connect() as conn:
-            conn.execute(text("DROP TABLE alembic_version"))
+            conn.execute(text(f"DROP TABLE {db.version_table}"))
 
         yield db
 
