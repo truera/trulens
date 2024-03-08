@@ -13,7 +13,7 @@
 
 # In[ ]:
 
-# ! pip install trulens_eval openai langchain chromadb langchainhub bs4
+# ! pip install trulens_eval openai langchain chromadb langchainhub bs4 tiktoken
 
 # In[ ]:
 
