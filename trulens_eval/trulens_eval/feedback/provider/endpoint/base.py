@@ -246,6 +246,16 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         payload: JSON,
         timeout: float = DEFAULT_NETWORK_TIMEOUT
     ) -> Any:
+        """Make an HTTP Post request.
+
+        Args:
+            url: The url to post to.
+
+            payload: The payload to post.
+
+            timeout: The timeout for the request.
+        """
+
         self.pace_me()
         ret = requests.post(
             url, json=payload, timeout=timeout, headers=self.post_headers
@@ -261,7 +271,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             sleep(wait_time + 2)
             return self.post(url, payload)
 
-        elif isinstance(j, Dict) and "error" in j:
+        if isinstance(j, Dict) and "error" in j:
             error = j['error']
             logger.error("API error: %s.", j)
 
@@ -269,8 +279,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 logger.error("Waiting for overloaded API before trying again.")
                 sleep(10.0)
                 return self.post(url, payload)
-            else:
-                raise RuntimeError(error)
+            
+            raise RuntimeError(error)
 
         assert isinstance(
             j, Sequence
@@ -279,8 +289,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         if len(j) == 1:
             return j[0]
 
-        else:
-            return j
+        return j
 
     def run_in_pace(self, func: Callable[[A], B], *args, **kwargs) -> B:
         """
