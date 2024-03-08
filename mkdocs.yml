@@ -110,7 +110,17 @@ plugins:
               - "!^_" # exlude all members starting with _
               - "^__init__$" # but always include __init__ modules and methods
               - "^__call__$" # and __call__ methods
-
+  - redirects:
+      redirect_maps:
+        # These were distributed in the past but moved since then. Our own links
+        # in the docs are updated but we keep these here for any distributed
+        # links out there.
+        # NOTE: Even though both the source and target in these maps refer to
+        # ".md", the get interpreted (or maybe generated as) urls without ".md". 
+        trulens_eval/getting_started/core_concepts_feedback_functions.md: trulens_eval/getting_started/core_concepts/feedback_functions.md
+        trulens_eval/getting_started/core_concepts_rag_triad.md: trulens_eval/getting_started/core_concepts/rag_triad.md
+        trulens_eval/getting_started/core_concepts_honest_harmless_helpful_evals.md: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
+  
 
 theme:
   name: material
@@ -272,14 +282,3 @@ extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - javascript/tex-mml-chtml-3.0.0.js
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
-
-
-plugins:
-  - redirects:
-      redirect_maps:
-        # These were distributed in the past but moved since then. Our own links
-        # in the docs are updated but we keep these here for any distributed
-        # links out there.
-        trulens_eval/getting_started/core_concepts_feedback_functions.md: trulens_eval/getting_started/core_concepts/feedback_functions.md
-        trulens_eval/getting_started/core_concepts_rag_triad.md: trulens_eval/getting_started/core_concepts/rag_triad.md
-        trulens_eval/getting_started/core_concepts_honest_harmless_helpful_evals.md: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
