@@ -14,12 +14,16 @@ target_metadata = Base.metadata
 config = context.config
 
 # Run this block only if Alembic was called from the command-line
-if config.get_main_option("calling_context", default="CLI") == "CLI":
-    # Interpret the `alembic.ini` file for Python logging.
-    if config.config_file_name is not None:
-        fileConfig(config.config_file_name)
+#if config.get_main_option("calling_context", default="CLI") == "CLI":
+# NOTE(piotrm): making this run always so users can configure alembic.ini as
+# they see fit.
 
-    # Evaluate `sqlalchemy.url` from the environment
+# Interpret the `alembic.ini` file for Python logging.
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+# Evaluate `sqlalchemy.url` from the environment
+if config.get_main_option("sqlalchemy.url", None) is None:
     config.set_main_option(
         "sqlalchemy.url", os.environ.get("SQLALCHEMY_URL", "")
     )
