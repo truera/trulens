@@ -121,11 +121,11 @@ plugins:
         trulens_eval/getting_started/core_concepts_rag_triad.md: trulens_eval/getting_started/core_concepts/rag_triad.md
         trulens_eval/getting_started/core_concepts_honest_harmless_helpful_evals.md: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
         trulens_eval/quickstart.ipynb: trulens_eval/getting_started/quickstarts/quickstart.ipynb
-        trulens_eval/langchain_quickstart.ipynb trulens_eval/getting_started/quickstarts/langchain_quickstart.ipynb
-        trulens_eval/llama_index_quickstart.ipynb trulens_eval/getting_started/quickstarts/llama_index_quickstart.ipynb
-        trulens_eval/text2text_quickstart.ipynb trulens_eval/getting_started/quickstarts/text2text_quickstart.ipynb
-        trulens_eval/groundtruth_evals.ipynb trulens_eval/getting_started/quickstarts/groundtruth_evals.ipynb
-        trulens_eval/human_feedback.ipynb trulens_eval/getting_started/quickstarts/human_feedback.ipynb
+        trulens_eval/langchain_quickstart.ipynb: trulens_eval/getting_started/quickstarts/langchain_quickstart.ipynb
+        trulens_eval/llama_index_quickstart.ipynb: trulens_eval/getting_started/quickstarts/llama_index_quickstart.ipynb
+        trulens_eval/text2text_quickstart.ipynb: trulens_eval/getting_started/quickstarts/text2text_quickstart.ipynb
+        trulens_eval/groundtruth_evals.ipynb: trulens_eval/getting_started/quickstarts/groundtruth_evals.ipynb
+        trulens_eval/human_feedback.ipynb: trulens_eval/getting_started/quickstarts/human_feedback.ipynb
 
 theme:
   name: material
