@@ -140,8 +140,8 @@ class VirtualRecord(Record):
     def __init__(
         self,
         calls: Dict[serial.Lens, Dict],
-        cost: Optional[Cost]=None,
-        perf: Optional[Perf]=None,
+        cost: Optional[Cost] = None,
+        perf: Optional[Perf] = None,
         **kwargs: dict
     ):
         """Create a record for a virtual app.
@@ -174,7 +174,6 @@ class VirtualRecord(Record):
         | `pid` | [int][] | `0` |
         | `tid` | [int][] | `0` |
         """
-
 
         kwargs['cost'] = cost
         kwargs['perf'] = perf
