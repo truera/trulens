@@ -1,11 +1,13 @@
 # Packages required for building documentation pages.
-
 mkdocs               >= 1.5.3
-mkdocs-material      >= 9.5.8
 mkdocstrings-python  >= 1.8.0
-mkdocs-include-markdown-plugin >= 6.0.4
 mkdocstrings         >= 0.24.0
+
+# mkdocs plugins
+mkdocs-material      >= 9.5.8
 mkdocs-jupyter       >= 0.24.6
+mkdocs-redirects     >= 1.2.1
+mkdocs-include-markdown-plugin >= 6.0.4
 
 python-markdown-math >= 0.8
 markdown-include     >= 0.8.1
