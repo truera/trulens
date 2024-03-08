@@ -24,7 +24,8 @@ class LaminiCallback(EndpointCallback):
     """Handlers for Lamini responses to track costs/performance/etc.
     
     !!! NOTE:
-        Lamini no usage information is current included in lamini responses.
+        Lamini does not currently produce any usage information in its responses
+        so this class is not yet useful.
     """
 
     model_config: ClassVar[dict] = {'arbitrary_types_allowed': True}
@@ -35,7 +36,6 @@ class LaminiCallback(EndpointCallback):
     def handle_generation(self, response: pydantic.BaseModel) -> None:
         """Get the usage information from lamini response."""
         super().handle_generation(response)
-
 
 class LaminiEndpoint(Endpoint):
     """Lamini endpoint."""

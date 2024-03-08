@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 class Lamini(WithOutputType, LLMProvider):
     """Out of the box feedback functions calling Lamini API.
 
-    Create an Lamini Provider with out of the box feedback functions.
+    Create an Lamini Provider with out of the box feedback functions. Lamini
+    supports output type specification making it more efficient at some
+    tasks/feedback functions.
 
     Usage:
         ```python
@@ -135,9 +137,6 @@ class Lamini(WithOutputType, LLMProvider):
                 **self.generation_args
             )
 
-        print("prompt=", prompt)
-        print("args", pformat(all_args))
-
         comp = lamini_instance.generate(prompt, **all_args)
 
         if "output" not in comp:
@@ -147,7 +146,5 @@ class Lamini(WithOutputType, LLMProvider):
 
         if output_type != "string":
             comp = str(comp)
-        
-        print(f"comp={comp}")
 
         return comp
