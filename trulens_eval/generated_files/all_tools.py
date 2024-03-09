@@ -26,7 +26,6 @@ os.environ["OPENAI_API_KEY"] = "sk-..."
 # In[ ]:
 
 # Imports main tools:
-from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval import TruChain
 
@@ -105,10 +104,11 @@ rag_chain.invoke("What is Task Decomposition?")
 
 import numpy as np
 
+from trulens_eval import Feedback
 from trulens_eval.feedback.provider import OpenAI
 
 # Initialize provider class
-openai = OpenAI()
+provider = OpenAI()
 
 # select context to be used in feedback. the location of context is app specific.
 from trulens_eval.app import App
@@ -126,10 +126,11 @@ f_groundedness = (
 )
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = Feedback(openai.relevance).on_input_output()
+f_answer_relevance = (Feedback(provider.relevance).on_input_output())
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(openai.qs_relevance).on_input().on(context).aggregate(np.mean)
+    Feedback(provider.context_relevance_with_cot_reasons
+            ).on_input().on(context).aggregate(np.mean)
 )
 
 # ## Instrument chain for logging with TruLens
@@ -139,7 +140,7 @@ f_context_relevance = (
 tru_recorder = TruChain(
     rag_chain,
     app_id='Chain1_ChatApplication',
-    feedbacks=[f_qa_relevance, f_context_relevance, f_groundedness]
+    feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness]
 )
 
 # In[ ]:
@@ -333,22 +334,21 @@ print(response)
 
 import numpy as np
 
-# Initialize provider class
-from trulens_eval.feedback.provider.openai import OpenAI
+from trulens_eval import Feedback
+from trulens_eval.feedback.provider import OpenAI
 
-openai = OpenAI()
+# Initialize provider class
+provider = OpenAI()
 
 # select context to be used in feedback. the location of context is app specific.
 from trulens_eval.app import App
 
 context = App.select_context(query_engine)
 
-# imports for feedback
-from trulens_eval import Feedback
-# Define a groundedness feedback function
 from trulens_eval.feedback import Groundedness
 
 grounded = Groundedness(groundedness_provider=OpenAI())
+# Define a groundedness feedback function
 f_groundedness = (
     Feedback(grounded.groundedness_measure_with_cot_reasons
             ).on(context.collect())  # collect context chunks into a list
@@ -356,11 +356,11 @@ f_groundedness = (
 )
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = Feedback(openai.relevance).on_input_output()
-
+f_answer_relevance = (Feedback(provider.relevance).on_input_output())
 # Question/statement relevance between question and each context chunk.
-f_qs_relevance = (
-    Feedback(openai.qs_relevance).on_input().on(context).aggregate(np.mean)
+f_context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons
+            ).on_input().on(context).aggregate(np.mean)
 )
 
 # ## Instrument app for logging with TruLens
@@ -372,7 +372,7 @@ from trulens_eval import TruLlama
 tru_query_engine_recorder = TruLlama(
     query_engine,
     app_id='LlamaIndex_App1',
-    feedbacks=[f_groundedness, f_qa_relevance, f_qs_relevance]
+    feedbacks=[f_groundedness, f_answer_relevance, f_context_relevance]
 )
 
 # In[ ]:
@@ -563,12 +563,11 @@ import numpy as np
 from trulens_eval import Feedback
 from trulens_eval import Select
 from trulens_eval.feedback import Groundedness
-from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI
+from trulens_eval.feedback.provider.openai import OpenAI
 
-# Initialize provider class
-fopenai = fOpenAI()
+provider = OpenAI()
 
-grounded = Groundedness(groundedness_provider=fopenai)
+grounded = Groundedness(groundedness_provider=provider)
 
 # Define a groundedness feedback function
 f_groundedness = (
@@ -579,19 +578,18 @@ f_groundedness = (
 )
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = (
-    Feedback(fopenai.relevance_with_cot_reasons, name="Answer Relevance").on(
+f_answer_relevance = (
+    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance").on(
         Select.RecordCalls.retrieve.args.query
     ).on_output()
 )
 
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(fopenai.qs_relevance_with_cot_reasons,
-             name="Context Relevance").on(
-                 Select.RecordCalls.retrieve.args.query
-             ).on(Select.RecordCalls.retrieve.rets.collect()
-                 ).aggregate(np.mean)
+    Feedback(
+        provider.context_relevance_with_cot_reasons, name="Context Relevance"
+    ).on(Select.RecordCalls.retrieve.args.query
+        ).on(Select.RecordCalls.retrieve.rets.collect()).aggregate(np.mean)
 )
 
 # ## Construct the app
@@ -604,7 +602,7 @@ from trulens_eval import TruCustomApp
 tru_rag = TruCustomApp(
     rag,
     app_id='RAG v1',
-    feedbacks=[f_groundedness, f_qa_relevance, f_context_relevance]
+    feedbacks=[f_groundedness, f_answer_relevance, f_context_relevance]
 )
 
 # ## Run the app
