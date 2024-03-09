@@ -13,9 +13,10 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
-                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
-                    TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
+    Optional, Sequence, Set, Tuple, Type, TypeVar
+)
 
 import pydantic
 
@@ -593,9 +594,14 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             from trulens_eval.tru_llama import TruLlama
             return TruLlama.select_context(app)
 
-        raise ValueError(
-            f"Could not determine context from unrecognized `app` type {type(app)}."
-        )
+        elif type(app).__module__.startswith("nemoguardrails"):
+            from trulens_eval.tru_rails import TruRails
+            return TruRails.select_context(app)
+
+        else:
+            raise ValueError(
+                f"Could not determine context from unrecognized `app` type {type(app)}."
+            )
 
     def __hash__(self):
         return hash(id(self))
@@ -692,11 +698,17 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 choices = getattr(value, 'choices', None)
                 if choices is not None:
                     # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
-                    return [self._extract_content(choice.message) for choice in choices]
+                    return [
+                        self._extract_content(choice.message)
+                        for choice in choices
+                    ]
                 else:
                     # Recursively extract content from nested pydantic models
-                    return {k: self._extract_content(v) if isinstance(v, (pydantic.BaseModel, dict, list)) else v
-                            for k, v in value.dict().items()}
+                    return {
+                        k: self._extract_content(v) if
+                        isinstance(v, (pydantic.BaseModel, dict, list)) else v
+                        for k, v in value.dict().items()
+                    }
         elif isinstance(value, dict):
             # Check for 'content' key in the dictionary
             content = value.get('content')
@@ -704,7 +716,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 return content
             else:
                 # Recursively extract content from nested dictionaries
-                return {k: self._extract_content(v) if isinstance(v, (dict, list)) else v for k, v in value.items()}
+                return {
+                    k:
+                    self._extract_content(v) if isinstance(v,
+                                                           (dict, list)) else v
+                    for k, v in value.items()
+                }
         elif isinstance(value, list):
             # Handle lists by extracting content from each item
             return [self._extract_content(item) for item in value]
@@ -713,7 +730,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> str:
+    ) -> JSON:
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
@@ -761,15 +778,14 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
             return str(focus)
 
         logger.warning(
-            "Could not determine main input/output of %s.",
-            str(all_args)
+            "Could not determine main input/output of %s.", str(all_args)
         )
 
         return "Could not determine main input from " + str(all_args)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> str:
+    ) -> JSON:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -796,7 +812,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
         else:
             logger.warning("Could not determine main output from %s.", content)
-            return str(content) if content is not None else "Could not determine main output from " + str(content)
+            return str(
+                content
+            ) if content is not None else "Could not determine main output from " + str(
+                content
+            )
 
     # WithInstrumentCallbacks requirement
     def on_method_instrumented(self, obj: object, func: Callable, path: Lens):

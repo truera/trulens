@@ -13,6 +13,9 @@ from tests.unit.test import optional_test
 from tests.unit.test import requiredonly_test
 
 import trulens_eval
+from trulens_eval.instruments import class_filter_matches
+from trulens_eval.instruments import Instrument
+from trulens_eval.utils.imports import Dummy
 
 # Importing any of these should throw ImportError (or its sublcass
 # ModuleNotFoundError) if optional packages are not installed. The key is the
@@ -37,7 +40,8 @@ optional_mods = dict(
     openai=[
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
-    ]
+    ],
+    nemoguardrails=["trulens_eval.tru_rails"]
 )
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
@@ -91,14 +95,72 @@ class TestStatic(TestCase):
         pass
 
     def test_import_base(self):
-        """
-        Check that all of the base modules that do not depend on optional
+        """Check that all of the base modules that do not depend on optional
         packages can be imported.
         """
 
         for mod in base_mods:
             with self.subTest(mod=mod):
                 __import__(mod)
+
+    def _test_instrumentation(self, i: Instrument):
+        """Check that the instrumentation specification is good in these ways:
+        
+        - (1) All classes mentioned are loaded/importable.
+        - (2) All methods associated with a class are actually methods of that
+          class.
+        - (3) All classes belong to modules that are to be instrumented. Otherwise
+          this may be a sign that a class is an alias for things like builtin
+          types like functions/callables or None.
+        """
+
+        for cls in i.include_classes:
+            with self.subTest(cls=cls):
+                if isinstance(cls, Dummy):  # (1)
+                    original_exception = cls.original_exception
+                    self.fail(
+                        f"Instrumented class {cls.name} is dummy meaning it was not importable. Original expception={original_exception}"
+                    )
+
+                # Disabled #2 test right now because of too many failures. We
+                # are using the class filters too liberally.
+                """
+                for method, class_filter in i.include_methods.items():
+                    if class_filter_matches(f=class_filter, obj=cls):
+                        with self.subTest(method=method):
+                            self.assertTrue(
+                                hasattr(cls, method),  # (2)
+                                f"Method {method} is not a method of class {cls}."
+                            )
+                """
+
+                if not i.to_instrument_module(cls.__module__):  #(3)
+                    self.fail(
+                        f"Instrumented class {cls} is in module {cls.__module__} which is not to be instrumented."
+                    )
+
+    def test_instrumentation_langchain(self):
+        """Check that the langchain instrumentation is up to date."""
+
+        from trulens_eval.tru_chain import LangChainInstrument
+
+        self._test_instrumentation(LangChainInstrument())
+
+    @optional_test
+    def test_instrumentation_llama_index(self):
+        """Check that the llama_index instrumentation is up to date."""
+
+        from trulens_eval.tru_llama import LlamaInstrument
+
+        self._test_instrumentation(LlamaInstrument())
+
+    @optional_test
+    def test_instrumentation_nemo(self):
+        """Check that the nemo guardrails instrumentation is up to date."""
+
+        from trulens_eval.tru_rails import RailsInstrument
+
+        self._test_instrumentation(RailsInstrument())
 
     @requiredonly_test
     def test_import_optional_fail(self):

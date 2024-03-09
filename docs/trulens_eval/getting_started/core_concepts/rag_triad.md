@@ -45,5 +45,5 @@ vector database contains only accurate information, then the answers provided by
 the RAG are also accurate.
 
 To see the RAG triad in action, check out the [TruLens
-Quickstart](https://www.trulens.org/trulens_eval/quickstart/)
+Quickstart](../quickstarts/quickstart.ipynb)
 

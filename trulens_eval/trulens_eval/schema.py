@@ -26,6 +26,7 @@ from __future__ import annotations
 import datetime
 from enum import Enum
 import logging
+from pprint import pformat
 from pprint import PrettyPrinter
 from typing import (
     Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
@@ -43,6 +44,7 @@ from trulens_eval.utils import serial
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.python import Future
+from trulens_eval.utils.text import retab
 
 T = TypeVar("T")
 
@@ -322,34 +324,39 @@ class Select:
     Utilities for creating selectors using Lens and aliases/shortcuts.
     """
 
-    # Typing for type hints.
     # TODEP
     Query = serial.Lens
+    """Selector type."""
 
-    # The tru wrapper (TruLlama, TruChain, etc.)
-    Tru: Query = Query()
+    Tru: serial.Lens = Query()
+    """Selector for the tru wrapper (TruLlama, TruChain, etc.)."""
 
-    # Instance for constructing queries for record json like `Record.app.llm`.
     Record: Query = Query().__record__
+    """Selector for the record."""
 
-    # Instance for constructing queries for app json.
     App: Query = Query().__app__
+    """Selector for the app."""
 
-    # A App's main input and main output.
-    # TODO: App input/output generalization.
-    RecordInput: Query = Record.main_input  # type: ignore
-    RecordOutput: Query = Record.main_output  # type: ignore
+    RecordInput: Query = Record.main_input
+    """Selector for the main app input."""
 
-    # The calls made by the wrapped app. Layed out by path into components.
+    RecordOutput: Query = Record.main_output
+    """Selector for the main app output."""
+
     RecordCalls: Query = Record.app  # type: ignore
+    """Selector for the calls made by the wrapped app.
+    
+    Layed out by path into components.
+    """
 
-    # The first called method (last to return).
     RecordCall: Query = Record.calls[-1]
+    """Selector for the first called method (last to return)."""
 
-    # The whole set of inputs/arguments to the first called / last method call.
     RecordArgs: Query = RecordCall.args
-    # The whole output of the first called / last returned method call.
+    """Selector for the whole set of inputs/arguments to the first called / last method call."""
+
     RecordRets: Query = RecordCall.rets
+    """Selector for the whole output of the first called / last returned method call."""
 
     @staticmethod
     def path_and_method(select: Select.Query) -> Tuple[Select.Query, str]:
@@ -378,10 +385,7 @@ class Select:
 
     @staticmethod
     def dequalify(select: Select.Query) -> Select.Query:
-        """
-        If the given selector qualifies record or app, remove that
-        qualification.
-        """
+        """If the given selector qualifies record or app, remove that qualification."""
 
         if len(select.path) == 0:
             return select
@@ -407,10 +411,7 @@ class Select:
 
     @staticmethod
     def render_for_dashboard(query: Select.Query) -> str:
-        """
-        Render the given query for use in dashboard to help user specify
-        feedback functions.
-        """
+        """Render the given query for use in dashboard to help user specify feedback functions."""
 
         if len(query) == 0:
             return "Select.Query()"
@@ -456,38 +457,49 @@ class Select:
 
 
 class FeedbackResultStatus(Enum):
-    """
-    For deferred feedback evaluation, these values indicate status of evaluation.
-    """
+    """For deferred feedback evaluation, these values indicate status of evaluation."""
 
-    # Initial value is none.
     NONE = "none"
+    """Initial value is none."""
 
-    # Once queued/started, status is updated to "running".
     RUNNING = "running"
+    """Once queued/started, status is updated to "running"."""
 
-    # If run failed.
     FAILED = "failed"
+    """Run failed."""
 
-    # If run completed successfully.
     DONE = "done"
+    """Run completed successfully."""
 
 
 class FeedbackCall(serial.SerialModel):
-    """
-    Invocations of feedback function results in one of these instances. Note
-    that a single `Feedback` instance might require more than one call.
+    """Invocations of feedback function results in one of these instances.
+    
+    Note that a single `Feedback` instance might require more than one call.
     """
 
-    # Arguments to the feedback function.
     args: Dict[str, Optional[serial.JSON]]
+    """Arguments to the feedback function."""
 
-    # Return value.
     ret: float
+    """Return value."""
 
-    # New in 0.6.0: Any additional data a feedback function returns to display
-    # alongside its float result.
     meta: Dict[str, Any] = pydantic.Field(default_factory=dict)
+    """Any additional data a feedback function returns to display alongside its float result."""
+
+    def __str__(self) -> str:
+        out = ""
+        tab = "  "
+        for k, v in self.args.items():
+            out += f"{tab}{k} = {v}\n"
+        out += f"{tab}ret = {self.ret}\n"
+        if self.meta:
+            out += f"{tab}meta = \n{retab(tab=tab*2, s=pformat(self.meta))}\n"
+
+        return out
+
+    def __repr__(self) -> str:
+        return str(self)
 
 
 class FeedbackResult(serial.SerialModel):
@@ -570,6 +582,16 @@ class FeedbackResult(serial.SerialModel):
 
         self.feedback_result_id = feedback_result_id
 
+    def __str__(self):
+        out = f"{self.name} ({self.status}) = {self.result}\n"
+        for call in self.calls:
+            out += pformat(call)
+
+        return out
+
+    def __repr__(self):
+        return str(self)
+
 
 class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     """Serialized parts of a feedback function. 
@@ -589,6 +611,13 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     feedback_definition_id: FeedbackDefinitionID
     """Id, if not given, uniquely determined from content."""
 
+    if_exists: Optional[serial.Lens] = None
+    """Only execute the feedback function if the following selector names
+    something that exists in a record/app.
+    
+    Can use this to evaluate conditionally on presence of some calls, for example.
+    """
+
     selectors: Dict[str, serial.Lens]
     """Selectors; pointers into Records of where to get arguments for `imp`."""
 
@@ -604,21 +633,23 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
         implementation: Optional[Union[pyschema.Function,
                                        pyschema.Method]] = None,
         aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
+        if_exists: Optional[serial.Lens] = None,
         selectors: Optional[Dict[str, serial.Lens]] = None,
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
         **kwargs
     ):
-        selectors = selectors or dict()
+        selectors = selectors or {}
 
         if name is not None:
             kwargs['supplied_name'] = name
 
         super().__init__(
             feedback_definition_id="temporary",
-            selectors=selectors,
             implementation=implementation,
             aggregator=aggregator,
+            selectors=selectors,
+            if_exists=if_exists,
             **kwargs
         )
 
@@ -637,6 +668,12 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
                 feedback_definition_id = "anonymous_feedback_definition"
 
         self.feedback_definition_id = feedback_definition_id
+
+    def __repr__(self):
+        return f"FeedbackDefinition({self.name},\n\tselectors={self.selectors},\n\tif_exists={self.if_exists}\n)"
+
+    def __str__(self):
+        return repr(self)
 
     def __hash__(self):
         return hash(self.feedback_definition_id)
@@ -662,6 +699,11 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
 
 class FeedbackMode(str, Enum):
+    """Mode of feedback evaluation.
+
+    Specify this using the `feedback_mode` to [App][trulens_eval.app.App] constructors.
+    """
+
     NONE = "none"
     """No evaluation will happen even if feedback functions are specified."""
 
@@ -700,10 +742,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     root_class: pyschema.Class
     """Class of the main instrumented object.
     
-    Ideally this would be a [ClassVar][] but since we want to check this without
+    Ideally this would be a [ClassVar][typing.ClassVar] but since we want to check this without
     instantiating the subclass of
     [AppDefinition][trulens_eval.schema.AppDefinition] that would define it, we
-    cannot use [ClassVar][].
+    cannot use [ClassVar][typing.ClassVar].
     """
 
     root_callable: ClassVar[pyschema.FunctionOrMethod]
@@ -769,8 +811,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
                 if len(dump) > MAX_DILL_SIZE:
                     logger.warning(
-                        f"`initial_app_loader` dump is too big ({humanize.naturalsize(len(dump))} > {humanize.naturaldate(MAX_DILL_SIZE)} bytes). "
-                        "If you are loading large objects, include the loading logic inside `initial_app_loader`."
+                        "`initial_app_loader` dump is too big (%s) > %s bytes). "
+                        "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
+                        humanize.naturalsize(len(dump)),
+                        humanize.naturalsize(MAX_DILL_SIZE)
                     )
                 else:
                     self.initial_app_loader_dump = serial.SerialBytes(data=dump)
@@ -794,8 +838,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
             except Exception as e:
                 logger.warning(
-                    f"Could not serialize app loader. "
-                    f"Some trulens features may not be available: {e}"
+                    "Could not serialize app loader. "
+                    "Some trulens features may not be available: %s", e
                 )
 
     @staticmethod
@@ -899,9 +943,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @classmethod
     def select_inputs(cls) -> serial.Lens:
-        """
-        Get the path to the main app's call inputs.
-        """
+        """Get the path to the main app's call inputs."""
 
         return getattr(
             Select.RecordCalls,
@@ -910,9 +952,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @classmethod
     def select_outputs(cls) -> serial.Lens:
-        """
-        Get the path to the main app's call outputs.
-        """
+        """Get the path to the main app's call outputs."""
 
         return getattr(
             Select.RecordCalls,

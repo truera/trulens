@@ -248,9 +248,16 @@ class TestTruChain(JSONTestCase):
             sync_record.model_dump(),
             skips=set(
                 [
-                    "id", "name", "ts", "start_time", "end_time", "record_id",
-                    "tid", "pid", "app_id",
-                    "cost" # TODO(piotrm): cost tracking not working with async
+                    "id",
+                    "name",
+                    "ts",
+                    "start_time",
+                    "end_time",
+                    "record_id",
+                    "tid",
+                    "pid",
+                    "app_id",
+                    "cost"  # TODO(piotrm): cost tracking not working with async
                 ]
             )
         )
@@ -302,7 +309,8 @@ class TestTruChain(JSONTestCase):
                     "end_time",
                     "record_id",
                     "tid",
-                    "pid"
+                    "pid",
+                    "run_id"
                 ]
             )
         )

@@ -22,7 +22,8 @@ class Rating(BaseModel):
         return v
 
 
-PATTERN_0_10: re.Pattern = re.compile(r"\s*([0-9]+)\s*$")
+# PATTERN_0_10: re.Pattern = re.compile(r"\s*([0-9]+)\s*$")
+PATTERN_0_10: re.Pattern = re.compile(r"\b([0-9]|10)(?=\D*$|\s*\.)")
 """Regex for extracting a 0-10 rating.
 
 We are assuming the score will always be the last part of the generated text
