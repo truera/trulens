@@ -167,6 +167,7 @@ nav:
           # Title labels of these notebooks come from within the notebooks
           # themselves and will be overridden if specified here.
           - trulens_eval/getting_started/quickstarts/quickstart.ipynb
+          - trulens_eval/getting_started/quickstarts/existing_data_quickstart.ipynb
           - trulens_eval/getting_started/quickstarts/langchain_quickstart.ipynb
           - trulens_eval/getting_started/quickstarts/llama_index_quickstart.ipynb
           - trulens_eval/getting_started/quickstarts/text2text_quickstart.ipynb
