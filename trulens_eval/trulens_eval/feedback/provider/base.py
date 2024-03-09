@@ -267,12 +267,13 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
-        
+
         return self.generate_score(
             system_prompt=str.format(
                 prompts.CONTEXT_RELEVANCE, question=question, context=context
             )
         )
+
     def qs_relevance(self, question: str, context: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -306,7 +307,7 @@ class LLMProvider(Provider):
             "The method 'qs_relevance' is deprecated and will be removed in future versions. "
             "Please use 'context_relevance' instead.", DeprecationWarning
         )
-        
+
         return self.generate_score(
             system_prompt=str.format(
                 prompts.CONTEXT_RELEVANCE, question=question, context=context
@@ -350,9 +351,9 @@ class LLMProvider(Provider):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(system_prompt)
-    
+
     def qs_relevance_with_cot_reasons(self, question: str,
-                                           context: str) -> Tuple[float, Dict]:
+                                      context: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the context to the question.
@@ -389,7 +390,8 @@ class LLMProvider(Provider):
 
         warnings.warn(
             "The method 'qs_relevance_with_cot_reasons' is deprecated and will be removed in future versions. "
-            "Please use 'context_relevance_with_cot_reasons' instead.", DeprecationWarning
+            "Please use 'context_relevance_with_cot_reasons' instead.",
+            DeprecationWarning
         )
 
         return self.generate_score_and_reasons(system_prompt)
