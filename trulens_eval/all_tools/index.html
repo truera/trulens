@@ -536,6 +536,8 @@
       
         
       
+        
+      
     
     
     
@@ -580,6 +582,26 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/quickstarts/existing_data_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 TruLens with Outside Logs
   </span>
   
 
@@ -3780,7 +3802,7 @@ os.environ["OPENAI_API_KEY"] = "sk-..."</div>
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Imports main tools:</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span><span class="p">,</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Tru</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruChain</span><span class="p">,</span> <span class="n">Tru</span>
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 <span class="n">tru</span><span class="o">.</span><span class="n">reset_database</span><span class="p">()</span>
 
@@ -3796,7 +3818,7 @@ os.environ["OPENAI_API_KEY"] = "sk-..."</div>
 <span class="kn">from</span> <span class="nn">langchain_core.runnables</span> <span class="kn">import</span> <span class="n">RunnablePassthrough</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-3"># Imports main tools:
-from trulens_eval import TruChain, Feedback, Tru
+from trulens_eval import TruChain, Tru
 tru = Tru()
 tru.reset_database()
 
@@ -4060,10 +4082,11 @@ rag_chain = (
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="c1"># Initialize provider class</span>
-<span class="n">openai</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
 <span class="c1"># select context to be used in feedback. the location of context is app specific.</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
@@ -4080,20 +4103,24 @@ rag_chain = (
 <span class="p">)</span>
 
 <span class="c1"># Question/answer relevance between overall question and answer.</span>
-<span class="n">f_qa_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+<span class="n">f_answer_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+<span class="p">)</span>
 <span class="c1"># Question/statement relevance between question and each context chunk.</span>
 <span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-8">from trulens_eval.feedback.provider import OpenAI
+from trulens_eval import Feedback
 import numpy as np
 
 # Initialize provider class
-openai = OpenAI()
+provider = OpenAI()
 
 # select context to be used in feedback. the location of context is app specific.
 from trulens_eval.app import App
@@ -4110,10 +4137,13 @@ f_groundedness = (
 )
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = Feedback(openai.relevance).on_input_output()
+f_answer_relevance = (
+    Feedback(provider.relevance)
+    .on_input_output()
+)
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(openai.qs_relevance)
+    Feedback(provider.context_relevance_with_cot_reasons)
     .on_input()
     .on(context)
     .aggregate(np.mean)
@@ -4155,11 +4185,11 @@ f_context_relevance = (
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span><span class="n">rag_chain</span><span class="p">,</span>
     <span class="n">app_id</span><span class="o">=</span><span class="s1">'Chain1_ChatApplication'</span><span class="p">,</span>
-    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">,</span> <span class="n">f_groundedness</span><span class="p">])</span>
+    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_answer_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">,</span> <span class="n">f_groundedness</span><span class="p">])</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-9">tru_recorder = TruChain(rag_chain,
     app_id='Chain1_ChatApplication',
-    feedbacks=[f_qa_relevance, f_context_relevance, f_groundedness])</div>
+    feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness])</div>
 </div>
 </div>
 </div>
@@ -4908,22 +4938,20 @@ print(response)</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="c1"># Initialize provider class</span>
-<span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
-<span class="n">openai</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
 <span class="c1"># select context to be used in feedback. the location of context is app specific.</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
 <span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">query_engine</span><span class="p">)</span>
 
-<span class="c1"># imports for feedback</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
-
-<span class="c1"># Define a groundedness feedback function</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Groundedness</span>
 <span class="n">grounded</span> <span class="o">=</span> <span class="n">Groundedness</span><span class="p">(</span><span class="n">groundedness_provider</span><span class="o">=</span><span class="n">OpenAI</span><span class="p">())</span>
+<span class="c1"># Define a groundedness feedback function</span>
 <span class="n">f_groundedness</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Feedback</span><span class="p">(</span><span class="n">grounded</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span> <span class="c1"># collect context chunks into a list</span>
@@ -4932,32 +4960,32 @@ print(response)</div>
 <span class="p">)</span>
 
 <span class="c1"># Question/answer relevance between overall question and answer.</span>
-<span class="n">f_qa_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
-
+<span class="n">f_answer_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+<span class="p">)</span>
 <span class="c1"># Question/statement relevance between question and each context chunk.</span>
-<span class="n">f_qs_relevance</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span>
+<span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-27">import numpy as np
+<div class="clipboard-copy-txt" id="cell-27">from trulens_eval.feedback.provider import OpenAI
+from trulens_eval import Feedback
+import numpy as np
 
 # Initialize provider class
-from trulens_eval.feedback.provider.openai import OpenAI
-openai = OpenAI()
+provider = OpenAI()
 
 # select context to be used in feedback. the location of context is app specific.
 from trulens_eval.app import App
 context = App.select_context(query_engine)
 
-# imports for feedback
-from trulens_eval import Feedback
-
-# Define a groundedness feedback function
 from trulens_eval.feedback import Groundedness
 grounded = Groundedness(groundedness_provider=OpenAI())
+# Define a groundedness feedback function
 f_groundedness = (
     Feedback(grounded.groundedness_measure_with_cot_reasons)
     .on(context.collect()) # collect context chunks into a list
@@ -4966,11 +4994,13 @@ f_groundedness = (
 )
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = Feedback(openai.relevance).on_input_output()
-
+f_answer_relevance = (
+    Feedback(provider.relevance)
+    .on_input_output()
+)
 # Question/statement relevance between question and each context chunk.
-f_qs_relevance = (
-    Feedback(openai.qs_relevance)
+f_context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons)
     .on_input()
     .on(context)
     .aggregate(np.mean)
@@ -5013,12 +5043,12 @@ f_qs_relevance = (
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruLlama</span>
 <span class="n">tru_query_engine_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">,</span>
     <span class="n">app_id</span><span class="o">=</span><span class="s1">'LlamaIndex_App1'</span><span class="p">,</span>
-    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundedness</span><span class="p">,</span> <span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_qs_relevance</span><span class="p">])</span>
+    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundedness</span><span class="p">,</span> <span class="n">f_answer_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-28">from trulens_eval import TruLlama
 tru_query_engine_recorder = TruLlama(query_engine,
     app_id='LlamaIndex_App1',
-    feedbacks=[f_groundedness, f_qa_relevance, f_qs_relevance])</div>
+    feedbacks=[f_groundedness, f_answer_relevance, f_context_relevance])</div>
 </div>
 </div>
 </div>
@@ -5721,14 +5751,13 @@ rag = RAG_from_scratch()</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Select</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Groundedness</span>
-<span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span> <span class="k">as</span> <span class="n">fOpenAI</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="c1"># Initialize provider class</span>
-<span class="n">fopenai</span> <span class="o">=</span> <span class="n">fOpenAI</span><span class="p">()</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
-<span class="n">grounded</span> <span class="o">=</span> <span class="n">Groundedness</span><span class="p">(</span><span class="n">groundedness_provider</span><span class="o">=</span><span class="n">fopenai</span><span class="p">)</span>
+<span class="n">grounded</span> <span class="o">=</span> <span class="n">Groundedness</span><span class="p">(</span><span class="n">groundedness_provider</span><span class="o">=</span><span class="n">provider</span><span class="p">)</span>
 
 <span class="c1"># Define a groundedness feedback function</span>
 <span class="n">f_groundedness</span> <span class="o">=</span> <span class="p">(</span>
@@ -5739,15 +5768,15 @@ rag = RAG_from_scratch()</div>
 <span class="p">)</span>
 
 <span class="c1"># Question/answer relevance between overall question and answer.</span>
-<span class="n">f_qa_relevance</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">fopenai</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Answer Relevance"</span><span class="p">)</span>
+<span class="n">f_answer_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Answer Relevance"</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
 <span class="p">)</span>
 
 <span class="c1"># Question/statement relevance between question and each context chunk.</span>
 <span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">fopenai</span><span class="o">.</span><span class="n">qs_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Context Relevance"</span><span class="p">)</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Context Relevance"</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">rets</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
@@ -5755,14 +5784,13 @@ rag = RAG_from_scratch()</div>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-44">from trulens_eval import Feedback, Select
 from trulens_eval.feedback import Groundedness
-from trulens_eval.feedback.provider.openai import OpenAI as fOpenAI
+from trulens_eval.feedback.provider.openai import OpenAI
 
 import numpy as np
 
-# Initialize provider class
-fopenai = fOpenAI()
+provider = OpenAI()
 
-grounded = Groundedness(groundedness_provider=fopenai)
+grounded = Groundedness(groundedness_provider=provider)
 
 # Define a groundedness feedback function
 f_groundedness = (
@@ -5773,15 +5801,15 @@ f_groundedness = (
 )
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = (
-    Feedback(fopenai.relevance_with_cot_reasons, name = "Answer Relevance")
+f_answer_relevance = (
+    Feedback(provider.relevance_with_cot_reasons, name = "Answer Relevance")
     .on(Select.RecordCalls.retrieve.args.query)
     .on_output()
 )
 
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(fopenai.qs_relevance_with_cot_reasons, name = "Context Relevance")
+    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
     .on(Select.RecordCalls.retrieve.args.query)
     .on(Select.RecordCalls.retrieve.rets.collect())
     .aggregate(np.mean)
@@ -5824,12 +5852,12 @@ f_context_relevance = (
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruCustomApp</span>
 <span class="n">tru_rag</span> <span class="o">=</span> <span class="n">TruCustomApp</span><span class="p">(</span><span class="n">rag</span><span class="p">,</span>
     <span class="n">app_id</span> <span class="o">=</span> <span class="s1">'RAG v1'</span><span class="p">,</span>
-    <span class="n">feedbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">f_groundedness</span><span class="p">,</span> <span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
+    <span class="n">feedbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">f_groundedness</span><span class="p">,</span> <span class="n">f_answer_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-45">from trulens_eval import TruCustomApp
 tru_rag = TruCustomApp(rag,
     app_id = 'RAG v1',
-    feedbacks = [f_groundedness, f_qa_relevance, f_context_relevance])</div>
+    feedbacks = [f_groundedness, f_answer_relevance, f_context_relevance])</div>
 </div>
 </div>
 </div>

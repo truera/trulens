@@ -546,6 +546,8 @@
       
         
       
+        
+      
     
     
     
@@ -590,6 +592,26 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../existing_data_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 TruLens with Outside Logs
   </span>
   
 
@@ -4034,13 +4056,13 @@ prompt_output</div>
 <span class="n">fopenai</span> <span class="o">=</span> <span class="n">fOpenAI</span><span class="p">()</span>
 
 <span class="c1"># Define a relevance function from openai</span>
-<span class="n">f_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">fopenai</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+<span class="n">f_answer_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">fopenai</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-6"># Initialize OpenAI-based feedback function collection class:
 fopenai = fOpenAI()
 
 # Define a relevance function from openai
-f_relevance = Feedback(fopenai.relevance).on_input_output()</div>
+f_answer_relevance = Feedback(fopenai.relevance).on_input_output()</div>
 </div>
 </div>
 </div>
@@ -4077,10 +4099,10 @@ f_relevance = Feedback(fopenai.relevance).on_input_output()</div>
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruBasicApp</span>
-<span class="n">tru_llm_standalone_recorder</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">llm_standalone</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">"Happy Bot"</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_relevance</span><span class="p">])</span>
+<span class="n">tru_llm_standalone_recorder</span> <span class="o">=</span> <span class="n">TruBasicApp</span><span class="p">(</span><span class="n">llm_standalone</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">"Happy Bot"</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_answer_relevance</span><span class="p">])</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-7">from trulens_eval import TruBasicApp
-tru_llm_standalone_recorder = TruBasicApp(llm_standalone, app_id="Happy Bot", feedbacks=[f_relevance])</div>
+tru_llm_standalone_recorder = TruBasicApp(llm_standalone, app_id="Happy Bot", feedbacks=[f_answer_relevance])</div>
 </div>
 </div>
 </div>

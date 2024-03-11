@@ -536,6 +536,8 @@
       
         
       
+        
+      
     
     
     
@@ -580,6 +582,26 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/existing_data_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 TruLens with Outside Logs
   </span>
   
 
@@ -3350,8 +3372,22 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance" class="md-nav__link">
+    context_relevance()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.base.LLMProvider.qs_relevance" class="md-nav__link">
     qs_relevance()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance_with_cot_reasons" class="md-nav__link">
+    context_relevance_with_cot_reasons()
   </a>
   
 </li>
@@ -5462,26 +5498,27 @@ models</a>.</p>
 
 
 
-<h4 id="trulens_eval.feedback.provider.base.LLMProvider.qs_relevance" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">qs_relevance</span>
+<h4 id="trulens_eval.feedback.provider.base.LLMProvider.context_relevance" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">context_relevance</span>
 
 
-<a href="#trulens_eval.feedback.provider.base.LLMProvider.qs_relevance" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">qs_relevance</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+<a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">context_relevance</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
       <p>Uses chat completion model. A function that completes a template to
-check the relevance of the statement to the question.</p>
-<p><div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span> 
-</code></pre></div>
-The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
-Guide</a></p>
+check the relevance of the context to the question.</p>
 <p>Usage on RAG Contexts:</p>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input</span><span class="p">()</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
-    <span class="n">TruLlama</span><span class="o">.</span><span class="n">select_source_nodes</span><span class="p">()</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">text</span> <span class="c1"># See note below</span>
-<span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> 
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_app</span><span class="p">)</span>
+<span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="p">)</span>
 </code></pre></div>
 <p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide :
 Selectors</a></p>
@@ -5511,10 +5548,10 @@ Selectors</a></p>
           </td>
         </tr>
         <tr>
-          <td><code>statement</code></td>
+          <td><code>context</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A statement to the question.</p>
+              <p>Context related to the question.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -5566,27 +5603,134 @@ Selectors</a></p>
 
 
 
-<h4 id="trulens_eval.feedback.provider.base.LLMProvider.qs_relevance_with_cot_reasons" class="doc doc-heading">
-          <span class="doc doc-object-name doc-function-name">qs_relevance_with_cot_reasons</span>
+<h4 id="trulens_eval.feedback.provider.base.LLMProvider.qs_relevance" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">qs_relevance</span>
 
 
-<a href="#trulens_eval.feedback.provider.base.LLMProvider.qs_relevance_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">qs_relevance_with_cot_reasons</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]</span>
+<a href="#trulens_eval.feedback.provider.base.LLMProvider.qs_relevance" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">qs_relevance</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses chat completion model. A function that completes a template to
+check the relevance of the statement to the question.</p>
+<p>Usage on RAG Contexts:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_app</span><span class="p">)</span>
+<span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide :
+Selectors</a></p>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>question</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>A question being asked. </p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>context</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>A context to the question.</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <code>float</code>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>A value between 0.0 (not relevant) and 1.0 (relevant).</p>
+            </div>
+              <p>
+                <span class="doc-returns-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                </span>
+              </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.feedback.provider.base.LLMProvider.context_relevance_with_cot_reasons" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">context_relevance_with_cot_reasons</span>
+
+
+<a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">context_relevance_with_cot_reasons</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
       <p>Uses chat completion model. A function that completes a
-template to check the relevance of the statement to the question.
+template to check the relevance of the context to the question.
 Also uses chain of thought methodology and emits the reasons.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code>feedback = Feedback(provider.qs_relevance_with_cot_reasons).on_input_output() 
-</code></pre></div>
-The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function Guide</a></p>
-<p>Usage on RAG Contexts:
-<div class="highlight"><pre><span></span><code>feedback = Feedback(provider.qs_relevance_with_cot_reasons).on_input().on(
-    TruLlama.select_source_nodes().node.text # See note below
-).aggregate(np.mean) 
+Usage on RAG Contexts:</p>
+<p><div class="highlight"><pre><span></span><code>from trulens_eval.app import App
+context = App.select_context(rag_app)
+feedback = (
+    Feedback(provider.context_relevance_with_cot_reasons)
+    .on_input()
+    .on(context)
+    .aggregate(np.mean)
+    )
 </code></pre></div>
 The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
 
@@ -5615,10 +5759,116 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
           </td>
         </tr>
         <tr>
-          <td><code>statement</code></td>
+          <td><code>context</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A statement to the question.</p>
+              <p>Context related to the question.</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <code>float</code>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".</p>
+            </div>
+              <p>
+                <span class="doc-returns-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
+                </span>
+              </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.feedback.provider.base.LLMProvider.qs_relevance_with_cot_reasons" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">qs_relevance_with_cot_reasons</span>
+
+
+<a href="#trulens_eval.feedback.provider.base.LLMProvider.qs_relevance_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">qs_relevance_with_cot_reasons</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses chat completion model. A function that completes a
+template to check the relevance of the context to the question.
+Also uses chain of thought methodology and emits the reasons.</p>
+<p><strong>Usage:</strong>
+Usage on RAG Contexts:
+<div class="highlight"><pre><span></span><code>from trulens_eval.app import App
+context = App.select_context(rag_app)
+feedback = (
+    Feedback(provider.qs_relevance_with_cot_reasons)
+    .on_input()
+    .on(context)
+    .aggregate(np.mean)
+    )
+</code></pre></div>
+The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>question</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>A question being asked. </p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>context</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>Context related to the question.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">

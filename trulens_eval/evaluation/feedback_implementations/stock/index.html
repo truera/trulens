@@ -544,6 +544,8 @@
       
         
       
+        
+      
     
     
     
@@ -588,6 +590,26 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/existing_data_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 TruLens with Outside Logs
   </span>
   
 
@@ -1477,6 +1499,20 @@
           <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.base.LLMProvider.conciseness_with_cot_reasons" class="md-nav__link">
     conciseness_with_cot_reasons()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance" class="md-nav__link">
+    context_relevance()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance_with_cot_reasons" class="md-nav__link">
+    context_relevance_with_cot_reasons()
   </a>
   
 </li>
@@ -3926,6 +3962,20 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance" class="md-nav__link">
+    context_relevance()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance_with_cot_reasons" class="md-nav__link">
+    context_relevance_with_cot_reasons()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.base.LLMProvider.controversiality" class="md-nav__link">
     controversiality()
   </a>
@@ -5089,6 +5139,83 @@ Guide</a></p>
 
 
 
+<h4 id="trulens_eval.feedback.provider.base.LLMProvider.context_relevance" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">context_relevance</span></code>
+
+<a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses chat completion model. A function that completes a template to
+check the relevance of the context to the question.</p>
+<p>Usage on RAG Contexts:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_app</span><span class="p">)</span>
+<span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide :
+Selectors</a></p>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h4 id="trulens_eval.feedback.provider.base.LLMProvider.context_relevance_with_cot_reasons" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">context_relevance_with_cot_reasons</span></code>
+
+<a href="#trulens_eval.feedback.provider.base.LLMProvider.context_relevance_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Uses chat completion model. A function that completes a
+template to check the relevance of the context to the question.
+Also uses chain of thought methodology and emits the reasons.</p>
+<p><strong>Usage:</strong>
+Usage on RAG Contexts:</p>
+<p><div class="highlight"><pre><span></span><code>from trulens_eval.app import App
+context = App.select_context(rag_app)
+feedback = (
+    Feedback(provider.context_relevance_with_cot_reasons)
+    .on_input()
+    .on(context)
+    .aggregate(np.mean)
+    )
+</code></pre></div>
+The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
 <h4 id="trulens_eval.feedback.provider.base.LLMProvider.controversiality" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">controversiality</span></code>
 
@@ -5691,14 +5818,15 @@ Guide</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the relevance of the statement to the question.</p>
-<p><div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span> 
-</code></pre></div>
-The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
-Guide</a></p>
 <p>Usage on RAG Contexts:</p>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input</span><span class="p">()</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
-    <span class="n">TruLlama</span><span class="o">.</span><span class="n">select_source_nodes</span><span class="p">()</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">text</span> <span class="c1"># See note below</span>
-<span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> 
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_app</span><span class="p">)</span>
+<span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="p">)</span>
 </code></pre></div>
 <p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide :
 Selectors</a></p>
@@ -5727,16 +5855,18 @@ Selectors</a></p>
   <div class="doc doc-contents ">
   
       <p>Uses chat completion model. A function that completes a
-template to check the relevance of the statement to the question.
+template to check the relevance of the context to the question.
 Also uses chain of thought methodology and emits the reasons.</p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code>feedback = Feedback(provider.qs_relevance_with_cot_reasons).on_input_output() 
-</code></pre></div>
-The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function Guide</a></p>
-<p>Usage on RAG Contexts:
-<div class="highlight"><pre><span></span><code>feedback = Feedback(provider.qs_relevance_with_cot_reasons).on_input().on(
-    TruLlama.select_source_nodes().node.text # See note below
-).aggregate(np.mean) 
+Usage on RAG Contexts:
+<div class="highlight"><pre><span></span><code>from trulens_eval.app import App
+context = App.select_context(rag_app)
+feedback = (
+    Feedback(provider.qs_relevance_with_cot_reasons)
+    .on_input()
+    .on(context)
+    .aggregate(np.mean)
+    )
 </code></pre></div>
 The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
 
