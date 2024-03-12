@@ -38,7 +38,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
     # this set of imports. We don't want to partially run the new imports and
     # fail midway to continue with the legacy imports.
 
-    legacy: bool = isinstance(llama_index, Dummy)
+    legacy: bool = version is None or isinstance(llama_index, Dummy)
 
     if not legacy:
         # Check if llama_index is new enough.

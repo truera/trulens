@@ -7,22 +7,21 @@ from inspect import signature
 import itertools
 import json
 import logging
+from pprint import pformat
 import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple,
+                    TypeVar, Union)
 import warnings
+
 import munch
-from rich.pretty import pretty_repr
-from rich import print as rprint
-from rich.markdown import Markdown
-
-
 import numpy as np
 import pandas
 import pydantic
+from rich import print as rprint
+from rich.markdown import Markdown
+from rich.pretty import pretty_repr
 
-from pprint import pformat
+from trulens_eval import schema as tru_schema
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.schema import AppDefinition
@@ -34,14 +33,16 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval import schema as tru_schema
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.python import callable_name, class_name
+from trulens_eval.utils.python import callable_name
+from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import Future
-from trulens_eval.utils.serial import JSON, GetItemOrAttribute
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.text import UNICODE_CHECK, retab
+from trulens_eval.utils.text import retab
+from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
