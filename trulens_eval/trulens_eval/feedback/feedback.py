@@ -33,6 +33,7 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+from trulens_eval import schema
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import callable_name, class_name
@@ -417,17 +418,33 @@ class Feedback(FeedbackDefinition):
         assert self.imp is not None, "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
 
-    def aggregate(self, func: AggCallable) -> Feedback:
+    def aggregate(
+        self, func: Optional[AggCallable],
+        combinations: Optional[schema.FeedbackCombinations]
+    ) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
-        generate more than one value for implementation argument(s).
+        generate more than one value for implementation argument(s). Can also
+        specify the method of producing combinations of values in such cases.
 
-        Returns a new Feedback object with the given aggregation function.
+        Returns a new Feedback object with the given aggregation function and/or
+        the given [combination mode][trulens_eval.schema.FeedbackCombinations].
         """
+
+        if func is None and combinations is None:
+            raise ValueError(
+                "At least one of `func` or `combinations` must be provided."
+            )
+
+        updates = {}
+        if func is not None:
+            updates['agg'] = func
+        if combinations is not None:
+            updates['combinations'] = combinations
 
         return Feedback.model_copy(
             self,
-            update=dict(agg=func)  # does this run __init__ ?
+            update=updates
         )
 
     @staticmethod
@@ -753,7 +770,10 @@ Feedback function signature:
         # a warning earlier than later.
         try:
             input_combinations = list(
-                self._extract_selection(source_data=source_data)
+                self._extract_selection(
+                    source_data=source_data,
+                    combinations=self.combinations
+                )
             )
 
         except Exception as e:
@@ -936,7 +956,11 @@ Feedback function signature:
 
         return super().name
 
-    def _extract_selection(self, source_data: Dict) -> Iterable[Dict[str, Any]]:
+    def _extract_selection(
+        self,
+        source_data: Dict,
+        combinations: schema.FeedbackCombinations = "product"
+    ) -> Iterable[Dict[str, Any]]:
 
         arg_vals = {}
 
@@ -951,7 +975,15 @@ Feedback function signature:
         keys = arg_vals.keys()
         vals = arg_vals.values()
 
-        assignments = itertools.product(*vals)
+        if combinations == "product":
+            assignments = itertools.product(*vals)
+        elif combinations == "zip":
+            assignments = zip(*vals)
+        else:
+            raise ValueError(
+                f"Unknown combination mode {combinations}. "
+                "Expected `product` or `zip`."
+            )
 
         for assignment in assignments:
             yield {k: v for k, v in zip(keys, assignment)}

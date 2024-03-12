@@ -610,6 +610,45 @@ class FeedbackResult(serial.SerialModel):
         return str(self)
 
 
+class FeedbackCombinations(Enum):
+    """How to aggregate multiple feedback function calls.
+    
+    Note that this applies only to cases where selectors pick out more than one
+    thing for feedback function arguments. This option can be specified with
+    [Feedback.aggregate][trulens_eval.feedback.feedback.Feedback.aggregate].
+    """
+
+    ZIP = "zip"
+    """Match argument values per position in produced values. 
+    
+    !!! Example:
+        If arg1 has values [0, 1, 2] and arg2 has values ["a", "b", "c"], the
+        feedback function will be called 3 times with kwargs:
+        
+        - `{'arg1': 0, arg2: "a"}`, 
+        - `{'arg1': 1, arg2: "b"}`, 
+        - `{'arg1': 2, arg2: "c"}`
+
+    Note that selectors can use `collect()` to name a single (list) value
+    instead of multiple values.
+    """
+
+    PRODUCT = "product"
+    """Evaluate feedback on all combinations of feedback function arguments.
+
+    !!! Example:
+        If arg1 has values [0, 1] and arg2 has values ["a", "b"], the
+        feedback function will be called 4 times with kwargs:
+
+        - `{'arg1': 0, arg2: "a"}`,
+        - `{'arg1': 0, arg2: "b"}`,
+        - `{'arg1': 1, arg2: "a"}`,
+        - `{'arg1': 1, arg2: "b"}`
+
+    Note that selectors can use `collect()` to name a single (list) value
+    instead of multiple values.
+    """
+
 class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     """Serialized parts of a feedback function. 
     
@@ -624,6 +663,8 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
     aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None
     """Aggregator method serialization."""
+
+    combinations: Optional[FeedbackCombinations] = FeedbackCombinations.PRODUCT
 
     feedback_definition_id: FeedbackDefinitionID
     """Id, if not given, uniquely determined from content."""
