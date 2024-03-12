@@ -51,8 +51,8 @@ jobs:
           set -e
           source activate $(python-version)
 
-          pip install yapf==0.32.0
-          pip install isort==5.10.1
+          pip install yapf==0.32.0 --verbose
+          pip install isort==5.10.1 --verbose
 
           yapf --version
           isort --vn
@@ -74,7 +74,7 @@ jobs:
           source activate $(python-version)
 
           cd ./trulens_eval
-          pip install -e .
+          pip install -e . --verbose
 
         displayName: Install trulens
 
@@ -82,7 +82,7 @@ jobs:
           set -e
           source activate $(python-version)
 
-          pip install \
+          pip install --verbose \
             pytest==7.0.1 pytest-subtests pytest-azurepipelines
 
         displayName: Install testing packages
@@ -118,11 +118,12 @@ jobs:
           #  --name $(python-version) \
           #  --display-name $(python-version)
 
-          pip install -r trulens_eval/requirements.optional.txt
+          pip install --verbose -r trulens_eval/requirements.optional.txt
 
           python --version
           pip --version
-          pip list
+          pip list --verbose
+
         displayName: Install optional packages
 
       - bash: |
