@@ -21,9 +21,10 @@ from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 
-# WARNING: importing schema seems to break pydantic for unknown reason.
-# This happens if you import it as something else.
-# from trulens_eval import schema
+# WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
+# This happens even if you import it as something else.
+# from trulens_eval import schema # breaks pydantic
+# from trulens_eval import schema as tru_schema # also breaks pydantic
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
