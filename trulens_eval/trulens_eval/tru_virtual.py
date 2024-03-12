@@ -325,6 +325,16 @@ class TruVirtual(App):
 
     instrument: Optional[Instrument] = None
 
+    selector_check_warning: bool = False
+    """Selector checking is disabled for virtual apps."""
+
+    selector_nocheck: bool = True
+    """The selector check must be disabled for virtual apps. 
+    
+    This is because methods that could be called are not known in advance of
+    creating virtual records.
+    """
+
     def __init__(
         self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: dict
     ):
@@ -340,6 +350,12 @@ class TruVirtual(App):
                     "Unknown type for `app`. "
                     "Either dict or `trulens_eval.tru_virtual.VirtualApp` expected."
                 )
+
+        if kwargs.get("selector_nocheck") is False or kwargs.get("selector_check_warning") is True:
+            raise ValueError(
+                "Selector prechecking does not work with virtual apps. "
+                "The settings `selector_nocheck=True` and `selector_check_warning=False` are required."
+            )
 
         super().__init__(app=app, **kwargs)
 

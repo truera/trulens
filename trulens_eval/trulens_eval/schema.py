@@ -610,43 +610,56 @@ class FeedbackResult(serial.SerialModel):
         return str(self)
 
 
-class FeedbackCombinations(Enum):
+class FeedbackCombinations(str, Enum):
     """How to aggregate multiple feedback function calls.
     
     Note that this applies only to cases where selectors pick out more than one
-    thing for feedback function arguments. This option can be specified with
+    thing for feedback function arguments. This option is used for the field
+    `combinations` of
+    [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition] and can be
+    specified with
     [Feedback.aggregate][trulens_eval.feedback.feedback.Feedback.aggregate].
     """
 
     ZIP = "zip"
     """Match argument values per position in produced values. 
     
-    !!! Example:
-        If arg1 has values [0, 1, 2] and arg2 has values ["a", "b", "c"], the
-        feedback function will be called 3 times with kwargs:
-        
-        - `{'arg1': 0, arg2: "a"}`, 
+    Example:
+        If the selector for `arg1` generates values `0, 1, 2` and one for `arg2`
+        generates values `"a", "b", "c"`, the feedback function will be called 3
+        times with kwargs:
+
+        - `{'arg1': 0, arg2: "a"}`,
         - `{'arg1': 1, arg2: "b"}`, 
         - `{'arg1': 2, arg2: "c"}`
 
-    Note that selectors can use `collect()` to name a single (list) value
-    instead of multiple values.
+    If the quantities of items in the various generators do not match, the
+    result will have only as many combinations as the generator with the
+    fewest items as per python [zip][zip] (strict mode is not used).
+
+    Note that selectors can use
+    [Lens][trulens_eval.utils.serial.Lens] `collect()` to name a single (list)
+    value instead of multiple values.
     """
 
     PRODUCT = "product"
     """Evaluate feedback on all combinations of feedback function arguments.
 
-    !!! Example:
-        If arg1 has values [0, 1] and arg2 has values ["a", "b"], the
-        feedback function will be called 4 times with kwargs:
+    Example:
+        If the selector for `arg1` generates values `0, 1` and the one for
+        `arg2` generates values `"a", "b"`, the feedback function will be called
+        4 times with kwargs:
 
         - `{'arg1': 0, arg2: "a"}`,
         - `{'arg1': 0, arg2: "b"}`,
         - `{'arg1': 1, arg2: "a"}`,
         - `{'arg1': 1, arg2: "b"}`
 
-    Note that selectors can use `collect()` to name a single (list) value
-    instead of multiple values.
+    See [itertools.product][itertools.product] for more.
+
+    Note that selectors can use
+    [Lens][trulens_eval.utils.serial.Lens] `collect()` to name a single (list)
+    value instead of multiple values.
     """
 
 class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
@@ -665,6 +678,8 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     """Aggregator method serialization."""
 
     combinations: Optional[FeedbackCombinations] = FeedbackCombinations.PRODUCT
+    """Mode of combining selected values to produce arguments to each feedback
+    function call."""
 
     feedback_definition_id: FeedbackDefinitionID
     """Id, if not given, uniquely determined from content."""

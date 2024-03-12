@@ -12,6 +12,7 @@ from typing import (
     Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
 )
 import warnings
+import munch
 from rich.pretty import pretty_repr
 from rich import print as rprint
 from rich.markdown import Markdown
@@ -419,8 +420,9 @@ class Feedback(FeedbackDefinition):
         return self.imp(*args, **kwargs)
 
     def aggregate(
-        self, func: Optional[AggCallable],
-        combinations: Optional[schema.FeedbackCombinations]
+        self,
+        func: Optional[AggCallable] = None,
+        combinations: Optional[schema.FeedbackCombinations] = None
     ) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
@@ -650,6 +652,8 @@ record:
 
 ```python
 {q}
+# or equivalently
+{Select.render_for_dashboard(q)}
 ```
 
 The data used to make this check may be incomplete. If you expect records
@@ -690,6 +694,9 @@ Feedback function signature:
 
             try:
                 for prefix_obj in prefix.get(source_data):
+                    if isinstance(prefix_obj, munch.Munch):
+                        prefix_obj = prefix_obj.toDict()
+
                     msg += f"- Object of type `{class_name(type(prefix_obj))}` starting with:\n"
                     msg += "```python\n" + retab(tab="\t  ", s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)) + "\n```\n"
 
@@ -959,7 +966,7 @@ Feedback function signature:
     def _extract_selection(
         self,
         source_data: Dict,
-        combinations: schema.FeedbackCombinations = "product"
+        combinations: schema.FeedbackCombinations = schema.FeedbackCombinations.PRODUCT
     ) -> Iterable[Dict[str, Any]]:
 
         arg_vals = {}
