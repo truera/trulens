@@ -21,12 +21,16 @@ from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 
-from trulens_eval import schema as tru_schema
+# WARNING: importing schema seems to break pydantic for unknown reason.
+# This happens if you import it as something else.
+# from trulens_eval import schema
+
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackCall
+from trulens_eval.schema import FeedbackCombinations
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
@@ -423,7 +427,7 @@ class Feedback(FeedbackDefinition):
     def aggregate(
         self,
         func: Optional[AggCallable] = None,
-        combinations: Optional[tru_schema.FeedbackCombinations] = None
+        combinations: Optional[FeedbackCombinations] = None
     ) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
@@ -967,7 +971,7 @@ Feedback function signature:
     def _extract_selection(
         self,
         source_data: Dict,
-        combinations: tru_schema.FeedbackCombinations = tru_schema.FeedbackCombinations.PRODUCT
+        combinations: FeedbackCombinations = FeedbackCombinations.PRODUCT
     ) -> Iterable[Dict[str, Any]]:
 
         arg_vals = {}
@@ -983,9 +987,9 @@ Feedback function signature:
         keys = arg_vals.keys()
         vals = arg_vals.values()
 
-        if combinations == tru_schema.FeedbackCombinations.PRODUCT:
+        if combinations == FeedbackCombinations.PRODUCT:
             assignments = itertools.product(*vals)
-        elif combinations == tru_schema.FeedbackCombinations.ZIP:
+        elif combinations == FeedbackCombinations.ZIP:
             assignments = zip(*vals)
         else:
             raise ValueError(

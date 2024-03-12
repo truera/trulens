@@ -86,10 +86,11 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
         # Otherwise llama_index is installed but is old so we have to use older imports.
         # Bridge for versions < 0.10
 
-        logger.warning(
-            "Using legacy llama_index version %s. Consider upgrading to 0.10.0 or later.",
-            version
-        )
+        if version is not None:
+            logger.warning(
+                "Using legacy llama_index version %s. Consider upgrading to 0.10.0 or later.",
+                version
+            )
 
         from llama_index.chat_engine.types import AgentChatResponse
         from llama_index.chat_engine.types import BaseChatEngine
