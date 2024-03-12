@@ -98,10 +98,10 @@ from trulens_eval.utils.imports import check_imports
 
 check_imports()
 
-from trulens_eval.feedback import Feedback
-from trulens_eval.feedback import Langchain
+from trulens_eval.feedback.feedback import Feedback
 from trulens_eval.feedback.provider import Provider
 from trulens_eval.feedback.provider.hugs import Huggingface
+from trulens_eval.feedback.provider.langchain import Langchain
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
