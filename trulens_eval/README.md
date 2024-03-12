@@ -50,8 +50,8 @@ Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.
 
 ### 💡 Contributing
 
-Interested in contributing? See our [contribution
-guide](https://www.trulens.org/trulens_eval/CONTRIBUTING/) for more details.
+Interested in contributing? See our [contributing
+guide](https://www.trulens.org/trulens_eval/contributing/) for more details.
 <!---
 end of docs/trulens_eval/intro.md
 -->
