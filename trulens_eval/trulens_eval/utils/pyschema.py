@@ -5,13 +5,14 @@ In order to serialize (and optionally deserialize) python entities while still
 being able to inspect them in their serialized form, we employ several storage
 classes that mimic basic python entities:
 
-Serializable representation | Python entity
-----------------------------+------------------
-Class                       | (python) class
-Module                      | (python) module
-Obj                         | (python) object
-Function                    | (python) function
-Method                      | (python) method
+| Serializable representation | Python entity |
+| --- | --- |
+| Class    | (python) class    |
+| Module   | (python) module   |
+| Obj      | (python) object   |
+| Function | (python) function |
+| Method   | (python) method   |
+
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ import warnings
 import pydantic
 
 from trulens_eval.utils.python import safe_hasattr
+from trulens_eval.utils.python import safe_issubclass
 from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
@@ -64,15 +66,6 @@ def noserio(obj, **extra: Dict) -> dict:
         inner['len'] = len(obj)
 
     return {NOSERIO: inner}
-
-
-def callable_name(c: Callable):
-    if safe_hasattr(c, "__name__"):
-        return c.__name__
-    elif safe_hasattr(c, "__call__"):
-        return callable_name(c.__call__)
-    else:
-        return str(c)
 
 
 # TODO: rename as functionality optionally produces JSONLike .
@@ -165,9 +158,13 @@ class Module(SerialModel):
             # running in notebook
             raise ImportError(f"Module {module_name} is not importable.")
 
-        mod = importlib.import_module(module_name)
-        package_name = mod.__package__
-        return Module(package_name=package_name, module_name=module_name)
+        try:
+            mod = importlib.import_module(module_name)
+            package_name = mod.__package__
+            return Module(package_name=package_name, module_name=module_name)
+
+        except ImportError:
+            return Module(package_name=None, module_name=module_name)
 
     def load(self) -> ModuleType:
         return importlib.import_module(
@@ -591,14 +588,16 @@ CLASS_INFO = "tru_class_info"
 
 
 class WithClassInfo(pydantic.BaseModel):
-    """
-    Mixin to track class information to aid in querying serialized components
+    """Mixin to track class information to aid in querying serialized components
     without having to load them.
     """
 
-    # Using this odd key to not pollute attribute names in whatever class we mix
-    # this into. Should be the same as CLASS_INFO.
-    tru_class_info: Class  # = Field(None, exclude=False)
+    tru_class_info: Class
+    """Class information of this pydantic object for use in deserialization.
+    
+    Using this odd key to not pollute attribute names in whatever class we mix
+    this into. Should be the same as CLASS_INFO.
+    """
 
     # NOTE(piotrm): HACK005: for some reason, model_validate is not called for
     # nested models but the method decorated as such below is called. We use
@@ -612,6 +611,8 @@ class WithClassInfo(pydantic.BaseModel):
     @pydantic.model_validator(mode='before')
     @staticmethod
     def load(obj, *args, **kwargs):
+        """Deserialize/load this object using the class information in
+        tru_class_info to lookup the actual class that will do the deserialization."""
 
         if not isinstance(obj, dict):
             return obj
@@ -627,7 +628,11 @@ class WithClassInfo(pydantic.BaseModel):
         except RuntimeError:
             return obj
 
-        validated = dict()
+        # TODO: We shouldn't be doing a lot of these pydantic details but could
+        # not find how to integrate with existing pydantic functionality. Please
+        # figure it out.
+        validated = {}
+
         for k, finfo in cls.model_fields.items():
             typ = finfo.annotation
             val = finfo.get_default(call_default_factory=True)
@@ -635,10 +640,14 @@ class WithClassInfo(pydantic.BaseModel):
             if k in obj:
                 val = obj[k]
 
-            if isinstance(val, dict) and CLASS_INFO in val \
-            and inspect.isclass(typ) and issubclass(typ, WithClassInfo):
-                subcls = Class.model_validate(val[CLASS_INFO]).load()
-                val = subcls.model_validate(val)
+            try:
+                if (isinstance(val, dict)) and (CLASS_INFO in val) \
+                and inspect.isclass(typ) and safe_issubclass(typ, WithClassInfo):
+                    subcls = Class.model_validate(val[CLASS_INFO]).load()
+
+                    val = subcls.model_validate(val)
+            except Exception as e:
+                pass
 
             validated[k] = val
 
@@ -655,6 +664,7 @@ class WithClassInfo(pydantic.BaseModel):
         cls: Optional[type] = None,
         **kwargs
     ):
+
         if obj is not None:
             warnings.warn(
                 "`obj` does not need to be provided to WithClassInfo any more",
@@ -686,3 +696,14 @@ class WithClassInfo(pydantic.BaseModel):
     @staticmethod
     def of_class(cls: type):  # class
         return WithClassInfo(class_info=Class.of_class(cls))
+
+
+# HACK013:
+Module.model_rebuild()
+Class.model_rebuild()
+Obj.model_rebuild()
+Bindings.model_rebuild()
+FunctionOrMethod.model_rebuild()
+Function.model_rebuild()
+Method.model_rebuild()
+WithClassInfo.model_rebuild()

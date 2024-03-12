@@ -9,7 +9,7 @@ README.md . If you are editing README.md, your changes will be overwritten.
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens_eval)
 [![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
-[![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/welcome/)
+[![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/install/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
 
 # 🦑 **Welcome to TruLens!**
@@ -38,10 +38,10 @@ you to identify failure modes & systematically iterate to improve your
 application.
 
 Read more about the core concepts behind TruLens including [Feedback
-Functions](https://www.trulens.org/trulens_eval/core_concepts_feedback_functions/),
-[The RAG Triad](https://www.trulens.org/trulens_eval/core_concepts_rag_triad/),
+Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/),
+[The RAG Triad](https://www.trulens.org/trulens_eval/getting_started/core_concepts/rag_triad/),
 and [Honest, Harmless and Helpful
-Evals](https://www.trulens.org/trulens_eval/core_concepts_honest_harmless_helpful_evals/).
+Evals](https://www.trulens.org/trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals/).
 
 ## TruLens in the development workflow
 

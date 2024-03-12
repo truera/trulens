@@ -6,15 +6,16 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple
+from typing import Any, Callable, ClassVar, Dict, Optional
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 
 from trulens_eval.app import App
+from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Record
 from trulens_eval.schema import Select
+from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.json import jsonify
@@ -45,9 +46,10 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     from langchain.schema import BaseMemory  # no methods instrumented
     from langchain.schema import BaseRetriever
     from langchain.schema.document import Document
-    from langchain.schema.language_model import BaseLanguageModel
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
+    # from langchain.schema.language_model import BaseLanguageModel
+    from langchain_core.language_models.base import BaseLanguageModel
     from langchain_core.runnables.base import RunnableSerializable
 
 
@@ -55,8 +57,8 @@ class LangChainInstrument(Instrument):
 
     class Default:
         MODULES = {"langchain"}
+        """Filter for module name prefix for modules to be instrumented."""
 
-        # Thunk because langchain is optional. TODO: Not anymore.
         CLASSES = lambda: {
             RunnableSerializable,
             Serializable,
@@ -77,47 +79,36 @@ class LangChainInstrument(Instrument):
             BaseTool,
             WithFeedbackFilterDocuments
         }
+        """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
-        METHODS = {
-            "invoke":
-                lambda o: isinstance(o, RunnableSerializable),
-            "ainvoke":
-                lambda o: isinstance(o, RunnableSerializable),
-            "save_context":
-                lambda o: isinstance(o, BaseMemory),
-            "clear":
-                lambda o: isinstance(o, BaseMemory),
-            "_call":
-                lambda o: isinstance(o, Chain),
-            "__call__":
-                lambda o: isinstance(o, Chain),
-            "_acall":
-                lambda o: isinstance(o, Chain),
-            "acall":
-                lambda o: isinstance(o, Chain),
-            "_get_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            "_aget_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            "get_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            "aget_relevant_documents":
-                lambda o: isinstance(o, (RunnableSerializable)),
-            # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-            # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-            # the prompt calls might be too small to be interesting
-            "plan":
-                lambda o:
-                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
-            "aplan":
-                lambda o:
-                isinstance(o, (BaseSingleActionAgent, BaseMultiActionAgent)),
-            "_arun":
-                lambda o: isinstance(o, BaseTool),
-            "_run":
-                lambda o: isinstance(o, BaseTool),
-        }
+        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
+            {},
+            {
+                ("invoke", "ainvoke"):
+                    RunnableSerializable,
+                ("save_context", "clear"):
+                    BaseMemory,
+                ("run", "arun", "_call", "__call__", "_acall", "acall"):
+                    Chain,
+                (
+                    "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
+                ):
+                    RunnableSerializable,
+
+                # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                # the prompt calls might be too small to be interesting
+                ("plan", "aplan"):
+                    (BaseSingleActionAgent, BaseMultiActionAgent),
+                ("_arun", "_run"):
+                    BaseTool,
+            }
+        )
+        """Methods to be instrumented.
+        
+        Key is method name and value is filter for objects that need those
+        methods instrumented"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -130,17 +121,15 @@ class LangChainInstrument(Instrument):
 
 
 class TruChain(App):
-    """
-    Instantiates the Langchain Wrapper.
+    """Instantiates the Langchain Wrapper.
         
-        **Usage:**
-
+    Example:
         Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)
 
         ```python
          # Code snippet taken from langchain 0.0.281 (API subject to change with new versions)
         from langchain.chains import LLMChain
-        from langchain.llms import OpenAI
+        from langchain_community.llms import OpenAI
         from langchain.prompts import PromptTemplate
         from langchain.prompts.chat import ChatPromptTemplate
         from langchain.prompts.chat import HumanMessagePromptTemplate
@@ -183,34 +172,27 @@ class TruChain(App):
             chain("Where do I download langchain?")
         ```
 
-        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+    See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
-        Args:
-            app (Chain): A langchain application.
+    Args:
+        app: A langchain application.
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     app: Any  # Chain
+    """The langchain app to be instrumented."""
 
     # TODO: what if _acall is being used instead?
-    root_callable: ClassVar[Any] = Field(
+    root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call)
     )
-
-    # FunctionOrMethod
+    """The root callable of the wrapped app."""
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
-    def __init__(self, app: Chain, **kwargs):
-        """
-        Wrap a langchain chain for monitoring.
-
-        Arguments:
-        - app: Chain -- the chain to wrap.
-        - More args in App
-        - More args in AppDefinition
-        - More args in WithClassInfo
-        """
-
+    def __init__(self, app: Chain, **kwargs: dict):
         # TruChain specific:
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
@@ -220,9 +202,7 @@ class TruChain(App):
 
     @classmethod
     def select_context(cls, app: Optional[Chain] = None) -> Lens:
-        """
-        Get the path to the context in the query output.
-        """
+        """Get the path to the context in the query output."""
 
         if app is None:
             raise ValueError(
@@ -257,38 +237,33 @@ class TruChain(App):
             Select.RecordCalls + retrievers[0][0]
         ).get_relevant_documents.rets
 
-    # TODEP
-    # Chain requirement
-    @property
-    def _chain_type(self):
-        return "TruChain"
-
-    # TODEP
-    # Chain requirement
-    @property
-    def input_keys(self) -> List[str]:
-        if safe_hasattr(self.app, "input_keys"):
-            return self.app.input_keys
-        else:
-            raise TypeError("App does not have input_keys.")
-
-    # TODEP
-    # Chain requirement
-    @property
-    def output_keys(self) -> List[str]:
-        if safe_hasattr(self.app, "output_keys"):
-            return self.app.output_keys
-        else:
-            raise TypeError("App does not have output_keys.")
-
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> str:
+    ) -> str:  # might have to relax to JSON output
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
+
+        if "input" in bindings.arguments:
+            temp = bindings.arguments['input']
+            if isinstance(temp, str):
+                return temp
+
+            if isinstance(temp, dict):
+                vals = list(temp.values())
+            elif isinstance(temp, list):
+                vals = temp
+
+            if len(vals) == 0:
+                return None
+
+            if len(vals) == 1:
+                return vals[0]
+
+            if len(vals) > 1:
+                return vals[0]
 
         if 'inputs' in bindings.arguments \
             and safe_hasattr(self.app, "input_keys") \
@@ -345,80 +320,53 @@ class TruChain(App):
             logger.warning("Unsure what the main output string may be.")
             return str(out)
 
-    def __getattr__(self, __name: str) -> Any:
-        # A message for cases where a user calls something that the wrapped
-        # chain has but we do not wrap yet.
-
-        if safe_hasattr(self.app, __name):
-            return RuntimeError(
-                f"TruChain has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
-                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruChain`. "
-                f"TruChain presently only wraps Chain.__call__, Chain._call, and Chain._acall ."
-            )
-        else:
-            raise RuntimeError(f"TruChain has no attribute named {__name}.")
-
     # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
-    # TODEP
-    async def acall_with_record(self, *args, **kwargs) -> Tuple[Any, Record]:
+    # TOREMOVE
+    async def acall_with_record(self, *args, **kwargs) -> None:
         """
-        Run the chain acall method and also return a record metadata object.
+        DEPRECATED: Run the chain acall method and also return a record metadata object.
         """
 
-        self._with_dep_message(method="acall", is_async=True, with_record=True)
-
-        return await self.awith_record(self.app.acall, *args, **kwargs)
+        self._throw_dep_message(method="acall", is_async=True, with_record=True)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
-    # TODEP
-    def call_with_record(self, *args, **kwargs) -> Tuple[Any, Record]:
+    # TOREMOVE
+    def call_with_record(self, *args, **kwargs) -> None:
         """
-        Run the chain call method and also return a record metadata object.
+        DEPRECATED: Run the chain call method and also return a record metadata object.
         """
 
-        self._with_dep_message(
+        self._throw_dep_message(
             method="__call__", is_async=False, with_record=True
         )
 
-        return self.with_record(self.app.__call__, *args, **kwargs)
-
-    # TODEP
+    # TOREMOVE
     # Mimics Chain
-    def __call__(self, *args, **kwargs) -> Dict[str, Any]:
+    def __call__(self, *args, **kwargs) -> None:
         """
-        Wrapped call to self.app._call with instrumentation. If you need to
-        get the record, use `call_with_record` instead. 
+        DEPRECATED: Wrapped call to self.app._call with instrumentation. If you
+        need to get the record, use `call_with_record` instead. 
         """
-
-        self._with_dep_message(
+        self._throw_dep_message(
             method="__call__", is_async=False, with_record=False
         )
 
-        return self.with_(self.app, *args, **kwargs)
-
-    # TODEP
+    # TOREMOVE
     # Chain requirement
-    def _call(self, *args, **kwargs) -> Any:
+    def _call(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(
+        self._throw_dep_message(
             method="_call", is_async=False, with_record=False
         )
 
-        ret, _ = self.with_(self.app._call, *args, **kwargs)
-
-        return ret
-
-    # TODEP
+    # TOREMOVE
     # Optional Chain requirement
-    async def _acall(self, *args, **kwargs) -> Any:
+    async def _acall(self, *args, **kwargs) -> None:
 
-        self._with_dep_message(
+        self._throw_dep_message(
             method="_acall", is_async=True, with_record=False
         )
 
-        ret, _ = await self.awith_(self.app.acall, *args, **kwargs)
 
-        return ret
-
-
-TruChain.model_rebuild()
+# from trulens_eval.utils import serial
+# TruChain.model_rebuild()

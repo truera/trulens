@@ -1,6 +1,4 @@
-"""
-Json utilities and serialization utilities dealing with json.
-"""
+"""Json utilities and serialization utilities dealing with json."""
 
 from __future__ import annotations
 
@@ -108,7 +106,6 @@ def jsonify_for_ui(*args, **kwargs):
     return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
 
 
-# TODO: refactor to somewhere else or change instrument to a generic filter
 def jsonify(
     obj: Any,
     dicted: Optional[Dict[int, JSON]] = None,
@@ -117,32 +114,27 @@ def jsonify(
     redact_keys: bool = False,
     include_excluded: bool = True
 ) -> JSON:
-    """
-    Convert the given object into types that can be serialized in json.
+    """Convert the given object into types that can be serialized in json.
 
     Args:
+        obj: the object to jsonify.
 
-        - obj: Any -- the object to jsonify.
+        dicted: the mapping from addresses of already jsonifed objects (via id)
+            to their json.
 
-        - dicted: Optional[Dict[int, JSON]] -- the mapping from addresses of
-          already jsonifed objects (via id) to their json.
+        instrument: instrumentation functions for checking whether to recur into
+            components of `obj`.
 
-        - instrument: Optional[Instrument] -- instrumentation functions for
-          checking whether to recur into components of `obj`.
+        skip_specials: remove specially keyed structures from the json. These
+            have keys that start with "__tru_".
 
-        - skip_specials: bool (default is False) -- if set, will remove
-          specially keyed structures from the json. These have keys that start
-          with "__tru_".
+        redact_keys: redact secrets from the output. Secrets are detremined by
+            `keys.py:redact_value` .
 
-        - redact_keys: bool (default is False) -- if set, will redact secrets
-          from the output. Secrets are detremined by `keys.py:redact_value` .
-
-        - include_excluded: bool (default is True) -- include fields that are
-          annotated to be excluded by pydantic.
+        include_excluded: include fields that are annotated to be excluded by pydantic.
 
     Returns:
-
-        JSON | Sequence[JSON]
+        The jsonified version of the given object.
     """
     skip_excluded = not include_excluded
     # Hack so that our models do not get exludes dumped which causes many
@@ -232,29 +224,6 @@ def jsonify(
 
         content = temp
 
-    elif isinstance(obj, pydantic.v1.BaseModel):
-        # TODO: DEDUP with pydantic.BaseModel case
-
-        # Not even trying to use pydantic.dict here.
-
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update(
-            {
-                k: recur(safe_getattr(obj, k))
-                for k, v in obj.__fields__.items()
-                if (not skip_excluded or not v.field_info.exclude) and
-                recur_key(k)
-            }
-        )
-
-        # Redact possible secrets based on key name and value.
-        if redact_keys:
-            for k, v in temp.items():
-                temp[k] = redact_value(v=v, k=k)
-
-        content = temp
-
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
 
@@ -268,6 +237,29 @@ def jsonify(
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.model_fields.items()
                 if (not skip_excluded or not v.exclude) and recur_key(k)
+            }
+        )
+
+        # Redact possible secrets based on key name and value.
+        if redact_keys:
+            for k, v in temp.items():
+                temp[k] = redact_value(v=v, k=k)
+
+        content = temp
+
+    elif isinstance(obj, pydantic.v1.BaseModel):
+        # TODO: DEDUP with pydantic.BaseModel case
+
+        # Not even trying to use pydantic.dict here.
+
+        temp = {}
+        new_dicted[id(obj)] = temp
+        temp.update(
+            {
+                k: recur(safe_getattr(obj, k))
+                for k, v in obj.__fields__.items()
+                if (not skip_excluded or not v.field_info.exclude) and
+                recur_key(k)
             }
         )
 

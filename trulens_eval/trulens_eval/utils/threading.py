@@ -1,32 +1,72 @@
 """
-Multi-threading utilities.
+# Threading Utilities
 """
 
-from concurrent.futures import Future
+from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
 import contextvars
 from inspect import stack
 import logging
 import threading
+from threading import Thread as fThread
 from typing import Callable, Optional, TypeVar
 
 from trulens_eval.utils.python import _future_target_wrapper
 from trulens_eval.utils.python import code_line
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
+from trulens_eval.utils.python import T
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
-
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
+
+A = TypeVar("A")
+
+
+class Thread(fThread):
+    """Thread that wraps target with stack/context tracking.
+    
+    App components that do not use this thread class might not be properly
+    tracked."""
+
+    def __init__(
+        self,
+        name=None,
+        group=None,
+        target=None,
+        args=(),
+        kwargs={},
+        daemon=None
+    ):
+        present_stack = stack()
+        present_context = contextvars.copy_context()
+
+        fThread.__init__(
+            self,
+            name=name,
+            group=group,
+            target=_future_target_wrapper,
+            args=(present_stack, present_context, target, *args),
+            kwargs=kwargs,
+            daemon=daemon
+        )
+
+
+# HACK007: Attempt to force other users of Thread to use our version instead.
+import threading
+
+threading.Thread = Thread
 
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
-    """
-    A ThreadPoolExecutor that keeps track of the stack prior to each thread's
+    """A ThreadPoolExecutor that keeps track of the stack prior to each thread's
     invocation.
+    
+    Apps that do not use this thread pool might not be properly tracked.
     """
 
     def __init__(self, *args, **kwargs):
@@ -41,7 +81,8 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         )
 
 
-# HACK002: Attempt other users of ThreadPoolExecutor to use our version.
+# HACK002: Attempt to make other users of ThreadPoolExecutor use our version
+# instead. TODO: this may be redundant with the thread override above.
 import concurrent
 
 concurrent.futures.ThreadPoolExecutor = ThreadPoolExecutor
@@ -67,15 +108,17 @@ except Exception:
     pass
 
 
-class TP(SingletonPerName['TP']):  # "thread processing"
+class TP(SingletonPerName):  # "thread processing"
+    """Manager of thread pools.
 
-    # Store here stacks of calls to various thread starting methods so that we
-    # can retrieve the trace of calls that caused a thread to start.
+    Singleton.
+    """
 
     MAX_THREADS: int = 128
+    """Maximum number of threads to run concurrently."""
 
-    # How long to wait for any task before restarting it.
     DEBUG_TIMEOUT: Optional[float] = 600.0  # [seconds], None to disable
+    """How long to wait (seconds) for any task before restarting it."""
 
     def __init__(self):
         if safe_hasattr(self, "thread_pool"):
@@ -102,7 +145,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def _run_with_timeout(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
@@ -110,7 +153,7 @@ class TP(SingletonPerName['TP']):  # "thread processing"
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
-        fut: 'Future[T]' = self.thread_pool.submit(func, *args, **kwargs)
+        fut: Future[T] = self.thread_pool.submit(func, *args, **kwargs)
 
         try:
             res: T = fut.result(timeout=timeout)
@@ -132,11 +175,11 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def submit(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> 'Future[T]':
+    ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
@@ -150,11 +193,11 @@ class TP(SingletonPerName['TP']):  # "thread processing"
 
     def _submit(
         self,
-        func: Callable[..., T],
+        func: Callable[[A], T],
         *args,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> 'Future[T]':
+    ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 

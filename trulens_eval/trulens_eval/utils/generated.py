@@ -22,14 +22,21 @@ class Rating(BaseModel):
         return v
 
 
-# for extracting the 0-10 rating, we are assuming the score will
-# always be the last part of the generated text from LLM - hence we are matching for the last
-# group of digits in the string
-pat_0_10 = re.compile(r"\s*([0-9]+)\s*$")
+# PATTERN_0_10: re.Pattern = re.compile(r"\s*([0-9]+)\s*$")
+PATTERN_0_10: re.Pattern = re.compile(r"\b([0-9]|10)(?=\D*$|\s*\.)")
+"""Regex for extracting a 0-10 rating.
+
+We are assuming the score will always be the last part of the generated text
+from LLM - hence we are matching for the last group of digits in the string.
+"""
 
 
-def re_0_10_rating(str_val):
-    matches = pat_0_10.fullmatch(str_val)
+def re_0_10_rating(str_val: str) -> int:
+    """Extract 0-10 rating from a string.
+    
+    If the string does not match, returns -10 instead."""
+
+    matches = PATTERN_0_10.fullmatch(str_val)
     if not matches:
         # Try soft match
         matches = re.search(r'([0-9]+)(?=\D*$)', str_val)

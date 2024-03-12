@@ -103,6 +103,7 @@ class DB(SerialModel, abc.ABC):
 
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def get_feedback_defs(
         self, feedback_definition_id: Optional[str] = None
     ) -> pd.DataFrame:
@@ -131,8 +132,31 @@ class DB(SerialModel, abc.ABC):
         feedback_definition_id: Optional[FeedbackDefinitionID] = None,
         status: Optional[Union[FeedbackResultStatus,
                                Sequence[FeedbackResultStatus]]] = None,
-        last_ts_before: Optional[datetime] = None
+        last_ts_before: Optional[datetime] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
     ) -> pd.DataFrame:
+        """
+        Get feedback results matching a set of optional criteria:
+
+        - record_id: Optional[RecordID],
+
+        - feedback_result_id: Optional[FeedbackResultID], and
+
+        - feedback_definition_id: Optional[FeedbackDefinitionID] results
+          matching the given ids
+
+        - status: Optional[FeedbackResultStatus] results matching the given
+          status.
+
+        - last_ts_before: Optional[datetime] results with last_ts before the
+          given datetime.
+
+        - offset: Optional[int] index of the first row to return.
+
+        - limit: Optional[int] limit the number of rows returned.
+        """
+
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -717,11 +741,3 @@ class LocalSQLite(DB):
         combined_df = df_records.merge(df_results, on=['record_id'])
 
         return combined_df, list(result_cols)
-
-
-class TruDB(DB):
-
-    def __init__(self, *args, **kwargs):
-        # Since 0.2.0
-        logger.warning("Class TruDB is deprecated, use DB instead.")
-        super().__init__(*args, **kwargs)

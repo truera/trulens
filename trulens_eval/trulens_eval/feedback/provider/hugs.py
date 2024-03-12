@@ -1,7 +1,5 @@
-from concurrent.futures import Future
 from concurrent.futures import wait
 import logging
-from multiprocessing.pool import AsyncResult
 from typing import Dict, get_args, get_origin, Optional, Tuple, Union
 
 import numpy as np
@@ -10,9 +8,9 @@ from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.threading import ThreadPoolExecutor
-from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
 
@@ -98,14 +96,11 @@ class Huggingface(Provider):
         """
         Create a Huggingface Provider with out of the box feedback functions.
 
-        **Usage:**
-        ```python
-        from trulens_eval.feedback.provider.hugs import Huggingface
-        huggingface_provider = Huggingface()
-        ```
-
-        Args:
-            endpoint (Endpoint): Internal Usage for DB serialization
+        Usage:
+            ```python
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            huggingface_provider = Huggingface()
+            ```
         """
 
         kwargs['name'] = name
@@ -366,20 +361,23 @@ class Huggingface(Provider):
     def pii_detection(self, text: str) -> float:
         """
         NER model to detect PII.
-        **Usage:**
-        ```
-        hugs = Huggingface()
 
-        # Define a pii_detection feedback function using HuggingFace.
-        f_pii_detection = Feedback(hugs.pii_detection).on_input()
-        ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+        Usage:
+            ```python
+            hugs = Huggingface()
+
+            # Define a pii_detection feedback function using HuggingFace.
+            f_pii_detection = Feedback(hugs.pii_detection).on_input()
+            ```
+            
+            The `on(...)` selector can be changed. See [Feedback Function Guide:
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            input (str): A text prompt that may contain a name.
+            text: A text prompt that may contain a name.
 
         Returns:
-            - float: the likelihood that a name is contained in the input text.
+            The likelihood that a name is contained in the input text.
         """
 
         # Initialize a list to store scores for "NAME" entities
@@ -502,7 +500,9 @@ class Dummy(Huggingface):
         loading_prob: float = 1 / 100,
         freeze_prob: float = 1 / 100,
         overloaded_prob: float = 1 / 100,
+        alloc: int = 1024 * 1024,
         rpm: float = 600,
+        delay: float = 1.0,
         **kwargs
     ):
         kwargs['name'] = name or "dummyhugs"

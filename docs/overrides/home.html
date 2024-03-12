@@ -15,26 +15,23 @@
 
     <meta property="og:title" content="TruLens">
     <meta property="og:description" content="Explainability for Neural Networks">
-    <meta property="og:image" content="https://www.trulens.org/assets/image/Neural_Network_Explainability.png">
+    <meta property="og:image" content="/assets/images/Neural_Network_Explainability.png">
     <meta property="og:url" content="https://www.trulens.org">
 
-    <link rel="apple-touch-icon" sizes="180x180" href="Assets/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="Assets/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="Assets/favicon/favicon-16x16.png">
-    <link rel="manifest" href="/Assets/favicon/site.webmanifest">
-    <link rel="mask-icon" href="/Assets/favicon/safari-pinned-tab.svg" color="#034a61">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/assets/favicon/site.webmanifest">
+    <link rel="mask-icon" href="/assets/favicon/safari-pinned-tab.svg" color="#034a61">
     <meta name="msapplication-TileColor" content="#034a61">
     <meta name="theme-color" content="#034a61">
 
-    <link rel="stylesheet" href="../stylesheets/style.css">
+    <link rel="stylesheet" href="stylesheets/style.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;700&display=swap&family=Space+Grotesk:wght@400;500;700&display=swap"
         rel="stylesheet">
-
-    <link rel="stylesheet" href="../Assets/Scripts/app.js">
 
     <!-- Google Tag Manager -->
     <script>(function (w, d, s, l, i) {
@@ -102,14 +99,14 @@
                         </svg>
                     </a>
                     <ul class="nav__items">
+                        <a href="/nn-explainability.html">
+                            <li>NN Explainability</li>
+                        </a>
                         <a href="https://blog.trulens.org/">
                             <li>Blog</li>
                         </a>
                         <a href="https://github.com/truera/trulens/" target="_blank">
                             <li>GitHub</li>
-                        </a>
-                        <a href="nn-explainability.html">
-                            <li>NN Explainability</li>
                         </a>
                         <a href="https://communityinviter.com/apps/aiqualityforum/josh" target="blank">
                             <li>Community</li>
@@ -117,7 +114,7 @@
                         <a href="https://go.truera.com/newsletter-archive" target="blank">
                             <li>Newsletter</li>
                         </a>
-                        <a href="https://trulens.org/welcome/" target="_blank"
+                        <a href="/trulens_eval/getting_started" target="_blank"
                             class="header__btn nav__btn d-if fd-r ai-c jc-c mt-xxl-mob">
                             <svg class="hide-desktop" width="24" height="25" viewBox="0 0 24 25" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
@@ -211,21 +208,42 @@
                 </svg>
             </div>
         </div>
-
         <div class="container__wrapper">
             <section class="section container">
-
-                <div class="grid-columns-2">
-                    <h2>TruLens:</br> scale up and accelerate LLM app evaluation</h2>
-                    <p>
-                        Create credible and powerful LLM apps, faster. TruLens is a software tool that helps you to
-                        objectively measure the quality and effectiveness of your LLM-based applications using feedback
-                        functions. Feedback functions help to programmatically evaluate the quality of inputs, outputs,
-                        and intermediate results, so that you can expedite and scale up experiment evaluation. Use it
-                        for a wide variety of use cases including question answering, retrieval-augmented generation,
-                        and agent-based applications.
-                    </p>
-                </div>
+                    <div class="icons">
+                        <a href="https://pypi.org/project/trulens-eval/" target="_blank">
+                            <img src="https://img.shields.io/pypi/v/trulens_eval?label=trulens_eval&link=https%3A%2F%2Fpypi.org%2Fproject%2Ftrulens-eval%2F" alt="PyPI - Version" />
+                        </a>
+                        <a href="https://dev.azure.com/truera/TruLens/_build/latest?definitionId=9&branchName=master" target="_blank">
+                            <img src="https://img.shields.io/azure-devops/build/truera/5a27f3d2-132d-40fc-9b0c-81abd1182f41/9" alt="Azure DevOps builds (job)" />
+                        </a>
+                        <a href="https://github.com/truera/trulens" target="_blank">
+                            <img src="https://img.shields.io/github/license/truera/trulens" alt="GitHub" />
+                        </a>
+                        <a href="https://pypi.org/project/trulens-eval/" target="_blank">
+                            <img src="https://img.shields.io/pypi/dm/trulens_eval" alt="PyPI - Downloads" />
+                        </a>
+                        <a href="https://communityinviter.com/apps/aiqualityforum/josh" target="_blank">
+                            <img src="https://img.shields.io/badge/slack-join-green?logo=slack" alt="Slack" />
+                        </a>
+                        <a href="trulens_eval/getting_started/" target="_blank">
+                            <img src="https://img.shields.io/badge/docs-trulens.org-blue" alt="Docs" />
+                        </a>
+                        <a href="https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb" target="_blank">
+                            <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" />
+                        </a>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <h2>TruLens: Don't just vibe check your LLM app!</h2>
+                        <p>
+                            Create credible and powerful LLM apps, faster. TruLens is a software tool that helps you to
+                            objectively measure the quality and effectiveness of your LLM-based applications using feedback
+                            functions. Feedback functions help to programmatically evaluate the quality of inputs, outputs,
+                            and intermediate results, so that you can expedite and scale up experiment evaluation. Use it
+                            for a wide variety of use cases including question answering, summarization, retrieval-augmented generation,
+                            and agent-based applications.
+                        </p>
+                    </div>
 
                 <div class="grid-columns-3 mt-xxl">
                     <div class="box">
@@ -235,8 +253,8 @@
                         </p>
                         <ul class="custom-list mt-xl">
                             <li>Groundedness</li>
-                            <li>Relevance</li>
-                            <li>Toxicity</li>
+                            <li>Context Relevance</li>
+                            <li>Safety</li>
                         </ul>
                     </div>
                     <div class="box">
@@ -249,7 +267,7 @@
                     <div class="box">
                         <h3>Test</h3>
                         <p>
-                            Compare different LLM chains on a metrics leaderboard to pick the best performing one.
+                            Compare different LLM apps on a metrics leaderboard to pick the best performing one.
                         </p>
                     </div>
                 </div>
@@ -262,8 +280,8 @@
 
                 <div class="ta-c">
                     <h2 class="ta-l">How it works</h2>
-                    <img class="hide-mobile" src="../img/trulens-diagram.svg" alt="TruLens diagram" />
-                    <img class="hide-desktop" src="../img/trulens-diagram-mob.png" alt="TruLens diagram vertical" />
+                    <img class="hide-mobile" src="img/trulens-diagram.svg" alt="TruLens diagram" />
+                    <img class="hide-desktop" src="img/trulens-diagram-mob.png" alt="TruLens diagram vertical" />
                 </div>
 
             </section>
@@ -272,7 +290,7 @@
         <div class="container__wrapper">
             <section class="section container">
                 <h2>Why Use TruLens for LLM applications?</h2>
-                <p class="subtitle mb-xxl">The fastest, easiest way to test and iterate on your LLM app.</p>
+                <p class="subtitle mb-xxl">The fastest, easiest way to validate your LLM app.</p>
                 <div class="grid-columns-2 mb-xxl">
                     <div class="mb-xll-mob">
                         <div class="btn__shadow mb-xl">
@@ -314,7 +332,7 @@
                         <p>
                             TruLens fits easily into your LLM app dev process. Simply pip install from <a
                                 href="https://pypi.org/project/trulens-eval/" target="_blank">PyPI</a>,
-                            and add a couple of lines to your LLM app.
+                            and add a couple of lines to your LLM app. Track any application, and evaluate with the model of your choice.
                         </p>
                     </div>
                     <div>
@@ -363,7 +381,7 @@
                 </div>
                 <div class="grid-columns-2 box-dark">
                     <div class="box-violet">
-                        <img class="" src="../img/trulens-feedback-functions.png" alt="TruLens Feednacl Functions" />
+                        <img class="" src="img/trulens-feedback-functions.png" alt="TruLens Feednacl Functions" />
                     </div>
                     <div class="box teal">
                         <h3>Get the breadth of feedback you need to evaluate app performance.</h3>
@@ -372,12 +390,13 @@
                             performance and minimize risk:
                         </p>
                         <ul class="col-2 custom-list">
-                            <li>Truthfulness</li>
-                            <li>Question answering relevance</li>
+                            <li>Context Relevance</li>
+                            <li>Groundedness</li>
+                            <li>Answer Relevance</li>
+                            <li>Comprehensiveness</li>
                             <li>Harmful or toxic language</li>
                             <li>User sentiment</li>
                             <li>Language mismatch</li>
-                            <li>Response verbosity</li>
                             <li>Fairness and bias</li>
                             <li>Or other custom feedback functions you provide</li>
                         </ul>
@@ -394,10 +413,11 @@
                 </p>
                 <ul class="grid-columns-2 custom-list">
                     <div class="box">
-                        <h3>TruLens can be used to ensure AI Quality in a wide variety of use cases, such as:</h3>
-                        <li>Customer service chatbots for retail, manufacturing, insurance, banking, and more!</li>
-                        <li>Informational chatbots for consumer research, corporate research, weather, healthcare, and
-                            more.</li>
+                        <h3>TruLens is loved by thousands of users for applications such as:</h3>
+                        <li>Retrieval Augmented Generation (RAG)</li>
+                        <li>Summarization</li>
+                        <li>Co-pilots</li>
+                        <li>Agents</li>
                     </div>
                     <div class="box">
                         <h3>TruLens can also help you to identify which of your LLM app versions is the best performing
@@ -405,7 +425,7 @@
                         <li>Understand which version of your LLM apps is producing the best results across a variety of
                             metrics
                         </li>
-                        <li>Understand which model version has the lowest dollar cost (via API call volume) or risk
+                        <li>Make informed trade-offs between cost, latency and response quality.
                         </li>
                     </div>
                 </ul>
@@ -525,7 +545,7 @@
                             </svg>
                         </a>
                         <p class="strong font-primary">Documentation</p>
-                        <span>Read about the library <a href="https://www.trulens.org/trulens_eval/install/"
+                        <span>Read about the library <a href="trulens_eval/install/"
                                 target="_blank">here</a>.</span>
                     </div>
                     <div class="box__shadow">
@@ -606,7 +626,7 @@
                         </p>
                     </div>
                     <div class="full-image">
-                        <img class="" src="../img/trulens-more-functions.png"
+                        <img class="" src="img/trulens-more-functions.png"
                             alt="TruLens Unlimited Feedback Functions" />
                     </div>
                 </div>

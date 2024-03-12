@@ -46,7 +46,7 @@ SOURCE: {premise}
 STATEMENT: {hypothesis}
 """
 
-QS_RELEVANCE = v2.QuestionStatementRelevance.prompt.template
+CONTEXT_RELEVANCE = v2.ContextRelevance.prompt.template
 QS_RELEVANCE_VERB_2S_TOP1 = v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
 PR_RELEVANCE = v2.PromptResponseRelevance.prompt.template
 
@@ -80,7 +80,7 @@ The expected answer is:
 
 Answer only with an integer from 1 to 10 based on how semantically similar the responses are to the expected answer. 
 where 0 is no semantic similarity at all and 10 is perfect agreement between the responses and the expected answer.
-Never elaborate.
+On a NEW LINE, give the integer score and nothing more.
 """
 
 REMOVE_Y_N = " If so, respond Y. If not, respond N."
@@ -122,36 +122,35 @@ LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS = LANGCHAIN_PROMPT_TEMPLATE + COT_REA
 
 STEREOTYPES_PROMPT = v2.Stereotypes.prompt.template
 
-SUMMARIZATION_PROMPT = """
-You are a helper for summarization tasks. You will do two steps. You must do both steps, and most importantly, you must add a score.
+COMPREHENSIVENESS_PROMPT = """
+You are tasked with evaluating summarization quality. Please follow the instructions below.
 
-STEP 1 - Most Important Points:
-(DO NOT SKIP THIS STEP!)
+INSTRUCTIONS:
 
-For the given SOURCE What are the most important points?
+1. Identify the key points in the provided source text and assign them high or low importance level.
 
-please answer with this template:
-
-(Step 1)
-Important Points: <Outline the important points>
-
-Step 2 - Compare:
-(DO NOT SKIP THIS STEP!)
-
-For a SUMMARY How well does this summary address the above main points?
-
-please answer with this template:
-
-(Step 2)
-Supporting Evidence: <For each of the Important Points, explain if the SUMMARY does or does not mention it.>
-Score: <Give a score from 0 to 10 on if the SUMMARY addresses every single one of the main points. A score of 0 is no points were mentioned. A score of 5 is half the points were mentioned. a score of 10 is all points were mentioned.>
-
-
-/START SUMMARY/ 
-{summary}
-/END SUMMARY/ 
-
-/START SOURCE/ 
+/SOURCE TEXT/
 {source}
-/END SOURCE/ 
+/END OF SOURCE TEXT/
+
+2. Assess how well the summary captures these key points.
+
+/SUMMARY/
+{summary}
+/END OF SUMMARY/
+
+Are the key points from the source text comprehensively included in the summary? More important key points matter more in the evaluation.
+
+Scoring criteria:
+0 - Capturing no key points with high importance level
+5 - Capturing 70 percent of key points with high importance level
+10 - Capturing all key points of high importance level
+
+Answer using the entire template below.
+
+TEMPLATE:
+Score: <The score from 0 (capturing none of the important key points) to 10 (captures all key points of high importance).>
+Criteria: <Mention key points from the source text that should be included in the summary>
+Supporting Evidence: <Which key points are present and which key points are absent in the summary.>
+
 """

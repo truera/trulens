@@ -7,11 +7,12 @@ from inspect import signature
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Callable, ClassVar, Optional
+from typing import Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
 
 from trulens_eval.app import App
+from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
@@ -21,29 +22,19 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-class TruBasicCallableInstrument(Instrument):
-
-    class Default:
-        CLASSES = lambda: {TruWrapperApp}
-
-        # Instrument only methods with these names and of these classes.
-        METHODS = {"_call": lambda o: isinstance(o, TruWrapperApp)}
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            include_classes=TruBasicCallableInstrument.Default.CLASSES(),
-            include_methods=TruBasicCallableInstrument.Default.METHODS,
-            *args,
-            **kwargs
-        )
-
-
 class TruWrapperApp(object):
-    # This will be wrapped by instrumentation. Because TruWrapperApp may wrap
-    # different types of callables, we cannot patch the signature to anything
-    # consistent. Because of this, the dashboard/record for this call will have
-    # *args, **kwargs instead of what the app actually uses. We also need to
-    # adjust the main_input lookup to get the correct signature. See note there.
+    """Wrapper of basic apps.
+
+    This will be wrapped by instrumentation. 
+
+    !!! Warning:
+        Because TruWrapperApp may wrap different types of callables, we cannot
+        patch the signature to anything consistent. Because of this, the
+        dashboard/record for this call will have *args, **kwargs instead of what
+        the app actually uses. We also need to adjust the main_input lookup to
+        get the correct signature. See note there.
+    """
+
     def _call(self, *args, **kwargs):
         return self._call_fn(*args, **kwargs)
 
@@ -54,12 +45,33 @@ class TruWrapperApp(object):
         self._call_fn = call_fn
 
 
-class TruBasicApp(App):
-    """Instantiates a Basic app that makes little assumptions. Assumes input text and output text.
-        
-        **Usage:**
+class TruBasicCallableInstrument(Instrument):
+    """Basic app instrumentation."""
 
-        ```
+    class Default:
+        """Default instrumentation specification for basic apps."""
+
+        CLASSES = lambda: {TruWrapperApp}
+
+        # Instrument only methods with these names and of these classes.
+        METHODS: Dict[str, ClassFilter] = {"_call": TruWrapperApp}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            include_classes=TruBasicCallableInstrument.Default.CLASSES(),
+            include_methods=TruBasicCallableInstrument.Default.METHODS,
+            *args,
+            **kwargs
+        )
+
+
+class TruBasicApp(App):
+    """Instantiates a Basic app that makes little assumptions.
+    
+    Assumes input text and output text.
+        
+    Example:
+        ```python
         def custom_application(prompt: str) -> str:
             return "a response"
         
@@ -75,39 +87,41 @@ class TruBasicApp(App):
             tru_recorder.app(question)
 
         tru_record = recording.records[0]
-        
         ```
-        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
-        Args:
-            text_to_text (Callable): A text to text callable.
+        See [Feedback
+        Functions](https://www.trulens.org/trulens_eval/api/feedback/) for
+        instantiating feedback functions.
+
+    Args:
+        text_to_text: A str to str callable.
+
+        app: A TruWrapperApp instance. If not provided, `text_to_text` must
+            be provided.
+        
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     app: TruWrapperApp
+    """The app to be instrumented."""
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
         default_factory=lambda: FunctionOrMethod.
         of_callable(TruWrapperApp._call)
     )
+    """The root callable to be instrumented.
+    
+    This is the method that will be called by the main_input method."""
 
     def __init__(
         self,
-        text_to_text: Optional[Callable] = None,
+        text_to_text: Optional[Callable[[str], str]] = None,
         app: Optional[TruWrapperApp] = None,
-        **kwargs
+        **kwargs: dict
     ):
-        """
-        Wrap a callable for monitoring.
-
-        Arguments:
-        - text_to_text: A function with signature string to string.
-        - More args in App
-        - More args in AppDefinition
-        - More args in WithClassInfo
-        """
-
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
         else:
@@ -123,10 +137,6 @@ class TruBasicApp(App):
         # If available, a single text to a single text invocation of this app.
 
         return self.app._call(human)
-
-    async def main_acall(self, human: str) -> str:
-        # If available, a single text to a single text invocation of this app.
-        raise NotImplementedError()
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
@@ -150,19 +160,6 @@ class TruBasicApp(App):
 
         return super().main_input(func, sig, bindings)
 
-    def call_with_record(self, *args, **kwargs):
-        """
-        Run the callable with the given arguments. Note that the wrapped
-        callable is expected to take in a single string.
+    def call_with_record(self, *args, **kwargs) -> None:
 
-        Returns:
-            dict: record metadata
-        """
-        # NOTE: Actually text_to_text can take in more args.
-
-        self._with_dep_message(method="call", is_async=False, with_record=True)
-
-        return self.with_record(self.app._call, *args, **kwargs)
-
-
-TruBasicApp.model_rebuild()
+        self._throw_dep_message(method="call", is_async=False, with_record=True)

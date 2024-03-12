@@ -8,13 +8,7 @@ various llama_index classes and example classes:
 
 from typing import List, Type
 
-import llama_index
-from llama_index.indices.query.schema import QueryBundle
-from llama_index.indices.vector_store.retrievers import VectorIndexRetriever
-from llama_index.schema import NodeWithScore
-
 from trulens_eval import app
-from trulens_eval import Feedback
 from trulens_eval.feedback import Feedback
 from trulens_eval.utils.containers import first
 from trulens_eval.utils.containers import second
@@ -22,6 +16,13 @@ from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.threading import ThreadPoolExecutor
+
+with OptionalImports(messages=REQUIREMENT_LLAMA):
+    import llama_index
+    from llama_index.core.indices.vector_store.retrievers.retriever import \
+        VectorIndexRetriever
+    from llama_index.indices.query.schema import QueryBundle
+    from llama_index.schema import NodeWithScore
 
 OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
 
