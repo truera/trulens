@@ -93,7 +93,7 @@ jobs:
 
           python --version
           pip --version
-          pip list
+          pip list --verbose
   
         displayName: Describe python env
 
