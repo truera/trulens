@@ -61,7 +61,7 @@ notebooks:
   Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing)
 
 For more information, see [TruLens-Explain
-Documentation](https://www.trulens.org/trulens_explain/quickstart/).
+Documentation](https://www.trulens.org/trulens_explain/getting_started/quickstart/).
 
 <!---
 end of trulens_explain/gh_top_intro.md

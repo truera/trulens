@@ -141,6 +141,23 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
     end_time: datetime.datetime
     """Datetime after the recorded call."""
 
+    @staticmethod
+    def now(latency: Optional[datetime.timedelta] = None) -> Perf:
+        """Create a `Perf` instance starting now and ending now plus latency.
+         
+        Args:
+            latency: Latency in seconds. If given, end time will be now plus
+                latency. Otherwise end time will be a minimal interval plus start_time.
+        """
+
+        start_time = datetime.datetime.now()
+        if latency is not None:
+            end_time = start_time + latency
+        else:
+            end_time = start_time + datetime.timedelta(microseconds=1)
+
+        return Perf(start_time=start_time, end_time=end_time)
+
     @property
     def latency(self):
         """Latency in seconds."""
