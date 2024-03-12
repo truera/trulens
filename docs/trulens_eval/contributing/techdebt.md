@@ -96,3 +96,12 @@ See `instruments.py` docstring for discussion why these are done.
   `BaseModel.model_rebuild` after all types references in annotations in that file
   have been defined for each model class that uses type annotations that
   reference types defined after its own definition (i.e. "forward refs").
+
+- "HACK014" -- cannot `from trulens_eval import schema` in some places due to
+  strange interaction with pydantic. Results in:
+
+  ```python
+  AttributeError: module 'pydantic' has no attribute 'v1'
+  ```
+
+  It might be some interaction with "from __future__ import annotations" and/or `OptionalImports`.

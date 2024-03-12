@@ -567,7 +567,7 @@ class OptionalImports(object):
         builtins.__import__ = self.imp
 
         if exc_value is None:
-            return None
+            return
 
         if isinstance(exc_value, ModuleNotFoundError):
             if exc_value.msg.startswith(self.messages.module_not_found):
@@ -591,5 +591,4 @@ class OptionalImports(object):
                 retab(tab="    ", s=repr(exc_value))
             ) from exc_value
 
-        else:
-            raise exc_value
+        # Exception will be propagated unless we return True so we don't return it.
