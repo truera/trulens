@@ -486,6 +486,9 @@ class FeedbackResultStatus(Enum):
     DONE = "done"
     """Run completed successfully."""
 
+    SKIPPED = "skipped"
+    """This feedback was skipped because it had an `if_exists` selector and did not select anything."""
+
 
 class FeedbackCall(serial.SerialModel):
     """Invocations of feedback function results in one of these instances.

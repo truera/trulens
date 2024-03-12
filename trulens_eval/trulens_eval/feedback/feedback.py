@@ -773,9 +773,10 @@ Feedback function signature:
         if self.if_exists is not None:
             if not self.if_exists.exists(source_data):
                 logger.warning(
-                    f"Feedback %s skipped as %s does not exist.", self.name,
+                    "Feedback %s skipped as %s does not exist.", self.name,
                     self.if_exists
                 )
+                feedback_result.status = FeedbackResultStatus.SKIPPED
                 return feedback_result
 
         # Separate try block for extracting inputs from records/apps in case a
