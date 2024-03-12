@@ -576,7 +576,10 @@ class Feedback(FeedbackDefinition):
             app: The app that produced the record.
 
             record: The record that the feedback will run on. This can be a
-                mostly empty record for checking ahead of producing one.
+                mostly empty record for checking ahead of producing one. The
+                utility method
+                [App.dummy_record][trulens_eval.app.App.dummy_record] is built
+                for this prupose.
 
             source_data: Additional data to select from when extracting feedback
                 function arguments.
@@ -611,12 +614,11 @@ class Feedback(FeedbackDefinition):
             app=app, record=record, source_data=source_data
         )
 
-        # logger.warning(msg)
-
-
+        # Build the hint message here.
         msg = ""
 
-        check_good = True
+        # Keep track whether any selectors failed to validate.
+        check_good: bool = True
 
         # with c.capture() as cap:
         for k, q in self.selectors.items():
@@ -666,7 +668,8 @@ Feedback function signature:
 
         if check_good:
             return True
-        
+
+        # Output using rich text.
         rprint(Markdown(msg))
 
         if warning:
