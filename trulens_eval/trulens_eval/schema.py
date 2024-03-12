@@ -611,7 +611,7 @@ class FeedbackResult(serial.SerialModel):
 
 
 class FeedbackCombinations(str, Enum):
-    """How to aggregate multiple feedback function calls.
+    """How to collect arguments for feedback function calls.
     
     Note that this applies only to cases where selectors pick out more than one
     thing for feedback function arguments. This option is used for the field
