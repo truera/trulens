@@ -28,6 +28,7 @@ humanize           >= 4.6.0
 streamlit          >= 1.31.1
 streamlit-aggrid   >= 0.3.4.post3
 streamlit-extras   >= 0.2.7
+rich               >= 13.6.0
 
 # DB and migration
 sqlalchemy         >= 2.0.19

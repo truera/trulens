@@ -99,10 +99,11 @@ ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
 
 def jsonify_for_ui(*args, **kwargs):
+    """Options for jsonify common to UI displays.
+    
+    Redacts keys and hides special fields introduced by trulens.
     """
-    Options for jsonify common to UI displays. Redact keys and hide special
-    fields.
-    """
+    
     return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
 
 
@@ -134,7 +135,9 @@ def jsonify(
         include_excluded: include fields that are annotated to be excluded by pydantic.
 
     Returns:
-        The jsonified version of the given object.
+        The jsonified version of the given object. Jsonified means that the the
+        object is either a JSON base type, a list, or a dict with the containing
+        elements of the same.
     """
     skip_excluded = not include_excluded
     # Hack so that our models do not get exludes dumped which causes many
@@ -148,26 +151,26 @@ def jsonify(
     if instrument is None:
         instrument = Instrument()
 
-    dicted = dicted or dict()
+    dicted = dicted or {}
 
     if skip_specials:
-        recur_key = lambda k: isinstance(
-            k, JSON_BASES
-        ) and k not in ALL_SPECIAL_KEYS
+        def recur_key(k):
+            return isinstance(k, JSON_BASES) and k not in ALL_SPECIAL_KEYS
     else:
-        recur_key = lambda k: isinstance(k, JSON_BASES) and True
+        def recur_key(k):
+            return isinstance(k, JSON_BASES)
 
     if id(obj) in dicted:
         if skip_specials:
             return None
-        else:
-            return {CIRCLE: id(obj)}
+
+        return {CIRCLE: id(obj)}
 
     if isinstance(obj, JSON_BASES):
         if redact_keys and isinstance(obj, str):
             return redact_value(obj)
-        else:
-            return obj
+        
+        return obj
 
     # TODO: remove eventually
     if isinstance(obj, SerialBytes):
@@ -182,14 +185,15 @@ def jsonify(
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = dict(dicted)
 
-    recur = lambda o: jsonify(
-        obj=o,
-        dicted=new_dicted,
-        instrument=instrument,
-        skip_specials=skip_specials,
-        redact_keys=redact_keys,
-        include_excluded=include_excluded
-    )
+    def recur(o):
+        return jsonify(
+            obj=o,
+            dicted=new_dicted,
+            instrument=instrument,
+            skip_specials=skip_specials,
+            redact_keys=redact_keys,
+            include_excluded=include_excluded
+        )
 
     content = None
 
@@ -314,16 +318,17 @@ def jsonify(
 
     else:
         logger.debug(
-            f"Do not know how to jsonify an object '{str(obj)[0:32]}' of type '{type(obj)}'."
+            "Do not know how to jsonify an object '%s' of type '%s'.", str(obj)[0:32], type(obj)
         )
 
         content = noserio(obj)
 
     # Add class information for objects that are to be instrumented, known as
     # "components".
-    if isinstance(content, dict) and not isinstance(
+    if not skip_specials and isinstance(content, dict) and not isinstance(
             obj, dict) and (instrument.to_instrument_object(obj) or
                             isinstance(obj, WithClassInfo)):
+
         content[CLASS_INFO] = Class.of_class(
             cls=obj.__class__, with_bases=True
         ).model_dump()
