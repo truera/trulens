@@ -37,7 +37,7 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import callable_name, class_name
 from trulens_eval.utils.python import Future
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSON, GetItemOrAttribute
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import UNICODE_CHECK, retab
 from trulens_eval.utils.threading import TP
@@ -625,8 +625,6 @@ class Feedback(FeedbackDefinition):
             if q.exists(source_data):
                 continue
 
-            check_good = False
-
             msg += f"""
 # Selector check failed
 
@@ -655,6 +653,21 @@ Feedback function signature:
 
             if prefix is None:
                 continue
+
+            if len(prefix.path) >= 2 and isinstance(prefix.path[-1], GetItemOrAttribute) and prefix.path[-1].get_item_or_attribute() == "rets":
+                # If the selector check failed because the selector was pointing
+                # to something beyond the rets of a record call, we have to
+                # ignore it as we cannot tell what will be in the rets ahead of
+                # invoking app.
+                continue
+
+            if len(prefix.path) >= 3 and isinstance(prefix.path[-2], GetItemOrAttribute) and prefix.path[-2].get_item_or_attribute() == "args":
+                # Likewise if failure was because the selector was pointing to
+                # method args beyond their parameter names, we also cannot tell
+                # their contents so skip.
+                continue
+
+            check_good = False
 
             msg += f"The prefix `{prefix}` selects this data that exists in your app or typical records:\n\n"
 
