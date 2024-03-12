@@ -995,8 +995,6 @@ Feedback function signature:
         for assignment in assignments:
             yield {k: v for k, v in zip(keys, assignment)}
 
-        pass
-
     def _construct_source_data(
         self,
         app: Optional[Union[AppDefinition, JSON]] = None,
