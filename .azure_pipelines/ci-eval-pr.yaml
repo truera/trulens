@@ -76,9 +76,6 @@ jobs:
           cd ./trulens_eval
           pip install -e .
 
-          python --version
-          pip --version
-          pip list
         displayName: Install trulens
 
       - bash: |
@@ -89,6 +86,16 @@ jobs:
             pytest==7.0.1 pytest-subtests pytest-azurepipelines
 
         displayName: Install testing packages
+
+      - bash: |
+          set -e
+          source activate $(python-version)
+
+          python --version
+          pip --version
+          pip list
+  
+        displayName: Describe python env
 
       - bash: |
           set -e
