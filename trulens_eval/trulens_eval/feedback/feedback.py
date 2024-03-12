@@ -34,7 +34,7 @@ from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
-from trulens_eval import schema
+from trulens_eval import schema as tru_schema
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import callable_name, class_name
@@ -422,7 +422,7 @@ class Feedback(FeedbackDefinition):
     def aggregate(
         self,
         func: Optional[AggCallable] = None,
-        combinations: Optional[schema.FeedbackCombinations] = None
+        combinations: Optional[tru_schema.FeedbackCombinations] = None
     ) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
@@ -966,7 +966,7 @@ Feedback function signature:
     def _extract_selection(
         self,
         source_data: Dict,
-        combinations: schema.FeedbackCombinations = schema.FeedbackCombinations.PRODUCT
+        combinations: tru_schema.FeedbackCombinations = tru_schema.FeedbackCombinations.PRODUCT
     ) -> Iterable[Dict[str, Any]]:
 
         arg_vals = {}
@@ -982,9 +982,9 @@ Feedback function signature:
         keys = arg_vals.keys()
         vals = arg_vals.values()
 
-        if combinations == schema.FeedbackCombinations.PRODUCT:
+        if combinations == tru_schema.FeedbackCombinations.PRODUCT:
             assignments = itertools.product(*vals)
-        elif combinations == schema.FeedbackCombinations.ZIP:
+        elif combinations == tru_schema.FeedbackCombinations.ZIP:
             assignments = zip(*vals)
         else:
             raise ValueError(
