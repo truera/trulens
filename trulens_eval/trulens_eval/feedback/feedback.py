@@ -7,26 +7,31 @@ from inspect import signature
 import itertools
 import json
 import logging
+from pprint import pformat
 import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple,
+                    TypeVar, Union)
 import warnings
-from rich.pretty import pretty_repr
-from rich import print as rprint
-from rich.markdown import Markdown
 
-
+import munch
 import numpy as np
 import pandas
 import pydantic
+from rich import print as rprint
+from rich.markdown import Markdown
+from rich.pretty import pretty_repr
 
-from pprint import pformat
+# WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
+# This happens even if you import it as something else.
+# from trulens_eval import schema # breaks pydantic
+# from trulens_eval import schema as tru_schema # also breaks pydantic
+
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackCall
+from trulens_eval.schema import FeedbackCombinations
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
@@ -35,11 +40,14 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.python import callable_name, class_name
+from trulens_eval.utils.python import callable_name
+from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import Future
-from trulens_eval.utils.serial import JSON, GetItemOrAttribute
+from trulens_eval.utils.serial import GetItemOrAttribute
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.text import UNICODE_CHECK, retab
+from trulens_eval.utils.text import retab
+from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
@@ -417,17 +425,34 @@ class Feedback(FeedbackDefinition):
         assert self.imp is not None, "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
 
-    def aggregate(self, func: AggCallable) -> Feedback:
+    def aggregate(
+        self,
+        func: Optional[AggCallable] = None,
+        combinations: Optional[FeedbackCombinations] = None
+    ) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
-        generate more than one value for implementation argument(s).
+        generate more than one value for implementation argument(s). Can also
+        specify the method of producing combinations of values in such cases.
 
-        Returns a new Feedback object with the given aggregation function.
+        Returns a new Feedback object with the given aggregation function and/or
+        the given [combination mode][trulens_eval.schema.FeedbackCombinations].
         """
+
+        if func is None and combinations is None:
+            raise ValueError(
+                "At least one of `func` or `combinations` must be provided."
+            )
+
+        updates = {}
+        if func is not None:
+            updates['agg'] = func
+        if combinations is not None:
+            updates['combinations'] = combinations
 
         return Feedback.model_copy(
             self,
-            update=dict(agg=func)  # does this run __init__ ?
+            update=updates
         )
 
     @staticmethod
@@ -633,6 +658,8 @@ record:
 
 ```python
 {q}
+# or equivalently
+{Select.render_for_dashboard(q)}
 ```
 
 The data used to make this check may be incomplete. If you expect records
@@ -673,6 +700,9 @@ Feedback function signature:
 
             try:
                 for prefix_obj in prefix.get(source_data):
+                    if isinstance(prefix_obj, munch.Munch):
+                        prefix_obj = prefix_obj.toDict()
+
                     msg += f"- Object of type `{class_name(type(prefix_obj))}` starting with:\n"
                     msg += "```python\n" + retab(tab="\t  ", s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)) + "\n```\n"
 
@@ -743,9 +773,10 @@ Feedback function signature:
         if self.if_exists is not None:
             if not self.if_exists.exists(source_data):
                 logger.warning(
-                    f"Feedback %s skipped as %s does not exist.", self.name,
+                    "Feedback %s skipped as %s does not exist.", self.name,
                     self.if_exists
                 )
+                feedback_result.status = FeedbackResultStatus.SKIPPED
                 return feedback_result
 
         # Separate try block for extracting inputs from records/apps in case a
@@ -753,7 +784,10 @@ Feedback function signature:
         # a warning earlier than later.
         try:
             input_combinations = list(
-                self._extract_selection(source_data=source_data)
+                self._extract_selection(
+                    source_data=source_data,
+                    combinations=self.combinations
+                )
             )
 
         except Exception as e:
@@ -936,7 +970,11 @@ Feedback function signature:
 
         return super().name
 
-    def _extract_selection(self, source_data: Dict) -> Iterable[Dict[str, Any]]:
+    def _extract_selection(
+        self,
+        source_data: Dict,
+        combinations: FeedbackCombinations = FeedbackCombinations.PRODUCT
+    ) -> Iterable[Dict[str, Any]]:
 
         arg_vals = {}
 
@@ -951,12 +989,18 @@ Feedback function signature:
         keys = arg_vals.keys()
         vals = arg_vals.values()
 
-        assignments = itertools.product(*vals)
+        if combinations == FeedbackCombinations.PRODUCT:
+            assignments = itertools.product(*vals)
+        elif combinations == FeedbackCombinations.ZIP:
+            assignments = zip(*vals)
+        else:
+            raise ValueError(
+                f"Unknown combination mode {combinations}. "
+                "Expected `product` or `zip`."
+            )
 
         for assignment in assignments:
             yield {k: v for k, v in zip(keys, assignment)}
-
-        pass
 
     def _construct_source_data(
         self,

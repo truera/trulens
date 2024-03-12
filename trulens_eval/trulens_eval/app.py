@@ -1,5 +1,5 @@
 """
-Generalized root type for various libraries like llama_index and langchain .
+Generalized root type for various libraries like `llama_index` and `langchain` .
 """
 
 from abc import ABC

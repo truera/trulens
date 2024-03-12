@@ -610,10 +610,8 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     """
     Lenses into python objects.
 
-    **Usage:**
-    
-    ```python
-
+    Usage:
+        ```python
         path = Lens().record[5]['somekey']
 
         obj = ... # some object that contains a value at `obj.record[5]['somekey]`
@@ -621,8 +619,27 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         value_at_path = path.get(obj) # that value
 
         new_obj = path.set(obj, 42) # updates the value to be 42 instead
-    ```
-    """
+        ```
+
+    ## `collect` and special attributes
+
+    Some attributes hold special meaning for lenses. Attempting to access
+    them will produce a special lens instead of one that looks up that
+    attribute.
+
+    Example:
+        ```python
+        path = Lens().record[:]
+
+        obj = dict(record=[1, 2, 3])
+
+        value_at_path = path.get(obj) # generates 3 items: 1, 2, 3 (not a list)
+
+        path_collect = path.collect()
+
+        value_at_path = path_collect.get(obj) # generates a single item, [1, 2, 3] (a list)
+        ```
+        """
 
     path: Tuple[Step, ...]
 
