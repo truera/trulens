@@ -7,18 +7,21 @@ from inspect import signature
 import itertools
 import json
 import logging
-import pprint
 import traceback
 from typing import (
     Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
 )
 import warnings
-import munch
+from rich.pretty import pretty_repr
+from rich import print as rprint
+from rich.markdown import Markdown
+
 
 import numpy as np
 import pandas
 import pydantic
 
+from pprint import pformat
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.schema import AppDefinition
@@ -32,7 +35,7 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.python import callable_name
+from trulens_eval.utils.python import callable_name, class_name
 from trulens_eval.utils.python import Future
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
@@ -40,8 +43,6 @@ from trulens_eval.utils.text import UNICODE_CHECK, retab
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
-
-pp = pprint.PrettyPrinter()
 
 A = TypeVar("A")
 
@@ -525,9 +526,22 @@ class Feedback(FeedbackDefinition):
         """
 
         new_selectors = self.selectors.copy()
+
+        for k, v in kwargs.items():
+            if not isinstance(v, Lens):
+                raise ValueError(
+                    f"Expected a Lens but got `{v}` of type `{class_name(type(v))}`."
+                )
+            new_selectors[k] = v
+
         new_selectors.update(kwargs)
 
         for path in args:
+            if not isinstance(path, Lens):
+                raise ValueError(
+                    f"Expected a Lens but got `{path}` of type `{class_name(type(path))}`."
+                )
+            
             argname = self._next_unselected_arg_name()
             new_selectors[argname] = path
             self._print_guessed_selector(argname, path)
@@ -553,7 +567,7 @@ class Feedback(FeedbackDefinition):
         self,
         app: Union[AppDefinition, JSON],
         record: Record,
-        source_data: Dict[str, Any],
+        source_data: Optional[Dict[str, Any]] = None,
         warning: bool = False
     ) -> bool:
         """Check that the selectors are valid for the given app and record.
@@ -581,7 +595,10 @@ class Feedback(FeedbackDefinition):
 
         from trulens_eval.app import App
 
-        app_type = "trulens recorder (`TruChain`, `TruLlama`, etc)"
+        if source_data is None:
+            source_data = {}
+
+        app_type: str = "trulens recorder (`TruChain`, `TruLlama`, etc)"
     
         if isinstance(app, App):
             app_type = f"`{type(app).__name__}`"
@@ -594,28 +611,29 @@ class Feedback(FeedbackDefinition):
             app=app, record=record, source_data=source_data
         )
 
+        # logger.warning(msg)
+
+
+        msg = ""
+
+        check_good = True
+
+        # with c.capture() as cap:
         for k, q in self.selectors.items():
-            if not q.exists(source_data):
-                prefix = q.existing_prefix(source_data)
+            if q.exists(source_data):
+                continue
 
-                obj_dump = ""
+            check_good = False
 
-                try:
-                    for prefix_obj in prefix.get(source_data):
+            msg += f"""
+# Selector check failed
 
-                        if isinstance(prefix_obj, munch.Munch):
-                            prefix_obj = prefix_obj.toDict()
-
-                        obj_dump += f"  Object of type {type(prefix_obj).__name__} starting with:\n"
-                        obj_dump += retab(tab="    ", s=pprint.pformat(prefix_obj, depth=2) + "\n\n")
-                except Exception as e:
-                    obj_dump += f"  Some non-existant object because: {repr(e)}"
-
-
-                msg =f"""
 Source of argument `{k}` to `{self.name}` does not exist in app or expected
-record:\n
-  `{q}`
+record:
+
+```python
+{q}
+```
 
 The data used to make this check may be incomplete. If you expect records
 produced by your app to contain the selected content, you can ignore this error
@@ -623,22 +641,40 @@ by setting `selectors_nocheck` in the {app_type} constructor. Alternatively,
 setting `selectors_check_warning` will print out this message but will not raise
 an error.
 
-Additional information:
+## Additional information:
 
-Feedback function signature: `{self.sig}`
+Feedback function signature:
+```python
+{self.sig}
+```
 
-The prefix `{prefix}` selects this data that exists in your app or typical records:
-
-{obj_dump}
 """
-                if warning:
-                    logger.warning(msg)
-                    return False
-                else:
+            prefix = q.existing_prefix(source_data)
 
-                    raise ValueError(msg)
+            if prefix is None:
+                continue
 
-        return True
+            msg += f"The prefix `{prefix}` selects this data that exists in your app or typical records:\n\n"
+
+            try:
+                for prefix_obj in prefix.get(source_data):
+                    msg += f"- Object of type `{class_name(type(prefix_obj))}` starting with:\n"
+                    msg += "```python\n" + retab(tab="\t  ", s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)) + "\n```\n"
+
+            except Exception as e:
+                msg += f"Some non-existant object because: {pretty_repr(e)}"
+
+        if check_good:
+            return True
+        
+        rprint(Markdown(msg))
+
+        if warning:
+            return False
+
+        else:
+            raise ValueError("Some selectors do not exist in the app or record.")
+
 
     def run(
         self,
@@ -725,7 +761,7 @@ The prefix `{prefix}` selects this data that exists in your app or typical recor
                     cost += part_cost
                 except Exception as e:
                     raise RuntimeError(
-                        f"Evaluation of {self.name} failed on inputs: \n{pp.pformat(ins)[0:128]}."
+                        f"Evaluation of {self.name} failed on inputs: \n{pformat(ins)[0:128]}."
                     ) from e
 
                 if isinstance(result_and_meta, Tuple):
@@ -931,7 +967,7 @@ The prefix `{prefix}` selects this data that exists in your app or typical recor
         """
 
         if source_data is None:
-            source_data = dict()
+            source_data = {}
         else:
             source_data = dict(source_data)  # copy
 

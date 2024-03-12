@@ -13,13 +13,14 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
-    Optional, Sequence, Set, Tuple, Type, TypeVar
-)
+import datetime
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
+                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
+                    TypeVar)
 
 import pydantic
 
+from trulens_eval import schema
 from trulens_eval.db import DB
 from trulens_eval.feedback import Feedback
 from trulens_eval.instruments import Instrument
@@ -33,6 +34,7 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
+from trulens_eval.utils import pyschema
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.asynchro import desync
 from trulens_eval.utils.asynchro import sync
@@ -673,14 +675,14 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                     ) from e
         
         if not self.selector_nocheck:
+
+            dummy = self.dummy_record()
+
             for feedback in self.feedbacks:
                 feedback.check_selectors(
                     app=self, 
                     # Don't have a record yet, but use an empty one for the non-call related fields.
-                    record=Record(app_id=self.app_id), 
-                    source_data={'__record__': {'app': self.app}}, # And use self.app for the calls. 
-                    # Note: record.layout_calls_as_app will produce the same
-                    # structure near the root of the record as the app.
+                    record=dummy,
                     warning=self.selector_check_warning
                 )
 
@@ -1324,6 +1326,75 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             raise AttributeError(
                 f"'{type(self).__name__}' object has no attribute '{__name}'"
             )
+
+    def dummy_record(
+        self,
+        cost: Cost = schema.Cost(),
+        perf: Perf = schema.Perf.now(),
+        ts: datetime.datetime = datetime.datetime.now(),
+        main_input: str ="main_input are strings.",
+        main_output: str ="main_output are strings.",
+        main_error: str = "main_error are strings.",
+        meta: Dict ={'metakey': 'meta are dicts'},
+        tags: str ='tags are strings'
+    ) -> Record:
+        """Create a dummy record with some of the expected structure without
+        actually invoking the app.
+
+        The record is a guess of what an actual record might look like but will
+        be missing information that can only be determined after a call is made.
+
+        All args are [Record][trulens_eval.schema.Record] fields except these:
+
+            - `record_id` is generated using the default id naming schema.
+            - `app_id` is taken from this recorder.
+            - `calls` field is constructed based on instrumented methods. 
+        """
+
+        calls = []
+
+        for methods in self.instrumented_methods.values():
+            for func, lens in methods.items():
+
+                component = lens.get_sole_item(self)
+
+                if not hasattr(component, func.__name__):
+                    continue
+                method = getattr(component, func.__name__)
+
+                sig = inspect.signature(method)
+
+                method_serial = pyschema.FunctionOrMethod.of_callable(method)
+
+                sample_args = {}
+                for p in sig.parameters.values():
+                    if p.default == inspect.Parameter.empty:
+                        sample_args[p.name] = None
+                    else:
+                        sample_args[p.name] = p.default
+
+                sample_call = RecordAppCall(
+                    stack=[schema.RecordAppCallMethod(path=lens, method=method_serial)],
+                    args=sample_args,
+                    rets=None,
+                    pid=0,
+                    tid=0
+                )
+
+                calls.append(sample_call)
+
+        return Record(
+            app_id=self.app_id,
+            calls=calls,
+            cost=cost,
+            perf=perf,
+            ts=ts,
+            main_input=main_input,
+            main_output=main_output,
+            main_error=main_error,
+            meta=meta,
+            tags=tags
+        )
 
     def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
         """
