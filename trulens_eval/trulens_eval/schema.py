@@ -924,9 +924,12 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_definition_json: serial.JSON, app: Any
     ) -> AppDefinition:
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
-        """EXPERIMENTAL: Instantiate the given `app` with the given state
+        """Instantiate the given `app` with the given state
         `app_definition_json`.
         
+        Warning:
+            This is an experimental feature with ongoing work.
+
         Args:
             app_definition_json: The json serialized app.
 
@@ -948,8 +951,11 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_definition_json: serial.JSON,
         initial_app_loader: Optional[Callable] = None
     ) -> AppDefinition:
-        """EXPERIMENTAL: Create an app instance at the start of a session.
+        """Create an app instance at the start of a session.
         
+        Warning:
+            This is an experimental feature with ongoing work.
+
         Create a copy of the json serialized app with the enclosed app being
         initialized to its initial state before any records are produced (i.e.
         blank memory).
@@ -988,8 +994,11 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def get_loadable_apps():
-        """EXPERIMENTAL: Gets a list of all of the loadable apps.
+        """Gets a list of all of the loadable apps.
         
+        Warning:
+            This is an experimental feature with ongoing work.
+
         This is those that have `initial_app_loader_dump` set.
         """
 
