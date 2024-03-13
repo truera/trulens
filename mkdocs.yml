@@ -114,7 +114,7 @@ plugins:
             - trulens_explain
             - trulens_eval
           #selection:
-          
+
   - redirects:
       redirect_maps:
         # These were distributed in the past but moved since then. Our own links
@@ -188,7 +188,6 @@ nav:
       - Feedback Functions:
           - trulens_eval/evaluation/feedback_functions/index.md
           - Anatomy of a Feedback Function: trulens_eval/evaluation/feedback_functions/anatomy.md
-          - Specification Guide: trulens_eval/evaluation/feedback_functions/guide.md
       - Running Feedback Functions:
           # PLACEHOLDER: - trulens_eval/evaluation/running_feedback_functions/index.md
           - Running with your app: trulens_eval/evaluation/running_feedback_functions/with_app.md
@@ -196,6 +195,7 @@ nav:
       - Feedback Selectors:
           - trulens_eval/evaluation/feedback_selectors/index.md
           - Selecting Components: trulens_eval/evaluation/feedback_selectors/selecting_components.md
+          - Feedback Aggregation: trulens_eval/evaluation/feedback_selectors/feedback_aggregation.md
           - Shortcuts: trulens_eval/evaluation/feedback_selectors/selector_shortcuts.md
       - Feedback Implementations:
           - trulens_eval/evaluation/feedback_implementations/index.md
