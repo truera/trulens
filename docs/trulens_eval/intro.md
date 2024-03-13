@@ -17,10 +17,10 @@ you to identify failure modes & systematically iterate to improve your
 application.
 
 Read more about the core concepts behind TruLens including [Feedback
-Functions](https://www.trulens.org/trulens_eval/core_concepts/feedback_functions/),
-[The RAG Triad](https://www.trulens.org/trulens_eval/core_concepts/rag_triad/),
+Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/
+[The RAG Triad](https://www.trulens.org/trulens_eval/getting_started/core_concepts/rag_triad/),
 and [Honest, Harmless and Helpful
-Evals](https://www.trulens.org/trulens_eval/core_concepts/honest_harmless_helpful_evals/).
+Evals](https://www.trulens.org/trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals/).
 
 ## TruLens in the development workflow
 
@@ -50,8 +50,8 @@ Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.
 
 ### 💡 Contributing
 
-Interested in contributing? See our [contribution
-guide](https://www.trulens.org/trulens_eval/CONTRIBUTING/) for more details.
+Interested in contributing? See our [contributing
+guide](https://www.trulens.org/trulens_eval/contributing/) for more details.
 <!---
 end of docs/trulens_eval/intro.md
 -->

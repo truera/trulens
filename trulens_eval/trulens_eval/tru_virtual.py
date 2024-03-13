@@ -8,7 +8,7 @@ from concurrent import futures
 import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Any, ClassVar, Dict, Optional, Union
+from typing import Any, ClassVar, Dict, Optional, Sequence, Union
 
 from pydantic import Field
 
@@ -139,7 +139,7 @@ class VirtualRecord(Record):
 
     def __init__(
         self,
-        calls: Dict[serial.Lens, Dict],
+        calls: Dict[serial.Lens, Union[Dict, Sequence[Dict]]],
         cost: Optional[Cost] = None,
         perf: Optional[Perf] = None,
         **kwargs: dict
@@ -162,8 +162,10 @@ class VirtualRecord(Record):
                 is extended to make sure it is not of duration zero.
 
         Call values are dictionaries containing arguments to
-        [RecordAppCall][trulens_eval.schema.RecordAppCall] constructor. The
-        following defaults are used if not provided.
+        [RecordAppCall][trulens_eval.schema.RecordAppCall] constructor. Values
+        can also be lists of the same. This happens in non-virtual apps when the
+        same method is recorded making multiple calls in a single app
+        invocation. The following defaults are used if not provided.
 
         | PARAMETER | TYPE |DEFAULT |
         | --- | ---| --- |
@@ -175,54 +177,59 @@ class VirtualRecord(Record):
         | `tid` | [int][] | `0` |
         """
 
-        kwargs['cost'] = cost
-        kwargs['perf'] = perf
-
         root_call = RecordAppCallMethod(
             path=serial.Lens(), method=virtual_method_root
         )
 
-        start_time = datetime.datetime.now()
-
         record_calls = []
 
-        for lens, call in calls.items():
-            substart_time = datetime.datetime.now()
+        start_time = datetime.datetime.now()
 
-            if "stack" not in call:
-                path, method_name = Select.path_and_method(
-                    Select.dequalify(lens)
-                )
-                method = virtual_method_call.replace(name=method_name)
+        for lens, call_or_calls in calls.items():
 
-                call['stack'] = [
-                    root_call,
-                    RecordAppCallMethod(path=path, method=method)
-                ]
-            if "args" not in call:
-                call['args'] = []
-            if "rets" not in call:
-                call['rets'] = []
-            if "pid" not in call:
-                call['pid'] = 0
-            if "tid" not in call:
-                call['tid'] = 0
+            if isinstance(call_or_calls, Sequence):
+                calls_list = call_or_calls
+            else:
+                calls_list = [call_or_calls]
 
-            subend_time = datetime.datetime.now()
+            for call in calls_list:
+                substart_time = datetime.datetime.now()
 
-            # NOTE(piotrm for garrett): that the dashboard timeline has problems
-            # with calls that span too little time so we add some delays to the
-            # recorded perf.
-            if (subend_time - substart_time).total_seconds() == 0.0:
-                subend_time += datetime.timedelta(microseconds=1)
+                if "stack" not in call:
+                    path, method_name = Select.path_and_method(
+                        Select.dequalify(lens)
+                    )
+                    method = virtual_method_call.replace(name=method_name)
 
-            if "perf" not in call:
-                call['perf'] = Perf(
-                    start_time=substart_time, end_time=subend_time
-                )
+                    call['stack'] = [
+                        root_call,
+                        RecordAppCallMethod(path=path, method=method)
+                    ]
 
-            rinfo = RecordAppCall(**call)
-            record_calls.append(rinfo)
+                if "args" not in call:
+                    call['args'] = []
+                if "rets" not in call:
+                    call['rets'] = []
+                if "pid" not in call:
+                    call['pid'] = 0
+                if "tid" not in call:
+                    call['tid'] = 0
+
+                subend_time = datetime.datetime.now()
+
+                # NOTE(piotrm for garrett): that the dashboard timeline has problems
+                # with calls that span too little time so we add some delays to the
+                # recorded perf.
+                if (subend_time - substart_time).total_seconds() == 0.0:
+                    subend_time += datetime.timedelta(microseconds=1)
+
+                if "perf" not in call:
+                    call['perf'] = Perf(
+                        start_time=substart_time, end_time=subend_time
+                    )
+
+                rinfo = RecordAppCall(**call)
+                record_calls.append(rinfo)
 
         end_time = datetime.datetime.now()
 
@@ -318,6 +325,16 @@ class TruVirtual(App):
 
     instrument: Optional[Instrument] = None
 
+    selector_check_warning: bool = False
+    """Selector checking is disabled for virtual apps."""
+
+    selector_nocheck: bool = True
+    """The selector check must be disabled for virtual apps. 
+    
+    This is because methods that could be called are not known in advance of
+    creating virtual records.
+    """
+
     def __init__(
         self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: dict
     ):
@@ -333,6 +350,12 @@ class TruVirtual(App):
                     "Unknown type for `app`. "
                     "Either dict or `trulens_eval.tru_virtual.VirtualApp` expected."
                 )
+
+        if kwargs.get("selector_nocheck") is False or kwargs.get("selector_check_warning") is True:
+            raise ValueError(
+                "Selector prechecking does not work with virtual apps. "
+                "The settings `selector_nocheck=True` and `selector_check_warning=False` are required."
+            )
 
         super().__init__(app=app, **kwargs)
 
@@ -369,3 +392,6 @@ class TruVirtual(App):
             futures.wait(futs)
 
         return record
+
+import trulens_eval # for App class annotations
+TruVirtual.model_rebuild()
