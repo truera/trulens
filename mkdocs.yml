@@ -188,19 +188,20 @@ nav:
       - Feedback Functions:
           - trulens_eval/evaluation/feedback_functions/index.md
           - Anatomy of a Feedback Function: trulens_eval/evaluation/feedback_functions/anatomy.md
-      - Running Feedback Functions:
-          # PLACEHOLDER: - trulens_eval/evaluation/running_feedback_functions/index.md
-          - Running with your app: trulens_eval/evaluation/running_feedback_functions/with_app.md
-          - Running on existing data: trulens_eval/evaluation/running_feedback_functions/existing_data.md
-      - Feedback Selectors:
-          - trulens_eval/evaluation/feedback_selectors/index.md
-          - Selecting Components: trulens_eval/evaluation/feedback_selectors/selecting_components.md
-          - Feedback Aggregation: trulens_eval/evaluation/feedback_selectors/feedback_aggregation.md
-          - Shortcuts: trulens_eval/evaluation/feedback_selectors/selector_shortcuts.md
       - Feedback Implementations:
           - trulens_eval/evaluation/feedback_implementations/index.md
           - 🧰 Stock Feedback Functions: trulens_eval/evaluation/feedback_implementations/stock.md
           - trulens_eval/evaluation/feedback_implementations/custom_feedback_functions.ipynb
+      - Feedback Selectors:
+          - trulens_eval/evaluation/feedback_selectors/index.md
+          - Selecting Components: trulens_eval/evaluation/feedback_selectors/selecting_components.md
+          - Selector Shortcuts: trulens_eval/evaluation/feedback_selectors/selector_shortcuts.md
+      - Feedback Aggregation:
+          - trulens_eval/evaluation/feedback_aggregation/index.md
+      - Running Feedback Functions:
+          # PLACEHOLDER: - trulens_eval/evaluation/running_feedback_functions/index.md
+          - Running with your app: trulens_eval/evaluation/running_feedback_functions/with_app.md
+          - Running on existing data: trulens_eval/evaluation/running_feedback_functions/existing_data.md
       - Generating Test Cases: trulens_eval/evaluation/generate_test_cases.md
       - Feedback Evaluations:
           # Titles come from notebook and will be overridden if specified here.
