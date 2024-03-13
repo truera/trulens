@@ -342,7 +342,7 @@ class RecordingContext():
     - Combinations of the above.
     """
 
-    def __init__(self, app: 'App', record_metadata: JSON = None):
+    def __init__(self, app: App, record_metadata: JSON = None):
         # A record (in terms of its RecordAppCall) in process of being created
         # are kept here:
         self.calls: List[RecordAppCall] = []
@@ -430,7 +430,7 @@ class RecordingContext():
 
 class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     """
-    Generalization of a wrapped model.
+    Generalization of an app recorder.
     
     Non-serialized fields here while the serialized ones are defined in
     [AppDefinition][trulens_eval.schema.AppDefinition].
@@ -446,14 +446,14 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     )
     """Feedback functions to evaluate on each record."""
 
-    tru: Optional[Tru] = pydantic.Field(default=None, exclude=True)
+    tru: Optional[trulens_eval.tru.Tru] = pydantic.Field(default=None, exclude=True)
     """Workspace manager.
     
     If this is not povided, a singleton [Tru][trulens_eval.tru.Tru] will be made
     (if not already) and used.
     """
 
-    db: Optional[DB] = pydantic.Field(default=None, exclude=True)
+    db: Optional[trulens_eval.db.DB] = pydantic.Field(default=None, exclude=True)
     """Database interface.
     
     If this is not provided, a singleton
@@ -642,8 +642,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         
         """
 
+        
+
         if self.tru is None:
             if self.feedback_mode != FeedbackMode.NONE:
+                from trulens_eval.tru import Tru
                 logger.debug("Creating default tru.")
                 self.tru = Tru()
 
@@ -1454,3 +1457,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
 
         print("\n".join(object_strings))
+
+# NOTE: Cannot App.model_rebuild here due to circular imports involving tru.Tru
+# and db.DB. Will rebuild each App subclass instead.
+        

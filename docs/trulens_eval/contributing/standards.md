@@ -5,7 +5,7 @@ Enumerations of standards for code and its documentation to be maintained in
 
 ## Proper Names
 
-Styling of formatting of proper names.
+Styling/formatting of proper names.
 
 - "TruLens"
 

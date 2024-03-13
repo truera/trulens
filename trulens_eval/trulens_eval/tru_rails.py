@@ -1,5 +1,5 @@
 """
-NEMO Guardrails instrumentation and monitoring. 
+NeMo Guardrails instrumentation and monitoring. 
 """
 
 import inspect
@@ -449,3 +449,7 @@ class TruRails(App):
             )
         else:
             raise RuntimeError(f"TruRails has no attribute named {__name}.")
+
+
+import trulens_eval # for App class annotations
+TruRails.model_rebuild()

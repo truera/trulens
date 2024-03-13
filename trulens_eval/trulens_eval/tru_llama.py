@@ -510,5 +510,5 @@ class TruLlama(App):
             method="astream_chat", is_async=True, with_record=True
         )
 
-
+import trulens_eval # for App class annotations
 TruLlama.model_rebuild()

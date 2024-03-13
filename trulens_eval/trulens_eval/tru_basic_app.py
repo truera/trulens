@@ -163,3 +163,6 @@ class TruBasicApp(App):
     def call_with_record(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(method="call", is_async=False, with_record=True)
+
+import trulens_eval # for App class annotations
+TruBasicApp.model_rebuild()

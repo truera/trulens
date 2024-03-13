@@ -58,7 +58,7 @@ class LangChainInstrument(Instrument):
 
     class Default:
         """Instrumentation specification for LangChain apps."""
-        
+
         MODULES = {"langchain"}
         """Filter for module name prefix for modules to be instrumented."""
 
@@ -373,6 +373,5 @@ class TruChain(App):
             method="_acall", is_async=True, with_record=False
         )
 
-
-# from trulens_eval.utils import serial
-# TruChain.model_rebuild()
+import trulens_eval # for App class annotations
+TruChain.model_rebuild()
