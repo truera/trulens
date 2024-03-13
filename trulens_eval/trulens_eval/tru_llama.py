@@ -1,5 +1,5 @@
 """
-# Llama_index instrumentation and monitoring. 
+# LlamaIndex instrumentation.
 """
 
 from inspect import BoundArguments
@@ -137,13 +137,19 @@ from trulens_eval.tru_chain import LangChainInstrument
 
 
 class LlamaInstrument(Instrument):
+    """Instrumentation for LlamaIndex apps."""
 
     class Default:
+        """Instrumentation specification for LlamaIndex apps."""
+
         MODULES = {"llama_index.", "llama_hub."}.union(
             LangChainInstrument.Default.MODULES
-        )  # NOTE: llama_index uses langchain internally for some things
+        )
+        """Modules by prefix to instrument.
+         
+        Note that llama_index uses langchain internally for some things.
+        """
 
-        # Putting these inside thunk as llama_index is optional.
         CLASSES = lambda: {
             BaseComponent, BaseLLM, BaseQueryEngine, BaseRetriever, BaseIndex,
             BaseChatEngine, BaseQuestionGenerator, BaseSynthesizer, Refine,
@@ -152,9 +158,8 @@ class LlamaInstrument(Instrument):
             BaseMemory, WithFeedbackFilterNodes, BaseNodePostprocessor,
             QueryEngineComponent, RetrieverComponent
         }.union(LangChainInstrument.Default.CLASSES())
+        """Classes to instrument."""
 
-        # Instrument only methods with these names and of these classes. Ok to
-        # include llama_index inside methods.
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS),
             {
@@ -204,6 +209,7 @@ class LlamaInstrument(Instrument):
                 ("_run_component"): (QueryEngineComponent, RetrieverComponent)
             }
         )
+        """Methods to instrument."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -217,11 +223,14 @@ class LlamaInstrument(Instrument):
 
 class TruLlama(App):
     """
-    Instantiates the LLama Index Wrapper.
+    LlamaIndex app recorder.
+
+    Further information about LlamaIndex apps can be found on the [🦙 LlamaIndex
+    Documentation](https://docs.llamaindex.ai/en/stable/) page.
 
     Example:
-        LLama-Index code: [LLama Index
-        Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
+        LLama-Index code: (see [LLama Index
+        Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html))
     
         ```python
         from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
@@ -257,7 +266,7 @@ class TruLlama(App):
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
     Args:
-        app: A llama index application.
+        app: A LlamaIndex application.
 
         **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
             and [AppDefinition][trulens_eval.app.AppDefinition]
@@ -501,5 +510,5 @@ class TruLlama(App):
             method="astream_chat", is_async=True, with_record=True
         )
 
-
+import trulens_eval # for App class annotations
 TruLlama.model_rebuild()
