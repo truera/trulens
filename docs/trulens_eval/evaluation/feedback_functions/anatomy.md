@@ -38,6 +38,6 @@ The components of this specifications are:
 - **Argument specification** -- The next line, `on_input_output`, specifies how
   the `language_match` arguments are to be determined from an app record or app
   definition. The general form of this specification is done using `on` but
-  several shorthands are provided. `on_input_output` states that the first two
+  several shorthands are provided. For example, `on_input_output` states that the first two
   argument to `relevance` (`prompt` and `response`) are to be the main app input
   and the main output, respectively.

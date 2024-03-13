@@ -2,28 +2,28 @@
 
 ## Argument specification
 
-  Several utility methods starting with `.on` provide shorthands:
+Several utility methods starting with `.on` provide shorthands:
 
-  - `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
-    unspecified argument or `arg` should be the main app input.
+- `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
+  unspecified argument or `arg` should be the main app input.
 
-  - `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
-    argument or `arg` should be the main app output.
+- `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
+  argument or `arg` should be the main app output.
 
-  - `on_input_output() == on_input().on_output()` -- specifies that the first
-    two arguments of implementation should be the main app input and main app
-    output, respectively.
+- `on_input_output() == on_input().on_output()` -- specifies that the first
+  two arguments of implementation should be the main app input and main app
+  output, respectively.
 
-  - `on_default()` -- depending on signature of implementation uses either
-    `on_output()` if it has a single argument, or `on_input_output` if it has
-    two arguments.
+- `on_default()` -- depending on signature of implementation uses either
+  `on_output()` if it has a single argument, or `on_input_output` if it has
+  two arguments.
 
-  Some wrappers include additional shorthands:
+Some wrappers include additional shorthands:
 
 ### llama_index-specific selectors
 
 - `TruLlama.select_source_nodes()` -- outputs the selector of the source
-    documents part of the engine output.
+  documents part of the engine output.
 
 ## Fine-grained Selection and Aggregation
 
@@ -31,20 +31,20 @@ For more advanced control on the feedback function operation, we allow data
 selection and aggregation. Consider this feedback example:
 
 ```python
-f_qs_relevance = Feedback(openai.qs_relevance)
-    .on_input()
-    .on(Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].page_content)
-    .aggregate(numpy.min)
-
-# Implementation signature:
-# def qs_relevance(self, question: str, statement: str) -> float:
+# Context relevance between question and each context chunk.
+f_context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+    .on(Select.RecordCalls.retrieve.args.query)
+    .on(Select.RecordCalls.retrieve.rets)
+    .aggregate(np.mean)
+)
 ```
 
 - **Argument Selection specification** -- Where we previously set,
   `on_input_output` , the `on(Select...)` line enables specification of where
   the statement argument to the implementation comes from. The form of the
-  specification will be discussed in further details in the Specifying Arguments
-  section.
+  specification will be discussed in further details in the [Specifying Arguments
+  section](#selector-details).
 
 - **Aggregation specification** -- The last line `aggregate(numpy.min)` specifies
   how feedback outputs are to be aggregated. This only applies to cases where
@@ -76,7 +76,7 @@ app: App = tru.Chain(...., feedbacks=[f_qs_relevance])
 
 The function or method provided to the `Feedback` constructor is the
 implementation of the feedback function which does the actual work of producing
-a float indicating some quantity of interest. 
+a float indicating some quantity of interest.
 
 **Note regarding FeedbackMode.DEFERRED** -- Any function or method (not static
 or class methods presently supported) can be provided here but there are
@@ -125,7 +125,7 @@ argument names. The types of `selector1` is `JSONPath` which we elaborate on in
 the "Selector Details".
 
 If argument names are ommitted, they are taken from the feedback function
-implementation signature in order. That is, 
+implementation signature in order. That is,
 
 ```python
 Feedback(...).on(argname1=selector1, argname2=selector2)
@@ -144,15 +144,7 @@ are equivalent assuming the feedback implementation has two arguments,
 
 Feedback implementations are simple callables that can be run on any arguments
 matching their signatures. However, once wrapped with `Feedback`, they are meant
-to be run on outputs of app evaluation (the "Records"). Specifically,
-`Feedback.run` has this definition:
-
-```python
-def run(self, 
-    app: Union[AppDefinition, JSON], 
-    record: Record
-) -> FeedbackResult:
-```
+to be run on outputs of app evaluation (the "Records").
 
 That is, the context of a Feedback evaluation is an app (either as
 `AppDefinition` or a JSON-like object) and a `Record` of the execution of the
@@ -165,17 +157,57 @@ attributes (see **Selectors** section below).
 
 ### Selector Details
 
-Apps and Records will be converted to JSON-like structures representing their callstack.
+LLM apps come in all shapes and sizes and with a variety of different control
+flows. As a result it’s a challenge to consistently evaluate parts of an LLM
+application trace.
 
-Selectors are of type `JSONPath` defined in `utils/serial.py` help specify paths into JSON-like
-structures (enumerating `Record` or `App` contents). 
+Therefore, we’ve adapted the use of [lenses](https://en.wikipedia.org/wiki/Bidirectional_transformation)
+to refer to parts of an LLM stack trace and use those when defining evaluations.
+For example, the following lens refers to the input to the retrieve step of the
+app called query.
+
+```python
+Select.RecordCalls.retrieve.args.query
+```
+
+Such lenses can then be used to define evaluations as so:
+
+```python
+# Context relevance between question and each context chunk.
+f_context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+    .on(Select.RecordCalls.retrieve.args.query)
+    .on(Select.RecordCalls.retrieve.rets)
+    .aggregate(np.mean)
+)
+```
 
 In most cases, the Select object produces only a single item but can also
 address multiple items.
 
+For example: `Select.RecordCalls.retrieve.args.query` refers to only one item.
+
+However, `Select.RecordCalls.retrieve.rets` refers to multiple items. In this case,
+the documents returned by the `retrieve` method. These items can be evaluated separately,
+as shown above, or can be collected into an array for evaluation with `.collect()`.
+This is most commonly used for groundedness evaluations.
+
+Example:
+
+```python
+grounded = Groundedness(groundedness_provider=provider)
+
+f_groundedness = (
+    Feedback(grounded.groundedness_measure_with_cot_reasons, name = "Groundedness")
+    .on(Select.RecordCalls.retrieve.rets.collect())
+    .on_output()
+    .aggregate(grounded.grounded_statements_aggregator)
+)
+```
+
 You can access the JSON structure with `with_record` methods and then calling `layout_calls_as_app`.
 
-for example
+For example:
 
 ```python
 response = my_llm_app(query)
@@ -204,15 +236,15 @@ json_like['app']['combine_documents_chain']['_call']
 The top level record also contains these helper accessors
 
 - `RecordInput = Record.main_input` -- points to the main input part of a
-    Record. This is the first argument to the root method of an app (for
-    langchain Chains this is the `__call__` method).
+  Record. This is the first argument to the root method of an app (for
+  langchain Chains this is the `__call__` method).
 
 - `RecordOutput = Record.main_output` -- points to the main output part of a
-    Record. This is the output of the root method of an app (i.e. `__call__`
-    for langchain Chains).
+  Record. This is the output of the root method of an app (i.e. `__call__`
+  for langchain Chains).
 
 - `RecordCalls = Record.app` -- points to the root of the app-structured
-    mirror of calls in a record. See **App-organized Calls** Section above.
+  mirror of calls in a record. See **App-organized Calls** Section above.
 
 ## Multiple Inputs Per Argument
 
@@ -288,7 +320,7 @@ print(tru.dict())
 When evaluating a feedback function, Records are augmented with
 app/component calls. For example, if the instrumented app
 contains a component `combine_docs_chain` then `app.combine_docs_chain` will
-contain calls to methods of this component. `app.combine_docs_chain._call` will 
+contain calls to methods of this component. `app.combine_docs_chain._call` will
 contain a `RecordAppCall` (see schema.py) with information about the inputs/outputs/metadata
 regarding the `_call` call to that component. Selecting this information is the
 reason behind the `Select.RecordCalls` alias.
