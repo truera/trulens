@@ -50,6 +50,7 @@ class GenerateTestSet:
         Themes must be three words or less. The {test_breadth} key themes are:
         """
         )
+        themes = themes.response if hasattr(themes, 'response') else themes
         return themes
 
     def _format_themes(self, themes: str, test_breadth: int) -> list:
@@ -63,13 +64,21 @@ class GenerateTestSet:
         list: A list of formatted themes.
         """
         theme_format = [f"theme {i+1}" for i in range(test_breadth)]
-        test_categories = literal_eval(
-            self.app_callable(
-                f"Take the following themes, and turn them into a python list of the exact format: {theme_format}.\n\n"
-                f"Themes: {themes}\n\n"
-                "Python list:"
-            )
+        response = self.app_callable(
+            f"Take the following themes, and turn them into a python list of the exact format: {theme_format}.\n\n"
+            f"Themes: {themes}\n\n"
+            "Python list:"
         )
+        test_categories = response.response if hasattr(
+            response, 'response'
+        ) else response
+        # Attempt to evaluate the string as a Python literal.
+        try:
+            test_categories = literal_eval(test_categories)
+        except SyntaxError as e:
+            raise ValueError(
+                f"Failed to parse themes string: {test_categories}"
+            ) from e
         return test_categories
 
     def _generate_test_prompts(
@@ -103,6 +112,9 @@ class GenerateTestSet:
                 f"Provide {test_depth} questions on the topic of '{test_category}' that are answerable by the provided context."
             )
         raw_test_prompts = self.app_callable(prompt)
+        raw_test_prompts = raw_test_prompts.response if hasattr(
+            raw_test_prompts, 'response'
+        ) else raw_test_prompts
         return raw_test_prompts
 
     def _format_test_prompts(self, raw_test_prompts: str) -> list:
@@ -121,7 +133,11 @@ class GenerateTestSet:
             f"{raw_test_prompts}\n\n"
             f"""\n\n Return only a python list of the exact format ["<question 1>","<question 2>", ...]."""
         )
-        test_prompts = literal_eval(self.app_callable(formatted_prompt))
+        response = self.app_callable(formatted_prompt)
+        test_prompts = response.response if hasattr(
+            response, 'response'
+        ) else response
+        test_prompts = literal_eval(test_prompts)
         return test_prompts
 
     def _generate_and_format_test_prompts(

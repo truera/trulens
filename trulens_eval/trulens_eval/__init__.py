@@ -88,7 +88,7 @@ TO PLACE
 
 """
 
-__version_info__ = (0, 24, 1)
+__version_info__ = (0, 25, 1)
 __version__ = '.'.join(map(str, __version_info__))
 
 # This check is intentionally done ahead of the other imports as we want to
@@ -114,10 +114,10 @@ from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
+from trulens_eval.utils.imports import REQUIREMENT_RAILS
 from trulens_eval.utils.threading import TP
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
-    from trulens_eval.tru_llama import TruLlama
+# Optional provider types.
 
 with OptionalImports(messages=REQUIREMENT_LITELLM):
     from trulens_eval.feedback.provider.litellm import LiteLLM
@@ -129,6 +129,14 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import AzureOpenAI
     from trulens_eval.feedback.provider.openai import OpenAI
 
+# Optional app types.
+
+with OptionalImports(messages=REQUIREMENT_LLAMA):
+    from trulens_eval.tru_llama import TruLlama
+
+with OptionalImports(messages=REQUIREMENT_RAILS):
+    from trulens_eval.tru_rails import TruRails
+
 __all__ = [
     "Tru",  # main interface
 
@@ -138,6 +146,7 @@ __all__ = [
     "TruChain",
     "TruLlama",
     "TruVirtual",
+    "TruRails",
 
     # app setup
     "FeedbackMode",
