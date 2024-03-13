@@ -28,10 +28,8 @@ from enum import Enum
 import logging
 from pprint import pformat
 from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
-    Type, TypeVar, Union
-)
+from typing import (Any, Callable, ClassVar, Dict, Hashable, List, Optional,
+                    Sequence, Tuple, Type, TypeVar, Union)
 
 import dill
 import humanize
@@ -140,6 +138,23 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
 
     end_time: datetime.datetime
     """Datetime after the recorded call."""
+
+    @staticmethod
+    def now(latency: Optional[datetime.timedelta] = None) -> Perf:
+        """Create a `Perf` instance starting now and ending now plus latency.
+         
+        Args:
+            latency: Latency in seconds. If given, end time will be now plus
+                latency. Otherwise end time will be a minimal interval plus start_time.
+        """
+
+        start_time = datetime.datetime.now()
+        if latency is not None:
+            end_time = start_time + latency
+        else:
+            end_time = start_time + datetime.timedelta(microseconds=1)
+
+        return Perf(start_time=start_time, end_time=end_time)
 
     @property
     def latency(self):
@@ -471,6 +486,9 @@ class FeedbackResultStatus(Enum):
     DONE = "done"
     """Run completed successfully."""
 
+    SKIPPED = "skipped"
+    """This feedback was skipped because it had an `if_exists` selector and did not select anything."""
+
 
 class FeedbackCall(serial.SerialModel):
     """Invocations of feedback function results in one of these instances.
@@ -593,6 +611,58 @@ class FeedbackResult(serial.SerialModel):
         return str(self)
 
 
+class FeedbackCombinations(str, Enum):
+    """How to collect arguments for feedback function calls.
+    
+    Note that this applies only to cases where selectors pick out more than one
+    thing for feedback function arguments. This option is used for the field
+    `combinations` of
+    [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition] and can be
+    specified with
+    [Feedback.aggregate][trulens_eval.feedback.feedback.Feedback.aggregate].
+    """
+
+    ZIP = "zip"
+    """Match argument values per position in produced values. 
+    
+    Example:
+        If the selector for `arg1` generates values `0, 1, 2` and one for `arg2`
+        generates values `"a", "b", "c"`, the feedback function will be called 3
+        times with kwargs:
+
+        - `{'arg1': 0, arg2: "a"}`,
+        - `{'arg1': 1, arg2: "b"}`, 
+        - `{'arg1': 2, arg2: "c"}`
+
+    If the quantities of items in the various generators do not match, the
+    result will have only as many combinations as the generator with the
+    fewest items as per python [zip][zip] (strict mode is not used).
+
+    Note that selectors can use
+    [Lens][trulens_eval.utils.serial.Lens] `collect()` to name a single (list)
+    value instead of multiple values.
+    """
+
+    PRODUCT = "product"
+    """Evaluate feedback on all combinations of feedback function arguments.
+
+    Example:
+        If the selector for `arg1` generates values `0, 1` and the one for
+        `arg2` generates values `"a", "b"`, the feedback function will be called
+        4 times with kwargs:
+
+        - `{'arg1': 0, arg2: "a"}`,
+        - `{'arg1': 0, arg2: "b"}`,
+        - `{'arg1': 1, arg2: "a"}`,
+        - `{'arg1': 1, arg2: "b"}`
+
+    See [itertools.product][itertools.product] for more.
+
+    Note that selectors can use
+    [Lens][trulens_eval.utils.serial.Lens] `collect()` to name a single (list)
+    value instead of multiple values.
+    """
+
 class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     """Serialized parts of a feedback function. 
     
@@ -607,6 +677,10 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
     aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None
     """Aggregator method serialization."""
+
+    combinations: Optional[FeedbackCombinations] = FeedbackCombinations.PRODUCT
+    """Mode of combining selected values to produce arguments to each feedback
+    function call."""
 
     feedback_definition_id: FeedbackDefinitionID
     """Id, if not given, uniquely determined from content."""

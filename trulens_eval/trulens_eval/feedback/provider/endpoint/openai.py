@@ -30,11 +30,11 @@ from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
 
-from trulens_eval.feedback.provider.endpoint.base import DEFAULT_RPM
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
+from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import safe_getattr
@@ -217,21 +217,27 @@ class OpenAIEndpoint(Endpoint):
 
     def __init__(
         self,
-        rpm: float = DEFAULT_RPM,
         name: str = "openai",
         client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
                                OpenAIClient]] = None,
+        rpm: Optional[int] = None,
+        pace: Optional[Pace] = None,
         **kwargs: dict
     ):
         if safe_hasattr(self, "name") and client is not None:
             # Already created with SingletonPerName mechanism
+            if len(kwargs) != 0:
+                logger.warning(
+                    "OpenAIClient singleton already made, ignoring arguments %s", kwargs
+                )
             return
 
-        self_kwargs = dict(
-            name=name,  # for SingletonPerName
-            rpm=rpm,  # for Endpoint
+        self_kwargs = {
+            'name': name,  # for SingletonPerName
+            'rpm': rpm,
+            'pace': pace,
             **kwargs
-        )
+        }
 
         self_kwargs['callback_class'] = OpenAICallback
 
@@ -246,7 +252,7 @@ class OpenAIEndpoint(Endpoint):
         else:
             if len(kwargs) != 0:
                 logger.warning(
-                    f"Arguments {list(kwargs.keys())} are ignored as `client` was provided."
+                    "Arguments %s are ignored as `client` was provided.", list(kwargs.keys())
                 )
 
             # Convert openai client to our wrapper if needed.
