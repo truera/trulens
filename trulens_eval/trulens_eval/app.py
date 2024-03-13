@@ -2,9 +2,12 @@
 Generalized root type for various libraries like `llama_index` and `langchain` .
 """
 
+from __future__ import annotations
+
 from abc import ABC
 from abc import abstractmethod
 import contextvars
+import datetime
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
@@ -13,15 +16,13 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-import datetime
 from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
                     Iterable, List, Optional, Sequence, Set, Tuple, Type,
                     TypeVar)
 
 import pydantic
 
-from trulens_eval import schema
-from trulens_eval.db import DB
+from trulens_eval import schema as mod_schema
 from trulens_eval.feedback import Feedback
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import WithInstrumentCallbacks
@@ -33,7 +34,6 @@ from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordAppCall
 from trulens_eval.schema import Select
-from trulens_eval.tru import Tru
 from trulens_eval.utils import pyschema
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.asynchro import desync
@@ -326,12 +326,26 @@ def instrumented_component_views(
 
 
 class RecordingContext():
-    """
-    Manager of the creation of records from record calls. Each instance of this
-    class will result in a record for every "root" instrumented method called.
-    Root method here means the first instrumented method in a call stack. Note
-    that there may be more than one of these contexts in play at the same time
-    due to:
+    """Manager of the creation of records from record calls.
+    
+    An instance of this class is produced when using an
+    [App][trulens_eval.app.App] as a context mananger, i.e.:
+
+    Example:
+        ```python
+        app = ...  # your app
+        truapp: TruChain = TruChain(app, ...) # recorder for LangChain apps
+
+        with truapp as recorder:
+            app.invoke(...) # use your app
+
+        recorder: RecordingContext
+        ```
+    
+    Each instance of this class produces a record for every "root" instrumented
+    method called. Root method here means the first instrumented method in a
+    call stack. Note that there may be more than one of these contexts in play
+    at the same time due to:
 
     - More than one wrapper of the same app.
     - More than one context manager ("with" statement) surrounding calls to the
@@ -342,25 +356,24 @@ class RecordingContext():
     - Combinations of the above.
     """
 
-    def __init__(self, app: 'App', record_metadata: JSON = None):
-        # A record (in terms of its RecordAppCall) in process of being created
-        # are kept here:
+    def __init__(self, app: App, record_metadata: JSON = None):
         self.calls: List[RecordAppCall] = []
+        """A record (in terms of its RecordAppCall) in process of being created."""
 
-        # Completed records go here:
         self.records: List[Record] = []
+        """Completed records."""
 
-        # Lock calls and records when adding calls or finishing a record.
         self.lock: Lock = Lock()
+        """Lock blocking access to `calls` and `records` when adding calls or finishing a record."""
 
-        # Token for context management. See contextvars.
-        self.token: contextvars.Token = None
+        self.token: Optional[contextvars.Token] = None
+        """Token for context management."""
 
-        # App managing this recording.
         self.app: WithInstrumentCallbacks = app
+        """App for which we are recording."""
 
-        # Metadata to attach to all records produced in this context.
         self.record_metadata = record_metadata
+        """Metadata to attach to all records produced in this context."""
 
     def __iter__(self):
         return iter(self.records)
@@ -430,7 +443,7 @@ class RecordingContext():
 
 class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     """
-    Generalization of a wrapped model.
+    Generalization of an app recorder.
     
     Non-serialized fields here while the serialized ones are defined in
     [AppDefinition][trulens_eval.schema.AppDefinition].
@@ -446,11 +459,20 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     )
     """Feedback functions to evaluate on each record."""
 
-    tru: Optional[Tru] = pydantic.Field(default=None, exclude=True)
-    """Workspace manager."""
+    tru: Optional[trulens_eval.tru.Tru] = pydantic.Field(default=None, exclude=True)
+    """Workspace manager.
+    
+    If this is not povided, a singleton [Tru][trulens_eval.tru.Tru] will be made
+    (if not already) and used.
+    """
 
-    db: Optional[DB] = pydantic.Field(default=None, exclude=True)
-    """Database interfaces."""
+    db: Optional[trulens_eval.db.DB] = pydantic.Field(default=None, exclude=True)
+    """Database interface.
+    
+    If this is not provided, a singleton
+    [SqlAlchemyDB][trulens_eval.database.sqlalchemy_db.SqlAlchemyDB] will be
+    made (if not already) and used.
+    """
 
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""
@@ -477,7 +499,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
 
     records_with_pending_feedback_results: Queue[Record] = \
         pydantic.Field(exclude=True, default_factory=lambda: queue.Queue(maxsize=1024))
-    """EXPRIMENTAL: Records produced by this app which might have yet to finish
+    """Records produced by this app which might have yet to finish
     feedback runs."""
 
     manage_pending_feedback_results_thread: Optional[threading.Thread] = \
@@ -633,8 +655,11 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         
         """
 
+        
+
         if self.tru is None:
             if self.feedback_mode != FeedbackMode.NONE:
+                from trulens_eval.tru import Tru
                 logger.debug("Creating default tru.")
                 self.tru = Tru()
 
@@ -1329,8 +1354,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     def dummy_record(
         self,
-        cost: Cost = schema.Cost(),
-        perf: Perf = schema.Perf.now(),
+        cost: Cost = mod_schema.Cost(),
+        perf: Perf = mod_schema.Perf.now(),
         ts: datetime.datetime = datetime.datetime.now(),
         main_input: str ="main_input are strings.",
         main_output: str ="main_output are strings.",
@@ -1374,7 +1399,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                         sample_args[p.name] = p.default
 
                 sample_call = RecordAppCall(
-                    stack=[schema.RecordAppCallMethod(path=lens, method=method_serial)],
+                    stack=[mod_schema.RecordAppCallMethod(path=lens, method=method_serial)],
                     args=sample_args,
                     rets=None,
                     pid=0,
@@ -1445,3 +1470,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
 
         print("\n".join(object_strings))
+
+# NOTE: Cannot App.model_rebuild here due to circular imports involving tru.Tru
+# and db.DB. Will rebuild each App subclass instead.
+        

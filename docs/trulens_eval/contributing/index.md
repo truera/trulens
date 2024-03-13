@@ -11,6 +11,7 @@ Interested in contributing to TruLens? Here's how to get started!
 4. 🎉 Add usage examples
 5. 🧪 Add experimental features
 6. 📄 Improve code quality & documentation
+7. ⛅ Address open issues.
 
 Also, join the [AI Quality Slack
 community](https://communityinviter.com/apps/aiqualityforum/josh) for ideas and
@@ -47,7 +48,7 @@ provider you need!
 
 ## 🐛 Fix Bugs
 
-Most bugs are reported and tracked in the Github Issues Page. We try our best in
+Most bugs are reported and tracked in the Github [Issues](https://github.com/truera/trulens/issues) Page. We try our best in
 triaging and tagging these issues:
 
 Issues tagged as bug are confirmed bugs. New contributors may want to start with
@@ -85,6 +86,12 @@ Big parts of the code base currently do not follow the code standards outlined
 in [Standards index](standards.md). Many good contributions can be made in adapting
 us to the standards.
 
+## ⛅ Address Open Issues
+
+See [🍼 good first
+issue](https://github.com/truera/trulens/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+or [🧙 all open issues](https://github.com/truera/trulens/issues).
+
 ## 👀 Things to be Aware Of
 
 ### ✅ Standards
@@ -98,7 +105,7 @@ Parts of the code are nuanced in ways should be avoided by new contributors.
 Discussions of these points are welcome to help the project rid itself of these
 problematic designs. See [Tech debt index](techdebt.md).
 
-## Contributors
+## 👋👋🏻👋🏼👋🏽👋🏾👋🏿 Contributors
 
 {%
    include-markdown "../../../trulens_eval/CONTRIBUTORS.md"
