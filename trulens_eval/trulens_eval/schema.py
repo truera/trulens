@@ -832,10 +832,13 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Wrapped app in jsonized form."""
 
     initial_app_loader_dump: Optional[serial.SerialBytes] = None
-    """EXPERIMENTAL: serialization of a function that loads an app.
+    """Serialization of a function that loads an app.
 
     Dump is of the initial app state before any invocations. This can be used to
     create a new session.
+
+    Warning:
+        Experimental work in progress.
     """
 
     app_extra_json: serial.JSON

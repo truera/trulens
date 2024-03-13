@@ -2,9 +2,8 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Union
-)
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Union)
 import warnings
 
 import numpy as np
@@ -18,6 +17,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import MetaData
 
 from trulens_eval import schema
+from trulens_eval.app import App
 from trulens_eval.database import orm
 from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions
@@ -43,6 +43,7 @@ from trulens_eval.schema import RecordID
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSONized
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
 from trulens_eval.utils.text import UNICODE_HOURGLASS
@@ -60,6 +61,11 @@ logger = logging.getLogger(__name__)
     ]
 )
 class SqlAlchemyDB(DB):
+    """Database implemented using sqlalchemy.
+    
+    See abstract class [DB][trulens_eval.db.DB] for method reference.
+    """
+
     engine_params: dict = Field(default_factory=dict)
     session_params: dict = Field(default_factory=dict)
     engine: Engine = None
@@ -165,7 +171,7 @@ class SqlAlchemyDB(DB):
 
             return _rec.record_id
 
-    def get_app(self, app_id: str) -> Optional[JSON]:
+    def get_app(self, app_id: AppID) -> Optional[JSONized[App]]:
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition).filter_by(app_id=app_id
                                                                  ).first():

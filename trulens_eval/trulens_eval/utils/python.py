@@ -146,8 +146,7 @@ def id_str(obj: Any) -> str:
 def is_really_coroutinefunction(func) -> bool:
     """Determine whether the given function is a coroutine function.
 
-    !!! Warning
-     
+    Warning 
         Inspect checkers for async functions do not work on openai clients,
         perhaps because they use `@typing.overload`. Because of that, we detect
         them by checking `__wrapped__` attribute instead. Note that the inspect
@@ -404,8 +403,7 @@ def get_all_local_in_call_stack(
         
         skip: A frame to skip as well.
 
-    !!! Note
-    
+    Note:
         `offset` is unreliable for skipping the intended frame when operating
         with async tasks. In those cases, the `skip` argument is more reliable.
 

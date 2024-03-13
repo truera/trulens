@@ -63,7 +63,7 @@ class RailsActionSelect(Select):
     Context = Action.context
     """Selector for context in action call parameters.
     
-    !!! Warning
+    Warning:
         This is not the same "context" as in RAG triad. This is a parameter to rails
         actions that stores context of the rails app execution.
     """

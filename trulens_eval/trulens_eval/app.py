@@ -447,10 +447,19 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     """Feedback functions to evaluate on each record."""
 
     tru: Optional[Tru] = pydantic.Field(default=None, exclude=True)
-    """Workspace manager."""
+    """Workspace manager.
+    
+    If this is not povided, a singleton [Tru][trulens_eval.tru.Tru] will be made
+    (if not already) and used.
+    """
 
     db: Optional[DB] = pydantic.Field(default=None, exclude=True)
-    """Database interfaces."""
+    """Database interface.
+    
+    If this is not provided, a singleton
+    [SqlAlchemyDB][trulens_eval.database.sqlalchemy_db.SqlAlchemyDB] will be
+    made (if not already) and used.
+    """
 
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""

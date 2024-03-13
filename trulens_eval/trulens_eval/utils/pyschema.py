@@ -697,6 +697,22 @@ class WithClassInfo(pydantic.BaseModel):
     def of_class(cls: type):  # class
         return WithClassInfo(class_info=Class.of_class(cls))
 
+    @classmethod
+    def model_validate(cls, *args, **kwargs) -> Any:
+        # Note: This is here only so we can provide a pointer and some
+        # instructions to render into the docs.
+        """
+        Deserialized a jsonized version of the app into the instance of the
+        class it was serialized from.
+
+        Note:
+            This process uses extra information stored in the jsonized object
+            and handled by [WithClassInfo][trulens_eval.utils.pyschema.WithClassInfo].
+        """
+
+        return super().model_validate(*args, **kwargs)
+
+
 
 # HACK013:
 Module.model_rebuild()
