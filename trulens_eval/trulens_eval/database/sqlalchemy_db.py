@@ -171,7 +171,7 @@ class SqlAlchemyDB(DB):
 
             return _rec.record_id
 
-    def get_app(self, app_id: AppID) -> Optional[JSONized[App]]:
+    def get_app(self, app_id: schema.AppID) -> Optional[JSONized[App]]:
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition).filter_by(app_id=app_id
                                                                  ).first():
