@@ -4,11 +4,13 @@ The `Feedback` class contains the starting point for feedback function
 specification and evaluation. A typical use-case looks like this:
 
 ```python
-from trulens_eval import OpenAI
-
-openai = OpenAI(model_engine="gpt-3.5-turbo")
-
-f_relevance = Feedback(openai.relevance).on_input_output()
+# Context relevance between question and each context chunk.
+f_context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+    .on(Select.RecordCalls.retrieve.args.query)
+    .on(Select.RecordCalls.retrieve.rets)
+    .aggregate(numpy.mean)
+)
 ```
 
 The components of this specifications are:
@@ -25,11 +27,11 @@ The components of this specifications are:
   has the following signature:
 
   ```python
-  def relevance(self, prompt: str, response: str) -> float:
+  def context_relevance(self, prompt: str, context: str) -> float:
   ```
 
-  That is, `relevance` is a plain python method that accepts the prompt and
-  response, both strings, and produces a float (assumed to be between 0.0 and
+  That is, `context_relevance` is a plain python method that accepts the prompt and
+  context, both strings, and produces a float (assumed to be between 0.0 and
   1.0).
 
 - **Feedback constructor** -- The line `Feedback(openai.relevance)` constructs a
@@ -41,3 +43,12 @@ The components of this specifications are:
   several shorthands are provided. For example, `on_input_output` states that the first two
   argument to `relevance` (`prompt` and `response`) are to be the main app input
   and the main output, respectively.
+
+- **Aggregation specification** -- The last line `aggregate(numpy.mean)` specifies
+  how feedback outputs are to be aggregated. This only applies to cases where
+  the argument specification names more than one value for an input. The second
+  specification, for `statement` was of this type. The input to `aggregate` must
+  be a method which can be imported globally. This requirement is further
+  elaborated in the next section. This function is called on the `float` results
+  of feedback function evaluations to produce a single float. The default is
+  `numpy.mean`.
