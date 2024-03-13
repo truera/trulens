@@ -9,3 +9,5 @@ that may or may not be serializable.
 ::: trulens_eval.schema.AppDefinition
 
 ::: trulens_eval.app.App
+
+::: trulens_eval.app.RecordingContext

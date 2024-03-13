@@ -392,3 +392,6 @@ class TruVirtual(App):
             futures.wait(futs)
 
         return record
+
+import trulens_eval # for App class annotations
+TruVirtual.model_rebuild()

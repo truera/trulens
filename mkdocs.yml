@@ -65,6 +65,7 @@ plugins:
             - http://pandas.pydata.org/pandas-docs/stable/objects.inv
             - https://docs.pydantic.dev/latest/objects.inv
             - https://typing-extensions.readthedocs.io/en/latest/objects.inv
+            - https://docs.llamaindex.ai/en/stable/objects.inv
           options:
             extensions:
               - pydantic: { schema: true }
@@ -102,14 +103,18 @@ plugins:
             #- llama_index
             #- typing
             #- typing_extensions
+            # members:
+            filters:
+              - "!^_" # exlude all members starting with _
+              - "!^tru_class_info" # don't show tru_class_info
+              - "^__init__$" # but always include __init__ modules and methods
+              - "^__call__$" # and __call__ methods
+
           paths:
             - trulens_explain
             - trulens_eval
-          selection:
-            filters:
-              - "!^_" # exlude all members starting with _
-              - "^__init__$" # but always include __init__ modules and methods
-              - "^__call__$" # and __call__ methods
+          #selection:
+          
   - redirects:
       redirect_maps:
         # These were distributed in the past but moved since then. Our own links
