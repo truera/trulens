@@ -121,8 +121,9 @@ feedback: Feedback = feedback.on(argname1=selector1, argname2=selector2, ...)
 
 That is, `Feedback.on(...)` returns a new `Feedback` object with additional
 argument mappings, the source of `argname1` is `selector1` and so on for further
-argument names. The types of `selector1` is `JSONPath` which we elaborate on in
-the "Selector Details".
+argument names.
+
+Read more about how to construct a `Selector` in "Selector Details".
 
 If argument names are ommitted, they are taken from the feedback function
 implementation signature in order. That is,
@@ -157,7 +158,7 @@ attributes (see **Selectors** section below).
 
 ### Selector Details
 
-LLM apps come in all shapes and sizes and with a variety of different control
+LLM applications come in all shapes and sizes and with a variety of different control
 flows. As a result it’s a challenge to consistently evaluate parts of an LLM
 application trace.
 
@@ -205,7 +206,33 @@ f_groundedness = (
 )
 ```
 
-You can access the JSON structure with `with_record` methods and then calling `layout_calls_as_app`.
+Selectors can also access multiple calls to the same component. In agentic applications,
+this is an increasingly common practice. For example, an agent could complete multiple
+calls to a `retrieve` method to complete the task required.
+
+For example, the following method returns only the returned context documents from
+the first invocation of `retrieve`.
+
+```python
+context = Select.RecordCalls.retrieve.rets.rets[:]
+# Same as context = context_method[0].rets[:]
+```
+
+Alternatively, adding `[:]` after the method name `retrieve` returns context documents
+from all invocations of `retrieve`.
+
+```python
+context_all_calls = Select.RecordCalls.retrieve[:].rets.rets[:]
+```
+
+### Understanding the structure of your app
+
+Because LLM apps have a wide variation in their structure, the feedback selector construction
+can also vary widely. To construct the feedback selector, you must first understand the structure
+of your application.
+
+In python, you can access the JSON structure with `with_record` methods and then calling
+`layout_calls_as_app`.
 
 For example:
 
@@ -232,6 +259,10 @@ It can be accessed via the JSON-like via
 ```python
 json_like['app']['combine_documents_chain']['_call']
 ```
+
+The application structure can also be viewed in the TruLens user inerface.
+You can view this structure on the `Evaluations` page by scrolling down to the
+`Timeline`.
 
 The top level record also contains these helper accessors
 
