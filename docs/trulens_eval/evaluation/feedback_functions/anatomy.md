@@ -21,6 +21,8 @@ The components of this specifications are:
   feedback implementation is shared across providers (such as with LLM-based
   evaluations).
 
+  Read more about [feedback providers](../api/provider/index.md).
+
 - **Feedback implementations** -- `openai.relevance` is a feedback function
   implementation. Feedback implementations are simple callables that can be run
   on any arguments matching their signatures. In the example, the implementation
@@ -34,6 +36,8 @@ The components of this specifications are:
   context, both strings, and produces a float (assumed to be between 0.0 and
   1.0).
 
+  Read more about [feedback implementations](../feedback_implementations/index.md)
+
 - **Feedback constructor** -- The line `Feedback(openai.relevance)` constructs a
   Feedback object with a feedback implementation.
 
@@ -44,6 +48,8 @@ The components of this specifications are:
   argument to `relevance` (`prompt` and `response`) are to be the main app input
   and the main output, respectively.
 
+  Read more about [argument specification](../feedback_selectors/selecting_components.md) and [selector shortcuts](../feedback_selectors/selector_shortcuts.md).
+
 - **Aggregation specification** -- The last line `aggregate(numpy.mean)` specifies
   how feedback outputs are to be aggregated. This only applies to cases where
   the argument specification names more than one value for an input. The second
@@ -52,3 +58,5 @@ The components of this specifications are:
   elaborated in the next section. This function is called on the `float` results
   of feedback function evaluations to produce a single float. The default is
   `numpy.mean`.
+
+  Read more about [feedback aggregation](../feedback_aggregation/index.md).
