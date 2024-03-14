@@ -497,3 +497,7 @@ class instrument(base_instrument):
         # Also make note of it for verification that it was found by the walk
         # after init.
         TruCustomApp.functions_to_instrument.add(getattr(cls, name))
+
+
+import trulens_eval # for App class annotations
+TruCustomApp.model_rebuild()

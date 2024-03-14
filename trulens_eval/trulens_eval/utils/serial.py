@@ -10,13 +10,12 @@ from __future__ import annotations
 import ast
 from ast import dump
 from ast import parse
+from contextvars import ContextVar
 from copy import copy
 import logging
-from pprint import PrettyPrinter
-from typing import (
-    Any, Callable, Dict, Generic, Hashable, Iterable, List, Optional, Sequence,
-    Sized, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable,
+                    List, Optional, Sequence, Set, Sized, Tuple, TypeVar,
+                    Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -24,11 +23,12 @@ import pydantic
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 from pydantic_core import CoreSchema
+import rich
 
 from trulens_eval.utils.containers import iterable_peek
+from trulens_eval.utils.python import class_name
 
 logger = logging.getLogger(__name__)
-pp = PrettyPrinter()
 
 T = TypeVar("T")
 
@@ -100,12 +100,45 @@ def model_dump(obj: Union[pydantic.BaseModel, pydantic.v1.BaseModel]) -> dict:
     else:
         raise ValueError("Not a pydantic.BaseModel.")
 
-
 class SerialModel(pydantic.BaseModel):
     """
     Trulens-specific additions on top of pydantic models. Includes utilities to
     help serialization mostly.
     """
+
+    formatted_objects: ClassVar[ContextVar[Set[int]]] = ContextVar("formatted_objects")
+
+    def __rich_repr__(self) -> rich.repr.Result:
+        """Requirement for pretty printing using the rich package."""
+    
+        # yield class_name(type(self))
+
+        # If this is a root repr, create a new set for already-formatted objects.
+        tok = None
+        if SerialModel.formatted_objects.get(None) is None:
+            tok = SerialModel.formatted_objects.set(set())
+
+        formatted_objects = SerialModel.formatted_objects.get()
+
+        if formatted_objects is None:
+            formatted_objects = set()
+
+        if id(self) in formatted_objects:
+            yield f"{class_name(type(self))}@0x{id(self):x}"
+
+            if tok is not None:
+                SerialModel.formatted_objects.reset(tok)
+
+            return
+
+        formatted_objects.add(id(self))
+
+        for k, v in self.__dict__.items():
+            # This might result in recursive calls to __rich_repr__ of v.
+            yield k, v
+
+        if tok is not None:
+            SerialModel.formatted_objects.reset(tok)
 
     def model_dump_json(self, **kwargs):
         from trulens_eval.utils.json import json_str_of_obj
@@ -577,10 +610,8 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     """
     Lenses into python objects.
 
-    **Usage:**
-    
-    ```python
-
+    Usage:
+        ```python
         path = Lens().record[5]['somekey']
 
         obj = ... # some object that contains a value at `obj.record[5]['somekey]`
@@ -588,8 +619,27 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         value_at_path = path.get(obj) # that value
 
         new_obj = path.set(obj, 42) # updates the value to be 42 instead
-    ```
-    """
+        ```
+
+    ## `collect` and special attributes
+
+    Some attributes hold special meaning for lenses. Attempting to access
+    them will produce a special lens instead of one that looks up that
+    attribute.
+
+    Example:
+        ```python
+        path = Lens().record[:]
+
+        obj = dict(record=[1, 2, 3])
+
+        value_at_path = path.get(obj) # generates 3 items: 1, 2, 3 (not a list)
+
+        path_collect = path.collect()
+
+        value_at_path = path_collect.get(obj) # generates a single item, [1, 2, 3] (a list)
+        ```
+        """
 
     path: Tuple[Step, ...]
 
@@ -619,19 +669,34 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         super().__init__(path=tuple(path))
 
+    def existing_prefix(self, obj: Any) -> Lens:
+        """Get the Lens representing the longest prefix of the path that exists
+        in the given object.
+        """
+
+        last_lens = Lens()
+        current_lens = last_lens
+
+        for i, step in enumerate(self.path):
+            last_lens = current_lens
+            current_lens = current_lens._append(step)
+            if not current_lens.exists(obj):
+                return last_lens
+
+        return current_lens
+
     def exists(self, obj: Any) -> bool:
-        """
-        Check whether the path exists in the given object.
-        """
+        """Check whether the path exists in the given object."""
 
         try:
             for _ in self.get(obj):
-                return True
+                # Check that all named values exist, not just the first one.
+                pass
 
         except (KeyError, IndexError, ValueError):
             return False
-
-        return False
+        
+        return True
 
     @staticmethod
     def of_string(s: str) -> Lens:
@@ -958,7 +1023,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                 for last_selection in last_step.get(start_selection):
                     yield last_selection
 
-    def _append(self, step: Step) -> 'Lens':
+    def _append(self, step: Step) -> Lens:
         return Lens(path=self.path + (step,))
 
     def __getitem__(

@@ -1,5 +1,5 @@
 """
-NEMO Guardrails instrumentation and monitoring. 
+NeMo Guardrails instrumentation and monitoring. 
 """
 
 import inspect
@@ -63,7 +63,7 @@ class RailsActionSelect(Select):
     Context = Action.context
     """Selector for context in action call parameters.
     
-    !!! Warning
+    Warning:
         This is not the same "context" as in RAG triad. This is a parameter to rails
         actions that stores context of the rails app execution.
     """
@@ -449,3 +449,7 @@ class TruRails(App):
             )
         else:
             raise RuntimeError(f"TruRails has no attribute named {__name}.")
+
+
+import trulens_eval # for App class annotations
+TruRails.model_rebuild()

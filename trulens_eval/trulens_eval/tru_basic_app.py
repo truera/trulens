@@ -27,12 +27,12 @@ class TruWrapperApp(object):
 
     This will be wrapped by instrumentation. 
 
-    !!! Warning:
-        Because TruWrapperApp may wrap different types of callables, we cannot
+    Warning:
+        Because `TruWrapperApp` may wrap different types of callables, we cannot
         patch the signature to anything consistent. Because of this, the
-        dashboard/record for this call will have *args, **kwargs instead of what
-        the app actually uses. We also need to adjust the main_input lookup to
-        get the correct signature. See note there.
+        dashboard/record for this call will have `*args`, `**kwargs` instead of
+        what the app actually uses. We also need to adjust the main_input lookup
+        to get the correct signature. See note there.
     """
 
     def _call(self, *args, **kwargs):
@@ -163,3 +163,6 @@ class TruBasicApp(App):
     def call_with_record(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(method="call", is_async=False, with_record=True)
+
+import trulens_eval # for App class annotations
+TruBasicApp.model_rebuild()

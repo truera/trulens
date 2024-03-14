@@ -20,6 +20,8 @@ non-serializable instantiations.
 
 ::: trulens_eval.feedback.feedback.AggCallable
 
+::: trulens_eval.schema.FeedbackCombinations
+
 ::: trulens_eval.schema.FeedbackMode
 
 ::: trulens_eval.schema.FeedbackResult

@@ -1,5 +1,5 @@
 """
-# Langchain instrumentation and monitoring.
+# LangChain app instrumentation.
 """
 
 from inspect import BoundArguments
@@ -54,8 +54,11 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
 
 
 class LangChainInstrument(Instrument):
+    """Instruemtnation for LangChain apps."""
 
     class Default:
+        """Instrumentation specification for LangChain apps."""
+
         MODULES = {"langchain"}
         """Filter for module name prefix for modules to be instrumented."""
 
@@ -89,9 +92,7 @@ class LangChainInstrument(Instrument):
                     RunnableSerializable,
                 ("save_context", "clear"):
                     BaseMemory,
-                (
-                    "run", "arun", "_call", "__call__", "_acall", "acall", "invoke", "ainvoke"
-                ):
+                ("run", "arun", "_call", "__call__", "_acall", "acall"):
                     Chain,
                 (
                     "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
@@ -123,10 +124,13 @@ class LangChainInstrument(Instrument):
 
 
 class TruChain(App):
-    """Instantiates the Langchain Wrapper.
+    """Recorder for LangChain apps.
+
+    Further information about langchain apps can be found on the [🦜️🔗 LangChain
+    Documentation](https://python.langchain.com/docs/) page.
         
     Example:
-        Langchain Code: [Langchain Quickstart](https://python.langchain.com/docs/get_started/quickstart)
+        Langchain Code: (see [LangChain Quickstart](https://python.langchain.com/docs/get_started/quickstart))
 
         ```python
          # Code snippet taken from langchain 0.0.281 (API subject to change with new versions)
@@ -177,7 +181,7 @@ class TruChain(App):
     See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
 
     Args:
-        app: A langchain application.
+        app: A LangChain application.
 
         **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
             and [AppDefinition][trulens_eval.app.AppDefinition]
@@ -369,6 +373,5 @@ class TruChain(App):
             method="_acall", is_async=True, with_record=False
         )
 
-
-# from trulens_eval.utils import serial
-# TruChain.model_rebuild()
+import trulens_eval # for App class annotations
+TruChain.model_rebuild()

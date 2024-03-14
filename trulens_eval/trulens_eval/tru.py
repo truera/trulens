@@ -14,9 +14,8 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Union)
 import warnings
 
 import humanize
@@ -71,6 +70,8 @@ class Tru(python.SingletonPerName):
 
         [TruLlama][trulens_eval.tru_llama.TruLlama]: Llama Index
             apps.
+
+        [TruRails][trulens_eval.tru_rails.TruRails]: NeMo Guardrails apps.
 
         [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
@@ -579,7 +580,7 @@ class Tru(python.SingletonPerName):
             app = schema.AppDefinition.model_validate(app_json)
             ```
 
-        !!! note "Deserialization"
+        Warning:
             Do not rely on deserializing into [App][trulens_eval.app.App] as
             its implementations feature attributes not meant to be deserialized.
         
@@ -598,7 +599,8 @@ class Tru(python.SingletonPerName):
         Returns:
             A list of JSON-ized version of all apps in the database.
 
-        !!! note "Same Deserialization caveats as `get_app`"
+        Warning:
+            Same Deserialization caveats as [get_app][trulens_eval.tru.Tru.get_app].
         """
 
         return self.db.get_apps()
