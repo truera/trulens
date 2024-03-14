@@ -14,7 +14,7 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="../guide/">
+        <link rel="next" href="../../feedback_implementations/">
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
@@ -887,6 +887,8 @@
       
         
       
+        
+      
     
     
       
@@ -936,8 +938,6 @@
       
         
           
-        
-      
         
       
         
@@ -1004,6 +1004,17 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Anatomy of a Feedback Function
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -1014,27 +1025,70 @@
 
       </a>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../guide/" class="md-nav__link">
         
-  
-  <span class="md-ellipsis">
-    Specification Guide
-  </span>
-  
 
-      </a>
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feedback Providers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feedback implementations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-constructor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feedback constructor
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#argument-specification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Argument specification
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aggregation-specification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Aggregation specification
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1058,6 +1112,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -1079,23 +1137,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
         
           
-          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../feedback_implementations/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Running Feedback Functions
+    Feedback Implementations
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
-            Running Feedback Functions
+            Feedback Implementations
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -1104,11 +1172,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../running_feedback_functions/with_app/" class="md-nav__link">
+      <a href="../../feedback_implementations/stock/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Running with your app
+    🧰 Stock Feedback Functions
   </span>
   
 
@@ -1125,11 +1193,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../running_feedback_functions/existing_data/" class="md-nav__link">
+      <a href="../../feedback_implementations/custom_feedback_functions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Running on existing data
+    📓 Custom Feedback Functions
   </span>
   
 
@@ -1242,7 +1310,7 @@
         
   
   <span class="md-ellipsis">
-    Shortcuts
+    Selector Shortcuts
   </span>
   
 
@@ -1271,10 +1339,6 @@
       
         
           
-        
-      
-        
-      
         
       
     
@@ -1297,30 +1361,33 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../feedback_implementations/" class="md-nav__link ">
+            <a href="../../feedback_aggregation/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
-    Feedback Implementations
+    Feedback Aggregation
   </span>
   
 
             </a>
-            
-              
-              <label class="md-nav__link " for="__nav_3_4" id="__nav_3_4_label" tabindex="">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
             
           </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_4">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Implementations
+            Feedback Aggregation
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
               
             
               
@@ -1329,12 +1396,61 @@
   
   
   
+    
+    
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Running Feedback Functions
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            Running Feedback Functions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../../feedback_implementations/stock/" class="md-nav__link">
+      <a href="../../running_feedback_functions/with_app/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    🧰 Stock Feedback Functions
+    Running with your app
   </span>
   
 
@@ -1351,11 +1467,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../feedback_implementations/custom_feedback_functions/" class="md-nav__link">
+      <a href="../../running_feedback_functions/existing_data/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    📓 Custom Feedback Functions
+    Running on existing data
   </span>
   
 
@@ -1379,16 +1495,57 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../generate_test_cases/" class="md-nav__link">
+    
+    
+      
         
+          
+        
+      
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../generate_test_cases/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
     Generating Test Cases
   </span>
   
 
-      </a>
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            Generating Test Cases
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -1424,10 +1581,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
         
           
-          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -1438,8 +1595,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
             <span class="md-nav__icon md-icon"></span>
             Feedback Evaluations
           </label>
@@ -3320,6 +3477,59 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feedback Providers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feedback implementations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feedback-constructor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feedback constructor
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#argument-specification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Argument specification
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aggregation-specification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Aggregation specification
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -3339,47 +3549,53 @@
 <h1 id="anatomy-of-feedback-functions">Anatomy of Feedback Functions<a class="headerlink" href="#anatomy-of-feedback-functions" title="Permanent link">&para;</a></h1>
 <p>The <code>Feedback</code> class contains the starting point for feedback function
 specification and evaluation. A typical use-case looks like this:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">OpenAI</span>
-
-<span class="n">openai</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;gpt-3.5-turbo&quot;</span><span class="p">)</span>
-
-<span class="n">f_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Context relevance between question and each context chunk.</span>
+<span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Context Relevance&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">rets</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+<span class="p">)</span>
 </code></pre></div>
 <p>The components of this specifications are:</p>
-<ul>
-<li>
-<p><strong>Feedback Providers</strong> -- The provider is the back-end on which a given
-  feedback function is run.' Multiple underlying models are available through
-  each provider, such as GPT-4 or Llama-2. In many, but not all cases, the
-  feedback implementation is shared across providers (such as with LLM-based
-  evaluations).</p>
-</li>
-<li>
-<p><strong>Feedback implementations</strong> -- <code>openai.relevance</code> is a feedback function
-  implementation. Feedback implementations are simple callables that can be run
-  on any arguments matching their signatures. In the example, the implementation
-  has the following signature:</p>
-</li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<h2 id="feedback-providers">Feedback Providers<a class="headerlink" href="#feedback-providers" title="Permanent link">&para;</a></h2>
+<p>The provider is the back-end on which a given feedback function is run.
+Multiple underlying models are available througheach provider, such as GPT-4 or
+Llama-2. In many, but not all cases, the feedback implementation is shared
+cross providers (such as with LLM-based evaluations).</p>
+<p>Read more about <a href="../../../api/provider/">feedback providers</a>.</p>
+<h2 id="feedback-implementations">Feedback implementations<a class="headerlink" href="#feedback-implementations" title="Permanent link">&para;</a></h2>
+<p><code>openai.context_relevance</code> is an example of a feedback function implementation.</p>
+<p>Feedback implementations are simple callables that can be run
+on any arguments matching their signatures. In the example, the implementation
+has the following signature:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">context_relevance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 </code></pre></div>
-<p>That is, <code>relevance</code> is a plain python method that accepts the prompt and
-  response, both strings, and produces a float (assumed to be between 0.0 and
-  1.0).</p>
-<ul>
-<li>
-<p><strong>Feedback constructor</strong> -- The line <code>Feedback(openai.relevance)</code> constructs a
-  Feedback object with a feedback implementation.</p>
-</li>
-<li>
-<p><strong>Argument specification</strong> -- The next line, <code>on_input_output</code>, specifies how
-  the <code>language_match</code> arguments are to be determined from an app record or app
-  definition. The general form of this specification is done using <code>on</code> but
-  several shorthands are provided. <code>on_input_output</code> states that the first two
-  argument to <code>relevance</code> (<code>prompt</code> and <code>response</code>) are to be the main app input
-  and the main output, respectively.</p>
-</li>
-</ul>
+<p>That is, <code>context_relevance</code> is a plain python method that accepts the prompt and
+context, both strings, and produces a float (assumed to be between 0.0 and
+1.0).</p>
+<p>Read more about <a href="../../feedback_implementations/">feedback implementations</a></p>
+<h2 id="feedback-constructor">Feedback constructor<a class="headerlink" href="#feedback-constructor" title="Permanent link">&para;</a></h2>
+<p>The line <code>Feedback(openai.relevance)</code> constructs a
+Feedback object with a feedback implementation.</p>
+<h2 id="argument-specification">Argument specification<a class="headerlink" href="#argument-specification" title="Permanent link">&para;</a></h2>
+<p>The next line, <code>on_input_output</code>, specifies how
+the <code>language_match</code> arguments are to be determined from an app record or app
+definition. The general form of this specification is done using <code>on</code> but
+several shorthands are provided. For example, <code>on_input_output</code> states that the first two
+argument to <code>relevance</code> (<code>prompt</code> and <code>response</code>) are to be the main app input
+and the main output, respectively.</p>
+<p>Read more about <a href="../../feedback_selectors/selecting_components/">argument specification</a> and <a href="../../feedback_selectors/selector_shortcuts/">selector shortcuts</a>.</p>
+<h2 id="aggregation-specification">Aggregation specification<a class="headerlink" href="#aggregation-specification" title="Permanent link">&para;</a></h2>
+<p>The last line <code>aggregate(numpy.mean)</code> specifies
+how feedback outputs are to be aggregated. This only applies to cases where
+the argument specification names more than one value for an input. The second
+specification, for <code>statement</code> was of this type. The input to <code>aggregate</code> must
+be a method which can be imported globally. This requirement is further
+elaborated in the next section. This function is called on the <code>float</code> results
+of feedback function evaluations to produce a single float. The default is
+<code>numpy.mean</code>.</p>
+<p>Read more about <a href="../../feedback_aggregation/">feedback aggregation</a>.</p>
 
 
 
