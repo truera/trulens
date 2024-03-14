@@ -1,141 +1,90 @@
-For more advanced control on the feedback function operation, we allow data
-selection and aggregation. Consider this feedback example:
+LLM applications come in all shapes and sizes and with a variety of different control
+flows. As a result it’s a challenge to consistently evaluate parts of an LLM
+application trace.
+
+Therefore, we’ve adapted the use of [lenses](https://en.wikipedia.org/wiki/Bidirectional_transformation)
+to refer to parts of an LLM stack trace and use those when defining evaluations.
+For example, the following lens refers to the input to the retrieve step of the
+app called query.
 
 ```python
-f_qs_relevance = Feedback(openai.qs_relevance)
-    .on_input()
-    .on(Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].page_content)
-    .aggregate(numpy.min)
-
-# Implementation signature:
-# def qs_relevance(self, question: str, statement: str) -> float:
+Select.RecordCalls.retrieve.args.query
 ```
 
-- **Argument Selection specification** -- Where we previously set,
-  `on_input_output` , the `on(Select...)` line enables specification of where
-  the statement argument to the implementation comes from. The form of the
-  specification will be discussed in further details in the Specifying Arguments
-  section.
-
-- **Aggregation specification** -- The last line `aggregate(numpy.min)`
-  specifies how feedback outputs are to be aggregated. This only applies to
-  cases where the argument specification names more than one value for an input.
-  The second specification, for `statement` was of this type. The input to
-  `aggregate` must be a method which can be imported globally. This requirement
-  is further elaborated in the next section. This function is called on the
-  `float` results of feedback function evaluations to produce a single float.
-  The default is `numpy.mean`.
-
-The result of these lines is that `f_qs_relevance` can be now be run on
-app/records and will automatically select the specified components of those
-apps/records:
+Such lenses can then be used to define evaluations as so:
 
 ```python
-record: Record = ...
-app: App = ...
-
-feedback_result: FeedbackResult = f_qs_relevance.run(app=app, record=record)
+# Context relevance between question and each context chunk.
+f_context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+    .on(Select.RecordCalls.retrieve.args.query)
+    .on(Select.RecordCalls.retrieve.rets)
+    .aggregate(np.mean)
+)
 ```
-
-The object can also be provided to an app wrapper for automatic evaluation:
-
-```python
-app: App = tru.Chain(..., feedbacks=[f_qs_relevance])
-```
-
-## Specifying Implementation Function and Aggregate
-
-The function or method provided to the `Feedback` constructor is the
-implementation of the feedback function which does the actual work of producing
-a float indicating some quantity of interest.
-
-**Note regarding FeedbackMode.DEFERRED** -- Any function or method (not static
-or class methods presently supported) can be provided here but there are
-additional requirements if your app uses the "deferred" feedback evaluation mode
-(when `feedback_mode=FeedbackMode.DEFERRED` are specified to app constructor).
-In those cases the callables must be functions or methods that are importable
-(see the next section for details). The function/method performing the
-aggregation has the same requirements.
-
-### Import requirement (DEFERRED feedback mode only)
-
-If using deferred evaluation, the feedback function implementations and
-aggregation implementations must be functions or methods from a Provider
-subclass that is importable. That is, the callables must be accessible were you
-to evaluate this code:
-
-```python
-from somepackage.[...] import someproviderclass
-from somepackage.[...] import somefunction
-
-# [...] means optionally further package specifications
-
-provider = someproviderclass(...) # constructor arguments can be included
-feedback_implementation1 = provider.somemethod
-feedback_implementation2 = somefunction
-```
-
-For provided feedback functions, `somepackage` is `trulens_eval.feedback` and
-`someproviderclass` is `OpenAI` or one of the other `Provider` subclasses.
-Custom feedback functions likewise need to be importable functions or methods of
-a provider subclass that can be imported. Critically, functions or classes
-defined locally in a notebook will not be importable this way.
-
-## Specifying Arguments
-
-The mapping between app/records to feedback implementation arguments is
-specified by the `on...` methods of the `Feedback` objects. The general form is:
-
-```python
-feedback: Feedback = feedback.on(argname1=selector1, argname2=selector2, ...)
-```
-
-That is, `Feedback.on(...)` returns a new `Feedback` object with additional
-argument mappings, the source of `argname1` is `selector1` and so on for further
-argument names. The types of `selector1` is `JSONPath` which we elaborate on in
-the "Selector Details".
-
-If argument names are ommitted, they are taken from the feedback function
-implementation signature in order. That is,
-
-```python
-Feedback(...).on(argname1=selector1, argname2=selector2)
-```
-
-and
-
-```python
-Feedback(...).on(selector1, selector2)
-```
-
-are equivalent assuming the feedback implementation has two arguments,
-`argname1` and `argname2`, in that order.
-
-### Selector Details
-
-Apps and Records will be converted to JSON-like structures representing their
-callstack.
-
-Selectors are of type `JSONPath` defined in `utils/serial.py` help specify paths
-into JSON-like structures (enumerating `Record` or `App` contents).
 
 In most cases, the Select object produces only a single item but can also
 address multiple items.
 
-You can access the JSON structure with `with_record` methods and then calling
-`layout_calls_as_app`.
+For example: `Select.RecordCalls.retrieve.args.query` refers to only one item.
 
-for example
+However, `Select.RecordCalls.retrieve.rets` refers to multiple items. In this case,
+the documents returned by the `retrieve` method. These items can be evaluated separately,
+as shown above, or can be collected into an array for evaluation with `.collect()`.
+This is most commonly used for groundedness evaluations.
+
+Example:
 
 ```python
-rag_chain.invoke("What is Task Decomposition?")
+grounded = Groundedness(groundedness_provider=provider)
+
+f_groundedness = (
+    Feedback(grounded.groundedness_measure_with_cot_reasons, name = "Groundedness")
+    .on(Select.RecordCalls.retrieve.rets.collect())
+    .on_output()
+    .aggregate(grounded.grounded_statements_aggregator)
+)
+```
+
+Selectors can also access multiple calls to the same component. In agentic applications,
+this is an increasingly common practice. For example, an agent could complete multiple
+calls to a `retrieve` method to complete the task required.
+
+For example, the following method returns only the returned context documents from
+the first invocation of `retrieve`.
+
+```python
+context = Select.RecordCalls.retrieve.rets.rets[:]
+# Same as context = context_method[0].rets[:]
+```
+
+Alternatively, adding `[:]` after the method name `retrieve` returns context documents
+from all invocations of `retrieve`.
+
+```python
+context_all_calls = Select.RecordCalls.retrieve[:].rets.rets[:]
+```
+
+### Understanding the structure of your app
+
+Because LLM apps have a wide variation in their structure, the feedback selector construction
+can also vary widely. To construct the feedback selector, you must first understand the structure
+of your application.
+
+In python, you can access the JSON structure with `with_record` methods and then calling
+`layout_calls_as_app`.
+
+For example:
+
+```python
+response = my_llm_app(query)
 
 from trulens_eval import TruChain
 tru_recorder = TruChain(
-    rag_chain,
+    my_llm_app,
     app_id='Chain1_ChatApplication')
 
-response, tru_record = tru_recorder.with_record(rag_chain.invoke, "What is Task Decomposition?")
+response, tru_record = tru_recorder.with_record(my_llm_app, query)
 json_like = tru_record.layout_calls_as_app()
 ```
 
@@ -151,21 +100,22 @@ It can be accessed via the JSON-like via
 json_like['app']['combine_documents_chain']['_call']
 ```
 
-This structure can also be seen in the TruLens Evaluations UI by clicking on a
-component of interest in the timeline.
+The application structure can also be viewed in the TruLens user inerface.
+You can view this structure on the `Evaluations` page by scrolling down to the
+`Timeline`.
 
 The top level record also contains these helper accessors
 
 - `RecordInput = Record.main_input` -- points to the main input part of a
-  Record. This is the first argument to the root method of an app (for langchain
-  Chains this is the `__call__` method).
+  Record. This is the first argument to the root method of an app (for
+  langchain Chains this is the `__call__` method).
 
 - `RecordOutput = Record.main_output` -- points to the main output part of a
-  Record. This is the output of the root method of an app (i.e. `__call__` for
-  langchain Chains).
+  Record. This is the output of the root method of an app (i.e. `__call__`
+  for langchain Chains).
 
-- `RecordCalls = Record.app` -- points to the root of the app-structured mirror
-  of calls in a record. See **App-organized Calls** Section above.
+- `RecordCalls = Record.app` -- points to the root of the app-structured
+  mirror of calls in a record. See **App-organized Calls** Section above.
 
 ## Multiple Inputs Per Argument
 
@@ -238,13 +188,13 @@ print(tru.dict())
 
 ### Calls made by App Components
 
-When evaluating a feedback function, Records are augmented with app/component
-calls. For example, if the instrumented app contains a component
-`combine_docs_chain` then `app.combine_docs_chain` will contain calls to methods
-of this component. `app.combine_docs_chain._call` will contain a `RecordAppCall`
-(see schema.py) with information about the inputs/outputs/metadata regarding the
-`_call` call to that component. Selecting this information is the reason behind
-the `Select.RecordCalls` alias.
+When evaluating a feedback function, Records are augmented with
+app/component calls. For example, if the instrumented app
+contains a component `combine_docs_chain` then `app.combine_docs_chain` will
+contain calls to methods of this component. `app.combine_docs_chain._call` will
+contain a `RecordAppCall` (see schema.py) with information about the inputs/outputs/metadata
+regarding the `_call` call to that component. Selecting this information is the
+reason behind the `Select.RecordCalls` alias.
 
 You can inspect the components making up your app via the `App` method
 `print_instrumented`.
