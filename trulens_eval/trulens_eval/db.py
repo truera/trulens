@@ -250,7 +250,7 @@ class DB(SerialModel, abc.ABC):
         
         Args:
             app_ids: If given, retrieve only the records for the given apps.
-            Otherwise all apps are retrieved.
+                Otherwise all apps are retrieved.
         
         Returns:
             A dataframe with the records.
@@ -836,3 +836,19 @@ class LocalSQLite(DB):
         combined_df = df_records.merge(df_results, on=['record_id'])
 
         return combined_df, list(result_cols)
+
+    def get_feedback_count_by_status(
+        self,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        status: Optional[Union[FeedbackResultStatus,
+                               Sequence[FeedbackResultStatus]]] = None,
+        last_ts_before: Optional[datetime] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+        shuffle: bool = False
+    ) -> Dict[FeedbackResultStatus, int]:
+        
+        raise NotImplementedError("This database implementation is deprecated.")
+    
