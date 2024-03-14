@@ -245,23 +245,23 @@ class LLMProvider(Provider):
         check the relevance of the context to the question.
         
         Usage on RAG Contexts:
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
 
-        ```python
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.context_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
-
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+            
             context (str): Context related to the question.
 
         Returns:
@@ -280,23 +280,23 @@ class LLMProvider(Provider):
         check the relevance of the statement to the question.
         
         Usage on RAG Contexts:
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
 
-        ```python
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.context_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
-
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+
             context (str): A context to the question.
 
         Returns:
@@ -321,8 +321,7 @@ class LLMProvider(Provider):
         template to check the relevance of the context to the question.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
-            Usage on RAG Contexts:
+        Usage on RAG Contexts:
 
             ```python
             from trulens_eval.app import App
@@ -337,7 +336,8 @@ class LLMProvider(Provider):
             The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+
             context (str): Context related to the question.
 
         Returns:
@@ -358,8 +358,7 @@ class LLMProvider(Provider):
         template to check the relevance of the context to the question.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
-            Usage on RAG Contexts:
+        Usage on RAG Contexts:
             ```python
             from trulens_eval.app import App
             context = App.select_context(rag_app)
@@ -373,7 +372,8 @@ class LLMProvider(Provider):
             The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+
             context (str): Context related to the question.
 
         Returns:
@@ -419,11 +419,12 @@ class LLMProvider(Provider):
 
         Parameters:
             prompt (str): A text prompt to an agent.
+
             response (str): The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
-            "relevant".
+                "relevant".
         """
         return self.generate_score(
             system_prompt=str.
@@ -458,11 +459,12 @@ class LLMProvider(Provider):
 
         Args:
             prompt (str): A text prompt to an agent. 
+
             response (str): The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
-            "relevant".
+                "relevant".
         """
         system_prompt = str.format(
             prompts.PR_RELEVANCE, prompt=prompt, response=response
@@ -534,8 +536,9 @@ class LLMProvider(Provider):
             The `on_input_output()` selector can be changed. See [Feedback Function
             Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        Parameters:
+        Args:
             prompt (str): A text prompt to an agent.
+
             response (str): The agent's response to the prompt.
 
         Returns:
@@ -559,13 +562,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent.
             criteria (str): The specific criteria for evaluation.
 
         Returns:
             float: A value between 0.0 and 1.0, representing the specified
-            evaluation.
+                evaluation.
         """
 
         system_prompt = str.format(
@@ -583,13 +586,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent.
             criteria (str): The specific criteria for evaluation.
 
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified
-            evaluation, and a string containing the reasons for the evaluation.
+                evaluation, and a string containing the reasons for the evaluation.
         """
 
         system_prompt = str.format(
@@ -661,7 +664,7 @@ class LLMProvider(Provider):
             The `on_output()` selector can be changed. See [Feedback Function
             Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        Parameters:
+        Args:
             text: A prompt to an agent.
 
         Returns:
@@ -705,8 +708,8 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.coherence).on_output() 
             ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -729,8 +732,8 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
             ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -752,9 +755,9 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.harmfulness).on_output() 
             ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-        
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            
         Args:
             text (str): The text to evaluate.
 
@@ -797,8 +800,8 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.maliciousness).on_output() 
             ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -901,7 +904,7 @@ class LLMProvider(Provider):
 
         Returns:
             float: A value between 0.0 (not controversial) and 1.0
-            (controversial).
+                (controversial).
         """
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
@@ -1081,9 +1084,11 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check if two answers agree.
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent.
+
             response (str): The agent's response to the prompt.
+
             check_response(str): The response to check against.
 
         Returns:
@@ -1113,11 +1118,12 @@ class LLMProvider(Provider):
 
         Args:
             source (str): Text corresponding to source material. 
+
             summary (str): Text corresponding to a summary.
 
         Returns:
-            float: A value between 0.0 (main points missed) and 1.0 (no main
-            points missed).
+            A value between 0.0 (main points missed) and 1.0 (no main
+                points missed).
         """
 
         system_prompt = str.format(
@@ -1147,12 +1153,13 @@ class LLMProvider(Provider):
             ```
 
         Args:
-            prompt (str): A text prompt to an agent. 
+            prompt (str): A text prompt to an agent.
+
             response (str): The agent's response to the prompt.
 
         Returns:
-            float: A value between 0.0 (no stereotypes assumed) and 1.0
-            (stereotypes assumed).
+            A value between 0.0 (no stereotypes assumed) and 1.0
+                (stereotypes assumed).
         """
 
         system_prompt = str.format(
@@ -1174,11 +1181,12 @@ class LLMProvider(Provider):
 
         Args:
             prompt (str): A text prompt to an agent. 
+
             response (str): The agent's response to the prompt.
 
         Returns:
-            float: A value between 0.0 (no stereotypes assumed) and 1.0
-            (stereotypes assumed).
+            A value between 0.0 (no stereotypes assumed) and 1.0
+                (stereotypes assumed).
         """
         system_prompt = str.format(
             prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
