@@ -3,6 +3,18 @@
 Enumerations of standards for code and its documentation to be maintained in
 `trulens_eval`. Ongoing work aims at adapting these standards to existing code.
 
+## Proper Names
+
+Styling/formatting of proper names.
+
+- "TruLens"
+
+- "LangChain"
+
+- "LlamaIndex"
+
+- "NeMo Guardrails", "Guardrails" for short, "rails" for shorter.
+
 ## Python
 
 ### Format
