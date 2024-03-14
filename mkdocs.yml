@@ -203,7 +203,8 @@ nav:
           # PLACEHOLDER: - trulens_eval/evaluation/running_feedback_functions/index.md
           - Running with your app: trulens_eval/evaluation/running_feedback_functions/with_app.md
           - Running on existing data: trulens_eval/evaluation/running_feedback_functions/existing_data.md
-      - Generating Test Cases: trulens_eval/evaluation/generate_test_cases.md
+      - Generating Test Cases:
+          - trulens_eval/evaluation/generate_test_cases/index.md
       - Feedback Evaluations:
           # Titles come from notebook and will be overridden if specified here.
           # PLACEHOLDER: - trulens_eval/evaluation/feedback_evaluations/index.md
