@@ -246,7 +246,7 @@ class DB(SerialModel, abc.ABC):
         
         Args:
             app_ids: If given, retrieve only the records for the given apps.
-            Otherwise all apps are retrieved.
+                Otherwise all apps are retrieved.
         
         Returns:
             A dataframe with the records.
