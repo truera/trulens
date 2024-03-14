@@ -42,10 +42,11 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs cosine distance on the query and document embeddings
 
         Usage:
-            ```python
-            # Below is just one example. See supported embedders: https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
+            Below is just one example. See supported embedders:
+            https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
             from langchain.embeddings.openai import OpenAIEmbeddings
 
+            ```python
             model_name = 'text-embedding-ada-002'
 
             embed_model = OpenAIEmbeddings(
@@ -55,10 +56,14 @@ class Embeddings(WithClassInfo, SerialModel):
 
             # Create the feedback function
             f_embed = feedback.Embeddings(embed_model=embed_model)
-            f_embed_dist = feedback.Feedback(f_embed.cosine_distance).on_input().on(Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content)
+            f_embed_dist = feedback.Feedback(f_embed.cosine_distance)\
+                .on_input()\
+                .on(Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content)
             ```
 
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide
+            :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             query (str): A text prompt to a vector DB. 
@@ -92,10 +97,11 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L1 distance on the query and document embeddings
 
         Usage:
-            ```python
-            # Below is just one example. See supported embedders: https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
+            Below is just one example. See supported embedders:
+            https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
             from langchain.embeddings.openai import OpenAIEmbeddings
 
+            ```python
             model_name = 'text-embedding-ada-002'
 
             embed_model = OpenAIEmbeddings(
@@ -105,10 +111,14 @@ class Embeddings(WithClassInfo, SerialModel):
 
             # Create the feedback function
             f_embed = feedback.Embeddings(embed_model=embed_model)
-            f_embed_dist = feedback.Feedback(f_embed.manhattan_distance).on_input().on(Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content)
+            f_embed_dist = feedback.Feedback(f_embed.manhattan_distance)\
+                .on_input()\
+                .on(Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content)
             ```
 
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide
+            :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             query (str): A text prompt to a vector DB. 
@@ -142,10 +152,11 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L2 distance on the query and document embeddings
 
         Usage:
-            ```python
-            # Below is just one example. See supported embedders: https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
+            Below is just one example. See supported embedders:
+            https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
             from langchain.embeddings.openai import OpenAIEmbeddings
-
+            
+            ```python
             model_name = 'text-embedding-ada-002'
 
             embed_model = OpenAIEmbeddings(
@@ -155,10 +166,14 @@ class Embeddings(WithClassInfo, SerialModel):
 
             # Create the feedback function
             f_embed = feedback.Embeddings(embed_model=embed_model)
-            f_embed_dist = feedback.Feedback(f_embed.euclidean_distance).on_input().on(Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content)
+            f_embed_dist = feedback.Feedback(f_embed.euclidean_distance)\
+                .on_input()\
+                .on(Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content)
             ```
 
-            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide
+            :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             query (str): A text prompt to a vector DB. 
