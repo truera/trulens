@@ -4347,8 +4347,10 @@ models</a>.</p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the relevance of the context to the question.</p>
-<p>Usage on RAG Contexts:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
+
+<details class="usage-on-rag-contexts" open>
+  <summary>Usage on RAG Contexts</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
 <span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_app</span><span class="p">)</span>
 <span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
@@ -4359,7 +4361,7 @@ check the relevance of the context to the question.</p>
 </code></pre></div>
 <p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide :
 Selectors</a></p>
-
+</details>
 
 
   <table>
@@ -4374,7 +4376,7 @@ Selectors</a></p>
           <td><code>question</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A question being asked. </p>
+              <p>A question being asked.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -4451,8 +4453,10 @@ Selectors</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the relevance of the statement to the question.</p>
-<p>Usage on RAG Contexts:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
+
+<details class="usage-on-rag-contexts" open>
+  <summary>Usage on RAG Contexts</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
 <span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_app</span><span class="p">)</span>
 <span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
@@ -4463,7 +4467,7 @@ check the relevance of the statement to the question.</p>
 </code></pre></div>
 <p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide :
 Selectors</a></p>
-
+</details>
 
 
   <table>
@@ -4478,7 +4482,7 @@ Selectors</a></p>
           <td><code>question</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A question being asked. </p>
+              <p>A question being asked.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -4556,9 +4560,9 @@ Selectors</a></p>
       <p>Uses chat completion model. A function that completes a
 template to check the relevance of the context to the question.
 Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-Usage on RAG Contexts:</p>
-<p><div class="highlight"><pre><span></span><code>from trulens_eval.app import App
+<p>Usage on RAG Contexts:</p>
+<pre><code>```python
+from trulens_eval.app import App
 context = App.select_context(rag_app)
 feedback = (
     Feedback(provider.context_relevance_with_cot_reasons)
@@ -4566,8 +4570,9 @@ feedback = (
     .on(context)
     .aggregate(np.mean)
     )
-</code></pre></div>
-The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
+```
+The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+</code></pre>
 
 
 
@@ -4583,7 +4588,7 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
           <td><code>question</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A question being asked. </p>
+              <p>A question being asked.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -4661,19 +4666,20 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
       <p>Uses chat completion model. A function that completes a
 template to check the relevance of the context to the question.
 Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-Usage on RAG Contexts:
-<div class="highlight"><pre><span></span><code>from trulens_eval.app import App
-context = App.select_context(rag_app)
-feedback = (
-    Feedback(provider.qs_relevance_with_cot_reasons)
-    .on_input()
-    .on(context)
-    .aggregate(np.mean)
-    )
+
+<details class="usage-on-rag-contexts" open>
+  <summary>Usage on RAG Contexts</summary>
+  <p><div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_app</span><span class="p">)</span>
+<span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">qs_relevance_with_cot_reasons</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="p">)</span>
 </code></pre></div>
 The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
-
+</details>
 
 
   <table>
@@ -4688,7 +4694,7 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
           <td><code>question</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A question being asked. </p>
+              <p>A question being asked.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -4765,19 +4771,23 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
   
       <p>Uses chat completion model. A function that completes a
 template to check the relevance of the response to a prompt.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+</code></pre></div>
 <p>The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-<p>Usage on RAG Contexts:</p>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input</span><span class="p">()</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
+</details>
+<details class="usage-on-rag-contexts" open>
+  <summary>Usage on RAG Contexts</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input</span><span class="p">()</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
     <span class="n">TruLlama</span><span class="o">.</span><span class="n">select_source_nodes</span><span class="p">()</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">text</span> <span class="c1"># See note below</span>
 <span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> 
 </code></pre></div>
 <p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide :
 Selectors</a></p>
-
+</details>
 
 
   <table>
@@ -4835,7 +4845,8 @@ Selectors</a></p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A value between 0 and 1. 0 being "not relevant" and 1 being</p>
+              <p>A value between 0 and 1. 0 being "not relevant" and 1 being
+"relevant".</p>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -4843,18 +4854,6 @@ Selectors</a></p>
                     <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                 </span>
               </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-              <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-              </span>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>"relevant".</p>
-            </div>
           </td>
         </tr>
     </tbody>
@@ -4882,19 +4881,23 @@ Selectors</a></p>
       <p>Uses chat completion Model. A function that completes a template to
 check the relevance of the response to a prompt. Also uses chain of
 thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+</code></pre></div>
 <p>The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-<p>Usage on RAG Contexts:
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_input</span><span class="p">()</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
+</details>
+<details class="usage-on-rag-contexts" open>
+  <summary>Usage on RAG Contexts</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_input</span><span class="p">()</span><span class="o">.</span><span class="n">on</span><span class="p">(</span>
     <span class="n">TruLlama</span><span class="o">.</span><span class="n">select_source_nodes</span><span class="p">()</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">text</span> <span class="c1"># See note below</span>
 <span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> 
-</code></pre></div></p>
+</code></pre></div>
 <p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide :
 Selectors</a></p>
-
+</details>
 
 
   <table>
@@ -4952,26 +4955,15 @@ Selectors</a></p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A value between 0 and 1. 0 being "not relevant" and 1 being</p>
+              <p>A value between 0 and 1. 0 being "not relevant" and 1 being
+"relevant".</p>
             </div>
               <p>
                 <span class="doc-returns-annotation">
                   <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                    <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
                 </span>
               </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-              <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></code>
-              </span>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>"relevant".</p>
-            </div>
           </td>
         </tr>
     </tbody>
@@ -5081,12 +5073,14 @@ being "positive sentiment".</p>
       <p>Uses chat completion model. A function that completes a
 template to check the sentiment of some text.
 Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">sentiment_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">sentiment_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -5166,12 +5160,14 @@ Guide</a></p>
 prompt and gets a response, encouraging truthfulness. A second template
 is given to the model with a prompt that the original response is
 correct, and measures whether previous chat completion response is similar.</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">model_agreement</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span> 
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">model_agreement</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span> 
 </code></pre></div>
 <p>The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -5519,12 +5515,14 @@ Guide</a></p>
       <p>Uses chat completion model. A function that completes a template to
 check the correctness of some text. Prompt credit to Langchain Eval.
 Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">correctness_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">correctness_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -5602,12 +5600,14 @@ Guide</a></p>
   
       <p>Uses chat completion model. A function that completes a
 template to check the coherence of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">coherence</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">coherence</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -5686,12 +5686,14 @@ Guide</a></p>
       <p>Uses chat completion model. A function that completes a template to
 check the coherence of some text. Prompt credit to Langchain Eval. Also
 uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">coherence_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">coherence_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -5769,12 +5771,14 @@ Guide</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the harmfulness of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">harmfulness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">harmfulness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -5853,13 +5857,67 @@ Guide</a></p>
       <p>Uses chat completion model. A function that completes a template to
 check the harmfulness of some text. Prompt credit to Langchain Eval.
 Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-```python
-feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output() </p>
-<p>Args:
-    text (str): The text to evaluate.</p>
-<p>Returns:
-    float: A value between 0.0 (not harmful) and 1.0 (harmful).</p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">harmfulness_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
+</code></pre></div>
+</details>
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>text</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>The text to evaluate.</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <code>float</code>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>A value between 0.0 (not harmful) and 1.0 (harmful).</p>
+            </div>
+              <p>
+                <span class="doc-returns-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
+                </span>
+              </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
@@ -5882,12 +5940,14 @@ feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output() </p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the maliciousness of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">maliciousness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">maliciousness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -5966,12 +6026,14 @@ Guide</a></p>
       <p>Uses chat compoletion model. A function that completes a
 template to check the maliciousness of some text. Prompt credit to Langchain Eval.
 Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">maliciousness_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">maliciousness_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6049,12 +6111,14 @@ Guide</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the helpfulness of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">helpfulness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">helpfulness</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6133,12 +6197,14 @@ Guide</a></p>
       <p>Uses chat completion model. A function that completes a template to
 check the helpfulness of some text. Prompt credit to Langchain Eval.
 Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">helpfulness_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">helpfulness_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6217,12 +6283,14 @@ Guide</a></p>
       <p>Uses chat completion model. A function that completes a template to
 check the controversiality of some text. Prompt credit to Langchain
 Eval.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">controversiality</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">controversiality</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6266,7 +6334,8 @@ Guide</a></p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A value between 0.0 (not controversial) and 1.0</p>
+              <p>A value between 0.0 (not controversial) and 1.0
+(controversial).</p>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -6274,18 +6343,6 @@ Guide</a></p>
                     <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                 </span>
               </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-              <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-              </span>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>(controversial).</p>
-            </div>
           </td>
         </tr>
     </tbody>
@@ -6313,12 +6370,14 @@ Guide</a></p>
       <p>Uses chat completion model. A function that completes a template to
 check the controversiality of some text. Prompt credit to Langchain
 Eval. Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">controversiality_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">controversiality_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6396,12 +6455,14 @@ Guide</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the misogyny of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">misogyny</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">misogyny</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6480,12 +6541,14 @@ Guide</a></p>
       <p>Uses chat completion model. A function that completes a template to
 check the misogyny of some text. Prompt credit to Langchain Eval. Also
 uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">misogyny_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">misogyny_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6563,12 +6626,14 @@ Guide</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the criminality of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">criminality</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">criminality</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6647,12 +6712,14 @@ Guide</a></p>
       <p>Uses chat completion model. A function that completes a template to
 check the criminality of some text. Prompt credit to Langchain Eval.
 Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">criminality_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">criminality_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6730,12 +6797,14 @@ Guide</a></p>
   
       <p>Uses chat completion model. A function that completes a template to
 check the insensitivity of some text. Prompt credit to Langchain Eval.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">insensitivity</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">insensitivity</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6814,12 +6883,14 @@ Guide</a></p>
       <p>Uses chat completion model. A function that completes a template to
 check the insensitivity of some text. Prompt credit to Langchain Eval.
 Also uses chain of thought methodology and emits the reasons.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">insensitivity_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
-</code></pre></div></p>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">insensitivity_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
+</code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-
+</details>
 
 
   <table>
@@ -6899,10 +6970,12 @@ Guide</a></p>
 and compares a summary against those main points. This feedback function
 only has a chain of thought implementation as it is extremely important
 in function assessment.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">comprehensiveness_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
-</code></pre></div></p>
 
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">comprehensiveness_with_cot_reasons</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+</code></pre></div>
+</details>
 
 
   <table>
@@ -6956,29 +7029,14 @@ in function assessment.</p>
     <tbody>
         <tr>
           <td>
-              <code>float</code>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>A value between 0.0 (main points missed) and 1.0 (no main</p>
-            </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-                </span>
-              </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
               <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
               </span>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>points missed).</p>
+              <p>A value between 0.0 (main points missed) and 1.0 (no main
+points missed).</p>
             </div>
           </td>
         </tr>
@@ -7028,10 +7086,12 @@ in function assessment.</p>
       <p>Uses chat completion model. A function that completes a template to
 check adding assumed stereotypes in the response when not present in the
 prompt.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">stereotypes</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
-</code></pre></div></p>
 
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">stereotypes</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+</code></pre></div>
+</details>
 
 
   <table>
@@ -7046,7 +7106,7 @@ prompt.</p>
           <td><code>prompt</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A text prompt to an agent. </p>
+              <p>A text prompt to an agent.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -7085,29 +7145,14 @@ prompt.</p>
     <tbody>
         <tr>
           <td>
-              <code>float</code>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>A value between 0.0 (no stereotypes assumed) and 1.0</p>
-            </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-                </span>
-              </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
               <span class="doc-returns-annotation">
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
               </span>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>(stereotypes assumed).</p>
+              <p>A value between 0.0 (no stereotypes assumed) and 1.0
+(stereotypes assumed).</p>
             </div>
           </td>
         </tr>
@@ -7136,10 +7181,12 @@ prompt.</p>
       <p>Uses chat completion model. A function that completes a template to
 check adding assumed stereotypes in the response when not present in the
 prompt.</p>
-<p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">stereotypes</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
-</code></pre></div></p>
 
+<details class="usage" open>
+  <summary>Usage</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">stereotypes</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+</code></pre></div>
+</details>
 
 
   <table>
@@ -7193,29 +7240,14 @@ prompt.</p>
     <tbody>
         <tr>
           <td>
-              <code>float</code>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>A value between 0.0 (no stereotypes assumed) and 1.0</p>
-            </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-                </span>
-              </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
               <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
               </span>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>(stereotypes assumed).</p>
+              <p>A value between 0.0 (no stereotypes assumed) and 1.0
+(stereotypes assumed).</p>
             </div>
           </td>
         </tr>
