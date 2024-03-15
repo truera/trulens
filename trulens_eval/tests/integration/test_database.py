@@ -235,7 +235,7 @@ def _test_db_consistency(db: SqlAlchemyDB):
     db.migrate_database()  # ensure latest revision
 
     _populate_data(db)
-    with db.Session.begin() as session:
+    with db.session.begin() as session:
         session.delete(
             session.query(orm.AppDefinition).one()
         )  # delete the only app
@@ -247,7 +247,7 @@ def _test_db_consistency(db: SqlAlchemyDB):
                      ).one()  # feedback defs are preserved
 
     _populate_data(db)
-    with db.Session.begin() as session:
+    with db.session.begin() as session:
         session.delete(
             session.query(orm.Record).one()
         )  # delete the only record

@@ -72,13 +72,13 @@ class SqlAlchemyDB(DB):
 
     engine: Optional[Engine] = None
 
-    Session: Optional[sessionmaker] = None
+    session: Optional[sessionmaker] = None
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def __init__(self, redact_keys: bool = False, **kwargs):
         super().__init__(redact_keys=redact_keys, **kwargs)
-        self.reload_engine()
+        self._reload_engine()
         if is_memory_sqlite(self.engine):
             warnings.warn(
                 UserWarning(
@@ -87,9 +87,9 @@ class SqlAlchemyDB(DB):
                 )
             )
 
-    def reload_engine(self):
+    def _reload_engine(self):
         self.engine = create_engine(**self.engine_params)
-        self.Session = sessionmaker(self.engine, **self.session_params)
+        self.session = sessionmaker(self.engine, **self.session_params)
 
 
     @classmethod
@@ -101,6 +101,11 @@ class SqlAlchemyDB(DB):
         database_version_table: Optional[str] = "trulens_version_table",
         **kwargs
     ) -> SqlAlchemyDB:
+        """Process database-related configuration provided to the Tru class to
+        create a database.
+        
+        Emits warnings if appropriate.
+        """
         
         if None not in (database_url, database_file):
             raise ValueError(
@@ -121,7 +126,10 @@ class SqlAlchemyDB(DB):
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
 
         new_db: DB = SqlAlchemyDB.from_db_url(
-            database_url, redact_keys=database_redact_keys
+            database_url,
+            redact_keys=database_redact_keys,
+            version_table=database_version_table,
+            **kwargs
         )
 
         print(
@@ -140,7 +148,20 @@ class SqlAlchemyDB(DB):
         return new_db 
 
     @classmethod
-    def from_db_url(cls, url: str, redact_keys: bool = False) -> SqlAlchemyDB:
+    def from_db_url(cls, url: str, **kwargs) -> SqlAlchemyDB:
+        """
+        Create a database for the given url.
+
+        Args:
+            url: The database url. This includes database type.
+
+            kwargs: Additional arguments to pass to the database constructor.
+
+        Returns:
+
+            A database instance.
+        """
+
         # Params needed for https://github.com/truera/trulens/issues/470
         # Params are from
         # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
@@ -157,7 +178,7 @@ class SqlAlchemyDB(DB):
             engine_params["max_overflow"] = 2
             engine_params["pool_use_lifo"] = True
 
-        return cls(engine_params=engine_params, redact_keys=redact_keys)
+        return cls(engine_params=engine_params, **kwargs)
 
     def migrate_database(self):
         """See [DB.migrate_database][trulens_eval.db.DB.migrate_database]."""
@@ -180,7 +201,7 @@ class SqlAlchemyDB(DB):
                     ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(self.engine, revision="head")
 
-                self.reload_engine(
+                self._reload_engine(
                 )  # let sqlalchemy recognize the migrated schema
 
                 ### DATA MIGRATION ###
@@ -212,7 +233,7 @@ class SqlAlchemyDB(DB):
         # TODO: thread safety
 
         _rec = orm.Record.parse(record, redact_keys=self.redact_keys)
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             if session.query(orm.Record).filter_by(record_id=record.record_id
                                                   ).first():
                 session.merge(_rec)  # update existing
@@ -226,7 +247,7 @@ class SqlAlchemyDB(DB):
     def get_app(self, app_id: schema.AppID) -> Optional[JSONized[App]]:
         """See [DB.get_app][trulens_eval.db.DB.get_app]."""
 
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             if _app := session.query(orm.AppDefinition).filter_by(app_id=app_id
                                                                  ).first():
                 return json.loads(_app.app_json)
@@ -234,7 +255,7 @@ class SqlAlchemyDB(DB):
     def get_apps(self) -> Iterable[JSON]:
         """See [DB.get_apps][trulens_eval.db.DB.get_apps]."""
 
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             for _app in session.query(orm.AppDefinition):
                 yield json.loads(_app.app_json)
 
@@ -243,7 +264,7 @@ class SqlAlchemyDB(DB):
 
         # TODO: thread safety
 
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             if _app := session.query(orm.AppDefinition
                                     ).filter_by(app_id=app.app_id).first():
 
@@ -265,7 +286,7 @@ class SqlAlchemyDB(DB):
         
         # TODO: thread safety
 
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             if _fb_def := session.query(orm.FeedbackDefinition) \
                     .filter_by(feedback_definition_id=feedback_definition.feedback_definition_id) \
                     .first():
@@ -287,7 +308,7 @@ class SqlAlchemyDB(DB):
     ) -> pd.DataFrame:
         """See [DB.get_feedback_defs][trulens_eval.db.DB.get_feedback_defs]."""
 
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             q = select(orm.FeedbackDefinition)
             if feedback_definition_id:
                 q = q.filter_by(feedback_definition_id=feedback_definition_id)
@@ -310,7 +331,7 @@ class SqlAlchemyDB(DB):
         _feedback_result = orm.FeedbackResult.parse(
             feedback_result, redact_keys=self.redact_keys
         )
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             if session.query(orm.FeedbackResult) \
                     .filter_by(feedback_result_id=feedback_result.feedback_result_id).first():
                 session.merge(_feedback_result)  # update existing
@@ -402,7 +423,7 @@ class SqlAlchemyDB(DB):
     ) -> Dict[FeedbackResultStatus, int]:
         """See [DB.get_feedback_count_by_status][trulens_eval.db.DB.get_feedback_count_by_status]."""
 
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             q = self._feedback_query(
                 count=True, **locals_except("self", "session")
             )
@@ -426,7 +447,7 @@ class SqlAlchemyDB(DB):
     ) -> pd.DataFrame:
         """See [DB.get_feedback][trulens_eval.db.DB.get_feedback]."""
 
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             q = self._feedback_query(**locals_except("self", "session"))
 
             results = (row[0] for row in session.execute(q))
@@ -439,7 +460,7 @@ class SqlAlchemyDB(DB):
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens_eval.db.DB.get_records_and_feedback]."""
         
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             stmt = select(orm.AppDefinition)
             if app_ids:
                 stmt = stmt.where(orm.AppDefinition.app_id.in_(app_ids))
