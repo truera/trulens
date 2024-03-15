@@ -293,23 +293,23 @@ class LLMProvider(Provider):
         check the relevance of the context to the question.
         
         Usage on RAG Contexts:
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
 
-        ```python
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.context_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
-
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+            
             context (str): Context related to the question.
 
         Returns:
@@ -328,23 +328,23 @@ class LLMProvider(Provider):
         check the relevance of the statement to the question.
         
         Usage on RAG Contexts:
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
 
-        ```python
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.context_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
-
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+
             context (str): A context to the question.
 
         Returns:
@@ -369,24 +369,23 @@ class LLMProvider(Provider):
         template to check the relevance of the context to the question.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
         Usage on RAG Contexts:
 
-        ```
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.context_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
+            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+
             context (str): Context related to the question.
 
         Returns:
@@ -407,23 +406,22 @@ class LLMProvider(Provider):
         template to check the relevance of the context to the question.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
         Usage on RAG Contexts:
-        ```
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.qs_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.qs_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
+            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+
             context (str): Context related to the question.
 
         Returns:
@@ -449,32 +447,32 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a
         template to check the relevance of the response to a prompt.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.relevance).on_input_output()
-        ```
-        
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        Usage:
+            ```python
+            feedback = Feedback(provider.relevance).on_input_output()
+            ```
+            
+            The `on_input_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Usage on RAG Contexts:
+            ```python
+            feedback = Feedback(provider.relevance).on_input().on(
+                TruLlama.select_source_nodes().node.text # See note below
+            ).aggregate(np.mean) 
+            ```
 
-        ```python
-        feedback = Feedback(provider.relevance).on_input().on(
-            TruLlama.select_source_nodes().node.text # See note below
-        ).aggregate(np.mean) 
-        ```
-
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Parameters:
             prompt (str): A text prompt to an agent.
+
             response (str): The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
-            "relevant".
+                "relevant".
         """
         return self.generate_score(
             system_prompt=str.
@@ -488,32 +486,33 @@ class LLMProvider(Provider):
         check the relevance of the response to a prompt. Also uses chain of
         thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.relevance_with_cot_reasons).on_input_output()
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.relevance_with_cot_reasons).on_input_output()
+            ```
 
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Usage on RAG Contexts:
-        ```python
+            ```python
 
-        feedback = Feedback(provider.relevance_with_cot_reasons).on_input().on(
-            TruLlama.select_source_nodes().node.text # See note below
-        ).aggregate(np.mean) 
-        ```
+            feedback = Feedback(provider.relevance_with_cot_reasons).on_input().on(
+                TruLlama.select_source_nodes().node.text # See note below
+            ).aggregate(np.mean) 
+            ```
 
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             prompt (str): A text prompt to an agent. 
+
             response (str): The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
-            "relevant".
+                "relevant".
         """
         system_prompt = str.format(
             prompts.PR_RELEVANCE, prompt=prompt, response=response
@@ -552,14 +551,13 @@ class LLMProvider(Provider):
         template to check the sentiment of some text.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-
-        ```python
-        feedback = Feedback(provider.sentiment_with_cot_reasons).on_output() 
-        ```
-        
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        Usage:
+            ```python
+            feedback = Feedback(provider.sentiment_with_cot_reasons).on_output() 
+            ```
+            
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -578,17 +576,17 @@ class LLMProvider(Provider):
         is given to the model with a prompt that the original response is
         correct, and measures whether previous chat completion response is similar.
 
-        **Usage:**
+        Usage:
+            ```python
+            feedback = Feedback(provider.model_agreement).on_input_output() 
+            ```
 
-        ```python
-        feedback = Feedback(provider.model_agreement).on_input_output() 
-        ```
+            The `on_input_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Parameters:
+        Args:
             prompt (str): A text prompt to an agent.
+
             response (str): The agent's response to the prompt.
 
         Returns:
@@ -612,13 +610,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent.
             criteria (str): The specific criteria for evaluation.
 
         Returns:
             float: A value between 0.0 and 1.0, representing the specified
-            evaluation.
+                evaluation.
         """
 
         system_prompt = str.format(
@@ -636,13 +634,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent.
             criteria (str): The specific criteria for evaluation.
 
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified
-            evaluation, and a string containing the reasons for the evaluation.
+                evaluation, and a string containing the reasons for the evaluation.
         """
 
         system_prompt = str.format(
@@ -714,7 +712,7 @@ class LLMProvider(Provider):
             The `on_output()` selector can be changed. See [Feedback Function
             Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        Parameters:
+        Args:
             text: A prompt to an agent.
 
         Returns:
@@ -730,13 +728,13 @@ class LLMProvider(Provider):
         check the correctness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -753,13 +751,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a
         template to check the coherence of some text. Prompt credit to Langchain Eval.
         
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.coherence).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.coherence).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -777,13 +775,13 @@ class LLMProvider(Provider):
         check the coherence of some text. Prompt credit to Langchain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -800,14 +798,14 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the harmfulness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.harmfulness).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.harmfulness).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-        
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            
         Args:
             text (str): The text to evaluate.
 
@@ -824,10 +822,11 @@ class LLMProvider(Provider):
         check the harmfulness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output() 
-        
+        Usage:
+            ```python
+            feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output()
+            ```
+            
         Args:
             text (str): The text to evaluate.
 
@@ -844,13 +843,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the maliciousness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.maliciousness).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.maliciousness).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -869,13 +868,13 @@ class LLMProvider(Provider):
         template to check the maliciousness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -892,13 +891,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the helpfulness of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.helpfulness).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.helpfulness).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -916,13 +915,13 @@ class LLMProvider(Provider):
         check the helpfulness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -940,20 +939,20 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.controversiality).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.controversiality).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
 
         Returns:
             float: A value between 0.0 (not controversial) and 1.0
-            (controversial).
+                (controversial).
         """
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
@@ -966,14 +965,14 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval. Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-        
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            
         Args:
             text (str): The text to evaluate.
 
@@ -989,13 +988,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the misogyny of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.misogyny).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.misogyny).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1013,13 +1012,13 @@ class LLMProvider(Provider):
         check the misogyny of some text. Prompt credit to Langchain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1036,13 +1035,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the criminality of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.criminality).on_output()
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.criminality).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1061,13 +1060,13 @@ class LLMProvider(Provider):
         check the criminality of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1084,13 +1083,13 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the insensitivity of some text. Prompt credit to Langchain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.insensitivity).on_output()
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.insensitivity).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1108,13 +1107,13 @@ class LLMProvider(Provider):
         check the insensitivity of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1133,9 +1132,11 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check if two answers agree.
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent.
+
             response (str): The agent's response to the prompt.
+
             check_response(str): The response to check against.
 
         Returns:
@@ -1158,18 +1159,19 @@ class LLMProvider(Provider):
         only has a chain of thought implementation as it is extremely important
         in function assessment.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
+            ```
 
         Args:
             source (str): Text corresponding to source material. 
+
             summary (str): Text corresponding to a summary.
 
         Returns:
-            float: A value between 0.0 (main points missed) and 1.0 (no main
-            points missed).
+            A value between 0.0 (main points missed) and 1.0 (no main
+                points missed).
         """
 
         system_prompt = str.format(
@@ -1193,18 +1195,19 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.stereotypes).on_input_output()
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.stereotypes).on_input_output()
+            ```
 
         Args:
-            prompt (str): A text prompt to an agent. 
+            prompt (str): A text prompt to an agent.
+
             response (str): The agent's response to the prompt.
 
         Returns:
-            float: A value between 0.0 (no stereotypes assumed) and 1.0
-            (stereotypes assumed).
+            A value between 0.0 (no stereotypes assumed) and 1.0
+                (stereotypes assumed).
         """
 
         system_prompt = str.format(
@@ -1219,18 +1222,19 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.stereotypes).on_input_output()
-        ```
+        Usage:
+            ```python
+            feedback = Feedback(provider.stereotypes).on_input_output()
+            ```
 
         Args:
             prompt (str): A text prompt to an agent. 
+
             response (str): The agent's response to the prompt.
 
         Returns:
-            float: A value between 0.0 (no stereotypes assumed) and 1.0
-            (stereotypes assumed).
+            A value between 0.0 (no stereotypes assumed) and 1.0
+                (stereotypes assumed).
         """
         system_prompt = str.format(
             prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
