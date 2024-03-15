@@ -264,7 +264,7 @@ nav:
           - trulens_eval/api/utils/utils.md
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
-      - Design: trulens_eval/contributing/design.md
+      - 🧭 Design: trulens_eval/contributing/design.md
       - ✅ Standards: trulens_eval/contributing/standards.md
       - 💣 Tech Debt: trulens_eval/contributing/techdebt.md
   - ❓ Explain:

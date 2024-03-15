@@ -345,7 +345,20 @@ class LocalSQLite(DB):
         self._drop_tables()
         self._build_tables()
 
-    def migrate_database(self):
+    def migrate_database(self, prior_version_table: str = "version_table"):
+        """
+        Migrate the database to the current version of trulens_eval. If the
+        prior version used a different name for the version table, it must be
+        provided to this method.
+
+        Args:
+            prior_version_table: str -- the name of the version table used by the
+                prior version of the database. 
+        """
+
+        # TODO: figure out how to update the version table alone if that is all
+        # that needs to happen
+
         db_migration.migrate(db=self)
 
     def _clear_tables(self) -> None:

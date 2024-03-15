@@ -1,4 +1,4 @@
-# TruLens-Eval Design Principles
+# 🧭 Design Goals and Principles
 
 ***Minimal time/effort-to-value*** If a user already has an llm app coded in one of the
    supported libraries, give them some value with the minimal efford beyond that
@@ -19,9 +19,9 @@ tru.start_dashboard() # 4
 they can open the dashboard and inspect the recording of their app's invocation
 including performance and cost statistics. This means trulens must do quite a
 bit of haggling under the hood to get that data. This is outlined primarily in
-the [Instrumentation Design and Choices] section below.
+the [Instrumentation](#Instrumentation) section below.
 
-## Instrumentation Designs and Choices
+## Instrumentation
 
 ### App Data
 
