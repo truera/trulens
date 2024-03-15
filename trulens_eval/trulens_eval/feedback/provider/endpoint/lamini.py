@@ -23,7 +23,7 @@ OptionalImports(messages=REQUIREMENT_LAMINI).assert_installed(lamini)
 class LaminiCallback(EndpointCallback):
     """Handlers for Lamini responses to track costs/performance/etc.
     
-    !!! NOTE:
+    Note:
         Lamini does not currently produce any usage information in its responses
         so this class is not yet useful.
     """

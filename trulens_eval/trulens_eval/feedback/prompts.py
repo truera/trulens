@@ -4,6 +4,12 @@
 # those yet.
 
 from trulens_eval.feedback.v2 import feedback as v2
+import pydantic
+from typing import Dict, Any
+
+class COTPrompt(pydantic.BaseModel):
+    system_prompt: str
+    data_types: Dict[str, Any]
 
 COT_REASONS_TEMPLATE = \
 """
@@ -14,6 +20,37 @@ Score: <The score 0-10 based on the given criteria>
 Criteria: <Provide the criteria for this evaluation>
 Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
 """
+"""Template for providing reasons for a score in a COT evaluation. 
+
+Warning: 
+    The order of the fields is important.
+"""
+
+COT_REASONS_PROMPT = """
+Please answer using the entire template below.
+
+TEMPLATE: 
+Score: <The score 0-10 based on the given criteria>
+Criteria: <Provide the criteria for this evaluation>
+Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
+"""
+"""Template for providing reasons for a score in a COT evaluation. 
+
+Warning: 
+    The order of the fields is important.
+"""
+COT_REASONS_TYPES = {'Score': int, 'Criteria': str, 'Supporting Evidence': str})
+"""For providers that can use generation with data types, the data types for the
+COT reasons template fields.
+
+Warning:
+    The order of the fields is important and so are the keys.
+"""
+
+COT_REASONS = COTPrompt(
+    system_prompt=COT_REASONS_PROMPT,
+    data_types=COT_REASONS_TYPES
+)
 
 LLM_GROUNDEDNESS = v2.Groundedness.prompt.template
 

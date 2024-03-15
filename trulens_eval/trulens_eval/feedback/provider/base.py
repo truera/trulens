@@ -249,10 +249,14 @@ Score: {comp['Score']}
         Base method to generate a score and reason, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formated system prompt
+            system_prompt: A pre-formated system prompt
+
+            normalize: A float to normalize the score with. If the prompt asks a
+                generation in range [0, X], normalize should be X.
 
         Returns:
-            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
+            The score on 0-1 scale and reason metadata (dict) if returned by the
+                LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -1305,13 +1309,16 @@ class WithOutputType(LLMProvider):
         """
 
         # TODO: implement this
+
+
+
         return super().generate_score_and_reasons(system_prompt, user_prompt, normalize)
 
     def create_chat_completion_with_output_type(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        output_type: Optional[Dict[str, OutputType]] = {'output': 'string'},
+        output_type: Optional[Dict[str, OutputType]] = None,
         **kwargs
     ) -> Dict[str, Union[str, int, float]]:
         """
@@ -1322,7 +1329,7 @@ class WithOutputType(LLMProvider):
             
             messages: A list of messages. One of prompt or messages is required.
 
-            output_type: The requested output type. Defaults to "string". Other
+            output_type: The requested output type. Defaults to `{'output': 'string'}`. Other
                 types are "int" and "float".
 
         Returns:
