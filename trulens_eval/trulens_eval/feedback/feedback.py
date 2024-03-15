@@ -727,7 +727,7 @@ Feedback function signature:
         app: Optional[Union[AppDefinition, JSON]] = None,
         record: Optional[Record] = None,
         source_data: Optional[Dict] = None,
-        **kwargs: dict
+        **kwargs: Dict[str, Any]
     ) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
@@ -786,7 +786,8 @@ Feedback function signature:
             input_combinations = list(
                 self._extract_selection(
                     source_data=source_data,
-                    combinations=self.combinations
+                    combinations=self.combinations,
+                    **kwargs
                 )
             )
 
@@ -801,8 +802,6 @@ Feedback function signature:
             multi_result = None
 
             for ins in input_combinations:
-                ins = dict(ins, **kwargs)
-
                 try:
                     result_and_meta, part_cost = Endpoint.track_all_costs_tally(
                         self.imp, **ins
@@ -973,18 +972,44 @@ Feedback function signature:
     def _extract_selection(
         self,
         source_data: Dict,
-        combinations: FeedbackCombinations = FeedbackCombinations.PRODUCT
+        combinations: FeedbackCombinations = FeedbackCombinations.PRODUCT,
+        **kwargs: Dict[str, Any]
     ) -> Iterable[Dict[str, Any]]:
+        """
+        Create parameter assignments to self.imp from t he given data source or
+        optionally additional kwargs.
+
+        Args:
+            source_data: The data to select from.
+
+            combinations: How to combine assignments for various variables to
+                make an assignment to the while signature.
+
+            **kwargs: Additional keyword arguments to use instead of looking
+                them up from source data. Any parameters specified here will be
+                used as the assignment value and the selector for that paremeter
+                will be ignored.
+        
+        """
 
         arg_vals = {}
 
         for k, q in self.selectors.items():
             try:
-                arg_vals[k] = list(q.get(source_data))
+                if k in kwargs:
+                    arg_vals[k] = [kwargs[k]]
+                else:
+                    arg_vals[k] = list(q.get(source_data))
             except Exception as e:
                 raise RuntimeError(
                     f"Could not locate {q} in recorded data."
                 ) from e
+
+        # For anything specified in kwargs that did not have a selector, set the
+        # assignment here as the above loop will have missed it.
+        for k, v in kwargs.items():
+            if k not in self.selectors:
+                arg_vals[k] = [v]
 
         keys = arg_vals.keys()
         vals = arg_vals.values()
