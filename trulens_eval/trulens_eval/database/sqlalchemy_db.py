@@ -178,9 +178,11 @@ class SqlAlchemyDB(DB):
                 return json.loads(_app.app_json)
 
     def get_apps(self) -> Iterable[JSON]:
+        data =[]
         with self.Session.begin() as session:
             for _app in session.query(orm.AppDefinition):
-                yield json.loads(_app.app_json)
+                data.append(_app.__dict__)
+        return data
 
     def insert_app(self, app: schema.AppDefinition) -> schema.AppID:
         # TODO: thread safety
@@ -202,7 +204,9 @@ class SqlAlchemyDB(DB):
 
     def list_records(self, app_id) -> List[int]:
         data = []
+        breakpoint()
         with self.Session.begin() as session:
+            print(session.query(orm.Record).all())
             data = [
                 i.record_id
                 for i in session.query(orm.Record).filter_by(app_id=app_id)

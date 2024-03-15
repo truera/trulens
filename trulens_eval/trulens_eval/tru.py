@@ -26,9 +26,8 @@ from tqdm.auto import tqdm
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
-from trulens_eval import db
 from trulens_eval import schema
-from trulens_eval.database import sqlalchemy_db
+from trulens_eval.database import sqlalchemy_db as db
 from trulens_eval.feedback import feedback
 from trulens_eval.utils import imports
 from trulens_eval.utils import notebook_utils
@@ -181,7 +180,7 @@ class Tru(python.SingletonPerName):
         if database_url is None:
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
 
-        self.db: db.DB = sqlalchemy_db.SqlAlchemyDB.from_db_url(
+        self.db: db.DB = db.SqlAlchemyDB.from_db_url(
             database_url, redact_keys=database_redact_keys
         )
 
@@ -606,7 +605,8 @@ class Tru(python.SingletonPerName):
         return self.db.get_apps()
 
     def list_records(self, app_id) -> List[int]:
-        return self.db.list_records(app_id)
+
+        return self.db.list_records(app_id=app_id)
 
     def get_record_and_feedback(self, record_id) -> [pd.DataFrame]:
 
