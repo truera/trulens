@@ -253,7 +253,8 @@ nav:
           - Endpoint:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
-      - Instruments: trulens_eval/api/instruments.md
+      - 𝄢 Instruments: trulens_eval/api/instruments.md
+      - 🗄 Database: trulens_eval/api/db.md
       - Utils:
           - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
@@ -263,6 +264,7 @@ nav:
           - trulens_eval/api/utils/utils.md
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
+      - Design: trulens_eval/contributing/design.md
       - ✅ Standards: trulens_eval/contributing/standards.md
       - 💣 Tech Debt: trulens_eval/contributing/techdebt.md
   - ❓ Explain:

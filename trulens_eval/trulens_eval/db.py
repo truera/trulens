@@ -47,7 +47,7 @@ MULTI_CALL_NAME_DELIMITER = ":::"
 
 class DBMeta(pydantic.BaseModel):
     """
-    Databasae meta data mostly used for migrating from old db schemas.
+    Database meta data mostly used for migrating from old db schemas.
     """
 
     trulens_version: Optional[str]
