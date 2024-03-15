@@ -7,22 +7,31 @@ from inspect import signature
 import itertools
 import json
 import logging
-import pprint
+from pprint import pformat
 import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple,
+                    TypeVar, Union)
 import warnings
 
+import munch
 import numpy as np
 import pandas
 import pydantic
+from rich import print as rprint
+from rich.markdown import Markdown
+from rich.pretty import pretty_repr
+
+# WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
+# This happens even if you import it as something else.
+# from trulens_eval import schema # breaks pydantic
+# from trulens_eval import schema as tru_schema # also breaks pydantic
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackCall
+from trulens_eval.schema import FeedbackCombinations
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
@@ -32,15 +41,16 @@ from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import callable_name
+from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import Future
+from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
+from trulens_eval.utils.text import retab
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.threading import TP
 
 logger = logging.getLogger(__name__)
-
-pp = pprint.PrettyPrinter()
 
 A = TypeVar("A")
 
@@ -420,17 +430,34 @@ class Feedback(FeedbackDefinition):
         assert self.imp is not None, "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
 
-    def aggregate(self, func: AggCallable) -> Feedback:
+    def aggregate(
+        self,
+        func: Optional[AggCallable] = None,
+        combinations: Optional[FeedbackCombinations] = None
+    ) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
-        generate more than one value for implementation argument(s).
+        generate more than one value for implementation argument(s). Can also
+        specify the method of producing combinations of values in such cases.
 
-        Returns a new Feedback object with the given aggregation function.
+        Returns a new Feedback object with the given aggregation function and/or
+        the given [combination mode][trulens_eval.schema.FeedbackCombinations].
         """
+
+        if func is None and combinations is None:
+            raise ValueError(
+                "At least one of `func` or `combinations` must be provided."
+            )
+
+        updates = {}
+        if func is not None:
+            updates['agg'] = func
+        if combinations is not None:
+            updates['combinations'] = combinations
 
         return Feedback.model_copy(
             self,
-            update=dict(agg=func)  # does this run __init__ ?
+            update=updates
         )
 
     @staticmethod
@@ -494,6 +521,7 @@ class Feedback(FeedbackDefinition):
 
         return ret
 
+    # alias
     on_input = on_prompt
 
     def on_response(self, arg: Optional[str] = None) -> Feedback:
@@ -516,6 +544,7 @@ class Feedback(FeedbackDefinition):
 
         return ret
 
+    # alias
     on_output = on_response
 
     def on(self, *args, **kwargs) -> Feedback:
@@ -527,9 +556,22 @@ class Feedback(FeedbackDefinition):
         """
 
         new_selectors = self.selectors.copy()
+
+        for k, v in kwargs.items():
+            if not isinstance(v, Lens):
+                raise ValueError(
+                    f"Expected a Lens but got `{v}` of type `{class_name(type(v))}`."
+                )
+            new_selectors[k] = v
+
         new_selectors.update(kwargs)
 
         for path in args:
+            if not isinstance(path, Lens):
+                raise ValueError(
+                    f"Expected a Lens but got `{path}` of type `{class_name(type(path))}`."
+                )
+            
             argname = self._next_unselected_arg_name()
             new_selectors[argname] = path
             self._print_guessed_selector(argname, path)
@@ -551,12 +593,146 @@ class Feedback(FeedbackDefinition):
 
         return signature(self.imp)
 
+    def check_selectors(
+        self,
+        app: Union[AppDefinition, JSON],
+        record: Record,
+        source_data: Optional[Dict[str, Any]] = None,
+        warning: bool = False
+    ) -> bool:
+        """Check that the selectors are valid for the given app and record.
+
+        Args:
+            app: The app that produced the record.
+
+            record: The record that the feedback will run on. This can be a
+                mostly empty record for checking ahead of producing one. The
+                utility method
+                [App.dummy_record][trulens_eval.app.App.dummy_record] is built
+                for this prupose.
+
+            source_data: Additional data to select from when extracting feedback
+                function arguments.
+
+            warning: Issue a warning instead of raising an error if a selector is
+                invalid. As some parts of a Record cannot be known ahead of
+                producing it, it may be necessary to not raise exception here
+                and only issue a warning. 
+
+        Returns:
+            True if the selectors are valid. False if not (if warning is set).
+
+        Raises:
+            ValueError: If a selector is invalid and warning is not set.
+        """
+
+        from trulens_eval.app import App
+
+        if source_data is None:
+            source_data = {}
+
+        app_type: str = "trulens recorder (`TruChain`, `TruLlama`, etc)"
+    
+        if isinstance(app, App):
+            app_type = f"`{type(app).__name__}`"
+            app = jsonify(app, instrument=app.instrument, skip_specials=True, redact_keys=True)
+
+        elif isinstance(app, AppDefinition):
+            app = jsonify(app, skip_specials=True, redact_keys=True)
+
+        source_data = self._construct_source_data(
+            app=app, record=record, source_data=source_data
+        )
+
+        # Build the hint message here.
+        msg = ""
+
+        # Keep track whether any selectors failed to validate.
+        check_good: bool = True
+
+        # with c.capture() as cap:
+        for k, q in self.selectors.items():
+            if q.exists(source_data):
+                continue
+
+            msg += f"""
+# Selector check failed
+
+Source of argument `{k}` to `{self.name}` does not exist in app or expected
+record:
+
+```python
+{q}
+# or equivalently
+{Select.render_for_dashboard(q)}
+```
+
+The data used to make this check may be incomplete. If you expect records
+produced by your app to contain the selected content, you can ignore this error
+by setting `selectors_nocheck` in the {app_type} constructor. Alternatively,
+setting `selectors_check_warning` will print out this message but will not raise
+an error.
+
+## Additional information:
+
+Feedback function signature:
+```python
+{self.sig}
+```
+
+"""
+            prefix = q.existing_prefix(source_data)
+
+            if prefix is None:
+                continue
+
+            if len(prefix.path) >= 2 and isinstance(prefix.path[-1], GetItemOrAttribute) and prefix.path[-1].get_item_or_attribute() == "rets":
+                # If the selector check failed because the selector was pointing
+                # to something beyond the rets of a record call, we have to
+                # ignore it as we cannot tell what will be in the rets ahead of
+                # invoking app.
+                continue
+
+            if len(prefix.path) >= 3 and isinstance(prefix.path[-2], GetItemOrAttribute) and prefix.path[-2].get_item_or_attribute() == "args":
+                # Likewise if failure was because the selector was pointing to
+                # method args beyond their parameter names, we also cannot tell
+                # their contents so skip.
+                continue
+
+            check_good = False
+
+            msg += f"The prefix `{prefix}` selects this data that exists in your app or typical records:\n\n"
+
+            try:
+                for prefix_obj in prefix.get(source_data):
+                    if isinstance(prefix_obj, munch.Munch):
+                        prefix_obj = prefix_obj.toDict()
+
+                    msg += f"- Object of type `{class_name(type(prefix_obj))}` starting with:\n"
+                    msg += "```python\n" + retab(tab="\t  ", s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)) + "\n```\n"
+
+            except Exception as e:
+                msg += f"Some non-existant object because: {pretty_repr(e)}"
+
+        if check_good:
+            return True
+
+        # Output using rich text.
+        rprint(Markdown(msg))
+
+        if warning:
+            return False
+
+        else:
+            raise ValueError("Some selectors do not exist in the app or record.")
+
+
     def run(
         self,
         app: Optional[Union[AppDefinition, JSON]] = None,
         record: Optional[Record] = None,
         source_data: Optional[Dict] = None,
-        **kwargs: dict
+        **kwargs: Dict[str, Any]
     ) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
@@ -602,9 +778,10 @@ class Feedback(FeedbackDefinition):
         if self.if_exists is not None:
             if not self.if_exists.exists(source_data):
                 logger.warning(
-                    f"Feedback %s skipped as %s does not exist.", self.name,
+                    "Feedback %s skipped as %s does not exist.", self.name,
                     self.if_exists
                 )
+                feedback_result.status = FeedbackResultStatus.SKIPPED
                 return feedback_result
 
         # Separate try block for extracting inputs from records/apps in case a
@@ -612,7 +789,11 @@ class Feedback(FeedbackDefinition):
         # a warning earlier than later.
         try:
             input_combinations = list(
-                self._extract_selection(source_data=source_data)
+                self._extract_selection(
+                    source_data=source_data,
+                    combinations=self.combinations,
+                    **kwargs
+                )
             )
 
         except Exception as e:
@@ -626,8 +807,6 @@ class Feedback(FeedbackDefinition):
             multi_result = None
 
             for ins in input_combinations:
-                ins = dict(ins, **kwargs)
-
                 try:
                     result_and_meta, part_cost = Endpoint.track_all_costs_tally(
                         self.imp, **ins
@@ -636,7 +815,7 @@ class Feedback(FeedbackDefinition):
                     cost += part_cost
                 except Exception as e:
                     raise RuntimeError(
-                        f"Evaluation of {self.name} failed on inputs: \n{pp.pformat(ins)[0:128]}."
+                        f"Evaluation of {self.name} failed on inputs: \n{pformat(ins)[0:128]}."
                     ) from e
 
                 if isinstance(result_and_meta, Tuple):
@@ -795,27 +974,63 @@ class Feedback(FeedbackDefinition):
 
         return super().name
 
-    def _extract_selection(self, source_data: Dict) -> Iterable[Dict[str, Any]]:
+    def _extract_selection(
+        self,
+        source_data: Dict,
+        combinations: FeedbackCombinations = FeedbackCombinations.PRODUCT,
+        **kwargs: Dict[str, Any]
+    ) -> Iterable[Dict[str, Any]]:
+        """
+        Create parameter assignments to self.imp from t he given data source or
+        optionally additional kwargs.
+
+        Args:
+            source_data: The data to select from.
+
+            combinations: How to combine assignments for various variables to
+                make an assignment to the while signature.
+
+            **kwargs: Additional keyword arguments to use instead of looking
+                them up from source data. Any parameters specified here will be
+                used as the assignment value and the selector for that paremeter
+                will be ignored.
+        
+        """
 
         arg_vals = {}
 
         for k, q in self.selectors.items():
             try:
-                arg_vals[k] = list(q.get(source_data))
+                if k in kwargs:
+                    arg_vals[k] = [kwargs[k]]
+                else:
+                    arg_vals[k] = list(q.get(source_data))
             except Exception as e:
                 raise RuntimeError(
                     f"Could not locate {q} in recorded data."
                 ) from e
 
+        # For anything specified in kwargs that did not have a selector, set the
+        # assignment here as the above loop will have missed it.
+        for k, v in kwargs.items():
+            if k not in self.selectors:
+                arg_vals[k] = [v]
+
         keys = arg_vals.keys()
         vals = arg_vals.values()
 
-        assignments = itertools.product(*vals)
+        if combinations == FeedbackCombinations.PRODUCT:
+            assignments = itertools.product(*vals)
+        elif combinations == FeedbackCombinations.ZIP:
+            assignments = zip(*vals)
+        else:
+            raise ValueError(
+                f"Unknown combination mode {combinations}. "
+                "Expected `product` or `zip`."
+            )
 
         for assignment in assignments:
             yield {k: v for k, v in zip(keys, assignment)}
-
-        pass
 
     def _construct_source_data(
         self,
@@ -842,7 +1057,7 @@ class Feedback(FeedbackDefinition):
         """
 
         if source_data is None:
-            source_data = dict()
+            source_data = {}
         else:
             source_data = dict(source_data)  # copy
 

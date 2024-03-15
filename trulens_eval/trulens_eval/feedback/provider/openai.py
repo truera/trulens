@@ -9,6 +9,7 @@ from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
+from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import CLASS_INFO
 
 with OptionalImports(messages=REQUIREMENT_OPENAI):
@@ -53,6 +54,8 @@ class OpenAI(LLMProvider):
         self,
         *args,
         endpoint=None,
+        pace: Optional[Pace] = None,
+        rpm: Optional[int] = None,
         model_engine: Optional[str] = None,
         **kwargs: dict
     ):
@@ -63,12 +66,17 @@ class OpenAI(LLMProvider):
         if model_engine is None:
             model_engine = self.DEFAULT_MODEL_ENGINE
 
-        # TODO: why was self_kwargs required here independently of kwargs?
+        # Seperate set of args for our attributes because only a subset go into
+        # endpoint below.
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
         self_kwargs['model_engine'] = model_engine
 
-        self_kwargs['endpoint'] = OpenAIEndpoint(*args, **kwargs)
+        self_kwargs['endpoint'] = OpenAIEndpoint(
+            *args, 
+            pace=pace, rpm=rpm,
+            **kwargs
+        )
 
         super().__init__(
             **self_kwargs

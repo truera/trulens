@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sqlite3
-from typing import Any, ClassVar, List, Optional, Sequence, Tuple, Union
+from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
 import numpy as np
@@ -14,6 +14,7 @@ import pydantic
 
 from trulens_eval import __version__
 from trulens_eval import db_migration
+from trulens_eval.app import App
 from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
@@ -29,6 +30,7 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSONized
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -53,17 +55,21 @@ class DBMeta(pydantic.BaseModel):
 
 
 class DB(SerialModel, abc.ABC):
-    # Whether db will redact secrets before writing out data.
+    """Abstract definition of databases used by trulens_eval.
+    
+    [SqlAlchemyDB][trulens_eval.database.sqlalchemy_db.SqlAlchemyDB] is the main
+    and default implementation if this specification.
+    """
+
     redact_keys: bool = False
+    """Redact secrets before writing out data."""
 
     def _json_str_of_obj(self, obj: Any) -> str:
         return json_str_of_obj(obj, redact_keys=self.redact_keys)
 
     @abc.abstractmethod
     def reset_database(self):
-        """
-        Delete all data.
-        """
+        """Delete all data."""
 
         raise NotImplementedError()
 
@@ -73,11 +79,13 @@ class DB(SerialModel, abc.ABC):
         record: Record,
     ) -> RecordID:
         """
-        Insert a new `record` into db, indicating its `app` as well. Return
-        record id.
-
+        Upsert a `record` into the database.
+        
         Args:
-        - record: Record
+            record: The record to insert or update.
+
+        Returns:
+            The id of the given record.
         """
 
         raise NotImplementedError()
@@ -85,10 +93,15 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_app(self, app: AppDefinition) -> AppID:
         """
-        Insert a new `app` into db under the given `app_id`.
+        Upsert an `app` into the database.
 
         Args:
-        - app: AppDefinition -- App definition.
+            app: The app to insert or update. Note that only the
+                [AppDefinition][trulens_eval.schema.AppDefinition] parts are serialized
+                hence the type hint.
+
+        Returns:
+            The id of the given app.
         """
 
         raise NotImplementedError()
@@ -98,15 +111,36 @@ class DB(SerialModel, abc.ABC):
         self, feedback_definition: FeedbackDefinition
     ) -> FeedbackDefinitionID:
         """
-        Insert a feedback definition into the db.
+        Upsert a `feedback_definition` into the databaase.
+
+        Args:
+            feedback_definition: The feedback definition to insert or update.
+                Note that only the
+                [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition]
+                parts are serialized hence the type hint.
+
+        Returns:
+            The id of the given feedback definition.
         """
 
         raise NotImplementedError()
 
     @abc.abstractmethod
     def get_feedback_defs(
-        self, feedback_definition_id: Optional[str] = None
+        self, feedback_definition_id: Optional[FeedbackDefinitionID] = None
     ) -> pd.DataFrame:
+        """Retrieve feedback definitions from the database.
+        
+        Args:
+            feedback_definition_id: if provided, only the
+                feedback definition with the given id is returned. Otherwise,
+                all feedback definitions are returned.
+
+        Returns:
+            A dataframe with the feedback definitions.
+        """
+
+
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -114,12 +148,13 @@ class DB(SerialModel, abc.ABC):
         self,
         feedback_result: FeedbackResult,
     ) -> FeedbackResultID:
-        """
-        Insert a feedback record into the db.
+        """Upsert a `feedback_result` into the the database.
 
         Args:
+            feedback_result: The feedback result to insert or update.
 
-        - feedback_result: FeedbackResult
+        Returns:
+            The id of the given feedback result.
         """
 
         raise NotImplementedError()
@@ -134,52 +169,101 @@ class DB(SerialModel, abc.ABC):
                                Sequence[FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        shuffle: Optional[bool] = None
     ) -> pd.DataFrame:
-        """
-        Get feedback results matching a set of optional criteria:
+        """Get feedback results matching a set of optional criteria:
 
-        - record_id: Optional[RecordID],
+        Args:
+            record_id: Get only the feedback for the given record id.
 
-        - feedback_result_id: Optional[FeedbackResultID], and
+            feedback_result_id: Get only the feedback for the given feedback
+                result id.
 
-        - feedback_definition_id: Optional[FeedbackDefinitionID] results
-          matching the given ids
+            feedback_definition_id: Get only the feedback for the given feedback
+                definition id.
 
-        - status: Optional[FeedbackResultStatus] results matching the given
-          status.
+            status: Get only the feedback with the given status. If a sequence
+                of statuses is given, all feedback with any of the given
+                statuses are returned.
 
-        - last_ts_before: Optional[datetime] results with last_ts before the
-          given datetime.
+            last_ts_before: get only results with `last_ts` before the
+                given datetime.
 
-        - offset: Optional[int] index of the first row to return.
+            offset: index of the first row to return.
 
-        - limit: Optional[int] limit the number of rows returned.
+            limit: limit the number of rows returned.
+
+            shuffle: shuffle the rows before returning them.
         """
 
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_app(self, app_id: str) -> JSON:
+    def get_feedback_count_by_status(
+        self,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        status: Optional[Union[FeedbackResultStatus,
+                               Sequence[FeedbackResultStatus]]] = None,
+        last_ts_before: Optional[datetime] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+        shuffle: bool = False
+    ) -> Dict[FeedbackResultStatus, int]:
+        """Get count of feedback results matching a set of optional criteria grouped by
+        their status.
+        
+        See [get_feedback][trulens_eval.db.DB.get_feedback] for the meaning of
+        the the arguments.
+
+        Returns:
+            A mapping of status to the count of feedback results of that status
+                that match the given filters.
+        """
+
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_app(self, app_id: AppID) -> Optional[JSONized[App]]:
+        """Get the app with the given id from the database.
+        
+        Returns:
+            The jsonized version of the app with the given id. Deserialization
+                can be done with
+                [App.model_validate][trulens_eval.app.App.model_validate].
+        
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[str]] = None
+        app_ids: Optional[List[AppID]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """
-        Get the records logged for the given set of `app_ids` (otherwise all)
-        alongside the names of the feedback function columns listed the
-        dataframe.
+        """Get records fom the database.
+        
+        Args:
+            app_ids: If given, retrieve only the records for the given apps.
+                Otherwise all apps are retrieved.
+        
+        Returns:
+            A dataframe with the records.
+
+            A list of column names that contain feedback results.
         """
         raise NotImplementedError()
 
 
 def versioning_decorator(func):
-    """A function decorator that checks if a DB can be used before using it.
+    """A function decorator that checks if a DB is up to date.
+     
+    Check that the database is up to date with the current
+    trulens_eval version (or rather the db version used in the current
+    trulens_eval version).
     """
-
+    
     def wrapper(self, *args, **kwargs):
         db_migration._migration_checker(db=self)
         returned_value = func(self, *args, **kwargs)
@@ -190,7 +274,7 @@ def versioning_decorator(func):
 
 def for_all_methods(decorator):
     """
-    A Class decorator that will decorate all DB Access methods except for
+    A class decorator that will decorate all DB Access methods except for
     instantiations, db resets, or version checking.
     """
 
@@ -199,7 +283,6 @@ def for_all_methods(decorator):
             if not str(attr).startswith("_") and str(attr) not in [
                     "get_meta", "reset_database", "migrate_database"
             ] and callable(getattr(cls, attr)):
-                logger.debug(f"{attr}")
                 setattr(cls, attr, decorator(getattr(cls, attr)))
         return cls
 
@@ -208,6 +291,14 @@ def for_all_methods(decorator):
 
 @for_all_methods(versioning_decorator)
 class LocalSQLite(DB):
+    """
+    Warning:
+        This database implementation is deprecated and will be removed in the
+        future. Use
+        [SqlAlchemyDB][trulens_eval.database.sqlalchemy_db.SqlAlchemyDB]
+        instead. Local sqlite databases can be initialized with SqlAlchemyDB.
+    """
+
     filename: Path
 
     TABLE_META: ClassVar[str] = "meta"
@@ -741,3 +832,19 @@ class LocalSQLite(DB):
         combined_df = df_records.merge(df_results, on=['record_id'])
 
         return combined_df, list(result_cols)
+
+    def get_feedback_count_by_status(
+        self,
+        record_id: Optional[RecordID] = None,
+        feedback_result_id: Optional[FeedbackResultID] = None,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
+        status: Optional[Union[FeedbackResultStatus,
+                               Sequence[FeedbackResultStatus]]] = None,
+        last_ts_before: Optional[datetime] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+        shuffle: bool = False
+    ) -> Dict[FeedbackResultStatus, int]:
+        
+        raise NotImplementedError("This database implementation is deprecated.")
+    

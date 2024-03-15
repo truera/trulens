@@ -1125,7 +1125,8 @@ results. Additional information about this call:
         Some apps include either anonymous functions or manipulates methods that
         have self bound already. Our other instrumentation cannot handle those cases.
     
-        EXPERIMENTAL: Work in progress.
+        Warning:
+            Experimental work in progress.
         """
 
         for method_name, _ in self.include_methods.items():

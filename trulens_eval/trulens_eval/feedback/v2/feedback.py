@@ -139,38 +139,8 @@ class Relevance(Semantics):
 This evaluates the *relevance* of the LLM response to the given text by LLM
 prompting.
 
-Relevance is currently only available with OpenAI ChatCompletion API.
+Relevance is available for any LLM provider.
 
-TruLens offers two particular flavors of relevance: 1. *Prompt response
-relevance* is best for measuring the relationship of the final answer to the
-user inputed question. This flavor of relevance is particularly optimized for
-the following features:
-
-    * Relevance requires adherence to the entire prompt.
-    * Responses that don't provide a definitive answer can still be relevant
-    * Admitting lack of knowledge and refusals are still relevant.
-    * Feedback mechanism should differentiate between seeming and actual
-      relevance.
-    * Relevant but inconclusive statements should get increasingly high scores
-      as they are more helpful for answering the query.
-
-    You can read more information about the performance of prompt response
-    relevance by viewing its [smoke test results](../pr_relevance_smoke_tests/).
-
-2. *Question statement relevance*, sometimes known as context relevance, is best
-   for measuring the relationship of a provided context to the user inputed
-   question. This flavor of relevance is optimized for a slightly different set
-   of features:
-    * Relevance requires adherence to the entire query.
-    * Long context with small relevant chunks are relevant.
-    * Context that provides no answer can still be relevant.
-    * Feedback mechanism should differentiate between seeming and actual
-      relevance.
-    * Relevant but inconclusive statements should get increasingly high scores
-      as they are more helpful for answering the query.
-
-    You can read more information about the performance of question statement
-    relevance by viewing its [smoke test results](../qs_relevance_smoke_tests/).
     """
     # openai.relevance
     # openai.relevance_with_cot_reasons
@@ -194,37 +164,35 @@ INFORMATION OVERLAP: """
     )
 
 
-class QuestionStatementRelevance(Relevance, WithPrompt):
+class ContextRelevance(Relevance, WithPrompt):
     # openai.qs_relevance
     # openai.qs_relevance_with_cot_reasons
 
     prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """You are a RELEVANCE grader; providing the relevance of the given STATEMENT to the given QUESTION.
+        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
 Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant. 
 
 A few additional scoring guidelines:
 
-- Long STATEMENTS should score equally well as short STATEMENTS.
+- Long CONTEXTS should score equally well as short CONTEXTS.
 
-- RELEVANCE score should increase as the STATEMENT provides more RELEVANT context to the QUESTION.
+- RELEVANCE score should increase as the CONTEXTS provides more RELEVANT context to the QUESTION.
 
-- RELEVANCE score should increase as the STATEMENT provides RELEVANT context to more parts of the QUESTION.
+- RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
 
-- STATEMENT that is RELEVANT to some of the QUESTION should score of 2, 3 or 4. Higher score indicates more RELEVANCE.
+- CONTEXT that is RELEVANT to some of the QUESTION should score of 2, 3 or 4. Higher score indicates more RELEVANCE.
 
-- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
+- CONTEXT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
 
-- STATEMENT that is RELEVANT to the entire QUESTION should get a score of 9 or 10. Higher score indicates more RELEVANCE.
+- CONTEXT that is RELEVANT to the entire QUESTION should get a score of 9 or 10. Higher score indicates more RELEVANCE.
 
-- STATEMENT must be relevant and helpful for answering the entire QUESTION to get a score of 10.
-
-- Answers that intentionally do not answer the question, such as 'I don't know', should also be counted as the most relevant.
+- CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of 10.
 
 - Never elaborate.
 
 QUESTION: {question}
 
-STATEMENT: {statement}
+CONTEXT: {context}
 
 RELEVANCE: """
     )

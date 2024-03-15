@@ -7,7 +7,8 @@ This is useful because today's LLM applications are increasingly complex.
 Chaining together components such as planning, retrievel, tool selection,
 synthesis, and more; each component can be a source of error.
 
-This also makes the instrumentation and evaluation of LLM applications inseparable. To evaluate the inner components of an application, we first need access to them.
+This also makes the instrumentation and evaluation of LLM applications inseparable.
+To evaluate the inner components of an application, we first need access to them.
 
 As a reminder, a typical feedback definition looks like this:
 

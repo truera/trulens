@@ -88,7 +88,7 @@ TO PLACE
 
 """
 
-__version_info__ = (0, 25, 0)
+__version_info__ = (0, 25, 1)
 __version__ = '.'.join(map(str, __version_info__))
 
 # This check is intentionally done ahead of the other imports as we want to
@@ -98,10 +98,10 @@ from trulens_eval.utils.imports import check_imports
 
 check_imports()
 
-from trulens_eval.feedback import Feedback
-from trulens_eval.feedback import Langchain
-from trulens_eval.feedback.provider import Provider
+from trulens_eval.feedback.feedback import Feedback
+from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.hugs import Huggingface
+from trulens_eval.feedback.provider.langchain import Langchain
 from trulens_eval.schema import FeedbackMode
 from trulens_eval.schema import Select
 from trulens_eval.tru import Tru
