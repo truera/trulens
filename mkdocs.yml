@@ -239,7 +239,7 @@ nav:
           - TruCustom: trulens_eval/api/app/trucustom.md
           - TruVirtual: trulens_eval/api/app/truvirtual.md
       - Feedback: trulens_eval/api/feedback.md
-      - Record: trulens_eval/api/record.md
+      - 💾 Record: trulens_eval/api/record.md
       - Provider:
           - trulens_eval/api/provider/index.md
           - LLMProvider: trulens_eval/api/provider/llmprovider.md

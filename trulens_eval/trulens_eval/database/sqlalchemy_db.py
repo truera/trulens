@@ -139,7 +139,6 @@ class SqlAlchemyDB(DB):
 
         return new_db 
 
-
     @classmethod
     def from_db_url(cls, url: str, redact_keys: bool = False) -> SqlAlchemyDB:
         # Params needed for https://github.com/truera/trulens/issues/470
@@ -161,9 +160,7 @@ class SqlAlchemyDB(DB):
         return cls(engine_params=engine_params, redact_keys=redact_keys)
 
     def migrate_database(self):
-        """
-        Migrate database schema to the latest revision.
-        """
+        """See [DB.migrate_database][trulens_eval.db.DB.migrate_database]."""
 
         try:
             # Expect to get the the behind exception.
