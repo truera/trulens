@@ -1,6 +1,4 @@
 import logging
-import os
-from pprint import pformat
 from typing import Any, ClassVar, Dict, Optional, Sequence
 
 import pydantic
@@ -60,7 +58,7 @@ class Lamini(WithOutputType, LLMProvider):
     """Additional arguments to pass to the `Lamini.generate` as needed for
     model/usage.
 
-    !!! Warning:
+    Warning:
         Feedback functions override the `output_type` argument to
         `Lamini.generate` so this parameter cannot be set using
         `generation_args`.

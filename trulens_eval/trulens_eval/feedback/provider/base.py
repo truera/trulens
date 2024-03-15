@@ -89,7 +89,9 @@ class LLMProvider(Provider):
     
     * [Langchain][trulens_eval.feedback.provider.langchain.Langchain]
 
-    * [Lamini][trulens_eval.feedback.provider.lamini.Lamini]
+    * [Lamini][trulens_eval.feedback.provider.lamini.Lamini]. Lamini supports
+    several families of open models as listed in the [Lamini model list
+    page](https://lamini-ai.github.io/inference/models_list/).
     """
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2

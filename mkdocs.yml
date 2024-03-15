@@ -51,7 +51,7 @@ plugins:
       rewrite_relative_urls: true
       heading_offset: 0
   - search
-  - mkdocs-jupyter
+  # - mkdocs-jupyter
   - mkdocstrings:
       # See https://mkdocstrings.github.io/python/usage/configuration/docstrings/ .
       default_handler: python
