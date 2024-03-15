@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import defaultdict
 from datetime import datetime
 import json
@@ -73,7 +75,7 @@ class SqlAlchemyDB(DB):
     session_params: dict = Field(default_factory=dict)
 
     engine: Optional[Engine] = None
-    
+
     Session: Optional[sessionmaker] = None
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -93,8 +95,57 @@ class SqlAlchemyDB(DB):
         self.engine = create_engine(**self.engine_params)
         self.Session = sessionmaker(self.engine, **self.session_params)
 
+
     @classmethod
-    def from_db_url(cls, url: str, redact_keys: bool = False) -> "SqlAlchemyDB":
+    def from_tru_args(
+        cls,
+        database_url: Optional[str] = None,
+        database_file: Optional[str] = None,
+        database_redact_keys: Optional[bool] = False,
+        database_version_table: Optional[str] = "trulens_version_table",
+        **kwargs
+    ) -> SqlAlchemyDB:
+        
+        if None not in (database_url, database_file):
+            raise ValueError(
+                "Please specify at most one of `database_url` and `database_file`"
+            )
+
+        if database_file:
+            warnings.warn(
+                (
+                    "`database_file` is deprecated, "
+                    "use `database_url` instead as in `database_url='sqlite:///filename'."
+                ),
+                DeprecationWarning,
+                stacklevel=2
+            )
+
+        if database_url is None:
+            database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
+
+        new_db: db.DB = SqlAlchemyDB.from_db_url(
+            database_url, redact_keys=database_redact_keys
+        )
+
+        print(
+            f"{text.UNICODE_SQUID} Tru initialized with db url {new_db.engine.url} ."
+        )
+        if database_redact_keys:
+            print(
+                f"{text.UNICODE_LOCK} Secret keys will not be included in the database."
+            )
+        else:
+            print(
+                f"{text.UNICODE_STOP} Secret keys may be written to the database. "
+                "See the `database_redact_keys` option of Tru` to prevent this."
+            )
+
+        return new_db 
+
+
+    @classmethod
+    def from_db_url(cls, url: str, redact_keys: bool = False) -> SqlAlchemyDB:
         # Params needed for https://github.com/truera/trulens/issues/470
         # Params are from
         # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn

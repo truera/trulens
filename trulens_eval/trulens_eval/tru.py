@@ -149,53 +149,29 @@ class Tru(python.SingletonPerName):
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
         database_redact_keys: bool = False,
+        database_args: Optional[Dict[str, Any]] = None
     ):
 
+        if database_args is None:
+            database_args = {}
+
+        database_args.update({
+            'database_url': database_url,
+            'database_file': database_file,
+            'database_redact_keys': database_redact_keys
+        })
+
         if python.safe_hasattr(self, "db"):
-            if database_url is not None or database_file is not None:
+            if sum((1 if v is not None else 0 for v in database_args.values())) > 0:
                 logger.warning(
                     "Tru was already initialized. "
-                    "Cannot change database_url=%s "
-                    "or database_file=%s .", database_url, database_file
+                    "Cannot change database configuration after initialization."
                 )
 
             # Already initialized by SingletonByName mechanism.
             return
 
-        if None not in (database_url, database_file):
-            raise ValueError(
-                "Please specify at most one of `database_url` and `database_file`"
-            )
-
-        if database_file:
-            warnings.warn(
-                (
-                    "`database_file` is deprecated, "
-                    "use `database_url` instead as in `database_url='sqlite:///filename'."
-                ),
-                DeprecationWarning,
-                stacklevel=2
-            )
-
-        if database_url is None:
-            database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
-
-        self.db: db.DB = sqlalchemy_db.SqlAlchemyDB.from_db_url(
-            database_url, redact_keys=database_redact_keys
-        )
-
-        print(
-            f"{text.UNICODE_SQUID} Tru initialized with db url {self.db.engine.url} ."
-        )
-        if database_redact_keys:
-            print(
-                f"{text.UNICODE_LOCK} Secret keys will not be included in the database."
-            )
-        else:
-            print(
-                f"{text.UNICODE_STOP} Secret keys may be written to the database. "
-                "See the `database_redact_keys` option of Tru` to prevent this."
-            )
+        self.db = sqlalchemy_db.SqlAlchemyDB.from_tru_args(**database_args)
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict

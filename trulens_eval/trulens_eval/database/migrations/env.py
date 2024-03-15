@@ -71,7 +71,7 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection, 
             target_metadata=target_metadata,
-            version_table="trulems_version_table" # TODO: configurable
+            version_table="trulens_version_table" # TODO: configurable
         )
 
         with context.begin_transaction():

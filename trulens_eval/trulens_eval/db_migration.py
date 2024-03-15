@@ -65,13 +65,20 @@ class VersionException(Exception):
 
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
-migration_versions: List[str] = ["0.19.0", "0.9.0", "0.3.0", "0.2.0", "0.1.2"]
+migration_versions: List[str] = [
+    "0.25.2",
+    "0.19.0",
+    "0.9.0",
+    "0.3.0",
+    "0.2.0",
+    "0.1.2"
+]
 
 
 def _update_db_json_col(
     db, table: str, old_entry: tuple, json_db_col_idx: int, new_json: dict
 ):
-    """Replaces an old json serialized db column with a migrated/new one
+    """Replaces an old json serialized db column with a migrated/new one.
 
     Args:
         db (DB): the db object
@@ -82,7 +89,7 @@ def _update_db_json_col(
 
         json_db_col_idx (int): the tuple idx to update
         
-        new_json (dict): the new json object to be put in the DB
+        new_json (dict): the new json object to be put in the D
     """
     migrate_record = list(old_entry)
     migrate_record[json_db_col_idx] = json.dumps(new_json)
@@ -150,6 +157,12 @@ class UnknownClass(pydantic.BaseModel):
         """
 
 
+def migrate_0_25_2(db):
+    # Change in alchemy version table name.
+
+    pass
+
+
 def migrate_0_9_0(db):
     rename_classinfo = jsonlike_rename_key("__tru_class_info", "tru_class_info")
     rename_objserial = jsonlike_rename_value("ObjSerial", "Obj")
@@ -159,7 +172,7 @@ def migrate_0_9_0(db):
         # Old Method format:
         if isinstance(obj,
                       dict) and "module_name" in obj and "method_name" in obj:
-            logger.debug(f"migrating RecordAppCallMethod {obj}")
+            logger.debug("migrating RecordAppCallMethod %s", obj)
             # example: {'module_name': 'langchain.chains.llm', 'class_name': 'LLMChain', 'method_name': '_call'}
             return Method(
                 obj=Obj(
@@ -183,7 +196,7 @@ def migrate_0_9_0(db):
 
     conn, c = db._connect()
     c.execute(
-        f"""SELECT * FROM records"""
+        """SELECT * FROM records"""
     )  # Use hardcode names as versions could go through name change
     rows = c.fetchall()
     json_db_col_idx = 4
@@ -209,15 +222,15 @@ def migrate_0_9_0(db):
 
         if CLASS_INFO not in new_json:
             new_json[CLASS_INFO] = Class.of_class(Feedback).model_dump()
-            logger.debug(f"adding '{CLASS_INFO}'")
+            logger.debug("adding '%s'", CLASS_INFO)
 
         if "initial_app_loader" not in new_json:
             new_json['initial_app_loader'] = None
-            logger.debug(f"adding 'initial_app_loader'")
+            logger.debug("adding 'initial_app_loader'")
 
         if "initial_app_loader_dump" not in new_json:
             new_json['initial_app_loader_dump'] = None
-            logger.debug(f"adding 'initial_app_loader_dump'")
+            logger.debug("adding 'initial_app_loader_dump'")
 
         _update_db_json_col(
             db=db,
@@ -227,7 +240,7 @@ def migrate_0_9_0(db):
             new_json=new_json
         )
 
-    c.execute(f"""SELECT * FROM apps""")
+    c.execute("""SELECT * FROM apps""")
     rows = c.fetchall()
     json_db_col_idx = 1
     for old_entry in tqdm(rows, desc="Migrating Apps DB 0.9.0 to 0.19.0"):
@@ -235,11 +248,11 @@ def migrate_0_9_0(db):
 
         if CLASS_INFO not in new_json:
             new_json[CLASS_INFO] = Class.of_class(AppDefinition).model_dump()
-            logger.debug(f"adding `{CLASS_INFO}`")
+            logger.debug("adding `%s`", CLASS_INFO)
 
         if "app" not in new_json:
             new_json['app'] = dict()
-            logger.debug(f"adding `app`")
+            logger.debug("adding `app`")
 
         _update_db_json_col(
             db=db,
@@ -254,8 +267,10 @@ def migrate_0_9_0(db):
 
 def migrate_0_3_0(db):
     conn, c = db._connect()
-    c.execute(f"""ALTER TABLE feedbacks
-        ADD multi_result TEXT;""")
+    c.execute("""
+        ALTER TABLE feedbacks
+        ADD multi_result TEXT;
+    """)
     conn.commit()
 
 
@@ -268,7 +283,7 @@ def migrate_0_2_0(db):
 
     conn, c = db._connect()
     c.execute(
-        f"""SELECT * FROM records"""
+        """SELECT * FROM records"""
     )  # Use hardcode names as versions could go through name change
     rows = c.fetchall()
     json_db_col_idx = 7
@@ -294,7 +309,7 @@ def migrate_0_2_0(db):
             new_json=new_json
         )
 
-    c.execute(f"""SELECT * FROM feedbacks""")
+    c.execute("""SELECT * FROM feedbacks""")
     rows = c.fetchall()
     json_db_col_idx = 9
     for old_entry in tqdm(rows, desc="Migrating Feedbacks DB 0.2.0 to 0.3.0"):
@@ -309,7 +324,7 @@ def migrate_0_2_0(db):
             new_json=new_json
         )
 
-    c.execute(f"""SELECT * FROM feedback_defs""")
+    c.execute("""SELECT * FROM feedback_defs""")
     rows = c.fetchall()
     json_db_col_idx = 1
     for old_entry in tqdm(rows,
@@ -346,7 +361,7 @@ def migrate_0_1_2(db):
     conn, c = db._connect()
 
     c.execute(
-        f"""ALTER TABLE records
+        """ALTER TABLE records
         RENAME COLUMN chain_id TO app_id;
         """
     )
@@ -356,11 +371,11 @@ def migrate_0_1_2(db):
         DEFAULT "{MIGRATION_UNKNOWN_STR}";"""
     )
 
-    c.execute(f"""ALTER TABLE feedbacks
+    c.execute("""ALTER TABLE feedbacks
         DROP COLUMN chain_id;""")
 
     c.execute(
-        f"""SELECT * FROM records"""
+        """SELECT * FROM records"""
     )  # Use hardcode names as versions could go through name change
     rows = c.fetchall()
     json_db_col_idx = 4
@@ -381,7 +396,7 @@ def migrate_0_1_2(db):
             new_json=new_json
         )
 
-    c.execute(f"""SELECT * FROM chains""")
+    c.execute("""SELECT * FROM chains""")
     rows = c.fetchall()
     json_db_col_idx = 1
     for old_entry in tqdm(rows, desc="Migrating Apps DB 0.1.2 to 0.2.0"):
@@ -417,7 +432,8 @@ upgrade_paths = {
     "0.1.2": ("0.2.0", migrate_0_1_2),
     "0.2.0": ("0.3.0", migrate_0_2_0),
     "0.3.0": ("0.9.0", migrate_0_3_0),
-    "0.9.0": ("0.19.0", migrate_0_9_0)
+    "0.9.0": ("0.19.0", migrate_0_9_0),
+    "0.19.0": ("0.25.2.0", migrate_0_25_2)
 }
 
 
@@ -622,7 +638,7 @@ def _serialization_asserts(db) -> None:
 
                         raise VersionException(
                             f"Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}\n\n{validation_fail_advice}"
-                        )
+                        ) from e
 
 
 def migrate(db) -> None:
