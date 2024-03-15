@@ -137,19 +137,19 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         with a prompt that the original response is correct, and measures
         whether previous Chat GPT's response is similar.
 
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback import GroundTruthAgreement
-        golden_set = [
-            {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
-            {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
-        ]
-        ground_truth_collection = GroundTruthAgreement(golden_set)
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback import GroundTruthAgreement
+            golden_set = [
+                {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
+                {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+            ]
+            ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output() 
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output() 
+            ```
+            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent. 
@@ -179,19 +179,19 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         Primarily used for evaluation of model generated feedback against human feedback
 
-        **Usage**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback import GroundTruthAgreement
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback import GroundTruthAgreement
 
-        golden_set =
-        {"query": "How many stomachs does a cow have?", "response": "Cows' diet relies primarily on grazing.", "expected_score": 0.4},
-        {"query": "Name some top dental floss brands", "response": "I don't know", "expected_score": 0.8}
-        ]
-        ground_truth_collection = GroundTruthAgreement(golden_set)
+            golden_set =
+            {"query": "How many stomachs does a cow have?", "response": "Cows' diet relies primarily on grazing.", "expected_score": 0.4},
+            {"query": "Name some top dental floss brands", "response": "I don't know", "expected_score": 0.8}
+            ]
+            ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        f_groundtruth = Feedback(ground_truth.mae).on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
-        ```
+            f_groundtruth = Feedback(ground_truth.mae).on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
+            ```
 
         """
 
@@ -210,19 +210,19 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Uses BERT Score. A function that that measures
         similarity to ground truth using bert embeddings. 
 
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback import GroundTruthAgreement
-        golden_set = [
-            {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
-            {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
-        ]
-        ground_truth_collection = GroundTruthAgreement(golden_set)
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback import GroundTruthAgreement
+            golden_set = [
+                {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
+                {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+            ]
+            ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        feedback = Feedback(ground_truth_collection.bert_score).on_input_output() 
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            feedback = Feedback(ground_truth_collection.bert_score).on_input_output() 
+            ```
+            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
 
         Args:
@@ -256,19 +256,19 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap. 
 
-        **Usage:**
-        ```
-        from trulens_eval import Feedback
-        from trulens_eval.feedback import GroundTruthAgreement
-        golden_set = [
-            {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
-            {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
-        ]
-        ground_truth_collection = GroundTruthAgreement(golden_set)
+        Usage:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback import GroundTruthAgreement
+            golden_set = [
+                {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
+                {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+            ]
+            ground_truth_collection = GroundTruthAgreement(golden_set)
 
-        feedback = Feedback(ground_truth_collection.bleu).on_input_output() 
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            feedback = Feedback(ground_truth_collection.bleu).on_input_output() 
+            ```
+            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent. 
