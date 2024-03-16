@@ -204,7 +204,6 @@ class SqlAlchemyDB(DB):
 
     def list_records(self, app_id) -> List[int]:
         data = []
-        breakpoint()
         with self.Session.begin() as session:
             print(session.query(orm.Record).all())
             data = [

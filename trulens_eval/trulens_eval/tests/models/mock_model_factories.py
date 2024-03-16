@@ -1,4 +1,3 @@
-from factory import Factory as factory
 
 import factory
 from faker import Faker
@@ -12,6 +11,8 @@ import random
 
 faker = Faker()
 faker.add_provider(EnumProvider)
+
+
 
 
 class AppDefinitionFactory(factory.Factory):

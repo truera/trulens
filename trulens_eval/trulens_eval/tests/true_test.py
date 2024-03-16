@@ -5,7 +5,7 @@ from trulens_eval.tru import Tru
 
 class TrueTestCase(unittest.TestCase):
     def setUp(self):
-        self.tru = Tru("sqlite:///default.sqlite")
+        self.tru = Tru()
         self.app_defination = AppDefinitionFactory.create_batch(3)
         self.record = RecordFactory.create_batch(3)
         self.feedback_definiition = FeedbackDefinitionFactory.create_batch(3)
@@ -16,7 +16,8 @@ class TrueTestCase(unittest.TestCase):
     #     self.assertEqual(record, [])
 
     def test_list_record_when_valid(self):
-        breakpoint()
+
+        print(self.tru.db.query(orm.Record).all())
         record = self.tru.list_records(self.record[0].app.app_id)
         print(self.record[0].app.__dict__)
         print(self.record[0].app.app_id)
