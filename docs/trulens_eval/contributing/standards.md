@@ -5,15 +5,15 @@ Enumerations of standards for code and its documentation to be maintained in
 
 ## Proper Names
 
-Styling/formatting of proper names.
+Styling/formatting of proper names in italics.
 
-- "TruLens"
+- *TruLens*
 
-- "LangChain"
+- *LangChain*
 
-- "LlamaIndex"
+- *LlamaIndex*
 
-- "NeMo Guardrails", "Guardrails" for short, "rails" for shorter.
+- *NeMo Guardrails*, *Guardrails* for short, *rails* for shorter.
 
 ## Python
 
