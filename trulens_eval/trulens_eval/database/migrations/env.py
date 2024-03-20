@@ -5,10 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from trulens_eval.database.orm import Base
-
-# Database schema information
-target_metadata = Base.metadata
+from trulens_eval.database.orm import make_base_for_prefix, BaseWithTablePrefix
 
 # Gives access to the values within the alembic.ini file
 config = context.config
@@ -22,12 +19,25 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Evaluate `sqlalchemy.url` from the environment
+# Get `sqlalchemy.url` from the environment.
 if config.get_main_option("sqlalchemy.url", None) is None:
     config.set_main_option(
         "sqlalchemy.url", os.environ.get("SQLALCHEMY_URL", "")
     )
 
+# Get `trulens.table_prefix` from the environment.
+prefix = config.get_main_option("trulens.table_prefix") or "trulens_"
+
+
+Base = make_base_for_prefix(
+    BaseWithTablePrefix,
+    prefix
+)
+
+# Database schema information
+target_metadata = Base.metadata
+
+url = config.get_main_option("sqlalchemy.url")
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -40,17 +50,17 @@ def run_migrations_offline() -> None:
     Calls to context.execute() here emit the given string to the
     script output.
     """
-    url = config.get_main_option("sqlalchemy.url")
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        version_table="trulens_version_table" # TODO: configurable
+        version_table=prefix + "alembic_version"
     )
 
     with context.begin_transaction():
-        context.run_migrations()
+        context.run_migrations(confi=config)
 
 
 def run_migrations_online() -> None:
@@ -71,11 +81,11 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection, 
             target_metadata=target_metadata,
-            version_table="trulens_version_table" # TODO: configurable
+            version_table=prefix + "alembic_version"
         )
 
         with context.begin_transaction():
-            context.run_migrations()
+            context.run_migrations(config=config)
 
 
 if context.is_offline_mode():

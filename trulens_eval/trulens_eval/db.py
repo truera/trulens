@@ -45,6 +45,12 @@ logger = logging.getLogger(__name__)
 MULTI_CALL_NAME_DELIMITER = ":::"
 
 
+DEFAULT_DATABASE_FILE: str = "default.sqlite"
+"""Filename for default sqlite database.
+
+The sqlalchemy url for this default local sqlite database is `sqlite:///default.sqlite`.
+"""
+
 class DBMeta(pydantic.BaseModel):
     """
     Database meta data mostly used for migrating from old db schemas.
@@ -64,9 +70,13 @@ class DB(SerialModel, abc.ABC):
     redact_keys: bool = False
     """Redact secrets before writing out data."""
 
-    version_table: str = "trulens_version_table"
-    """For databases that support versioning (alembic), the name of table where
-    versioning data is stored."""
+    table_prefix: str = "trulens_"
+    """Prefix for table names for trulens_eval to use.
+    
+    May be useful in some databases where trulens is not the only tenant.
+    """
+
+
 
     def _json_str_of_obj(self, obj: Any) -> str:
         return json_str_of_obj(obj, redact_keys=self.redact_keys)
@@ -345,15 +355,15 @@ class LocalSQLite(DB):
         self._drop_tables()
         self._build_tables()
 
-    def migrate_database(self, prior_version_table: str = "version_table"):
+    def migrate_database(self, prior_table_prefix: str = ""):
         """
         Migrate the database to the current version of trulens_eval. If the
         prior version used a different name for the version table, it must be
         provided to this method.
 
         Args:
-            prior_version_table: str -- the name of the version table used by the
-                prior version of the database. 
+            prior_table_prefix: The table name prefix used in the prior version
+                of the database or the database we need to migrate from.
         """
 
         # TODO: figure out how to update the version table alone if that is all

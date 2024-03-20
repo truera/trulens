@@ -18,6 +18,7 @@ from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.db import LocalSQLite
+from trulens_eval import db as mod_db
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ def for_all_methods(decorator, _except: Optional[List[str]] = None):
             if _except is not None and attr_name in _except:
                 continue
 
-            logger.debug(f"Decorating {attr_name}")
+            logger.debug("Decorating %s", attr_name)
             setattr(cls, attr_name, decorator(attr))
 
         return cls
@@ -86,7 +87,9 @@ def is_legacy_sqlite(engine: Engine) -> bool:
         # brand new db, not even initialized yet
         return False
 
-    return not "alembic_version" in tables
+    version_tables = [t for t in tables if t.endswith("alembic_version")]
+
+    return len(version_tables) == 0
 
     #return DbRevisions.load(engine).current is None
 
@@ -121,10 +124,53 @@ def is_memory_sqlite(
     )
 
 
-def check_db_revision(engine: Engine):
+def check_db_revision(
+    engine: Engine,
+    prefix: str = "trulens_",
+    prior_prefix: Optional[str] = None
+):
     """
     Check if database schema is at the expected revision.
+
+    Args:
+        engine: SQLAlchemy engine to check.
+
+        prefix: Prefix used for table names including alembic_version in the
+            current code.
+
+        prior_prefix: Table prefix used in the previous version of the
+            database. Before this configuration was an option, the prefix was
+            equivalent to "".
     """
+
+    if not isinstance(prefix, str):
+        raise ValueError("prefix must be a string")
+
+    if prefix == prior_prefix:
+        raise ValueError("prior_prefix and prefix canot be the same. Use None for prior_prefix if it is unknown.")
+
+    ins = sqlalchemy.inspect(engine)
+    tables = ins.get_table_names()
+
+    version_tables = [t for t in tables if t.endswith("alembic_version")]
+
+    if prior_prefix is not None:
+        # Check if tables using the old/empty prefix exist.
+        if prior_prefix + "alembic_version" in version_tables:
+            raise DatabaseVersionException.reconfigured(prior_prefix=prior_prefix)
+    else:
+        if len(version_tables) > 0:
+            if len(version_tables) > 1:
+                raise ValueError(
+                    f"Found multiple alembic_version tables: {version_tables}. "
+                    "Cannot determine prior prefix. "
+                    "Please specify it using the `prior_prefix` argument."
+                )
+            
+            if version_tables[0] != prefix + "alembic_version":
+                raise DatabaseVersionException.reconfigured(
+                    prior_prefix=version_tables[0].replace("alembic_version", "")
+                )
 
     if is_legacy_sqlite(engine):
         logger.info("Found legacy SQLite file: %s", engine.url)
@@ -135,7 +181,7 @@ def check_db_revision(engine: Engine):
     if revisions.current is None:
         logger.debug("Creating database")
         upgrade_db(
-            engine, revision="head"
+            engine, revision="head", prefix=prefix
         )  # create automatically if it doesn't exist
 
     elif revisions.in_sync:
@@ -153,7 +199,7 @@ def check_db_revision(engine: Engine):
         )
 
 
-def migrate_legacy_sqlite(engine: Engine):
+def migrate_legacy_sqlite(engine: Engine, prefix: str = "trulens_"):
     """
     Migrate legacy file-based SQLite to the latest Alembic revision:
 
@@ -176,13 +222,14 @@ def migrate_legacy_sqlite(engine: Engine):
     """
 
     # 1. Make sure that original database is at the latest legacy schema
-    assert is_legacy_sqlite(engine)
+    if not is_legacy_sqlite(engine):
+        raise ValueError("Not a legacy SQLite database")
 
     original_file = Path(engine.url.database)
     saved_db_file = original_file.parent / f"{original_file.name}_saved_{uuid.uuid1()}"
     shutil.copy(original_file, saved_db_file)
     logger.info(
-        f"Saved original db file: `{original_file}` to new file: `{saved_db_file}`"
+        "Saved original db file: `%s` to new file: `%s`", original_file, saved_db_file
     )
     logger.info("Handling legacy SQLite file: %s", original_file)
     logger.debug("Applying legacy migration scripts")
@@ -204,7 +251,7 @@ def migrate_legacy_sqlite(engine: Engine):
             pool_pre_ping=True,
             pool_use_lifo=True
         )
-        upgrade_db(stg_engine, revision="1")
+        upgrade_db(stg_engine, revision="1", prefix=prefix)
 
         # 3. Copy records from original database to staging
         src_conn = sqlite3.connect(original_file)
@@ -223,7 +270,7 @@ def migrate_legacy_sqlite(engine: Engine):
 
         # 4. Migrate staging database to the latest Alembic revision
         logger.debug("Applying Alembic migration scripts")
-        upgrade_db(stg_engine, revision="head")
+        upgrade_db(stg_engine, revision="head", prefix=prefix)
 
         # 5. Replace original database file with the staging one
         logger.debug("Replacing database file at %s", original_file)
