@@ -1,4 +1,4 @@
-# Database
+# 🗄 Database
 
 ::: trulens_eval.db
 
