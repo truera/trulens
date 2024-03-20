@@ -1,3 +1,3 @@
-# Instruments
+# 𝄢 Instruments
 
 ::: trulens_eval.instruments
