@@ -96,8 +96,8 @@ or [🧙 all open issues](https://github.com/truera/trulens/issues).
 
 ### 🧭 Design Goals and Principles
 
-The design of the user interface API is governed by the principles outlined in
-the [Design](design.md) doc.
+The design of the API is governed by the principles outlined in the
+[Design](design.md) doc.
 
 ### ✅ Standards
 
