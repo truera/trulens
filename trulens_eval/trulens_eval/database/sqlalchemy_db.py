@@ -107,8 +107,8 @@ class SqlAlchemyDB(DB):
         cls,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
-        database_redact_keys: Optional[bool] = False,
-        database_table_prefix: Optional[str] = "trulens_",
+        database_redact_keys: Optional[bool] = None,
+        database_prefix: Optional[str] = None,
         **kwargs
     ) -> SqlAlchemyDB:
         """Process database-related configuration provided to the Tru class to
@@ -135,10 +135,14 @@ class SqlAlchemyDB(DB):
         if database_url is None:
             database_url = f"sqlite:///{database_file or mod_db.DEFAULT_DATABASE_FILE}"
 
+        if 'table_prefix' not in kwargs:
+            kwargs['table_prefix'] = database_prefix
+
+        if 'redact_keys' not in kwargs:
+            kwargs['redact_keys'] = database_redact_keys
+
         new_db: DB = SqlAlchemyDB.from_db_url(
             database_url,
-            redact_keys=database_redact_keys,
-            table_prefix=database_table_prefix,
             **kwargs
         )
 

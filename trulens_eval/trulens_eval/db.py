@@ -73,10 +73,8 @@ class DB(SerialModel, abc.ABC):
     table_prefix: str = "trulens_"
     """Prefix for table names for trulens_eval to use.
     
-    May be useful in some databases where trulens is not the only tenant.
+    May be useful in some databases where trulens is not the only app.
     """
-
-
 
     def _json_str_of_obj(self, obj: Any) -> str:
         return json_str_of_obj(obj, redact_keys=self.redact_keys)

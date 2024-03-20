@@ -149,6 +149,7 @@ class Tru(python.SingletonPerName):
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
         database_redact_keys: bool = False,
+        database_prefix: str = "trulens_",
         database_args: Optional[Dict[str, Any]] = None
     ):
 
@@ -158,7 +159,8 @@ class Tru(python.SingletonPerName):
         database_args.update({
             'database_url': database_url,
             'database_file': database_file,
-            'database_redact_keys': database_redact_keys
+            'database_redact_keys': database_redact_keys,
+            'database_prefix': database_prefix
         })
 
         if python.safe_hasattr(self, "db"):
