@@ -114,7 +114,7 @@ class Groundedness(WithClassInfo, SerialModel):
             )
         else:
             hypotheses = sent_tokenize(statement)
-            reasons_dict = {}
+            reasons_str = ""
             for i, hypothesis in enumerate(tqdm(
                 hypotheses, desc="Groundedness per statement in source")):
                 reason = self.groundedness_provider._groundedness_doc_in_out(
@@ -123,8 +123,8 @@ class Groundedness(WithClassInfo, SerialModel):
                 score_line = next((line for line in reason.split('\n') if "Score" in line), None)
                 if score_line:
                     groundedness_scores[f"statement_{i}"] = re_0_10_rating(score_line) / 10
-                    reasons_dict[f"STATEMENT_{i}"] = reason
-            return groundedness_scores, {"reasons": reasons_dict}
+                    reasons_str += f"\nSTATEMENT {i}:\n{reason}\n\n"
+            return groundedness_scores, {"reasons": reasons_str}
 
     def groundedness_measure_with_nli(self, source: str,
                                       statement: str) -> Tuple[float, dict]:

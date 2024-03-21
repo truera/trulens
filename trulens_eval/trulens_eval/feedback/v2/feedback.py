@@ -161,7 +161,6 @@ class Groundedness(Semantics, WithPrompt):
         
         Please answer with the template below for all statement sentences:
 
-        TEMPLATE: 
         Statement Sentence: <Sentence>, 
         Supporting Evidence: <Choose the exact unchanged sentences in the source that can answer the statement, if nothing matches, say NOTHING FOUND>
         Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
