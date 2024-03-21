@@ -22,11 +22,11 @@ from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import downgrade_db
 from trulens_eval.database.migrations import get_revision_history
 from trulens_eval.database.migrations import upgrade_db
-from trulens_eval.database.sqlalchemy_db import AppsExtractor
-from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
+from trulens_eval.database.sqlalchemy import AppsExtractor
+from trulens_eval.database.sqlalchemy import SqlAlchemyDB
 from trulens_eval.database.utils import is_legacy_sqlite
-from trulens_eval.db import DB
-from trulens_eval.db import LocalSQLite
+from trulens_eval.database.base import DB
+from trulens_eval.database.base import LocalSQLite
 
 
 class TestDbV2Migration(TestCase):

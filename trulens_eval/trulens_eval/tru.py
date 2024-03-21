@@ -16,7 +16,6 @@ from threading import Thread
 from time import sleep
 from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
                     Tuple, Union)
-import warnings
 
 import humanize
 import pandas
@@ -25,15 +24,13 @@ from tqdm.auto import tqdm
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
-from trulens_eval import db
+from trulens_eval.database.base import DB
 from trulens_eval import schema
-from trulens_eval.database import sqlalchemy_db
+from trulens_eval.database import sqlalchemy
 from trulens_eval.feedback import feedback
-from trulens_eval.utils import imports
 from trulens_eval.utils import notebook_utils
 from trulens_eval.utils import python
 from trulens_eval.utils import serial
-from trulens_eval.utils import text
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.python import Future  # code style exception
 
@@ -124,7 +121,7 @@ class Tru(python.SingletonPerName):
     DEFERRED_NUM_RUNS: int = 32
     """Number of futures to wait for when evaluating deferred feedback functions."""
 
-    db: db.DB
+    db: DB
     """Database supporting this workspace."""
 
     _dashboard_urls: Optional[str] = None
@@ -148,22 +145,24 @@ class Tru(python.SingletonPerName):
         self,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
-        database_redact_keys: bool = False,
-        database_prefix: str = "trulens_",
+        database_redact_keys: Optional[bool] = None,
+        database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None
     ):
 
         if database_args is None:
             database_args = {}
 
-        database_args.update({
+        database_args.update({k: v for k, v in {
             'database_url': database_url,
             'database_file': database_file,
             'database_redact_keys': database_redact_keys,
             'database_prefix': database_prefix
-        })
+        }.items() if v is not None})
 
         if python.safe_hasattr(self, "db"):
+            # Already initialized by SingletonByName mechanism. Give warning if
+            # any option was specified (not None) as it will be ignored.
             if sum((1 if v is not None else 0 for v in database_args.values())) > 0:
                 logger.warning(
                     "Tru was already initialized. "
@@ -173,7 +172,7 @@ class Tru(python.SingletonPerName):
             # Already initialized by SingletonByName mechanism.
             return
 
-        self.db = sqlalchemy_db.SqlAlchemyDB.from_tru_args(**database_args)
+        self.db = sqlalchemy.SqlAlchemyDB.from_tru_args(**database_args)
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict
@@ -337,7 +336,7 @@ class Tru(python.SingletonPerName):
 
         app_id = record.app_id
 
-        self.db: db.DB
+        self.db: DB
 
         if app is None:
             app = schema.AppDefinition.model_validate(

@@ -11,12 +11,13 @@ from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from pydantic import BaseModel
 from sqlalchemy import Engine
+from trulens_eval.database.base import db as mod_db
 
 logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def alembic_config(engine: Engine, prefix: str = "trulens_") -> Iterator[Config]:
+def alembic_config(engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX) -> Iterator[Config]:
     alembic_dir = os.path.dirname(os.path.abspath(__file__))
     db_url = str(engine.url).replace("%", "%%")  # Escape any '%' in db_url
     config = Config(os.path.join(alembic_dir, "alembic.ini"))
@@ -31,27 +32,27 @@ def alembic_config(engine: Engine, prefix: str = "trulens_") -> Iterator[Config]
     yield config
 
 
-def upgrade_db(engine: Engine, revision: str = "head", prefix: str = "trulens_"):
+def upgrade_db(engine: Engine, revision: str = "head", prefix: str = mod_db.DEFAULT_DATABASE_PREFIX):
     with alembic_config(engine, prefix=prefix) as config:
         command.upgrade(config, revision)
 
 
-def downgrade_db(engine: Engine, revision: str = "base", prefix: str = "trulens_"):
+def downgrade_db(engine: Engine, revision: str = "base", prefix: str = mod_db.DEFAULT_DATABASE_PREFIX):
     with alembic_config(engine, prefix=prefix) as config:
         command.downgrade(config, revision)
 
 
-def get_current_db_revision(engine: Engine) -> Optional[str]:
+def get_current_db_revision(engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX) -> Optional[str]:
     with engine.connect() as conn:
-        return MigrationContext.configure(conn).get_current_revision()
+        return MigrationContext.configure(conn, opts=dict(version_table=prefix + "alembic_version")).get_current_revision()
 
 
-def get_revision_history(engine: Engine) -> List[str]:
+def get_revision_history(engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX) -> List[str]:
     """
     Return list of all revisions, from base to head.
     Warn: Branching not supported, fails if there's more than one head.
     """
-    with alembic_config(engine) as config:
+    with alembic_config(engine, prefix=prefix) as config:
         scripts = ScriptDirectory.from_config(config)
         return list(
             reversed(
@@ -76,10 +77,10 @@ class DbRevisions(BaseModel):
         return self.history[-1]
 
     @classmethod
-    def load(cls, engine: Engine) -> DbRevisions:
+    def load(cls, engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX) -> DbRevisions:
         return cls(
-            current=get_current_db_revision(engine),
-            history=get_revision_history(engine),
+            current=get_current_db_revision(engine, prefix=prefix),
+            history=get_revision_history(engine, prefix=prefix),
         )
 
     @property

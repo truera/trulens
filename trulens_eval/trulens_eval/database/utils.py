@@ -14,11 +14,11 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import inspect as sql_inspect
 
+from trulens_eval.database import base as mod_db
+from trulens_eval.database.base import LocalSQLite
 from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
-from trulens_eval.db import LocalSQLite
-from trulens_eval import db as mod_db
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +152,8 @@ def check_db_revision(
     ins = sqlalchemy.inspect(engine)
     tables = ins.get_table_names()
 
+    # Get all tables we could have made for alembic version. Other apps might
+    # also have made these though.
     version_tables = [t for t in tables if t.endswith("alembic_version")]
 
     if prior_prefix is not None:
@@ -159,15 +161,23 @@ def check_db_revision(
         if prior_prefix + "alembic_version" in version_tables:
             raise DatabaseVersionException.reconfigured(prior_prefix=prior_prefix)
     else:
-        if len(version_tables) > 0:
-            if len(version_tables) > 1:
-                raise ValueError(
-                    f"Found multiple alembic_version tables: {version_tables}. "
-                    "Cannot determine prior prefix. "
-                    "Please specify it using the `prior_prefix` argument."
-                )
-            
-            if version_tables[0] != prefix + "alembic_version":
+        # Check if the new/expected version table exists.
+
+        if prefix + "alembic_version" not in version_tables:
+            # If not, lets try to figure out the prior prefix.
+
+            if len(version_tables) > 0:
+
+                if len(version_tables) > 1:
+                    # Cannot figure out prior prefix if there is more than one
+                    # version table.
+                    raise ValueError(
+                        f"Found multiple alembic_version tables: {version_tables}. "
+                        "Cannot determine prior prefix. "
+                        "Please specify it using the `prior_prefix` argument."
+                    )
+
+                # Guess prior prefix as the single one with version table name.
                 raise DatabaseVersionException.reconfigured(
                     prior_prefix=version_tables[0].replace("alembic_version", "")
                 )
@@ -176,7 +186,7 @@ def check_db_revision(
         logger.info("Found legacy SQLite file: %s", engine.url)
         raise DatabaseVersionException.behind()
 
-    revisions = DbRevisions.load(engine)
+    revisions = DbRevisions.load(engine, prefix=prefix)
 
     if revisions.current is None:
         logger.debug("Creating database")
@@ -305,7 +315,7 @@ def _copy_database(src_url: str, tgt_url: str):
           the databases are NOT used by anyone while this process runs.
     """
 
-    from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
+    from trulens_eval.database.sqlalchemy import SqlAlchemyDB
 
     src = SqlAlchemyDB.from_db_url(src_url)
     check_db_revision(src.engine)

@@ -10,7 +10,7 @@ from sqlalchemy import Float
 from sqlalchemy import Text
 from sqlalchemy import VARCHAR
 from sqlalchemy.orm import backref
-from sqlalchemy.ext.declarative import declared_attr, DeferredReflection
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import DeclarativeBase
 
@@ -30,7 +30,7 @@ TYPE_ID = VARCHAR(256)
 """Database type for unique IDs."""
 
 
-class BaseWithTablePrefix(DeferredReflection, DeclarativeBase):
+class BaseWithTablePrefix(DeclarativeBase):
     """ORM base class except with __tablename__ defined in terms
     of a base name and a prefix.
 
@@ -42,7 +42,7 @@ class BaseWithTablePrefix(DeferredReflection, DeclarativeBase):
 
     # https://stackoverflow.com/questions/38245145/how-to-set-common-prefix-for-all-tables-in-sqlalchemy
     # Needed for sqlaclhemy to prevent it from creating a table for this class
-    # before the two following attributes are set.
+    # before the two following attributes are set which we do in subclasses later.
     __abstract__ = True
 
     _table_base_name: str = "not set"
@@ -62,24 +62,17 @@ class BaseWithTablePrefix(DeferredReflection, DeclarativeBase):
     def __tablename__(cls) -> str:
         return cls._table_prefix + cls._table_base_name
 
-def base_prefixed(table_prefix: str = "trulens_"):
-    """Create a base class for ORM classes with the given table name prefix."""
-
-    class BaseWithGivenPrefix(BaseWithTablePrefix):
-        _table_prefix: str = table_prefix
-
-    return BaseWithGivenPrefix
-
-T = TypeVar("T", bound=BaseWithTablePrefix)
-
 class ORM():
     """Container for ORM classes. 
     
     Needs to be extended with classes that set table prefix.
-    """
 
-    registry: Dict[str, Type[BaseWithTablePrefix]] = BaseWithTablePrefix.registry._class_registry
-    """Table name to ORM class mapping."""
+    Warning:
+        The relationships between tables established in the classes in this
+        container refer to class names i.e. "AppDefinition" hence these are
+        important and need to stay consistent between definition of one and
+        relationships in another.
+    """
 
     class AppDefinition(BaseWithTablePrefix):
         """ORM class for [AppDefinition][trulens_eval.schema.AppDefinition].
@@ -106,8 +99,6 @@ class ORM():
                 app_id=obj.app_id,
                 app_json=obj.model_dump_json(redact_keys=redact_keys)
             )
-
-    registry["apps"] = AppDefinition
 
     class FeedbackDefinition(BaseWithTablePrefix):
         """ORM class for [AppDefinition][trulens_eval.schema.FeedbackDefinition].
@@ -136,8 +127,6 @@ class ORM():
                 feedback_definition_id=obj.feedback_definition_id,
                 feedback_json=json_str_of_obj(obj, redact_keys=redact_keys)
             )
-        
-    registry["feedback_defs"] = FeedbackDefinition
 
     class Record(BaseWithTablePrefix):
         """ORM class for [AppDefinition][trulens_eval.schema.Record].
@@ -165,7 +154,7 @@ class ORM():
         @classmethod
         def app(cls):
             return relationship(
-                'AppDefinition',
+                "AppDefinition",
                 backref=backref('records', cascade="all,delete"),
                 primaryjoin='AppDefinition.app_id == Record.app_id',
                 foreign_keys=[cls.app_id],
@@ -214,7 +203,7 @@ class ORM():
         @classmethod
         def record(cls):
             return relationship(
-                'Record',
+                "Record",
                 backref=backref('feedback_results', cascade="all,delete"),
                 primaryjoin='Record.record_id == FeedbackResult.record_id',
                 foreign_keys=[cls.record_id]
@@ -252,13 +241,13 @@ class ORM():
                 cost_json=json_str_of_obj(obj.cost, redact_keys=redact_keys),
                 multi_result=obj.multi_result
             )
-        
-    registry["feedbacks"] = FeedbackResult
+
+T = TypeVar("T", bound=BaseWithTablePrefix)
 
 def make_base_for_prefix(
-    base_type: Type[BaseWithTablePrefix],
+    base_type: Type[T],
     table_prefix: str = "trulens_"
-) -> Type[BaseWithTablePrefix]:
+) -> Type[T]:
     """
     Create a base class for ORM classes with the given table name prefix.
 
@@ -272,16 +261,20 @@ def make_base_for_prefix(
         A class that extends `base_type` and sets the table prefix to `table_prefix`.
     """
 
-    class BaseWithGivenPrefix(base_type, DeferredReflection):
-        __abstract__ = True
-        _table_prefix = table_prefix
+    if not issubclass(base_type, BaseWithTablePrefix):
+        raise ValueError("Expected `base_type` to be a subclass of `BaseWithTablePrefix`.")
 
-    return BaseWithGivenPrefix
+    # sqlalchemy stores a mapping of class names to the classes we defined in
+    # the ORM above. Here we want to create a class with the specific name
+    # matching base_type hence use `type` instead of `class SomeName: ...`.
+    return type(
+        base_type.__name__, (base_type,), {"_table_prefix": table_prefix}
+    )
 
 
-def make_orm_for_prefix(table_prefix: str = "trulens_") -> ORM:
+def make_orm_for_prefix(table_prefix: str = "trulens_") -> Type[ORM]:
     """
-    Container for ORM classes.
+    Make a container for ORM classes.
 
     This is done so that we can use a dynamic table name prefix and make the ORM
     classes based on that.
@@ -291,25 +284,12 @@ def make_orm_for_prefix(table_prefix: str = "trulens_") -> ORM:
     """
 
     class ORMWithPrefix(ORM):
+        """ORM classes that have a table name prefix."""
+
         AppDefinition = make_base_for_prefix(ORM.AppDefinition, table_prefix)
         FeedbackDefinition = make_base_for_prefix(ORM.FeedbackDefinition, table_prefix)
         Record = make_base_for_prefix(ORM.Record, table_prefix)
         FeedbackResult = make_base_for_prefix(ORM.FeedbackResult, table_prefix)
-
-        registry = ORM.registry
-        registry["apps"] = AppDefinition
-        registry["feedback_defs"] = FeedbackDefinition
-        registry["records"] = Record
-        registry["feedbacks"] = FeedbackResult
-
-        #class AppDefinition(BaseWithTablePrefix):
-        #    _table_prefix = table_prefix
-        #class FeedbackDefinition(BaseWithTablePrefix):
-        #    _table_prefix = table_prefix
-        #class Record(BaseWithTablePrefix):
-        #    _table_prefix = table_prefix
-        #class FeedbackResult(BaseWithTablePrefix):
-        #   _table_prefix = table_prefix
 
     return ORMWithPrefix
 

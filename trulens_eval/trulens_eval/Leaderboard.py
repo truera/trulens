@@ -12,7 +12,7 @@ import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
-from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
+from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()

@@ -466,7 +466,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     (if not already) and used.
     """
 
-    db: Optional[trulens_eval.db.DB] = pydantic.Field(default=None, exclude=True)
+    db: Optional[trulens_eval.database.base.DB] = pydantic.Field(default=None, exclude=True)
     """Database interface.
     
     If this is not provided, a singleton
@@ -1472,5 +1472,5 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         print("\n".join(object_strings))
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving tru.Tru
-# and db.DB. Will rebuild each App subclass instead.
+# and database.base.DB. Will rebuild each App subclass instead.
         

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import traceback
 from typing import List
@@ -5,9 +7,9 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens_eval.database.legacy.migration import VersionException
 from trulens_eval.database.migrations import DbRevisions
-from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
-from trulens_eval.db_migration import VersionException
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackCall
@@ -129,7 +131,7 @@ def _sql_alchemy_serialization_asserts(db: "DB") -> None:
                                     )
 
 
-def data_migrate(db: "DB", from_version: str):
+def data_migrate(db: DB, from_version: str):
     """Makes any data changes needed for upgrading from the from_version
 
     Args:

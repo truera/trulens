@@ -13,9 +13,9 @@ import pandas as pd
 import pydantic
 
 from trulens_eval import __version__
-from trulens_eval import db_migration
+from trulens_eval.database.legacy import migration
 from trulens_eval.app import App
-from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
+from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.feedback import Feedback
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import AppID
@@ -44,12 +44,20 @@ logger = logging.getLogger(__name__)
 
 MULTI_CALL_NAME_DELIMITER = ":::"
 
+DEFAULT_DATABASE_PREFIX: str = "trulens_"
+"""Default prefix for table names for trulens_eval to use.
+
+This includes alembic's version table.
+"""
 
 DEFAULT_DATABASE_FILE: str = "default.sqlite"
 """Filename for default sqlite database.
 
 The sqlalchemy url for this default local sqlite database is `sqlite:///default.sqlite`.
 """
+
+DEFAULT_DATABASE_REDACT_KEYS: bool = False
+"""Default value for option to redact secrets before writing out data to database."""
 
 class DBMeta(pydantic.BaseModel):
     """
@@ -227,7 +235,7 @@ class DB(SerialModel, abc.ABC):
         """Get count of feedback results matching a set of optional criteria grouped by
         their status.
         
-        See [get_feedback][trulens_eval.db.DB.get_feedback] for the meaning of
+        See [get_feedback][trulens_eval.database.base.DB.get_feedback] for the meaning of
         the the arguments.
 
         Returns:
@@ -277,7 +285,7 @@ def versioning_decorator(func):
     """
     
     def wrapper(self, *args, **kwargs):
-        db_migration._migration_checker(db=self)
+        migration._migration_checker(db=self)
         returned_value = func(self, *args, **kwargs)
         return returned_value
 
@@ -343,7 +351,7 @@ class LocalSQLite(DB):
         super().__init__(filename=filename, redact_keys=redact_keys)
 
         self._build_tables()
-        db_migration._migration_checker(db=self, warn=True)
+        migration._migration_checker(db=self, warn=True)
 
     def __str__(self) -> str:
         return f"SQLite({self.filename})"
@@ -367,7 +375,7 @@ class LocalSQLite(DB):
         # TODO: figure out how to update the version table alone if that is all
         # that needs to happen
 
-        db_migration.migrate(db=self)
+        migration.migrate(db=self)
 
     def _clear_tables(self) -> None:
         conn, c = self._connect()
