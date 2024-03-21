@@ -14,6 +14,8 @@ def get_args():
     try:
         args = parser.parse_args()
     except SystemExit as e:
+        print(e)
+        
         # This exception will be raised if --help or invalid command line arguments
         # are used. Currently, streamlit prevents the program from exiting normally,
         # so we have to do a hard exit.
