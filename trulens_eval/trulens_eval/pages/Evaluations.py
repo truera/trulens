@@ -5,7 +5,7 @@ from typing import Dict, Iterable, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
-from pprint import PrettyPrinter
+from pprint import pformat
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,8 +18,6 @@ import streamlit as st
 from ux.add_logo import add_logo_and_style_overrides
 from ux.styles import CATEGORY
 
-pp = PrettyPrinter()
-
 from trulens_eval import Tru
 from trulens_eval.app import Agent
 from trulens_eval.app import ComponentView
@@ -28,12 +26,13 @@ from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
 from trulens_eval.app import Tool
-from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
+from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
+from trulens_eval.utils.streamlit import get_args
 from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
@@ -52,7 +51,9 @@ st.runtime.legacy_caching.clear_cache()
 
 add_logo_and_style_overrides()
 
-tru = Tru()
+args = get_args()
+
+tru = Tru(database_url=args.database_url, database_prefix=args.database_prefix)
 lms = tru.db
 
 df_results, feedback_cols = lms.get_records_and_feedback([])
@@ -387,7 +388,7 @@ else:
                                 args = c['args']
                                 for k, v in args.items():
                                     if not isinstance(v, str):
-                                        args[k] = pp.pformat(v)
+                                        args[k] = pformat(v)
 
                             df = pd.DataFrame.from_records(
                                 c['args'] for c in call

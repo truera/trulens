@@ -1,18 +1,18 @@
-import argparse
+
 import asyncio
 import json
 import math
-import sys
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
 from millify import millify
-import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
+from trulens_eval.database import base as mod_db
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens_eval.utils.streamlit import get_args
 from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()
@@ -27,13 +27,13 @@ from trulens_eval.ux.add_logo import add_logo_and_style_overrides
 
 add_logo_and_style_overrides()
 
-database_url = None
+# Set in main section below from command line args.
+args = get_args()
 
+tru = Tru(database_url=args.database_url, database_prefix=args.database_prefix)
+lms = tru.db
 
-def streamlit_app():
-    tru = Tru(database_url=database_url)
-    lms = tru.db
-
+def leaderboard():
     # Set the title and subtitle of the app
     st.title("App Leaderboard")
     st.write(
@@ -146,24 +146,5 @@ def streamlit_app():
 
         st.markdown("""---""")
 
-
-# Define the main function to run the app
-def main():
-    streamlit_app()
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--database-url", default=None)
-
-    try:
-        args = parser.parse_args()
-    except SystemExit as e:
-        # This exception will be raised if --help or invalid command line arguments
-        # are used. Currently, streamlit prevents the program from exiting normally,
-        # so we have to do a hard exit.
-        sys.exit(e.code)
-
-    database_url = args.database_url
-
-    main()
+    leaderboard()

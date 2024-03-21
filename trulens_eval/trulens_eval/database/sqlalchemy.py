@@ -218,12 +218,9 @@ class SqlAlchemyDB(DB):
             )
 
             # If we get here, our db revision does not need upgrade.
-            print("No migration necessary.")
-            logger.info("Your database does not need migration.")
+            logger.warning("Database does not need migration.")
 
         except DatabaseVersionException as e:
-            print(e)
-
             if e.reason == DatabaseVersionException.Reason.BEHIND:
 
                 revisions = DbRevisions.load(self.engine)
@@ -261,7 +258,7 @@ class SqlAlchemyDB(DB):
                         old_version_table = f"{prior_prefix}{table_name}"
                         new_version_table = f"{self.table_prefix}{table_name}"
     
-                        logger.info(f"%s -> %s", old_version_table, new_version_table)
+                        logger.info("%s -> %s", old_version_table, new_version_table)
 
                         c.execute(sql_text("""ALTER TABLE %s RENAME TO %s;""" % (old_version_table, new_version_table)))
 

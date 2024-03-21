@@ -74,6 +74,13 @@ class ORM():
         relationships in another.
     """
 
+    registry: Dict[str, Type[BaseWithTablePrefix]] = \
+        BaseWithTablePrefix.registry._class_registry
+    """Table name to ORM class mapping.
+    
+    This can be used to iterate through all classes/tables.
+    """
+
     class AppDefinition(BaseWithTablePrefix):
         """ORM class for [AppDefinition][trulens_eval.schema.AppDefinition].
 

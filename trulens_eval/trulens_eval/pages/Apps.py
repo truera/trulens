@@ -5,9 +5,11 @@ import pydantic
 
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Record
+from trulens_eval.tru import Tru
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
+from trulens_eval.utils.streamlit import get_args
 from trulens_eval.ux.apps import ChatRecord
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
@@ -291,6 +293,13 @@ def end_session():
 
 # NOTE: using callbacks for all interactions as otherwise I'm seeing various
 # problems.
+
+args = get_args()
+
+# Initialize Tru in so that futher initis will get the right configuration (due
+# to singleton mechanism).
+tru = Tru(database_url=args.database_url, database_prefix=args.database_prefix)
+
 
 if "records" not in st.session_state:
     # This field only exists after a model is selected. Here no model was

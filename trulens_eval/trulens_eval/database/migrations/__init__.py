@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 import logging
 import os
-from typing import Generator, Iterator, List, Optional
+from typing import Iterator, List, Optional
 
 from alembic import command
 from alembic.config import Config
@@ -11,7 +11,7 @@ from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from pydantic import BaseModel
 from sqlalchemy import Engine
-from trulens_eval.database.base import db as mod_db
+from trulens_eval.database import base as mod_db
 
 logger = logging.getLogger(__name__)
 

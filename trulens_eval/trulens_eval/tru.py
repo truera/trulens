@@ -951,8 +951,9 @@ class Tru(python.SingletonPerName):
             args.append(f"--server.address={address}")
 
         args += [
-            leaderboard_path, "--", "--database-url",
-            self.db.engine.url.render_as_string(hide_password=False)
+            leaderboard_path, "--",
+            "--database-url", self.db.engine.url.render_as_string(hide_password=False),
+            "--database-prefix", self.db.table_prefix
         ]
 
         proc = subprocess.Popen(
