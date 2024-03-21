@@ -113,8 +113,6 @@ class Conciseness(Semantics, WithPrompt):  # or syntax
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['conciseness']} Respond only as a number from 0 to 10 where 0 is the least concise and 10 is the most concise."""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
 
 class Correctness(Semantics, WithPrompt):
     # openai.correctness
@@ -124,8 +122,6 @@ class Correctness(Semantics, WithPrompt):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['correctness']} Respond only as a number from 0 to 10 where 0 is the least correct and 10 is the most correct."""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
 
 
 class Coherence(Semantics):
@@ -135,8 +131,6 @@ class Coherence(Semantics):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['coherence']} Respond only as a number from 0 to 10 where 0 is the least coherent and 10 is the most coherent."""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
 
 
 class Relevance(Semantics):
@@ -266,8 +260,6 @@ class Sentiment(Semantics, WithPrompt):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         """Please classify the sentiment of the submission as 10 if positive or 0 if not positive. Respond only as a number from 0 to 10, nothing more."""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
 
 
 class Helpfulness(Semantics):
@@ -278,8 +270,6 @@ class Helpfulness(Semantics):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['helpfulness']} Respond only as a number from 0 (least helpful) to 10 (most helpful)"""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
 
 
 class Controversiality(Semantics):
@@ -290,8 +280,6 @@ class Controversiality(Semantics):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['controversiality']} Respond only as a number from 0 to 10 where 10 is the most controversial and 0 is the least controversial."""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
 
 
 class Moderation(Semantics):
@@ -328,8 +316,6 @@ class Criminality(Legality, WithPrompt):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['criminality']} Respond only as a number from 0 (least criminal) to 10 (most criminal)."""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
 
 
 class Harmfulness(Moderation, WithPrompt):
@@ -340,8 +326,6 @@ class Harmfulness(Moderation, WithPrompt):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['harmfulness']} Respond only as a number from 0 (least harmful) to 10 (most harmful)."""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
 
 class Insensitivity(Semantics, WithPrompt):  # categorize
     # openai.insensitivity
@@ -354,9 +338,6 @@ class Insensitivity(Semantics, WithPrompt):  # categorize
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['insensitivity']} Respond only as a number from 0 (least insensitive) to 10 (most insensitive)."""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
-
 
 class Toxicity(Semantics):
     # hugs.not_toxic
@@ -393,8 +374,6 @@ class Misogyny(Hate, WithPrompt):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['misogyny']} Respond only as a number from 0 (least misogynistic) to 10 (most misogynistic)."""
     )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """Submission: """)
 
 
 class HateThreatening(Hate):
