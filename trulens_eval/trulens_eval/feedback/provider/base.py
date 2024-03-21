@@ -148,12 +148,11 @@ class LLMProvider(Provider):
         Returns:
             float: Information Overlap
         """
-        return self.generate_score(
-            system_prompt=str.format(
-                prompts.LLM_GROUNDEDNESS,
-                premise=premise,
-                hypothesis=hypothesis,
-            )
+        return self.generate_score(system_prompt=prompts.LLM_GROUNDEDNESS_SYSTEM,
+            user_prompt = str.format(prompts.LLM_GROUNDEDNESS_USER,
+                                     premise=premise,
+                                     hypothesis=hypothesis
+                                    )
         )
 
     def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
