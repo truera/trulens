@@ -73,7 +73,6 @@ class Bedrock(LLMProvider):
         **kwargs
     ) -> str:
         assert self.endpoint is not None
-        assert messages is not None, "Bedrock requires `messages` to operate."
 
         import json
 
@@ -100,7 +99,7 @@ class Bedrock(LLMProvider):
         elif self.model_id.startswith("anthropic"):
             body = json.dumps(
                 {
-                    "prompt": messages_str,
+                    "prompt": f"\n\nHuman:{messages_str}\n\nAssistant:",
                     "temperature": 0,
                     "top_p": 1,
                     "max_tokens_to_sample": 4096
@@ -178,11 +177,13 @@ class Bedrock(LLMProvider):
             The score and reason metadata if available.
         """
 
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        if user_prompt is not None:
+            llm_messages.append({"role": "user", "content": user_prompt})
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(
-                system_prompt + user_prompt if user_prompt else system_prompt
-            )
+            messages=llm_messages
         )
 
         return re_0_10_rating(response) / normalize
@@ -205,11 +206,13 @@ class Bedrock(LLMProvider):
         Returns:
             The score and reason metadata if available.
         """
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        if user_prompt is not None:
+            llm_messages.append({"role": "user", "content": user_prompt})
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(
-                system_prompt + user_prompt if user_prompt else system_prompt
-            )
+            messages=llm_messages
         )
         if "Supporting Evidence" in response:
             score = 0.0
