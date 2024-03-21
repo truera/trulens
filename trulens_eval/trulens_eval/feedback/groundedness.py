@@ -257,13 +257,13 @@ class Groundedness(WithClassInfo, SerialModel):
     def grounded_statements_aggregator(
         self, source_statements_multi_output: List[Dict]
     ) -> float:
-        """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
+        """Compute the mean groundedness based on the best evidence available for each statement.
 
         Args:
             source_statements_multi_output (List[Dict]): A list of scores. Each list index is a context. The Dict is a per statement score.
 
         Returns:
-            float: for each statement, gets the max groundedness, then averages over that.
+            float: for each statement, gets the max score, then averages over that.
         """
         all_results = []
 
@@ -283,3 +283,4 @@ class Groundedness(WithClassInfo, SerialModel):
             all_results.append(np.max(statements_to_scores[k]))
 
         return np.mean(all_results)
+
