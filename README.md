@@ -9,15 +9,15 @@ README.md . If you are editing README.md, your changes will be overwritten.
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens_eval)
 [![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
-[![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/install/)
+[![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/trulens_eval/getting_started/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
 
 # 🦑 **Welcome to TruLens!**
 
 TruLens provides a set of tools for developing and monitoring neural nets,
 including large language models. This includes both tools for evaluation of LLMs
-and LLM-based applications with *TruLens-Eval* and deep learning explainability
-with *TruLens-Explain*. *TruLens-Eval* and *TruLens-Explain* are housed in
+and LLM-based applications with _TruLens-Eval_ and deep learning explainability
+with _TruLens-Explain_. _TruLens-Eval_ and _TruLens-Explain_ are housed in
 separate packages and can be used independently.
 
 The best way to support TruLens is to give us a ⭐ on
@@ -77,7 +77,6 @@ pip uninstall trulens_eval -y # to remove existing PyPI version
 pip install git+https://github.com/truera/trulens@BRANCH#subdirectory=trulens_eval
 ```
 
-
 ### Quick Usage
 
 Walk through how to instrument and evaluate a RAG built from scratch with
@@ -114,12 +113,14 @@ These installation instructions assume that you have conda installed and added
 to your path.
 
 0. Create a virtual environment (or modify an existing one).
+
 ```bash
 conda create -n "<my_name>" python=3  # Skip if using existing environment.
 conda activate <my_name>
 ```
- 
+
 1. Install dependencies.
+
 ```bash
 conda install tensorflow-gpu=1  # Or whatever backend you're using.
 conda install keras             # Or whatever backend you're using.
@@ -127,6 +128,7 @@ conda install matplotlib        # For visualizations.
 ```
 
 2. [Pip installation] Install the trulens pip package from PyPI.
+
 ```bash
 pip install trulens
 ```
@@ -152,10 +154,10 @@ pip install git+https://github.com/truera/trulens@BRANCH#subdirectory=trulens_ex
 To quickly play around with the TruLens library, check out the following Colab
 notebooks:
 
-* PyTorch: [![Open In
-  Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing)
-* TensorFlow 2 / Keras: [![Open In
-  Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing)
+- PyTorch: [![Open In
+Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing)
+- TensorFlow 2 / Keras: [![Open In
+Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1f-ETsdlppODJGQCdMXG-jmGmfyWyW2VD?usp=sharing)
 
 For more information, see [TruLens-Explain
 Documentation](https://www.trulens.org/trulens_explain/getting_started/quickstart/).
