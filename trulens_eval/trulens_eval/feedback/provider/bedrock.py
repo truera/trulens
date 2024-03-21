@@ -120,7 +120,27 @@ class Bedrock(LLMProvider):
                     "prompt": messages_str,
                     "temperature": 0,
                     "topP": 1,
-                    "maxTokens": 8191
+                    "maxTokens": 8192
+                }
+            )
+
+        elif self.model_id.startswith("mistral"):
+            body = json.dumps(
+                {
+                    "prompt": messages_str,
+                    "temperature": 0,
+                    "top_p": 1,
+                    "max_tokens": 4096
+                }
+            )
+
+        elif self.model_id.startswith("meta"):
+            body = json.dumps(
+                {
+                    "prompt": messages_str,
+                    "temperature": 0,
+                    "top_p": 1,
+                    "max_gen_len": 2048
                 }
             )
         else:
@@ -150,7 +170,13 @@ class Bedrock(LLMProvider):
         if self.model_id.startswith("cohere"):
             response_body = json.loads(response.get('body').read()
                                       ).get('generations')[0]["text"]
-
+            
+        if self.model_id.startswith("mistral"):
+            response_body = json.loads(response.get('body').read()
+                                      ).get('output')[0]["text"]
+        if self.model_id.startswith("meta"):
+            response_body = json.loads(response.get('body').read()
+                                      ).get('generation')
         if self.model_id.startswith("ai21"):
             response_body = json.loads(
                 response.get('body').read()
