@@ -181,12 +181,11 @@ class Groundedness(WithClassInfo, SerialModel):
     def groundedness_measure(self, source: str,
                              statement: str) -> Tuple[float, dict]:
         """
-        Groundedness measure is deprecated in place of the chain-of-thought version. Defaulting to groundedness_measure_with_cot_reasons.
+        Groundedness measure is deprecated in place of the chain-of-thought version. This function will raise a NotImplementedError.
         """
-        logger.warning(
+        raise NotImplementedError(
             "groundedness_measure is deprecated, please use groundedness_measure_with_cot_reasons or groundedness_measure_with_nli instead."
         )
-        return self.groundedness_measure_with_cot_reasons(source, statement)
 
     def groundedness_measure_with_summarize_step(
         self, source: str, statement: str
