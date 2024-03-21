@@ -2,10 +2,14 @@ import argparse
 import sys
 
 from trulens_eval.database import base as mod_db
+from trulens_eval.tru import Tru
 
 
-def get_args():
-    """Parse command line arguments."""
+def init_from_args():
+    """Parse command line arguments and initialize Tru with them.
+    
+    As Tru is a singleton, further Tru() uses will get the same configuration.
+    """
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
@@ -21,4 +25,4 @@ def get_args():
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    return args
+    Tru(database_url=args.database_url, database_prefix=args.database_prefix)

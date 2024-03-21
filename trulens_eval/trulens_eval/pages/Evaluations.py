@@ -32,7 +32,7 @@ from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.streamlit import get_args
+from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
@@ -51,9 +51,11 @@ st.runtime.legacy_caching.clear_cache()
 
 add_logo_and_style_overrides()
 
-args = get_args()
+if __name__ == "__main__":
+    # If not imported, gets args from command line and creates Tru singleton
+    init_from_args()
 
-tru = Tru(database_url=args.database_url, database_prefix=args.database_prefix)
+tru = Tru()
 lms = tru.db
 
 df_results, feedback_cols = lms.get_records_and_feedback([])

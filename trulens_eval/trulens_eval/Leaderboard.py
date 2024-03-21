@@ -12,28 +12,30 @@ from streamlit_extras.switch_page_button import switch_page
 
 from trulens_eval.database import base as mod_db
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens_eval.utils.streamlit import get_args
+from trulens_eval.utils.streamlit import get_args, init_from_args
 from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()
 
 from trulens_eval import Tru
 from trulens_eval.ux import styles
+from trulens_eval.ux.add_logo import add_logo_and_style_overrides
 from trulens_eval.ux.components import draw_metadata
 
-st.set_page_config(page_title="Leaderboard", layout="wide")
-
-from trulens_eval.ux.add_logo import add_logo_and_style_overrides
-
-add_logo_and_style_overrides()
-
-# Set in main section below from command line args.
-args = get_args()
-
-tru = Tru(database_url=args.database_url, database_prefix=args.database_prefix)
-lms = tru.db
+if __name__ == "__main__":
+    # If not imported, gets args from command line and creates Tru singleton
+    init_from_args()
 
 def leaderboard():
+    """Render the leaderboard page."""
+
+    tru = Tru() # get singletone whether this file was imported or executed from command line.
+    lms = tru.db
+
+    add_logo_and_style_overrides()
+
+    st.set_page_config(page_title="Leaderboard", layout="wide")
+
     # Set the title and subtitle of the app
     st.title("App Leaderboard")
     st.write(
