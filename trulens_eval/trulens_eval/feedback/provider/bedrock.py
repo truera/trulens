@@ -89,7 +89,7 @@ class Bedrock(LLMProvider):
                     "inputText": messages_str,
                     "textGenerationConfig":
                         {
-                            "maxTokenCount": 4096,
+                            "maxTokenCount": 4095,
                             "stopSequences": [],
                             "temperature": 0,
                             "topP": 1
@@ -102,7 +102,7 @@ class Bedrock(LLMProvider):
                     "prompt": f"\n\nHuman:{messages_str}\n\nAssistant:",
                     "temperature": 0,
                     "top_p": 1,
-                    "max_tokens_to_sample": 4096
+                    "max_tokens_to_sample": 4095
                 }
             )
         elif self.model_id.startswith("cohere"):
@@ -111,7 +111,7 @@ class Bedrock(LLMProvider):
                     "prompt": messages_str,
                     "temperature": 0,
                     "p": 1,
-                    "max_tokens": 4096
+                    "max_tokens": 4095
                 }
             )
         elif self.model_id.startswith("ai21"):
@@ -120,7 +120,7 @@ class Bedrock(LLMProvider):
                     "prompt": messages_str,
                     "temperature": 0,
                     "topP": 1,
-                    "maxTokens": 8192
+                    "maxTokens": 8191
                 }
             )
 
@@ -130,7 +130,7 @@ class Bedrock(LLMProvider):
                     "prompt": messages_str,
                     "temperature": 0,
                     "top_p": 1,
-                    "max_tokens": 4096
+                    "max_tokens": 4095
                 }
             )
 
@@ -140,7 +140,7 @@ class Bedrock(LLMProvider):
                     "prompt": messages_str,
                     "temperature": 0,
                     "top_p": 1,
-                    "max_gen_len": 2048
+                    "max_gen_len": 2047
                 }
             )
         else:
