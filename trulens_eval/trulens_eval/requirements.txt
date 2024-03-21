@@ -33,3 +33,10 @@ rich               >= 13.6.0
 # DB and migration
 sqlalchemy         >= 2.0.19
 alembic            >= 1.11.2
+
+
+#Mock data
+factory-boy==3.3.0
+Faker==24.2.0
+faker-enum==0.0.2
+

@@ -20,14 +20,14 @@ import warnings
 
 import humanize
 import pandas
+import pandas as pd
 import pkg_resources
 from tqdm.auto import tqdm
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
-from trulens_eval import db
 from trulens_eval import schema
-from trulens_eval.database import sqlalchemy_db
+from trulens_eval.database import sqlalchemy_db as db
 from trulens_eval.feedback import feedback
 from trulens_eval.utils import imports
 from trulens_eval.utils import notebook_utils
@@ -180,7 +180,7 @@ class Tru(python.SingletonPerName):
         if database_url is None:
             database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
 
-        self.db: db.DB = sqlalchemy_db.SqlAlchemyDB.from_db_url(
+        self.db: db.DB = db.SqlAlchemyDB.from_db_url(
             database_url, redact_keys=database_redact_keys
         )
 
@@ -604,6 +604,20 @@ class Tru(python.SingletonPerName):
 
         return self.db.get_apps()
 
+    def list_records(self, app_id) -> List[int]:
+
+        return self.db.list_records(app_id=app_id)
+
+    def get_record_and_feedback(self, record_id) -> [pd.DataFrame]:
+
+        return self.db.get_record_and_feedback(record_id)
+
+    def delete_record(self, record_id):
+        return self.db.delete_record(record_id)
+
+    def delete_app(self, app_id):
+        return self.db.delete_app(app_id)
+
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[schema.AppID]] = None
@@ -752,7 +766,7 @@ class Tru(python.SingletonPerName):
                     new_futures: List[Tuple[pandas.Series, Future[schema.FeedbackResult]]] = \
                         feedback.Feedback.evaluate_deferred(
                             tru=self,
-                            limit=self.DEFERRED_NUM_RUNS-len(futures_map),
+                            limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                             shuffle=True
                         )
 
@@ -801,7 +815,9 @@ class Tru(python.SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {name: count for name, count in runs_stats.items()}
+                    {
+                        name: count for name, count in runs_stats.items()
+                    }
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()
@@ -953,7 +969,7 @@ class Tru(python.SingletonPerName):
         else:
             print("Credentials file already exists. Skipping writing process.")
 
-        #run leaderboard with subprocess
+        # run leaderboard with subprocess
         leaderboard_path = pkg_resources.resource_filename(
             'trulens_eval', 'Leaderboard.py'
         )

@@ -764,8 +764,12 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 else:
                     # Recursively extract content from nested pydantic models
                     return {
-                        k: self._extract_content(v) if
-                        isinstance(v, (pydantic.BaseModel, dict, list)) else v
+
+                        k:
+                            self._extract_content(v) if
+                            isinstance(v,
+                                       (pydantic.BaseModel, dict, list)) else v
+
                         for k, v in value.dict().items()
                     }
         elif isinstance(value, dict):
@@ -777,8 +781,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 # Recursively extract content from nested dictionaries
                 return {
                     k:
-                    self._extract_content(v) if isinstance(v,
-                                                           (dict, list)) else v
+                        self._extract_content(v) if isinstance(v, (dict,
+                                                                   list)) else v
+
                     for k, v in value.items()
                 }
         elif isinstance(value, list):
