@@ -191,10 +191,14 @@ class Groundedness(WithClassInfo, SerialModel):
     def groundedness_measure_with_summarize_step(
         self, source: str, statement: str
     ) -> float:
-        """A measure to track if the source material supports each sentence in the statement. 
+        """
+        DEPRECATED: This method is deprecated and will be removed in a future release.
+        Please use alternative groundedness measure methods.
+
+        A measure to track if the source material supports each sentence in the statement. 
         This groundedness measure is more accurate; but slower using a two step process.
         - First find supporting evidence with an LLM
-        - Then for each statement sentence, check groundendness
+        - Then for each statement sentence, check groundedness
         
         Usage on RAG Contexts:
         ```
@@ -218,6 +222,10 @@ class Groundedness(WithClassInfo, SerialModel):
         Returns:
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
+        logger.warning(
+            "groundedness_measure_with_summarize_step is deprecated and will be removed in a future release. "
+            "Please use alternative groundedness measure methods."
+        )
         groundedness_scores = {}
         if not isinstance(self.groundedness_provider, LLMProvider):
             raise AssertionError(
@@ -227,7 +235,7 @@ class Groundedness(WithClassInfo, SerialModel):
             reason = ""
             hypotheses = sent_tokenize(statement)
             for i, hypothesis in enumerate(tqdm(
-                    hypotheses, desc="Groundendess per statement in source")):
+                    hypotheses, desc="Groundedness per statement in source")):
                 score = self.groundedness_provider._groundedness_doc_in_out(
                     premise=source, hypothesis=hypothesis
                 )
