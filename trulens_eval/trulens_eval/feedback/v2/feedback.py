@@ -260,6 +260,9 @@ class Sentiment(Semantics, WithPrompt):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         """Please classify the sentiment of the submission as 10 if positive or 0 if not positive. Respond only as a number from 0 to 10, nothing more."""
     )
+    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
+        """Submission: """
+    )
 
 
 class Helpfulness(Semantics):
