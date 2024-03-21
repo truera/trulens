@@ -12,7 +12,7 @@ from streamlit_extras.switch_page_button import switch_page
 
 from trulens_eval.database import base as mod_db
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens_eval.utils.streamlit import get_args, init_from_args
+from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()
