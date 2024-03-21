@@ -113,17 +113,18 @@ class Groundedness(WithClassInfo, SerialModel):
                 "Only LLM providers are supported for groundedness_measure_with_cot_reasons."
             )
         else:
-            reason = self.groundedness_provider._groundedness_doc_in_out(
-                premise = source, hypothesis = statement
-            )
-            print(reason)
-            i = 0
-            for line in reason.split('\n'):
-                if "Score" in line:
-                    groundedness_scores[f"statement_{i}"
-                                       ] = re_0_10_rating(line) / 10
-                    i += 1
-        return groundedness_scores, {"reasons": reason}
+            hypotheses = sent_tokenize(statement)
+            reasons_dict = {}
+            for i, hypothesis in enumerate(tqdm(
+                hypotheses, desc="Groundedness per statement in source")):
+                reason = self.groundedness_provider._groundedness_doc_in_out(
+                    premise=source, hypothesis=hypothesis
+                )
+                score_line = next((line for line in reason.split('\n') if "Score" in line), None)
+                if score_line:
+                    groundedness_scores[f"statement_{i}"] = re_0_10_rating(score_line) / 10
+                    reasons_dict[f"STATEMENT_{i}"] = reason
+            return groundedness_scores, {"reasons": reasons_dict}
 
     def groundedness_measure_with_nli(self, source: str,
                                       statement: str) -> Tuple[float, dict]:

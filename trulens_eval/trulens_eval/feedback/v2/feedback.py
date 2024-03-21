@@ -157,9 +157,9 @@ class Groundedness(Semantics, WithPrompt):
     user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         """SOURCE: {premise}
         
-        STATEMENT: {hypothesis}
+        Hypothesis: {hypothesis}
         
-        Please answer with the template below:
+        Please answer with the template below for all statement sentences:
 
         TEMPLATE: 
         Statement Sentence: <Sentence>, 
