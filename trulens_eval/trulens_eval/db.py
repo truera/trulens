@@ -127,7 +127,8 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def get_feedback_defs(
-        self, feedback_definition_id: Optional[FeedbackDefinitionID] = None
+        self,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None
     ) -> pd.DataFrame:
         """Retrieve feedback definitions from the database.
         
@@ -139,7 +140,6 @@ class DB(SerialModel, abc.ABC):
         Returns:
             A dataframe with the feedback definitions.
         """
-
 
         raise NotImplementedError()
 
@@ -263,7 +263,7 @@ def versioning_decorator(func):
     trulens_eval version (or rather the db version used in the current
     trulens_eval version).
     """
-    
+
     def wrapper(self, *args, **kwargs):
         db_migration._migration_checker(db=self)
         returned_value = func(self, *args, **kwargs)
@@ -845,6 +845,5 @@ class LocalSQLite(DB):
         limit: Optional[int] = None,
         shuffle: bool = False
     ) -> Dict[FeedbackResultStatus, int]:
-        
+
         raise NotImplementedError("This database implementation is deprecated.")
-    

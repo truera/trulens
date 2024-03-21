@@ -228,7 +228,8 @@ class OpenAIEndpoint(Endpoint):
             # Already created with SingletonPerName mechanism
             if len(kwargs) != 0:
                 logger.warning(
-                    "OpenAIClient singleton already made, ignoring arguments %s", kwargs
+                    "OpenAIClient singleton already made, ignoring arguments %s",
+                    kwargs
                 )
             return
 
@@ -252,7 +253,8 @@ class OpenAIEndpoint(Endpoint):
         else:
             if len(kwargs) != 0:
                 logger.warning(
-                    "Arguments %s are ignored as `client` was provided.", list(kwargs.keys())
+                    "Arguments %s are ignored as `client` was provided.",
+                    list(kwargs.keys())
                 )
 
             # Convert openai client to our wrapper if needed.

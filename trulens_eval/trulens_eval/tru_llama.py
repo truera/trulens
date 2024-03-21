@@ -142,9 +142,8 @@ class LlamaInstrument(Instrument):
     class Default:
         """Instrumentation specification for LlamaIndex apps."""
 
-        MODULES = {"llama_index.", "llama_hub."}.union(
-            LangChainInstrument.Default.MODULES
-        )
+        MODULES = {"llama_index.",
+                   "llama_hub."}.union(LangChainInstrument.Default.MODULES)
         """Modules by prefix to instrument.
          
         Note that llama_index uses langchain internally for some things.
@@ -510,5 +509,7 @@ class TruLlama(App):
             method="astream_chat", is_async=True, with_record=True
         )
 
-import trulens_eval # for App class annotations
+
+import trulens_eval  # for App class annotations
+
 TruLlama.model_rebuild()

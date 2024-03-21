@@ -103,7 +103,7 @@ def jsonify_for_ui(*args, **kwargs):
     
     Redacts keys and hides special fields introduced by trulens.
     """
-    
+
     return jsonify(*args, **kwargs, redact_keys=True, skip_specials=True)
 
 
@@ -154,9 +154,11 @@ def jsonify(
     dicted = dicted or {}
 
     if skip_specials:
+
         def recur_key(k):
             return isinstance(k, JSON_BASES) and k not in ALL_SPECIAL_KEYS
     else:
+
         def recur_key(k):
             return isinstance(k, JSON_BASES)
 
@@ -169,7 +171,7 @@ def jsonify(
     if isinstance(obj, JSON_BASES):
         if redact_keys and isinstance(obj, str):
             return redact_value(obj)
-        
+
         return obj
 
     # TODO: remove eventually
@@ -318,7 +320,8 @@ def jsonify(
 
     else:
         logger.debug(
-            "Do not know how to jsonify an object '%s' of type '%s'.", str(obj)[0:32], type(obj)
+            "Do not know how to jsonify an object '%s' of type '%s'.",
+            str(obj)[0:32], type(obj)
         )
 
         content = noserio(obj)
