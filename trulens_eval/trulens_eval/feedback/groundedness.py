@@ -114,8 +114,9 @@ class Groundedness(WithClassInfo, SerialModel):
             )
         else:
             reason = self.groundedness_provider._groundedness_doc_in_out(
-                source, statement
+                premise = source, hypothesis = statement
             )
+            print(reason)
             i = 0
             for line in reason.split('\n'):
                 if "Score" in line:

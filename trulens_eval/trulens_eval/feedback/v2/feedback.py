@@ -151,15 +151,21 @@ class Groundedness(Semantics, WithPrompt):
     # hugs._doc_groundedness
 
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """You are a INFORMATION OVERLAP classifier; providing the overlap of information between two statements.
+        """You are a INFORMATION OVERLAP classifier; providing the overlap of information between the source and statement.
         Respond only as a number from 0 to 10 where 0 is no information overlap and 10 is all information is overlapping.
         Never elaborate.""")
     user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """STATEMENT 1: {premise}
+        """SOURCE: {premise}
         
-        STATEMENT 2: {hypothesis}
+        STATEMENT: {hypothesis}
         
-        INFORMATION OVERLAP: """
+        Please answer with the template below:
+
+        TEMPLATE: 
+        Statement Sentence: <Sentence>, 
+        Supporting Evidence: <Choose the exact unchanged sentences in the source that can answer the statement, if nothing matches, say NOTHING FOUND>
+        Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
+        """
     )
 
 
