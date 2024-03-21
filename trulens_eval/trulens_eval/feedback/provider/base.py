@@ -153,7 +153,7 @@ class LLMProvider(Provider):
                                      premise=premise,
                                      hypothesis=hypothesis
                                     )
-        )
+            )
 
     def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
         """
@@ -169,14 +169,14 @@ class LLMProvider(Provider):
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
+        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(premise=premise, hypothesis=hypothesis)
+        llm_messages.append({"role": "user", "content": user_prompt})
+        print(llm_messages)
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
-            str.format(
-                prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                premise=premise,
-                hypothesis=hypothesis
-            )
+            messages=llm_messages
         )
 
     def generate_score(
@@ -226,7 +226,6 @@ class LLMProvider(Provider):
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
-
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion, messages=llm_messages
         )
@@ -365,12 +364,12 @@ class LLMProvider(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         system_prompt = prompts.CONTEXT_RELEVANCE_SYSTEM
-        system_prompt = system_prompt.replace(
-            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
-        )
         user_prompt = str.format(prompts.CONTEXT_RELEVANCE_USER,
                                  question=question,
                                  context=context
+        )
+        user_prompt = user_prompt.replace(
+            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
@@ -462,12 +461,13 @@ class LLMProvider(Provider):
                 "relevant".
         """
         system_prompt=prompts.ANSWER_RELEVANCE_SYSTEM
-        system_prompt = system_prompt.replace(
-            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
-        )
+        
         user_prompt = str.format(prompts.ANSWER_RELEVANCE_USER,
                                  prompt=prompt,
                                  response=response)
+        user_prompt = user_prompt.replace(
+            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+        )
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def sentiment(self, text: str) -> float:
@@ -515,8 +515,7 @@ class LLMProvider(Provider):
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
         system_prompt = prompts.SENTIMENT_SYSTEM
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        user_prompt = prompts.SENTIMENT_USER + text
+        user_prompt = prompts.SENTIMENT_USER + text + prompts.COT_REASONS_TEMPLATE
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def model_agreement(self, prompt: str, response: str) -> float:
