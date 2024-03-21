@@ -173,7 +173,6 @@ class LLMProvider(Provider):
         llm_messages = [{"role": "system", "content": system_prompt}]
         user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(premise=premise, hypothesis=hypothesis)
         llm_messages.append({"role": "user", "content": user_prompt})
-        print(llm_messages)
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages
