@@ -73,14 +73,21 @@ class Bedrock(LLMProvider):
         **kwargs
     ) -> str:
         assert self.endpoint is not None
-        assert prompt is not None, "Bedrock can only operate on `prompt`, not `messages`."
+        assert messages is not None, "Bedrock requires `messages` to operate."
 
         import json
+
+        if messages:
+            messages_str = " ".join([f"{message['role']}: {message['content']}" for message in messages])
+        elif prompt:
+            messages_str = prompt
+        else:
+            raise ValueError("Either 'messages' or 'prompt' must be supplied.")
 
         if self.model_id.startswith("amazon"):
             body = json.dumps(
                 {
-                    "inputText": prompt,
+                    "inputText": messages_str,
                     "textGenerationConfig":
                         {
                             "maxTokenCount": 4096,
@@ -93,7 +100,7 @@ class Bedrock(LLMProvider):
         elif self.model_id.startswith("anthropic"):
             body = json.dumps(
                 {
-                    "prompt": f"\n\nHuman:{prompt}\n\nAssistant:",
+                    "prompt": messages_str,
                     "temperature": 0,
                     "top_p": 1,
                     "max_tokens_to_sample": 4096
@@ -102,7 +109,7 @@ class Bedrock(LLMProvider):
         elif self.model_id.startswith("cohere"):
             body = json.dumps(
                 {
-                    "prompt": prompt,
+                    "prompt": messages_str,
                     "temperature": 0,
                     "p": 1,
                     "max_tokens": 4096
@@ -111,7 +118,7 @@ class Bedrock(LLMProvider):
         elif self.model_id.startswith("ai21"):
             body = json.dumps(
                 {
-                    "prompt": prompt,
+                    "prompt": messages_str,
                     "temperature": 0,
                     "topP": 1,
                     "maxTokens": 8191
