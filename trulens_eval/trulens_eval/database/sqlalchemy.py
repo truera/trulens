@@ -21,8 +21,8 @@ from sqlalchemy.sql import text as sql_text
 
 from trulens_eval import schema
 from trulens_eval.app import App
-from trulens_eval.database import orm as mod_orm
 from trulens_eval.database import base as mod_db
+from trulens_eval.database import orm as mod_orm
 from trulens_eval.database.base import DB
 from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
@@ -53,7 +53,10 @@ logger = logging.getLogger(__name__)
 
 
 @for_all_methods(
-    run_before(lambda self, *args, **kwargs: check_db_revision(self.engine, prefix=self.table_prefix)),
+    run_before(
+        lambda self, *args, **kwargs: \
+            check_db_revision(self.engine, prefix=self.table_prefix)
+    ),
     _except=[
         "migrate_database",
         "reload_engine",
@@ -73,16 +76,26 @@ class SqlAlchemyDB(DB):
     """
 
     engine_params: dict = Field(default_factory=dict)
+    """Sqlalchemy-related engine params."""
 
     session_params: dict = Field(default_factory=dict)
+    """Sqlalchemy-related session."""
 
     engine: Optional[Engine] = None
+    """Sqlalchemy engine."""
 
     session: Optional[sessionmaker] = None
+    """Sqlalchemy session(maker)."""
 
     model_config: ClassVar[dict] = {'arbitrary_types_allowed': True}
 
     orm: Type[mod_orm.ORM]
+    """
+    Container of all the ORM classes for this database.
+
+    This should be set to a subclass of
+    [ORM][trulens_eval.database.orm.ORM] upon initialization.
+    """
 
     def __init__(
         self,
@@ -120,7 +133,7 @@ class SqlAlchemyDB(DB):
         database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
         **kwargs
     ) -> SqlAlchemyDB:
-        """Process database-related configuration provided to the Tru class to
+        """Process database-related configuration provided to the [Tru][trulens_eval.tru.Tru] class to
         create a database.
         
         Emits warnings if appropriate.
@@ -251,14 +264,15 @@ class SqlAlchemyDB(DB):
 
                 prior_prefix = e.prior_prefix
 
-                logger.info("Renaming tables from prefix \"%s\" to \"%s\".", prior_prefix, self.table_prefix)
+                logger.warning("Renaming tables from prefix \"%s\" to \"%s\".", prior_prefix, self.table_prefix)
+                logger.warning("Please ignore these warnings: \"SAWarning: This declarative base already contains...\"")
 
                 with self.engine.connect() as c:
                     for table_name in ['alembic_version'] + [c._table_base_name for c in self.orm.registry.values() if hasattr(c, "_table_base_name")]:
                         old_version_table = f"{prior_prefix}{table_name}"
                         new_version_table = f"{self.table_prefix}{table_name}"
     
-                        logger.info("%s -> %s", old_version_table, new_version_table)
+                        logger.warning("%s -> %s", old_version_table, new_version_table)
 
                         c.execute(sql_text("""ALTER TABLE %s RENAME TO %s;""" % (old_version_table, new_version_table)))
 
@@ -270,7 +284,8 @@ class SqlAlchemyDB(DB):
     def reset_database(self):
         """See [DB.reset_database][trulens_eval.database.base.DB.reset_database]."""
 
-        meta = MetaData()
+        #meta = MetaData()
+        meta = self.orm.metadata# 
         meta.reflect(bind=self.engine)
         meta.drop_all(bind=self.engine)
 

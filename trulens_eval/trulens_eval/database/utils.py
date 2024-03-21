@@ -126,7 +126,7 @@ def is_memory_sqlite(
 
 def check_db_revision(
     engine: Engine,
-    prefix: str = "trulens_",
+    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
     prior_prefix: Optional[str] = None
 ):
     """

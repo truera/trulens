@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def alembic_config(engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX) -> Iterator[Config]:
+def alembic_config(
+    engine: Engine,
+    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+) -> Iterator[Config]:
+    
     alembic_dir = os.path.dirname(os.path.abspath(__file__))
     db_url = str(engine.url).replace("%", "%%")  # Escape any '%' in db_url
     config = Config(os.path.join(alembic_dir, "alembic.ini"))
@@ -26,7 +30,7 @@ def alembic_config(engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX)
         "calling_context", "PYTHON"
     )  # skips CLI-specific setup
     config.set_main_option("sqlalchemy.url", db_url)
-    config.set_main_option("trulens.prefix", prefix)
+    config.set_main_option("trulens.table_prefix", prefix)
     config.attributes["engine"] = engine
 
     yield config

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 from sqlite3 import Connection as SQLite3Connection
 from typing import ClassVar, Dict, Type, TypeVar
 
@@ -9,12 +10,14 @@ from sqlalchemy import event
 from sqlalchemy import Float
 from sqlalchemy import Text
 from sqlalchemy import VARCHAR
-from sqlalchemy.orm import backref
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import relationship
+from sqlalchemy.schema import MetaData
 
 from trulens_eval import schema
+from trulens_eval.database import base as mod_db
 from trulens_eval.utils.json import json_str_of_obj
 
 TYPE_JSON = Text
@@ -76,10 +79,13 @@ class ORM():
 
     registry: Dict[str, Type[BaseWithTablePrefix]] = \
         BaseWithTablePrefix.registry._class_registry
-    """Table name to ORM class mapping.
+    """Table name to ORM class mapping for tables used by trulens_eval.
     
     This can be used to iterate through all classes/tables.
     """
+
+    metadata: MetaData = BaseWithTablePrefix.metadata
+    """SqlAlchemy metadata object for tables used by trulens_eval."""
 
     class AppDefinition(BaseWithTablePrefix):
         """ORM class for [AppDefinition][trulens_eval.schema.AppDefinition].
@@ -251,9 +257,12 @@ class ORM():
 
 T = TypeVar("T", bound=BaseWithTablePrefix)
 
+# NOTE: lru_cache is important here as we don't want to create multiple classes for
+# the same table name as sqlalchemy will complain.
+@functools.lru_cache
 def make_base_for_prefix(
     base_type: Type[T],
-    table_prefix: str = "trulens_"
+    table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
 ) -> Type[T]:
     """
     Create a base class for ORM classes with the given table name prefix.
@@ -278,8 +287,10 @@ def make_base_for_prefix(
         base_type.__name__, (base_type,), {"_table_prefix": table_prefix}
     )
 
-
-def make_orm_for_prefix(table_prefix: str = "trulens_") -> Type[ORM]:
+# NOTE: lru_cache is important here as we don't want to create multiple classes for
+# the same table name as sqlalchemy will complain.
+@functools.lru_cache
+def make_orm_for_prefix(table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX) -> Type[ORM]:
     """
     Make a container for ORM classes.
 
