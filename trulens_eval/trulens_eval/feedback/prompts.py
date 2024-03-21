@@ -15,6 +15,26 @@ Criteria: <Provide the criteria for this evaluation>
 Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
 """
 
+LLM_GROUNDEDNESS_FULL_SYSTEM = """You are a INFORMATION OVERLAP classifier providing the overlap of information between a SOURCE and STATEMENT.
+For every sentence in the statement, please answer with this template:
+TEMPLATE: 
+Statement Sentence: <Sentence>, 
+Supporting Evidence: <Choose the exact unchanged sentences in the source that can answer the statement, if nothing matches, say NOTHING FOUND>
+Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
+"""
+
+# Keep this in line with the LLM output template as above
+GROUNDEDNESS_REASON_TEMPLATE = """
+Statement Sentence: {statement_sentence} 
+Supporting Evidence: {supporting_evidence} 
+Score: {score} 
+"""
+
+LLM_GROUNDEDNESS_FULL_PROMPT = """Give me the INFORMATION OVERLAP of this SOURCE and STATEMENT.
+SOURCE: {premise}
+STATEMENT: {hypothesis}
+"""
+
 LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt.template
 LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt.template
 
