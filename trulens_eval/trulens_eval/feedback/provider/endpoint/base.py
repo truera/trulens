@@ -14,6 +14,7 @@ from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
     Type, TypeVar
 )
+from humanize import naturaltime
 
 from pydantic import Field
 import requests
@@ -50,6 +51,24 @@ INSTRUMENT = "__tru_instrument"
 DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
 
+class EndpointDelayError(Exception):
+    """Raised when an endpoint invocation suggest some delay to wait for."""
+
+    def __init__(self, delay: float):
+        if delay < 0:
+            raise ValueError("Delay cannot be negative.")
+        
+        if delay > 60:
+            logger.warning("Received a long delay suggestion from endpoint for %s.", naturaltime(delay))
+
+        self.delay = delay
+
+        super().__init__(f"Endpoint suggests waiting for {delay} seconds.")
+
+    def wait(self):
+        """Wait for the suggested delay."""
+
+        sleep(self.delay)
 
 class EndpointCallback(SerialModel):
     """
@@ -120,6 +139,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             arg_flag="with_bedrock",
             module_name="trulens_eval.feedback.provider.endpoint.bedrock",
             class_name="BedrockEndpoint"
+        ),
+        EndpointSetup(
+            arg_flag="with_lamini",
+            module_name="trulens_eval.feedback.provider.endpoint.lamini",
+            class_name="LaminiEndpoint"
         )
     ]
 
@@ -155,7 +179,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     pace: Pace = Field(
         default_factory=lambda:
         Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
-        exclude=True
     )
     """Pacing instance to maintain a desired rpm."""
 
@@ -191,6 +214,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         self,
         *args,
         name: str,
+        pace: Optional[Pace] = None,
         rpm: Optional[float] = None,
         callback_class: Optional[Any] = None,
         **kwargs
@@ -203,21 +227,29 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # Some old databases do not have this serialized so lets set it to
             # the parent of callbacks and hope it never gets used.
             callback_class = EndpointCallback
-            #raise ValueError(
-            #    "Endpoint has to be extended by class that can set `callback_class`."
-            #)
+
+        if pace is not None and rpm is not None:
+            raise ValueError(
+                "Cannot set both `pace` and `rpm`. You can set `rpm` with `Pace.rpm`."
+            )
 
         if rpm is None:
             rpm = DEFAULT_RPM
+
+        if pace is None:
+            pace=Pace(
+                seconds_per_period=60.0,  # 1 minute
+                marks_per_second=rpm / 60.0
+            )
+
+        rpm = pace.marks_per_second * 60.0
 
         kwargs['name'] = name
         kwargs['callback_class'] = callback_class
         kwargs['global_callback'] = callback_class(endpoint=self)
         kwargs['callback_name'] = f"callback_{name}"
-        kwargs['pace'] = Pace(
-            seconds_per_period=60.0,  # 1 minute
-            marks_per_second=rpm / 60.0
-        )
+        kwargs['rpm'] = rpm
+        kwargs['pace'] = pace
 
         super().__init__(*args, **kwargs)
 
@@ -241,6 +273,16 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         payload: JSON,
         timeout: float = DEFAULT_NETWORK_TIMEOUT
     ) -> Any:
+        """Make an HTTP Post request.
+
+        Args:
+            url: The url to post to.
+
+            payload: The payload to post.
+
+            timeout: The timeout for the request.
+        """
+
         self.pace_me()
         ret = requests.post(
             url, json=payload, timeout=timeout, headers=self.post_headers
@@ -256,7 +298,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             sleep(wait_time + 2)
             return self.post(url, payload)
 
-        elif isinstance(j, Dict) and "error" in j:
+        if isinstance(j, Dict) and "error" in j:
             error = j['error']
             logger.error("API error: %s.", j)
 
@@ -264,8 +306,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 logger.error("Waiting for overloaded API before trying again.")
                 sleep(10.0)
                 return self.post(url, payload)
-            else:
-                raise RuntimeError(error)
+            
+            raise RuntimeError(error)
 
         assert isinstance(
             j, Sequence
@@ -274,13 +316,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         if len(j) == 1:
             return j[0]
 
-        else:
-            return j
+        return j
 
     def run_in_pace(self, func: Callable[[A], B], *args, **kwargs) -> B:
-        """
-        Run the given `func` on the given `args` and `kwargs` at pace with the
-        endpoint-specified rpm. Failures will be retried `self.retries` times.
+        """Run the given `func` on the given `args` and `kwargs` at pace with the
+        endpoint-specified pace. 
+        
+        Failures will be retried `self.retries` times.
         """
 
         retries = self.retries + 1
@@ -293,6 +335,16 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 self.pace_me()
                 ret = func(*args, **kwargs)
                 return ret
+
+            except EndpointDelayError as e:
+                retries -= 1
+                logger.error(
+                    "%s request produced delay request %s=%s. Retries remaining=%s.", self.name,
+                    type(e), e, retries
+                )
+                errors.append(e)
+                if retries > 0:
+                    sleep(e.delay)
 
             except Exception as e:
                 retries -= 1
@@ -439,6 +491,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        with_lamini: bool = True,
         **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -486,6 +539,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        with_lamini: bool = True,
         **kwargs
     ) -> Tuple[T, Cost]:
         """
@@ -500,6 +554,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             with_hugs=with_hugs,
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
+            with_lamini=with_lamini,
             **kwargs
         )
 

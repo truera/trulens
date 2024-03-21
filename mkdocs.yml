@@ -51,7 +51,7 @@ plugins:
       rewrite_relative_urls: true
       heading_offset: 0
   - search
-  - mkdocs-jupyter
+  # - mkdocs-jupyter
   - mkdocstrings:
       # See https://mkdocstrings.github.io/python/usage/configuration/docstrings/ .
       default_handler: python
@@ -250,6 +250,7 @@ nav:
               - AzureOpenAI: trulens_eval/api/provider/openai/azureopenai.md
           - AWS Bedrock: trulens_eval/api/provider/bedrock.md
           - LiteLLM: trulens_eval/api/provider/litellm.md
+          - Lamini: trulens_eval/api/provider/lamini.md
           - 🦜️🔗 Langchain: trulens_eval/api/provider/langchain.md
           - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
           - Endpoint:

@@ -66,7 +66,7 @@ class Bedrock(LLMProvider):
         )  # need to include pydantic.BaseModel.__init__
 
     # LLMProvider requirement
-    def _create_chat_completion(
+    def create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
@@ -172,7 +172,7 @@ class Bedrock(LLMProvider):
         """
 
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
+            func=self.create_chat_completion,
             prompt=(
                 system_prompt + user_prompt if user_prompt else system_prompt
             )
@@ -199,7 +199,7 @@ class Bedrock(LLMProvider):
             The score and reason metadata if available.
         """
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
+            func=self.create_chat_completion,
             prompt=(
                 system_prompt + user_prompt if user_prompt else system_prompt
             )

@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple
+from typing import ClassVar, Dict, Literal, Optional, Sequence, Tuple, Union
 import warnings
 
 from trulens_eval.feedback import prompts
@@ -73,24 +73,26 @@ class Provider(WithClassInfo, SerialModel):
     def __init__(self, name: Optional[str] = None, **kwargs):
         super().__init__(name=name, **kwargs)
 
-
 class LLMProvider(Provider):
     """An LLM-based provider.
     
     This is an abstract class and needs to be initialized as one of these:
 
     * [OpenAI][trulens_eval.feedback.provider.openai.OpenAI] and subclass
-      [AzureOpenAI][trulens_eval.feedback.provider.openai.AzureOpenAI].
+      [AzureOpenAI][trulens_eval.feedback.provider.openai.AzureOpenAI]
 
-    * [Bedrock][trulens_eval.feedback.provider.bedrock.Bedrock].
+    * [Bedrock][trulens_eval.feedback.provider.bedrock.Bedrock]
 
     * [LiteLLM][trulens_eval.feedback.provider.litellm.LiteLLM]. LiteLLM provides an
     interface to a [wide range of
     models](https://docs.litellm.ai/docs/providers).
     
-    * [Langchain][trulens_eval.feedback.provider.langchain.Langchain].
+    * [Langchain][trulens_eval.feedback.provider.langchain.Langchain]
 
-"""
+    * [Lamini][trulens_eval.feedback.provider.lamini.Lamini]. Lamini supports
+    several families of open models as listed in the [Lamini model list
+    page](https://lamini-ai.github.io/inference/models_list/).
+    """
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any
@@ -108,7 +110,7 @@ class LLMProvider(Provider):
         )  # need to include pydantic.BaseModel.__init__
 
     #@abstractmethod
-    def _create_chat_completion(
+    def create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
@@ -122,13 +124,12 @@ class LLMProvider(Provider):
         """
         # text
         raise NotImplementedError()
-        pass
 
     def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
         assert self.endpoint is not None, "Endpoint is not set."
 
         return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
+            func=self.create_chat_completion,
             prompt=str.format(
                 prompts.SYSTEM_FIND_SUPPORTING,
                 prompt=full_source,
@@ -170,15 +171,40 @@ class LLMProvider(Provider):
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
-        return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
-            str.format(
-                prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                premise=premise,
-                hypothesis=hypothesis
+        if isinstance(self, WithOutputType):
+            comp = self.endpoint.run_in_pace(
+                func=self.create_chat_completion,
+                prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
+                str.format(
+                    prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                    premise=premise,
+                    hypothesis=hypothesis
+                ),
+                output_type={
+                    'Sentence': "string",
+                    'Evidence': "string",
+                    'Score': "int"
+                }
             )
-        )
+            # Inefficient conversion back to string but that is what user of
+            # this method expects.
+
+            return """
+Statement: {comp['Sentence']}
+Evidence: {comp['Evidence']}
+Score: {comp['Score']}
+"""
+
+        else:
+            return self.endpoint.run_in_pace(
+                func=self.create_chat_completion,
+                prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
+                str.format(
+                    prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
+                    premise=premise,
+                    hypothesis=hypothesis
+                )
+            )
 
     def generate_score(
         self,
@@ -201,8 +227,14 @@ class LLMProvider(Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
+        extra_args = {}
+        if isinstance(self, WithOutputType):
+            # If have output type capability, add output type to request an int
+            # from the completion model.
+            extra_args = {'output_type': "int"}
+
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
+            func=self.create_chat_completion, messages=llm_messages, **extra_args
         )
 
         return re_0_10_rating(response) / normalize
@@ -217,10 +249,14 @@ class LLMProvider(Provider):
         Base method to generate a score and reason, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formated system prompt
+            system_prompt: A pre-formated system prompt
+
+            normalize: A float to normalize the score with. If the prompt asks a
+                generation in range [0, X], normalize should be X.
 
         Returns:
-            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
+            The score on 0-1 scale and reason metadata (dict) if returned by the
+                LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -229,7 +265,7 @@ class LLMProvider(Provider):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
+            func=self.create_chat_completion, messages=llm_messages
         )
         if "Supporting Evidence" in response:
             score = -1
@@ -389,7 +425,8 @@ class LLMProvider(Provider):
             context (str): Context related to the question.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being
+                "relevant".
         """
         system_prompt = str.format(
             prompts.CONTEXT_RELEVANCE, question=question, context=context
@@ -597,7 +634,7 @@ class LLMProvider(Provider):
             "Use `GroundTruthAgreement(ground_truth)` instead.",
             DeprecationWarning
         )
-        chat_response = self._create_chat_completion(
+        chat_response = self.create_chat_completion(
             prompt=prompts.CORRECT_SYSTEM_PROMPT
         )
         agreement_txt = self._get_answer_agreement(
@@ -1146,7 +1183,7 @@ class LLMProvider(Provider):
         assert self.endpoint is not None, "Endpoint is not set."
 
         return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
+            func=self.create_chat_completion,
             prompt=(prompts.AGREEMENT_SYSTEM_PROMPT %
                     (prompt, check_response)) + response
         )
@@ -1241,3 +1278,61 @@ class LLMProvider(Provider):
         ) + prompts.COT_REASONS_TEMPLATE
 
         return self.generate_score_and_reasons(system_prompt)
+
+OutputType = Union[Literal["string"], Literal['int'], Literal['float']]
+
+class WithOutputType(LLMProvider):
+    """A mixin to [LLMProvider][trulens_eval.feedback.provider.base.LLMProvider]
+    that indicates it can accept required output type for generation.
+    
+    The classes that mixin in this type should implement
+    [create_chat_completion_with_output_type][trulens_eval.feedback.provider.base.WithOutputType.create_chat_completion_with_output_type]
+    method that accepts the `output_type` argument.
+    """
+
+    def generate_score_and_reasons(
+        self,
+        system_prompt: str,
+        user_prompt: Optional[str] = None,
+        normalize: float = 10.0
+    ) -> Tuple[float, Dict]:
+        """
+        Base method to generate a score and reason, used for evaluation.
+
+        Uses a chat model that can handle `output_data`.
+
+        Args:
+            system_prompt: A pre-formated system prompt.
+
+        Returns:
+            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
+        """
+
+        # TODO: implement this
+
+
+
+        return super().generate_score_and_reasons(system_prompt, user_prompt, normalize)
+
+    def create_chat_completion_with_output_type(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[Sequence[Dict]] = None,
+        output_type: Optional[Dict[str, OutputType]] = None,
+        **kwargs
+    ) -> Dict[str, Union[str, int, float]]:
+        """
+        Run a completion. This version should accept a requested output type.
+
+        Args:
+            prompt: A prompt to the model. One of prompt or messages is required.
+            
+            messages: A list of messages. One of prompt or messages is required.
+
+            output_type: The requested output type. Defaults to `{'output': 'string'}`. Other
+                types are "int" and "float".
+
+        Returns:
+            Outputs in a dictionary format as specified by output_type.
+        """
+        raise NotImplementedError()

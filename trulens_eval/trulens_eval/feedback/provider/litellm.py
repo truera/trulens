@@ -12,7 +12,7 @@ with OptionalImports(messages=REQUIREMENT_LITELLM):
     import litellm
     from litellm import completion
 
-    from trulens_eval.feedback.provider.endpoint import LiteLLMEndpoint
+    from trulens_eval.feedback.provider.endpoint.litellm import LiteLLMEndpoint
 
 # check that the optional imports are not dummies:
 OptionalImports(messages=REQUIREMENT_LITELLM).assert_installed(litellm)
@@ -93,7 +93,7 @@ provider = LiteLLM(
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    def _create_chat_completion(
+    def create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,

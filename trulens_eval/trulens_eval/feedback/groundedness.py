@@ -92,7 +92,9 @@ class Groundedness(WithClassInfo, SerialModel):
             from trulens_eval.feedback.provider.openai import OpenAI
             grounded = feedback.Groundedness(groundedness_provider=OpenAI())
 
-            f_groundedness = feedback.Feedback(grounded.groundedness_measure_with_cot_reasons).on(
+            f_groundedness = feedback.Feedback(
+                grounded.groundedness_measure_with_cot_reasons
+            ).on(
                 Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
             ).on_output().aggregate(grounded.grounded_statements_aggregator)
             ```

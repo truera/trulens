@@ -83,7 +83,7 @@ class OpenAI(LLMProvider):
         )  # need to include pydantic.BaseModel.__init__
 
     # LLMProvider requirement
-    def _create_chat_completion(
+    def create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
@@ -439,7 +439,7 @@ class AzureOpenAI(OpenAI):
         # Make a dict of args to pass to AzureOpenAI client. Remove any we use
         # for our needs. Note that model name / deployment name is not set in
         # that client and instead is an argument to each chat request. We pass
-        # that through the super class's `_create_chat_completion`.
+        # that through the super class's `create_chat_completion`.
         client_kwargs = dict(kwargs)
         if CLASS_INFO in client_kwargs:
             del client_kwargs[CLASS_INFO]
@@ -457,8 +457,8 @@ class AzureOpenAI(OpenAI):
             endpoint=None, **kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    def _create_chat_completion(self, *args, **kwargs):
+    def create_chat_completion(self, *args, **kwargs):
         """
         We need to pass `engine`
         """
-        return super()._create_chat_completion(*args, **kwargs)
+        return super().create_chat_completion(*args, **kwargs)
