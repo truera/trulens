@@ -16,6 +16,7 @@ from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import MetaData
+from sqlite3 import OperationalError
 
 from trulens_eval import schema
 from trulens_eval.app import App
@@ -519,57 +520,67 @@ class AppsExtractor:
             [], columns=self.app_cols + self.rec_cols
         )  # prevent empty iterator
         for _app in apps:
-            if _recs := _app.records:
-                df = pd.DataFrame(data=self.extract_records(_recs))
+            try:
+                if _recs := _app.records:
+                    df = pd.DataFrame(data=self.extract_records(_recs))
 
-                for col in self.app_cols:
-                    if col == "type":
-                        # Previous DBs did not contain entire app so we cannot
-                        # deserialize AppDefinition here unless we fix prior DBs
-                        # in migration. Because of this, loading just the
-                        # `root_class` here.
-                        df[col] = str(
-                            Class.model_validate(
-                                json.loads(_app.app_json).get('root_class')
+                    for col in self.app_cols:
+                        if col == "type":
+                            # Previous DBs did not contain entire app so we cannot
+                            # deserialize AppDefinition here unless we fix prior DBs
+                            # in migration. Because of this, loading just the
+                            # `root_class` here.
+                            df[col] = str(
+                                Class.model_validate(
+                                    json.loads(_app.app_json).get('root_class')
+                                )
                             )
-                        )
-                    else:
-                        df[col] = getattr(_app, col)
+                        else:
+                            df[col] = getattr(_app, col)
 
-                yield df
+                    yield df
+            except OperationalError as e:
+                print("Error encountered while attempting to retrieve an app. This issue may stem from a corrupted database.")
+                print(f"Error details: {e}")
+                
 
     def extract_records(self,
                         records: Iterable[orm.Record]) -> Iterable[pd.Series]:
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
+            
+            try:
+                for _res in _rec.feedback_results:
+                    calls[_res.name].append(json.loads(_res.calls_json)["calls"])
+                    if _res.multi_result is not None and (multi_result :=
+                                                        json.loads(
+                                                            _res.multi_result
+                                                        )) is not None:
+                        for key, val in multi_result.items():
+                            if val is not None:  # avoid getting Nones into np.mean
+                                name = f"{_res.name}:::{key}"
+                                values[name] = val
+                                self.feedback_columns.add(name)
+                    elif _res.result is not None:  # avoid getting Nones into np.mean
+                        values[_res.name].append(_res.result)
+                        self.feedback_columns.add(_res.name)
 
-            for _res in _rec.feedback_results:
-                calls[_res.name].append(json.loads(_res.calls_json)["calls"])
-                if _res.multi_result is not None and (multi_result :=
-                                                      json.loads(
-                                                          _res.multi_result
-                                                      )) is not None:
-                    for key, val in multi_result.items():
-                        if val is not None:  # avoid getting Nones into np.mean
-                            name = f"{_res.name}:::{key}"
-                            values[name] = val
-                            self.feedback_columns.add(name)
-                elif _res.result is not None:  # avoid getting Nones into np.mean
-                    values[_res.name].append(_res.result)
-                    self.feedback_columns.add(_res.name)
+                row = {
+                    **{k: np.mean(v) for k, v in values.items()},
+                    **{k + "_calls": flatten(v) for k, v in calls.items()},
+                }
 
-            row = {
-                **{k: np.mean(v) for k, v in values.items()},
-                **{k + "_calls": flatten(v) for k, v in calls.items()},
-            }
+                for col in self.rec_cols:
+                    row[col] = datetime.fromtimestamp(
+                        _rec.ts
+                    ).isoformat() if col == "ts" else getattr(_rec, col)
 
-            for col in self.rec_cols:
-                row[col] = datetime.fromtimestamp(
-                    _rec.ts
-                ).isoformat() if col == "ts" else getattr(_rec, col)
-
-            yield row
+                yield row
+            except Exception as e:
+                # Handling unexpected errors, possibly due to database issues.
+                print("Error encountered while attempting to retrieve feedback results. This issue may stem from a corrupted database.")
+                print(f"Error details: {e}")
 
 
 def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
