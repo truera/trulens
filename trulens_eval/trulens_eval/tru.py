@@ -24,9 +24,9 @@ from tqdm.auto import tqdm
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
-from trulens_eval.database.base import DB
 from trulens_eval import schema
 from trulens_eval.database import sqlalchemy
+from trulens_eval.database.base import DB
 from trulens_eval.feedback import feedback
 from trulens_eval.utils import notebook_utils
 from trulens_eval.utils import python
@@ -82,6 +82,10 @@ class Tru(python.SingletonPerName):
             records.
 
     Args:
+        database: Database to use. If not provided, an
+            [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] database
+            will be initialized based on the other arguments.
+
         database_url: Database URL. Defaults to a local SQLite
             database file at `"default.sqlite"` See [this
             article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
@@ -92,9 +96,13 @@ class Tru(python.SingletonPerName):
 
             **Deprecated**: Use `database_url` instead.
 
+        database_prefix: Prefix for table names for trulens_eval to use. 
+            May be useful in some databases hosting other apps.
+
         database_redact_keys: Whether to redact secret keys in data to be
             written to database (defaults to `False`)
 
+        database_args: Additional arguments to pass to the database constructor.
     """
 
     DEFAULT_DATABASE_FILE: str = "default.sqlite"
@@ -143,6 +151,7 @@ class Tru(python.SingletonPerName):
 
     def __init__(
         self,
+        database: Optional[DB] = None,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
         database_redact_keys: Optional[bool] = None,
@@ -172,7 +181,10 @@ class Tru(python.SingletonPerName):
             # Already initialized by SingletonByName mechanism.
             return
 
-        self.db = sqlalchemy.SqlAlchemyDB.from_tru_args(**database_args)
+        if database is not None:
+            self.db = database
+        else:
+            self.db = sqlalchemy.SQLAlchemyDB.from_tru_args(**database_args)
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict

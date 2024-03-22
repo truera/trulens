@@ -63,7 +63,7 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 class DB(SerialModel, abc.ABC):
     """Abstract definition of databases used by trulens_eval.
     
-    [SqlAlchemyDB][trulens_eval.database.sqlalchemy_db.SqlAlchemyDB] is the main
+    [SQLAlchemyDB][trulens_eval.database.sqlalchemy_db.SQLAlchemyDB] is the main
     and default implementation if this specification.
     """
 

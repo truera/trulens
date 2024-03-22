@@ -470,7 +470,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     """Database interface.
     
     If this is not provided, a singleton
-    [SqlAlchemyDB][trulens_eval.database.sqlalchemy_db.SqlAlchemyDB] will be
+    [SQLAlchemyDB][trulens_eval.database.sqlalchemy_db.SQLAlchemyDB] will be
     made (if not already) and used.
     """
 

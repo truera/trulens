@@ -39,8 +39,8 @@ class LocalSQLite(DB):
     Warning:
         This database implementation is deprecated and will be removed in the
         future. Use
-        [SqlAlchemyDB][trulens_eval.database.sqlalchemy_db.SqlAlchemyDB]
-        instead. Local sqlite databases can be initialized with SqlAlchemyDB.
+        [SQLAlchemyDB][trulens_eval.database.sqlalchemy_db.SQLAlchemyDB]
+        instead. Local sqlite databases can be initialized with SQLAlchemyDB.
     """
 
     filename: Path

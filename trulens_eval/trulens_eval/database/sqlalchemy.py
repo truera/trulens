@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
         "reset_database"  # migrates database automatically
     ]
 )
-class SqlAlchemyDB(DB):
+class SQLAlchemyDB(DB):
     """Database implemented using sqlalchemy.
     
     See abstract class [DB][trulens_eval.database.base.DB] for method reference.
@@ -132,7 +132,7 @@ class SqlAlchemyDB(DB):
         database_redact_keys: Optional[bool] = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
         database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
         **kwargs
-    ) -> SqlAlchemyDB:
+    ) -> SQLAlchemyDB:
         """Process database-related configuration provided to the [Tru][trulens_eval.tru.Tru] class to
         create a database.
         
@@ -163,7 +163,7 @@ class SqlAlchemyDB(DB):
         if 'redact_keys' not in kwargs:
             kwargs['redact_keys'] = database_redact_keys
 
-        new_db: DB = SqlAlchemyDB.from_db_url(
+        new_db: DB = SQLAlchemyDB.from_db_url(
             database_url,
             **kwargs
         )
@@ -184,7 +184,7 @@ class SqlAlchemyDB(DB):
         return new_db
 
     @classmethod
-    def from_db_url(cls, url: str, **kwargs) -> SqlAlchemyDB:
+    def from_db_url(cls, url: str, **kwargs) -> SQLAlchemyDB:
         """
         Create a database for the given url.
 

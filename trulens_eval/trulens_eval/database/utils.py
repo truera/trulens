@@ -320,12 +320,12 @@ def copy_database(
           the databases are NOT used by anyone while this process runs.
     """
 
-    from trulens_eval.database.sqlalchemy import SqlAlchemyDB
+    from trulens_eval.database.sqlalchemy import SQLAlchemyDB
 
-    src = SqlAlchemyDB.from_db_url(src_url, prefix=src_prefix)
+    src = SQLAlchemyDB.from_db_url(src_url, prefix=src_prefix)
     check_db_revision(src.engine, prefix=src_prefix)
 
-    tgt = SqlAlchemyDB.from_db_url(tgt_url, prefix=tgt_prefix)
+    tgt = SQLAlchemyDB.from_db_url(tgt_url, prefix=tgt_prefix)
     check_db_revision(tgt.engine, prefix=tgt_prefix)
 
     for k, source_table_class in src.orm.registry.items():
