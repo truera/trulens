@@ -13,9 +13,10 @@ from ast import parse
 from contextvars import ContextVar
 from copy import copy
 import logging
-from typing import (Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable,
-                    List, Optional, Sequence, Set, Sized, Tuple, TypeVar,
-                    Union)
+from typing import (
+    Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable, List, Optional,
+    Sequence, Set, Sized, Tuple, TypeVar, Union
+)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -100,17 +101,19 @@ def model_dump(obj: Union[pydantic.BaseModel, pydantic.v1.BaseModel]) -> dict:
     else:
         raise ValueError("Not a pydantic.BaseModel.")
 
+
 class SerialModel(pydantic.BaseModel):
     """
     Trulens-specific additions on top of pydantic models. Includes utilities to
     help serialization mostly.
     """
 
-    formatted_objects: ClassVar[ContextVar[Set[int]]] = ContextVar("formatted_objects")
+    formatted_objects: ClassVar[ContextVar[Set[int]]
+                               ] = ContextVar("formatted_objects")
 
     def __rich_repr__(self) -> rich.repr.Result:
         """Requirement for pretty printing using the rich package."""
-    
+
         # yield class_name(type(self))
 
         # If this is a root repr, create a new set for already-formatted objects.
@@ -695,7 +698,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         except (KeyError, IndexError, ValueError):
             return False
-        
+
         return True
 
     @staticmethod
