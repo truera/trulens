@@ -15,6 +15,7 @@ from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import MetaData
+from sqlite3 import OperationalError
 
 from trulens_eval import schema
 from trulens_eval.app import App
@@ -518,24 +519,28 @@ class AppsExtractor:
             [], columns=self.app_cols + self.rec_cols
         )  # prevent empty iterator
         for _app in apps:
-            if _recs := _app.records:
-                df = pd.DataFrame(data=self.extract_records(_recs))
+            try:
+                if _recs := _app.records:
+                    df = pd.DataFrame(data=self.extract_records(_recs))
 
-                for col in self.app_cols:
-                    if col == "type":
-                        # Previous DBs did not contain entire app so we cannot
-                        # deserialize AppDefinition here unless we fix prior DBs
-                        # in migration. Because of this, loading just the
-                        # `root_class` here.
-                        df[col] = str(
-                            Class.model_validate(
-                                json.loads(_app.app_json).get('root_class')
+                    for col in self.app_cols:
+                        if col == "type":
+                            # Previous DBs did not contain entire app so we cannot
+                            # deserialize AppDefinition here unless we fix prior DBs
+                            # in migration. Because of this, loading just the
+                            # `root_class` here.
+                            df[col] = str(
+                                Class.model_validate(
+                                    json.loads(_app.app_json).get('root_class')
+                                )
                             )
-                        )
-                    else:
-                        df[col] = getattr(_app, col)
+                        else:
+                            df[col] = getattr(_app, col)
 
-                yield df
+                    yield df
+            except OperationalError as e:
+                print(str(e))
+                
 
     def extract_records(self,
                         records: Iterable[orm.Record]) -> Iterable[pd.Series]:
