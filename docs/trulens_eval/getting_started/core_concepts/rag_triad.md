@@ -12,7 +12,7 @@ edge of the RAG architecture, shown below:
 
 The RAG triad is made up of 3 evaluations: context relevance, groundedness and
 answer relevance. Satisfactory evaluations on each provides us confidence that
-our LLM app is free form hallucination.
+our LLM app is free from hallucination.
 
 ## Context Relevance
 
