@@ -1,7 +1,3 @@
-"""
-Generalized root type for various libraries like `llama_index` and `langchain` .
-"""
-
 from __future__ import annotations
 
 from abc import ABC
@@ -442,11 +438,22 @@ class RecordingContext():
 
 
 class App(AppDefinition, WithInstrumentCallbacks, Hashable):
-    """
-    Generalization of an app recorder.
-    
+    """Base app recorder type.
+
     Non-serialized fields here while the serialized ones are defined in
     [AppDefinition][trulens_eval.schema.AppDefinition].
+
+    This class is abstract. Use one of these concrete subclasses as appropriate:
+    - [TruLlama][trulens_eval.tru_llama.TruLlama] for _LlamaIndex_ apps.
+    - [TruChain][trulens_eval.tru_chain.TruChain] for _LangChain_ apps.
+    - [TruRails][trulens_eval.tru_rails.TruRails] for _NeMo Guardrails_
+        apps.
+    - [TruVirtual][trulens_eval.tru_virtual.TruVirtual] for recording
+        information about invocations of apps without access to those apps.
+    - [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp] for custom
+        apps. These need to be decorated to have appropriate data recorded.
+    - [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp] for apps defined
+        solely by a string-to-string method.
     """
 
     model_config: ClassVar[dict] = {

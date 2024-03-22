@@ -5,9 +5,7 @@ from pprint import PrettyPrinter
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
-import numpy as np
 import pandas as pd
-import pydantic
 
 from trulens_eval import __version__
 from trulens_eval.app import App
@@ -28,8 +26,6 @@ from trulens_eval.utils.serial import SerialModel
 
 mj = MerkleJson()
 NoneType = type(None)
-
-pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +51,7 @@ class DB(SerialModel, abc.ABC):
     """Abstract definition of databases used by trulens_eval.
     
     [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] is the main
-    and default implementation if this specification.
+    and default implementation of this interface.
     """
 
     redact_keys: bool = DEFAULT_DATABASE_REDACT_KEYS
