@@ -28,7 +28,7 @@ class TestLlamaIndex(JSONTestCase):
         from llama_index.core import SimpleDirectoryReader
         from llama_index.core import VectorStoreIndex
         os.system(
-            'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
+            'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
         )
 
         documents = SimpleDirectoryReader("data").load_data()
