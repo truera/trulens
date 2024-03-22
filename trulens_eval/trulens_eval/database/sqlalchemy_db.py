@@ -577,6 +577,7 @@ class AppsExtractor:
 
                 yield row
             except Exception as e:
+                # Handling unexpected errors, possibly due to database issues.
                 print("Error encountered while attempting to retrieve feedback results. This issue may stem from a corrupted database.")
                 print(f"Error details: {e}")
 
