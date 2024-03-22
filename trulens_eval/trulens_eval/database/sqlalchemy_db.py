@@ -200,6 +200,41 @@ class SqlAlchemyDB(DB):
 
             return _app.app_id
 
+    def list_records(self, app_id) -> List[int]:
+        data = []
+        with self.Session.begin() as session:
+            data = [
+                i.record_id
+                for i in session.query(orm.Record).filter_by(app_id=app_id)
+            ]
+
+        return data
+
+    def get_record_and_feedback(self, record_id) -> [pd.DataFrame]:
+        data = []
+        with self.Session.begin() as session:
+            data = [
+                i.__dict__
+                for i in session.query(orm.FeedbackResult
+                                      ).filter_by(record_id=record_id)
+            ]
+
+        return pd.DataFrame(data)
+
+    def delete_record(self, record_id):
+        with self.Session.begin() as session:
+            session.query(orm.FeedbackResult).filter_by(record_id=record_id
+                                                       ).delete()
+            session.query(orm.Record).filter_by(record_id=record_id).delete()
+
+    def delete_app(self, app_id):
+        with self.Session.begin() as session:
+            record = session.query(orm.Record).filter_by(app_id=app_id)
+            if record:
+                session.query(orm.FeedbackResult).filter_by(record__in=[i.record_id for i in record]).delete()
+                record.delete()
+                session.query(orm.AppDefinition).filter_by(id=app_id).delete()
+
     def insert_feedback_definition(
         self, feedback_definition: schema.FeedbackDefinition
     ) -> schema.FeedbackDefinitionID:
@@ -559,8 +594,12 @@ class AppsExtractor:
                     self.feedback_columns.add(_res.name)
 
             row = {
-                **{k: np.mean(v) for k, v in values.items()},
-                **{k + "_calls": flatten(v) for k, v in calls.items()},
+                **{
+                    k: np.mean(v) for k, v in values.items()
+                },
+                **{
+                    k + "_calls": flatten(v) for k, v in calls.items()
+                },
             }
 
             for col in self.rec_cols:
@@ -579,3 +618,6 @@ def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
                 yield element
 
     return list(_flatten(nested))
+
+
+

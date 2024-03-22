@@ -255,6 +255,26 @@ class DB(SerialModel, abc.ABC):
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def list_records(self, app_id) -> List[int]:
+        """Get the list of record ids for the given app_id"""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_record_and_feedback(self, record_id) -> [pd.DataFrame]:
+        """Get all feedbacks for a given record_id"""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def delete_record(self, record_id):
+        """Delete record based on record_id"""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def delete_app(self, app_id):
+        """Delete app for a given app_id"""
+        raise NotImplementedError()
+
 
 def versioning_decorator(func):
     """A function decorator that checks if a DB is up to date.
