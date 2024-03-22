@@ -73,9 +73,7 @@ class OpenAI(LLMProvider):
         self_kwargs['model_engine'] = model_engine
 
         self_kwargs['endpoint'] = OpenAIEndpoint(
-            *args, 
-            pace=pace, rpm=rpm,
-            **kwargs
+            *args, pace=pace, rpm=rpm, **kwargs
         )
 
         super().__init__(
