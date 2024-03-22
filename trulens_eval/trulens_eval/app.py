@@ -655,8 +655,6 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
         
         """
 
-        
-
         if self.tru is None:
             if self.feedback_mode != FeedbackMode.NONE:
                 from trulens_eval.tru import Tru
