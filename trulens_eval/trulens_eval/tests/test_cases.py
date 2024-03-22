@@ -275,8 +275,8 @@ def generate_meetingbank_comprehensiveness_benchmark(human_annotation_file_path,
             summary = details["summary"]
             avg_informativeness_score = sum(details["informativeness"]) / len(details["informativeness"]) # informativeness maps to comprehensiveness
             yield {
-                "summarizer_model": model,
-                "transcripts": transcripts_str,
+                # "summarizer_model": model,
+                "query": transcripts_str,
                 "response": summary,
                 "expected_score": calculate_expected_score(
                     [avg_informativeness_score / 5],  #  normalize score from 1 to 5 to 0 to 1.0
