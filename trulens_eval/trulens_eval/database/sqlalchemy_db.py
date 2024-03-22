@@ -548,33 +548,37 @@ class AppsExtractor:
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
+            
+            try:
+                for _res in _rec.feedback_results:
+                    calls[_res.name].append(json.loads(_res.calls_json)["calls"])
+                    if _res.multi_result is not None and (multi_result :=
+                                                        json.loads(
+                                                            _res.multi_result
+                                                        )) is not None:
+                        for key, val in multi_result.items():
+                            if val is not None:  # avoid getting Nones into np.mean
+                                name = f"{_res.name}:::{key}"
+                                values[name] = val
+                                self.feedback_columns.add(name)
+                    elif _res.result is not None:  # avoid getting Nones into np.mean
+                        values[_res.name].append(_res.result)
+                        self.feedback_columns.add(_res.name)
 
-            for _res in _rec.feedback_results:
-                calls[_res.name].append(json.loads(_res.calls_json)["calls"])
-                if _res.multi_result is not None and (multi_result :=
-                                                      json.loads(
-                                                          _res.multi_result
-                                                      )) is not None:
-                    for key, val in multi_result.items():
-                        if val is not None:  # avoid getting Nones into np.mean
-                            name = f"{_res.name}:::{key}"
-                            values[name] = val
-                            self.feedback_columns.add(name)
-                elif _res.result is not None:  # avoid getting Nones into np.mean
-                    values[_res.name].append(_res.result)
-                    self.feedback_columns.add(_res.name)
+                row = {
+                    **{k: np.mean(v) for k, v in values.items()},
+                    **{k + "_calls": flatten(v) for k, v in calls.items()},
+                }
 
-            row = {
-                **{k: np.mean(v) for k, v in values.items()},
-                **{k + "_calls": flatten(v) for k, v in calls.items()},
-            }
+                for col in self.rec_cols:
+                    row[col] = datetime.fromtimestamp(
+                        _rec.ts
+                    ).isoformat() if col == "ts" else getattr(_rec, col)
 
-            for col in self.rec_cols:
-                row[col] = datetime.fromtimestamp(
-                    _rec.ts
-                ).isoformat() if col == "ts" else getattr(_rec, col)
-
-            yield row
+                yield row
+            except Exception as e:
+                print("Error encountered while attempting to retrieve feedback results. This issue may stem from a corrupted database.")
+                print(f"Error details: {e}")
 
 
 def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
