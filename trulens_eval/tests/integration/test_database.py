@@ -26,7 +26,7 @@ from trulens_eval.database.sqlalchemy import AppsExtractor
 from trulens_eval.database.sqlalchemy import SqlAlchemyDB
 from trulens_eval.database.utils import is_legacy_sqlite
 from trulens_eval.database.base import DB
-from trulens_eval.database.base import LocalSQLite
+from trulens_eval.database.legacy.sqlite import LocalSQLite
 
 
 class TestDbV2Migration(TestCase):

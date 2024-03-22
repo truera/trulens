@@ -15,7 +15,7 @@ from sqlalchemy import Engine
 from sqlalchemy import inspect as sql_inspect
 
 from trulens_eval.database import base as mod_db
-from trulens_eval.database.base import LocalSQLite
+from trulens_eval.database.legacy.sqlite import LocalSQLite
 from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
