@@ -377,5 +377,7 @@ class TruChain(App):
             method="_acall", is_async=True, with_record=False
         )
 
-import trulens_eval # for App class annotations
+
+import trulens_eval  # for App class annotations
+
 TruChain.model_rebuild()
