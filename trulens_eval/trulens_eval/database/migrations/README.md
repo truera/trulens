@@ -1,4 +1,5 @@
-# Database Migrations
+# Database Migration
+
 Database schema revisions are handled with
 [Alembic](https://github.com/sqlalchemy/alembic/)
 
@@ -7,12 +8,43 @@ Database schema revisions are handled with
 ```python
 from trulens_eval import Tru
 
-tru = Tru(database_url="<sqlalchemy_url>")
+tru = Tru(
+   database_url="<sqlalchemy_url>",
+   database_prefix="trulens_"
+)
 tru.migrate_database()
+# If database contains more than one alembic-versioned app, the prior prefix used by trulens may be required:
+# tru.migrate_database(prior_prefix="something")
 ```
 
+## Copying a database
 
-## Creating a new schema revision
+Have a look at the help text for `copy_database` and take into account all the
+items under the section `Important considerations`:
+
+```python
+from trulens_eval.database.utils import copy_database
+
+help(copy_database)
+```
+
+Copy all data from the source database into an EMPTY target database:
+
+```python
+from trulens_eval.database.utils import copy_database
+
+copy_database(
+    src_url="<source_db_url>",
+    tgt_url="<target_db_url>",
+    src_prefix="<source_db_prefix>",
+    tgt_prefix="<target_db_prefix>"
+)
+```
+
+## Dev Notes
+
+### Creating a new schema revision
+
 If upgrading DB, You must do this step!!
 
 1. `cd truera/trulens_eval/database/migrations`
@@ -31,7 +63,8 @@ If upgrading DB, You must do this step!!
    were made
 1. `git add truera/trulens_eval/database/migrations/versions`
 
-## Creating a DB at the latest schema
+### Creating a DB at the latest schema
+
 If upgrading DB, You must do this step!!
 
 Note: You must create a new schema revision before doing this
@@ -57,32 +90,11 @@ Note: You must create a new schema revision before doing this
       trulens/trulens_eval/release_dbs/sql_alchemy_<NEW_VERSION>/`
 1. `git add trulens/trulens_eval/release_dbs`
 
-## Testing the DB
+### Testing the DB
+
 Run the below:
+
 1. `cd trulens/trulens_eval`
 1. `HUGGINGFACE_API_KEY="<to_fill_out>"  OPENAI_API_KEY="<to_fill_out>"
    PINECONE_API_KEY="" PINECONE_ENV="" HUGGINGFACEHUB_API_TOKEN="" python -m
    pytest tests/docs_notebooks -k backwards_compat`
-
-## Copying a database
-Have a look at the help text for `_copy_database` and take into account all the
-items under the section `Important considerations`:
-
-```python
-
-from trulens_eval.database.utils import _copy_database
-
-help(_copy_database)
-```
-
-Copy all data from the source database into an EMPTY target database:
-
-```python
-
-from trulens_eval.database.utils import _copy_database
-
-_copy_database(
-    src_url="<source_db_url>",
-    tgt_url="<target_db_url>"
-)
-```

@@ -297,7 +297,12 @@ def coerce_ts(ts: Union[datetime, str, int, float]) -> datetime:
     raise ValueError(f"Cannot coerce to datetime: {ts}")
 
 
-def _copy_database(src_url: str, tgt_url: str):
+def copy_database(
+    src_url: str,
+    tgt_url: str,
+    src_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
+    tgt_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+):
     """
     Copy all data from a source database to an EMPTY target database.
 
@@ -306,7 +311,7 @@ def _copy_database(src_url: str, tgt_url: str):
           important that the target database is empty.
 
         - Will fail if the databases are not at the latest schema revision. That
-          can be fixed with `Tru(database_url="...").migrate_database()`
+          can be fixed with `Tru(database_url="...", database_prefix="...").migrate_database()`
 
         - Might fail if the target database enforces relationship constraints,
           because then the order of inserting data matters.
@@ -317,15 +322,23 @@ def _copy_database(src_url: str, tgt_url: str):
 
     from trulens_eval.database.sqlalchemy import SqlAlchemyDB
 
-    src = SqlAlchemyDB.from_db_url(src_url)
-    check_db_revision(src.engine)
+    src = SqlAlchemyDB.from_db_url(src_url, prefix=src_prefix)
+    check_db_revision(src.engine, prefix=src_prefix)
 
-    tgt = SqlAlchemyDB.from_db_url(tgt_url)
-    check_db_revision(tgt.engine)
+    tgt = SqlAlchemyDB.from_db_url(tgt_url, prefix=tgt_prefix)
+    check_db_revision(tgt.engine, prefix=tgt_prefix)
 
-    for table in ["apps", "feedback_defs", "records", "feedbacks"]:
+    for k, source_table_class in src.orm.registry.items():
+        # ["apps", "feedback_defs", "records", "feedbacks"]:
+
+        if not hasattr(source_table_class, "_table_base_name"):
+            continue
+
+        target_table_class = tgt.orm.registry.get(k)
 
         with src.engine.begin() as src_conn:
+
             with tgt.engine.begin() as tgt_conn:
-                df = pd.read_sql(f"SELECT * FROM {table}", src_conn)
-                df.to_sql(table, tgt_conn, index=False, if_exists="append")
+
+                df = pd.read_sql(f"SELECT * FROM {source_table_class.__tablename__}", src_conn)
+                df.to_sql(target_table_class.__tablename__, tgt_conn, index=False, if_exists="append")
