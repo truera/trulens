@@ -113,16 +113,18 @@ class Groundedness(WithClassInfo, SerialModel):
                 "Only LLM providers are supported for groundedness_measure_with_cot_reasons."
             )
         else:
-            reason = self.groundedness_provider._groundedness_doc_in_out(
-                source, statement
-            )
-            i = 0
-            for line in reason.split('\n'):
-                if "Score" in line:
-                    groundedness_scores[f"statement_{i}"
-                                       ] = re_0_10_rating(line) / 10
-                    i += 1
-        return groundedness_scores, {"reasons": reason}
+            hypotheses = sent_tokenize(statement)
+            reasons_str = ""
+            for i, hypothesis in enumerate(tqdm(
+                hypotheses, desc="Groundedness per statement in source")):
+                reason = self.groundedness_provider._groundedness_doc_in_out(
+                    premise=source, hypothesis=hypothesis
+                )
+                score_line = next((line for line in reason.split('\n') if "Score" in line), None)
+                if score_line:
+                    groundedness_scores[f"statement_{i}"] = re_0_10_rating(score_line) / 10
+                    reasons_str += f"\nSTATEMENT {i}:\n{reason}\n\n"
+            return groundedness_scores, {"reasons": reasons_str}
 
     def groundedness_measure_with_nli(self, source: str,
                                       statement: str) -> Tuple[float, dict]:
@@ -181,20 +183,23 @@ class Groundedness(WithClassInfo, SerialModel):
     def groundedness_measure(self, source: str,
                              statement: str) -> Tuple[float, dict]:
         """
-        Groundedness measure is deprecated in place of the chain-of-thought version. Defaulting to groundedness_measure_with_cot_reasons.
+        Groundedness measure is deprecated in place of the chain-of-thought version. This function will raise a NotImplementedError.
         """
-        logger.warning(
+        raise NotImplementedError(
             "groundedness_measure is deprecated, please use groundedness_measure_with_cot_reasons or groundedness_measure_with_nli instead."
         )
-        return self.groundedness_measure_with_cot_reasons(source, statement)
 
     def groundedness_measure_with_summarize_step(
         self, source: str, statement: str
     ) -> float:
-        """A measure to track if the source material supports each sentence in the statement. 
+        """
+        DEPRECATED: This method is deprecated and will be removed in a future release.
+        Please use alternative groundedness measure methods.
+
+        A measure to track if the source material supports each sentence in the statement. 
         This groundedness measure is more accurate; but slower using a two step process.
         - First find supporting evidence with an LLM
-        - Then for each statement sentence, check groundendness
+        - Then for each statement sentence, check groundedness
         
         Usage on RAG Contexts:
         ```
@@ -218,6 +223,10 @@ class Groundedness(WithClassInfo, SerialModel):
         Returns:
             float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
         """
+        logger.warning(
+            "groundedness_measure_with_summarize_step is deprecated and will be removed in a future release. "
+            "Please use alternative groundedness measure methods."
+        )
         groundedness_scores = {}
         if not isinstance(self.groundedness_provider, LLMProvider):
             raise AssertionError(
@@ -227,7 +236,7 @@ class Groundedness(WithClassInfo, SerialModel):
             reason = ""
             hypotheses = sent_tokenize(statement)
             for i, hypothesis in enumerate(tqdm(
-                    hypotheses, desc="Groundendess per statement in source")):
+                    hypotheses, desc="Groundedness per statement in source")):
                 score = self.groundedness_provider._groundedness_doc_in_out(
                     premise=source, hypothesis=hypothesis
                 )
@@ -249,13 +258,13 @@ class Groundedness(WithClassInfo, SerialModel):
     def grounded_statements_aggregator(
         self, source_statements_multi_output: List[Dict]
     ) -> float:
-        """Aggregates multi-input, mulit-output information from the groundedness_measure methods.
+        """Compute the mean groundedness based on the best evidence available for each statement.
 
         Args:
             source_statements_multi_output (List[Dict]): A list of scores. Each list index is a context. The Dict is a per statement score.
 
         Returns:
-            float: for each statement, gets the max groundedness, then averages over that.
+            float: for each statement, gets the max score, then averages over that.
         """
         all_results = []
 
@@ -275,3 +284,4 @@ class Groundedness(WithClassInfo, SerialModel):
             all_results.append(np.max(statements_to_scores[k]))
 
         return np.mean(all_results)
+
