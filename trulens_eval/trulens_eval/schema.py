@@ -28,8 +28,10 @@ from enum import Enum
 import logging
 from pprint import pformat
 from pprint import PrettyPrinter
-from typing import (Any, Callable, ClassVar, Dict, Hashable, List, Optional,
-                    Sequence, Tuple, Type, TypeVar, Union)
+from typing import (
+    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
+    Type, TypeVar, Union
+)
 
 import dill
 import humanize
@@ -662,6 +664,7 @@ class FeedbackCombinations(str, Enum):
     [Lens][trulens_eval.utils.serial.Lens] `collect()` to name a single (list)
     value instead of multiple values.
     """
+
 
 class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     """Serialized parts of a feedback function. 

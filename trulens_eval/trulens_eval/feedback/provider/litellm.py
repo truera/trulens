@@ -105,12 +105,14 @@ provider = LiteLLM(
         completion_args.update(self.completion_args)
 
         if prompt is not None:
-            completion_args['messages'] = [{
+            completion_args['messages'] = [
+                {
                     "role": "system",
                     "content": prompt
-                }]
+                }
+            ]
         elif messages is not None:
-            completion_args['messages']=messages
+            completion_args['messages'] = messages
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")

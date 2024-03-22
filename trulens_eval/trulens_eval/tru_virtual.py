@@ -351,7 +351,8 @@ class TruVirtual(App):
                     "Either dict or `trulens_eval.tru_virtual.VirtualApp` expected."
                 )
 
-        if kwargs.get("selector_nocheck") is False or kwargs.get("selector_check_warning") is True:
+        if kwargs.get("selector_nocheck") is False or kwargs.get(
+                "selector_check_warning") is True:
             raise ValueError(
                 "Selector prechecking does not work with virtual apps. "
                 "The settings `selector_nocheck=True` and `selector_check_warning=False` are required."
@@ -393,5 +394,7 @@ class TruVirtual(App):
 
         return record
 
-import trulens_eval # for App class annotations
+
+import trulens_eval  # for App class annotations
+
 TruVirtual.model_rebuild()
