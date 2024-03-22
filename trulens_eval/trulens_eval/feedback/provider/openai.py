@@ -96,18 +96,19 @@ class OpenAI(LLMProvider):
         if 'seed' not in kwargs:
             kwargs['seed'] = 123
 
-        if prompt is not None:
+        if messages is not None:
+            completion = self.endpoint.client.chat.completions.create(
+                messages=messages, **kwargs
+            )
+
+        elif prompt is not None:
             completion = self.endpoint.client.chat.completions.create(
                 messages=[{
                     "role": "system",
                     "content": prompt
                 }], **kwargs
             )
-        elif messages is not None:
-            completion = self.endpoint.client.chat.completions.create(
-                messages=messages, **kwargs
-            )
-
+            
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
