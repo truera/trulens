@@ -17,7 +17,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 
 from trulens_eval import schema
-from trulens_eval.database import base as mod_db
+from trulens_eval.database.base import DEFAULT_DATABASE_PREFIX
 from trulens_eval.utils.json import json_str_of_obj
 
 TYPE_JSON = Text
@@ -34,7 +34,7 @@ TYPE_ID = VARCHAR(256)
 
 
 class BaseWithTablePrefix(DeclarativeBase):
-    """ORM base class except with __tablename__ defined in terms
+    """ORM base class except with `__tablename__` defined in terms
     of a base name and a prefix.
 
     A subclass should set _table_base_name and/or _table_prefix. If it does not
@@ -114,7 +114,7 @@ class ORM():
             )
 
     class FeedbackDefinition(BaseWithTablePrefix):
-        """ORM class for [AppDefinition][trulens_eval.schema.FeedbackDefinition].
+        """ORM class for [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition].
 
         Warning:
             We don't use any of the typical ORM features and this class is only
@@ -142,7 +142,7 @@ class ORM():
             )
 
     class Record(BaseWithTablePrefix):
-        """ORM class for [AppDefinition][trulens_eval.schema.Record].
+        """ORM class for [Record][trulens_eval.schema.Record].
 
         Warning:
             We don't use any of the typical ORM features and this class is only
@@ -189,7 +189,7 @@ class ORM():
 
     class FeedbackResult(BaseWithTablePrefix):
         """
-        ORM class for [AppDefinition][trulens_eval.schema.FeedbackResult].
+        ORM class for [FeedbackResult][trulens_eval.schema.FeedbackResult].
 
         Warning:
             We don't use any of the typical ORM features and this class is only
@@ -262,18 +262,18 @@ T = TypeVar("T", bound=BaseWithTablePrefix)
 @functools.lru_cache
 def make_base_for_prefix(
     base_type: Type[T],
-    table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
+    table_prefix: str = DEFAULT_DATABASE_PREFIX,
 ) -> Type[T]:
     """
     Create a base class for ORM classes with the given table name prefix.
 
     Args:
-        base_type: Base class to extend. Should be a subclass of BaseWithTablePrefix.
+        base_type: Base class to extend. Should be a subclass of
+            [BaseWithTablePrefix][trulens_eval.database.orm.BaseWithTablePrefix].
 
         table_prefix: Prefix to use for table names.
 
     Returns:
-
         A class that extends `base_type` and sets the table prefix to `table_prefix`.
     """
 
@@ -290,7 +290,7 @@ def make_base_for_prefix(
 # NOTE: lru_cache is important here as we don't want to create multiple classes for
 # the same table name as sqlalchemy will complain.
 @functools.lru_cache
-def make_orm_for_prefix(table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX) -> Type[ORM]:
+def make_orm_for_prefix(table_prefix: str = DEFAULT_DATABASE_PREFIX) -> Type[ORM]:
     """
     Make a container for ORM classes.
 

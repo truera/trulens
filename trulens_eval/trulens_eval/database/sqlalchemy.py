@@ -16,7 +16,6 @@ from sqlalchemy import Engine
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.schema import MetaData
 from sqlalchemy.sql import text as sql_text
 
 from trulens_eval import schema
@@ -69,7 +68,7 @@ class SQLAlchemyDB(DB):
     See abstract class [DB][trulens_eval.database.base.DB] for method reference.
     """
 
-    table_prefix: str = "trulens_"
+    table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
     """The prefix to use for all table names. 
     
     [DB][trulens_eval.database.base.DB] interface requirement.
@@ -101,7 +100,7 @@ class SQLAlchemyDB(DB):
         self,
         redact_keys: bool = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
         table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
-        **kwargs
+        **kwargs: Dict[str, Any]
     ):
         super().__init__(
             redact_keys=redact_keys,
@@ -131,7 +130,7 @@ class SQLAlchemyDB(DB):
         database_file: Optional[str] = None,
         database_redact_keys: Optional[bool] = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
         database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
-        **kwargs
+        **kwargs: Dict[str, Any]
     ) -> SQLAlchemyDB:
         """Process database-related configuration provided to the [Tru][trulens_eval.tru.Tru] class to
         create a database.
@@ -184,7 +183,7 @@ class SQLAlchemyDB(DB):
         return new_db
 
     @classmethod
-    def from_db_url(cls, url: str, **kwargs) -> SQLAlchemyDB:
+    def from_db_url(cls, url: str, **kwargs: Dict[str, Any]) -> SQLAlchemyDB:
         """
         Create a database for the given url.
 

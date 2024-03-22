@@ -1,11 +1,8 @@
 import abc
 from datetime import datetime
-import json
 import logging
-from pathlib import Path
 from pprint import PrettyPrinter
-import sqlite3
-from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
 import numpy as np
@@ -13,27 +10,21 @@ import pandas as pd
 import pydantic
 
 from trulens_eval import __version__
-from trulens_eval.database.legacy import migration
 from trulens_eval.app import App
-from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens_eval.feedback import Feedback
+from trulens_eval.database.legacy import migration
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import AppID
-from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackDefinition
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONized
 from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.text import UNICODE_CHECK
-from trulens_eval.utils.text import UNICODE_CLOCK
 
 mj = MerkleJson()
 NoneType = type(None)
@@ -63,14 +54,14 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 class DB(SerialModel, abc.ABC):
     """Abstract definition of databases used by trulens_eval.
     
-    [SQLAlchemyDB][trulens_eval.database.sqlalchemy_db.SQLAlchemyDB] is the main
+    [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] is the main
     and default implementation if this specification.
     """
 
-    redact_keys: bool = False
+    redact_keys: bool = DEFAULT_DATABASE_REDACT_KEYS
     """Redact secrets before writing out data."""
 
-    table_prefix: str = "trulens_"
+    table_prefix: str = DEFAULT_DATABASE_PREFIX
     """Prefix for table names for trulens_eval to use.
     
     May be useful in some databases where trulens is not the only app.
@@ -83,6 +74,21 @@ class DB(SerialModel, abc.ABC):
     def reset_database(self):
         """Delete all data."""
 
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def migrate_database(
+        self,
+        prior_prefix: Optional[str] = None
+    ):
+        """Migrade the stored data to the current configuration of the database.
+        
+        Args:
+            prior_prefix: If given, the database is assumed to have been
+                reconfigured from a database with the given prefix. If not
+                given, it may be guessed if there is only one table in the
+                database with the suffix `alembic_version`.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -247,6 +253,12 @@ class DB(SerialModel, abc.ABC):
                 [App.model_validate][trulens_eval.app.App.model_validate].
         
         """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_apps(self) -> Iterable[JSON]:
+        """Get all apps."""
+    
         raise NotImplementedError()
 
     @abc.abstractmethod

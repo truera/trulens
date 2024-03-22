@@ -7,6 +7,7 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from trulens_eval.database.base import DB
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.database.legacy.migration import VersionException
 from trulens_eval.database.migrations import DbRevisions
@@ -36,7 +37,7 @@ def _get_sql_alchemy_compatibility_version(version: str) -> str:
     """Gets the last compatible version of a DB that needed data migration
 
     Args:
-        version (str): The alembic version
+        version: The alembic version
 
     Returns:
         str: An alembic version of the oldest compatible DB
@@ -47,6 +48,7 @@ def _get_sql_alchemy_compatibility_version(version: str) -> str:
         if candidate_version_int <= int(
                 version) and candidate_version_int > compat_version:
             compat_version = candidate_version_int
+
     return compat_version
 
 
@@ -135,11 +137,12 @@ def data_migrate(db: DB, from_version: str):
     """Makes any data changes needed for upgrading from the from_version
 
     Args:
-        db (DB): The Database Object
-        from_version (str): The current version
+        db: The database instance.
+
+        from_version: The current version.
 
     Raises:
-        VersionException: Can raise a migration or validation upgrade error
+        VersionException: Can raise a migration or validation upgrade error.
     """
 
     if from_version is None:
@@ -150,7 +153,7 @@ def data_migrate(db: DB, from_version: str):
         sql_alchemy_from_version
     )
     to_compat_version = None
-    fail_advice = f"Please open a ticket on trulens github page including this error message. The migration completed so you can still proceed; but stability is not guaranteed. If needed, you can `tru.reset_database()`"
+    fail_advice = "Please open a ticket on trulens github page including this error message. The migration completed so you can still proceed; but stability is not guaranteed. If needed, you can `tru.reset_database()`"
 
     try:
         while from_compat_version in sqlalchemy_upgrade_paths:
@@ -161,18 +164,18 @@ def data_migrate(db: DB, from_version: str):
             from_compat_version = to_compat_version
 
         print("DB Migration complete!")
-    except Exception:
+    except Exception as e:
         tb = traceback.format_exc()
         current_revision = DbRevisions.load(db.engine).current
         raise VersionException(
             f"Migration failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
-        )
+        ) from e
     try:
         _sql_alchemy_serialization_asserts(db)
         print("DB Validation complete!")
-    except Exception:
+    except Exception as e:
         tb = traceback.format_exc()
         current_revision = DbRevisions.load(db.engine).current
         raise VersionException(
             f"Validation failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
-        )
+        ) from e

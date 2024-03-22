@@ -66,6 +66,7 @@ plugins:
             - https://docs.pydantic.dev/latest/objects.inv
             - https://typing-extensions.readthedocs.io/en/latest/objects.inv
             - https://docs.llamaindex.ai/en/stable/objects.inv
+            - https://docs.sqlalchemy.org/en/20/objects.inv
           options:
             extensions:
               - pydantic: { schema: true }
@@ -256,7 +257,10 @@ nav:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
       - 𝄢 Instruments: trulens_eval/api/instruments.md
-      - 🗄 Database: trulens_eval/api/db.md
+      - 🗄 Database:
+        - trulens_eval/api/database/index.md
+        - Migration: trulens_eval/api/database/migration.md
+        - SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
       - Utils:
           - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
@@ -269,6 +273,7 @@ nav:
       - 🧭 Design: trulens_eval/contributing/design.md
       - ✅ Standards: trulens_eval/contributing/standards.md
       - 💣 Tech Debt: trulens_eval/contributing/techdebt.md
+      - ✨ Database Migration: trulens_eval/contributing/migration.md
   - ❓ Explain:
       # PLACEHOLDER: - trulens_explain/index.md
       - Getting Started:

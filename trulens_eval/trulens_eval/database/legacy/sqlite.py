@@ -18,6 +18,7 @@ from trulens_eval.database.base import for_all_methods, versioning_decorator, DB
 from trulens_eval.database.legacy import migration
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval import schema
+from trulens_eval import feedback
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -39,8 +40,8 @@ class LocalSQLite(DB):
     Warning:
         This database implementation is deprecated and will be removed in the
         future. Use
-        [SQLAlchemyDB][trulens_eval.database.sqlalchemy_db.SQLAlchemyDB]
-        instead. Local sqlite databases can be initialized with SQLAlchemyDB.
+        [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB]
+        instead.
     """
 
     filename: Path
@@ -253,7 +254,7 @@ class LocalSQLite(DB):
         return app_id
 
     def insert_feedback_definition(
-        self, feedback: Union[schema.Feedback, schema.FeedbackDefinition]
+        self, feedback: Union[feedback.Feedback, schema.FeedbackDefinition]
     ) -> schema.FeedbackDefinitionID:
         """
         Insert a feedback definition into the database.

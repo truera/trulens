@@ -77,8 +77,7 @@ class Tru(python.SingletonPerName):
             of methods to instrument.
 
         [TruVirtual][trulens_eval.tru_virtual.TruVirtual]: Virtual
-            apps that do not have a real app to instrument but have a virtual
-            structure and can log existing captured data as if they were trulens
+            apps that do not have a real app to instrument but have a virtual            structure and can log existing captured data as if they were trulens
             records.
 
     Args:
@@ -103,12 +102,6 @@ class Tru(python.SingletonPerName):
             written to database (defaults to `False`)
 
         database_args: Additional arguments to pass to the database constructor.
-    """
-
-    DEFAULT_DATABASE_FILE: str = "default.sqlite"
-    """Filename for default sqlite database.
-
-    The sqlalchemy url for this default local sqlite database is `sqlite:///default.sqlite`.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -276,18 +269,28 @@ class Tru(python.SingletonPerName):
         return TruVirtual(tru=self, app=app, **kwargs)
 
     def reset_database(self):
-        """Reset the database. Clears all tables."""
+        """Reset the database. Clears all tables.
+        
+        See [DB.reset_database][trulens_eval.database.base.DB.reset_database].
+        """
 
         self.db.reset_database()
 
-    def migrate_database(self):
+    def migrate_database(self, **kwargs: Dict[str, Any]):
         """Migrates the database.
         
         This should be run whenever there are breaking changes in a database
-        created with an older version of trulens_eval.
+        created with an older version of _trulens_eval_.
+
+        Args:
+            **kwargs: Keyword arguments to pass to
+                [migrate_database][trulens_eval.database.base.DB.migrate_database]
+                of the current database.
+
+        See [DB.migrate_database][trulens_eval.database.base.DB.migrate_database].
         """
 
-        self.db.migrate_database()
+        self.db.migrate_database(**kwargs)
 
     def add_record(
         self,
