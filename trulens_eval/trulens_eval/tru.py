@@ -14,8 +14,9 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import humanize

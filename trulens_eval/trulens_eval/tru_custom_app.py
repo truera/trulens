@@ -499,5 +499,6 @@ class instrument(base_instrument):
         TruCustomApp.functions_to_instrument.add(getattr(cls, name))
 
 
-import trulens_eval # for App class annotations
+import trulens_eval  # for App class annotations
+
 TruCustomApp.model_rebuild()
