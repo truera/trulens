@@ -539,7 +539,8 @@ class AppsExtractor:
 
                     yield df
             except OperationalError as e:
-                print(str(e))
+                print("Error encountered while attempting to retrieve an app. This issue may stem from a corrupted database.")
+                print(f"Error details: {e}")
                 
 
     def extract_records(self,
