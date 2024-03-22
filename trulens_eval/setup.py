@@ -44,8 +44,7 @@ setup(
     packages=find_namespace_packages(
         include=["trulens_eval", "trulens_eval.*"]
     ),
-    python_requires=
-    '>= 3.8, < 3.13',
+    python_requires='>= 3.8, < 3.13',
     entry_points={
         'console_scripts': [
             'trulens-eval=trulens_eval.utils.command_line:main'
