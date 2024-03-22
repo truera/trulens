@@ -2,8 +2,9 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import numpy as np

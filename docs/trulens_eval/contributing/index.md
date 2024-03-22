@@ -94,6 +94,11 @@ or [🧙 all open issues](https://github.com/truera/trulens/issues).
 
 ## 👀 Things to be Aware Of
 
+### 🧭 Design Goals and Principles
+
+The design of the API is governed by the principles outlined in the
+[Design](design.md) doc.
+
 ### ✅ Standards
 
 We try to respect various code, testing, and documentation

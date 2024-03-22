@@ -9,8 +9,9 @@ import json
 import logging
 from pprint import pformat
 import traceback
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple,
-                    TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
+)
 import warnings
 
 import munch
@@ -20,11 +21,6 @@ import pydantic
 from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
-
-# WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
-# This happens even if you import it as something else.
-# from trulens_eval import schema # breaks pydantic
-# from trulens_eval import schema as tru_schema # also breaks pydantic
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -49,6 +45,11 @@ from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import retab
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.threading import TP
+
+# WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
+# This happens even if you import it as something else.
+# from trulens_eval import schema # breaks pydantic
+# from trulens_eval import schema as tru_schema # also breaks pydantic
 
 logger = logging.getLogger(__name__)
 
@@ -450,10 +451,7 @@ class Feedback(FeedbackDefinition):
         if combinations is not None:
             updates['combinations'] = combinations
 
-        return Feedback.model_copy(
-            self,
-            update=updates
-        )
+        return Feedback.model_copy(self, update=updates)
 
     @staticmethod
     def of_feedback_definition(f: FeedbackDefinition):
@@ -566,7 +564,7 @@ class Feedback(FeedbackDefinition):
                 raise ValueError(
                     f"Expected a Lens but got `{path}` of type `{class_name(type(path))}`."
                 )
-            
+
             argname = self._next_unselected_arg_name()
             new_selectors[argname] = path
             self._print_guessed_selector(argname, path)
@@ -627,10 +625,15 @@ class Feedback(FeedbackDefinition):
             source_data = {}
 
         app_type: str = "trulens recorder (`TruChain`, `TruLlama`, etc)"
-    
+
         if isinstance(app, App):
             app_type = f"`{type(app).__name__}`"
-            app = jsonify(app, instrument=app.instrument, skip_specials=True, redact_keys=True)
+            app = jsonify(
+                app,
+                instrument=app.instrument,
+                skip_specials=True,
+                redact_keys=True
+            )
 
         elif isinstance(app, AppDefinition):
             app = jsonify(app, skip_specials=True, redact_keys=True)
@@ -681,14 +684,18 @@ Feedback function signature:
             if prefix is None:
                 continue
 
-            if len(prefix.path) >= 2 and isinstance(prefix.path[-1], GetItemOrAttribute) and prefix.path[-1].get_item_or_attribute() == "rets":
+            if len(prefix.path) >= 2 and isinstance(
+                    prefix.path[-1], GetItemOrAttribute
+            ) and prefix.path[-1].get_item_or_attribute() == "rets":
                 # If the selector check failed because the selector was pointing
                 # to something beyond the rets of a record call, we have to
                 # ignore it as we cannot tell what will be in the rets ahead of
                 # invoking app.
                 continue
 
-            if len(prefix.path) >= 3 and isinstance(prefix.path[-2], GetItemOrAttribute) and prefix.path[-2].get_item_or_attribute() == "args":
+            if len(prefix.path) >= 3 and isinstance(
+                    prefix.path[-2], GetItemOrAttribute
+            ) and prefix.path[-2].get_item_or_attribute() == "args":
                 # Likewise if failure was because the selector was pointing to
                 # method args beyond their parameter names, we also cannot tell
                 # their contents so skip.
@@ -704,7 +711,10 @@ Feedback function signature:
                         prefix_obj = prefix_obj.toDict()
 
                     msg += f"- Object of type `{class_name(type(prefix_obj))}` starting with:\n"
-                    msg += "```python\n" + retab(tab="\t  ", s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)) + "\n```\n"
+                    msg += "```python\n" + retab(
+                        tab="\t  ",
+                        s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)
+                    ) + "\n```\n"
 
             except Exception as e:
                 msg += f"Some non-existant object because: {pretty_repr(e)}"
@@ -719,8 +729,9 @@ Feedback function signature:
             return False
 
         else:
-            raise ValueError("Some selectors do not exist in the app or record.")
-
+            raise ValueError(
+                "Some selectors do not exist in the app or record."
+            )
 
     def run(
         self,

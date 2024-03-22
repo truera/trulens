@@ -9,15 +9,15 @@ README.md . If you are editing README.md, your changes will be overwritten.
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens_eval)
 [![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
-[![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/install/)
+[![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/trulens_eval/getting_started/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
 
 # 🦑 **Welcome to TruLens!**
 
 TruLens provides a set of tools for developing and monitoring neural nets,
 including large language models. This includes both tools for evaluation of LLMs
-and LLM-based applications with *TruLens-Eval* and deep learning explainability
-with *TruLens-Explain*. *TruLens-Eval* and *TruLens-Explain* are housed in
+and LLM-based applications with _TruLens-Eval_ and deep learning explainability
+with _TruLens-Explain_. _TruLens-Eval_ and _TruLens-Explain_ are housed in
 separate packages and can be used independently.
 
 The best way to support TruLens is to give us a ⭐ on
@@ -38,7 +38,7 @@ you to identify failure modes & systematically iterate to improve your
 application.
 
 Read more about the core concepts behind TruLens including [Feedback
-Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/),
+Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/
 [The RAG Triad](https://www.trulens.org/trulens_eval/getting_started/core_concepts/rag_triad/),
 and [Honest, Harmless and Helpful
 Evals](https://www.trulens.org/trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals/).
@@ -77,7 +77,6 @@ pip uninstall trulens_eval -y # to remove existing PyPI version
 pip install git+https://github.com/truera/trulens@BRANCH#subdirectory=trulens_eval
 ```
 
-
 ### Quick Usage
 
 Walk through how to instrument and evaluate a RAG built from scratch with
@@ -94,6 +93,7 @@ guide](https://www.trulens.org/trulens_eval/contributing/) for more details.
 <!---
 end of trulens_eval/gh_top_intro.md
 -->
+
 
 <!---
 start of trulens_explain/gh_top_intro.md
