@@ -2005,6 +2005,8 @@
       
         
       
+        
+      
     
     
       
@@ -2293,7 +2295,7 @@
         
   
   <span class="md-ellipsis">
-    Record
+    💾 Record
   </span>
   
 
@@ -2671,7 +2673,28 @@
         
   
   <span class="md-ellipsis">
-    Instruments
+    𝄢 Instruments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../db/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🗄 Database
   </span>
   
 
@@ -2716,7 +2739,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8" >
         
           
           
@@ -2732,14 +2755,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_6_7" id="__nav_6_7_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_6_8" id="__nav_6_8_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -2884,6 +2907,8 @@
       
         
       
+        
+      
     
     
       
@@ -2925,6 +2950,27 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/design/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -3422,6 +3468,15 @@
   <a href="#trulens_eval.feedback.provider.hugs.Huggingface.pii_detection_with_cot_reasons" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;pii_detection_with_cot_reasons
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.feedback.provider.hugs.Huggingface.hallucination_evaluator" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;hallucination_evaluator
     </span>
   </a>
   
@@ -4677,6 +4732,105 @@ Selectors</a></p>
 </div>
 
 
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="trulens_eval.feedback.provider.hugs.Huggingface.hallucination_evaluator" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">hallucination_evaluator</span>
+
+
+<a href="#trulens_eval.feedback.provider.hugs.Huggingface.hallucination_evaluator" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">hallucination_evaluator</span><span class="p">(</span><span class="n">model_output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Evaluates the hallucination score for a combined input of two statements as a float 0&lt;x&lt;1 representing a 
+true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
+less than 0.5 the statement is evaluated as a hallucination.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
+
+<span class="n">score</span> <span class="o">=</span> <span class="n">huggingface_provider</span><span class="o">.</span><span class="n">hallucination_evaluator</span><span class="p">(</span><span class="s2">&quot;The sky is blue. [SEP] Apples are red , the grass is green.&quot;</span><span class="p">)</span>
+</code></pre></div></p>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>model_output</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>This is what an LLM returns based on the text chunks retrieved during RAG</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>retrieved_text_chunk</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>These are the text chunks you have retrieved during RAG</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <code>float</code>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>Hallucination score</p>
+            </div>
+              <p>
+                <span class="doc-returns-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                </span>
+              </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
 
   </div>
 
@@ -5688,7 +5842,7 @@ models</a>.</p>
 
 
 <a href="#trulens_eval.feedback.provider.base.LLMProvider.generate_score" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5761,7 +5915,7 @@ models</a>.</p>
 
 
 <a href="#trulens_eval.feedback.provider.base.LLMProvider.generate_score_and_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score_and_reasons</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score_and_reasons</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5945,92 +6099,7 @@ Selectors</a></p>
 
   <div class="doc doc-contents ">
   
-      <p>Uses chat completion model. A function that completes a template to
-check the relevance of the statement to the question.</p>
-
-<details class="usage-on-rag-contexts" open>
-  <summary>Usage on RAG Contexts</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
-<span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_app</span><span class="p">)</span>
-<span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
-    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
-    <span class="p">)</span>
-</code></pre></div>
-<p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide :
-Selectors</a></p>
-</details>
-
-
-  <table>
-    <thead>
-      <tr>
-        <th><b>PARAMETER</b></th>
-        <th><b> DESCRIPTION</b></th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>question</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>A question being asked.</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                </span>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td><code>context</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>A context to the question.</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                </span>
-            </p>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-
-
-  <table>
-    <thead>
-      <tr>
-        <th><b>RETURNS</b></th>
-        <th><b>DESCRIPTION</b></th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-              <code>float</code>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>A value between 0.0 (not relevant) and 1.0 (relevant).</p>
-            </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-                </span>
-              </p>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+      <p>Question statement relevance is deprecated and will be removed in future versions. Please use context relevance in its place.</p>
 
   </div>
 
@@ -6157,92 +6226,7 @@ The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors]
 
   <div class="doc doc-contents ">
   
-      <p>Uses chat completion model. A function that completes a
-template to check the relevance of the context to the question.
-Also uses chain of thought methodology and emits the reasons.</p>
-
-<details class="usage-on-rag-contexts" open>
-  <summary>Usage on RAG Contexts</summary>
-  <p><div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
-<span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_app</span><span class="p">)</span>
-<span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">qs_relevance_with_cot_reasons</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
-    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
-    <span class="p">)</span>
-</code></pre></div>
-The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide : Selectors</a></p>
-</details>
-
-
-  <table>
-    <thead>
-      <tr>
-        <th><b>PARAMETER</b></th>
-        <th><b> DESCRIPTION</b></th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td><code>question</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>A question being asked.</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                </span>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td><code>context</code></td>
-          <td class="doc-param-details">
-            <div class="doc-md-description">
-              <p>Context related to the question.</p>
-            </div>
-            <p>
-                <span class="doc-param-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                </span>
-            </p>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-
-
-  <table>
-    <thead>
-      <tr>
-        <th><b>RETURNS</b></th>
-        <th><b>DESCRIPTION</b></th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td>
-              <code>float</code>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".</p>
-            </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
-                </span>
-              </p>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+      <p>Question statement relevance is deprecated and will be removed in future versions. Please use context relevance in its place.</p>
 
   </div>
 
@@ -9107,7 +9091,7 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 
   <div class="doc doc-contents ">
   
-      <p>Groundedness measure is deprecated in place of the chain-of-thought version. Defaulting to groundedness_measure_with_cot_reasons.</p>
+      <p>Groundedness measure is deprecated in place of the chain-of-thought version. This function will raise a NotImplementedError.</p>
 
   </div>
 
@@ -9128,10 +9112,12 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 
   <div class="doc doc-contents ">
   
-      <p>A measure to track if the source material supports each sentence in the statement. 
+      <p>DEPRECATED: This method is deprecated and will be removed in a future release.
+Please use alternative groundedness measure methods.</p>
+<p>A measure to track if the source material supports each sentence in the statement. 
 This groundedness measure is more accurate; but slower using a two step process.
 - First find supporting evidence with an LLM
-- Then for each statement sentence, check groundendness</p>
+- Then for each statement sentence, check groundedness</p>
 <p>Usage on RAG Contexts:
 <div class="highlight"><pre><span></span><code>from trulens_eval import Feedback
 from trulens_eval.feedback import Groundedness
@@ -9234,7 +9220,7 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
 
   <div class="doc doc-contents ">
   
-      <p>Aggregates multi-input, mulit-output information from the groundedness_measure methods.</p>
+      <p>Compute the mean groundedness based on the best evidence available for each statement.</p>
 
 
 
@@ -9279,7 +9265,7 @@ The <code>on(...)</code> selector can be changed. See <a href="https://www.trule
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>for each statement, gets the max groundedness, then averages over that.</p>
+              <p>for each statement, gets the max score, then averages over that.</p>
             </div>
               <p>
                 <span class="doc-returns-annotation">

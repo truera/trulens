@@ -2013,6 +2013,8 @@
       
         
       
+        
+      
     
     
       
@@ -2307,7 +2309,7 @@
         
   
   <span class="md-ellipsis">
-    Record
+    💾 Record
   </span>
   
 
@@ -2689,6 +2691,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#trulens_eval.feedback.provider.hugs.Huggingface.hallucination_evaluator" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;hallucination_evaluator
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2814,7 +2825,28 @@
         
   
   <span class="md-ellipsis">
-    Instruments
+    𝄢 Instruments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../db/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🗄 Database
   </span>
   
 
@@ -2862,7 +2894,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8" >
         
           
           
@@ -2878,14 +2910,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+              <label class="md-nav__link " for="__nav_6_8" id="__nav_6_8_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -3030,6 +3062,8 @@
       
         
       
+        
+      
     
     
       
@@ -3071,6 +3105,27 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/design/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -3582,6 +3637,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#trulens_eval.feedback.provider.hugs.Huggingface.hallucination_evaluator" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;hallucination_evaluator
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4065,6 +4129,105 @@ Selectors</a></p>
 :
 Selectors</a></p>
 </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h4 id="trulens_eval.feedback.provider.hugs.Huggingface.hallucination_evaluator" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">hallucination_evaluator</span>
+
+
+<a href="#trulens_eval.feedback.provider.hugs.Huggingface.hallucination_evaluator" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">hallucination_evaluator</span><span class="p">(</span><span class="n">model_output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Evaluates the hallucination score for a combined input of two statements as a float 0&lt;x&lt;1 representing a 
+true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
+less than 0.5 the statement is evaluated as a hallucination.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
+
+<span class="n">score</span> <span class="o">=</span> <span class="n">huggingface_provider</span><span class="o">.</span><span class="n">hallucination_evaluator</span><span class="p">(</span><span class="s2">&quot;The sky is blue. [SEP] Apples are red , the grass is green.&quot;</span><span class="p">)</span>
+</code></pre></div></p>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>model_output</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>This is what an LLM returns based on the text chunks retrieved during RAG</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>retrieved_text_chunk</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>These are the text chunks you have retrieved during RAG</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <code>float</code>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>Hallucination score</p>
+            </div>
+              <p>
+                <span class="doc-returns-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                </span>
+              </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
   </div>
 
 </div>
