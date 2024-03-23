@@ -182,7 +182,8 @@ class LLMProvider(Provider):
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0
+        normalize: float = 10.0,
+        temperature: float = 0.0,
     ) -> float:
         """
         Base method to generate a score only, used for evaluation.
@@ -200,7 +201,7 @@ class LLMProvider(Provider):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
+            func=self._create_chat_completion, messages=llm_messages, temperature=temperature
         )
 
         return re_0_10_rating(response) / normalize
@@ -209,7 +210,8 @@ class LLMProvider(Provider):
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0
+        normalize: float = 10.0,
+        temperature: float = 0.0
     ) -> Tuple[float, Dict]:
         """
         Base method to generate a score and reason, used for evaluation.
@@ -226,7 +228,7 @@ class LLMProvider(Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
+            func=self._create_chat_completion, messages=llm_messages, temperature=temperature
         )
         if "Supporting Evidence" in response:
             score = -1

@@ -1,7 +1,7 @@
 from concurrent.futures import wait
 import logging
 from typing import Dict, get_args, get_origin, Optional, Tuple, Union
-
+import requests
 import numpy as np
 
 from trulens_eval.feedback.provider.base import Provider
@@ -23,6 +23,7 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
 HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
 HUGS_PII_DETECTION_API_URL = "https://api-inference.huggingface.co/models/bigcode/starpii"
+HUGS_HALLUCINATION_API_URL = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
 
 import functools
 from inspect import signature
@@ -452,7 +453,50 @@ class Huggingface(Provider):
         score = 1 - total_likelihood
 
         return score, reasons
+    
+    @_tci
+    def hallucination_evaluator(self, model_output: str, retrieved_text_chunks: str) -> float:
+        """
+        Evaluates the hallucination score for a combined input of two statements as a float 0<x<1 representing a 
+        true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
+        less than 0.5 the statement is evaluated as a hallucination.
 
+        **Usage:**
+        ```python
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+
+        score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")
+        ```
+
+        Args:
+            model_output (str): This is what an LLM returns based on the text chunks retrieved during RAG
+            retrieved_text_chunk (str): These are the text chunks you have retrieved during RAG
+
+        Returns:
+            float: Hallucination score
+        """
+        combined_input = f"{model_output} [SEP] {retrieved_text_chunks}"
+        payload = {"inputs": combined_input}
+
+        response = self.endpoint.post(url=HUGS_HALLUCINATION_API_URL, payload=payload)
+        if isinstance(response, list):
+            # Assuming the list contains the result, check if the first element has a 'score' key
+            if 'score' not in response[0]:
+                raise RuntimeError(f"Error in API request: {response}, please try again once the endpoint has restarted.")
+            # Extract the score from the first element
+            score = response[0]['score']
+        elif isinstance(response, requests.Response):  # Check if it's an HTTP response
+            if response.status_code != 200:
+                raise RuntimeError(f"Error in API request: {response.text}, please try again once the endpoint has restarted.")
+            output = response.json()
+            score = output[0][0]['score']
+        else:
+            # If neither list nor HTTP response, raise an error
+            raise RuntimeError("Unexpected response type. Please check the API endpoint.")
+                    
+        
+        return score
 
 class Dummy(Huggingface):
 
