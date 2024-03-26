@@ -2,6 +2,7 @@ from datetime import datetime
 import inspect
 import logging
 from pathlib import Path
+from pprint import pformat
 import shutil
 import sqlite3
 from tempfile import TemporaryDirectory
@@ -300,8 +301,8 @@ def coerce_ts(ts: Union[datetime, str, int, float]) -> datetime:
 def copy_database(
     src_url: str,
     tgt_url: str,
-    src_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
-    tgt_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    src_prefix: str, # = mod_db.DEFAULT_DATABASE_PREFIX,
+    tgt_prefix: str, # = mod_db.DEFAULT_DATABASE_PREFIX
 ):
     """
     Copy all data from a source database to an EMPTY target database.
@@ -322,11 +323,17 @@ def copy_database(
 
     from trulens_eval.database.sqlalchemy import SQLAlchemyDB
 
-    src = SQLAlchemyDB.from_db_url(src_url, prefix=src_prefix)
+    src = SQLAlchemyDB.from_db_url(src_url, table_prefix=src_prefix)
     check_db_revision(src.engine, prefix=src_prefix)
 
-    tgt = SQLAlchemyDB.from_db_url(tgt_url, prefix=tgt_prefix)
+    tgt = SQLAlchemyDB.from_db_url(tgt_url, table_prefix=tgt_prefix)
     check_db_revision(tgt.engine, prefix=tgt_prefix)
+
+    print("Source database:")
+    print(pformat(src))
+
+    print("Target database:")
+    print(pformat(tgt))
 
     for k, source_table_class in src.orm.registry.items():
         # ["apps", "feedback_defs", "records", "feedbacks"]:
@@ -342,3 +349,5 @@ def copy_database(
 
                 df = pd.read_sql(f"SELECT * FROM {source_table_class.__tablename__}", src_conn)
                 df.to_sql(target_table_class.__tablename__, tgt_conn, index=False, if_exists="append")
+
+                print(f"Copied {len(df)} rows from {source_table_class.__tablename__} in source {target_table_class.__tablename__} in target.")

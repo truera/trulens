@@ -265,14 +265,14 @@ class SQLAlchemyDB(DB):
                 prior_prefix = e.prior_prefix
 
                 logger.warning("Renaming tables from prefix \"%s\" to \"%s\".", prior_prefix, self.table_prefix)
-                logger.warning("Please ignore these warnings: \"SAWarning: This declarative base already contains...\"")
+                # logger.warning("Please ignore these warnings: \"SAWarning: This declarative base already contains...\"")
 
                 with self.engine.connect() as c:
                     for table_name in ['alembic_version'] + [c._table_base_name for c in self.orm.registry.values() if hasattr(c, "_table_base_name")]:
                         old_version_table = f"{prior_prefix}{table_name}"
                         new_version_table = f"{self.table_prefix}{table_name}"
     
-                        logger.warning("%s -> %s", old_version_table, new_version_table)
+                        logger.warning("  %s -> %s", old_version_table, new_version_table)
 
                         c.execute(sql_text("""ALTER TABLE %s RENAME TO %s;""" % (old_version_table, new_version_table)))
 
