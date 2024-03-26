@@ -1,3 +1,6 @@
+# Make targets useful for developing TruLens.
+# How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
+
 SHELL := /bin/bash
 CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
@@ -18,8 +21,13 @@ lab:
 	$(CONDA) .conda/docs; jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 # Serve the documentation website.
-serve: site
+serve:
 	$(CONDA) .conda/docs; mkdocs serve -a 127.0.0.1:8000
+
+# The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
+# break references.
+serve-dirty:
+	$(CONDA) .conda/docs; mkdocs serve --dirty -a 127.0.0.1:8000
 
 # Build the documentation website.
 site: .conda/docs $(shell find docs -type f) mkdocs.yml
