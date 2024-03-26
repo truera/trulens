@@ -1,3 +1,6 @@
+# Make targets useful for developing TruLens.
+# How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
+
 SHELL := /bin/bash
 CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 
