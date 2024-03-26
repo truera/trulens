@@ -18,8 +18,13 @@ lab:
 	$(CONDA) .conda/docs; jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 # Serve the documentation website.
-serve: site
+serve:
 	$(CONDA) .conda/docs; mkdocs serve -a 127.0.0.1:8000
+
+# The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
+# break references.
+serve-dirty:
+	$(CONDA) .conda/docs; mkdocs serve --dirty -a 127.0.0.1:8000
 
 # Build the documentation website.
 site: .conda/docs $(shell find docs -type f) mkdocs.yml
