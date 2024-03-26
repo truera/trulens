@@ -116,13 +116,17 @@ class Groundedness(WithClassInfo, SerialModel):
             hypotheses = sent_tokenize(statement)
             reasons_str = ""
             for i, hypothesis in enumerate(tqdm(
-                hypotheses, desc="Groundedness per statement in source")):
+                    hypotheses, desc="Groundedness per statement in source")):
                 reason = self.groundedness_provider._groundedness_doc_in_out(
                     premise=source, hypothesis=hypothesis
                 )
-                score_line = next((line for line in reason.split('\n') if "Score" in line), None)
+                score_line = next(
+                    (line for line in reason.split('\n') if "Score" in line),
+                    None
+                )
                 if score_line:
-                    groundedness_scores[f"statement_{i}"] = re_0_10_rating(score_line) / 10
+                    groundedness_scores[f"statement_{i}"
+                                       ] = re_0_10_rating(score_line) / 10
                     reasons_str += f"\nSTATEMENT {i}:\n{reason}\n\n"
             return groundedness_scores, {"reasons": reasons_str}
 
@@ -284,4 +288,3 @@ class Groundedness(WithClassInfo, SerialModel):
             all_results.append(np.max(statements_to_scores[k]))
 
         return np.mean(all_results)
-
