@@ -1,4 +1,4 @@
-# Feedback Functions
+# ☔ Feedback Functions
 
 Feedback functions, analogous to labeling functions, provide a programmatic
 method for generating evaluations on an application run. The TruLens

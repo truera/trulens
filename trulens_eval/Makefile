@@ -1,3 +1,6 @@
+# Make targets useful for developing TruLens-Eval.
+# How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
+
 SHELL := /bin/bash
 CONDA_ENV := py311_trulens
 CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate $(CONDA_ENV)
