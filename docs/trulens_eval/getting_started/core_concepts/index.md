@@ -18,7 +18,7 @@ General and 🦑_TruLens-Eval_-specific concepts.
   [App][trulens_eval.app.App]. We offer special support for _LangChain_ via
   [TruChain][trulens_eval.tru_chain.TruChain], _LlamaIndex_ via
   [TruLlama][trulens_eval.tru_llama.TruLlama], and _NeMo Guardrails_ via
-  [TruRails][trulens_eval.tru_rails.TruRails] `Application`s as well as custom
+  [TruRails][trulens_eval.tru_rails.TruRails] `Applications` as well as custom
   apps via [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp] or
   [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp], and apps that
   already come with `Trace`s via
@@ -55,16 +55,16 @@ General and 🦑_TruLens-Eval_-specific concepts.
   applications, the user's message.
 
 - `Provider`. A system that _provides_ the ability to execute models, either
-  `LLM`s or classification models. In 🦑_TruLens-Eval_, `Feedback Function`s
-  make use of `Provider`s to invoke models for `Evaluation`.
+  `LLM`s or classification models. In 🦑_TruLens-Eval_, `Feedback Functions`
+  make use of `Providers` to invoke models for `Evaluation`.
 
 - `RAG`, `Retrieval Augmented Generation`. A common organization of
-  `Application`'s that combine a `Retrieval` with an `LLM` to produce
-  `Completion`s that incorporate information that an `LLM` alone may not be
+  `Applications` that combine a `Retrieval` with an `LLM` to produce
+  `Completions` that incorporate information that an `LLM` alone may not be
   aware of.
 
 - `RAG Triad` (🦑_TruLens-Eval_-specific concept). A combination of three
-  `Feedback Function`s meant to `Evaluate` `Retrieval` steps in `Applications`.
+  `Feedback Functions` meant to `Evaluate` `Retrieval` steps in `Applications`.
 
 - `Record`. A "record" of the execution of a single execution of an app. Single
   execution means invocation of some top-level app method. Corresponds to
