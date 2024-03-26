@@ -1,11 +1,12 @@
 # This a definition for azure pipelines, not github pipelines. There are
 # differences between these systems.
 
-pr:
+trigger:
+  # Run this pipeline for any PR that wishes to push to main that changes code
+  # inside trulens_eval folder.
   branches:
     include:
       - main
-      - releases/*
   paths:
     include:
       - trulens_eval
