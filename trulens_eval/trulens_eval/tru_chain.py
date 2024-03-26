@@ -51,6 +51,7 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # from langchain.schema.language_model import BaseLanguageModel
     from langchain_core.language_models.base import BaseLanguageModel
     from langchain_core.runnables.base import RunnableSerializable
+    from langchain.retrievers.multi_query import MultiQueryRetriever
 
 
 class LangChainInstrument(Instrument):
@@ -232,12 +233,15 @@ class TruChain(App):
             raise ValueError("Cannot find any `BaseRetriever` in app.")
 
         if len(retrievers) > 1:
-            raise ValueError(
+            if(isinstance(retrievers[0][1],MultiQueryRetriever)):
+                pass
+            else:
+                raise ValueError(
                 "Found more than one `BaseRetriever` in app:\n\t" + \
                 ("\n\t".join(map(
                     lambda lr: f"{type(lr[1])} at {lr[0]}",
                     retrievers)))
-            )
+                )
 
         return (
             Select.RecordCalls + retrievers[0][0]
@@ -373,5 +377,7 @@ class TruChain(App):
             method="_acall", is_async=True, with_record=False
         )
 
-import trulens_eval # for App class annotations
+
+import trulens_eval  # for App class annotations
+
 TruChain.model_rebuild()

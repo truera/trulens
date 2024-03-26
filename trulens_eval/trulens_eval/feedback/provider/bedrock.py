@@ -73,17 +73,23 @@ class Bedrock(LLMProvider):
         **kwargs
     ) -> str:
         assert self.endpoint is not None
-        assert prompt is not None, "Bedrock can only operate on `prompt`, not `messages`."
 
         import json
+
+        if messages:
+            messages_str = " ".join([f"{message['role']}: {message['content']}" for message in messages])
+        elif prompt:
+            messages_str = prompt
+        else:
+            raise ValueError("Either 'messages' or 'prompt' must be supplied.")
 
         if self.model_id.startswith("amazon"):
             body = json.dumps(
                 {
-                    "inputText": prompt,
+                    "inputText": messages_str,
                     "textGenerationConfig":
                         {
-                            "maxTokenCount": 4096,
+                            "maxTokenCount": 4095,
                             "stopSequences": [],
                             "temperature": 0,
                             "topP": 1
@@ -93,28 +99,48 @@ class Bedrock(LLMProvider):
         elif self.model_id.startswith("anthropic"):
             body = json.dumps(
                 {
-                    "prompt": f"\n\nHuman:{prompt}\n\nAssistant:",
+                    "prompt": f"\n\nHuman:{messages_str}\n\nAssistant:",
                     "temperature": 0,
                     "top_p": 1,
-                    "max_tokens_to_sample": 4096
+                    "max_tokens_to_sample": 4095
                 }
             )
         elif self.model_id.startswith("cohere"):
             body = json.dumps(
                 {
-                    "prompt": prompt,
+                    "prompt": messages_str,
                     "temperature": 0,
                     "p": 1,
-                    "max_tokens": 4096
+                    "max_tokens": 4095
                 }
             )
         elif self.model_id.startswith("ai21"):
             body = json.dumps(
                 {
-                    "prompt": prompt,
+                    "prompt": messages_str,
                     "temperature": 0,
                     "topP": 1,
                     "maxTokens": 8191
+                }
+            )
+
+        elif self.model_id.startswith("mistral"):
+            body = json.dumps(
+                {
+                    "prompt": messages_str,
+                    "temperature": 0,
+                    "top_p": 1,
+                    "max_tokens": 4095
+                }
+            )
+
+        elif self.model_id.startswith("meta"):
+            body = json.dumps(
+                {
+                    "prompt": messages_str,
+                    "temperature": 0,
+                    "top_p": 1,
+                    "max_gen_len": 2047
                 }
             )
         else:
@@ -144,7 +170,13 @@ class Bedrock(LLMProvider):
         if self.model_id.startswith("cohere"):
             response_body = json.loads(response.get('body').read()
                                       ).get('generations')[0]["text"]
-
+            
+        if self.model_id.startswith("mistral"):
+            response_body = json.loads(response.get('body').read()
+                                      ).get('output')[0]["text"]
+        if self.model_id.startswith("meta"):
+            response_body = json.loads(response.get('body').read()
+                                      ).get('generation')
         if self.model_id.startswith("ai21"):
             response_body = json.loads(
                 response.get('body').read()
@@ -171,11 +203,13 @@ class Bedrock(LLMProvider):
             The score and reason metadata if available.
         """
 
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        if user_prompt is not None:
+            llm_messages.append({"role": "user", "content": user_prompt})
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(
-                system_prompt + user_prompt if user_prompt else system_prompt
-            )
+            messages=llm_messages
         )
 
         return re_0_10_rating(response) / normalize
@@ -198,11 +232,13 @@ class Bedrock(LLMProvider):
         Returns:
             The score and reason metadata if available.
         """
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        if user_prompt is not None:
+            llm_messages.append({"role": "user", "content": user_prompt})
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(
-                system_prompt + user_prompt if user_prompt else system_prompt
-            )
+            messages=llm_messages
         )
         if "Supporting Evidence" in response:
             score = 0.0

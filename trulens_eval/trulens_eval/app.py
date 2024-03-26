@@ -12,9 +12,10 @@ from pprint import PrettyPrinter
 import queue
 import threading
 from threading import Lock
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
-                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
-                    TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
+    Optional, Sequence, Set, Tuple, Type, TypeVar
+)
 
 import pydantic
 
@@ -466,7 +467,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     )
     """Feedback functions to evaluate on each record."""
 
-    tru: Optional[trulens_eval.tru.Tru] = pydantic.Field(default=None, exclude=True)
+    tru: Optional[trulens_eval.tru.Tru] = pydantic.Field(
+        default=None, exclude=True
+    )
     """Workspace manager.
     
     If this is not povided, a singleton [Tru][trulens_eval.tru.Tru] will be made
@@ -703,14 +706,14 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                     raise Exception(
                         f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
                     ) from e
-        
+
         if not self.selector_nocheck:
 
             dummy = self.dummy_record()
 
             for feedback in self.feedbacks:
                 feedback.check_selectors(
-                    app=self, 
+                    app=self,
                     # Don't have a record yet, but use an empty one for the non-call related fields.
                     record=dummy,
                     warning=self.selector_check_warning
@@ -1362,11 +1365,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         cost: Cost = mod_schema.Cost(),
         perf: Perf = mod_schema.Perf.now(),
         ts: datetime.datetime = datetime.datetime.now(),
-        main_input: str ="main_input are strings.",
-        main_output: str ="main_output are strings.",
+        main_input: str = "main_input are strings.",
+        main_output: str = "main_output are strings.",
         main_error: str = "main_error are strings.",
-        meta: Dict ={'metakey': 'meta are dicts'},
-        tags: str ='tags are strings'
+        meta: Dict = {'metakey': 'meta are dicts'},
+        tags: str = 'tags are strings'
     ) -> Record:
         """Create a dummy record with some of the expected structure without
         actually invoking the app.
@@ -1404,7 +1407,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                         sample_args[p.name] = p.default
 
                 sample_call = RecordAppCall(
-                    stack=[mod_schema.RecordAppCallMethod(path=lens, method=method_serial)],
+                    stack=[
+                        mod_schema.RecordAppCallMethod(
+                            path=lens, method=method_serial
+                        )
+                    ],
                     args=sample_args,
                     rets=None,
                     pid=0,
@@ -1475,6 +1482,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
 
         print("\n".join(object_strings))
+
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving tru.Tru
 # and database.base.DB. Will rebuild each App subclass instead.

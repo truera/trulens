@@ -595,4 +595,3 @@ class LocalSQLite(DB):
     ) -> Dict[schema.FeedbackResultStatus, int]:
         
         raise NotImplementedError("This database implementation is deprecated.")
-    
