@@ -22,11 +22,11 @@ from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import downgrade_db
 from trulens_eval.database.migrations import get_revision_history
 from trulens_eval.database.migrations import upgrade_db
-from trulens_eval.database.sqlalchemy_db import AppsExtractor
-from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
+from trulens_eval.database.sqlalchemy import AppsExtractor
+from trulens_eval.database.sqlalchemy import SQLAlchemyDB
 from trulens_eval.database.utils import is_legacy_sqlite
-from trulens_eval.db import DB
-from trulens_eval.db import LocalSQLite
+from trulens_eval.database.base import DB
+from trulens_eval.database.legacy.sqlite import LocalSQLite
 
 
 class TestDbV2Migration(TestCase):
@@ -75,7 +75,7 @@ class TestDbV2Migration(TestCase):
                     self._test_future_db(dbfile=dbfile)
 
     def _test_future_db(self, dbfile: Path = None):
-        db = SqlAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
+        db = SQLAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
         self.assertFalse(is_legacy_sqlite(db.engine))
 
         # Migration should state there is a future version present which we
@@ -117,7 +117,7 @@ class TestDbV2Migration(TestCase):
 
     def _test_migrate_legacy_legacy_sqlite_file(self, dbfile: Path = None):
         # run migration
-        db = SqlAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
+        db = SQLAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
         self.assertTrue(is_legacy_sqlite(db.engine))
         db.migrate_database()
 
@@ -140,7 +140,7 @@ class TestDbV2Migration(TestCase):
             fb, app, rec = _populate_data(legacy_db)
 
             # run migration
-            db = SqlAlchemyDB.from_db_url(f"sqlite:///{file}")
+            db = SQLAlchemyDB.from_db_url(f"sqlite:///{file}")
             self.assertTrue(is_legacy_sqlite(db.engine))
             db.migrate_database()
 
@@ -177,7 +177,7 @@ class MockFeedback(Provider):
 
 
 @contextmanager
-def clean_db(alias: str) -> SqlAlchemyDB:
+def clean_db(alias: str) -> SQLAlchemyDB:
     with TemporaryDirectory() as tmp:
         url = {
             "sqlite_file":
@@ -188,14 +188,14 @@ def clean_db(alias: str) -> SqlAlchemyDB:
                 "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
         }[alias]
 
-        db = SqlAlchemyDB.from_db_url(url)
+        db = SQLAlchemyDB.from_db_url(url)
 
         downgrade_db(
             db.engine, revision="base"
-        )  # drops all tables except `alembic_version`
+        )  # drops all tables except `db.version_table`
 
         with db.engine.connect() as conn:
-            conn.execute(text("DROP TABLE alembic_version"))
+            conn.execute(text(f"DROP TABLE {db.version_table}"))
 
         yield db
 
@@ -209,7 +209,7 @@ def assert_revision(
     assert getattr(revisions, status)
 
 
-def _test_db_migration(db: SqlAlchemyDB):
+def _test_db_migration(db: SQLAlchemyDB):
     engine = db.engine
     history = get_revision_history(engine)
     curr_rev = None
@@ -231,11 +231,11 @@ def _test_db_migration(db: SqlAlchemyDB):
     assert_revision(engine, None, "behind")
 
 
-def _test_db_consistency(db: SqlAlchemyDB):
+def _test_db_consistency(db: SQLAlchemyDB):
     db.migrate_database()  # ensure latest revision
 
     _populate_data(db)
-    with db.Session.begin() as session:
+    with db.session.begin() as session:
         session.delete(
             session.query(orm.AppDefinition).one()
         )  # delete the only app
@@ -247,7 +247,7 @@ def _test_db_consistency(db: SqlAlchemyDB):
                      ).one()  # feedback defs are preserved
 
     _populate_data(db)
-    with db.Session.begin() as session:
+    with db.session.begin() as session:
         session.delete(
             session.query(orm.Record).one()
         )  # delete the only record

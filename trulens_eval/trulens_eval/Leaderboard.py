@@ -1,38 +1,40 @@
-import argparse
+
 import asyncio
 import json
 import math
-import sys
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
 from millify import millify
-import numpy as np
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
-from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
+from trulens_eval.database import base as mod_db
+from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()
 
 from trulens_eval import Tru
 from trulens_eval.ux import styles
+from trulens_eval.ux.add_logo import add_logo_and_style_overrides
 from trulens_eval.ux.components import draw_metadata
 
-st.set_page_config(page_title="Leaderboard", layout="wide")
+if __name__ == "__main__":
+    # If not imported, gets args from command line and creates Tru singleton
+    init_from_args()
 
-from trulens_eval.ux.add_logo import add_logo_and_style_overrides
+def leaderboard():
+    """Render the leaderboard page."""
 
-add_logo_and_style_overrides()
-
-database_url = None
-
-
-def streamlit_app():
-    tru = Tru(database_url=database_url)
+    tru = Tru() # get singletone whether this file was imported or executed from command line.
     lms = tru.db
+
+    add_logo_and_style_overrides()
+
+    st.set_page_config(page_title="Leaderboard", layout="wide")
 
     # Set the title and subtitle of the app
     st.title("App Leaderboard")
@@ -146,24 +148,5 @@ def streamlit_app():
 
         st.markdown("""---""")
 
-
-# Define the main function to run the app
-def main():
-    streamlit_app()
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--database-url", default=None)
-
-    try:
-        args = parser.parse_args()
-    except SystemExit as e:
-        # This exception will be raised if --help or invalid command line arguments
-        # are used. Currently, streamlit prevents the program from exiting normally,
-        # so we have to do a hard exit.
-        sys.exit(e.code)
-
-    database_url = args.database_url
-
-    main()
+    leaderboard()
