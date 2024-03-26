@@ -1,4 +1,6 @@
 trigger:
+  # Run this pipeline for any PR that wishes to push to main that changes code
+  # inside trulens_explain folder.
   branches:
     include:
       - main
@@ -7,6 +9,8 @@ trigger:
       - trulens_explain
 
 pr:
+  # Run this pipeline for any PR from a branch that starts with "releases/" or
+  # is "main" that changed trulens_explain code.
   branches:
     include:
       - main
@@ -14,6 +18,7 @@ pr:
   paths:
     include:
       - trulens_explain
+
 jobs:
   - job: lensApiTests
     pool:
