@@ -4,7 +4,7 @@
 
 Measuring the performance of LLM apps is a critical step in the path from development to production. You would not move a traditional ML system to production without first gaining confidence by measuring its accuracy on a representative test set.
 
-However unlike traditional machine learning, ground truth is sparse and often entirely unavailable.
+However unlike in traditional machine learning, ground truth is sparse and often entirely unavailable.
 
 Without ground truth on which to compute metrics on our LLM apps, feedback functions can be used to compute metrics for LLM applications.
 
