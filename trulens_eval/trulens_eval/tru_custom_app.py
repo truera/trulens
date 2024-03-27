@@ -71,7 +71,7 @@ The owner classes of any decorated method is then viewed as an app component. In
 
     # Tracked usage:
     with tru_recorder:
-        ca.respond_to_query, input="What is the capital of Indonesia?")
+        custom_app.respond_to_query, input="What is the capital of Indonesia?")
     ```
 
     `TruCustomApp` constructor arguments are like in those higher-level
@@ -218,7 +218,7 @@ PLACEHOLDER = "__tru_placeholder"
 
 class TruCustomApp(App):
     """
-    This wrapper is the most flexible option for instrumenting an application, and can be used to instrument any custom python class.
+    This recorder is the most flexible option for instrumenting an application, and can be used to instrument any custom python class.
     
     Track any custom app using methods decorated with `@instrument`, or whose methods are instrumented after the fact by `instrument.method`.
 
@@ -275,7 +275,7 @@ class TruCustomApp(App):
 
                 return output
         
-        ca = CustomApp()
+        custom_app = CustomApp()
 
         instrument.method(CustomApp, "retrieve_chunks")
         ```
@@ -299,17 +299,17 @@ class TruCustomApp(App):
             )
         ```
 
-    Now, the `TruCustomApp` can simply wrap our custom application, and provide logging and evaluation upon its use.
+    Last, the `TruCustomApp` recorder can wrap our custom application, and provide logging and evaluation upon its use.
 
-    !!! example "Using TruCustomApp to wrap a custom application"
+    !!! example "Using the `TruCustomApp` recorder"
 
         ```python
         from trulens_eval import TruCustomApp
 
-        tru_recorder = TruCustomApp(ca, 
+        tru_recorder = TruCustomApp(custom_app, 
             app_id="Custom Application v1",
             feedbacks=[f_context_relevance])
-            
+
         with tru_recorder as recording:
             custom_app.respond_to_query("What is the capital of Indonesia?")
         ```
