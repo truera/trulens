@@ -9,12 +9,12 @@ trigger:
       - trulens_eval
       - docs/trulens_eval/*.ipynb
 
-schedules:
-  - cron: "0 0 * * *"
-    displayName: Daily midnight build
-    branches:
-      include:
-        - main
+# schedules:
+#  - cron: "0 0 * * *"
+#    displayName: Daily midnight build
+#    branches:
+#      include:
+#        - main
 
 jobs:
   - job: ReleaseTests
