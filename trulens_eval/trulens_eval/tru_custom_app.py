@@ -1,90 +1,80 @@
 """
-# Custom class Apps
+# Custom class application
 
-This wrapper covers apps that are not based on one of the high-level frameworks
-such as langchain or llama-index. We instead assume that some python class or
-classes implements an app which has similar functionality to LLM apps coded in
-the high-level frameworks in that it generally processes text queries to produce
-text outputs while making intermediate queries to things like LLMs, vector DBs,
-and similar.
+This wrapper is the most flexible option for instrumenting an application, and can be used to instrument any custom python class.
 
-## Example Usage
+!!! example
 
-Consider a mock question-answering app with a context retriever component coded
-up as two classes in two python, `CustomApp` and `CustomRetriever`:
+    Consider a mock question-answering app with a context retriever component coded
+    up as two classes in two python, `CustomApp` and `CustomRetriever`:
 
-### `custom_app.py`
+    ### `custom_app.py`
 
-```python
-from trulens_eval.tru_custom_app import instrument
-from custom_retriever import CustomRetriever 
+    ```python
+    from trulens_eval.tru_custom_app import instrument
+    from custom_retriever import CustomRetriever 
 
 
-class CustomApp:
-    # NOTE: No restriction on this class.
+    class CustomApp:
+        # NOTE: No restriction on this class.
 
-    def __init__(self):
-        self.retriever = CustomRetriever()
+        def __init__(self):
+            self.retriever = CustomRetriever()
 
-    @instrument
-    def retrieve_chunks(self, data):
-        return self.retriever.retrieve_chunks(data)
+        @instrument
+        def retrieve_chunks(self, data):
+            return self.retriever.retrieve_chunks(data)
 
-    @instrument
-    def respond_to_query(self, input):
-        chunks = self.retrieve_chunks(input) output = f"The answer to {input} is
-        probably {chunks[0]} or something ..." return output
-```
+        @instrument
+        def respond_to_query(self, input):
+            chunks = self.retrieve_chunks(input) output = f"The answer to {input} is
+            probably {chunks[0]} or something ..." return output
+    ```
 
-### `custom_retriever.py`
+    ### `custom_retriever.py`
 
-```python
-from trulens_eval.tru_custom_app import instrument
+    ```python
+    from trulens_eval.tru_custom_app import instrument
 
-class CustomRetriever:
-    # NOTE: No restriction on this class either.
+    class CustomRetriever:
+        # NOTE: No restriction on this class either.
 
-    @instrument
-    def retrieve_chunks(self, data):
-        return [
-            f"Relevant chunk: {data.upper()}", f"Relevant chunk: {data[::-1]}"
-        ]
-```
+        @instrument
+        def retrieve_chunks(self, data):
+            return [
+                f"Relevant chunk: {data.upper()}", f"Relevant chunk: {data[::-1]}"
+            ]
+    ```
 
-The core tool for instrumenting these classes is the `instrument` method
-(actually class, but details are not important here). trulens needs to be aware
+The core tool for instrumenting these classes is the `@instrument` decorator. _TruLens_ needs to be aware
 of two high-level concepts to usefully monitor the app: components and methods
-used by components. The `instrument` must decorate each method that the user
-wishes to watch (for it to show up on the dashboard). In the example, all of the
-functionalities are decorated. Additionally, the owner classes of any decorated
-method is viewed as an app component. In this case `CustomApp` and
+used by components. The `instrument` must decorate each method that the user wishes to track.
+
+The owner classes of any decorated method is then viewed as an app component. In this example, case `CustomApp` and
 `CustomRetriever` are components. 
 
-Following the instrumentation, the app can be used with or without tracking:
+    !!! example
 
-### `example.py`
+    ### `example.py`
 
-```python
-from custom_app import CustomApp from trulens_eval.tru_custom_app
-import TruCustomApp
+    ```python
+    from custom_app import CustomApp from trulens_eval.tru_custom_app
+    import TruCustomApp
 
-ca = CustomApp()
+    custom_app = CustomApp()
 
-# Normal app Usage:
-response = ca.respond_to_query("What is the capital of Indonesia?")
+    # Normal app Usage:
+    response = custom_app.respond_to_query("What is the capital of Indonesia?")
 
-# Wrapping app with `TruCustomApp`: 
-ta = TruCustomApp(ca)
+    # Wrapping app with `TruCustomApp`: 
+    tru_recorder = TruCustomApp(ca)
 
-# Wrapped Usage: must use the general `with_record` (or `awith_record`) method:
-response, record = ta.with_record(
-    ca.respond_to_query, input="What is the capital of Indonesia?"
-)
-```
+    # Tracked usage:
+    with tru_recorder:
+        ca.respond_to_query, input="What is the capital of Indonesia?")
+    ```
 
-The `with_record` use above returns both the response of the app normally
-produces as well as the record of the app as is the case with the higher-level
-wrappers. `TruCustomApp` constructor arguments are like in those higher-level
+    `TruCustomApp` constructor arguments are like in those higher-level
 apps as well including the feedback functions, metadata, etc.
 
 ### Instrumenting 3rd party classes
@@ -227,9 +217,13 @@ PLACEHOLDER = "__tru_placeholder"
 
 
 class TruCustomApp(App):
-    """Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.
-        
-    Example:
+    """
+    This wrapper is the most flexible option for instrumenting an application, and can be used to instrument any custom python class.
+    
+    Track any custom app using methods decorated with `@instrument`, or whose methods are instrumented after the fact by `instrument.method`.
+
+    !!! example "Using the `@instrument` decorator"
+
         ```python
         from trulens_eval import instrument
         
@@ -255,30 +249,69 @@ class TruCustomApp(App):
                 return output
         
         ca = CustomApp()
+        ```
+
+    !!! example "Using `instrument.method`"
+
+        ```python
+        from trulens_eval import instrument
+        
+        class CustomApp:
+
+            def __init__(self):
+                self.retriever = CustomRetriever()
+                self.llm = CustomLLM()
+                self.template = CustomTemplate(
+                    "The answer to {question} is probably {answer} or something ..."
+                )
+
+            def retrieve_chunks(self, data):
+                return self.retriever.retrieve_chunks(data)
+
+            def respond_to_query(self, input):
+                chunks = self.retrieve_chunks(input)
+                answer = self.llm.generate(",".join(chunks))
+                output = self.template.fill(question=input, answer=answer)
+
+                return output
+        
+        ca = CustomApp()
+
+        instrument.method(CustomApp, "retrieve_chunks")
+        ```
+
+    Once a method is tracked, its arguments and returns are available to be used in feedback functions. This is done by using the `Select` class to select the arguments and returns of the method.
+
+    Doing so follows the structure: 
+    
+    - For args: `Select.RecordCalls.<method_name>.args.<arg_name>`
+
+    - For returns: `Select.RecordCalls.<method_name>.rets.<ret_name>`
+
+    !!! example "Defining feedback functions with instrumented methods"
+
+        ```python
+        f_context_relevance = (
+            Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+            .on(Select.RecordCalls.retrieve_chunks.args.query) # refers to the query arg of CustomApp's retrieve_chunks method
+            .on(Select.RecordCalls.retrieve_chunks.rets.collect())
+            .aggregate(np.mean)
+            )
+        ```
+
+    Now, the `TruCustomApp` can simply wrap our custom application, and provide logging and evaluation upon its use.
+
+    !!! example "Using TruCustomApp to wrap a custom application"
+
+        ```python
         from trulens_eval import TruCustomApp
-        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+
         tru_recorder = TruCustomApp(ca, 
             app_id="Custom Application v1",
-            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
-        
-        question = "What is the capital of Indonesia?"
-
-        # Normal Usage:
-        response_normal = ca.respond_to_query(question)
-
-        # Instrumented Usage:
+            feedbacks=[f_context_relevance])
+            
         with tru_recorder as recording:
-            ca.respond_to_query(question)
-
-        tru_record = recording.records[0]
-
-        # To add record metadata 
-        with tru_recorder as recording:
-            recording.record_metadata="this is metadata for all records in this context that follow this line"
-            ca.respond_to_query("What is llama 2?")
-            recording.record_metadata="this is different metadata for all records in this context that follow this line"
-            ca.respond_to_query("Where do I download llama 2?")
-        
+            custom_app.respond_to_query("What is the capital of Indonesia?")
         ```
 
         See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
