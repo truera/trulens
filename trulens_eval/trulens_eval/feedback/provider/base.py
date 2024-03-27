@@ -623,7 +623,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        !!! example
+
             ```python
             feedback = Feedback(provider.conciseness).on_output() 
             ```
@@ -647,7 +648,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.conciseness).on_output() 
             ```
@@ -672,7 +674,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.correctness).on_output() 
             ```
@@ -696,7 +699,8 @@ class LLMProvider(Provider):
         check the correctness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
             ```
@@ -719,7 +723,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a
         template to check the coherence of some text. Prompt credit to Langchain Eval.
         
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.coherence).on_output() 
             ```
@@ -743,7 +748,8 @@ class LLMProvider(Provider):
         check the coherence of some text. Prompt credit to Langchain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
             ```
@@ -766,7 +772,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the harmfulness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.harmfulness).on_output() 
             ```
@@ -790,7 +797,8 @@ class LLMProvider(Provider):
         check the harmfulness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output()
             ```
@@ -811,7 +819,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the maliciousness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.maliciousness).on_output() 
             ```
@@ -836,7 +845,8 @@ class LLMProvider(Provider):
         template to check the maliciousness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
             ```
@@ -859,7 +869,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the helpfulness of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.helpfulness).on_output() 
             ```
@@ -883,7 +894,8 @@ class LLMProvider(Provider):
         check the helpfulness of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
             ```
@@ -907,7 +919,8 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.controversiality).on_output() 
             ```
@@ -933,7 +946,8 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval. Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
             ```
@@ -956,7 +970,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the misogyny of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.misogyny).on_output() 
             ```
@@ -980,7 +995,8 @@ class LLMProvider(Provider):
         check the misogyny of some text. Prompt credit to Langchain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
             ```
@@ -1003,7 +1019,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the criminality of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.criminality).on_output()
             ```
@@ -1028,7 +1045,8 @@ class LLMProvider(Provider):
         check the criminality of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
             ```
@@ -1051,7 +1069,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the insensitivity of some text. Prompt credit to Langchain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.insensitivity).on_output()
             ```
@@ -1075,7 +1094,8 @@ class LLMProvider(Provider):
         check the insensitivity of some text. Prompt credit to Langchain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
             ```
@@ -1127,7 +1147,8 @@ class LLMProvider(Provider):
         only has a chain of thought implementation as it is extremely important
         in function assessment.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
             ```
@@ -1162,7 +1183,8 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.stereotypes).on_input_output()
             ```
@@ -1189,7 +1211,7 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        Usage:
+        !!! example
             ```python
             feedback = Feedback(provider.stereotypes).on_input_output()
             ```

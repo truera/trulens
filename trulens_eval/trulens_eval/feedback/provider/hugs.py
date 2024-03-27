@@ -96,7 +96,8 @@ class Huggingface(Provider):
         """
         Create a Huggingface Provider with out of the box feedback functions.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
@@ -132,7 +133,8 @@ class Huggingface(Provider):
         function is: `1.0 - (|probit_language_text1(text1) -
         probit_language_text1(text2))`
         
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.hugs import Huggingface
@@ -191,7 +193,8 @@ class Huggingface(Provider):
         Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
         function that uses a sentiment classifier on `text`.
         
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.hugs import Huggingface
@@ -232,7 +235,8 @@ class Huggingface(Provider):
         Uses Huggingface's martin-ha/toxic-comment-model model. A function that
         uses a toxic comment classifier on `text`.
         
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.hugs import Huggingface
@@ -323,7 +327,8 @@ class Huggingface(Provider):
         """
         NER model to detect PII.
 
-        Usage:
+        !!! example
+    
             ```python
             hugs = Huggingface()
 
@@ -383,7 +388,8 @@ class Huggingface(Provider):
         """
         NER model to detect PII, with reasons.
 
-        Usage:
+        !!! example
+    
             ```python
             hugs = Huggingface()
 
@@ -461,7 +467,8 @@ class Huggingface(Provider):
         true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
         less than 0.5 the statement is evaluated as a hallucination.
 
-        **Usage:**
+        **!!! example
+    **
         ```python
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()

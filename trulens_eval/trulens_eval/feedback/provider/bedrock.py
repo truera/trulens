@@ -192,15 +192,16 @@ class Bedrock(LLMProvider):
         normalize: float = 10.0
     ) -> float:
         """
-        Extractor for LLM prompts. If CoT is used; it will look for
-        "Supporting Evidence" template. Otherwise, it will look for the typical
-        0-10 scoring.
+        Base method to generate a score only, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formated system prompt
+            system_prompt (str): A pre-formatted system prompt.
+            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
+            normalize (float): The normalization factor for the score. Defaults to 10.0.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
-            The score and reason metadata if available.
+            float: The score on a 0-1 scale.
         """
 
         llm_messages = [{"role": "system", "content": system_prompt}]
@@ -222,15 +223,16 @@ class Bedrock(LLMProvider):
         normalize: float = 10.0
     ) -> Union[float, Tuple[float, Dict]]:
         """
-        Extractor for LLM prompts. If CoT is used; it will look for
-        "Supporting Evidence" template. Otherwise, it will look for the typical
-        0-10 scoring.
+        Base method to generate a score and reason, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formated system prompt
+            system_prompt (str): A pre-formatted system prompt.
+            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
+            normalize (float): The normalization factor for the score. Defaults to 10.0.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
-            The score and reason metadata if available.
+            Tuple[float, Dict]: The score on a 0-1 scale and reason metadata (dict) if returned by the LLM.
         """
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
