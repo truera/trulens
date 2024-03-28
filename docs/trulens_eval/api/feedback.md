@@ -22,6 +22,8 @@ non-serializable instantiations.
 
 ::: trulens_eval.schema.FeedbackCombinations
 
+::: trulens_eval.schema.FeedbackOnMissingParameters
+
 ::: trulens_eval.schema.FeedbackMode
 
 ::: trulens_eval.schema.FeedbackResult
