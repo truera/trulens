@@ -14,14 +14,16 @@ pr:
       - docs
 
 jobs:
-  - pool:
-      vmImage: ubuntu-latest
+  - job: DocsCheck
+    displayName: "Check Documentation"
+    pool:
+      vmImage: "ubuntu-latest"
     timeoutInMinutes: 30
 
     strategy:
       matrix:
         latest:
-          python-version: 3.12
+          python-version: "3.12"
 
     steps:
       - checkout: self
@@ -30,4 +32,4 @@ jobs:
       - bash: |
           echo "There are no doc checks at the moment."
 
-        displayName: Dummy check
+        displayName: "Dummy check"
