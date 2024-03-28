@@ -42,7 +42,8 @@ class Groundedness(WithClassInfo, SerialModel):
     find the relevant strings in a text. The groundedness_provider can
     either be an LLM provider (such as OpenAI) or NLI with huggingface.
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -50,7 +51,8 @@ class Groundedness(WithClassInfo, SerialModel):
         groundedness_imp = Groundedness(groundedness_provider=openai_provider)
         ```
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.hugs import Huggingface

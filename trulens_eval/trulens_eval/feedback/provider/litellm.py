@@ -25,7 +25,8 @@ class LiteLLM(LLMProvider):
 
     Create an LiteLLM Provider with out of the box feedback functions.
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback.provider.litellm import LiteLLM
         litellm_provider = LiteLLM()

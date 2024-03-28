@@ -125,67 +125,80 @@ class LangChainInstrument(Instrument):
 
 
 class TruChain(App):
-    """Recorder for LangChain apps.
+    """
+    Recorder for LangChain applications.
 
-    Further information about langchain apps can be found on the [🦜️🔗 LangChain
-    Documentation](https://python.langchain.com/docs/) page.
-        
-    Example:
-        Langchain Code: (see [LangChain Quickstart](https://python.langchain.com/docs/get_started/quickstart))
+    This recorder is designed for LangChain apps, providing a way to instrument, log, and evaluate their behavior.
+
+    !!! example "Creating a Langchain RAG application"
+
+        Consider an example Langchain RAG application. For the complete code example, see [LangChain Quickstart](https://www.trulens.org/trulens_eval/getting_started/quickstarts/langchain_quickstart/).
 
         ```python
-         # Code snippet taken from langchain 0.0.281 (API subject to change with new versions)
-        from langchain.chains import LLMChain
-        from langchain_community.llms import OpenAI
-        from langchain.prompts import PromptTemplate
-        from langchain.prompts.chat import ChatPromptTemplate
-        from langchain.prompts.chat import HumanMessagePromptTemplate
+        from langchain import hub
+        from langchain.chat_models import ChatOpenAI
+        from langchain.schema import StrOutputParser
+        from langchain_core.runnables import RunnablePassthrough
 
-        full_prompt = HumanMessagePromptTemplate(
-            prompt=PromptTemplate(
-                template=
-                "Provide a helpful response with relevant background information for the following: {prompt}",
-                input_variables=["prompt"],
-            )
+        retriever = vectorstore.as_retriever()
+
+        prompt = hub.pull("rlm/rag-prompt")
+        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+
+        rag_chain = (
+            {"context": retriever | format_docs, "question": RunnablePassthrough()}
+            | prompt
+            | llm
+            | StrOutputParser()
         )
-
-        chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
-
-        llm = OpenAI(temperature=0.9, max_tokens=128)
-
-        chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
         ```
 
-        Trulens Eval Code:
+    Feedback functions can utilize the specific context produced by the application's retriever. This is achieved using the `select_context` method, which then can be used by a feedback selector, such as `on(context)`.
+
+    !!! example "Defining a feedback function"
+
         ```python
-        
+        from trulens_eval.feedback.provider import OpenAI
+        from trulens_eval import Feedback
+        import numpy as np
+
+        # Select context to be used in feedback.
+        from trulens_eval.app import App
+        context = App.select_context(rag_chain)
+
+        # Use feedback
+        f_context_relevance = (
+            Feedback(provider.context_relevance_with_context_reasons)
+            .on_input()
+            .on(context)  # Refers to context defined from `select_context`
+            .aggregate(np.mean)
+        )
+        ```
+
+    The application can be wrapped in a `TruChain` recorder to provide logging and evaluation upon the application's use.
+
+    !!! example "Using the `TruChain` recorder"
+
+        ```python
         from trulens_eval import TruChain
-        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+
+        # Wrap application
         tru_recorder = TruChain(
             chain,
             app_id='Chain1_ChatApplication',
-            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+            feedbacks=[f_context_relevance]
         )
-        with tru_recorder as recording:
-            chain(""What is langchain?")
 
-        tru_record = recording.records[0]
-
-        # To add record metadata 
+        # Record application runs
         with tru_recorder as recording:
-            recording.record_metadata="this is metadata for all records in this context that follow this line"
             chain("What is langchain?")
-            recording.record_metadata="this is different metadata for all records in this context that follow this line"
-            chain("Where do I download langchain?")
         ```
 
-    See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+    Further information about LangChain apps can be found on the [LangChain Documentation](https://python.langchain.com/docs/) page.
 
     Args:
         app: A LangChain application.
-
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
-            and [AppDefinition][trulens_eval.app.AppDefinition]
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App] and [AppDefinition][trulens_eval.app.AppDefinition].
     """
 
     app: Any  # Chain

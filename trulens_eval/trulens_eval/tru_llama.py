@@ -222,15 +222,14 @@ class LlamaInstrument(Instrument):
 
 class TruLlama(App):
     """
-    LlamaIndex app recorder.
+    Recorder for Llama-Index applications.
 
-    Further information about LlamaIndex apps can be found on the [🦙 LlamaIndex
-    Documentation](https://docs.llamaindex.ai/en/stable/) page.
+    This recorder is designed for Llama-Index apps, providing a way to instrument, log, and evaluate their behavior.
 
-    Example:
-        LLama-Index code: (see [LLama Index
-        Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html))
-    
+    !!! example "Creating a Llama-Index application"
+
+        Consider an example Llama-Index application. For the complete code example, see [Llama-Index Quickstart](https://docs.llamaindex.ai/en/stable/getting_started/starter_example.html).
+
         ```python
         from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
@@ -240,7 +239,32 @@ class TruLlama(App):
         query_engine = index.as_query_engine()
         ```
 
-        Trulens Eval Code:
+    Feedback functions can utilize the specific context produced by the application's retriever. This is achieved using the `select_context` method, which then can be used by a feedback selector, such as `on(context)`.
+
+    !!! example "Defining a feedback function"
+
+        ```python
+        from trulens_eval.feedback.provider import OpenAI
+        from trulens_eval import Feedback
+        import numpy as np
+
+        # Select context to be used in feedback.
+        from trulens_eval.app import App
+        context = App.select_context(rag_chain)
+
+        # Use feedback
+        f_context_relevance = (
+            Feedback(provider.context_relevance_with_context_reasons)
+            .on_input()
+            .on(context)  # Refers to context defined from `select_context`
+            .aggregate(np.mean)
+        )
+        ```
+
+    The application can be wrapped in a `TruLlama` recorder to provide logging and evaluation upon the application's use.
+
+    !!! example "Using the `TruLlama` recorder"
+
         ```python
         from trulens_eval import TruLlama
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
@@ -250,27 +274,16 @@ class TruLlama(App):
 
         with tru_recorder as recording:
             query_engine.query("What is llama index?")
-
-        tru_record = recording.records[0]
-
-        # To add record metadata 
-        with tru_recorder as recording:
-            recording.record_metadata="this is metadata for all records in this context that follow this line"
-            query_engine.query("What is llama index?")
-            recording.record_metadata="this is different metadata for all records in this context that follow this line"
-            query_engine.query("Where do I download llama index?")
-        
         ```
 
-        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+    Feedback functions can utilize the specific context produced by the application's query engine. This is achieved using the `select_context` method, which then can be used by a feedback selector, such as `on(context)`.
+
+    Further information about Llama-Index apps can be found on the [🦙 LlamaIndex Documentation](https://docs.llamaindex.ai/en/stable/) page.
 
     Args:
         app: A LlamaIndex application.
-
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
-            and [AppDefinition][trulens_eval.app.AppDefinition]
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App] and [AppDefinition][trulens_eval.app.AppDefinition].
     """
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     app: Union[BaseQueryEngine, BaseChatEngine]
