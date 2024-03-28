@@ -42,6 +42,7 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
         Serializable  # this seems to be work in progress over at langchain
     from langchain.memory.chat_memory import BaseChatMemory
     from langchain.prompts.base import BasePromptTemplate
+    from langchain.retrievers.multi_query import MultiQueryRetriever
     from langchain.schema import BaseChatMessageHistory  # subclass of above
     from langchain.schema import BaseMemory  # no methods instrumented
     from langchain.schema import BaseRetriever
@@ -51,7 +52,6 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # from langchain.schema.language_model import BaseLanguageModel
     from langchain_core.language_models.base import BaseLanguageModel
     from langchain_core.runnables.base import RunnableSerializable
-    from langchain.retrievers.multi_query import MultiQueryRetriever
 
 
 class LangChainInstrument(Instrument):
@@ -246,7 +246,7 @@ class TruChain(App):
             raise ValueError("Cannot find any `BaseRetriever` in app.")
 
         if len(retrievers) > 1:
-            if(isinstance(retrievers[0][1],MultiQueryRetriever)):
+            if (isinstance(retrievers[0][1], MultiQueryRetriever)):
                 pass
             else:
                 raise ValueError(

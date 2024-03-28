@@ -77,7 +77,12 @@ class Bedrock(LLMProvider):
         import json
 
         if messages:
-            messages_str = " ".join([f"{message['role']}: {message['content']}" for message in messages])
+            messages_str = " ".join(
+                [
+                    f"{message['role']}: {message['content']}"
+                    for message in messages
+                ]
+            )
         elif prompt:
             messages_str = prompt
         else:
@@ -170,7 +175,7 @@ class Bedrock(LLMProvider):
         if self.model_id.startswith("cohere"):
             response_body = json.loads(response.get('body').read()
                                       ).get('generations')[0]["text"]
-            
+
         if self.model_id.startswith("mistral"):
             response_body = json.loads(response.get('body').read()
                                       ).get('output')[0]["text"]
@@ -209,8 +214,7 @@ class Bedrock(LLMProvider):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            messages=llm_messages
+            func=self._create_chat_completion, messages=llm_messages
         )
 
         return re_0_10_rating(response) / normalize
@@ -239,8 +243,7 @@ class Bedrock(LLMProvider):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            messages=llm_messages
+            func=self._create_chat_completion, messages=llm_messages
         )
         if "Supporting Evidence" in response:
             score = 0.0

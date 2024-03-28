@@ -109,7 +109,7 @@ class OpenAI(LLMProvider):
                     "content": prompt
                 }], **kwargs
             )
-            
+
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
