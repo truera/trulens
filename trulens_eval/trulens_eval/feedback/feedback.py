@@ -907,7 +907,9 @@ Feedback function signature:
 
         except:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
-            exc_tb = traceback.format_exc().encode('utf-8', errors='replace').decode('utf-8')
+            exc_tb = traceback.format_exc().encode(
+                'utf-8', errors='replace'
+            ).decode('utf-8')
             logger.warning(f"Feedback Function exception caught: %s", exc_tb)
             feedback_result.update(
                 error=exc_tb, status=FeedbackResultStatus.FAILED
@@ -952,7 +954,9 @@ Feedback function signature:
 
         except Exception:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
-            exc_tb = traceback.format_exc().encode('utf-8', errors='replace').decode('utf-8')
+            exc_tb = traceback.format_exc().encode(
+                'utf-8', errors='replace'
+            ).decode('utf-8')
             db.insert_feedback(
                 feedback_result.update(
                     error=exc_tb, status=FeedbackResultStatus.FAILED

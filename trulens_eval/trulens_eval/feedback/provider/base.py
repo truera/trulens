@@ -148,12 +148,14 @@ class LLMProvider(Provider):
         Returns:
             float: Information Overlap
         """
-        return self.generate_score(system_prompt=prompts.LLM_GROUNDEDNESS_SYSTEM,
-            user_prompt = str.format(prompts.LLM_GROUNDEDNESS_USER,
-                                     premise=premise,
-                                     hypothesis=hypothesis
-                                    )
+        return self.generate_score(
+            system_prompt=prompts.LLM_GROUNDEDNESS_SYSTEM,
+            user_prompt=str.format(
+                prompts.LLM_GROUNDEDNESS_USER,
+                premise=premise,
+                hypothesis=hypothesis
             )
+        )
 
     def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
         """
@@ -171,11 +173,13 @@ class LLMProvider(Provider):
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
         llm_messages = [{"role": "system", "content": system_prompt}]
-        user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(premise="""{}""".format(premise), hypothesis="""{}""".format(hypothesis)) + prompts.GROUNDEDNESS_REASON_TEMPLATE
+        user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+            premise="""{}""".format(premise),
+            hypothesis="""{}""".format(hypothesis)
+        ) + prompts.GROUNDEDNESS_REASON_TEMPLATE
         llm_messages.append({"role": "user", "content": user_prompt})
         return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            messages=llm_messages
+            func=self._create_chat_completion, messages=llm_messages
         )
 
     def generate_score(
@@ -201,7 +205,9 @@ class LLMProvider(Provider):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages, temperature=temperature
+            func=self._create_chat_completion,
+            messages=llm_messages,
+            temperature=temperature
         )
 
         return re_0_10_rating(response) / normalize
@@ -228,7 +234,9 @@ class LLMProvider(Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages, temperature=temperature
+            func=self._create_chat_completion,
+            messages=llm_messages,
+            temperature=temperature
         )
         if "Supporting Evidence" in response:
             score = -1
@@ -317,9 +325,10 @@ class LLMProvider(Provider):
 
         return self.generate_score(
             system_prompt=prompts.CONTEXT_RELEVANCE_SYSTEM,
-            user_prompt = str.format(prompts.CONTEXT_RELEVANCE_USER,
-                                     question=question,
-                                     context=context
+            user_prompt=str.format(
+                prompts.CONTEXT_RELEVANCE_USER,
+                question=question,
+                context=context
             )
         )
 
@@ -365,9 +374,8 @@ class LLMProvider(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         system_prompt = prompts.CONTEXT_RELEVANCE_SYSTEM
-        user_prompt = str.format(prompts.CONTEXT_RELEVANCE_USER,
-                                 question=question,
-                                 context=context
+        user_prompt = str.format(
+            prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
         )
         user_prompt = user_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
@@ -423,7 +431,9 @@ class LLMProvider(Provider):
         """
         return self.generate_score(
             system_prompt=prompts.ANSWER_RELEVANCE_SYSTEM,
-            user_prompt = str.format(prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response)
+            user_prompt=str.format(
+                prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
+            )
         )
 
     def relevance_with_cot_reasons(self, prompt: str,
@@ -461,11 +471,11 @@ class LLMProvider(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
                 "relevant".
         """
-        system_prompt=prompts.ANSWER_RELEVANCE_SYSTEM
-        
-        user_prompt = str.format(prompts.ANSWER_RELEVANCE_USER,
-                                 prompt=prompt,
-                                 response=response)
+        system_prompt = prompts.ANSWER_RELEVANCE_SYSTEM
+
+        user_prompt = str.format(
+            prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
+        )
         user_prompt = user_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
@@ -570,12 +580,10 @@ class LLMProvider(Provider):
         """
 
         system_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM,
-            criteria=criteria
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM, criteria=criteria
         )
         user_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER,
-            submission=text
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
 
         return self.generate_score(system_prompt, user_prompt)
@@ -601,8 +609,7 @@ class LLMProvider(Provider):
             criteria=criteria
         )
         user_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER,
-            submission=text
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
@@ -911,7 +918,8 @@ class LLMProvider(Provider):
                 (controversial).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            text=text,
+            criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
         )
 
     def controversiality_with_cot_reasons(self,
@@ -936,7 +944,8 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not controversial) and 1.0 (controversial).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            text=text,
+            criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
         )
 
     def misogyny(self, text: str) -> float:
@@ -1103,8 +1112,8 @@ class LLMProvider(Provider):
 
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(prompts.AGREEMENT_SYSTEM %
-                    (prompt, check_response)) + response
+            prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response)) +
+            response
         )
 
     def comprehensiveness_with_cot_reasons(self, source: str,
@@ -1131,7 +1140,11 @@ class LLMProvider(Provider):
         """
 
         system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
-        user_prompt = str.format(prompts.COMPOREHENSIVENESS_USER_PROMPT, source=source, summary=summary)
+        user_prompt = str.format(
+            prompts.COMPOREHENSIVENESS_USER_PROMPT,
+            source=source,
+            summary=summary
+        )
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def summarization_with_cot_reasons(self, source: str,
