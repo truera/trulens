@@ -1,4 +1,4 @@
-The primary method for evlauating LLM apps is by running feedback functions with
+The primary method for evaluating LLM apps is by running feedback functions with
 your app.
 
 To do so, you first need to define the wrap the specified feedback

@@ -1,0 +1,33 @@
+# This a definition for azure pipelines, not github pipelines. There are
+# differences between these systems.
+
+trigger: none
+
+pr:
+  # Run this pipeline for any PR that wishes to push to main that changes code
+  # inside docs folder.
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - docs
+
+jobs:
+  - pool:
+      vmImage: ubuntu-latest
+    timeoutInMinutes: 30
+
+    strategy:
+      matrix:
+        latest:
+          python-version: 3.12
+
+    steps:
+      - checkout: self
+        clean: true
+
+      - bash: |
+          echo "There are no doc checks at the moment."
+
+        displayName: Dummy check

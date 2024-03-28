@@ -1,3 +1,6 @@
+# Make targets useful for developing TruLens-Explain.
+# How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
+
 # Run target's commands in the same shell.
 .ONESHELL:
 
