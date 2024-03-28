@@ -1,17 +1,8 @@
-trigger:
-  # Run this pipeline for any PR that wishes to push to main that changes code
-  # inside trulens_eval folder or to eval notebooks in the docs folder.
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - trulens_eval
-      - docs/trulens_eval/*.ipynb
+trigger: none
 
 pr:
   # Run this pipeline for any PR from a branch that starts with "releases/" that
-  # changed code in the same as above.
+  # changed code in trulens_eval folder or to eval notebooks in the docs folder.
   branches:
     include:
       - releases/*
@@ -20,12 +11,12 @@ pr:
       - trulens_eval
       - docs/trulens_eval/*.ipynb
 
-schedules:
-  - cron: "0 0 * * *"
-    displayName: Daily midnight build
-    branches:
-      include:
-        - main
+# schedules:
+#  - cron: "0 0 * * *"
+#    displayName: Daily midnight build
+#    branches:
+#      include:
+#        - main
 
 jobs:
   - job: ReleaseTests
