@@ -37,15 +37,18 @@ def validate_rating(rating) -> int:
 PATTERN_0_10: re.Pattern = re.compile(r"([0-9]+)(?=\D*$)")
 """Regex that matches the last integer."""
 
-PATTERN_NUMBER: re.Pattern = re.compile(r"([+-]?[0-9]+\.[0-9]*|[0-9]+)")
+PATTERN_NUMBER: re.Pattern = re.compile(r"([+-]?[0-9]+\.[0-9]*|[1-9][0-9]*|0)")
 """Regex that matches floating point and integer numbers."""
+
+PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
+"""Regex that matches integers."""
 
 def re_0_10_rating(s: str) -> int:
     """Extract a 0-10 rating from a string.
     
-    If the string does not match a number or matches a number outside the 0-10
-    range, raises an error instead. If multiple numbers are found within the
-    expected 0-10 range, the smallest is returned.
+    If the string does not match an integer or matches an integer outside the
+    0-10 range, raises an error instead. If multiple numbers are found within
+    the expected 0-10 range, the smallest is returned.
 
     Args:
         s: String to extract rating from.
@@ -57,9 +60,9 @@ def re_0_10_rating(s: str) -> int:
         ParseError: If no integers between 0 and 10 are found in the string.
     """
 
-    matches = PATTERN_NUMBER.findall(s)
+    matches = PATTERN_INTEGER.findall(s)
     if not matches:
-        raise ParseError("int or float number", s, pattern=PATTERN_NUMBER)
+        raise ParseError("int or float number", s, pattern=PATTERN_INTEGER)
 
     vals = set()
     for match in matches:
