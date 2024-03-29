@@ -1,5 +1,16 @@
+"""
+Feedback functions.
+
+Warning:
+    This is work in progress. It represents a reorganization of the feedback
+    functions first along semantic criteria instead of the current origanization based
+    first on providers.
+"""
+
+from __future__ import annotations
+
 from abc import abstractmethod
-from typing import ClassVar, List, Optional
+from typing import ClassVar, Dict, List, Optional
 
 from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
 from langchain.prompts import PromptTemplate
@@ -9,6 +20,25 @@ from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.text import make_retab
 
+
+class Template(PromptTemplate):
+    """A prompt template that renders as a string.
+    
+    This is mostly to make it easier to view in a notebook or in docs.
+    """
+
+    @classmethod
+    def from_template(cls, *args, **kwargs: Dict) -> Template:
+        # This is just here to satisfy the type checker as it thinks this will
+        # return PromptTemplate instead of Template.
+
+        return super().from_template(*args, **kwargs)
+
+    def __repr__(self):
+        return self.template
+    
+    def __str__(self):
+        return self.template
 
 # Level 1 abstraction
 class WithPrompt(pydantic.BaseModel):
@@ -346,7 +376,7 @@ class Insensitivity(Semantics, WithPrompt):  # categorize
     """
 
     # langchain Criteria.INSENSITIVITY
-    system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
+    system_prompt: ClassVar[Template] = Template.from_template(
         f"""{supported_criteria['insensitivity']} Respond only as a number from 0 (least insensitive) to 10 (most insensitive)."""
     )
 

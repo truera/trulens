@@ -1045,8 +1045,9 @@ class LLMProvider(Provider):
 
     def insensitivity(self, text: str) -> float:
         """
-        Uses chat completion model. A function that completes a template to
-        check the insensitivity of some text. Prompt credit to Langchain Eval.
+        Insensitivity.
+
+        Prompt used: [LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT][trulens_eval.feedback.prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT].
 
         Usage:
             ```python
@@ -1056,12 +1057,23 @@ class LLMProvider(Provider):
             The `on_output()` selector can be changed. See [Feedback Function
             Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
+        Examples:
+            | text | score |
+            |------|-------|
+            | "I hate you." | 1.0 |
+            | "I love you." | 0.0 |
+
         Args:
             text (str): The text to evaluate.
 
         Returns:
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
+
+        Credits:
+            - Prompt: to _LangChain_ Eval.
+            - Examples: GitHub copilot.
         """
+
         return self._langchain_evaluate(
             text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
         )

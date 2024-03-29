@@ -146,13 +146,14 @@ class Huggingface(Provider):
             Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
-            text1 (str): Text to evaluate.
-            text2 (str): Comparative text to evaluate.
+            text1: Text to evaluate.
+
+            text2: Comparative text to evaluate.
 
         Returns:
-
-            float: A value between 0 and 1. 0 being "different languages" and 1
-            being "same languages".
+            float: A value between 0.0 and 1.0 . The value 0.0 indicates that
+                the input texts were of different languages and 1.0 indicates they
+                are in the same language.
         """
 
         def get_scores(text):

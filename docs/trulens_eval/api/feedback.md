@@ -29,3 +29,9 @@ non-serializable instantiations.
 ::: trulens_eval.schema.FeedbackResultStatus
 
 ::: trulens_eval.schema.FeedbackCall
+
+## Prompts
+
+::: trulens_eval.feedback.prompts
+    options:
+        show_if_no_docstring: true
