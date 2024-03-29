@@ -4,49 +4,75 @@ Utilities for dealing with LLM-generated text.
 
 import logging
 import re
+from typing import Optional
 
-from pydantic import BaseModel
-from pydantic import field_validator
-from pydantic import ValidationError
+from trulens_eval.utils.text import retab
 
 logger = logging.getLogger(__name__)
 
+class ParseError(Exception):
+    """Error parsing LLM-generated text."""
 
-class Rating(BaseModel):
-    rating: int
+    def __init__(self, expected: str, text: str, pattern: Optional[re.Pattern] = None):
+        super().__init__(
+            f"Tried to find {expected}" +
+            (f" using pattern {pattern.pattern}" if pattern else "") +
+            " in\n" + 
+            retab(tab='  ', s=text)
+        )
+        self.text = text
+        self.pattern = pattern
 
-    @field_validator('rating')
-    def check_rating(cls, v):
-        if not (0 <= v <= 10):
-            raise ValueError('Rating must be between 0 and 10')
-        return v
+def validate_rating(rating) -> int:
+    """Validate a rating is between 0 and 10."""
 
+    if not 0 <= rating <= 10:
+        raise ValueError('Rating must be between 0 and 10')
 
+    return rating
+
+# Various old patterns that didn't work as well:
 # PATTERN_0_10: re.Pattern = re.compile(r"\s*([0-9]+)\s*$")
-PATTERN_0_10: re.Pattern = re.compile(r"\b([0-9]|10)(?=\D*$|\s*\.)")
-"""Regex for extracting a 0-10 rating.
+# PATTERN_0_10: re.Pattern = re.compile(r"\b([0-9]|10)(?=\D*$|\s*\.)")
+PATTERN_0_10: re.Pattern = re.compile(r"([0-9]+)(?=\D*$)")
+"""Regex that matches the last integer."""
 
-We are assuming the score will always be the last part of the generated text
-from LLM - hence we are matching for the last group of digits in the string.
-"""
+PATTERN_NUMBER: re.Pattern = re.compile(r"([+-]?[0-9]+\.[0-9]*|[0-9]+)")
+"""Regex that matches floating point and integer numbers."""
 
-
-def re_0_10_rating(str_val: str) -> int:
-    """Extract 0-10 rating from a string.
+def re_0_10_rating(s: str) -> int:
+    """Extract a 0-10 rating from a string.
     
-    If the string does not match, returns -10 instead."""
+    If the string does not match a number or matches a number outside the 0-10
+    range, raises an error instead. If multiple numbers are found within the
+    expected 0-10 range, the smallest is returned.
 
-    matches = PATTERN_0_10.fullmatch(str_val)
+    Args:
+        s: String to extract rating from.
+
+    Returns:
+        int: Extracted rating. 
+    
+    Raises:
+        ParseError: If no integers between 0 and 10 are found in the string.
+    """
+
+    matches = PATTERN_NUMBER.findall(s)
     if not matches:
-        # Try soft match
-        matches = re.search(r'([0-9]+)(?=\D*$)', str_val)
-        if not matches:
-            logger.warning(f"0-10 rating regex failed to match on: '{str_val}'")
-            return -10  # so this will be reported as -1 after division by 10
+        raise ParseError("int or float number", s, pattern=PATTERN_NUMBER)
 
-    try:
-        rating = Rating(rating=int(matches.group()))
-        return rating.rating
-    except ValidationError as e:
-        logger.warning(f"Validation error: {e}")
-        return -10  # TODO: could consider incorporating re-asking and self-critique here with Instructor https://github.com/jxnl/instructor
+    vals = set()
+    for match in matches:
+        try:
+            vals.add(validate_rating(int(match)))
+        except ValueError:
+            pass
+
+    if not vals:
+        raise ParseError("0-10 rating", s)
+
+    if len(vals) > 1:
+        logger.warning("Multiple valid rating values found in the string: %s", s)
+
+    # Min to handle cases like "The rating is 8 out of 10."
+    return min(vals)
