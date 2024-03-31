@@ -126,13 +126,14 @@ class Huggingface(Provider):
     # TODEP
     @_tci
     def language_match(self, text1: str, text2: str) -> Tuple[float, Dict]:
-        """
-        Uses Huggingface's papluca/xlm-roberta-base-language-detection model. A
-        function that uses language detection on `text1` and `text2` and
-        calculates the probit difference on the language detected on text1. The
-        function is: `1.0 - (|probit_language_text1(text1) -
-        probit_language_text1(text2))`
-        
+        """Likelyhood that the texts are in the same natural language.
+
+        Details:
+            Uses a language detection on `text1` and `text2` and calculates the
+            probit difference on the language detected on text1. The function
+            is: `1.0 - (|probit_language_text1(text1) -
+            probit_language_text1(text2))`
+
         Usage:
             ```python
             from trulens_eval import Feedback
@@ -273,7 +274,7 @@ class Huggingface(Provider):
     # TODEP
     @_tci
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
-        """ A groundedness measure best used for summarized premise against simple hypothesis.
+        """A groundedness measure best used for summarized premise against simple hypothesis.
         This Huggingface implementation uses NLI.
 
         Args:
