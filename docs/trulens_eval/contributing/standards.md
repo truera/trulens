@@ -26,6 +26,8 @@ apply when referring to things like package names, classes, methods.
 
 - _Pinecone_
 
+- _HuggingFace_
+
 ## Python
 
 ### Format
