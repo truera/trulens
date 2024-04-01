@@ -108,11 +108,11 @@ The top level record also contains these helper accessors
 
 - `RecordInput = Record.main_input` -- points to the main input part of a
   Record. This is the first argument to the root method of an app (for
-  langchain Chains this is the `__call__` method).
+  _LangChain_ Chains this is the `__call__` method).
 
 - `RecordOutput = Record.main_output` -- points to the main output part of a
   Record. This is the output of the root method of an app (i.e. `__call__`
-  for langchain Chains).
+  for _LangChain_ Chains).
 
 - `RecordCalls = Record.app` -- points to the root of the app-structured
   mirror of calls in a record. See **App-organized Calls** Section above.
