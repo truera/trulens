@@ -128,11 +128,10 @@ class Huggingface(Provider):
     def language_match(self, text1: str, text2: str) -> Tuple[float, Dict]:
         """Likelyhood that the texts are in the same natural language.
 
-        Details:
-            Uses a language detection on `text1` and `text2` and calculates the
-            probit difference on the language detected on text1. The function
-            is: `1.0 - (|probit_language_text1(text1) -
-            probit_language_text1(text2))`
+        Uses a language detection on `text1` and `text2` and calculates the
+        probit difference on the language detected on text1. The function
+        is: `1.0 - (|probit_language_text1(text1) -
+        probit_language_text1(text2))`
 
         Usage:
             ```python
