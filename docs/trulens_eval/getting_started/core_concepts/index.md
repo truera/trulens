@@ -114,20 +114,21 @@ General and 🦑_TruLens-Eval_-specific concepts.
     !!! note
         This will be renamed to `Trace` in the future.
 
-- `Retrieval`. The process or result of looking up pieces of context relevant to
-  some query. Typically this is done using an `Embedding` reprqesentations of
-  queries and contexts.
+- `Retrieval`, `Retriever`. The process or result (or the `Component` that
+  performs this) of looking up pieces of text relevant to a `Prompt` to provide
+  as `Context` to an `LLM`. Typically this is done using an `Embedding`
+  representations.
 
 - `Selector` (🦑_TruLens-Eval_-specific concept). A specification of the source
   of data from a `Trace` to use as inputs to a `Feedback Function`. This
   corresponds to [Lens][trulens_eval.utils.serial.Lens] and utilities
   [Select][trulens_eval.schema.Select].
 
-- `Shot`, `Zero Shot`, `Few Shot`, `<Quantity>-Shot`. The use of zero or more examples in an
-  `Instruction Prompt` to help an `LLM` generate desirable `Completions`. `Zero
-  Shot` describes prompts that do not have any examples and only offer a natural
-  language description of the task, while `<Quantity>-Shot` indicate some
-  `<Quantity>` of examples are provided.
+- `Shot`, `Zero Shot`, `Few Shot`, `<Quantity>-Shot`. The use of zero or more
+  examples in an `Instruction Prompt` to help an `LLM` generate desirable
+  `Completions`. `Zero Shot` describes prompts that do not have any examples and
+  only offer a natural language description of the task, while `<Quantity>-Shot`
+  indicate some `<Quantity>` of examples are provided.
 
 - `Span`. Some unit of work logged as part of a record. Corresponds to current
   🦑[RecordAppCallMethod][trulens_eval.schema.RecordAppCall].
