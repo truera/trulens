@@ -3,9 +3,8 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Union
-)
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Union)
 import warnings
 
 import numpy as np
@@ -25,10 +24,6 @@ from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.database.migrations.db_data_migration import data_migrate
-from trulens_eval.database.orm import AppDefinition
-from trulens_eval.database.orm import FeedbackDefinition
-from trulens_eval.database.orm import FeedbackResult
-from trulens_eval.database.orm import Record
 from trulens_eval.database.utils import check_db_revision
 from trulens_eval.database.utils import for_all_methods
 from trulens_eval.database.utils import is_legacy_sqlite
@@ -40,7 +35,6 @@ from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import Perf
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.python import locals_except
