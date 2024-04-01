@@ -16,7 +16,8 @@ class Langchain(LLMProvider):
 
     Create a Langchain Provider with out of the box feedback functions.
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback.provider.langchain import Langchain
         from langchain_community.llms import OpenAI
