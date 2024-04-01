@@ -33,7 +33,7 @@ Several utility methods starting with `.on` provide shorthands:
 
 Some wrappers include additional shorthands:
 
-### Llama-Index specific selectors
+### LlamaIndex specific selectors
 
 - `TruLlama.select_source_nodes()` -- outputs the selector of the source
   documents part of the engine output.
@@ -67,7 +67,7 @@ Some wrappers include additional shorthands:
   context = TruChain.select_context(retriever_chain)
   ```
 
-### Llama-Index and _LangChain_ specific selectors
+### _LlamaIndex_ and _LangChain_ specific selectors
 
 - `App.select_context()` -- outputs the selector of the context part of the
   engine output. Can be used for both _LlamaIndex_ and _LangChain_ apps.
