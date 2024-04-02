@@ -5,15 +5,28 @@ Enumerations of standards for code and its documentation to be maintained in
 
 ## Proper Names
 
-Styling/formatting of proper names in italics.
+In natural language text, style/format proper names using italics if available.
+In Markdown, this can be done with a single underscore character on both sides
+of the term. In unstyled text, use the capitalization as below. This does not
+apply when referring to things like package names, classes, methods.
 
-- _TruLens_
+- _TruLens_, _TruLens-Eval_, _TruLens-Explain_
 
 - _LangChain_
 
 - _LlamaIndex_
 
-- _NeMo Guardrails_, _Guardrails_ for short, _rails_ for shorter.
+- _NeMo Guardrails_
+
+- _OpenAI_
+
+- _Bedrock_
+
+- _LiteLLM_
+
+- _Pinecone_
+
+- _HuggingFace_
 
 ## Python
 
