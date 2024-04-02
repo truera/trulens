@@ -130,9 +130,9 @@ class TruChain(App):
 
     This recorder is designed for LangChain apps, providing a way to instrument, log, and evaluate their behavior.
 
-    !!! example "Creating a Langchain RAG application"
+    !!! example "Creating a LangChain RAG application"
 
-        Consider an example Langchain RAG application. For the complete code example, see [LangChain Quickstart](https://www.trulens.org/trulens_eval/getting_started/quickstarts/langchain_quickstart/).
+        Consider an example LangChain RAG application. For the complete code example, see [LangChain Quickstart](https://www.trulens.org/trulens_eval/getting_started/quickstarts/langchain_quickstart/).
 
         ```python
         from langchain import hub

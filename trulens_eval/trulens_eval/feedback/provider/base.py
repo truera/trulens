@@ -628,7 +628,7 @@ class LLMProvider(Provider):
     def conciseness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the conciseness of some text. Prompt credit to Langchain Eval.
+        check the conciseness of some text. Prompt credit to LangChain Eval.
 
         !!! example
 
@@ -653,7 +653,7 @@ class LLMProvider(Provider):
     def conciseness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the conciseness of some text. Prompt credit to Langchain Eval.
+        check the conciseness of some text. Prompt credit to LangChain Eval.
 
         !!! example
         
@@ -679,7 +679,7 @@ class LLMProvider(Provider):
     def correctness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the correctness of some text. Prompt credit to Langchain Eval.
+        check the correctness of some text. Prompt credit to LangChain Eval.
 
         !!! example
         
@@ -703,7 +703,7 @@ class LLMProvider(Provider):
     def correctness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the correctness of some text. Prompt credit to Langchain Eval.
+        check the correctness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
@@ -728,7 +728,7 @@ class LLMProvider(Provider):
     def coherence(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a
-        template to check the coherence of some text. Prompt credit to Langchain Eval.
+        template to check the coherence of some text. Prompt credit to LangChain Eval.
         
         !!! example
         
@@ -752,7 +752,7 @@ class LLMProvider(Provider):
     def coherence_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the coherence of some text. Prompt credit to Langchain Eval. Also
+        check the coherence of some text. Prompt credit to LangChain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
         !!! example
@@ -777,7 +777,7 @@ class LLMProvider(Provider):
     def harmfulness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the harmfulness of some text. Prompt credit to Langchain Eval.
+        check the harmfulness of some text. Prompt credit to LangChain Eval.
 
         !!! example
         
@@ -801,7 +801,7 @@ class LLMProvider(Provider):
     def harmfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the harmfulness of some text. Prompt credit to Langchain Eval.
+        check the harmfulness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
@@ -824,7 +824,7 @@ class LLMProvider(Provider):
     def maliciousness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the maliciousness of some text. Prompt credit to Langchain Eval.
+        check the maliciousness of some text. Prompt credit to LangChain Eval.
 
         !!! example
         
@@ -849,7 +849,7 @@ class LLMProvider(Provider):
     def maliciousness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat compoletion model. A function that completes a
-        template to check the maliciousness of some text. Prompt credit to Langchain Eval.
+        template to check the maliciousness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
@@ -874,7 +874,7 @@ class LLMProvider(Provider):
     def helpfulness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the helpfulness of some text. Prompt credit to Langchain Eval.
+        check the helpfulness of some text. Prompt credit to LangChain Eval.
 
         !!! example
         
@@ -898,7 +898,7 @@ class LLMProvider(Provider):
     def helpfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the helpfulness of some text. Prompt credit to Langchain Eval.
+        check the helpfulness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
@@ -977,7 +977,7 @@ class LLMProvider(Provider):
     def misogyny(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the misogyny of some text. Prompt credit to Langchain Eval.
+        check the misogyny of some text. Prompt credit to LangChain Eval.
 
         !!! example
         
@@ -1001,7 +1001,7 @@ class LLMProvider(Provider):
     def misogyny_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the misogyny of some text. Prompt credit to Langchain Eval. Also
+        check the misogyny of some text. Prompt credit to LangChain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
         !!! example
@@ -1026,7 +1026,7 @@ class LLMProvider(Provider):
     def criminality(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the criminality of some text. Prompt credit to Langchain Eval.
+        check the criminality of some text. Prompt credit to LangChain Eval.
 
         !!! example
         
@@ -1051,7 +1051,7 @@ class LLMProvider(Provider):
     def criminality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the criminality of some text. Prompt credit to Langchain Eval.
+        check the criminality of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
@@ -1076,7 +1076,7 @@ class LLMProvider(Provider):
     def insensitivity(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the insensitivity of some text. Prompt credit to Langchain Eval.
+        check the insensitivity of some text. Prompt credit to LangChain Eval.
 
         !!! example
         
@@ -1100,7 +1100,7 @@ class LLMProvider(Provider):
     def insensitivity_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the insensitivity of some text. Prompt credit to Langchain Eval.
+        check the insensitivity of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example

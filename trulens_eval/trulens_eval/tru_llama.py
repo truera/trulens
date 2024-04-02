@@ -222,13 +222,13 @@ class LlamaInstrument(Instrument):
 
 class TruLlama(App):
     """
-    Recorder for Llama-Index applications.
+    Recorder for LlamaIndex applications.
 
-    This recorder is designed for Llama-Index apps, providing a way to instrument, log, and evaluate their behavior.
+    This recorder is designed for LlamaIndex apps, providing a way to instrument, log, and evaluate their behavior.
 
-    !!! example "Creating a Llama-Index application"
+    !!! example "Creating a LlamaIndex application"
 
-        Consider an example Llama-Index application. For the complete code example, see [Llama-Index Quickstart](https://docs.llamaindex.ai/en/stable/getting_started/starter_example.html).
+        Consider an example LlamaIndex application. For the complete code example, see [LlamaIndex Quickstart](https://docs.llamaindex.ai/en/stable/getting_started/starter_example.html).
 
         ```python
         from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
@@ -278,7 +278,7 @@ class TruLlama(App):
 
     Feedback functions can utilize the specific context produced by the application's query engine. This is achieved using the `select_context` method, which then can be used by a feedback selector, such as `on(context)`.
 
-    Further information about Llama-Index apps can be found on the [🦙 LlamaIndex Documentation](https://docs.llamaindex.ai/en/stable/) page.
+    Further information about LlamaIndex apps can be found on the [🦙 LlamaIndex Documentation](https://docs.llamaindex.ai/en/stable/) page.
 
     Args:
         app: A LlamaIndex application.
