@@ -15,10 +15,9 @@ pydantic           >= 2, <3
 merkle-json        >= 1.0.0
 
 # Langchain
-langchain          >= 0.0.354  # required for cost tracking even outside of langchain
+#langchain          >= 0.0.354  # required for cost tracking even outside of langchain
 langchain-core     >= 0.1.6  # required by langchain but here so we can reliably pin/lower bound
 typing-inspect     >= 0.8.0  # fixes bug with langchain on python < 3.9 
-packaging          >= 23.2, <24.0  # resolves version conflict with langchain-core
 
 # Models
 # All models are optional.
