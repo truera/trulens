@@ -19,7 +19,7 @@ merkle-json        >= 1.0.0
 langchain          >= 0.1.14  # required for cost tracking even outside of langchain
 langchain-core     >= 0.1.6  # required by langchain
 typing-inspect     >= 0.8.0  # fixes bug with langchain on python < 3.9 
-packaging          >= 23.2, <24.0  # resolves version conflict with langchain-core
+packaging          == 23.2 # resolves version conflict with langchain-core
 
 # Models
 # All models are optional.
