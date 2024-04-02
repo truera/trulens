@@ -60,9 +60,9 @@ def add_logo_and_style_overrides():
 
     # Sidebar feedback button
     with st.sidebar:
-        version_col, user_feedback_col = st.columns([6,4])
+        version_col, user_feedback_col = st.columns(2)
         with version_col:
-            st.text(f"{__package__} {__version__}")
+            st.text(f"{__package__}\nv{__version__}")
         with user_feedback_col:
-            st.link_button("Feedback", "https://forms.gle/HAc4HBk5nZRpgw7C6", help="Help us improve TruLens!")
+            st.link_button("Share Feedback", "https://forms.gle/HAc4HBk5nZRpgw7C6", help="Help us improve TruLens!")
         
