@@ -39,15 +39,13 @@ def score_passages(df, feedback_func_name, feedback_func, backoff_time=0.5, n=5,
             query_relevance.append(row['is_selected'])
             # print(f"Feedback avg score for query {name} is {sampled_score}, is_selected is {row['is_selected']}")
         
-        print(f"Query {name} scored {len(query_scores)} out of {len(group)} passages.")
+        print(f"Feedback function {name} scored {len(query_scores)} out of {len(group)} passages.")
         scores.append(query_scores)
         true_relevance.append(query_relevance)
 
     return scores, true_relevance
 
 def compute_ndcg(scores, true_relevance):
-    print(scores)
-    print(true_relevance)
     ndcg_values = [ndcg_score([true], [pred]) for true, pred in zip(true_relevance, scores)]
     return np.mean(ndcg_values)
 
