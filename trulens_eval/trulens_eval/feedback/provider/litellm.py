@@ -25,7 +25,8 @@ class LiteLLM(LLMProvider):
 
     Create an LiteLLM Provider with out of the box feedback functions.
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback.provider.litellm import LiteLLM
         litellm_provider = LiteLLM()
@@ -100,26 +101,25 @@ provider = LiteLLM(
         **kwargs
     ) -> str:
 
-        if prompt is not None:
-            comp = completion(
-                model=self.model_engine,
-                messages=[{
+        completion_args = kwargs
+        completion_args['model'] = self.model_engine
+        completion_args.update(self.completion_args)
+
+        if messages is not None:
+            completion_args['messages'] = messages
+
+        elif prompt is not None:
+            completion_args['messages'] = [
+                {
                     "role": "system",
                     "content": prompt
-                }],
-                **kwargs,
-                **self.completion_args
-            )
-        elif messages is not None:
-            comp = completion(
-                model=self.model_engine,
-                messages=messages,
-                **kwargs,
-                **self.completion_args
-            )
+                }
+            ]
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
+
+        comp = completion(**completion_args)
 
         assert isinstance(comp, object)
 

@@ -88,7 +88,7 @@ TO PLACE
 
 """
 
-__version_info__ = (0, 25, 1)
+__version_info__ = (0, 27, 0)
 __version__ = '.'.join(map(str, __version_info__))
 
 # This check is intentionally done ahead of the other imports as we want to

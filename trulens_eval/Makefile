@@ -1,8 +1,34 @@
+# Make targets useful for developing TruLens-Eval.
+# How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
+
 SHELL := /bin/bash
 CONDA_ENV := py311_trulens
-CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate $(CONDA_ENV)
+CONDA_ACTIVATE := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
+CONDA := $(CONDA_ACTIVATE) $(CONDA_ENV)
 
 PYENV:=PYTHONPATH=$(PWD)
+
+# Create conda enviornments with all of the supported python versions. The "req"
+# ones with just the required packages and the "opt" ones with also the optional
+# packages.
+test-envs: \
+	.conda/py-req-3.8 .conda/py-req-3.9 .conda/py-req-3.10 .conda/py-req-3.11 .conda/py-req-3.12 \
+	.conda/py-opt-3.8 .conda/py-opt-3.9 .conda/py-opt-3.10 .conda/py-opt-3.11 .conda/py-opt-3.12
+
+# Create a conda env for a particular python version with trulens-eval and just
+# the required packages.
+.conda/py-req-%:
+	conda create -p .conda/py-req-$* python=$* -y
+	$(CONDA_ACTIVATE) .conda/py-req-$*; \
+		pip install -r trulens_eval/requirements.txt
+
+# Create a conda env for a particular python version with trulens-eval and
+# the required and optional packages.
+.conda/py-opt-%:
+	conda create -p .conda/py-opt-$* python=$* -y
+	$(CONDA_ACTIVATE) .conda/py-opt-$*; \
+		pip install -r trulens_eval/requirements.txt; \
+		pip install -r trulens_eval/requirements.optional.txt
 
 # Start the trubot slack app.
 trubot:

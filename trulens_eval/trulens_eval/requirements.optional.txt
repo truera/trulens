@@ -8,9 +8,9 @@ bert-score   >= 0.3.13  # groundtruth.py
 evaluate     >= 0.4.0  # same
 nltk         >= 3.8.1  # groundedness.py
 
-# Apps: Langchain (optional parts)
+# Apps: LangChain (optional parts)
 langchainhub        >= 0.1.14  # example notebooks
-langchain_community >= 0.0.17  # example notebooks, now required for pinecone, others
+langchain_community >= 0.0.17  # example notebooks, now required for Pinecone, others
 langchain_openai    >= 0.0.5  # unit tests, sample apps
 
 # Apps: LlamaIndex
@@ -19,26 +19,23 @@ nbconvert   >= 7.14.2  # for llama_index example using SimlpleDirectoryReader
 llama-index-readers-file >= 0.1.5 # tests and notebooks
 llama-index-readers-web  >= 0.1.6 # tests and notebooks
 
-# Apps: NEMO Guardrails
+# Apps: NeMo Guardrails
 nemoguardrails >= 0.7.1
 
-# Models: openai
+# Models: OpenAI
 openai >= 1.1.1, <2
 httpx  >= 0.23.3  # for openai client serialization
 
-# Models: bedrock
+# Models: Bedrock
 boto3    >= 1.33.6
 botocore >= 1.33.6
 
 # Models API
-litellm     >= 1.11.1, <=1.24.0
-# have to upper bound due to py3.8 incompatibility:
-# https://github.com/BerriAI/litellm/issues/2005
+litellm     >= 1.25.2
 
 # Local models
 transformers  >= 4.10.0
 accelerate    >= 0.19.0
-pyllama       >= 0.0.9  # no direct uses
 
 # Local vector DBs
 hnswlib      >= 0.7.0

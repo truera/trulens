@@ -44,8 +44,7 @@ setup(
     packages=find_namespace_packages(
         include=["trulens_eval", "trulens_eval.*"]
     ),
-    python_requires=
-    '>= 3.8, < 3.12',  # Broken on python 3.12 release date for pyarrow. May be able to unpin if future deps are handled. make sure to also unpin conda python in ci-pr*.yaml
+    python_requires='>= 3.8, < 3.13',
     entry_points={
         'console_scripts': [
             'trulens-eval=trulens_eval.utils.command_line:main'

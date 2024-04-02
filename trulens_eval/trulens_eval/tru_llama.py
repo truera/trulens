@@ -1,5 +1,5 @@
 """
-# Llama_index instrumentation and monitoring. 
+# LlamaIndex instrumentation.
 """
 
 from inspect import BoundArguments
@@ -137,13 +137,18 @@ from trulens_eval.tru_chain import LangChainInstrument
 
 
 class LlamaInstrument(Instrument):
+    """Instrumentation for LlamaIndex apps."""
 
     class Default:
-        MODULES = {"llama_index.", "llama_hub."}.union(
-            LangChainInstrument.Default.MODULES
-        )  # NOTE: llama_index uses langchain internally for some things
+        """Instrumentation specification for LlamaIndex apps."""
 
-        # Putting these inside thunk as llama_index is optional.
+        MODULES = {"llama_index.",
+                   "llama_hub."}.union(LangChainInstrument.Default.MODULES)
+        """Modules by prefix to instrument.
+         
+        Note that llama_index uses langchain internally for some things.
+        """
+
         CLASSES = lambda: {
             BaseComponent, BaseLLM, BaseQueryEngine, BaseRetriever, BaseIndex,
             BaseChatEngine, BaseQuestionGenerator, BaseSynthesizer, Refine,
@@ -152,9 +157,8 @@ class LlamaInstrument(Instrument):
             BaseMemory, WithFeedbackFilterNodes, BaseNodePostprocessor,
             QueryEngineComponent, RetrieverComponent
         }.union(LangChainInstrument.Default.CLASSES())
+        """Classes to instrument."""
 
-        # Instrument only methods with these names and of these classes. Ok to
-        # include llama_index inside methods.
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS),
             {
@@ -204,6 +208,7 @@ class LlamaInstrument(Instrument):
                 ("_run_component"): (QueryEngineComponent, RetrieverComponent)
             }
         )
+        """Methods to instrument."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -217,12 +222,14 @@ class LlamaInstrument(Instrument):
 
 class TruLlama(App):
     """
-    Instantiates the LLama Index Wrapper.
+    Recorder for LlamaIndex applications.
 
-    Example:
-        LLama-Index code: [LLama Index
-        Quickstart](https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html)
-    
+    This recorder is designed for LlamaIndex apps, providing a way to instrument, log, and evaluate their behavior.
+
+    !!! example "Creating a LlamaIndex application"
+
+        Consider an example LlamaIndex application. For the complete code example, see [LlamaIndex Quickstart](https://docs.llamaindex.ai/en/stable/getting_started/starter_example.html).
+
         ```python
         from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 
@@ -232,7 +239,32 @@ class TruLlama(App):
         query_engine = index.as_query_engine()
         ```
 
-        Trulens Eval Code:
+    Feedback functions can utilize the specific context produced by the application's retriever. This is achieved using the `select_context` method, which then can be used by a feedback selector, such as `on(context)`.
+
+    !!! example "Defining a feedback function"
+
+        ```python
+        from trulens_eval.feedback.provider import OpenAI
+        from trulens_eval import Feedback
+        import numpy as np
+
+        # Select context to be used in feedback.
+        from trulens_eval.app import App
+        context = App.select_context(rag_chain)
+
+        # Use feedback
+        f_context_relevance = (
+            Feedback(provider.context_relevance_with_context_reasons)
+            .on_input()
+            .on(context)  # Refers to context defined from `select_context`
+            .aggregate(np.mean)
+        )
+        ```
+
+    The application can be wrapped in a `TruLlama` recorder to provide logging and evaluation upon the application's use.
+
+    !!! example "Using the `TruLlama` recorder"
+
         ```python
         from trulens_eval import TruLlama
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
@@ -242,27 +274,16 @@ class TruLlama(App):
 
         with tru_recorder as recording:
             query_engine.query("What is llama index?")
-
-        tru_record = recording.records[0]
-
-        # To add record metadata 
-        with tru_recorder as recording:
-            recording.record_metadata="this is metadata for all records in this context that follow this line"
-            query_engine.query("What is llama index?")
-            recording.record_metadata="this is different metadata for all records in this context that follow this line"
-            query_engine.query("Where do I download llama index?")
-        
         ```
 
-        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+    Feedback functions can utilize the specific context produced by the application's query engine. This is achieved using the `select_context` method, which then can be used by a feedback selector, such as `on(context)`.
+
+    Further information about LlamaIndex apps can be found on the [🦙 LlamaIndex Documentation](https://docs.llamaindex.ai/en/stable/) page.
 
     Args:
-        app: A llama index application.
-
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
-            and [AppDefinition][trulens_eval.app.AppDefinition]
+        app: A LlamaIndex application.
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App] and [AppDefinition][trulens_eval.app.AppDefinition].
     """
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     app: Union[BaseQueryEngine, BaseChatEngine]
@@ -501,5 +522,7 @@ class TruLlama(App):
             method="astream_chat", is_async=True, with_record=True
         )
 
+
+import trulens_eval  # for App class annotations
 
 TruLlama.model_rebuild()

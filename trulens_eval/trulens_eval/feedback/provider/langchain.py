@@ -12,11 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 class Langchain(LLMProvider):
-    """Out of the box feedback functions using Langchain LLMs and ChatModels
+    """Out of the box feedback functions using LangChain LLMs and ChatModels
 
-    Create a Langchain Provider with out of the box feedback functions.
+    Create a LangChain Provider with out of the box feedback functions.
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback.provider.langchain import Langchain
         from langchain_community.llms import OpenAI
@@ -26,7 +27,7 @@ class Langchain(LLMProvider):
         ```
 
     Args:
-        chain: Langchain LLM.
+        chain: LangChain LLM.
     """
 
     endpoint: LangchainEndpoint

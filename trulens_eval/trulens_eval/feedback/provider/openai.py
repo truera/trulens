@@ -27,7 +27,8 @@ class OpenAI(LLMProvider):
 
     Create an OpenAI Provider with out of the box feedback functions.
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback.provider.openai import OpenAI 
         openai_provider = OpenAI()
@@ -73,9 +74,7 @@ class OpenAI(LLMProvider):
         self_kwargs['model_engine'] = model_engine
 
         self_kwargs['endpoint'] = OpenAIEndpoint(
-            *args, 
-            pace=pace, rpm=rpm,
-            **kwargs
+            *args, pace=pace, rpm=rpm, **kwargs
         )
 
         super().__init__(
@@ -98,16 +97,17 @@ class OpenAI(LLMProvider):
         if 'seed' not in kwargs:
             kwargs['seed'] = 123
 
-        if prompt is not None:
+        if messages is not None:
+            completion = self.endpoint.client.chat.completions.create(
+                messages=messages, **kwargs
+            )
+
+        elif prompt is not None:
             completion = self.endpoint.client.chat.completions.create(
                 messages=[{
                     "role": "system",
                     "content": prompt
                 }], **kwargs
-            )
-        elif messages is not None:
-            completion = self.endpoint.client.chat.completions.create(
-                messages=messages, **kwargs
             )
 
         else:
@@ -128,7 +128,8 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is hate
         speech.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -157,7 +158,8 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is
         threatening speech.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -187,7 +189,8 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         self harm.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -217,7 +220,8 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is sexual
         speech.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -247,7 +251,8 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         sexual minors.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -279,7 +284,8 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         violence.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -309,7 +315,8 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -340,7 +347,8 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -369,7 +377,8 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI

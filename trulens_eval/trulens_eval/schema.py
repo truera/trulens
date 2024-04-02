@@ -28,8 +28,10 @@ from enum import Enum
 import logging
 from pprint import pformat
 from pprint import PrettyPrinter
-from typing import (Any, Callable, ClassVar, Dict, Hashable, List, Optional,
-                    Sequence, Tuple, Type, TypeVar, Union)
+from typing import (
+    Any, Callable, ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
+    Type, TypeVar, Union
+)
 
 import dill
 import humanize
@@ -201,12 +203,16 @@ class RecordAppCall(serial.SerialModel):
 
 
 class Record(serial.SerialModel, Hashable):
-    """Each instrumented method call produces one of these "record" instances."""
+    """The record of a single main method call.
 
-    model_config: ClassVar[dict] = dict(
+    Note:
+        This class will be renamed to `Trace` in the future.
+    """
+
+    model_config: ClassVar[dict] = {
         # for `Future[FeedbackResult]`
-        arbitrary_types_allowed=True
-    )
+        'arbitrary_types_allowed' : True
+    }
 
     record_id: RecordID
     """Unique identifier for this record."""
@@ -296,7 +302,7 @@ class Record(serial.SerialModel, Hashable):
 
         return ret
 
-    def layout_calls_as_app(self) -> serial.JSON:
+    def layout_calls_as_app(self) -> Bunch:
         """Layout the calls in this record into the structure that follows that of
         the app that created this record.
         
@@ -487,8 +493,41 @@ class FeedbackResultStatus(Enum):
     """Run completed successfully."""
 
     SKIPPED = "skipped"
-    """This feedback was skipped because it had an `if_exists` selector and did not select anything."""
+    """This feedback was skipped.
+     
+    This can be because because it had an `if_exists` selector and did not
+    select anything or it has a selector that did not select anything the
+    `on_missing` was set to warn or ignore.
+    """
 
+
+class FeedbackOnMissingParameters(str, Enum):
+    """How to handle missing parameters in feedback function calls.
+    
+    This is specifically for the case were a feedback function has a selector
+    that selects something that does not exist in a record/app.
+    """
+
+    ERROR = "error"
+    """Raise an error if a parameter is missing.
+    
+    The result status will be set to
+    [FAILED][trulens_eval.schema.FeedbackResultStatus.FAILED].
+    """
+
+    WARN = "warn"
+    """Warn if a parameter is missing.
+    
+    The result status will be set to
+    [SKIPPED][trulens_eval.schema.FeedbackResultStatus.SKIPPED].
+    """
+
+    IGNORE = "ignore"
+    """Do nothing. 
+    
+    No warning or error message will be shown. The result status will be set to
+    [SKIPPED][trulens_eval.schema.FeedbackResultStatus.SKIPPED].
+    """
 
 class FeedbackCall(serial.SerialModel):
     """Invocations of feedback function results in one of these instances.
@@ -663,6 +702,7 @@ class FeedbackCombinations(str, Enum):
     value instead of multiple values.
     """
 
+
 class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     """Serialized parts of a feedback function. 
     
@@ -689,11 +729,17 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     """Only execute the feedback function if the following selector names
     something that exists in a record/app.
     
-    Can use this to evaluate conditionally on presence of some calls, for example.
+    Can use this to evaluate conditionally on presence of some calls, for
+    example. Feedbacks skipped this way will have a status of
+    [FeedbackResultStatus.SKIPPED][trulens_eval.schema.FeedbackResultStatus.SKIPPED].
     """
 
+    if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR
+    """How to handle missing parameters in feedback function calls."""
+
     selectors: Dict[str, serial.Lens]
-    """Selectors; pointers into Records of where to get arguments for `imp`."""
+    """Selectors; pointers into [Records][trulens_eval.schema.Record] of where
+    to get arguments for `imp`."""
 
     supplied_name: Optional[str] = None
     """An optional name. Only will affect displayed tables."""
@@ -708,6 +754,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
                                        pyschema.Method]] = None,
         aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
         if_exists: Optional[serial.Lens] = None,
+        if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,
         selectors: Optional[Dict[str, serial.Lens]] = None,
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
@@ -724,6 +771,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             aggregator=aggregator,
             selectors=selectors,
             if_exists=if_exists,
+            if_missing=if_missing,
             **kwargs
         )
 
@@ -832,10 +880,13 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Wrapped app in jsonized form."""
 
     initial_app_loader_dump: Optional[serial.SerialBytes] = None
-    """EXPERIMENTAL: serialization of a function that loads an app.
+    """Serialization of a function that loads an app.
 
     Dump is of the initial app state before any invocations. This can be used to
     create a new session.
+
+    Warning:
+        Experimental work in progress.
     """
 
     app_extra_json: serial.JSON
@@ -921,9 +972,12 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_definition_json: serial.JSON, app: Any
     ) -> AppDefinition:
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
-        """EXPERIMENTAL: Instantiate the given `app` with the given state
+        """Instantiate the given `app` with the given state
         `app_definition_json`.
         
+        Warning:
+            This is an experimental feature with ongoing work.
+
         Args:
             app_definition_json: The json serialized app.
 
@@ -945,8 +999,11 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_definition_json: serial.JSON,
         initial_app_loader: Optional[Callable] = None
     ) -> AppDefinition:
-        """EXPERIMENTAL: Create an app instance at the start of a session.
+        """Create an app instance at the start of a session.
         
+        Warning:
+            This is an experimental feature with ongoing work.
+
         Create a copy of the json serialized app with the enclosed app being
         initialized to its initial state before any records are produced (i.e.
         blank memory).
@@ -985,8 +1042,11 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def get_loadable_apps():
-        """EXPERIMENTAL: Gets a list of all of the loadable apps.
+        """Gets a list of all of the loadable apps.
         
+        Warning:
+            This is an experimental feature with ongoing work.
+
         This is those that have `initial_app_loader_dump` set.
         """
 

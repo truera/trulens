@@ -1,12 +1,8 @@
-trigger:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - trulens_explain
+trigger: none
 
 pr:
+  # Run this pipeline for any PR from a branch that starts with "releases/" or
+  # is "main" that changed trulens_explain code.
   branches:
     include:
       - main
@@ -14,6 +10,7 @@ pr:
   paths:
     include:
       - trulens_explain
+
 jobs:
   - job: lensApiTests
     pool:

@@ -9,8 +9,9 @@ import json
 import logging
 from pprint import pformat
 import traceback
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple,
-                    TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
+)
 import warnings
 
 import munch
@@ -21,14 +22,9 @@ from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 
-# WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
-# This happens even if you import it as something else.
-# from trulens_eval import schema # breaks pydantic
-# from trulens_eval import schema as tru_schema # also breaks pydantic
-
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.schema import AppDefinition
+from trulens_eval.schema import AppDefinition, FeedbackOnMissingParameters
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackCall
 from trulens_eval.schema import FeedbackCombinations
@@ -50,6 +46,11 @@ from trulens_eval.utils.text import retab
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.threading import TP
 
+# WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
+# This happens even if you import it as something else.
+# from trulens_eval import schema # breaks pydantic
+# from trulens_eval import schema as tru_schema # also breaks pydantic
+
 logger = logging.getLogger(__name__)
 
 A = TypeVar("A")
@@ -63,6 +64,18 @@ float and a dictionary (of metadata)."""
 AggCallable = Callable[[Iterable[float]], float]
 """Signature of aggregation functions."""
 
+class InvalidSelector(Exception):
+    """Raised when a selector names something that is missing in a record/app."""
+
+    def __init__(self, selector: Lens, source_data: Optional[Dict[str, Any]] = None):
+        self.selector = selector
+        self.source_data = source_data
+
+    def __str__(self):
+        return f"Selector {self.selector} does not exist in source data."
+
+    def __repr__(self):
+        return f"InvalidSelector({self.selector})"
 
 def rag_triad(
     provider: LLMProvider,
@@ -450,10 +463,7 @@ class Feedback(FeedbackDefinition):
         if combinations is not None:
             updates['combinations'] = combinations
 
-        return Feedback.model_copy(
-            self,
-            update=updates
-        )
+        return Feedback.model_copy(self, update=updates)
 
     @staticmethod
     def of_feedback_definition(f: FeedbackDefinition):
@@ -566,7 +576,7 @@ class Feedback(FeedbackDefinition):
                 raise ValueError(
                     f"Expected a Lens but got `{path}` of type `{class_name(type(path))}`."
                 )
-            
+
             argname = self._next_unselected_arg_name()
             new_selectors[argname] = path
             self._print_guessed_selector(argname, path)
@@ -627,10 +637,15 @@ class Feedback(FeedbackDefinition):
             source_data = {}
 
         app_type: str = "trulens recorder (`TruChain`, `TruLlama`, etc)"
-    
+
         if isinstance(app, App):
             app_type = f"`{type(app).__name__}`"
-            app = jsonify(app, instrument=app.instrument, skip_specials=True, redact_keys=True)
+            app = jsonify(
+                app,
+                instrument=app.instrument,
+                skip_specials=True,
+                redact_keys=True
+            )
 
         elif isinstance(app, AppDefinition):
             app = jsonify(app, skip_specials=True, redact_keys=True)
@@ -681,14 +696,18 @@ Feedback function signature:
             if prefix is None:
                 continue
 
-            if len(prefix.path) >= 2 and isinstance(prefix.path[-1], GetItemOrAttribute) and prefix.path[-1].get_item_or_attribute() == "rets":
+            if len(prefix.path) >= 2 and isinstance(
+                    prefix.path[-1], GetItemOrAttribute
+            ) and prefix.path[-1].get_item_or_attribute() == "rets":
                 # If the selector check failed because the selector was pointing
                 # to something beyond the rets of a record call, we have to
                 # ignore it as we cannot tell what will be in the rets ahead of
                 # invoking app.
                 continue
 
-            if len(prefix.path) >= 3 and isinstance(prefix.path[-2], GetItemOrAttribute) and prefix.path[-2].get_item_or_attribute() == "args":
+            if len(prefix.path) >= 3 and isinstance(
+                    prefix.path[-2], GetItemOrAttribute
+            ) and prefix.path[-2].get_item_or_attribute() == "args":
                 # Likewise if failure was because the selector was pointing to
                 # method args beyond their parameter names, we also cannot tell
                 # their contents so skip.
@@ -704,7 +723,10 @@ Feedback function signature:
                         prefix_obj = prefix_obj.toDict()
 
                     msg += f"- Object of type `{class_name(type(prefix_obj))}` starting with:\n"
-                    msg += "```python\n" + retab(tab="\t  ", s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)) + "\n```\n"
+                    msg += "```python\n" + retab(
+                        tab="\t  ",
+                        s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)
+                    ) + "\n```\n"
 
             except Exception as e:
                 msg += f"Some non-existant object because: {pretty_repr(e)}"
@@ -719,15 +741,16 @@ Feedback function signature:
             return False
 
         else:
-            raise ValueError("Some selectors do not exist in the app or record.")
-
+            raise ValueError(
+                "Some selectors do not exist in the app or record."
+            )
 
     def run(
         self,
         app: Optional[Union[AppDefinition, JSON]] = None,
         record: Optional[Record] = None,
         source_data: Optional[Dict] = None,
-        **kwargs: dict
+        **kwargs: Dict[str, Any]
     ) -> FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
@@ -786,14 +809,35 @@ Feedback function signature:
             input_combinations = list(
                 self._extract_selection(
                     source_data=source_data,
-                    combinations=self.combinations
+                    combinations=self.combinations,
+                    **kwargs
                 )
             )
 
-        except Exception as e:
-            # TODO: Block here to remind us that we may want to do something
-            # better here.
-            raise e
+        except InvalidSelector as e:
+            # Handle the cases where a selector named something that does not
+            # exist in source data.
+            
+            if self.if_missing == FeedbackOnMissingParameters.ERROR:
+                feedback_result.status = FeedbackResultStatus.FAILED
+                raise e
+
+            if self.if_missing == FeedbackOnMissingParameters.WARN:
+                feedback_result.status = FeedbackResultStatus.SKIPPED
+                logger.warning(
+                    "Feedback %s cannot run as %s does not exist in record or app.", self.name,
+                    e.selector
+                )
+                return feedback_result
+
+            if self.if_missing == FeedbackOnMissingParameters.IGNORE:
+                feedback_result.status = FeedbackResultStatus.SKIPPED
+                return feedback_result
+
+            feedback_result.status = FeedbackResultStatus.FAILED
+            raise ValueError(
+                f"Unknown value for `if_missing` {self.if_missing}."
+            ) from e
 
         try:
             # Total cost, will accumulate.
@@ -801,8 +845,6 @@ Feedback function signature:
             multi_result = None
 
             for ins in input_combinations:
-                ins = dict(ins, **kwargs)
-
                 try:
                     result_and_meta, part_cost = Endpoint.track_all_costs_tally(
                         self.imp, **ins
@@ -896,7 +938,10 @@ Feedback function signature:
             return feedback_result
 
         except:
-            exc_tb = traceback.format_exc()
+            # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
+            exc_tb = traceback.format_exc().encode(
+                'utf-8', errors='replace'
+            ).decode('utf-8')
             logger.warning(f"Feedback Function exception caught: %s", exc_tb)
             feedback_result.update(
                 error=exc_tb, status=FeedbackResultStatus.FAILED
@@ -940,7 +985,10 @@ Feedback function signature:
             ).update(feedback_result_id=feedback_result_id)
 
         except Exception:
-            exc_tb = traceback.format_exc()
+            # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
+            exc_tb = traceback.format_exc().encode(
+                'utf-8', errors='replace'
+            ).decode('utf-8')
             db.insert_feedback(
                 feedback_result.update(
                     error=exc_tb, status=FeedbackResultStatus.FAILED
@@ -973,18 +1021,44 @@ Feedback function signature:
     def _extract_selection(
         self,
         source_data: Dict,
-        combinations: FeedbackCombinations = FeedbackCombinations.PRODUCT
+        combinations: FeedbackCombinations = FeedbackCombinations.PRODUCT,
+        **kwargs: Dict[str, Any]
     ) -> Iterable[Dict[str, Any]]:
+        """
+        Create parameter assignments to self.imp from t he given data source or
+        optionally additional kwargs.
+
+        Args:
+            source_data: The data to select from.
+
+            combinations: How to combine assignments for various variables to
+                make an assignment to the while signature.
+
+            **kwargs: Additional keyword arguments to use instead of looking
+                them up from source data. Any parameters specified here will be
+                used as the assignment value and the selector for that paremeter
+                will be ignored.
+        
+        """
 
         arg_vals = {}
 
         for k, q in self.selectors.items():
             try:
-                arg_vals[k] = list(q.get(source_data))
+                if k in kwargs:
+                    arg_vals[k] = [kwargs[k]]
+                else:
+                    arg_vals[k] = list(q.get(source_data))
             except Exception as e:
-                raise RuntimeError(
-                    f"Could not locate {q} in recorded data."
+                raise InvalidSelector(
+                    selector=q, source_data=source_data
                 ) from e
+
+        # For anything specified in kwargs that did not have a selector, set the
+        # assignment here as the above loop will have missed it.
+        for k, v in kwargs.items():
+            if k not in self.selectors:
+                arg_vals[k] = [v]
 
         keys = arg_vals.keys()
         vals = arg_vals.values()

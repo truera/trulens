@@ -3,6 +3,7 @@ import logging
 from typing import Dict, get_args, get_origin, Optional, Tuple, Union
 
 import numpy as np
+import requests
 
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
@@ -24,6 +25,7 @@ HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-lar
 HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
 HUGS_PII_DETECTION_API_URL = "https://api-inference.huggingface.co/models/bigcode/starpii"
 HUGS_CONTEXT_RELEVANCE_API_URL = "https://api-inference.huggingface.co/models/truera/context_relevance"
+HUGS_HALLUCINATION_API_URL = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
 
 import functools
 from inspect import signature
@@ -96,7 +98,8 @@ class Huggingface(Provider):
         """
         Create a Huggingface Provider with out of the box feedback functions.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
@@ -132,16 +135,18 @@ class Huggingface(Provider):
         function is: `1.0 - (|probit_language_text1(text1) -
         probit_language_text1(text2))`
         
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.hugs import Huggingface
-        huggingface_provider = Huggingface()
+        !!! example
+    
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            huggingface_provider = Huggingface()
 
-        feedback = Feedback(huggingface_provider.language_match).on_input_output() 
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            feedback = Feedback(huggingface_provider.language_match).on_input_output() 
+            ```
+
+            The `on_input_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text1 (str): Text to evaluate.
@@ -232,16 +237,18 @@ class Huggingface(Provider):
         Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
         function that uses a sentiment classifier on `text`.
         
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.hugs import Huggingface
-        huggingface_provider = Huggingface()
+        !!! example
+    
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            huggingface_provider = Huggingface()
 
-        feedback = Feedback(huggingface_provider.positive_sentiment).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            feedback = Feedback(huggingface_provider.positive_sentiment).on_output() 
+            ```
+
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -272,16 +279,18 @@ class Huggingface(Provider):
         Uses Huggingface's martin-ha/toxic-comment-model model. A function that
         uses a toxic comment classifier on `text`.
         
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.hugs import Huggingface
-        huggingface_provider = Huggingface()
+        !!! example
+    
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            huggingface_provider = Huggingface()
 
-        feedback = Feedback(huggingface_provider.not_toxic).on_output() 
-        ```
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            feedback = Feedback(huggingface_provider.not_toxic).on_output() 
+            ```
+
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         
         Args:
@@ -362,7 +371,8 @@ class Huggingface(Provider):
         """
         NER model to detect PII.
 
-        Usage:
+        !!! example
+    
             ```python
             hugs = Huggingface()
 
@@ -422,14 +432,18 @@ class Huggingface(Provider):
         """
         NER model to detect PII, with reasons.
 
-        **Usage:**
-        ```
-        hugs = Huggingface()
+        !!! example
+    
+            ```python
+            hugs = Huggingface()
 
-        # Define a pii_detection feedback function using HuggingFace.
-        f_pii_detection = Feedback(hugs.pii_detection).on_input()
-        ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            # Define a pii_detection feedback function using HuggingFace.
+            f_pii_detection = Feedback(hugs.pii_detection).on_input()
+            ```
+            
+            The `on(...)` selector can be changed. See [Feedback Function Guide
+            :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
         """
 
         # Initialize a dictionary to store reasons
@@ -489,6 +503,61 @@ class Huggingface(Provider):
         score = 1 - total_likelihood
 
         return score, reasons
+
+    @_tci
+    def hallucination_evaluator(
+        self, model_output: str, retrieved_text_chunks: str
+    ) -> float:
+        """
+        Evaluates the hallucination score for a combined input of two statements as a float 0<x<1 representing a 
+        true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
+        less than 0.5 the statement is evaluated as a hallucination.
+
+        **!!! example
+    **
+        ```python
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+
+        score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")
+        ```
+
+        Args:
+            model_output (str): This is what an LLM returns based on the text chunks retrieved during RAG
+            retrieved_text_chunk (str): These are the text chunks you have retrieved during RAG
+
+        Returns:
+            float: Hallucination score
+        """
+        combined_input = f"{model_output} [SEP] {retrieved_text_chunks}"
+        payload = {"inputs": combined_input}
+
+        response = self.endpoint.post(
+            url=HUGS_HALLUCINATION_API_URL, payload=payload
+        )
+        if isinstance(response, list):
+            # Assuming the list contains the result, check if the first element has a 'score' key
+            if 'score' not in response[0]:
+                raise RuntimeError(
+                    f"Error in API request: {response}, please try again once the endpoint has restarted."
+                )
+            # Extract the score from the first element
+            score = response[0]['score']
+        elif isinstance(response,
+                        requests.Response):  # Check if it's an HTTP response
+            if response.status_code != 200:
+                raise RuntimeError(
+                    f"Error in API request: {response.text}, please try again once the endpoint has restarted."
+                )
+            output = response.json()
+            score = output[0][0]['score']
+        else:
+            # If neither list nor HTTP response, raise an error
+            raise RuntimeError(
+                "Unexpected response type. Please check the API endpoint."
+            )
+
+        return score
 
 
 class Dummy(Huggingface):

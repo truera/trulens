@@ -65,6 +65,7 @@ plugins:
             - http://pandas.pydata.org/pandas-docs/stable/objects.inv
             - https://docs.pydantic.dev/latest/objects.inv
             - https://typing-extensions.readthedocs.io/en/latest/objects.inv
+            - https://docs.llamaindex.ai/en/stable/objects.inv
           options:
             extensions:
               - pydantic: { schema: true }
@@ -102,14 +103,18 @@ plugins:
             #- llama_index
             #- typing
             #- typing_extensions
+            # members:
+            filters:
+              - "!^_" # exlude all members starting with _
+              - "!^tru_class_info" # don't show tru_class_info
+              - "^__init__$" # but always include __init__ modules and methods
+              - "^__call__$" # and __call__ methods
+
           paths:
             - trulens_explain
             - trulens_eval
-          selection:
-            filters:
-              - "!^_" # exlude all members starting with _
-              - "^__init__$" # but always include __init__ modules and methods
-              - "^__call__$" # and __call__ methods
+          #selection:
+
   - redirects:
       redirect_maps:
         # These were distributed in the past but moved since then. Our own links
@@ -118,6 +123,7 @@ plugins:
         # NOTE: Even though both the source and target in these maps refer to
         # ".md", the get interpreted (or maybe generated as) urls without ".md".
         # hack: old .ipynb files are set has .md because .ipynb not supported for old link
+        trulens_eval/install.md: trulens_eval/getting_started/install.md
         trulens_eval/core_concepts_feedback_functions.md: trulens_eval/getting_started/core_concepts/feedback_functions.md
         trulens_eval/core_concepts_rag_triad.md: trulens_eval/getting_started/core_concepts/rag_triad.md
         trulens_eval/core_concepts_honest_harmless_helpful_evals.md: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
@@ -173,30 +179,32 @@ nav:
           - trulens_eval/getting_started/quickstarts/text2text_quickstart.ipynb
           - trulens_eval/getting_started/quickstarts/groundtruth_evals.ipynb
           - trulens_eval/getting_started/quickstarts/human_feedback.ipynb
-      - Core Concepts:
-          # PLACEHOLDER: - trulens_eval/getting_started/core_concepts/index.md
-          - Feedback Functions: trulens_eval/getting_started/core_concepts/feedback_functions.md
-          - RAG Triad: trulens_eval/getting_started/core_concepts/rag_triad.md
-          - Honest, Harmless, Helpful Evals: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
+      - ⭐ Core Concepts:
+          - trulens_eval/getting_started/core_concepts/index.md
+          - ☔ Feedback Functions: trulens_eval/getting_started/core_concepts/feedback_functions.md
+          - ⟁ RAG Triad: trulens_eval/getting_started/core_concepts/rag_triad.md
+          - 🏆 Honest, Harmless, Helpful Evals: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
   - 🎯 Evaluation:
       # PLACEHOLDER: - trulens_eval/evaluation/index.md
-      - Feedback Functions:
+      - ☔ Feedback Functions:
           - trulens_eval/evaluation/feedback_functions/index.md
           - Anatomy of a Feedback Function: trulens_eval/evaluation/feedback_functions/anatomy.md
-          - Specification Guide: trulens_eval/evaluation/feedback_functions/guide.md
-      - Running Feedback Functions:
-          # PLACEHOLDER: - trulens_eval/evaluation/running_feedback_functions/index.md
-          - Running with your app: trulens_eval/evaluation/running_feedback_functions/with_app.md
-          - Running on existing data: trulens_eval/evaluation/running_feedback_functions/existing_data.md
-      - Feedback Selectors:
-          - trulens_eval/evaluation/feedback_selectors/index.md
-          - Selecting Components: trulens_eval/evaluation/feedback_selectors/selecting_components.md
-          - Shortcuts: trulens_eval/evaluation/feedback_selectors/selector_shortcuts.md
       - Feedback Implementations:
           - trulens_eval/evaluation/feedback_implementations/index.md
           - 🧰 Stock Feedback Functions: trulens_eval/evaluation/feedback_implementations/stock.md
           - trulens_eval/evaluation/feedback_implementations/custom_feedback_functions.ipynb
-      - Generating Test Cases: trulens_eval/evaluation/generate_test_cases.md
+      - Feedback Selectors:
+          - trulens_eval/evaluation/feedback_selectors/index.md
+          - Selecting Components: trulens_eval/evaluation/feedback_selectors/selecting_components.md
+          - Selector Shortcuts: trulens_eval/evaluation/feedback_selectors/selector_shortcuts.md
+      - Feedback Aggregation:
+          - trulens_eval/evaluation/feedback_aggregation/index.md
+      - Running Feedback Functions:
+          # PLACEHOLDER: - trulens_eval/evaluation/running_feedback_functions/index.md
+          - Running with your app: trulens_eval/evaluation/running_feedback_functions/with_app.md
+          - Running on existing data: trulens_eval/evaluation/running_feedback_functions/existing_data.md
+      - Generating Test Cases:
+          - trulens_eval/evaluation/generate_test_cases/index.md
       - Feedback Evaluations:
           # Titles come from notebook and will be overridden if specified here.
           # PLACEHOLDER: - trulens_eval/evaluation/feedback_evaluations/index.md
@@ -233,7 +241,7 @@ nav:
           - TruCustom: trulens_eval/api/app/trucustom.md
           - TruVirtual: trulens_eval/api/app/truvirtual.md
       - Feedback: trulens_eval/api/feedback.md
-      - Record: trulens_eval/api/record.md
+      - 💾 Record: trulens_eval/api/record.md
       - Provider:
           - trulens_eval/api/provider/index.md
           - LLMProvider: trulens_eval/api/provider/llmprovider.md
@@ -242,12 +250,13 @@ nav:
               - AzureOpenAI: trulens_eval/api/provider/openai/azureopenai.md
           - AWS Bedrock: trulens_eval/api/provider/bedrock.md
           - LiteLLM: trulens_eval/api/provider/litellm.md
-          - 🦜️🔗 Langchain: trulens_eval/api/provider/langchain.md
+          - 🦜️🔗 LangChain: trulens_eval/api/provider/langchain.md
           - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
           - Endpoint:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
-      - Instruments: trulens_eval/api/instruments.md
+      - 𝄢 Instruments: trulens_eval/api/instruments.md
+      - 🗄 Database: trulens_eval/api/db.md
       - Utils:
           - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
@@ -257,6 +266,7 @@ nav:
           - trulens_eval/api/utils/utils.md
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
+      - 🧭 Design: trulens_eval/contributing/design.md
       - ✅ Standards: trulens_eval/contributing/standards.md
       - 💣 Tech Debt: trulens_eval/contributing/techdebt.md
   - ❓ Explain:

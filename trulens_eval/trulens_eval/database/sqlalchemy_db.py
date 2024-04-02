@@ -2,9 +2,9 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Union
-)
+from sqlite3 import OperationalError
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Union)
 import warnings
 
 import numpy as np
@@ -18,15 +18,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import MetaData
 
 from trulens_eval import schema
+from trulens_eval.app import App
 from trulens_eval.database import orm
 from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.database.migrations.db_data_migration import data_migrate
-from trulens_eval.database.orm import AppDefinition
-from trulens_eval.database.orm import FeedbackDefinition
-from trulens_eval.database.orm import FeedbackResult
-from trulens_eval.database.orm import Record
 from trulens_eval.database.utils import check_db_revision
 from trulens_eval.database.utils import for_all_methods
 from trulens_eval.database.utils import is_legacy_sqlite
@@ -38,11 +35,11 @@ from trulens_eval.db_migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import Perf
 from trulens_eval.schema import RecordID
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import JSONized
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
 from trulens_eval.utils.text import UNICODE_HOURGLASS
@@ -60,6 +57,11 @@ logger = logging.getLogger(__name__)
     ]
 )
 class SqlAlchemyDB(DB):
+    """Database implemented using sqlalchemy.
+    
+    See abstract class [DB][trulens_eval.db.DB] for method reference.
+    """
+
     engine_params: dict = Field(default_factory=dict)
     session_params: dict = Field(default_factory=dict)
     engine: Engine = None
@@ -165,7 +167,7 @@ class SqlAlchemyDB(DB):
 
             return _rec.record_id
 
-    def get_app(self, app_id: str) -> Optional[JSON]:
+    def get_app(self, app_id: schema.AppID) -> Optional[JSONized[App]]:
         with self.Session.begin() as session:
             if _app := session.query(orm.AppDefinition).filter_by(app_id=app_id
                                                                  ).first():
@@ -512,24 +514,30 @@ class AppsExtractor:
             [], columns=self.app_cols + self.rec_cols
         )  # prevent empty iterator
         for _app in apps:
-            if _recs := _app.records:
-                df = pd.DataFrame(data=self.extract_records(_recs))
+            try:
+                if _recs := _app.records:
+                    df = pd.DataFrame(data=self.extract_records(_recs))
 
-                for col in self.app_cols:
-                    if col == "type":
-                        # Previous DBs did not contain entire app so we cannot
-                        # deserialize AppDefinition here unless we fix prior DBs
-                        # in migration. Because of this, loading just the
-                        # `root_class` here.
-                        df[col] = str(
-                            Class.model_validate(
-                                json.loads(_app.app_json).get('root_class')
+                    for col in self.app_cols:
+                        if col == "type":
+                            # Previous DBs did not contain entire app so we cannot
+                            # deserialize AppDefinition here unless we fix prior DBs
+                            # in migration. Because of this, loading just the
+                            # `root_class` here.
+                            df[col] = str(
+                                Class.model_validate(
+                                    json.loads(_app.app_json).get('root_class')
+                                )
                             )
-                        )
-                    else:
-                        df[col] = getattr(_app, col)
+                        else:
+                            df[col] = getattr(_app, col)
 
-                yield df
+                    yield df
+            except OperationalError as e:
+                print(
+                    "Error encountered while attempting to retrieve an app. This issue may stem from a corrupted database."
+                )
+                print(f"Error details: {e}")
 
     def extract_records(self,
                         records: Iterable[orm.Record]) -> Iterable[pd.Series]:
@@ -537,32 +545,41 @@ class AppsExtractor:
             calls = defaultdict(list)
             values = defaultdict(list)
 
-            for _res in _rec.feedback_results:
-                calls[_res.name].append(json.loads(_res.calls_json)["calls"])
-                if _res.multi_result is not None and (multi_result :=
-                                                      json.loads(
-                                                          _res.multi_result
-                                                      )) is not None:
-                    for key, val in multi_result.items():
-                        if val is not None:  # avoid getting Nones into np.mean
-                            name = f"{_res.name}:::{key}"
-                            values[name] = val
-                            self.feedback_columns.add(name)
-                elif _res.result is not None:  # avoid getting Nones into np.mean
-                    values[_res.name].append(_res.result)
-                    self.feedback_columns.add(_res.name)
+            try:
+                for _res in _rec.feedback_results:
+                    calls[_res.name].append(
+                        json.loads(_res.calls_json)["calls"]
+                    )
+                    if _res.multi_result is not None and (multi_result :=
+                                                          json.loads(
+                                                              _res.multi_result
+                                                          )) is not None:
+                        for key, val in multi_result.items():
+                            if val is not None:  # avoid getting Nones into np.mean
+                                name = f"{_res.name}:::{key}"
+                                values[name] = val
+                                self.feedback_columns.add(name)
+                    elif _res.result is not None:  # avoid getting Nones into np.mean
+                        values[_res.name].append(_res.result)
+                        self.feedback_columns.add(_res.name)
 
-            row = {
-                **{k: np.mean(v) for k, v in values.items()},
-                **{k + "_calls": flatten(v) for k, v in calls.items()},
-            }
+                row = {
+                    **{k: np.mean(v) for k, v in values.items()},
+                    **{k + "_calls": flatten(v) for k, v in calls.items()},
+                }
 
-            for col in self.rec_cols:
-                row[col] = datetime.fromtimestamp(
-                    _rec.ts
-                ).isoformat() if col == "ts" else getattr(_rec, col)
+                for col in self.rec_cols:
+                    row[col] = datetime.fromtimestamp(
+                        _rec.ts
+                    ).isoformat() if col == "ts" else getattr(_rec, col)
 
-            yield row
+                yield row
+            except Exception as e:
+                # Handling unexpected errors, possibly due to database issues.
+                print(
+                    "Error encountered while attempting to retrieve feedback results. This issue may stem from a corrupted database."
+                )
+                print(f"Error details: {e}")
 
 
 def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:

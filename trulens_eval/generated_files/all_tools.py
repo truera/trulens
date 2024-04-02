@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # 📓 Langchain Quickstart
+# # 📓 LangChain Quickstart
 #
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
 #
@@ -261,7 +261,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 
-# # 📓 Llama-Index Quickstart
+# # 📓 LlamaIndex Quickstart
 #
 # In this quickstart you will create a simple Llama Index app and learn how to log it and get feedback on an LLM response.
 #
@@ -299,12 +299,12 @@ tru = Tru()
 #
 # This example uses the text of Paul Graham’s essay, [“What I Worked On”](https://paulgraham.com/worked.html), and is the canonical llama-index example.
 #
-# The easiest way to get it is to [download it via this link](https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt) and save it in a folder called data. You can do so with the following command:
+# The easiest way to get it is to [download it via this link](https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt) and save it in a folder called data. You can do so with the following command:
 
 # In[ ]:
 
 get_ipython().system(
-    'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
+    'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
 )
 
 # ### Create Simple LLM Application

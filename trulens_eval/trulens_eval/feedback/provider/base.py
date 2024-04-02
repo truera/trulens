@@ -12,7 +12,55 @@ logger = logging.getLogger(__name__)
 
 
 class Provider(WithClassInfo, SerialModel):
-    """Base Provider class."""
+    """Base Provider class.
+    
+    TruLens makes use of *Feedback Providers* to generate evaluations of
+    large language model applications. These providers act as an access point
+    to different models, most commonly classification models and large language models.
+
+    These models are then used to generate feedback on application outputs or intermediate
+    results.
+
+    `Provider` is the base class for all feedback providers. It is an abstract
+    class and should not be instantiated directly. Rather, it should be subclassed
+    and the subclass should implement the methods defined in this class.
+
+    There are many feedback providers available in TruLens that grant access to a wide range 
+    of proprietary and open-source models.
+
+    Providers for classification and other non-LLM models should directly subclass `Provider`.
+    The feedback functions available for these providers are tied to specific providers, as they
+    rely on provider-specific endpoints to models that are tuned to a particular task.
+
+    For example, the Huggingface feedback provider provides access to a number of classification models
+    for specific tasks, such as language detection. These models are than utilized by a feedback function
+    to generate an evaluation score.
+
+    !!! example
+
+        ```python
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+        huggingface_provider.language_match(prompt, response)
+        ```
+
+    Providers for LLM models should subclass `LLMProvider`, which itself subclasses `Provider`.
+    Providers for LLM-generated feedback are more of a plug-and-play variety. This means that the
+    base model of your choice can be combined with feedback-specific prompting to generate feedback.
+
+    For example, `relevance` can be run with any base LLM feedback provider. Once the feedback provider
+    is instantiated with a base model, the `relevance` function can be called with a prompt and response.
+
+    This means that the base model selected is combined with specific prompting for `relevance` to generate feedback.
+
+    !!! example
+
+        ```python
+        from trulens_eval.feedback.provider.openai import OpenAI
+        provider = OpenAI(model_engine="gpt-3.5-turbo")
+        provider.relevance(prompt, response)
+        ```
+    """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
@@ -101,10 +149,11 @@ class LLMProvider(Provider):
             float: Information Overlap
         """
         return self.generate_score(
-            system_prompt=str.format(
-                prompts.LLM_GROUNDEDNESS,
+            system_prompt=prompts.LLM_GROUNDEDNESS_SYSTEM,
+            user_prompt=str.format(
+                prompts.LLM_GROUNDEDNESS_USER,
                 premise=premise,
-                hypothesis=hypothesis,
+                hypothesis=hypothesis
             )
         )
 
@@ -122,30 +171,35 @@ class LLMProvider(Provider):
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
+        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+            premise="""{}""".format(premise),
+            hypothesis="""{}""".format(hypothesis)
+        ) + prompts.GROUNDEDNESS_REASON_TEMPLATE
+        llm_messages.append({"role": "user", "content": user_prompt})
         return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            prompt=str.format(prompts.LLM_GROUNDEDNESS_FULL_SYSTEM,) +
-            str.format(
-                prompts.LLM_GROUNDEDNESS_FULL_PROMPT,
-                premise=premise,
-                hypothesis=hypothesis
-            )
+            func=self._create_chat_completion, messages=llm_messages
         )
 
     def generate_score(
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0
+        normalize: float = 10.0,
+        temperature: float = 0.0,
     ) -> float:
         """
         Base method to generate a score only, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formated system prompt
+            system_prompt (str): A pre-formatted system prompt.
+            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
+            normalize (float): The normalization factor for the score. Defaults to 10.0.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
-            The score (float): 0-1 scale.
+            float: The score on a 0-1 scale.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -154,7 +208,9 @@ class LLMProvider(Provider):
             llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
+            func=self._create_chat_completion,
+            messages=llm_messages,
+            temperature=temperature
         )
 
         return re_0_10_rating(response) / normalize
@@ -163,25 +219,30 @@ class LLMProvider(Provider):
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0
+        normalize: float = 10.0,
+        temperature: float = 0.0
     ) -> Tuple[float, Dict]:
         """
         Base method to generate a score and reason, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formated system prompt
+            system_prompt (str): A pre-formatted system prompt.
+            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
+            normalize (float): The normalization factor for the score. Defaults to 10.0.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
-            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
+            Tuple[float, Dict]: The score on a 0-1 scale and reason metadata (dict) if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
-
         response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
+            func=self._create_chat_completion,
+            messages=llm_messages,
+            temperature=temperature
         )
         if "Supporting Evidence" in response:
             score = -1
@@ -244,24 +305,25 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the relevance of the context to the question.
         
-        Usage on RAG Contexts:
+        !!! example
 
-        ```python
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.context_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
 
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+            
             context (str): Context related to the question.
 
         Returns:
@@ -269,38 +331,17 @@ class LLMProvider(Provider):
         """
 
         return self.generate_score(
-            system_prompt=str.format(
-                prompts.CONTEXT_RELEVANCE, question=question, context=context
+            system_prompt=prompts.CONTEXT_RELEVANCE_SYSTEM,
+            user_prompt=str.format(
+                prompts.CONTEXT_RELEVANCE_USER,
+                question=question,
+                context=context
             )
         )
 
     def qs_relevance(self, question: str, context: str) -> float:
         """
-        Uses chat completion model. A function that completes a template to
-        check the relevance of the statement to the question.
-        
-        Usage on RAG Contexts:
-
-        ```python
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.context_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
-
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
-        Args:
-            question (str): A question being asked. 
-            context (str): A context to the question.
-
-        Returns:
-            float: A value between 0.0 (not relevant) and 1.0 (relevant).
+        Question statement relevance is deprecated and will be removed in future versions. Please use context relevance in its place.
         """
 
         warnings.warn(
@@ -308,11 +349,7 @@ class LLMProvider(Provider):
             "Please use 'context_relevance' instead.", DeprecationWarning
         )
 
-        return self.generate_score(
-            system_prompt=str.format(
-                prompts.CONTEXT_RELEVANCE, question=question, context=context
-            )
-        )
+        return self.context_relevance(question, context)
 
     def context_relevance_with_cot_reasons(self, question: str,
                                            context: str) -> Tuple[float, Dict]:
@@ -321,72 +358,43 @@ class LLMProvider(Provider):
         template to check the relevance of the context to the question.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        Usage on RAG Contexts:
+        !!! example
 
-        ```
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.context_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
+            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            question (str): A question being asked. 
+            question (str): A question being asked.
+
             context (str): Context related to the question.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
-        system_prompt = str.format(
-            prompts.CONTEXT_RELEVANCE, question=question, context=context
+        system_prompt = prompts.CONTEXT_RELEVANCE_SYSTEM
+        user_prompt = str.format(
+            prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
         )
-        system_prompt = system_prompt.replace(
+        user_prompt = user_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
-        return self.generate_score_and_reasons(system_prompt)
+
+        return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def qs_relevance_with_cot_reasons(self, question: str,
                                       context: str) -> Tuple[float, Dict]:
         """
-        Uses chat completion model. A function that completes a
-        template to check the relevance of the context to the question.
-        Also uses chain of thought methodology and emits the reasons.
-
-        **Usage:**
-        Usage on RAG Contexts:
-        ```
-        from trulens_eval.app import App
-        context = App.select_context(rag_app)
-        feedback = (
-            Feedback(provider.qs_relevance_with_cot_reasons)
-            .on_input()
-            .on(context)
-            .aggregate(np.mean)
-            )
-        ```
-        The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
-
-        Args:
-            question (str): A question being asked. 
-            context (str): Context related to the question.
-
-        Returns:
-            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+        Question statement relevance is deprecated and will be removed in future versions. Please use context relevance in its place.
         """
-        system_prompt = str.format(
-            prompts.CONTEXT_RELEVANCE, question=question, context=context
-        )
-        system_prompt = system_prompt.replace(
-            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
-        )
 
         warnings.warn(
             "The method 'qs_relevance_with_cot_reasons' is deprecated and will be removed in future versions. "
@@ -394,43 +402,46 @@ class LLMProvider(Provider):
             DeprecationWarning
         )
 
-        return self.generate_score_and_reasons(system_prompt)
+        return self.context_relevance_with_cot_reasons(question, context)
 
     def relevance(self, prompt: str, response: str) -> float:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the response to a prompt.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.relevance).on_input_output()
-        ```
-        
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        !!! example
+
+            ```python
+            feedback = Feedback(provider.relevance).on_input_output()
+            ```
+            
+            The `on_input_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Usage on RAG Contexts:
+            ```python
+            feedback = Feedback(provider.relevance).on_input().on(
+                TruLlama.select_source_nodes().node.text # See note below
+            ).aggregate(np.mean) 
+            ```
 
-        ```python
-        feedback = Feedback(provider.relevance).on_input().on(
-            TruLlama.select_source_nodes().node.text # See note below
-        ).aggregate(np.mean) 
-        ```
-
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Parameters:
             prompt (str): A text prompt to an agent.
+
             response (str): The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
-            "relevant".
+                "relevant".
         """
         return self.generate_score(
-            system_prompt=str.
-            format(prompts.PR_RELEVANCE, prompt=prompt, response=response)
+            system_prompt=prompts.ANSWER_RELEVANCE_SYSTEM,
+            user_prompt=str.format(
+                prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
+            )
         )
 
     def relevance_with_cot_reasons(self, prompt: str,
@@ -440,47 +451,52 @@ class LLMProvider(Provider):
         check the relevance of the response to a prompt. Also uses chain of
         thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.relevance_with_cot_reasons).on_input_output()
-        ```
+        !!! example
 
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            ```python
+            feedback = Feedback(provider.relevance_with_cot_reasons).on_input_output()
+            ```
+
+            The `on_input_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Usage on RAG Contexts:
-        ```python
+            ```python
 
-        feedback = Feedback(provider.relevance_with_cot_reasons).on_input().on(
-            TruLlama.select_source_nodes().node.text # See note below
-        ).aggregate(np.mean) 
-        ```
+            feedback = Feedback(provider.relevance_with_cot_reasons).on_input().on(
+                TruLlama.select_source_nodes().node.text # See note below
+            ).aggregate(np.mean) 
+            ```
 
-        The `on(...)` selector can be changed. See [Feedback Function Guide :
-        Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            The `on(...)` selector can be changed. See [Feedback Function Guide :
+            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             prompt (str): A text prompt to an agent. 
+
             response (str): The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
-            "relevant".
+                "relevant".
         """
-        system_prompt = str.format(
-            prompts.PR_RELEVANCE, prompt=prompt, response=response
+        system_prompt = prompts.ANSWER_RELEVANCE_SYSTEM
+
+        user_prompt = str.format(
+            prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
         )
-        system_prompt = system_prompt.replace(
+        user_prompt = user_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
-        return self.generate_score_and_reasons(system_prompt)
+        return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def sentiment(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the sentiment of some text.
 
-        Usage:
+        !!! example
+
             ```python
             feedback = Feedback(provider.sentiment).on_output() 
             ```
@@ -495,8 +511,9 @@ class LLMProvider(Provider):
             A value between 0 and 1. 0 being "negative sentiment" and 1
                 being "positive sentiment".
         """
-        system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT + text
-        return self.generate_score(system_prompt=system_prompt)
+        system_prompt = prompts.SENTIMENT_SYSTEM
+        user_prompt = prompts.SENTIMENT_USER + text
+        return self.generate_score(system_prompt, user_prompt)
 
     def sentiment_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
@@ -504,14 +521,14 @@ class LLMProvider(Provider):
         template to check the sentiment of some text.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
+        !!! example
 
-        ```python
-        feedback = Feedback(provider.sentiment_with_cot_reasons).on_output() 
-        ```
-        
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            ```python
+            feedback = Feedback(provider.sentiment_with_cot_reasons).on_output() 
+            ```
+            
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -519,9 +536,9 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
-        system_prompt = prompts.SENTIMENT_SYSTEM_PROMPT
-        system_prompt = system_prompt + prompts.COT_REASONS_TEMPLATE
-        return self.generate_score_and_reasons(system_prompt, user_prompt=text)
+        system_prompt = prompts.SENTIMENT_SYSTEM
+        user_prompt = prompts.SENTIMENT_USER + text + prompts.COT_REASONS_TEMPLATE
+        return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def model_agreement(self, prompt: str, response: str) -> float:
         """
@@ -530,17 +547,18 @@ class LLMProvider(Provider):
         is given to the model with a prompt that the original response is
         correct, and measures whether previous chat completion response is similar.
 
-        **Usage:**
+        !!! example
 
-        ```python
-        feedback = Feedback(provider.model_agreement).on_input_output() 
-        ```
+            ```python
+            feedback = Feedback(provider.model_agreement).on_input_output() 
+            ```
 
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        Parameters:
+        Args:
             prompt (str): A text prompt to an agent.
+
             response (str): The agent's response to the prompt.
 
         Returns:
@@ -552,7 +570,7 @@ class LLMProvider(Provider):
             DeprecationWarning
         )
         chat_response = self._create_chat_completion(
-            prompt=prompts.CORRECT_SYSTEM_PROMPT
+            prompt=prompts.CORRECT_SYSTEM
         )
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
@@ -564,22 +582,23 @@ class LLMProvider(Provider):
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent.
             criteria (str): The specific criteria for evaluation.
 
         Returns:
             float: A value between 0.0 and 1.0, representing the specified
-            evaluation.
+                evaluation.
         """
 
         system_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE,
-            criteria=criteria,
-            submission=text
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM, criteria=criteria
+        )
+        user_prompt = str.format(
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
 
-        return self.generate_score(system_prompt=system_prompt)
+        return self.generate_score(system_prompt, user_prompt)
 
     def _langchain_evaluate_with_cot_reasons(
         self, text: str, criteria: str
@@ -588,28 +607,31 @@ class LLMProvider(Provider):
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent.
             criteria (str): The specific criteria for evaluation.
 
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified
-            evaluation, and a string containing the reasons for the evaluation.
+                evaluation, and a string containing the reasons for the evaluation.
         """
 
         system_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS,
-            criteria=criteria,
-            submission=text
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
+            criteria=criteria
         )
-        return self.generate_score_and_reasons(system_prompt=system_prompt)
+        user_prompt = str.format(
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
+        )
+        return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def conciseness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the conciseness of some text. Prompt credit to Langchain Eval.
+        check the conciseness of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+
             ```python
             feedback = Feedback(provider.conciseness).on_output() 
             ```
@@ -625,15 +647,16 @@ class LLMProvider(Provider):
 
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
         )
 
     def conciseness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the conciseness of some text. Prompt credit to Langchain Eval.
+        check the conciseness of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.conciseness).on_output() 
             ```
@@ -650,15 +673,16 @@ class LLMProvider(Provider):
             A dictionary containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
         )
 
     def correctness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the correctness of some text. Prompt credit to Langchain Eval.
+        check the correctness of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.correctness).on_output() 
             ```
@@ -666,29 +690,30 @@ class LLMProvider(Provider):
             The `on_output()` selector can be changed. See [Feedback Function
             Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
-        Parameters:
+        Args:
             text: A prompt to an agent.
 
         Returns:
             A value between 0.0 (not correct) and 1.0 (correct).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
         )
 
     def correctness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the correctness of some text. Prompt credit to Langchain Eval.
+        check the correctness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -697,21 +722,22 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not correct) and 1.0 (correct).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
         )
 
     def coherence(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a
-        template to check the coherence of some text. Prompt credit to Langchain Eval.
+        template to check the coherence of some text. Prompt credit to LangChain Eval.
         
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.coherence).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.coherence).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -720,22 +746,23 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_COHERENCE_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
         )
 
     def coherence_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the coherence of some text. Prompt credit to Langchain Eval. Also
+        check the coherence of some text. Prompt credit to LangChain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -744,22 +771,23 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_COHERENCE_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
         )
 
     def harmfulness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the harmfulness of some text. Prompt credit to Langchain Eval.
+        check the harmfulness of some text. Prompt credit to LangChain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.harmfulness).on_output() 
-        ```
-
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        !!! example
         
+            ```python
+            feedback = Feedback(provider.harmfulness).on_output() 
+            ```
+
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            
         Args:
             text (str): The text to evaluate.
 
@@ -767,19 +795,21 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not harmful) and 1.0 (harmful)".
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_HARMFULNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
         )
 
     def harmfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the harmfulness of some text. Prompt credit to Langchain Eval.
+        check the harmfulness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output() 
+        !!! example
         
+            ```python
+            feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output()
+            ```
+            
         Args:
             text (str): The text to evaluate.
 
@@ -788,21 +818,22 @@ class LLMProvider(Provider):
         """
 
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_HARMFULNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
         )
 
     def maliciousness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the maliciousness of some text. Prompt credit to Langchain Eval.
+        check the maliciousness of some text. Prompt credit to LangChain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.maliciousness).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.maliciousness).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -812,22 +843,23 @@ class LLMProvider(Provider):
         """
 
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
         )
 
     def maliciousness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat compoletion model. A function that completes a
-        template to check the maliciousness of some text. Prompt credit to Langchain Eval.
+        template to check the maliciousness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -836,21 +868,22 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not malicious) and 1.0 (malicious).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
         )
 
     def helpfulness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the helpfulness of some text. Prompt credit to Langchain Eval.
+        check the helpfulness of some text. Prompt credit to LangChain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.helpfulness).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.helpfulness).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -859,22 +892,23 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
         )
 
     def helpfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the helpfulness of some text. Prompt credit to Langchain Eval.
+        check the helpfulness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -883,7 +917,7 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
         )
 
     def controversiality(self, text: str) -> float:
@@ -892,23 +926,25 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.controversiality).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.controversiality).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
 
         Returns:
             float: A value between 0.0 (not controversial) and 1.0
-            (controversial).
+                (controversial).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
+            text=text,
+            criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
         )
 
     def controversiality_with_cot_reasons(self,
@@ -918,14 +954,15 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval. Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
-        ```
-
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+        !!! example
         
+            ```python
+            feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
+            ```
+
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            
         Args:
             text (str): The text to evaluate.
 
@@ -933,21 +970,23 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not controversial) and 1.0 (controversial).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_PROMPT
+            text=text,
+            criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
         )
 
     def misogyny(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the misogyny of some text. Prompt credit to Langchain Eval.
+        check the misogyny of some text. Prompt credit to LangChain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.misogyny).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.misogyny).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -956,22 +995,23 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_MISOGYNY_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
         )
 
     def misogyny_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the misogyny of some text. Prompt credit to Langchain Eval. Also
+        check the misogyny of some text. Prompt credit to LangChain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -980,21 +1020,22 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_MISOGYNY_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
         )
 
     def criminality(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the criminality of some text. Prompt credit to Langchain Eval.
+        check the criminality of some text. Prompt credit to LangChain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.criminality).on_output()
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.criminality).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1004,22 +1045,23 @@ class LLMProvider(Provider):
 
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
         )
 
     def criminality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the criminality of some text. Prompt credit to Langchain Eval.
+        check the criminality of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1028,21 +1070,22 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not criminal) and 1.0 (criminal).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
         )
 
     def insensitivity(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the insensitivity of some text. Prompt credit to Langchain Eval.
+        check the insensitivity of some text. Prompt credit to LangChain Eval.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.insensitivity).on_output()
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.insensitivity).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1051,22 +1094,23 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
         )
 
     def insensitivity_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the insensitivity of some text. Prompt credit to Langchain Eval.
+        check the insensitivity of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
+            ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_output()` selector can be changed. See [Feedback Function
+            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1075,7 +1119,7 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
         )
 
     def _get_answer_agreement(
@@ -1085,9 +1129,11 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check if two answers agree.
 
-        Parameters:
+        Args:
             text (str): A prompt to an agent.
+
             response (str): The agent's response to the prompt.
+
             check_response(str): The response to check against.
 
         Returns:
@@ -1098,8 +1144,8 @@ class LLMProvider(Provider):
 
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(prompts.AGREEMENT_SYSTEM_PROMPT %
-                    (prompt, check_response)) + response
+            prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response)) +
+            response
         )
 
     def comprehensiveness_with_cot_reasons(self, source: str,
@@ -1110,24 +1156,29 @@ class LLMProvider(Provider):
         only has a chain of thought implementation as it is extremely important
         in function assessment.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
+            ```
 
         Args:
             source (str): Text corresponding to source material. 
+
             summary (str): Text corresponding to a summary.
 
         Returns:
-            float: A value between 0.0 (main points missed) and 1.0 (no main
-            points missed).
+            A value between 0.0 (main points missed) and 1.0 (no main
+                points missed).
         """
 
-        system_prompt = str.format(
-            prompts.COMPREHENSIVENESS_PROMPT, source=source, summary=summary
+        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
+        user_prompt = str.format(
+            prompts.COMPOREHENSIVENESS_USER_PROMPT,
+            source=source,
+            summary=summary
         )
-        return self.generate_score_and_reasons(system_prompt)
+        return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def summarization_with_cot_reasons(self, source: str,
                                        summary: str) -> Tuple[float, Dict]:
@@ -1145,24 +1196,26 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.stereotypes).on_input_output()
-        ```
+        !!! example
+        
+            ```python
+            feedback = Feedback(provider.stereotypes).on_input_output()
+            ```
 
         Args:
-            prompt (str): A text prompt to an agent. 
+            prompt (str): A text prompt to an agent.
+
             response (str): The agent's response to the prompt.
 
         Returns:
-            float: A value between 0.0 (no stereotypes assumed) and 1.0
-            (stereotypes assumed).
+            A value between 0.0 (no stereotypes assumed) and 1.0
+                (stereotypes assumed).
         """
-
-        system_prompt = str.format(
-            prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
+        system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT
+        user_prompt = str.format(
+            prompts.STEREOTYPES_USER_PROMPT, prompt=prompt, response=response
         )
-        return self.generate_score(system_prompt)
+        return self.generate_score(system_prompt, user_prompt)
 
     def stereotypes_with_cot_reasons(self, prompt: str,
                                      response: str) -> Tuple[float, Dict]:
@@ -1171,21 +1224,24 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        **Usage:**
-        ```python
-        feedback = Feedback(provider.stereotypes).on_input_output()
-        ```
+        !!! example
+            ```python
+            feedback = Feedback(provider.stereotypes).on_input_output()
+            ```
 
         Args:
             prompt (str): A text prompt to an agent. 
+
             response (str): The agent's response to the prompt.
 
         Returns:
-            float: A value between 0.0 (no stereotypes assumed) and 1.0
-            (stereotypes assumed).
+            A value between 0.0 (no stereotypes assumed) and 1.0
+                (stereotypes assumed).
         """
-        system_prompt = str.format(
-            prompts.STEREOTYPES_PROMPT, prompt=prompt, response=response
-        ) + prompts.COT_REASONS_TEMPLATE
+        system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT + prompts.COT_REASONS_TEMPLATE
+        user_prompt = str.format(
+            prompts.STEREOTYPES_USER_PROMPT, prompt=prompt, response=response
+        )
 
-        return self.generate_score_and_reasons(system_prompt)
+        return self.generate_score_and_reasons(system_prompt, user_prompt)
+

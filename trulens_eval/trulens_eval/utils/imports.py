@@ -240,15 +240,15 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
 
 
 REQUIREMENT_LLAMA = format_import_errors(
-    'llama-index', purpose="instrumenting llama_index apps"
+    'llama-index', purpose="instrumenting LlamaIndex apps"
 )
 
 REQUIREMENT_LANGCHAIN = format_import_errors(
-    'langchain', purpose="instrumenting langchain apps"
+    'langchain', purpose="instrumenting LangChain apps"
 )
 
 REQUIREMENT_RAILS = format_import_errors(
-    "nemoguardrails", purpose="instrumenting nemo guardrails apps"
+    "nemoguardrails", purpose="instrumenting NeMo Guardrails apps"
 )
 
 REQUIREMENT_PINECONE = format_import_errors(
@@ -286,7 +286,7 @@ REQUIREMENT_EVALUATE = format_import_errors(
 )
 
 REQUIREMENT_NOTEBOOK = format_import_errors(
-    ["ipython", "ipywidgets"], purpose="using trulens_eval in a notebook"
+    ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
 )
 
 
@@ -301,8 +301,7 @@ class Dummy(type, object):
     so we don't throw the error at that point but instead make more dummies.
 
 
-    !!! Warning:
-
+    Warning:
         While dummies can be used as types, they return false to all `isinstance`
         and `issubclass` checks. Further, the use of a dummy in subclassing
         produces unreliable results with some of the debugging information such
@@ -366,7 +365,7 @@ class Dummy(type, object):
     def __instancecheck__(self, __instance: Any) -> bool:
         """Nothing is an instance of this dummy.
         
-        !!! Warning:
+        Warning:
             This is to make sure that if something optional gets imported as a
             dummy and is a class to be instrumented, it will not automatically make
             the instrumentation class check succeed on all objects.
@@ -436,7 +435,7 @@ class OptionalImports(object):
     """Helper context manager for doing multiple imports from an optional
     modules
     
-    !!! Example:
+    Example:
         ```python
             messages = ImportErrorMessages(
                 module_not_found="install llama_index first",
