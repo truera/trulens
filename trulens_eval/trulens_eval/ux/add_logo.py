@@ -23,6 +23,7 @@ def add_logo_and_style_overrides():
                 background-size: 300px auto;
                 padding-top: 50px;
                 background-position: 20px 20px;
+                height: calc(100vh - 80px);
             }}
             [data-testid="stSidebarNav"]::before {{
                 margin-left: 20px;
@@ -31,11 +32,19 @@ def add_logo_and_style_overrides():
                 position: relative;
                 top: 100px;
             }}
-            [data-testid="stSidebarNav"]::after {{
-                margin-left: 20px;
+
+            /* For user feedback button and version text */
+            [data-testid="stSidebarUserContent"] {{
+                padding-bottom: 1rem;
+            }}
+
+            [data-testid="stSidebarUserContent"] [data-testid="column"] {{
+                align-content: center;
+            }}
+
+            [data-testid="stSidebarUserContent"] [data-testid="stText"] {{
                 color: #aaaaaa;
-                content: "{__package__} {__version__}";
-                font-size: 10pt;
+                font-size: 9pt;
             }}
 
             /* For list items in st.dataframe */
@@ -48,3 +57,12 @@ def add_logo_and_style_overrides():
         """,
         unsafe_allow_html=True,
     )
+
+    # Sidebar feedback button
+    with st.sidebar:
+        version_col, user_feedback_col = st.columns([6,4])
+        with version_col:
+            st.text(f"{__package__} {__version__}")
+        with user_feedback_col:
+            st.link_button("Feedback", "https://forms.gle/HAc4HBk5nZRpgw7C6", help="Help us improve TruLens!")
+        
