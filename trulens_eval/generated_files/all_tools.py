@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # 📓 LangChain Quickstart
+# # 📓 _LangChain_ Quickstart
 #
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
 #
@@ -32,7 +32,7 @@ from trulens_eval import TruChain
 tru = Tru()
 tru.reset_database()
 
-# Imports from langchain to build app
+# Imports from LangChain to build app
 import bs4
 from langchain import hub
 from langchain.chat_models import ChatOpenAI
@@ -841,7 +841,7 @@ tru.get_leaderboard(app_ids=[tru_app.app_id])
 
 # # 📓 Ground Truth Evaluations
 #
-# In this quickstart you will create a evaluate a LangChain app using ground truth. Ground truth evaluation can be especially useful during early LLM experiments when you have a small set of example queries that are critical to get right.
+# In this quickstart you will create a evaluate a _LangChain_ app using ground truth. Ground truth evaluation can be especially useful during early LLM experiments when you have a small set of example queries that are critical to get right.
 #
 # Ground truth evaluation works by comparing the similarity of an LLM response compared to its matching verified response.
 #
