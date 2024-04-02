@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # 📓 Langchain Quickstart
+# # 📓 LangChain Quickstart
 #
 # In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
 #
@@ -261,7 +261,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 
 # Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
 
-# # 📓 Llama-Index Quickstart
+# # 📓 LlamaIndex Quickstart
 #
 # In this quickstart you will create a simple Llama Index app and learn how to log it and get feedback on an LLM response.
 #

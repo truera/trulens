@@ -36,7 +36,7 @@ function [jsonify][trulens_eval.utils.json.jsonify] is the root of this process.
 Classes inheriting [BaseModel][pydantic.BaseModel] come with serialization
 to/from json in the form of [model_dump][pydantic.BaseModel.model_dump] and
 [model_validate][pydantic.BaseModel.model_validate]. We do not use the
-serialization to json part of this capability as a lot of langchain components
+serialization to json part of this capability as a lot of _LangChain_ components
 are tripped to fail it with a "will not serialize" message. However, we use make
 use of pydantic `fields` to enumerate components of an object ourselves saving
 us from having to filter out irrelevant internals that are not declared as
@@ -77,7 +77,7 @@ various classes.
 
 ##### pydantic (langchain)
 
-Most if not all langchain components use pydantic which imposes some
+Most if not all _LangChain_ components use pydantic which imposes some
 restrictions but also provides some utilities. Classes inheriting
 [BaseModel][pydantic.BaseModel] do not allow defining new attributes but
 existing attributes including those provided by pydantic itself can be
@@ -196,7 +196,7 @@ functions that seem to not involve [Task][asyncio.Task] do use tasks, such as
   TODO(piotrm): This might have been fixed. Check.
 
 - Some apps cannot be serialized/jsonized. Sequential app is an example. This is
-  a limitation of langchain itself.
+  a limitation of _LangChain_ itself.
 
 - Instrumentation relies on CPython specifics, making heavy use of the
   [inspect][] module which is not expected to work with other Python
@@ -235,7 +235,7 @@ stack for specific frames:
 
 #### Alternatives
 
-- [contextvars][] -- langchain uses these to manage contexts such as those used
+- [contextvars][] -- _LangChain_ uses these to manage contexts such as those used
   for instrumenting/tracking LLM usage. These can be used to manage call stack
   information like we do. The drawback is that these are not threadsafe or at
   least need instrumenting thread creation. We have to do a similar thing by
