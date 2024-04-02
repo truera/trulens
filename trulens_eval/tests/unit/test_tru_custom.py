@@ -12,7 +12,7 @@ from trulens_eval import TruCustomApp
 from trulens_eval.tru_custom_app import TruCustomApp
 
 
-class TestTruCustonApp(JSONTestCase):
+class TestTruCustomApp(JSONTestCase):
 
     @staticmethod
     def setUpClass():
