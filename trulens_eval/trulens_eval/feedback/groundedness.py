@@ -73,8 +73,8 @@ class Groundedness(WithClassInfo, SerialModel):
         if groundedness_provider is None:
             logger.warning("Provider not provided. Using OpenAI.")
             groundedness_provider = OpenAI()
-            nltk.download('punkt')
-
+            
+        nltk.download('punkt')
         super().__init__(groundedness_provider=groundedness_provider, **kwargs)
 
     def groundedness_measure_with_cot_reasons(
