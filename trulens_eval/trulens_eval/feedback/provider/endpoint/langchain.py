@@ -24,7 +24,7 @@ class LangchainCallback(EndpointCallback):
 
 class LangchainEndpoint(Endpoint):
     """
-    Langchain endpoint.
+    LangChain endpoint.
     """
 
     # Cannot validate BaseLLM / BaseChatModel as they are pydantic v1 and there
