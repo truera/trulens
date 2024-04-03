@@ -8,7 +8,7 @@ import builtins
 from dataclasses import dataclass
 from importlib import metadata
 from importlib import resources
-from importlib.abc import Traversable
+
 import inspect
 import logging
 from pathlib import Path
@@ -44,6 +44,7 @@ def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
 
 if sys.version_info >= (3, 9):
     # This does not exist in 3.8 .
+    from importlib.abc import Traversable
     _trulens_eval_resources: Traversable = resources.files("trulens_eval")
     """Traversable for resources in the trulens_eval package."""
 
