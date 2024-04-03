@@ -40,8 +40,10 @@ def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
 
     return mapping
 
+
 trulens_eval_resources: Traversable = resources.files("trulens_eval")
 """Traversable for resources in the trulens_eval package."""
+
 
 def static_resource(name: str) -> Path:
     """Get the path to a static resource file in the trulens_eval package."""
@@ -49,13 +51,17 @@ def static_resource(name: str) -> Path:
     with resources.as_file(trulens_eval_resources / name) as _path:
         return _path
 
+
 with resources.as_file(trulens_eval_resources / "requirements.txt") as _path:
-    required_packages: Dict[str, requirements.Requirement] = requirements_of_file(_path)
+    required_packages: Dict[
+        str, requirements.Requirement] = requirements_of_file(_path)
     """Mapping of required package names to the requirement object with info
     about that requirement including version constraints."""
 
-with resources.as_file(trulens_eval_resources / "requirements.optional.txt") as _path:
-    optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(_path)
+with resources.as_file(trulens_eval_resources / "requirements.optional.txt"
+                      ) as _path:
+    optional_packages: Dict[
+        str, requirements.Requirement] = requirements_of_file(_path)
     """Mapping of optional package names to the requirement object with info
     about that requirement including version constraints."""
 
@@ -71,6 +77,7 @@ def parse_version(version_string: str) -> version.Version:
     """Parse the version string into a packaging version object."""
 
     return version.parse(version_string)
+
 
 def get_package_version(name: str) -> Optional[version.Version]:
     """Get the version of a package by its name.
@@ -140,6 +147,7 @@ dependencies get installed and hopefully corrected:
     ```
 """
 
+
 class VersionConflict(Exception):
     """Exception to raise when a version conflict is found in a required package."""
 
@@ -165,9 +173,7 @@ def check_imports(ignore_version_mismatch: bool = False):
 
         except metadata.PackageNotFoundError as e:
             if is_optional:
-                logger.debug(
-                    MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name
-                )
+                logger.debug(MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
 
             else:
                 raise ModuleNotFoundError(
@@ -175,13 +181,19 @@ def check_imports(ignore_version_mismatch: bool = False):
                 ) from e
 
         if dist.version not in req.specifier:
-            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(req=req, dist=dist)
+            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(
+                req=req, dist=dist
+            )
 
             if is_optional:
-                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(req=req)
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(
+                    req=req
+                )
 
             else:
-                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(req=req)
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(
+                    req=req
+                )
 
             message += MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP.format(req=req)
 
@@ -189,6 +201,7 @@ def check_imports(ignore_version_mismatch: bool = False):
                 raise VersionConflict(message)
 
             logger.debug(message)
+
 
 def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
     """
@@ -202,8 +215,6 @@ def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
 
     spec = spec.replace(">=", "==")
     return requirements.Requirement(spec)
-
-
 
 
 @dataclass

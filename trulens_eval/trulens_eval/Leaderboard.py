@@ -20,8 +20,6 @@ st.runtime.legacy_caching.clear_cache()
 from trulens_eval import Tru
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
-
-
 from trulens_eval.ux.page_config import set_page_config
 
 set_page_config(page_title="Leaderboard")

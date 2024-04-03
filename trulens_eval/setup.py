@@ -1,5 +1,5 @@
-from distutils import log # DEP
-from distutils.command.build import build # DEP
+from distutils import log  # DEP
+from distutils.command.build import build  # DEP
 import os
 from pathlib import Path
 
@@ -10,21 +10,18 @@ from setuptools import setup
 required_packages = list(
     map(
         lambda pip_req: str(pip_req.requirement),
-        parse_requirements(
-            "trulens_eval/requirements.txt",
-            session=None
-        )
+        parse_requirements("trulens_eval/requirements.txt", session=None)
     )
 )
 optional_packages = list(
     map(
         lambda pip_req: str(pip_req.requirement),
         parse_requirements(
-            "trulens_eval/requirements.optional.txt",
-            session=None
+            "trulens_eval/requirements.optional.txt", session=None
         )
     )
 )
+
 
 class javascript_build(build):
 
