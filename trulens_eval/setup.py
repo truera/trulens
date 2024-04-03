@@ -1,11 +1,24 @@
-from distutils import log  # DEP
-from distutils.command.build import build  # DEP
+"""
+# _TruLens-Eval_ build script
+
+To build:
+
+```bash
+python setup.py bdist_wheel
+```
+
+TODO: It is more standard to configure a lot of things we configure
+here in a setup.cfg file instead. It is unclear whether we can do everything
+with a config file though so we may need to keep this script or parts of it.
+"""
+
 import os
-from pathlib import Path
 
 from pip._internal.req import parse_requirements
 from setuptools import find_namespace_packages
 from setuptools import setup
+from setuptools.command.build import build
+from setuptools.logging import logging
 
 required_packages = list(
     map(
@@ -22,13 +35,16 @@ optional_packages = list(
     )
 )
 
-
-class javascript_build(build):
-
+class BuildJavascript(build):
     def run(self):
-        log.info("running npm i")
+        """Custom build command to run npm commands before building the package.
+    
+        This builds the record timeline component for the dashboard.
+        """
+
+        logging.info("running npm i")
         os.system("npm i --prefix trulens_eval/react_components/record_viewer")
-        log.info("running npm run build")
+        logging.info("running npm run build")
         os.system(
             "npm run --prefix trulens_eval/react_components/record_viewer build"
         )
@@ -38,7 +54,7 @@ class javascript_build(build):
 setup(
     name="trulens_eval",
     cmdclass={
-        'build': javascript_build,
+        'build': BuildJavascript,
     },
     include_package_data=True,  # includes things specified in MANIFEST.in
     packages=find_namespace_packages(

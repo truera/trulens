@@ -49,12 +49,15 @@ if sys.version_info >= (3, 9):
     """Traversable for resources in the trulens_eval package."""
 
 
-def static_resource(name: str) -> Path:
+def static_resource(filepath: Union[Path, str]) -> Path:
     """Get the path to a static resource file in the trulens_eval package."""
+
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
 
     if sys.version_info >= (3, 9):
         # This does not exist in 3.8
-        with resources.as_file(_trulens_eval_resources / name) as _path:
+        with resources.as_file(_trulens_eval_resources / filepath) as _path:
             return _path
     else:
         # This is deprecated in 3.11
