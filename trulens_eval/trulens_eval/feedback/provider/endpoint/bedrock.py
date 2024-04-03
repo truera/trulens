@@ -92,7 +92,7 @@ class BedrockCallback(EndpointCallback):
  'contentType': 'application/json'}
  """
 
-        # NOTE(piotrm) langchain does not currently support cost tracking for
+        # NOTE(piotrm) LangChain does not currently support cost tracking for
         # Bedrock. We can at least count successes and tokens visible in the
         # example output above.
 

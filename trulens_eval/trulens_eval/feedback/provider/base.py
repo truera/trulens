@@ -36,15 +36,13 @@ class Provider(WithClassInfo, SerialModel):
     for specific tasks, such as language detection. These models are than utilized by a feedback function
     to generate an evaluation score.
 
-    For example, the `language_match` feedback function calls Huggingface's 
-    papluca/xlm-roberta-base-language-detection to detect the language of two 
-    strings and calculates the difference of the probits.
+    !!! example
 
-    ```python
-    from trulens_eval.feedback.provider.hugs import Huggingface
-    huggingface_provider = Huggingface()
-    huggingface_provider.language_match(prompt, response)
-    ```
+        ```python
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+        huggingface_provider.language_match(prompt, response)
+        ```
 
     Providers for LLM models should subclass `LLMProvider`, which itself subclasses `Provider`.
     Providers for LLM-generated feedback are more of a plug-and-play variety. This means that the
@@ -55,11 +53,13 @@ class Provider(WithClassInfo, SerialModel):
 
     This means that the base model selected is combined with specific prompting for `relevance` to generate feedback.
 
-    ```python
-    from trulens_eval.feedback.provider.openai import OpenAI
-    provider = OpenAI(model_engine="gpt-3.5-turbo")
-    provider.relevance(prompt, response)
-    ```
+    !!! example
+
+        ```python
+        from trulens_eval.feedback.provider.openai import OpenAI
+        provider = OpenAI(model_engine="gpt-3.5-turbo")
+        provider.relevance(prompt, response)
+        ```
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -193,10 +193,13 @@ class LLMProvider(Provider):
         Base method to generate a score only, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formated system prompt
+            system_prompt (str): A pre-formatted system prompt.
+            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
+            normalize (float): The normalization factor for the score. Defaults to 10.0.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
-            The score (float): 0-1 scale.
+            float: The score on a 0-1 scale.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -223,10 +226,13 @@ class LLMProvider(Provider):
         Base method to generate a score and reason, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formated system prompt
+            system_prompt (str): A pre-formatted system prompt.
+            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
+            normalize (float): The normalization factor for the score. Defaults to 10.0.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
-            The score (float): 0-1 scale and reason metadata (dict) if returned by the LLM.
+            Tuple[float, Dict]: The score on a 0-1 scale and reason metadata (dict) if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -299,7 +305,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the relevance of the context to the question.
         
-        Usage on RAG Contexts:
+        !!! example
+
             ```python
             from trulens_eval.app import App
             context = App.select_context(rag_app)
@@ -351,7 +358,7 @@ class LLMProvider(Provider):
         template to check the relevance of the context to the question.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage on RAG Contexts:
+        !!! example
 
             ```python
             from trulens_eval.app import App
@@ -402,7 +409,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a
         template to check the relevance of the response to a prompt.
 
-        Usage:
+        !!! example
+
             ```python
             feedback = Feedback(provider.relevance).on_input_output()
             ```
@@ -443,7 +451,8 @@ class LLMProvider(Provider):
         check the relevance of the response to a prompt. Also uses chain of
         thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+
             ```python
             feedback = Feedback(provider.relevance_with_cot_reasons).on_input_output()
             ```
@@ -486,7 +495,8 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the sentiment of some text.
 
-        Usage:
+        !!! example
+
             ```python
             feedback = Feedback(provider.sentiment).on_output() 
             ```
@@ -511,7 +521,8 @@ class LLMProvider(Provider):
         template to check the sentiment of some text.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+
             ```python
             feedback = Feedback(provider.sentiment_with_cot_reasons).on_output() 
             ```
@@ -536,7 +547,8 @@ class LLMProvider(Provider):
         is given to the model with a prompt that the original response is
         correct, and measures whether previous chat completion response is similar.
 
-        Usage:
+        !!! example
+
             ```python
             feedback = Feedback(provider.model_agreement).on_input_output() 
             ```
@@ -616,9 +628,10 @@ class LLMProvider(Provider):
     def conciseness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the conciseness of some text. Prompt credit to Langchain Eval.
+        check the conciseness of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+
             ```python
             feedback = Feedback(provider.conciseness).on_output() 
             ```
@@ -640,9 +653,10 @@ class LLMProvider(Provider):
     def conciseness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the conciseness of some text. Prompt credit to Langchain Eval.
+        check the conciseness of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.conciseness).on_output() 
             ```
@@ -665,9 +679,10 @@ class LLMProvider(Provider):
     def correctness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the correctness of some text. Prompt credit to Langchain Eval.
+        check the correctness of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.correctness).on_output() 
             ```
@@ -688,10 +703,11 @@ class LLMProvider(Provider):
     def correctness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the correctness of some text. Prompt credit to Langchain Eval.
+        check the correctness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
             ```
@@ -712,9 +728,10 @@ class LLMProvider(Provider):
     def coherence(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a
-        template to check the coherence of some text. Prompt credit to Langchain Eval.
+        template to check the coherence of some text. Prompt credit to LangChain Eval.
         
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.coherence).on_output() 
             ```
@@ -735,10 +752,11 @@ class LLMProvider(Provider):
     def coherence_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the coherence of some text. Prompt credit to Langchain Eval. Also
+        check the coherence of some text. Prompt credit to LangChain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
             ```
@@ -759,9 +777,10 @@ class LLMProvider(Provider):
     def harmfulness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the harmfulness of some text. Prompt credit to Langchain Eval.
+        check the harmfulness of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.harmfulness).on_output() 
             ```
@@ -782,10 +801,11 @@ class LLMProvider(Provider):
     def harmfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the harmfulness of some text. Prompt credit to Langchain Eval.
+        check the harmfulness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output()
             ```
@@ -804,9 +824,10 @@ class LLMProvider(Provider):
     def maliciousness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the maliciousness of some text. Prompt credit to Langchain Eval.
+        check the maliciousness of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.maliciousness).on_output() 
             ```
@@ -828,10 +849,11 @@ class LLMProvider(Provider):
     def maliciousness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat compoletion model. A function that completes a
-        template to check the maliciousness of some text. Prompt credit to Langchain Eval.
+        template to check the maliciousness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
             ```
@@ -852,9 +874,10 @@ class LLMProvider(Provider):
     def helpfulness(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the helpfulness of some text. Prompt credit to Langchain Eval.
+        check the helpfulness of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.helpfulness).on_output() 
             ```
@@ -875,10 +898,11 @@ class LLMProvider(Provider):
     def helpfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the helpfulness of some text. Prompt credit to Langchain Eval.
+        check the helpfulness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
             ```
@@ -902,7 +926,8 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.controversiality).on_output() 
             ```
@@ -929,7 +954,8 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval. Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
             ```
@@ -951,9 +977,10 @@ class LLMProvider(Provider):
     def misogyny(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the misogyny of some text. Prompt credit to Langchain Eval.
+        check the misogyny of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.misogyny).on_output() 
             ```
@@ -974,10 +1001,11 @@ class LLMProvider(Provider):
     def misogyny_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the misogyny of some text. Prompt credit to Langchain Eval. Also
+        check the misogyny of some text. Prompt credit to LangChain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
             ```
@@ -998,9 +1026,10 @@ class LLMProvider(Provider):
     def criminality(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the criminality of some text. Prompt credit to Langchain Eval.
+        check the criminality of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.criminality).on_output()
             ```
@@ -1022,10 +1051,11 @@ class LLMProvider(Provider):
     def criminality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the criminality of some text. Prompt credit to Langchain Eval.
+        check the criminality of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
             ```
@@ -1046,9 +1076,10 @@ class LLMProvider(Provider):
     def insensitivity(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the insensitivity of some text. Prompt credit to Langchain Eval.
+        check the insensitivity of some text. Prompt credit to LangChain Eval.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.insensitivity).on_output()
             ```
@@ -1069,10 +1100,11 @@ class LLMProvider(Provider):
     def insensitivity_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the insensitivity of some text. Prompt credit to Langchain Eval.
+        check the insensitivity of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
             ```
@@ -1124,7 +1156,8 @@ class LLMProvider(Provider):
         only has a chain of thought implementation as it is extremely important
         in function assessment.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
             ```
@@ -1163,7 +1196,8 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        Usage:
+        !!! example
+        
             ```python
             feedback = Feedback(provider.stereotypes).on_input_output()
             ```
@@ -1190,7 +1224,7 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        Usage:
+        !!! example
             ```python
             feedback = Feedback(provider.stereotypes).on_input_output()
             ```
@@ -1210,3 +1244,4 @@ class LLMProvider(Provider):
         )
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
+
