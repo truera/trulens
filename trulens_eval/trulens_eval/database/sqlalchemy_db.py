@@ -3,8 +3,9 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import numpy as np
