@@ -66,8 +66,12 @@ def static_resource(filepath: Union[Path, str]) -> Path:
         with resources.as_file(_trulens_eval_resources / filepath) as _path:
             return _path
     else:
-        # This is deprecated in 3.11
-        with resources.path("trulens_eval", name) as _path:
+        # This is deprecated starting 3.11
+        parts = filepath.parts
+        with resources.path("trulens_eval", parts[0]) as _path:
+            # NOTE: resources.path does not allow the resource to incude folders.
+            for part in parts[1:]:
+                _path = _path / part
             return _path
 
 required_packages: Dict[str, requirements.Requirement] = \
