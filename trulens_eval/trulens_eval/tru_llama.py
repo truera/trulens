@@ -76,6 +76,8 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
         from llama_index.core.vector_stores.types import VectorStore
         from llama_index.legacy.llm_predictor import LLMPredictor
         from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
+        from llama_index.memory.chat_memory_buffer import ChatMemoryBuffer
+        from llama_index.core.query_engine.retriever_query_engine import RetrieverQueryEngine
 
         # These exist in the bridge but not here so define placeholders.
         RetrieverComponent = EmptyType
@@ -155,7 +157,7 @@ class LlamaInstrument(Instrument):
             LLMPredictor, LLMMetadata, BaseLLMPredictor, VectorStore,
             PromptHelper, BaseEmbedding, NodeParser, ToolMetadata, BaseTool,
             BaseMemory, WithFeedbackFilterNodes, BaseNodePostprocessor,
-            QueryEngineComponent, RetrieverComponent
+            QueryEngineComponent, RetrieverComponent, ChatMemoryBuffer, RetrieverQueryEngine
         }.union(LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
@@ -176,7 +178,7 @@ class LlamaInstrument(Instrument):
 
                 # Memory:
                 ("put"):
-                    BaseMemory,
+                    (BaseMemory, ChatMemoryBuffer),
 
                 # Misc.:
                 ("get_response"):
@@ -186,7 +188,7 @@ class LlamaInstrument(Instrument):
 
                 # BaseQueryEngine:
                 ("query", "aquery"):
-                    BaseQueryEngine,
+                    (BaseQueryEngine, RetrieverQueryEngine),
 
                 # BaseChatEngine/LLM:
                 ("chat", "achat", "stream_chat", "astream_achat"):
@@ -194,7 +196,7 @@ class LlamaInstrument(Instrument):
 
                 # BaseRetriever/BaseQueryEngine:
                 ("retrieve", "_retrieve", "_aretrieve"):
-                    (BaseQueryEngine, BaseRetriever, WithFeedbackFilterNodes),
+                    (BaseQueryEngine, BaseRetriever, WithFeedbackFilterNodes, RetrieverQueryEngine),
 
                 # BaseQueryEngine:
                 ("synthesize"):
