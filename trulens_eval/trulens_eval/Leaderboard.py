@@ -21,11 +21,10 @@ from trulens_eval import Tru
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
 
-st.set_page_config(page_title="Leaderboard", layout="wide")
 
-from trulens_eval.ux.add_logo import add_logo_and_style_overrides
+from trulens_eval.ux.page_config import set_page_config
 
-add_logo_and_style_overrides()
+set_page_config(page_title="Leaderboard")
 
 database_url = None
 
