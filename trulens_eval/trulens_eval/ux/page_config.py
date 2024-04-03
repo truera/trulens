@@ -1,20 +1,17 @@
 import base64
 
-import pkg_resources
 import streamlit as st
 
 from trulens_eval import __package__
 from trulens_eval import __version__
+from trulens_eval.utils.imports import static_resource
 
 
 def set_page_config(page_title="TruLens"):
-    
+
     st.set_page_config(page_title=page_title, page_icon="https://www.trulens.org/img/favicon.ico", layout="wide")
-    
-    logo = open(
-        pkg_resources.resource_filename('trulens_eval', 'ux/trulens_logo.svg'),
-        "rb"
-    ).read()
+
+    logo = static_resource("ux/trulens_logo.svg").open("rb").read()
 
     logo_encoded = base64.b64encode(logo).decode()
     st.markdown(

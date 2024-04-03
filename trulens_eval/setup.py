@@ -1,27 +1,30 @@
-from distutils import log
-from distutils.command.build import build
+from distutils import log # DEP
+from distutils.command.build import build # DEP
 import os
 from pathlib import Path
 
-from pkg_resources import parse_requirements
+from pip._internal.req import parse_requirements
 from setuptools import find_namespace_packages
 from setuptools import setup
 
 required_packages = list(
     map(
-        str,
-        parse_requirements(Path("trulens_eval/requirements.txt").read_text())
+        lambda pip_req: str(pip_req.requirement),
+        parse_requirements(
+            "trulens_eval/requirements.txt",
+            session=None
+        )
     )
 )
 optional_packages = list(
     map(
-        str,
+        lambda pip_req: str(pip_req.requirement),
         parse_requirements(
-            Path("trulens_eval/requirements.optional.txt").read_text()
+            "trulens_eval/requirements.optional.txt",
+            session=None
         )
     )
 )
-
 
 class javascript_build(build):
 

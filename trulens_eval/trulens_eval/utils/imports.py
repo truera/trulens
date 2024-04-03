@@ -6,17 +6,18 @@ line. Hopefully this wraps automatically.
 
 import builtins
 from dataclasses import dataclass
+from importlib import metadata
+from importlib import resources
+from importlib.abc import Traversable
 import inspect
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 from typing import Any, Dict, Optional, Sequence, Type, Union
 
-import pkg_resources
-from pkg_resources import DistributionNotFound
-from pkg_resources import get_distribution
-from pkg_resources import parse_version
-from pkg_resources import VersionConflict
+from packaging import requirements
+from packaging import version
+from pip._internal.req import parse_requirements
 
 from trulens_eval import __name__ as trulens_name
 from trulens_eval.utils.text import retab
@@ -25,110 +26,72 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-def requirements_of_file(path: Path) -> Dict[str, pkg_resources.Requirement]:
-    reqs = pkg_resources.parse_requirements(path.read_text())
-    mapping = {req.project_name: req for req in reqs}
+def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
+    """Get a dictionary of package names to requirements from a requirements
+    file."""
+
+    pip_reqs = parse_requirements(str(path), session=None)
+
+    mapping = {}
+
+    for pip_req in pip_reqs:
+        req = requirements.Requirement(pip_req.requirement)
+        mapping[req.name] = req
 
     return mapping
 
+trulens_eval_resources: Traversable = resources.files("trulens_eval")
+"""Traversable for resources in the trulens_eval package."""
 
-required_packages = requirements_of_file(
-    Path(pkg_resources.resource_filename("trulens_eval", "requirements.txt"))
-)
-optional_packages = requirements_of_file(
-    Path(
-        pkg_resources.resource_filename(
-            "trulens_eval", "requirements.optional.txt"
-        )
-    )
-)
+def static_resource(name: str) -> Path:
+    """Get the path to a static resource file in the trulens_eval package."""
 
-all_packages = {**required_packages, **optional_packages}
+    with resources.as_file(trulens_eval_resources / name) as _path:
+        return _path
+
+with resources.as_file(trulens_eval_resources / "requirements.txt") as _path:
+    required_packages: Dict[str, requirements.Requirement] = requirements_of_file(_path)
+    """Mapping of required package names to the requirement object with info
+    about that requirement including version constraints."""
+
+with resources.as_file(trulens_eval_resources / "requirements.optional.txt") as _path:
+    optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(_path)
+    """Mapping of optional package names to the requirement object with info
+    about that requirement including version constraints."""
+
+all_packages: Dict[str, requirements.Requirement] = {
+    **required_packages,
+    **optional_packages
+}
+"""Mapping of optional and required package names to the requirement object
+with info about that requirement including version constraints."""
 
 
-def get_package_version(name: str):  # cannot find return type
+def parse_version(version_string: str) -> version.Version:
+    """Parse the version string into a packaging version object."""
+
+    return version.parse(version_string)
+
+def get_package_version(name: str) -> Optional[version.Version]:
     """Get the version of a package by its name.
     
-    Returns None if not installed.
+    Returns None if given package is not installed.
     """
 
     try:
-        return parse_version(get_distribution(name).version)
+        return parse_version(metadata.version(name))
 
-    except DistributionNotFound:
+    except metadata.PackageNotFoundError:
         return None
 
 
-def check_imports(ignore_version_mismatch: bool = False):
-    """Check required and optional package versions.
-
-    Args:
-        ignore_version_mismatch: If set, will not raise an error if a
-            version mismatch is found in a required package. Regardless of
-            this setting, mismatch in an optional package is a warning.
-    """
-
-    for n, req in all_packages.items():
-        is_optional = n in optional_packages
-
-        try:
-            get_distribution(req)
-
-        except VersionConflict as e:
-
-            message = f"Package {req.project_name} is installed but has a version conflict:\n\t{e}\n"
-
-            if is_optional:
-                message += f"""
-This package is optional for trulens_eval so this may not be a problem but if
-you need to use the related optional features and find there are errors, you
-will need to resolve the conflict:
-
-    ```bash
-    pip install '{req}'
-    ```
+MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND = \
+"""Optional package %s is not installed. Related optional functionality will not
+be available.
 """
 
-            else:
-                message += f"""
-This package is required for trulens_eval. Please resolve the conflict by
-installing a compatible version with:
-
-    ```bash
-    pip install '{req}'
-    ```
-"""
-
-            message += """
-If you are running trulens_eval in a notebook, you may need to restart the
-kernel after resolving the conflict. If your distribution is in a bad place
-beyond this package, you may need to reinstall trulens_eval so that all of the
-dependencies get installed and hopefully corrected:
-    
-    ```bash
-    pip uninstall -y trulens_eval
-    pip install trulens_eval
-    ```
-"""
-
-            if (not is_optional) and (not ignore_version_mismatch):
-                raise VersionConflict(message) from e
-            else:
-                logger.debug(message)
-
-        except DistributionNotFound as e:
-            if is_optional:
-                logger.debug(
-                    """
-Optional package %s is not installed. Related optional functionality will not be
-available.
-""", req.project_name
-                )
-
-            else:
-                raise ModuleNotFoundError(
-                    f"""
-Required package {req.project_name} is not installed. Please install it with pip:
+MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND = \
+"""Required package {req.name} is not installed. Please install it with pip:
 
     ```bash
     pip install '{req}'
@@ -142,10 +105,92 @@ reinstall trulens_eval so that all of the dependencies get installed:
     pip install trulens_eval
     ```
 """
+
+MESSAGE_FRAGMENT_VERSION_MISMATCH = \
+"""Package {req.name} is installed but has a version conflict:
+    Requirement: {req}
+    Installed: {dist.version}
+"""
+
+MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL = \
+"""This package is optional for trulens_eval so this may not be a problem but if
+you need to use the related optional features and find there are errors, you
+will need to resolve the conflict:
+"""
+
+MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED = \
+"""This package is required for trulens_eval. Please resolve the conflict by
+installing a compatible version with:
+"""
+
+MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP = \
+"""
+    ```bash
+    pip install '{req}'
+    ```
+
+If you are running trulens_eval in a notebook, you may need to restart the
+kernel after resolving the conflict. If your distribution is in a bad place
+beyond this package, you may need to reinstall trulens_eval so that all of the
+dependencies get installed and hopefully corrected:
+    
+    ```bash
+    pip uninstall -y trulens_eval
+    pip install trulens_eval
+    ```
+"""
+
+class VersionConflict(Exception):
+    """Exception to raise when a version conflict is found in a required package."""
+
+
+def check_imports(ignore_version_mismatch: bool = False):
+    """Check required and optional package versions.
+
+    Args:
+        ignore_version_mismatch: If set, will not raise an error if a
+            version mismatch is found in a required package. Regardless of
+            this setting, mismatch in an optional package is a warning.
+
+    Raises:
+        VersionConflict: If a version mismatch is found in a required package
+            and `ignore_version_mismatch` is not set.
+    """
+
+    for n, req in all_packages.items():
+        is_optional = n in optional_packages
+
+        try:
+            dist = metadata.distribution(req.name)
+
+        except metadata.PackageNotFoundError as e:
+            if is_optional:
+                logger.debug(
+                    MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name
+                )
+
+            else:
+                raise ModuleNotFoundError(
+                    MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND.format(req=req)
                 ) from e
 
+        if dist.version not in req.specifier:
+            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(req=req, dist=dist)
 
-def pin_spec(r: pkg_resources.Requirement) -> pkg_resources.Requirement:
+            if is_optional:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(req=req)
+
+            else:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(req=req)
+
+            message += MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP.format(req=req)
+
+            if (not is_optional) and (not ignore_version_mismatch):
+                raise VersionConflict(message)
+
+            logger.debug(message)
+
+def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
     """
     Pin the requirement to the version assuming it is lower bounded by a
     version.
@@ -156,13 +201,22 @@ def pin_spec(r: pkg_resources.Requirement) -> pkg_resources.Requirement:
         raise ValueError(f"Requirement {spec} is not lower-bounded.")
 
     spec = spec.replace(">=", "==")
-    return pkg_resources.Requirement.parse(spec)
+    return requirements.Requirement(spec)
+
+
 
 
 @dataclass
 class ImportErrorMessages():
+    """Container for messages to show when an optional package is not found or
+    has some other import error."""
+
     module_not_found: str
+    """Message to show or raise when a package is not found."""
+
     import_error: str
+    """Message to show or raise when a package may be installed but some import
+    error occurred trying to import it or something from it."""
 
 
 def format_import_errors(
@@ -170,10 +224,12 @@ def format_import_errors(
     purpose: Optional[str] = None,
     throw: Union[bool, Exception] = False
 ) -> ImportErrorMessages:
-    """
-    Format two messages for missing optional package or bad import from an optional package. Throws
-    an `ImportError` with the formatted message if `throw` flag is set. If `throw` is already an
-    exception, throws that instead after printing the message.
+    """Format two messages for missing optional package or bad import from an
+    optional package.
+    
+    Throws an `ImportError` with the formatted message if `throw` flag is set.
+    If `throw` is already an exception, throws that instead after printing the
+    message.
     """
 
     if purpose is None:
