@@ -55,7 +55,7 @@ def static_resource(filepath: Union[Path, str]) -> Path:
     By static here we mean something that exists in the filesystem already and
     not in some temporary folder. We use the `importlib.resources` context
     managers to get this but if the resource is temporary, the result might not
-    exist by the time we return.
+    exist by the time we return or is not expected to survive long.
     """
 
     if not isinstance(filepath, Path):
