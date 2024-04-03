@@ -13,8 +13,8 @@ import inspect
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Any, Dict, Optional, Sequence, Type, Union
 import sys
+from typing import Any, Dict, Optional, Sequence, Type, Union
 
 from packaging import requirements
 from packaging import version
@@ -41,10 +41,12 @@ def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
 
     return mapping
 
+
 if sys.version_info >= (3, 9):
     # This does not exist in 3.8 .
     _trulens_eval_resources: Traversable = resources.files("trulens_eval")
     """Traversable for resources in the trulens_eval package."""
+
 
 def static_resource(name: str) -> Path:
     """Get the path to a static resource file in the trulens_eval package."""
