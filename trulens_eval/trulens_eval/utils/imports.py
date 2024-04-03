@@ -114,7 +114,7 @@ dependencies get installed and hopefully corrected:
             if (not is_optional) and (not ignore_version_mismatch):
                 raise VersionConflict(message) from e
             else:
-                logger.warning(message)
+                logger.debug(message)
 
         except DistributionNotFound as e:
             if is_optional:
