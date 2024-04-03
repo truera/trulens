@@ -17,8 +17,8 @@ from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
-with OptionalImports(messages=REQUIREMENT_GROUNDEDNESS):
-    from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize
+import nltk
 
 with OptionalImports(messages=REQUIREMENT_BEDROCK):
     from trulens_eval.feedback.provider.bedrock import Bedrock
@@ -75,7 +75,8 @@ class Groundedness(WithClassInfo, SerialModel):
         if groundedness_provider is None:
             logger.warning("Provider not provided. Using OpenAI.")
             groundedness_provider = OpenAI()
-
+            
+        nltk.download('punkt')
         super().__init__(groundedness_provider=groundedness_provider, **kwargs)
 
     def groundedness_measure_with_cot_reasons(
