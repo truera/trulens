@@ -24,11 +24,12 @@ from rich.pretty import pretty_repr
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.schema import AppDefinition, FeedbackOnMissingParameters
+from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackCall
 from trulens_eval.schema import FeedbackCombinations
 from trulens_eval.schema import FeedbackDefinition
+from trulens_eval.schema import FeedbackOnMissingParameters
 from trulens_eval.schema import FeedbackResult
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
@@ -64,10 +65,13 @@ float and a dictionary (of metadata)."""
 AggCallable = Callable[[Iterable[float]], float]
 """Signature of aggregation functions."""
 
+
 class InvalidSelector(Exception):
     """Raised when a selector names something that is missing in a record/app."""
 
-    def __init__(self, selector: Lens, source_data: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, selector: Lens, source_data: Optional[Dict[str, Any]] = None
+    ):
         self.selector = selector
         self.source_data = source_data
 
@@ -76,6 +80,7 @@ class InvalidSelector(Exception):
 
     def __repr__(self):
         return f"InvalidSelector({self.selector})"
+
 
 def rag_triad(
     provider: LLMProvider,
@@ -817,7 +822,7 @@ Feedback function signature:
         except InvalidSelector as e:
             # Handle the cases where a selector named something that does not
             # exist in source data.
-            
+
             if self.if_missing == FeedbackOnMissingParameters.ERROR:
                 feedback_result.status = FeedbackResultStatus.FAILED
                 raise e
@@ -825,8 +830,8 @@ Feedback function signature:
             if self.if_missing == FeedbackOnMissingParameters.WARN:
                 feedback_result.status = FeedbackResultStatus.SKIPPED
                 logger.warning(
-                    "Feedback %s cannot run as %s does not exist in record or app.", self.name,
-                    e.selector
+                    "Feedback %s cannot run as %s does not exist in record or app.",
+                    self.name, e.selector
                 )
                 return feedback_result
 
