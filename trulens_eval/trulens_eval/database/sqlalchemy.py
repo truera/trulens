@@ -17,6 +17,7 @@ from sqlalchemy import Engine
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.schema import MetaData
 from sqlalchemy.sql import text as sql_text
 
 from trulens_eval import schema
@@ -683,23 +684,26 @@ class AppsExtractor:
 
                     yield df
             except OperationalError as e:
-                print("Error encountered while attempting to retrieve an app. This issue may stem from a corrupted database.")
+                print(
+                    "Error encountered while attempting to retrieve an app. This issue may stem from a corrupted database."
+                )
                 print(f"Error details: {e}")
-                
 
     def extract_records(self,
                         records: Iterable[orm.Record]) -> Iterable[pd.Series]:
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
-            
+
             try:
                 for _res in _rec.feedback_results:
-                    calls[_res.name].append(json.loads(_res.calls_json)["calls"])
+                    calls[_res.name].append(
+                        json.loads(_res.calls_json)["calls"]
+                    )
                     if _res.multi_result is not None and (multi_result :=
-                                                        json.loads(
-                                                            _res.multi_result
-                                                        )) is not None:
+                                                          json.loads(
+                                                              _res.multi_result
+                                                          )) is not None:
                         for key, val in multi_result.items():
                             if val is not None:  # avoid getting Nones into np.mean
                                 name = f"{_res.name}:::{key}"
@@ -722,7 +726,9 @@ class AppsExtractor:
                 yield row
             except Exception as e:
                 # Handling unexpected errors, possibly due to database issues.
-                print("Error encountered while attempting to retrieve feedback results. This issue may stem from a corrupted database.")
+                print(
+                    "Error encountered while attempting to retrieve feedback results. This issue may stem from a corrupted database."
+                )
                 print(f"Error details: {e}")
 
 

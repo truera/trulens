@@ -17,8 +17,8 @@ from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
-with OptionalImports(messages=REQUIREMENT_GROUNDEDNESS):
-    from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize
+import nltk
 
 with OptionalImports(messages=REQUIREMENT_BEDROCK):
     from trulens_eval.feedback.provider.bedrock import Bedrock
@@ -42,7 +42,8 @@ class Groundedness(WithClassInfo, SerialModel):
     find the relevant strings in a text. The groundedness_provider can
     either be an LLM provider (such as OpenAI) or NLI with huggingface.
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -50,7 +51,8 @@ class Groundedness(WithClassInfo, SerialModel):
         groundedness_imp = Groundedness(groundedness_provider=openai_provider)
         ```
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.hugs import Huggingface
@@ -73,7 +75,8 @@ class Groundedness(WithClassInfo, SerialModel):
         if groundedness_provider is None:
             logger.warning("Provider not provided. Using OpenAI.")
             groundedness_provider = OpenAI()
-
+            
+        nltk.download('punkt')
         super().__init__(groundedness_provider=groundedness_provider, **kwargs)
 
     def groundedness_measure_with_cot_reasons(
@@ -116,13 +119,17 @@ class Groundedness(WithClassInfo, SerialModel):
             hypotheses = sent_tokenize(statement)
             reasons_str = ""
             for i, hypothesis in enumerate(tqdm(
-                hypotheses, desc="Groundedness per statement in source")):
+                    hypotheses, desc="Groundedness per statement in source")):
                 reason = self.groundedness_provider._groundedness_doc_in_out(
                     premise=source, hypothesis=hypothesis
                 )
-                score_line = next((line for line in reason.split('\n') if "Score" in line), None)
+                score_line = next(
+                    (line for line in reason.split('\n') if "Score" in line),
+                    None
+                )
                 if score_line:
-                    groundedness_scores[f"statement_{i}"] = re_0_10_rating(score_line) / 10
+                    groundedness_scores[f"statement_{i}"
+                                       ] = re_0_10_rating(score_line) / 10
                     reasons_str += f"\nSTATEMENT {i}:\n{reason}\n\n"
             return groundedness_scores, {"reasons": reasons_str}
 
@@ -284,4 +291,3 @@ class Groundedness(WithClassInfo, SerialModel):
             all_results.append(np.max(statements_to_scores[k]))
 
         return np.mean(all_results)
-

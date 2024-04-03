@@ -1,7 +1,4 @@
-# Tru Rails (NEMO Guardrails)
-
-!!! Warning
-    This recorder is experimental.
+# Tru Rails for _NeMo Guardrails_
 
 ::: trulens_eval.tru_rails.TruRails
 

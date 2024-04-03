@@ -180,14 +180,14 @@ nav:
           - trulens_eval/getting_started/quickstarts/text2text_quickstart.ipynb
           - trulens_eval/getting_started/quickstarts/groundtruth_evals.ipynb
           - trulens_eval/getting_started/quickstarts/human_feedback.ipynb
-      - Core Concepts:
-          # PLACEHOLDER: - trulens_eval/getting_started/core_concepts/index.md
-          - Feedback Functions: trulens_eval/getting_started/core_concepts/feedback_functions.md
-          - RAG Triad: trulens_eval/getting_started/core_concepts/rag_triad.md
-          - Honest, Harmless, Helpful Evals: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
+      - ⭐ Core Concepts:
+          - trulens_eval/getting_started/core_concepts/index.md
+          - ☔ Feedback Functions: trulens_eval/getting_started/core_concepts/feedback_functions.md
+          - ⟁ RAG Triad: trulens_eval/getting_started/core_concepts/rag_triad.md
+          - 🏆 Honest, Harmless, Helpful Evals: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
   - 🎯 Evaluation:
       # PLACEHOLDER: - trulens_eval/evaluation/index.md
-      - Feedback Functions:
+      - ☔ Feedback Functions:
           - trulens_eval/evaluation/feedback_functions/index.md
           - Anatomy of a Feedback Function: trulens_eval/evaluation/feedback_functions/anatomy.md
       - Feedback Implementations:
@@ -251,7 +251,7 @@ nav:
               - AzureOpenAI: trulens_eval/api/provider/openai/azureopenai.md
           - AWS Bedrock: trulens_eval/api/provider/bedrock.md
           - LiteLLM: trulens_eval/api/provider/litellm.md
-          - 🦜️🔗 Langchain: trulens_eval/api/provider/langchain.md
+          - 🦜️🔗 LangChain: trulens_eval/api/provider/langchain.md
           - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
           - Endpoint:
               - trulens_eval/api/endpoint/index.md

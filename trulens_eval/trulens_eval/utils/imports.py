@@ -114,7 +114,7 @@ dependencies get installed and hopefully corrected:
             if (not is_optional) and (not ignore_version_mismatch):
                 raise VersionConflict(message) from e
             else:
-                logger.warning(message)
+                logger.debug(message)
 
         except DistributionNotFound as e:
             if is_optional:
@@ -240,15 +240,15 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
 
 
 REQUIREMENT_LLAMA = format_import_errors(
-    'llama-index', purpose="instrumenting llama_index apps"
+    'llama-index', purpose="instrumenting LlamaIndex apps"
 )
 
 REQUIREMENT_LANGCHAIN = format_import_errors(
-    'langchain', purpose="instrumenting langchain apps"
+    'langchain', purpose="instrumenting LangChain apps"
 )
 
 REQUIREMENT_RAILS = format_import_errors(
-    "nemoguardrails", purpose="instrumenting nemo guardrails apps"
+    "nemoguardrails", purpose="instrumenting NeMo Guardrails apps"
 )
 
 REQUIREMENT_PINECONE = format_import_errors(
@@ -286,7 +286,7 @@ REQUIREMENT_EVALUATE = format_import_errors(
 )
 
 REQUIREMENT_NOTEBOOK = format_import_errors(
-    ["ipython", "ipywidgets"], purpose="using trulens_eval in a notebook"
+    ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
 )
 
 

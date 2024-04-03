@@ -6,11 +6,10 @@ watchdog >= 3.0.0  # no direct uses
 scikit-learn >= 1.3.1
 bert-score   >= 0.3.13  # groundtruth.py
 evaluate     >= 0.4.0  # same
-nltk         >= 3.8.1  # groundedness.py
 
-# Apps: Langchain (optional parts)
+# Apps: LangChain (optional parts)
 langchainhub        >= 0.1.14  # example notebooks
-langchain_community >= 0.0.17  # example notebooks, now required for pinecone, others
+langchain_community >= 0.0.17  # example notebooks, now required for Pinecone, others
 langchain_openai    >= 0.0.5  # unit tests, sample apps
 
 # Apps: LlamaIndex
@@ -19,14 +18,14 @@ nbconvert   >= 7.14.2  # for llama_index example using SimlpleDirectoryReader
 llama-index-readers-file >= 0.1.5 # tests and notebooks
 llama-index-readers-web  >= 0.1.6 # tests and notebooks
 
-# Apps: NEMO Guardrails
+# Apps: NeMo Guardrails
 nemoguardrails >= 0.7.1
 
-# Models: openai
+# Models: OpenAI
 openai >= 1.1.1, <2
 httpx  >= 0.23.3  # for openai client serialization
 
-# Models: bedrock
+# Models: Bedrock
 boto3    >= 1.33.6
 botocore >= 1.33.6
 

@@ -7,7 +7,10 @@ from trulens_eval import __package__
 from trulens_eval import __version__
 
 
-def add_logo_and_style_overrides():
+def set_page_config(page_title="TruLens"):
+    
+    st.set_page_config(page_title=page_title, page_icon="https://www.trulens.org/img/favicon.ico", layout="wide")
+    
     logo = open(
         pkg_resources.resource_filename('trulens_eval', 'ux/trulens_logo.svg'),
         "rb"
@@ -23,6 +26,7 @@ def add_logo_and_style_overrides():
                 background-size: 300px auto;
                 padding-top: 50px;
                 background-position: 20px 20px;
+                height: calc(100vh - 80px);
             }}
             [data-testid="stSidebarNav"]::before {{
                 margin-left: 20px;
@@ -31,11 +35,19 @@ def add_logo_and_style_overrides():
                 position: relative;
                 top: 100px;
             }}
-            [data-testid="stSidebarNav"]::after {{
-                margin-left: 20px;
+
+            /* For user feedback button and version text */
+            [data-testid="stSidebarUserContent"] {{
+                padding-bottom: 1rem;
+            }}
+
+            [data-testid="stSidebarUserContent"] [data-testid="column"] {{
+                align-content: center;
+            }}
+
+            [data-testid="stSidebarUserContent"] [data-testid="stText"] {{
                 color: #aaaaaa;
-                content: "{__package__} {__version__}";
-                font-size: 10pt;
+                font-size: 9pt;
             }}
 
             /* For list items in st.dataframe */
@@ -48,3 +60,13 @@ def add_logo_and_style_overrides():
         """,
         unsafe_allow_html=True,
     )
+
+    # Sidebar feedback button
+    with st.sidebar:
+        version_col, user_feedback_col = st.columns(2)
+        with version_col:
+            st.text(f"{__package__}\nv{__version__}")
+        with user_feedback_col:
+            st.link_button("Share Feedback", "https://forms.gle/HAc4HBk5nZRpgw7C6", help="Help us improve TruLens!")
+    
+        

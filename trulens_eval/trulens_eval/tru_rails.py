@@ -46,7 +46,7 @@ OptionalImports(messages=REQUIREMENT_RAILS).assert_installed(nemoguardrails)
 
 
 class RailsActionSelect(Select):
-    """Selector shorthands for NEMO guardrails apps when used for evaluating
+    """Selector shorthands for _NeMo Guardrails_ apps when used for evaluating
     feedback in actions.
     
     These should not be used for feedback functions given to `TruRails` but
@@ -106,9 +106,9 @@ registered_feedback_functions = {}
 
 
 class FeedbackActions():
-    """
-    Feedback action action for NEMO guardrails apps. See docstring of method
-    `feedback`.
+    """Feedback action action for _NeMo Guardrails_ apps.
+    
+    See docstring of method `feedback`.
     """
 
     @staticmethod
@@ -324,7 +324,7 @@ class FeedbackActions():
 
 
 class RailsInstrument(Instrument):
-    """Instrumentation specification for NEMO guardrails apps."""
+    """Instrumentation specification for _NeMo Guardrails_ apps."""
 
     class Default:
         """Default instrumentation specification."""
@@ -332,7 +332,7 @@ class RailsInstrument(Instrument):
         MODULES = {"nemoguardrails"}.union(LangChainInstrument.Default.MODULES)
         """Modules to instrument by name prefix.
         
-        Note that nemo uses langchain internally for some things.
+        Note that _NeMo Guardrails_ uses _LangChain_ internally for some things.
         """
 
         CLASSES = lambda: {
@@ -375,11 +375,10 @@ class RailsInstrument(Instrument):
 
 
 class TruRails(App):
-    """
-    Recorder for apps defined using NEMO guardrails.
+    """Recorder for apps defined using _NeMo Guardrails_.
 
     Args:
-        app: A nemo guardrails application.
+        app: A _NeMo Guardrails_ application.
     """
 
     model_config: ClassVar[dict] = {'arbitrary_types_allowed': True}

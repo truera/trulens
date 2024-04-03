@@ -13,7 +13,7 @@ from trulens_eval.ux.apps import ChatRecord
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 import streamlit as st
-from ux.add_logo import add_logo_and_style_overrides
+from ux.page_config import set_page_config
 
 if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
@@ -26,7 +26,7 @@ st.set_page_config(page_title="App Runner", layout="wide")
 
 st.runtime.legacy_caching.clear_cache()
 
-add_logo_and_style_overrides()
+set_page_config(page_title="App Runner")
 
 
 def remove_selector(

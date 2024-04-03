@@ -24,7 +24,7 @@ from rich.pretty import pretty_repr
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.schema import AppDefinition
+from trulens_eval.schema import AppDefinition, FeedbackOnMissingParameters
 from trulens_eval.schema import Cost
 from trulens_eval.schema import FeedbackCall
 from trulens_eval.schema import FeedbackCombinations
@@ -64,6 +64,18 @@ float and a dictionary (of metadata)."""
 AggCallable = Callable[[Iterable[float]], float]
 """Signature of aggregation functions."""
 
+class InvalidSelector(Exception):
+    """Raised when a selector names something that is missing in a record/app."""
+
+    def __init__(self, selector: Lens, source_data: Optional[Dict[str, Any]] = None):
+        self.selector = selector
+        self.source_data = source_data
+
+    def __str__(self):
+        return f"Selector {self.selector} does not exist in source data."
+
+    def __repr__(self):
+        return f"InvalidSelector({self.selector})"
 
 def rag_triad(
     provider: LLMProvider,
@@ -802,10 +814,30 @@ Feedback function signature:
                 )
             )
 
-        except Exception as e:
-            # TODO: Block here to remind us that we may want to do something
-            # better here.
-            raise e
+        except InvalidSelector as e:
+            # Handle the cases where a selector named something that does not
+            # exist in source data.
+            
+            if self.if_missing == FeedbackOnMissingParameters.ERROR:
+                feedback_result.status = FeedbackResultStatus.FAILED
+                raise e
+
+            if self.if_missing == FeedbackOnMissingParameters.WARN:
+                feedback_result.status = FeedbackResultStatus.SKIPPED
+                logger.warning(
+                    "Feedback %s cannot run as %s does not exist in record or app.", self.name,
+                    e.selector
+                )
+                return feedback_result
+
+            if self.if_missing == FeedbackOnMissingParameters.IGNORE:
+                feedback_result.status = FeedbackResultStatus.SKIPPED
+                return feedback_result
+
+            feedback_result.status = FeedbackResultStatus.FAILED
+            raise ValueError(
+                f"Unknown value for `if_missing` {self.if_missing}."
+            ) from e
 
         try:
             # Total cost, will accumulate.
@@ -907,7 +939,9 @@ Feedback function signature:
 
         except:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
-            exc_tb = traceback.format_exc().encode('utf-8', errors='replace').decode('utf-8')
+            exc_tb = traceback.format_exc().encode(
+                'utf-8', errors='replace'
+            ).decode('utf-8')
             logger.warning(f"Feedback Function exception caught: %s", exc_tb)
             feedback_result.update(
                 error=exc_tb, status=FeedbackResultStatus.FAILED
@@ -952,7 +986,9 @@ Feedback function signature:
 
         except Exception:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
-            exc_tb = traceback.format_exc().encode('utf-8', errors='replace').decode('utf-8')
+            exc_tb = traceback.format_exc().encode(
+                'utf-8', errors='replace'
+            ).decode('utf-8')
             db.insert_feedback(
                 feedback_result.update(
                     error=exc_tb, status=FeedbackResultStatus.FAILED
@@ -1014,8 +1050,8 @@ Feedback function signature:
                 else:
                     arg_vals[k] = list(q.get(source_data))
             except Exception as e:
-                raise RuntimeError(
-                    f"Could not locate {q} in recorded data."
+                raise InvalidSelector(
+                    selector=q, source_data=source_data
                 ) from e
 
         # For anything specified in kwargs that did not have a selector, set the
