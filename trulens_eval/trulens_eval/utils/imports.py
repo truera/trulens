@@ -50,7 +50,13 @@ if sys.version_info >= (3, 9):
 
 
 def static_resource(filepath: Union[Path, str]) -> Path:
-    """Get the path to a static resource file in the trulens_eval package."""
+    """Get the path to a static resource file in the trulens_eval package.
+    
+    By static here we mean something that exists in the filesystem already and
+    not in some temporary folder. We use the `importlib.resources` context
+    managers to get this but if the resource is temporary, the result might not
+    exist by the time we return.
+    """
 
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
