@@ -7,7 +7,10 @@ from trulens_eval import __package__
 from trulens_eval import __version__
 
 
-def add_logo_and_style_overrides():
+def set_page_config(page_title="TruLens"):
+    
+    st.set_page_config(page_title=page_title, page_icon="https://www.trulens.org/img/favicon.ico", layout="wide")
+    
     logo = open(
         pkg_resources.resource_filename('trulens_eval', 'ux/trulens_logo.svg'),
         "rb"
@@ -65,4 +68,5 @@ def add_logo_and_style_overrides():
             st.text(f"{__package__}\nv{__version__}")
         with user_feedback_col:
             st.link_button("Share Feedback", "https://forms.gle/HAc4HBk5nZRpgw7C6", help="Help us improve TruLens!")
+    
         
