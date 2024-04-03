@@ -193,7 +193,7 @@ class Huggingface(Provider):
         """
         Uses Huggingface's truera/context_relevance model, a
         model that uses computes the relevance of a given context to the prompt. 
-        
+        The model can be found at https://huggingface.co/truera/context_relevance.
         **Usage:**
         ```python
         from trulens_eval import Feedback
