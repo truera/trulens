@@ -236,7 +236,7 @@ STATEMENT: {statement}
 
 RELEVANCE: 
 
-Finally, provide the probability on a scale of 1 to 10 that your REVELANCE scoring is correct. Give ONLY the probability, no
+Finally, provide the probability on a scale of 0 to 10 that your REVELANCE scoring is correct. Give ONLY the probability, no
 other words or explanation.\n\nFor example: <the probability between
 0 and 10 that your guess is correct, without any extra commentary whatsoever;
 just the probability!>
