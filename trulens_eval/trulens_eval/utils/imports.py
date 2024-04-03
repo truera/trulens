@@ -14,6 +14,7 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 from typing import Any, Dict, Optional, Sequence, Type, Union
+import sys
 
 from packaging import requirements
 from packaging import version
@@ -40,30 +41,32 @@ def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
 
     return mapping
 
-
-trulens_eval_resources: Traversable = resources.files("trulens_eval")
-"""Traversable for resources in the trulens_eval package."""
-
+if sys.version_info >= (3, 9):
+    # This does not exist in 3.8 .
+    _trulens_eval_resources: Traversable = resources.files("trulens_eval")
+    """Traversable for resources in the trulens_eval package."""
 
 def static_resource(name: str) -> Path:
     """Get the path to a static resource file in the trulens_eval package."""
 
-    with resources.as_file(trulens_eval_resources / name) as _path:
-        return _path
+    if sys.version_info >= (3, 9):
+        # This does not exist in 3.8
+        with resources.as_file(_trulens_eval_resources / name) as _path:
+            return _path
+    else:
+        # This is deprecated in 3.11
+        with resources.path("trulens_eval", name) as _path:
+            return _path
 
+required_packages: Dict[str, requirements.Requirement] = \
+    requirements_of_file(static_resource("requirements.txt"))
+"""Mapping of required package names to the requirement object with info
+about that requirement including version constraints."""
 
-with resources.as_file(trulens_eval_resources / "requirements.txt") as _path:
-    required_packages: Dict[
-        str, requirements.Requirement] = requirements_of_file(_path)
-    """Mapping of required package names to the requirement object with info
-    about that requirement including version constraints."""
-
-with resources.as_file(trulens_eval_resources / "requirements.optional.txt"
-                      ) as _path:
-    optional_packages: Dict[
-        str, requirements.Requirement] = requirements_of_file(_path)
-    """Mapping of optional package names to the requirement object with info
-    about that requirement including version constraints."""
+optional_packages: Dict[str, requirements.Requirement] = \
+    requirements_of_file(static_resource("requirements.optional.txt"))
+"""Mapping of optional package names to the requirement object with info
+about that requirement including version constraints."""
 
 all_packages: Dict[str, requirements.Requirement] = {
     **required_packages,
