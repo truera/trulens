@@ -15,7 +15,6 @@ asyncio.set_event_loop(asyncio.new_event_loop())
 import streamlit as st
 from ux.page_config import set_page_config
 
-
 st.runtime.legacy_caching.clear_cache()
 
 set_page_config(page_title="App Runner")

@@ -8,7 +8,6 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
-from pkg_resources import parse_version
 from pydantic import Field
 
 from trulens_eval.app import App
@@ -18,6 +17,7 @@ from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import Dummy
 from trulens_eval.utils.imports import get_package_version
 from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import parse_version
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod

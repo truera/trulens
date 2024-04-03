@@ -39,12 +39,10 @@ from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
 
-
 st.runtime.legacy_caching.clear_cache()
 
 set_page_config(page_title="Evaluations")
 st.title("Evaluations")
-
 
 tru = Tru()
 lms = tru.db
@@ -65,9 +63,7 @@ default_direction = "HIGHER_IS_BETTER"
 
 
 def render_component(
-    query: Lens,
-    component: ComponentView,
-    header: bool=True
+    query: Lens, component: ComponentView, header: bool = True
 ) -> None:
     """Render the accessor/path within the wrapped app of the component."""
 
@@ -107,12 +103,11 @@ def render_component(
 
 
 def render_record_metrics(
-    app_df: pd.DataFrame,
-    selected_rows: pd.DataFrame
+    app_df: pd.DataFrame, selected_rows: pd.DataFrame
 ) -> None:
     """Render record level metrics (e.g. total tokens, cost, latency) compared
     to the average when appropriate."""
-    
+
     app_specific_df = app_df[app_df["app_id"] == selected_rows["app_id"][0]]
 
     token_col, cost_col, latency_col = st.columns(3)
