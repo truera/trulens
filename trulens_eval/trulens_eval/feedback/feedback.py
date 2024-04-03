@@ -65,17 +65,26 @@ AggCallable = Callable[[Iterable[float]], float]
 """Signature of aggregation functions."""
 
 class InvalidSelector(Exception):
-    """Raised when a selector names something that is missing in a record/app."""
+    """Raised when a selector names something that is missing or empty in a record/app."""
 
     def __init__(self, selector: Lens, source_data: Optional[Dict[str, Any]] = None):
         self.selector = selector
         self.source_data = source_data
+        self.is_empty = False
+        if source_data:
+            # Check if the selector points to an empty string in the source data
+            selected_value = selector.get(source_data)
+            if isinstance(selected_value, str) and not selected_value.strip():
+                self.is_empty = True
 
     def __str__(self):
-        return f"Selector {self.selector} does not exist in source data."
+        if self.is_empty:
+            return f"Selector {self.selector} points to an empty string in source data."
+        else:
+            return f"Selector {self.selector} does not exist in source data."
 
     def __repr__(self):
-        return f"InvalidSelector({self.selector})"
+        return f"InvalidSelector({self.selector}, is_empty={self.is_empty})"
 
 def rag_triad(
     provider: LLMProvider,
