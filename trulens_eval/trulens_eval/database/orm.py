@@ -152,29 +152,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
             app_json = Column(TYPE_JSON, nullable=False)
 
-            # records via one-to-many on app_id
-            # feedback_results via one-to-many on record_id
-
-            
-            records = relationship(
-                'Record',
-                back_populates='app',
-                primaryjoin='AppDefinition.app_id == Record.app_id',
-                foreign_keys=[app_id]
-            )
-
-            """
-            @declared_attr
-            @classmethod
-            def records(cls):
-                return relationship(
-                    "Record",
-                    back_populates="app",
-                    # backref=backref('app', cascade="all,delete-orphan"),
-                    primaryjoin='AppDefinition.app_id == Record.app_id',
-                    foreign_keys=[cls.app_id],
-                )
-            """
+            # records via one-to-many on Record.app_id
+            # feedback_results via one-to-many on FeedbackResult.record_id
 
             @classmethod
             def parse(
@@ -202,7 +181,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             )
             feedback_json = Column(TYPE_JSON, nullable=False)
 
-            # feedback_results via one-to-many on feedback_definition_id
+            # feedback_results via one-to-many on FeedbackResult.feedback_definition_id
 
             @classmethod
             def parse(
@@ -226,11 +205,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             _table_base_name = "records"
 
             record_id = Column(TYPE_ID, nullable=False, primary_key=True)
-
-            @declared_attr
-            @classmethod
-            def app_id(cls) -> Column:
-                return Column(TYPE_ID, ForeignKey("AppDefinition.app_id"), nullable=False)
+            app_id = Column(TYPE_ID, nullable=False) # foreign key
             
             input = Column(Text)
             output = Column(Text)
@@ -240,31 +215,11 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             cost_json = Column(TYPE_JSON, nullable=False)
             perf_json = Column(TYPE_JSON, nullable=False)
 
-            """
-            @declared_attr.cascading
-            @classmethod
-            def app(cls):
-                return relationship(
-                    "AppDefinition",
-                    backref=backref('records', cascade="all,delete"),
-                    primaryjoin='AppDefinition.app_id == Record.app_id',
-                    foreign_keys=[cls.app_id],
-                )
-            """
-            """
-            feedback_results = relationship(
-                'FeedbackResult',
-                back_populates='record',
-                primaryjoin='Record.record_id == FeedbackResult.record_id',
-                foreign_keys=[record_id]
-            )
-            """
-
             app = relationship(
                'AppDefinition',
                 backref=backref('records', cascade="all,delete"),
                 primaryjoin='AppDefinition.app_id == Record.app_id',
-                # foreign_keys="Record.app_id",
+                foreign_keys=app_id,
             )
 
             @classmethod
@@ -307,12 +262,11 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             feedback_result_id = Column(
                 TYPE_ID, nullable=False, primary_key=True
             )
-            record_id = Column(TYPE_ID, ForeignKey("Record.record_id"), nullable=False)
+            record_id = Column(TYPE_ID, nullable=False) # foreign key
             feedback_definition_id = Column(
                 TYPE_ID,
-                ForeignKey("FeedbackDefinition.feedback_definition_id"),
-                nullable=True
-            )
+                nullable=False
+            ) # foreign key
             last_ts = Column(TYPE_TIMESTAMP, nullable=False)
             status = Column(TYPE_ENUM, nullable=False)
             error = Column(Text)
@@ -325,10 +279,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             record = relationship(
                 'Record',
                 backref=backref('feedback_results', cascade="all,delete"),
-                # back_populates='feedback_results',
                 primaryjoin='Record.record_id == FeedbackResult.record_id',
-                foreign_keys=[record_id],
-                # remote_side=[record_id]
+                foreign_keys=record_id,
             )
 
             feedback_definition = relationship(
@@ -336,33 +288,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 backref=backref("feedback_results", cascade="all,delete"),
                 primaryjoin=
                 "FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
-                foreign_keys=[feedback_definition_id],
+                foreign_keys=feedback_definition_id,
             )
-
-            """
-            @declared_attr.cascading
-            @classmethod
-            def record(cls):
-                return relationship(
-                    "Record",
-                    backref=backref('feedback_results', cascade="all,delete"),
-                    primaryjoin='Record.record_id == FeedbackResult.record_id',
-                    foreign_keys=[cls.record_id]
-                )
-            """
-
-            """
-            @declared_attr.cascading
-            @classmethod
-            def feedback_definition(cls):
-                return relationship(
-                    "FeedbackDefinition",
-                    backref=backref("feedback_results", cascade="all,delete"),
-                    primaryjoin=
-                    "FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
-                    foreign_keys=[cls.feedback_definition_id]
-                )
-            """
 
             @classmethod
             def parse(
@@ -388,8 +315,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     multi_result=obj.multi_result
                 )
 
-    configure_mappers()
-    base.registry.configure()
+    #configure_mappers()
+    #base.registry.configure()
 
     return NewORM
 

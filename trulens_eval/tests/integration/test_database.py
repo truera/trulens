@@ -65,15 +65,13 @@ class TestDBSpecifications(TestCase):
             with self.subTest(msg=f"prefix for {db_type}"):
                 with clean_db(db_type, table_prefix="test_") as db:
 
-                    _populate_data(db)
-
                     tables = ["apps", "records", "feedback_defs", "feedbacks"]
 
-                    for table in tables:
-                        print(table)
-                        df = pd.read_sql_table(table_name="test_" + table, con=db.engine)
-                        print(df)
-                        print()
+                    #for table in tables:
+                    #    print(table)
+                    #    df = pd.read_sql_table(table_name="test_" + table, con=db.engine)
+                    #    print(df)
+                    #    print()
 
                     _test_db_consistency(self, db)
 
@@ -339,6 +337,27 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
     _populate_data(db)
 
     with db.session.begin() as session:
+        print("feedback defs")
+        ress = session.query(db.orm.FeedbackDefinition).all()
+        for res in ress:
+            print(res.feedback_definition_id)
+
+        print("apps")
+        ress = session.query(db.orm.AppDefinition).all()
+        for res in ress:
+            print(res.app_id, res.records) # no feedback results
+
+        print("records")
+        ress = session.query(db.orm.Record).all()
+        for res in ress:
+            print(res.record_id, res.feedback_results)
+
+        print("feedbacks")
+        ress = session.query(db.orm.FeedbackResult).all()
+        for res in ress:
+            print(res.feedback_result_id, res.feedback_definition)
+
+    with db.session.begin() as session:
         # delete the only app
         session.delete(session.query(db.orm.AppDefinition).one())
 
@@ -355,6 +374,7 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
             [],
             "Expected no feedback results."
         )
+
 
         # feedback defs are preserved
         test.assertEqual(
@@ -380,6 +400,9 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
             print("result record=", res.record)
             print("result def=", res.feedback_definition)
 
+        for n, t in db.orm.registry.items():
+            print(n, t)
+
         # delete the only record
         session.delete(session.query(db.orm.Record).one())
 
@@ -401,22 +424,24 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 def _populate_data(db: DB):
     tru = Tru()
     tru.db = db  # because of the singleton behavior, db must be changed manually
+    
     fb = Feedback(
         imp=MockFeedback().length,
-        feedback_definition_id="mock",
+        # feedback_definition_id="mock",
         selectors={"text": Select.RecordOutput},
     )
     app = TruBasicApp(
         text_to_text=lambda x: x,
-        app_id="test",
+        # app_id="test",
         db=db,
         feedbacks=[fb],
         feedback_mode=FeedbackMode.WITH_APP,
     )
     _, rec = app.with_record(app.app.__call__, "boo")
 
-    return fb, app, rec
+    print(rec.wait_for_feedback_results())
 
+    return fb, app, rec
 
 if __name__ == '__main__':
     main()
