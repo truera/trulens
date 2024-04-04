@@ -18,7 +18,6 @@ from sqlalchemy import Engine
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.schema import MetaData
 from sqlalchemy.sql import text as sql_text
 
 from trulens_eval import schema

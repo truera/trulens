@@ -19,11 +19,12 @@ from trulens_eval.schema import Perf
 from trulens_eval.schema import Record
 from trulens_eval.utils.pyschema import FunctionOrMethod
 
-# Keeps track of any db versions that need data migration
-# Should be most recent is the leftmost in the list
 sql_alchemy_migration_versions: List[str] = ["1"]
+"""DB versions that need data migration.
 
-# A DAG of upgrade functions to get to most recent DB.
+The most recent should be the first in the list.
+"""
+
 sqlalchemy_upgrade_paths = {
     # Dict Structure:
     # "from_version":("to_version", migrate_method)
@@ -31,6 +32,7 @@ sqlalchemy_upgrade_paths = {
     # Example:
     # "1":("2"), migrate_alembic_1_to_2
 }
+"""A DAG of upgrade functions to get to most recent DB."""
 
 
 def _get_sql_alchemy_compatibility_version(version: str) -> str:
@@ -42,6 +44,7 @@ def _get_sql_alchemy_compatibility_version(version: str) -> str:
     Returns:
         str: An alembic version of the oldest compatible DB
     """
+
     compat_version = int(sql_alchemy_migration_versions[-1])
     for candidate_version in sql_alchemy_migration_versions:
         candidate_version_int = int(candidate_version)
@@ -52,7 +55,7 @@ def _get_sql_alchemy_compatibility_version(version: str) -> str:
     return compat_version
 
 
-def _sql_alchemy_serialization_asserts(db: "DB") -> None:
+def _sql_alchemy_serialization_asserts(db: DB) -> None:
     """Checks that data migrated JSONs can be deserialized from DB to Python objects.
 
     Args:
@@ -134,12 +137,13 @@ def _sql_alchemy_serialization_asserts(db: "DB") -> None:
 
 
 def data_migrate(db: DB, from_version: str):
-    """Makes any data changes needed for upgrading from the from_version
+    """Makes any data changes needed for upgrading from the from_version to the
+    current version.
 
     Args:
         db: The database instance.
 
-        from_version: The current version.
+        from_version: The version to migrate data from.
 
     Raises:
         VersionException: Can raise a migration or validation upgrade error.

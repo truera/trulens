@@ -1,4 +1,4 @@
-# SQLAlchemy Databases
+# 🧪 SQLAlchemy Databases
 
 ::: trulens_eval.database.sqlalchemy
 

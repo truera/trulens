@@ -259,8 +259,8 @@ nav:
       - 𝄢 Instruments: trulens_eval/api/instruments.md
       - 🗄 Database:
         - trulens_eval/api/database/index.md
-        - Migration: trulens_eval/api/database/migration.md
-        - SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
+        - ✨ Migration: trulens_eval/api/database/migration.md
+        - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
       - Utils:
           - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md

@@ -14,7 +14,6 @@ from sqlalchemy import VARCHAR
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 
@@ -146,8 +145,6 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            # __abstract__ = True
-
             _table_base_name: ClassVar[str] = "apps"
 
             app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
@@ -171,8 +168,6 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 We don't use any of the typical ORM features and this class is only
                 used as a schema to interact with database through SQLAlchemy.
             """
-
-            # __abstract__ = True
 
             _table_base_name = "feedback_defs"
 
@@ -200,8 +195,6 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            # __abstract__ = True
-
             _table_base_name = "records"
 
             record_id = Column(TYPE_ID, nullable=False, primary_key=True)
@@ -219,7 +212,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             def app(cls):
                 return relationship(
                     "AppDefinition",
-                    backref=backref('records', cascade="all,delete"),
+                    backref=backref('Record_AppDefinition', cascade="all,delete"),
                     primaryjoin='AppDefinition.app_id == Record.app_id',
                     foreign_keys=[cls.app_id],
                 )
@@ -259,8 +252,6 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            # __abstract__ = True
-
             _table_base_name = "feedbacks"
 
             feedback_result_id = Column(
@@ -282,7 +273,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             def record(cls):
                 return relationship(
                     "Record",
-                    backref=backref('feedback_results', cascade="all,delete"),
+                    backref=backref('FeedbackResult_Record', cascade="all,delete"),
                     primaryjoin='Record.record_id == FeedbackResult.record_id',
                     foreign_keys=[cls.record_id]
                 )
@@ -292,10 +283,10 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             def feedback_definition(cls):
                 return relationship(
                     "FeedbackDefinition",
-                    backref=backref("feedback_results", cascade="all,delete"),
+                    backref=backref("FeedbackResult_FeedbackDefinition", cascade="all,delete"),
                     primaryjoin=
                     "FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
-                    foreign_keys=[cls.feedback_definition_id],
+                    foreign_keys=[cls.feedback_definition_id]
                 )
 
             @classmethod
@@ -374,18 +365,6 @@ def make_orm_for_prefix(
 
     base: Type[T] = new_base(prefix=table_prefix)
     return new_orm(base)
-
-    class ORMWithPrefix(ORM):
-        """ORM classes that have a table name prefix."""
-
-        AppDefinition = make_base_for_prefix(orm.AppDefinition, table_prefix)
-        FeedbackDefinition = make_base_for_prefix(
-            orm.FeedbackDefinition, table_prefix
-        )
-        Record = make_base_for_prefix(orm.Record, table_prefix)
-        FeedbackResult = make_base_for_prefix(orm.FeedbackResult, table_prefix)
-
-    return ORMWithPrefix
 
 
 @event.listens_for(Engine, "connect")
