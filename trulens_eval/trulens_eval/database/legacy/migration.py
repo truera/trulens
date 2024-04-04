@@ -66,12 +66,7 @@ class VersionException(Exception):
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
 migration_versions: List[str] = [
-    "0.25.2",
-    "0.19.0",
-    "0.9.0",
-    "0.3.0",
-    "0.2.0",
-    "0.1.2"
+    "0.25.2", "0.19.0", "0.9.0", "0.3.0", "0.2.0", "0.1.2"
 ]
 
 
@@ -267,10 +262,12 @@ def migrate_0_9_0(db):
 
 def migrate_0_3_0(db):
     conn, c = db._connect()
-    c.execute("""
+    c.execute(
+        """
         ALTER TABLE feedbacks
         ADD multi_result TEXT;
-    """)
+    """
+    )
     conn.commit()
 
 

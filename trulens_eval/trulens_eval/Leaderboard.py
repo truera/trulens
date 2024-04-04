@@ -1,4 +1,3 @@
-
 import asyncio
 import json
 import math
@@ -27,12 +26,14 @@ if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
     init_from_args()
 
+
 def leaderboard():
     """Render the leaderboard page."""
 
     set_page_config(page_title="Leaderboard")
 
-    tru = Tru() # get singletone whether this file was imported or executed from command line.
+    tru = Tru(
+    )  # get singletone whether this file was imported or executed from command line.
 
     lms = tru.db
 
@@ -45,9 +46,9 @@ def leaderboard():
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
-            row.feedback_json.get("supplied_name", "") or
-            row.feedback_json["implementation"]["name"]
-        ): row.feedback_json.get("higher_is_better", True)
+            row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
+        ):
+            row.feedback_json.get("higher_is_better", True)
         for _, row in feedback_defs.iterrows()
     }
 
@@ -147,6 +148,7 @@ def leaderboard():
         #    st.markdown(draw_metadata(metadata))
 
         st.markdown("""---""")
+
 
 if __name__ == "__main__":
     leaderboard()

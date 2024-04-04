@@ -144,10 +144,9 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
     @staticmethod
     def min():
         """Zero-length span with start and end times at the minimum datetime."""
-        
+
         return Perf(
-            start_time=datetime.datetime.min,
-            end_time=datetime.datetime.min
+            start_time=datetime.datetime.min, end_time=datetime.datetime.min
         )
 
     @staticmethod

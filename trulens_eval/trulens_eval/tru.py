@@ -14,8 +14,9 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Union)
+from typing import (
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+)
 
 import humanize
 import pandas
@@ -155,17 +156,22 @@ class Tru(python.SingletonPerName):
         if database_args is None:
             database_args = {}
 
-        database_args.update({k: v for k, v in {
-            'database_url': database_url,
-            'database_file': database_file,
-            'database_redact_keys': database_redact_keys,
-            'database_prefix': database_prefix
-        }.items() if v is not None})
+        database_args.update(
+            {
+                k: v for k, v in {
+                    'database_url': database_url,
+                    'database_file': database_file,
+                    'database_redact_keys': database_redact_keys,
+                    'database_prefix': database_prefix
+                }.items() if v is not None
+            }
+        )
 
         if python.safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
-            if sum((1 if v is not None else 0 for v in database_args.values())) > 0:
+            if sum((1 if v is not None else 0 for v in database_args.values())
+                  ) > 0:
                 logger.warning(
                     "Tru was already initialized. "
                     "Cannot change database configuration after initialization."
@@ -793,7 +799,9 @@ class Tru(python.SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {name: count for name, count in runs_stats.items()}
+                    {
+                        name: count for name, count in runs_stats.items()
+                    }
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()
@@ -964,8 +972,8 @@ class Tru(python.SingletonPerName):
             args.append(f"--server.address={address}")
 
         args += [
-            leaderboard_path, "--",
-            "--database-url", self.db.engine.url.render_as_string(hide_password=False),
+            leaderboard_path, "--", "--database-url",
+            self.db.engine.url.render_as_string(hide_password=False),
             "--database-prefix", self.db.table_prefix
         ]
 

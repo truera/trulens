@@ -73,10 +73,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def migrate_database(
-        self,
-        prior_prefix: Optional[str] = None
-    ):
+    def migrate_database(self, prior_prefix: Optional[str] = None):
         """Migrade the stored data to the current configuration of the database.
         
         Args:
@@ -141,7 +138,8 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def get_feedback_defs(
-        self, feedback_definition_id: Optional[FeedbackDefinitionID] = None
+        self,
+        feedback_definition_id: Optional[FeedbackDefinitionID] = None
     ) -> pd.DataFrame:
         """Retrieve feedback definitions from the database.
         
@@ -153,7 +151,6 @@ class DB(SerialModel, abc.ABC):
         Returns:
             A dataframe with the feedback definitions.
         """
-
 
         raise NotImplementedError()
 
@@ -254,7 +251,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_apps(self) -> Iterable[JSON]:
         """Get all apps."""
-    
+
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -283,7 +280,7 @@ def versioning_decorator(func):
     trulens_eval version (or rather the db version used in the current
     trulens_eval version).
     """
-    
+
     def wrapper(self, *args, **kwargs):
         migration._migration_checker(db=self)
         returned_value = func(self, *args, **kwargs)

@@ -14,11 +14,14 @@ import pandas as pd
 import pydantic
 
 from trulens_eval import __version__
-from trulens_eval.database.base import for_all_methods, versioning_decorator, DB, MULTI_CALL_NAME_DELIMITER
+from trulens_eval import feedback
+from trulens_eval import schema
+from trulens_eval.database.base import DB
+from trulens_eval.database.base import for_all_methods
+from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
+from trulens_eval.database.base import versioning_decorator
 from trulens_eval.database.legacy import migration
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens_eval import schema
-from trulens_eval import feedback
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -89,7 +92,9 @@ class LocalSQLite(DB):
     def migrate_database(self, prior_table_prefix: Optional[str] = None):
         """Deprecated."""
 
-        raise RuntimeError("This database is deprecated and cannot be migrated to.")
+        raise RuntimeError(
+            "This database is deprecated and cannot be migrated to."
+        )
 
     def _clear_tables(self) -> None:
         conn, c = self._connect()
@@ -254,8 +259,7 @@ class LocalSQLite(DB):
         return app_id
 
     def insert_feedback_definition(
-        self,
-        feedback_definition: schema.FeedbackDefinition
+        self, feedback_definition: schema.FeedbackDefinition
     ) -> schema.FeedbackDefinitionID:
         """
         Insert a feedback definition into the database.
@@ -514,7 +518,9 @@ class LocalSQLite(DB):
             rows, columns=[description[0] for description in c.description]
         )
 
-        apps = df_records['app_json'].apply(schema.AppDefinition.model_validate_json)
+        apps = df_records['app_json'].apply(
+            schema.AppDefinition.model_validate_json
+        )
         df_records['type'] = apps.apply(lambda row: str(row.root_class))
 
         cost = df_records['cost_json'].map(schema.Cost.model_validate_json)
@@ -593,5 +599,5 @@ class LocalSQLite(DB):
         limit: Optional[int] = None,
         shuffle: bool = False
     ) -> Dict[schema.FeedbackResultStatus, int]:
-        
+
         raise NotImplementedError("This database implementation is deprecated.")

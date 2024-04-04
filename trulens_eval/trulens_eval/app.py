@@ -476,7 +476,9 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     (if not already) and used.
     """
 
-    db: Optional[trulens_eval.database.base.DB] = pydantic.Field(default=None, exclude=True)
+    db: Optional[trulens_eval.database.base.DB] = pydantic.Field(
+        default=None, exclude=True
+    )
     """Database interface.
     
     If this is not provided, a singleton
@@ -772,8 +774,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 else:
                     # Recursively extract content from nested pydantic models
                     return {
-                        k: self._extract_content(v) if
-                        isinstance(v, (pydantic.BaseModel, dict, list)) else v
+                        k:
+                            self._extract_content(v) if
+                            isinstance(v,
+                                       (pydantic.BaseModel, dict, list)) else v
                         for k, v in value.dict().items()
                     }
         elif isinstance(value, dict):
@@ -785,8 +789,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 # Recursively extract content from nested dictionaries
                 return {
                     k:
-                    self._extract_content(v) if isinstance(v,
-                                                           (dict, list)) else v
+                        self._extract_content(v) if isinstance(v, (dict,
+                                                                   list)) else v
                     for k, v in value.items()
                 }
         elif isinstance(value, list):
@@ -1486,4 +1490,3 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving tru.Tru
 # and database.base.DB. Will rebuild each App subclass instead.
-        

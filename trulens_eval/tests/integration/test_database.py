@@ -17,7 +17,9 @@ from trulens_eval import Select
 from trulens_eval import Tru
 from trulens_eval import TruBasicApp
 from trulens_eval.database import orm
+from trulens_eval.database.base import DB
 from trulens_eval.database.exceptions import DatabaseVersionException
+from trulens_eval.database.legacy.sqlite import LocalSQLite
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import downgrade_db
 from trulens_eval.database.migrations import get_revision_history
@@ -25,8 +27,6 @@ from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.database.sqlalchemy import AppsExtractor
 from trulens_eval.database.sqlalchemy import SQLAlchemyDB
 from trulens_eval.database.utils import is_legacy_sqlite
-from trulens_eval.database.base import DB
-from trulens_eval.database.legacy.sqlite import LocalSQLite
 
 
 class TestDbV2Migration(TestCase):

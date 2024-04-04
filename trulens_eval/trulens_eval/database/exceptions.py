@@ -45,8 +45,7 @@ class DatabaseVersionException(Exception):
         return cls(
             "Database schema is behind the expected revision. "
             "Please upgrade it by running `tru.migrate_database()` "
-            "or reset it by running `tru.reset_database()`.",
-            cls.Reason.BEHIND
+            "or reset it by running `tru.reset_database()`.", cls.Reason.BEHIND
         )
 
     @classmethod

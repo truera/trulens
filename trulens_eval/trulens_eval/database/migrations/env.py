@@ -27,7 +27,9 @@ if config.get_main_option("sqlalchemy.url", None) is None:
     )
 
 # Get `trulens.table_prefix` from the environment.
-prefix = config.get_main_option("trulens.table_prefix") or mod_db.DEFAULT_DATABASE_PREFIX
+prefix = config.get_main_option(
+    "trulens.table_prefix"
+) or mod_db.DEFAULT_DATABASE_PREFIX
 
 orm = make_orm_for_prefix(table_prefix=prefix)
 
@@ -35,6 +37,7 @@ orm = make_orm_for_prefix(table_prefix=prefix)
 target_metadata = orm.metadata
 
 url = config.get_main_option("sqlalchemy.url")
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -76,7 +79,7 @@ def run_migrations_online() -> None:
 
     with engine.connect() as connection:
         context.configure(
-            connection=connection, 
+            connection=connection,
             target_metadata=target_metadata,
             version_table=prefix + "alembic_version"
         )

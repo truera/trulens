@@ -26,6 +26,7 @@ st.runtime.legacy_caching.clear_cache()
 
 set_page_config(page_title="App Runner")
 
+
 def remove_selector(
     container,
     type: str,  # either "app" or "record"

@@ -13,7 +13,8 @@ from sqlalchemy import Text
 from sqlalchemy import VARCHAR
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref
-from sqlalchemy.orm import DeclarativeBase, declarative_base
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 
@@ -33,9 +34,10 @@ TYPE_ENUM = Text
 TYPE_ID = VARCHAR(256)
 """Database type for unique IDs."""
 
-class BaseWithTablePrefix(): # to be mixed into DeclarativeBase or new_declarative_base()
+
+class BaseWithTablePrefix(
+):  # to be mixed into DeclarativeBase or new_declarative_base()
     # Only for type hints or isinstance, issubclass checks.
-    
     """ORM base class except with `__tablename__` defined in terms
     of a base name and a prefix.
 
@@ -67,7 +69,9 @@ class BaseWithTablePrefix(): # to be mixed into DeclarativeBase or new_declarati
     def __tablename__(cls) -> str:
         return cls._table_prefix + cls._table_base_name
 
+
 T = TypeVar("T", bound=BaseWithTablePrefix)
+
 
 # NOTE: lru_cache is important here as we don't want to create multiple classes
 # of the same name for the same table name prefix as sqlalchemy will complain
@@ -91,9 +95,11 @@ def new_base(prefix: str) -> Type[T]:
         (base, BaseWithTablePrefix),
         {
             "_table_prefix": prefix,
-            "__abstract__": True # stay abstract until _table_base_name is set in a subclass
-        } 
+            "__abstract__":
+                True  # stay abstract until _table_base_name is set in a subclass
+        }
     )
+
 
 class ORM(abc.ABC, Generic[T]):
     """Abstract definition of a container for ORM classes."""
@@ -219,17 +225,29 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 )
 
             @classmethod
-            def parse(cls, obj: schema.Record, redact_keys: bool = False) -> ORM.Record:
+            def parse(
+                cls,
+                obj: schema.Record,
+                redact_keys: bool = False
+            ) -> ORM.Record:
                 return cls(
                     record_id=obj.record_id,
                     app_id=obj.app_id,
-                    input=json_str_of_obj(obj.main_input, redact_keys=redact_keys),
-                    output=json_str_of_obj(obj.main_output, redact_keys=redact_keys),
+                    input=json_str_of_obj(
+                        obj.main_input, redact_keys=redact_keys
+                    ),
+                    output=json_str_of_obj(
+                        obj.main_output, redact_keys=redact_keys
+                    ),
                     record_json=json_str_of_obj(obj, redact_keys=redact_keys),
                     tags=obj.tags,
                     ts=obj.ts.timestamp(),
-                    cost_json=json_str_of_obj(obj.cost, redact_keys=redact_keys),
-                    perf_json=json_str_of_obj(obj.perf, redact_keys=redact_keys),
+                    cost_json=json_str_of_obj(
+                        obj.cost, redact_keys=redact_keys
+                    ),
+                    perf_json=json_str_of_obj(
+                        obj.perf, redact_keys=redact_keys
+                    ),
                 )
 
         class FeedbackResult(base):
@@ -245,7 +263,9 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             _table_base_name = "feedbacks"
 
-            feedback_result_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            feedback_result_id = Column(
+                TYPE_ID, nullable=False, primary_key=True
+            )
             record_id = Column(TYPE_ID, nullable=False)
             feedback_definition_id = Column(TYPE_ID, nullable=True)
             last_ts = Column(TYPE_TIMESTAMP, nullable=False)
@@ -296,11 +316,14 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     ),
                     result=obj.result,
                     name=obj.name,
-                    cost_json=json_str_of_obj(obj.cost, redact_keys=redact_keys),
+                    cost_json=json_str_of_obj(
+                        obj.cost, redact_keys=redact_keys
+                    ),
                     multi_result=obj.multi_result
                 )
 
     return NewORM
+
 
 # NOTE: lru_cache is important here as we don't want to create multiple classes for
 # the same table name as sqlalchemy will complain.
@@ -323,19 +346,22 @@ def make_base_for_prefix(
     """
 
     if not hasattr(base, "_table_base_name"):
-        raise ValueError("Expected `base` to be a subclass of `BaseWithTablePrefix`.")
+        raise ValueError(
+            "Expected `base` to be a subclass of `BaseWithTablePrefix`."
+        )
 
     # sqlalchemy stores a mapping of class names to the classes we defined in
     # the ORM above. Here we want to create a class with the specific name
     # matching base_type hence use `type` instead of `class SomeName: ...`.
-    return type(
-        base.__name__, (base,), {"_table_prefix": table_prefix}
-    )
+    return type(base.__name__, (base,), {"_table_prefix": table_prefix})
+
 
 # NOTE: lru_cache is important here as we don't want to create multiple classes for
 # the same table name as sqlalchemy will complain.
 @functools.lru_cache
-def make_orm_for_prefix(table_prefix: str = DEFAULT_DATABASE_PREFIX) -> Type[ORM[T]]:
+def make_orm_for_prefix(
+    table_prefix: str = DEFAULT_DATABASE_PREFIX
+) -> Type[ORM[T]]:
     """
     Make a container for ORM classes.
 
@@ -353,7 +379,9 @@ def make_orm_for_prefix(table_prefix: str = DEFAULT_DATABASE_PREFIX) -> Type[ORM
         """ORM classes that have a table name prefix."""
 
         AppDefinition = make_base_for_prefix(orm.AppDefinition, table_prefix)
-        FeedbackDefinition = make_base_for_prefix(orm.FeedbackDefinition, table_prefix)
+        FeedbackDefinition = make_base_for_prefix(
+            orm.FeedbackDefinition, table_prefix
+        )
         Record = make_base_for_prefix(orm.Record, table_prefix)
         FeedbackResult = make_base_for_prefix(orm.FeedbackResult, table_prefix)
 

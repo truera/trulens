@@ -5,8 +5,9 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Type, Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+)
 import warnings
 
 import numpy as np
@@ -107,9 +108,7 @@ class SQLAlchemyDB(DB):
         super().__init__(
             redact_keys=redact_keys,
             table_prefix=table_prefix,
-            orm=mod_orm.make_orm_for_prefix(
-                table_prefix=table_prefix
-            ),
+            orm=mod_orm.make_orm_for_prefix(table_prefix=table_prefix),
             **kwargs
         )
         self._reload_engine()
@@ -130,7 +129,8 @@ class SQLAlchemyDB(DB):
         cls,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
-        database_redact_keys: Optional[bool] = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
+        database_redact_keys: Optional[bool] = mod_db.
+        DEFAULT_DATABASE_REDACT_KEYS,
         database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
         **kwargs: Dict[str, Any]
     ) -> SQLAlchemyDB:
@@ -164,13 +164,11 @@ class SQLAlchemyDB(DB):
         if 'redact_keys' not in kwargs:
             kwargs['redact_keys'] = database_redact_keys
 
-        new_db: DB = SQLAlchemyDB.from_db_url(
-            database_url,
-            **kwargs
-        )
+        new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
-            "%s Tru initialized with db url %s .", text.UNICODE_SQUID, new_db.engine.url
+            "%s Tru initialized with db url %s .", text.UNICODE_SQUID,
+            new_db.engine.url
         )
         if database_redact_keys:
             print(
@@ -217,17 +215,14 @@ class SQLAlchemyDB(DB):
 
         return cls(engine_params=engine_params, **kwargs)
 
-    def migrate_database(
-        self,
-        prior_prefix: Optional[str] = None
-    ):
+    def migrate_database(self, prior_prefix: Optional[str] = None):
         """See [DB.migrate_database][trulens_eval.database.base.DB.migrate_database]."""
 
         try:
             # Expect to get the the behind exception.
             check_db_revision(
                 self.engine,
-                prefix = self.table_prefix,
+                prefix=self.table_prefix,
                 prior_prefix=prior_prefix
             )
 
@@ -247,7 +242,9 @@ class SQLAlchemyDB(DB):
                     ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `tru.migrate_database(backup_db_url="...")`)
                     ### We might try copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first.
                     ### A valid backup would need to be able to copy an old version, not the newest version
-                    upgrade_db(self.engine, revision="head", prefix=self.table_prefix)
+                    upgrade_db(
+                        self.engine, revision="head", prefix=self.table_prefix
+                    )
 
                 self._reload_engine(
                 )  # let sqlalchemy recognize the migrated schema
@@ -265,28 +262,40 @@ class SQLAlchemyDB(DB):
 
                 prior_prefix = e.prior_prefix
 
-                logger.warning("Renaming tables from prefix \"%s\" to \"%s\".", prior_prefix, self.table_prefix)
+                logger.warning(
+                    "Renaming tables from prefix \"%s\" to \"%s\".",
+                    prior_prefix, self.table_prefix
+                )
                 # logger.warning("Please ignore these warnings: \"SAWarning: This declarative base already contains...\"")
 
                 with self.engine.connect() as c:
-                    for table_name in ['alembic_version'] + [c._table_base_name for c in self.orm.registry.values() if hasattr(c, "_table_base_name")]:
+                    for table_name in ['alembic_version'
+                                      ] + [c._table_base_name
+                                           for c in self.orm.registry.values()
+                                           if hasattr(c, "_table_base_name")]:
                         old_version_table = f"{prior_prefix}{table_name}"
                         new_version_table = f"{self.table_prefix}{table_name}"
-    
-                        logger.warning("  %s -> %s", old_version_table, new_version_table)
 
-                        c.execute(sql_text("""ALTER TABLE %s RENAME TO %s;""" % (old_version_table, new_version_table)))
+                        logger.warning(
+                            "  %s -> %s", old_version_table, new_version_table
+                        )
+
+                        c.execute(
+                            sql_text(
+                                """ALTER TABLE %s RENAME TO %s;""" %
+                                (old_version_table, new_version_table)
+                            )
+                        )
 
             else:
                 # TODO: better message here for unhandled cases?
                 raise e
 
-
     def reset_database(self):
         """See [DB.reset_database][trulens_eval.database.base.DB.reset_database]."""
 
         #meta = MetaData()
-        meta = self.orm.metadata# 
+        meta = self.orm.metadata  #
         meta.reflect(bind=self.engine)
         meta.drop_all(bind=self.engine)
 
@@ -298,8 +307,8 @@ class SQLAlchemyDB(DB):
 
         _rec = self.orm.Record.parse(record, redact_keys=self.redact_keys)
         with self.session.begin() as session:
-            if session.query(self.orm.Record).filter_by(record_id=record.record_id
-                                                  ).first():
+            if session.query(self.orm.Record
+                            ).filter_by(record_id=record.record_id).first():
                 session.merge(_rec)  # update existing
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
@@ -312,8 +321,8 @@ class SQLAlchemyDB(DB):
         """See [DB.get_app][trulens_eval.database.base.DB.get_app]."""
 
         with self.session.begin() as session:
-            if _app := session.query(self.orm.AppDefinition).filter_by(app_id=app_id
-                                                                 ).first():
+            if _app := session.query(self.orm.AppDefinition
+                                    ).filter_by(app_id=app_id).first():
                 return json.loads(_app.app_json)
 
     def get_apps(self) -> Iterable[JSON]:
@@ -347,7 +356,7 @@ class SQLAlchemyDB(DB):
         self, feedback_definition: schema.FeedbackDefinition
     ) -> schema.FeedbackDefinitionID:
         """See [DB.insert_feedback_definition][trulens_eval.database.base.DB.insert_feedback_definition]."""
-        
+
         # TODO: thread safety
 
         with self.session.begin() as session:
@@ -362,7 +371,8 @@ class SQLAlchemyDB(DB):
                 session.merge(_fb_def)  # .add was not thread safe
 
             logger.info(
-                "%s added feedback definition %s", UNICODE_CHECK, _fb_def.feedback_definition_id
+                "%s added feedback definition %s", UNICODE_CHECK,
+                _fb_def.feedback_definition_id
             )
 
             return _fb_def.feedback_definition_id
@@ -418,8 +428,8 @@ class SQLAlchemyDB(DB):
                 icon = "???"
 
             logger.info(
-                "%s feedback result %s %s %s",
-                icon, _feedback_result.name, status.name, _feedback_result.feedback_result_id
+                "%s feedback result %s %s %s", icon, _feedback_result.name,
+                status.name, _feedback_result.feedback_result_id
             )
 
             return _feedback_result.feedback_result_id
@@ -523,7 +533,7 @@ class SQLAlchemyDB(DB):
         app_ids: Optional[List[str]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
-        
+
         with self.session.begin() as session:
             stmt = select(self.orm.AppDefinition)
             if app_ids:
@@ -714,8 +724,12 @@ class AppsExtractor:
                         self.feedback_columns.add(_res.name)
 
                 row = {
-                    **{k: np.mean(v) for k, v in values.items()},
-                    **{k + "_calls": flatten(v) for k, v in calls.items()},
+                    **{
+                        k: np.mean(v) for k, v in values.items()
+                    },
+                    **{
+                        k + "_calls": flatten(v) for k, v in calls.items()
+                    },
                 }
 
                 for col in self.rec_cols:
