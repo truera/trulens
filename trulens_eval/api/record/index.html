@@ -634,7 +634,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Langchain Quickstart
+    📓 LangChain Quickstart
   </span>
   
 
@@ -655,7 +655,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Llama-Index Quickstart
+    📓 LlamaIndex Quickstart
   </span>
   
 
@@ -746,6 +746,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -766,23 +770,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting_started/core_concepts/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Core Concepts
+    ⭐ Core Concepts
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
-            Core Concepts
+            ⭐ Core Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -795,7 +809,7 @@
         
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -816,7 +830,7 @@
         
   
   <span class="md-ellipsis">
-    RAG Triad
+    ⟁ RAG Triad
   </span>
   
 
@@ -837,7 +851,7 @@
         
   
   <span class="md-ellipsis">
-    Honest, Harmless, Helpful Evals
+    🏆 Honest, Harmless, Helpful Evals
   </span>
   
 
@@ -954,7 +968,7 @@
               
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -970,7 +984,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Functions
+            ☔ Feedback Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1705,7 +1719,7 @@
         
   
   <span class="md-ellipsis">
-    📓 🦙 Llama-Index Integration
+    📓 🦙 LlamaIndex Integration
   </span>
   
 
@@ -3130,7 +3144,7 @@
         
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -4579,8 +4593,12 @@
             Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.SerialModel" href="../utils/serial/#trulens_eval.utils.serial.SerialModel">SerialModel</a></code>, <code><a class="autorefs autorefs-external" title="typing.Hashable" href="https://docs.python.org/3/library/typing.html#typing.Hashable">Hashable</a></code></p>
 
   
-      <p>Each instrumented method call produces one of these "record" instances.</p>
+      <p>The record of a single main method call.</p>
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>This class will be renamed to <code>Trace</code> in the future.</p>
+</details>
 
   
 
@@ -4966,7 +4984,7 @@ be filled in when read from database. Also, will not fill in when using
 
 
 <a href="#trulens_eval.schema.Record.layout_calls_as_app" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">layout_calls_as_app</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">layout_calls_as_app</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="munch.Munch">Munch</span></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">

@@ -636,7 +636,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Langchain Quickstart
+    📓 LangChain Quickstart
   </span>
   
 
@@ -657,7 +657,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Llama-Index Quickstart
+    📓 LlamaIndex Quickstart
   </span>
   
 
@@ -748,6 +748,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -768,23 +772,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting_started/core_concepts/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Core Concepts
+    ⭐ Core Concepts
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
-            Core Concepts
+            ⭐ Core Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -797,7 +811,7 @@
         
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -818,7 +832,7 @@
         
   
   <span class="md-ellipsis">
-    RAG Triad
+    ⟁ RAG Triad
   </span>
   
 
@@ -839,7 +853,7 @@
         
   
   <span class="md-ellipsis">
-    Honest, Harmless, Helpful Evals
+    🏆 Honest, Harmless, Helpful Evals
   </span>
   
 
@@ -964,7 +978,7 @@
               
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -980,7 +994,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Functions
+            ☔ Feedback Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1735,7 +1749,7 @@
         
   
   <span class="md-ellipsis">
-    📓 🦙 Llama-Index Integration
+    📓 🦙 LlamaIndex Integration
   </span>
   
 
@@ -2572,7 +2586,7 @@
         
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -3445,36 +3459,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#generation-based-feedback-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generation-based feedback implementations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#classification-based-providers" class="md-nav__link">
     <span class="md-ellipsis">
       Classification-based Providers
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#generation-based-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      Generation-based Providers
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embedding-based-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      Embedding-based Providers
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provider-combinations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Provider Combinations
     </span>
   </a>
   
@@ -3499,44 +3495,27 @@
 
 
 <h1 id="feedback-implementations">Feedback Implementations<a class="headerlink" href="#feedback-implementations" title="Permanent link">&para;</a></h1>
-<p>Feedback functions are implemented in collections in instances of the
-<a class="autorefs autorefs-internal" href="../../api/provider/#trulens_eval.feedback.provider.base.Provider">Provider</a> class. There are three
-categories of such providers as well as combination providers that make use of
-one or more of these providers to offer additional feedback functions based
-capabilities of the constituent providers.</p>
+<p>TruLens constructs feedback functions by a <a class="autorefs autorefs-internal" href="../../api/provider/#trulens_eval.feedback.provider.base.Provider"><strong><em>feedback provider</em></strong></a>, and <a href="./"><strong><em>feedback implementation</em></strong></a>.</p>
+<p>This page documents the feedback implementations available in <em>TruLens</em>.</p>
+<p>Feedback functions are implemented in instances of the <a class="autorefs autorefs-internal" href="../../api/provider/#trulens_eval.feedback.provider.base.Provider">Provider</a> class. They are made up of carefully constructed prompts and custom logic tailored to perform a particular evaluation task.</p>
+<h2 id="generation-based-feedback-implementations">Generation-based feedback implementations<a class="headerlink" href="#generation-based-feedback-implementations" title="Permanent link">&para;</a></h2>
+<p>The implementation of generation-based feedback functions can consist of:</p>
+<ol>
+<li>Instructions to a generative model (LLM) on how to perform a particular evaluation task. These instructions are sent to the LLM as a system message, and often consist of a rubric.</li>
+<li>A template that passes the arguments of the feedback function to the LLM. This template containing the arguments of the feedback function is sent to the LLM as a user message.</li>
+<li>A method for parsing, validating, and normalizing the output of the LLM, accomplished by <a class="autorefs autorefs-internal" href="stock/#trulens_eval.feedback.provider.base.LLMProvider.generate_score"><code>generate_score</code></a>.</li>
+<li>Custom Logic to perform data preprocessing tasks before the LLM is called for evaluation.</li>
+<li>Additional logic to perform postprocessing tasks using the LLM output.</li>
+</ol>
+<p><em>TruLens</em> can also provide reasons using <a href="https://arxiv.org/abs/2201.11903">chain-of-thought methodology</a>. Such implementations are denoted by method names ending in <code>_with_cot_reasons</code>. These implementations illicit the LLM to provide reasons for its score, accomplished by <a class="autorefs autorefs-internal" href="stock/#trulens_eval.feedback.provider.base.LLMProvider.generate_score_and_reasons"><code>generate_score_and_reasons</code></a>.</p>
 <h2 id="classification-based-providers">Classification-based Providers<a class="headerlink" href="#classification-based-providers" title="Permanent link">&para;</a></h2>
-<p>Some feedback functions rely on classification typically tailor made for task,
-unlike LLM models.</p>
-<ul>
-<li><a class="autorefs autorefs-internal" href="../../api/provider/huggingface/#trulens_eval.feedback.provider.hugs.Huggingface">Huggingface provider</a>
-  containing a variety of feedback functions.</li>
-<li><a class="autorefs autorefs-internal" href="../../api/provider/openai/#trulens_eval.feedback.provider.openai.OpenAI">OpenAI provider</a> (and
-  subclasses) features moderation feedback functions.</li>
-</ul>
-<h2 id="generation-based-providers">Generation-based Providers<a class="headerlink" href="#generation-based-providers" title="Permanent link">&para;</a></h2>
-<p>Providers which use large language models for feedback evaluation:</p>
-<ul>
-<li><a class="autorefs autorefs-internal" href="../../api/provider/openai/#trulens_eval.feedback.provider.openai.OpenAI">OpenAI provider</a> or
-  <a class="autorefs autorefs-internal" href="../../api/provider/openai/azureopenai/#trulens_eval.feedback.provider.openai.AzureOpenAI">AzureOpenAI provider</a></li>
-<li><a class="autorefs autorefs-internal" href="../../api/provider/bedrock/#trulens_eval.feedback.provider.bedrock.Bedrock">Bedrock provider</a></li>
-<li><a class="autorefs autorefs-internal" href="../../api/provider/litellm/#trulens_eval.feedback.provider.litellm.LiteLLM">LiteLLM provider</a></li>
-<li><a class="autorefs autorefs-internal" href="../../api/provider/langchain/#trulens_eval.feedback.provider.langchain.Langchain">Langchain provider</a></li>
-</ul>
-<p>Feedback functions in common across these providers are in their abstract class
-<a class="autorefs autorefs-internal" href="../../api/provider/llmprovider/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</a>.</p>
-<h2 id="embedding-based-providers">Embedding-based Providers<a class="headerlink" href="#embedding-based-providers" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a class="autorefs autorefs-internal" href="../../api/providers/#trulens_eval.feedback.embeddings.Embeddings">Embeddings</a></li>
-</ul>
-<h2 id="provider-combinations">Provider Combinations<a class="headerlink" href="#provider-combinations" title="Permanent link">&para;</a></h2>
-<ul>
-<li>
-<p><a class="autorefs autorefs-internal" href="../../api/providers/#trulens_eval.feedback.groundedness.Groundedness">Groundedness</a></p>
-</li>
-<li>
-<p><a class="autorefs autorefs-internal" href="../../api/providers/#trulens_eval.feedback.groundtruth.GroundTruthAgreement">Groundtruth</a></p>
-</li>
-</ul>
+<p>Some feedback functions rely on classification models, typically tailor made for task, unlike LLM models.</p>
+<p>This implementation consists of:</p>
+<ol>
+<li>A call to a specific classification model useful for accomplishing a given evaluation task.</li>
+<li>Custom Logic to perform data preprocessing tasks before the classification model is called for evaluation.</li>
+<li>Additional logic to perform postprocessing tasks using the classification model output.</li>
+</ol>
 
 
 

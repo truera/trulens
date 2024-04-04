@@ -636,7 +636,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Langchain Quickstart
+    📓 LangChain Quickstart
   </span>
   
 
@@ -657,7 +657,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Llama-Index Quickstart
+    📓 LlamaIndex Quickstart
   </span>
   
 
@@ -748,6 +748,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -768,23 +772,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting_started/core_concepts/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Core Concepts
+    ⭐ Core Concepts
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
-            Core Concepts
+            ⭐ Core Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -797,7 +811,7 @@
         
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -818,7 +832,7 @@
         
   
   <span class="md-ellipsis">
-    RAG Triad
+    ⟁ RAG Triad
   </span>
   
 
@@ -839,7 +853,7 @@
         
   
   <span class="md-ellipsis">
-    Honest, Harmless, Helpful Evals
+    🏆 Honest, Harmless, Helpful Evals
   </span>
   
 
@@ -966,7 +980,7 @@
               
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -982,7 +996,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Functions
+            ☔ Feedback Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1735,7 +1749,7 @@
         
   
   <span class="md-ellipsis">
-    📓 🦙 Llama-Index Integration
+    📓 🦙 LlamaIndex Integration
   </span>
   
 
@@ -2572,7 +2586,7 @@
         
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -3438,6 +3452,32 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-do-you-need-feedback-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why do you need feedback functions?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-a-feedback-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is a feedback function?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -3455,21 +3495,26 @@
 
 
 <h1 id="evaluation-using-feedback-functions">Evaluation using Feedback Functions<a class="headerlink" href="#evaluation-using-feedback-functions" title="Permanent link">&para;</a></h1>
-<p>Measuring the performance of LLM apps is a critical step in the path from
-development to production. You would not move a traditional ML system to
-production without first gaining confidence by measuring its accuracy on a test
-set.</p>
-<p>However unlike traditional machine learning, user feedback or any "ground truth"
-is largely unavailable. Without ground truth on which to compute metrics on our
-LLM apps, we can turn to feedback functions as a way to compute metrics for LLM
-apps.</p>
-<p>Feedback functions, analogous to labeling functions, provide a programmatic
-method for generating evaluations on an application run. In our view, this
-method of evaluations is far more useful than general benchmarks because they
-measures the performance of <strong>your app, on your data, for your users</strong>.</p>
-<p>Last, feedback functions are flexible. They can be implemented with any model on
-the back-end. This includes rule-based systems, smaller models tailored to a
-particular task, or carefully prompted large language models.</p>
+<h2 id="why-do-you-need-feedback-functions">Why do you need feedback functions?<a class="headerlink" href="#why-do-you-need-feedback-functions" title="Permanent link">&para;</a></h2>
+<p>Measuring the performance of LLM apps is a critical step in the path from development to production. You would not move a traditional ML system to production without first gaining confidence by measuring its accuracy on a representative test set.</p>
+<p>However unlike in traditional machine learning, ground truth is sparse and often entirely unavailable.</p>
+<p>Without ground truth on which to compute metrics on our LLM apps, feedback functions can be used to compute metrics for LLM applications.</p>
+<h2 id="what-is-a-feedback-function">What is a feedback function?<a class="headerlink" href="#what-is-a-feedback-function" title="Permanent link">&para;</a></h2>
+<p>Feedback functions, analogous to <a href="https://arxiv.org/abs/2101.07138">labeling functions</a>, provide a programmatic method for generating evaluations on an application run. In our view, this method of evaluations is far more useful than general benchmarks because they
+measure the performance of <strong>your app, on your data, for your users</strong>.</p>
+<div class="admonition info">
+<p class="admonition-title">Important Concept</p>
+<p>TruLens constructs feedback functions by combining more general models, known as the <a class="autorefs autorefs-internal" href="../../api/provider/#trulens_eval.feedback.provider.base.Provider"><strong><em>feedback provider</em></strong></a>, and <a href="../feedback_implementations/"><strong><em>feedback implementation</em></strong></a> made up of carefully constructed prompts and custom logic tailored to perform a particular evaluation task.</p>
+</div>
+<p>This construction is <strong>composable and extensible</strong>.</p>
+<p><strong>Composable</strong> meaning that the user can choose to combine any feedback provider with any feedback implementation.</p>
+<p><strong>Extensible</strong> meaning that the user can extend a feedback provider with custom feedback implementations of the user's choosing.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>In a high stakes domain requiring evaluating long chunks of context, the user may choose to use a more expensive SOTA model.</p>
+<p>In lower stakes, higher volume scenarios, the user may choose to use a smaller, cheaper model as the provider.</p>
+<p>In either case, any feedback provider can be combined with a <em>TruLens</em> feedback implementation to ultimately compose the feedback function.</p>
+</div>
 
 
 

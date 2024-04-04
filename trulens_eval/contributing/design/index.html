@@ -634,7 +634,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Langchain Quickstart
+    📓 LangChain Quickstart
   </span>
   
 
@@ -655,7 +655,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Llama-Index Quickstart
+    📓 LlamaIndex Quickstart
   </span>
   
 
@@ -746,6 +746,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -766,23 +770,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting_started/core_concepts/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Core Concepts
+    ⭐ Core Concepts
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
-            Core Concepts
+            ⭐ Core Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -795,7 +809,7 @@
         
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -816,7 +830,7 @@
         
   
   <span class="md-ellipsis">
-    RAG Triad
+    ⟁ RAG Triad
   </span>
   
 
@@ -837,7 +851,7 @@
         
   
   <span class="md-ellipsis">
-    Honest, Harmless, Helpful Evals
+    🏆 Honest, Harmless, Helpful Evals
   </span>
   
 
@@ -954,7 +968,7 @@
               
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -970,7 +984,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Functions
+            ☔ Feedback Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1705,7 +1719,7 @@
         
   
   <span class="md-ellipsis">
-    📓 🦙 Llama-Index Integration
+    📓 🦙 LlamaIndex Integration
   </span>
   
 
@@ -2542,7 +2556,7 @@
         
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -3984,7 +3998,7 @@ function <a class="autorefs autorefs-internal" href="../../api/utils/json/#trule
 <p>Classes inheriting <a class="autorefs autorefs-external" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel">BaseModel</a> come with serialization
 to/from json in the form of <a class="autorefs autorefs-external" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel.model_dump">model_dump</a> and
 <a class="autorefs autorefs-external" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel.model_validate">model_validate</a>. We do not use the
-serialization to json part of this capability as a lot of langchain components
+serialization to json part of this capability as a lot of <em>LangChain</em> components
 are tripped to fail it with a "will not serialize" message. However, we use make
 use of pydantic <code>fields</code> to enumerate components of an object ourselves saving
 us from having to filter out irrelevant internals that are not declared as
@@ -4016,7 +4030,7 @@ use/serialize them using their field information.</p>
 various classes. </p>
 <h4 id="classsystem-specific_1">class/system specific<a class="headerlink" href="#classsystem-specific_1" title="Permanent link">&para;</a></h4>
 <h5 id="pydantic-langchain_1">pydantic (langchain)<a class="headerlink" href="#pydantic-langchain_1" title="Permanent link">&para;</a></h5>
-<p>Most if not all langchain components use pydantic which imposes some
+<p>Most if not all <em>LangChain</em> components use pydantic which imposes some
 restrictions but also provides some utilities. Classes inheriting
 <a class="autorefs autorefs-external" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel">BaseModel</a> do not allow defining new attributes but
 existing attributes including those provided by pydantic itself can be
@@ -4137,7 +4151,7 @@ functions that seem to not involve <a class="autorefs autorefs-external" href="h
 <ul>
 <li>
 <p>Some apps cannot be serialized/jsonized. Sequential app is an example. This is
-  a limitation of langchain itself.</p>
+  a limitation of <em>LangChain</em> itself.</p>
 </li>
 <li>
 <p>Instrumentation relies on CPython specifics, making heavy use of the
@@ -4181,7 +4195,7 @@ stack for specific frames:</p>
 <h4 id="alternatives_2">Alternatives<a class="headerlink" href="#alternatives_2" title="Permanent link">&para;</a></h4>
 <ul>
 <li>
-<p><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/contextvars.html#module-contextvars">contextvars</a> -- langchain uses these to manage contexts such as those used
+<p><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/contextvars.html#module-contextvars">contextvars</a> -- <em>LangChain</em> uses these to manage contexts such as those used
   for instrumenting/tracking LLM usage. These can be used to manage call stack
   information like we do. The drawback is that these are not threadsafe or at
   least need instrumenting thread creation. We have to do a similar thing by

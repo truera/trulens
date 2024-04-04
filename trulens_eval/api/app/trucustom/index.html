@@ -634,7 +634,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Langchain Quickstart
+    📓 LangChain Quickstart
   </span>
   
 
@@ -655,7 +655,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Llama-Index Quickstart
+    📓 LlamaIndex Quickstart
   </span>
   
 
@@ -746,6 +746,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -766,23 +770,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../getting_started/core_concepts/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Core Concepts
+    ⭐ Core Concepts
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
-            Core Concepts
+            ⭐ Core Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -795,7 +809,7 @@
         
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -816,7 +830,7 @@
         
   
   <span class="md-ellipsis">
-    RAG Triad
+    ⟁ RAG Triad
   </span>
   
 
@@ -837,7 +851,7 @@
         
   
   <span class="md-ellipsis">
-    Honest, Harmless, Helpful Evals
+    🏆 Honest, Harmless, Helpful Evals
   </span>
   
 
@@ -954,7 +968,7 @@
               
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -970,7 +984,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Functions
+            ☔ Feedback Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1705,7 +1719,7 @@
         
   
   <span class="md-ellipsis">
-    📓 🦙 Llama-Index Integration
+    📓 🦙 LlamaIndex Integration
   </span>
   
 
@@ -3081,7 +3095,7 @@
         
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -4479,11 +4493,11 @@
             Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.app.App" href="../#trulens_eval.app.App">App</a></code></p>
 
   
-      <p>Instantiates a Custom App that can be tracked as long as methods are decorated with @instrument.</p>
-
-<details class="example" open>
-  <summary>Example</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">instrument</span>
+      <p>This recorder is the most flexible option for instrumenting an application, and can be used to instrument any custom python class.</p>
+<p>Track any custom app using methods decorated with <code>@instrument</code>, or whose methods are instrumented after the fact by <code>instrument.method</code>.</p>
+<div class="admonition example">
+<p class="admonition-title">Using the <code>@instrument</code> decorator</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">instrument</span>
 
 <span class="k">class</span> <span class="nc">CustomApp</span><span class="p">:</span>
 
@@ -4507,32 +4521,71 @@
         <span class="k">return</span> <span class="n">output</span>
 
 <span class="n">ca</span> <span class="o">=</span> <span class="n">CustomApp</span><span class="p">()</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruCustomApp</span>
-<span class="c1"># f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions</span>
-<span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruCustomApp</span><span class="p">(</span><span class="n">ca</span><span class="p">,</span> 
+</code></pre></div>
+</div>
+<div class="admonition example">
+<p class="admonition-title">Using <code>instrument.method</code></p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">instrument</span>
+
+<span class="k">class</span> <span class="nc">CustomApp</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span> <span class="o">=</span> <span class="n">CustomRetriever</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">CustomLLM</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">template</span> <span class="o">=</span> <span class="n">CustomTemplate</span><span class="p">(</span>
+            <span class="s2">&quot;The answer to </span><span class="si">{question}</span><span class="s2"> is probably </span><span class="si">{answer}</span><span class="s2"> or something ...&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">retrieve_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span><span class="o">.</span><span class="n">retrieve_chunks</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">respond_to_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">):</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_chunks</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">question</span><span class="o">=</span><span class="nb">input</span><span class="p">,</span> <span class="n">answer</span><span class="o">=</span><span class="n">answer</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">output</span>
+
+<span class="n">custom_app</span> <span class="o">=</span> <span class="n">CustomApp</span><span class="p">()</span>
+
+<span class="n">instrument</span><span class="o">.</span><span class="n">method</span><span class="p">(</span><span class="n">CustomApp</span><span class="p">,</span> <span class="s2">&quot;retrieve_chunks&quot;</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<p>Once a method is tracked, its arguments and returns are available to be used in feedback functions. This is done by using the <code>Select</code> class to select the arguments and returns of the method.</p>
+<p>Doing so follows the structure: </p>
+<ul>
+<li>
+<p>For args: <code>Select.RecordCalls.&lt;method_name&gt;.args.&lt;arg_name&gt;</code></p>
+</li>
+<li>
+<p>For returns: <code>Select.RecordCalls.&lt;method_name&gt;.rets.&lt;ret_name&gt;</code></p>
+</li>
+</ul>
+<div class="admonition example">
+<p class="admonition-title">Defining feedback functions with instrumented methods</p>
+<div class="highlight"><pre><span></span><code><span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Context Relevance&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve_chunks</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">query</span><span class="p">)</span> <span class="c1"># refers to the query arg of CustomApp&#39;s retrieve_chunks method</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve_chunks</span><span class="o">.</span><span class="n">rets</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="p">)</span>
+</code></pre></div>
+</div>
+<p>Last, the <code>TruCustomApp</code> recorder can wrap our custom application, and provide logging and evaluation upon its use.</p>
+<div class="admonition example">
+<p class="admonition-title">Using the <code>TruCustomApp</code> recorder</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruCustomApp</span>
+
+<span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruCustomApp</span><span class="p">(</span><span class="n">custom_app</span><span class="p">,</span> 
     <span class="n">app_id</span><span class="o">=</span><span class="s2">&quot;Custom Application v1&quot;</span><span class="p">,</span>
-    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">,</span> <span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_qs_relevance</span><span class="p">])</span>
+    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_context_relevance</span><span class="p">])</span>
 
-<span class="n">question</span> <span class="o">=</span> <span class="s2">&quot;What is the capital of Indonesia?&quot;</span>
-
-<span class="c1"># Normal Usage:</span>
-<span class="n">response_normal</span> <span class="o">=</span> <span class="n">ca</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
-
-<span class="c1"># Instrumented Usage:</span>
 <span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">ca</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
-
-<span class="n">tru_record</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">records</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-<span class="c1"># To add record metadata </span>
-<span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">recording</span><span class="o">.</span><span class="n">record_metadata</span><span class="o">=</span><span class="s2">&quot;this is metadata for all records in this context that follow this line&quot;</span>
-    <span class="n">ca</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">(</span><span class="s2">&quot;What is llama 2?&quot;</span><span class="p">)</span>
-    <span class="n">recording</span><span class="o">.</span><span class="n">record_metadata</span><span class="o">=</span><span class="s2">&quot;this is different metadata for all records in this context that follow this line&quot;</span>
-    <span class="n">ca</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">(</span><span class="s2">&quot;Where do I download llama 2?&quot;</span><span class="p">)</span>
+    <span class="n">custom_app</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">(</span><span class="s2">&quot;What is the capital of Indonesia?&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p>See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
-</details>
+</div>
+
 
 
   <table>

@@ -22,7 +22,7 @@
     
     
       
-        <title>🦜️🔗 Langchain - 🦑 TruLens</title>
+        <title>🦜️🔗 LangChain - 🦑 TruLens</title>
       
     
     
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              🦜️🔗 Langchain
+              🦜️🔗 LangChain
             
           </span>
         </div>
@@ -634,7 +634,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Langchain Quickstart
+    📓 LangChain Quickstart
   </span>
   
 
@@ -655,7 +655,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Llama-Index Quickstart
+    📓 LlamaIndex Quickstart
   </span>
   
 
@@ -746,6 +746,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -766,23 +770,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../getting_started/core_concepts/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Core Concepts
+    ⭐ Core Concepts
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
-            Core Concepts
+            ⭐ Core Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -795,7 +809,7 @@
         
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -816,7 +830,7 @@
         
   
   <span class="md-ellipsis">
-    RAG Triad
+    ⟁ RAG Triad
   </span>
   
 
@@ -837,7 +851,7 @@
         
   
   <span class="md-ellipsis">
-    Honest, Harmless, Helpful Evals
+    🏆 Honest, Harmless, Helpful Evals
   </span>
   
 
@@ -954,7 +968,7 @@
               
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -970,7 +984,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Functions
+            ☔ Feedback Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1705,7 +1719,7 @@
         
   
   <span class="md-ellipsis">
-    📓 🦙 Llama-Index Integration
+    📓 🦙 LlamaIndex Integration
   </span>
   
 
@@ -2564,7 +2578,7 @@
           
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -2575,7 +2589,7 @@
         
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -3506,13 +3520,13 @@
   
 
 
-<h1 id="langchain-provider">🦜️🔗 Langchain Provider<a class="headerlink" href="#langchain-provider" title="Permanent link">&para;</a></h1>
-<p>Below is how you can instantiate a <a href="https://python.langchain.com/docs/modules/model_io/llms/">Langchain LLM</a> as a provider.</p>
+<h1 id="langchain-provider">🦜️🔗 <em>LangChain</em> Provider<a class="headerlink" href="#langchain-provider" title="Permanent link">&para;</a></h1>
+<p>Below is how you can instantiate a <a href="https://python.langchain.com/docs/modules/model_io/llms/"><em>LangChain</em> LLM</a> as a provider.</p>
 <p>All feedback functions listed in the base <a class="autorefs autorefs-internal" href="../llmprovider/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider
-class</a> can be run with the Langchain Provider.</p>
+class</a> can be run with the <em>LangChain</em> Provider.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Langchain provider cannot be used in <code>deferred</code> mode due to inconsistent serialization capabilities of langchain apps.</p>
+<p><em>LangChain</em> provider cannot be used in <code>deferred</code> mode due to inconsistent serialization capabilities of <em>LangChain</em> apps.</p>
 </div>
 
 
@@ -3532,18 +3546,18 @@ class</a> can be run with the Langchain Provider.</p>
             Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.base.LLMProvider" href="../llmprovider/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</a></code></p>
 
   
-      <p>Out of the box feedback functions using Langchain LLMs and ChatModels</p>
-<p>Create a Langchain Provider with out of the box feedback functions.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.langchain</span> <span class="kn">import</span> <span class="n">Langchain</span>
+      <p>Out of the box feedback functions using LangChain LLMs and ChatModels</p>
+<p>Create a LangChain Provider with out of the box feedback functions.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.langchain</span> <span class="kn">import</span> <span class="n">Langchain</span>
 <span class="kn">from</span> <span class="nn">langchain_community.llms</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 
 <span class="n">gpt3_llm</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-3.5-turbo-instruct&quot;</span><span class="p">)</span>
 <span class="n">langchain_provider</span> <span class="o">=</span> <span class="n">Langchain</span><span class="p">(</span><span class="n">chain</span> <span class="o">=</span> <span class="n">gpt3_llm</span><span class="p">)</span>
 </code></pre></div>
-</details>
+</div>
+
 
 
   <table>
@@ -3558,7 +3572,7 @@ class</a> can be run with the Langchain Provider.</p>
           <td><code>chain</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>Langchain LLM.</p>
+              <p>LangChain LLM.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">

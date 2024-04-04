@@ -634,7 +634,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Langchain Quickstart
+    📓 LangChain Quickstart
   </span>
   
 
@@ -655,7 +655,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Llama-Index Quickstart
+    📓 LlamaIndex Quickstart
   </span>
   
 
@@ -746,6 +746,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -766,23 +770,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../getting_started/core_concepts/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Core Concepts
+    ⭐ Core Concepts
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
-            Core Concepts
+            ⭐ Core Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -795,7 +809,7 @@
         
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -816,7 +830,7 @@
         
   
   <span class="md-ellipsis">
-    RAG Triad
+    ⟁ RAG Triad
   </span>
   
 
@@ -837,7 +851,7 @@
         
   
   <span class="md-ellipsis">
-    Honest, Harmless, Helpful Evals
+    🏆 Honest, Harmless, Helpful Evals
   </span>
   
 
@@ -954,7 +968,7 @@
               
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -970,7 +984,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Functions
+            ☔ Feedback Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1705,7 +1719,7 @@
         
   
   <span class="md-ellipsis">
-    📓 🦙 Llama-Index Integration
+    📓 🦙 LlamaIndex Integration
   </span>
   
 
@@ -3054,7 +3068,7 @@
         
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -4425,14 +4439,11 @@
             Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.app.App" href="../#trulens_eval.app.App">App</a></code></p>
 
   
-      <p>LlamaIndex app recorder.</p>
-<p>Further information about LlamaIndex apps can be found on the <a href="https://docs.llamaindex.ai/en/stable/">🦙 LlamaIndex
-Documentation</a> page.</p>
-
-<details class="example" open>
-  <summary>Example</summary>
-  <p>LLama-Index code: (see <a href="https://gpt-index.readthedocs.io/en/stable/getting_started/starter_example.html">LLama Index
-Quickstart</a>)</p>
+      <p>Recorder for LlamaIndex applications.</p>
+<p>This recorder is designed for LlamaIndex apps, providing a way to instrument, log, and evaluate their behavior.</p>
+<div class="admonition example">
+<p class="admonition-title">Creating a LlamaIndex application</p>
+<p>Consider an example LlamaIndex application. For the complete code example, see <a href="https://docs.llamaindex.ai/en/stable/getting_started/starter_example.html">LlamaIndex Quickstart</a>.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">SimpleDirectoryReader</span>
 
 <span class="n">documents</span> <span class="o">=</span> <span class="n">SimpleDirectoryReader</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
@@ -4440,7 +4451,30 @@ Quickstart</a>)</p>
 
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">()</span>
 </code></pre></div>
-<p>Trulens Eval Code:
+</div>
+<p>Feedback functions can utilize the specific context produced by the application's retriever. This is achieved using the <code>select_context</code> method, which then can be used by a feedback selector, such as <code>on(context)</code>.</p>
+<div class="admonition example">
+<p class="admonition-title">Defining a feedback function</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># Select context to be used in feedback.</span>
+<span class="kn">from</span> <span class="nn">trulens_eval.app</span> <span class="kn">import</span> <span class="n">App</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">App</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">rag_chain</span><span class="p">)</span>
+
+<span class="c1"># Use feedback</span>
+<span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_context_reasons</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>  <span class="c1"># Refers to context defined from `select_context`</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+</div>
+<p>The application can be wrapped in a <code>TruLlama</code> recorder to provide logging and evaluation upon the application's use.</p>
+<div class="admonition example">
+<p class="admonition-title">Using the <code>TruLlama</code> recorder</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">TruLlama</span>
 <span class="c1"># f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions</span>
 <span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">,</span>
@@ -4449,18 +4483,11 @@ Quickstart</a>)</p>
 
 <span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
     <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;What is llama index?&quot;</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<p>Feedback functions can utilize the specific context produced by the application's query engine. This is achieved using the <code>select_context</code> method, which then can be used by a feedback selector, such as <code>on(context)</code>.</p>
+<p>Further information about LlamaIndex apps can be found on the <a href="https://docs.llamaindex.ai/en/stable/">🦙 LlamaIndex Documentation</a> page.</p>
 
-<span class="n">tru_record</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">records</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-<span class="c1"># To add record metadata </span>
-<span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">recording</span><span class="o">.</span><span class="n">record_metadata</span><span class="o">=</span><span class="s2">&quot;this is metadata for all records in this context that follow this line&quot;</span>
-    <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;What is llama index?&quot;</span><span class="p">)</span>
-    <span class="n">recording</span><span class="o">.</span><span class="n">record_metadata</span><span class="o">=</span><span class="s2">&quot;this is different metadata for all records in this context that follow this line&quot;</span>
-    <span class="n">query_engine</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;Where do I download llama index?&quot;</span><span class="p">)</span>
-</code></pre></div></p>
-<p>See <a href="https://www.trulens.org/trulens_eval/api/feedback/">Feedback Functions</a> for instantiating feedback functions.</p>
-</details>
 
 
   <table>
@@ -4489,8 +4516,7 @@ Quickstart</a>)</p>
           <td><code>**kwargs</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>Additional arguments to pass to <a class="autorefs autorefs-internal" href="../#trulens_eval.app.App">App</a>
-and <a class="autorefs autorefs-internal" href="../#trulens_eval.schema.AppDefinition">AppDefinition</a></p>
+              <p>Additional arguments to pass to <a class="autorefs autorefs-internal" href="../#trulens_eval.app.App">App</a> and <a class="autorefs autorefs-internal" href="../#trulens_eval.schema.AppDefinition">AppDefinition</a>.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">

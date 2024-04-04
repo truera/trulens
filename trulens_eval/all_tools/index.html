@@ -18,7 +18,7 @@
     
     
       
-        <title>📓 Langchain Quickstart - 🦑 TruLens</title>
+        <title>📓 LangChain Quickstart - 🦑 TruLens</title>
       
     
     
@@ -105,7 +105,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              📓 Langchain Quickstart
+              📓 LangChain Quickstart
             
           </span>
         </div>
@@ -628,7 +628,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Langchain Quickstart
+    📓 LangChain Quickstart
   </span>
   
 
@@ -649,7 +649,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Llama-Index Quickstart
+    📓 LlamaIndex Quickstart
   </span>
   
 
@@ -740,6 +740,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -760,23 +764,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../getting_started/core_concepts/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Core Concepts
+    ⭐ Core Concepts
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
-            Core Concepts
+            ⭐ Core Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -789,7 +803,7 @@
         
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -810,7 +824,7 @@
         
   
   <span class="md-ellipsis">
-    RAG Triad
+    ⟁ RAG Triad
   </span>
   
 
@@ -831,7 +845,7 @@
         
   
   <span class="md-ellipsis">
-    Honest, Harmless, Helpful Evals
+    🏆 Honest, Harmless, Helpful Evals
   </span>
   
 
@@ -948,7 +962,7 @@
               
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -964,7 +978,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Functions
+            ☔ Feedback Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1699,7 +1713,7 @@
         
   
   <span class="md-ellipsis">
-    📓 🦙 Llama-Index Integration
+    📓 🦙 LlamaIndex Integration
   </span>
   
 
@@ -2536,7 +2550,7 @@
         
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -3972,7 +3986,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="langchain-quickstart">📓 Langchain Quickstart<a class="anchor-link" href="#langchain-quickstart">¶</a></h1><p>In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.</p>
+<h1 id="langchain-quickstart">📓 <em>LangChain</em> Quickstart<a class="anchor-link" href="#langchain-quickstart">¶</a></h1><p>In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.</p>
 <p><a href="https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"/></a></p>
 </div>
 </div>
@@ -4079,7 +4093,7 @@ os.environ["OPENAI_API_KEY"] = "sk-..."</div>
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 <span class="n">tru</span><span class="o">.</span><span class="n">reset_database</span><span class="p">()</span>
 
-<span class="c1"># Imports from langchain to build app</span>
+<span class="c1"># Imports from LangChain to build app</span>
 <span class="kn">import</span> <span class="nn">bs4</span>
 <span class="kn">from</span> <span class="nn">langchain</span> <span class="kn">import</span> <span class="n">hub</span>
 <span class="kn">from</span> <span class="nn">langchain.chat_models</span> <span class="kn">import</span> <span class="n">ChatOpenAI</span>
@@ -4095,7 +4109,7 @@ from trulens_eval import TruChain, Tru
 tru = Tru()
 tru.reset_database()
 
-# Imports from langchain to build app
+# Imports from LangChain to build app
 import bs4
 from langchain import hub
 from langchain.chat_models import ChatOpenAI
@@ -4930,7 +4944,7 @@ records.head()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="llama-index-quickstart">📓 Llama-Index Quickstart<a class="anchor-link" href="#llama-index-quickstart">¶</a></h1><p>In this quickstart you will create a simple Llama Index app and learn how to log it and get feedback on an LLM response.</p>
+<h1 id="llamaindex-quickstart">📓 <em>LlamaIndex</em> Quickstart<a class="anchor-link" href="#llamaindex-quickstart">¶</a></h1><p>In this quickstart you will create a simple Llama Index app and learn how to log it and get feedback on an LLM response.</p>
 <p>For evaluation, we will leverage the "hallucination triad" of groundedness, context relevance and answer relevance.</p>
 <p><a href="https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"/></a></p>
 </div>

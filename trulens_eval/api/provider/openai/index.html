@@ -634,7 +634,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Langchain Quickstart
+    📓 LangChain Quickstart
   </span>
   
 
@@ -655,7 +655,7 @@
         
   
   <span class="md-ellipsis">
-    📓 Llama-Index Quickstart
+    📓 LlamaIndex Quickstart
   </span>
   
 
@@ -746,6 +746,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -766,23 +770,33 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
-            
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../getting_started/core_concepts/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
-    Core Concepts
+    ⭐ Core Concepts
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
-            Core Concepts
+            ⭐ Core Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -795,7 +809,7 @@
         
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -816,7 +830,7 @@
         
   
   <span class="md-ellipsis">
-    RAG Triad
+    ⟁ RAG Triad
   </span>
   
 
@@ -837,7 +851,7 @@
         
   
   <span class="md-ellipsis">
-    Honest, Harmless, Helpful Evals
+    🏆 Honest, Harmless, Helpful Evals
   </span>
   
 
@@ -954,7 +968,7 @@
               
   
   <span class="md-ellipsis">
-    Feedback Functions
+    ☔ Feedback Functions
   </span>
   
 
@@ -970,7 +984,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
-            Feedback Functions
+            ☔ Feedback Functions
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1705,7 +1719,7 @@
         
   
   <span class="md-ellipsis">
-    📓 🦙 Llama-Index Integration
+    📓 🦙 LlamaIndex Integration
   </span>
   
 
@@ -2557,7 +2571,7 @@
         
   
   <span class="md-ellipsis">
-    🦜️🔗 Langchain
+    🦜️🔗 LangChain
   </span>
   
 
@@ -3587,13 +3601,13 @@ OpenAI.</p>
   
       <p>Out of the box feedback functions calling OpenAI APIs.</p>
 <p>Create an OpenAI Provider with out of the box feedback functions.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span> 
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span> 
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 </code></pre></div>
-</details>
+</div>
+
 
 
   <table>
@@ -3678,10 +3692,9 @@ and finally to the OpenAI client.</p>
   
       <p>Uses OpenAI's Moderation API. A function that checks if text is hate
 speech.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
@@ -3691,7 +3704,8 @@ speech.</p>
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-</details>
+</div>
+
 
 
   <table>
@@ -3769,10 +3783,9 @@ Guide</a></p>
   
       <p>Uses OpenAI's Moderation API. A function that checks if text is
 threatening speech.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
@@ -3782,7 +3795,8 @@ threatening speech.</p>
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-</details>
+</div>
+
 
 
   <table>
@@ -3860,10 +3874,9 @@ Guide</a></p>
   
       <p>Uses OpenAI's Moderation API. A function that checks if text is about
 self harm.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
@@ -3873,7 +3886,8 @@ self harm.</p>
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-</details>
+</div>
+
 
 
   <table>
@@ -3951,10 +3965,9 @@ Guide</a></p>
   
       <p>Uses OpenAI's Moderation API. A function that checks if text is sexual
 speech.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
@@ -3962,7 +3975,8 @@ speech.</p>
     <span class="n">openai_provider</span><span class="o">.</span><span class="n">moderation_sexual</span><span class="p">,</span> <span class="n">higher_is_better</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
 </code></pre></div>
-</details>      <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
+</div>
+<p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
 
 
@@ -4042,10 +4056,9 @@ Guide</a></p>
   
       <p>Uses OpenAI's Moderation API. A function that checks if text is about
 sexual minors.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
@@ -4055,7 +4068,8 @@ sexual minors.</p>
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-</details>
+</div>
+
 
 
   <table>
@@ -4145,10 +4159,9 @@ Guide</a></p>
   
       <p>Uses OpenAI's Moderation API. A function that checks if text is about
 violence.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
@@ -4158,7 +4171,8 @@ violence.</p>
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-</details>
+</div>
+
 
 
   <table>
@@ -4236,10 +4250,9 @@ Guide</a></p>
   
       <p>Uses OpenAI's Moderation API. A function that checks if text is about
 graphic violence.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
@@ -4249,7 +4262,8 @@ graphic violence.</p>
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-</details>
+</div>
+
 
 
   <table>
@@ -4339,10 +4353,9 @@ Guide</a></p>
   
       <p>Uses OpenAI's Moderation API. A function that checks if text is about
 graphic violence.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
@@ -4352,7 +4365,8 @@ graphic violence.</p>
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-</details>
+</div>
+
 
 
   <table>
@@ -4430,10 +4444,9 @@ Guide</a></p>
   
       <p>Uses OpenAI's Moderation API. A function that checks if text is about
 graphic violence.</p>
-
-<details class="usage" open>
-  <summary>Usage</summary>
-  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="n">openai_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
@@ -4443,7 +4456,8 @@ graphic violence.</p>
 </code></pre></div>
 <p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
 Guide</a></p>
-</details>
+</div>
+
 
 
   <table>
