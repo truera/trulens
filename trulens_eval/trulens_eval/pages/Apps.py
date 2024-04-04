@@ -22,12 +22,9 @@ if __name__ == "__main__":
 tru = Tru()
 lms = tru.db
 
-st.set_page_config(page_title="App Runner", layout="wide")
-
 st.runtime.legacy_caching.clear_cache()
 
 set_page_config(page_title="App Runner")
-
 
 def remove_selector(
     container,

@@ -19,7 +19,6 @@ from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
 
 import humanize
 import pandas
-import pkg_resources
 from tqdm.auto import tqdm
 from typing_extensions import Annotated
 from typing_extensions import Doc
@@ -32,6 +31,7 @@ from trulens_eval.utils import notebook_utils
 from trulens_eval.utils import python
 from trulens_eval.utils import serial
 from trulens_eval.utils import threading as tru_threading
+from trulens_eval.utils.imports import static_resource
 from trulens_eval.utils.python import Future  # code style exception
 
 pp = PrettyPrinter()
@@ -946,9 +946,7 @@ class Tru(python.SingletonPerName):
             print("Credentials file already exists. Skipping writing process.")
 
         #run leaderboard with subprocess
-        leaderboard_path = pkg_resources.resource_filename(
-            'trulens_eval', 'Leaderboard.py'
-        )
+        leaderboard_path = static_resource('Leaderboard.py')
 
         if Tru._dashboard_proc is not None:
             print("Dashboard already running at path:", Tru._dashboard_urls)

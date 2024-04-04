@@ -18,11 +18,10 @@ from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()
 
-from ux.page_config import set_page_config
-
 from trulens_eval import Tru
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
+from trulens_eval.ux.page_config import set_page_config
 
 if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton

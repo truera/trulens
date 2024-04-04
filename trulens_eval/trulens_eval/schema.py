@@ -220,7 +220,7 @@ class Record(serial.SerialModel, Hashable):
 
     model_config: ClassVar[dict] = {
         # for `Future[FeedbackResult]`
-        'arbitrary_types_allowed' : True
+        'arbitrary_types_allowed': True
     }
 
     record_id: RecordID
@@ -538,6 +538,7 @@ class FeedbackOnMissingParameters(str, Enum):
     [SKIPPED][trulens_eval.schema.FeedbackResultStatus.SKIPPED].
     """
 
+
 class FeedbackCall(serial.SerialModel):
     """Invocations of feedback function results in one of these instances.
     
@@ -763,7 +764,8 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
                                        pyschema.Method]] = None,
         aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
         if_exists: Optional[serial.Lens] = None,
-        if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,
+        if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.
+        ERROR,
         selectors: Optional[Dict[str, serial.Lens]] = None,
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
