@@ -38,6 +38,7 @@ from trulens_eval.ux.components import draw_tool_info
 from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
+import pprint
 
 st.runtime.legacy_caching.clear_cache()
 
@@ -384,7 +385,7 @@ else:
                                 args = c['args']
                                 for k, v in args.items():
                                     if not isinstance(v, str):
-                                        args[k] = pp.pformat(v)
+                                        args[k] = pprint.pformat(v)
 
                             df = pd.DataFrame.from_records(
                                 c['args'] for c in call
