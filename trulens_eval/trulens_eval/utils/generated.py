@@ -10,18 +10,21 @@ from trulens_eval.utils.text import retab
 
 logger = logging.getLogger(__name__)
 
+
 class ParseError(Exception):
     """Error parsing LLM-generated text."""
 
-    def __init__(self, expected: str, text: str, pattern: Optional[re.Pattern] = None):
+    def __init__(
+        self, expected: str, text: str, pattern: Optional[re.Pattern] = None
+    ):
         super().__init__(
             f"Tried to find {expected}" +
-            (f" using pattern {pattern.pattern}" if pattern else "") +
-            " in\n" + 
+            (f" using pattern {pattern.pattern}" if pattern else "") + " in\n" +
             retab(tab='  ', s=text)
         )
         self.text = text
         self.pattern = pattern
+
 
 def validate_rating(rating) -> int:
     """Validate a rating is between 0 and 10."""
@@ -30,6 +33,7 @@ def validate_rating(rating) -> int:
         raise ValueError('Rating must be between 0 and 10')
 
     return rating
+
 
 # Various old patterns that didn't work as well:
 # PATTERN_0_10: re.Pattern = re.compile(r"\s*([0-9]+)\s*$")
@@ -42,6 +46,7 @@ PATTERN_NUMBER: re.Pattern = re.compile(r"([+-]?[0-9]+\.[0-9]*|[1-9][0-9]*|0)")
 
 PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
 """Regex that matches integers."""
+
 
 def re_0_10_rating(s: str) -> int:
     """Extract a 0-10 rating from a string.
@@ -75,7 +80,9 @@ def re_0_10_rating(s: str) -> int:
         raise ParseError("0-10 rating", s)
 
     if len(vals) > 1:
-        logger.warning("Multiple valid rating values found in the string: %s", s)
+        logger.warning(
+            "Multiple valid rating values found in the string: %s", s
+        )
 
     # Min to handle cases like "The rating is 8 out of 10."
     return min(vals)

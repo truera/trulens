@@ -24,6 +24,7 @@ HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm
 HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
 HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
 HUGS_PII_DETECTION_API_URL = "https://api-inference.huggingface.co/models/bigcode/starpii"
+HUGS_CONTEXT_RELEVANCE_API_URL = "https://api-inference.huggingface.co/models/truera/context_relevance"
 HUGS_HALLUCINATION_API_URL = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
 
 import functools
@@ -97,7 +98,8 @@ class Huggingface(Provider):
         """
         Create a Huggingface Provider with out of the box feedback functions.
 
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
@@ -133,7 +135,8 @@ class Huggingface(Provider):
         function is: `1.0 - (|probit_language_text1(text1) -
         probit_language_text1(text2))`
         
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.hugs import Huggingface
@@ -185,6 +188,48 @@ class Huggingface(Provider):
 
         return l1, dict(text1_scores=scores1, text2_scores=scores2)
 
+    @_tci
+    def context_relevance(self, prompt: str, context: str) -> float:
+        """
+        Uses Huggingface's truera/context_relevance model, a
+        model that uses computes the relevance of a given context to the prompt. 
+        The model can be found at https://huggingface.co/truera/context_relevance.
+        **Usage:**
+        ```python
+        from trulens_eval import Feedback
+        from trulens_eval.feedback.provider.hugs import Huggingface
+        huggingface_provider = Huggingface()
+
+        feedback = Feedback(huggingface_provider.context_relevance).on_input_output() 
+        ```
+        The `on_input_output()` selector can be changed. See [Feedback Function
+        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+
+        Args:
+            prompt (str): The given prompt.
+            context (str): Comparative contextual information.
+
+        Returns:
+            float: A value between 0 and 1. 0 being irrelevant and 1
+            being a relevant context for addressing the prompt.
+        """
+
+        if prompt[len(prompt) - 1] != '.':
+            prompt += '.'
+        ctx_relevnace_string = prompt + '<eos>' + context
+        payload = {"inputs": ctx_relevnace_string}
+        hf_response = self.endpoint.post(
+            url=HUGS_CONTEXT_RELEVANCE_API_URL, payload=payload
+        )
+
+        for label in hf_response:
+            if label['label'] == 'context_relevance':
+                return label['score']
+
+        raise RuntimeError(
+            "'context_relevance' not found in huggingface api response."
+        )
+
     # TODEP
     @_tci
     def positive_sentiment(self, text: str) -> float:
@@ -192,7 +237,8 @@ class Huggingface(Provider):
         Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
         function that uses a sentiment classifier on `text`.
         
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.hugs import Huggingface
@@ -233,7 +279,8 @@ class Huggingface(Provider):
         Uses Huggingface's martin-ha/toxic-comment-model model. A function that
         uses a toxic comment classifier on `text`.
         
-        Usage:
+        !!! example
+    
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.hugs import Huggingface
@@ -324,7 +371,8 @@ class Huggingface(Provider):
         """
         NER model to detect PII.
 
-        Usage:
+        !!! example
+    
             ```python
             hugs = Huggingface()
 
@@ -384,7 +432,8 @@ class Huggingface(Provider):
         """
         NER model to detect PII, with reasons.
 
-        Usage:
+        !!! example
+    
             ```python
             hugs = Huggingface()
 
@@ -464,7 +513,8 @@ class Huggingface(Provider):
         true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
         less than 0.5 the statement is evaluated as a hallucination.
 
-        **Usage:**
+        **!!! example
+    **
         ```python
         from trulens_eval.feedback.provider.hugs import Huggingface
         huggingface_provider = Huggingface()

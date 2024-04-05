@@ -1,6 +1,8 @@
 import logging
 from typing import Dict, List, Optional, Tuple
 
+import nltk
+from nltk.tokenize import sent_tokenize
 import numpy as np
 from tqdm.auto import tqdm
 
@@ -16,9 +18,6 @@ from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
-
-with OptionalImports(messages=REQUIREMENT_GROUNDEDNESS):
-    from nltk.tokenize import sent_tokenize
 
 with OptionalImports(messages=REQUIREMENT_BEDROCK):
     from trulens_eval.feedback.provider.bedrock import Bedrock
@@ -42,7 +41,8 @@ class Groundedness(WithClassInfo, SerialModel):
     find the relevant strings in a text. The groundedness_provider can
     either be an LLM provider (such as OpenAI) or NLI with huggingface.
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.openai import OpenAI
@@ -50,7 +50,8 @@ class Groundedness(WithClassInfo, SerialModel):
         groundedness_imp = Groundedness(groundedness_provider=openai_provider)
         ```
 
-    Usage:
+    !!! example
+    
         ```python
         from trulens_eval.feedback import Groundedness
         from trulens_eval.feedback.provider.hugs import Huggingface
@@ -74,6 +75,7 @@ class Groundedness(WithClassInfo, SerialModel):
             logger.warning("Provider not provided. Using OpenAI.")
             groundedness_provider = OpenAI()
 
+        nltk.download('punkt')
         super().__init__(groundedness_provider=groundedness_provider, **kwargs)
 
     def groundedness_measure_with_cot_reasons(

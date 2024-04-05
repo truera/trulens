@@ -5,8 +5,6 @@ from typing import Dict, Iterable, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
-from pprint import PrettyPrinter
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -15,10 +13,8 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
-from ux.add_logo import add_logo_and_style_overrides
+from ux.page_config import set_page_config
 from ux.styles import CATEGORY
-
-pp = PrettyPrinter()
 
 from trulens_eval import Tru
 from trulens_eval.app import Agent
@@ -37,20 +33,17 @@ from trulens_eval.utils.serial import Lens
 from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
-from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.components import draw_prompt_info
 from trulens_eval.ux.components import draw_tool_info
 from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
-
-st.set_page_config(page_title="Evaluations", layout="wide")
-
-st.title("Evaluations")
+import pprint
 
 st.runtime.legacy_caching.clear_cache()
 
-add_logo_and_style_overrides()
+set_page_config(page_title="Evaluations")
+st.title("Evaluations")
 
 tru = Tru()
 lms = tru.db
@@ -70,8 +63,11 @@ feedback_directions = {
 default_direction = "HIGHER_IS_BETTER"
 
 
-def render_component(query, component, header=True):
-    # Draw the accessor/path within the wrapped app of the component.
+def render_component(
+    query: Lens, component: ComponentView, header: bool = True
+) -> None:
+    """Render the accessor/path within the wrapped app of the component."""
+
     if header:
         st.markdown(
             f"##### Component {render_selector_markdown(Select.for_app(query))}"
@@ -107,8 +103,12 @@ def render_component(query, component, header=True):
             st.json(jsonify_for_ui(component.json))
 
 
-# Renders record level metrics (e.g. total tokens, cost, latency) compared to the average when appropriate
-def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
+def render_record_metrics(
+    app_df: pd.DataFrame, selected_rows: pd.DataFrame
+) -> None:
+    """Render record level metrics (e.g. total tokens, cost, latency) compared
+    to the average when appropriate."""
+
     app_specific_df = app_df[app_df["app_id"] == selected_rows["app_id"][0]]
 
     token_col, cost_col, latency_col = st.columns(3)
@@ -137,10 +137,8 @@ def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame):
     )
 
 
-# Define a function to extract record metadata from each row
-def extract_metadata(row):
-    """
-    Extract metadata from the record_json and return the metadata as a string.
+def extract_metadata(row: pd.Series) -> str:
+    """Extract metadata from the record_json and return the metadata as a string.
 
     Args:
         row: The row containing the record_json.
@@ -276,7 +274,7 @@ else:
             allow_unsafe_jscode=True,
         )
 
-        selected_rows = data["selected_rows"]
+        selected_rows = data.selected_rows
         selected_rows = pd.DataFrame(selected_rows)
 
         if len(selected_rows) == 0:
@@ -387,7 +385,7 @@ else:
                                 args = c['args']
                                 for k, v in args.items():
                                     if not isinstance(v, str):
-                                        args[k] = pp.pformat(v)
+                                        args[k] = pprint.pformat(v)
 
                             df = pd.DataFrame.from_records(
                                 c['args'] for c in call

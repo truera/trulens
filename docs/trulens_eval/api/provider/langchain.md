@@ -1,12 +1,12 @@
-# 🦜️🔗 Langchain Provider
+# 🦜️🔗 _LangChain_ Provider
 
-Below is how you can instantiate a [Langchain LLM](https://python.langchain.com/docs/modules/model_io/llms/) as a provider.
+Below is how you can instantiate a [_LangChain_ LLM](https://python.langchain.com/docs/modules/model_io/llms/) as a provider.
 
 All feedback functions listed in the base [LLMProvider
-class][trulens_eval.feedback.provider.base.LLMProvider] can be run with the Langchain Provider.
+class][trulens_eval.feedback.provider.base.LLMProvider] can be run with the _LangChain_ Provider.
 
 !!! note
 
-    Langchain provider cannot be used in `deferred` mode due to inconsistent serialization capabilities of langchain apps.
+    _LangChain_ provider cannot be used in `deferred` mode due to inconsistent serialization capabilities of _LangChain_ apps.
 
 ::: trulens_eval.feedback.provider.langchain.Langchain
