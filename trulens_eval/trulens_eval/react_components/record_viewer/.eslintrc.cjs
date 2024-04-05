@@ -45,6 +45,10 @@ module.exports = {
     // Note: you must disable the base rule as it can report incorrect errors
     'no-shadow': 'off',
     '@typescript-eslint/no-shadow': 'warn',
+
+    "react/require-default-props": 'off',
+
+    "import/prefer-default-export": "off",
   },
   settings: {
     'import/resolver': {

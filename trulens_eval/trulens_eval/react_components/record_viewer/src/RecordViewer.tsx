@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { DataRaw } from './utils/types';
 import { createTreeFromCalls } from './utils/utils';
 import RecordTable from './RecordTable/RecordTable';
+import RecordTree from './RecordTree/RecordTree';
 
 class RecordViewer extends StreamlitComponentBase {
   public render = (): ReactNode => {
@@ -23,6 +24,7 @@ class RecordViewer extends StreamlitComponentBase {
 
     return (
       <div style={{ fontFamily, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <RecordTree root={root} />
         <RecordTable root={root} />
       </div>
     );
