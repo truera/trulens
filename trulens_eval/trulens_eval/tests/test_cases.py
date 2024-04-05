@@ -240,29 +240,68 @@ def generate_summeval_groundedness_golden_set(file_path):
             }
 
 
-def generate_summeval_answer_relevance_golden_set(file_path):
+def generate_meetingbank_comprehensiveness_benchmark(human_annotation_file_path, meetingbank_file_path):
+    
+    with open(meetingbank_file_path, 'r') as f:
+        transcripts_data = json.load(f)
+
+    with open(human_annotation_file_path, 'r') as f:
+        annotation_data = json.load(f)
+    
+    def get_transcript_as_string(transcripts_data, meeting_name, section):
+        """
+        Retrieve a specific transcript based on the meeting name and section,
+        and concatenate the text fields into a single string.
+        """
+        meeting_minutes = ""
+        meeting_data = transcripts_data.get(meeting_name)
+        if meeting_data:
+            item_info = meeting_data.get("itemInfo")
+            if item_info:
+                section_data = item_info.get(section)
+                if section_data and "transcripts" in section_data:
+                    for transcript in section_data["transcripts"]:
+                        speaker_text = f"speaker {transcript['speaker']}: {transcript['text']}\n"
+                        meeting_minutes += speaker_text
+        return meeting_minutes
+    
+
+    for key, annotations in annotation_data.items():
+        meeting_name, section = key.rsplit('_', 1)
+        # Retrieve transcript based on meeting_name and section
+        transcripts_str = get_transcript_as_string(transcripts_data, meeting_name, section)
+        
+        for model, details in annotations.items():
+            summary = details["summary"]
+            avg_informativeness_score = sum(details["informativeness"]) / len(details["informativeness"]) # informativeness maps to comprehensiveness
+            yield {
+                # "summarizer_model": model,
+                "query": transcripts_str,
+                "response": summary,
+                "expected_score": calculate_expected_score(
+                    [avg_informativeness_score / 5],  #  normalize score from 1 to 5 to 0 to 1.0
+                    [1.0] 
+                )
+            }
+
+
+def generate_ms_marco_context_relevance_benchmark(file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
 
-    for item in data["rows"]:
-        row = item["row"]
+    for item in data['rows']:
+        row = item['row']
 
-        assert (
-            len(row["machine_summaries"]) == len(row["relevance"]) ==
-            len(row["human_summaries"])
-        )
+        assert len(row['passages']['is_selected']) == len(row['passages']['passage_text'])        
 
-        for i in range(len(row["machine_summaries"])):
+        if sum(row['passages']['is_selected']) < 1:
+              # currently we only consider sample with one passage marked as relevant (there are samples where zero passage_text is selected)
+            continue
+        for i, passage_text in enumerate(row['passages']['passage_text']):
             yield {
-                "query":
-                    row["text"],
-                "response":
-                    row["machine_summaries"][i],
-                "expected_score":
-                    calculate_expected_score(
-                        [
-                            row["relevance"][i] / 5,  # normalize to [0, 1]
-                        ],
-                        [1.0]
-                    )
+                'query_id': row['query_id'],
+                'query': row['query'],
+                'passage': passage_text,
+                'is_selected': row['passages']['is_selected'][i],  # Binary relevance
+                'relevant_idx': row['passages']['is_selected'].index(1)  # Index of the relevant passage
             }
