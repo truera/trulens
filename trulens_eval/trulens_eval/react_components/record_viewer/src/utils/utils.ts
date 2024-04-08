@@ -1,6 +1,8 @@
 import { v4 } from 'uuid';
 import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw, StackTreeNode } from './types';
 
+export const ROOT_NODE_ID = 'root-root-root';
+
 /**
  * Gets the name of the calling class in the stack cell.
  *
@@ -143,7 +145,7 @@ export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string) 
     path: '',
     parentNodes: [],
     id: 0,
-    nodeId: 'root-0', // ID for the record viewer, since function Ids may not be unique.
+    nodeId: ROOT_NODE_ID, // ID for the record viewer, since function Ids may not be unique.
     raw: {
       stack: [],
       args: { str_or_query_bundle: '' },
@@ -168,4 +170,22 @@ export const getSelector = (node: StackTreeNode) => {
   const components = [`Select.Record`, node.path, node.methodName].filter(Boolean);
 
   return components.join('.');
+};
+
+export const createNodeMap = (node: StackTreeNode) => {
+  const result: Record<string, StackTreeNode> = {};
+
+  const queue = [node];
+
+  while (queue.length !== 0) {
+    const currNode = queue.pop();
+
+    if (!currNode) continue;
+
+    result[currNode.nodeId] = currNode;
+
+    queue.push(...currNode.children);
+  }
+
+  return result;
 };

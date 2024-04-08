@@ -67,19 +67,18 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
             background: `${palette.grey[100]}`,
           },
           [`&.${classes.focused} > div`]: {
-            background: `${palette.primary.lighter!}`,
-            border: `1px solid ${palette.primary.main}`,
+            background: `${palette.grey[50]}`,
           },
           [`&.${classes.focused}:hover > div`]: {
-            background: `${palette.primary.light}`,
+            background: `${palette.grey[100]}`,
           },
 
           [`&.${classes.selected} > div`]: {
-            background: `#0ff`,
+            background: `${palette.primary.lighter!}`,
             border: `1px solid ${palette.primary.main}`,
           },
           [`&.${classes.selected}:hover > div`]: {
-            background: `#0ff`,
+            background: `${palette.primary.light}`,
           },
         })}
         className={clsx(className, classes.root, {

@@ -432,7 +432,7 @@ else:
             classes_map = {path: view for path, view in classes}
 
             st.markdown("")
-            st.subheader("Timeline")
+            st.subheader("Trace view")
             val = record_viewer(record_json, app_json)
             st.markdown("")
 

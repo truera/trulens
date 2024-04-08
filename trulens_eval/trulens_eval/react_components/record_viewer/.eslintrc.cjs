@@ -46,9 +46,10 @@ module.exports = {
     'no-shadow': 'off',
     '@typescript-eslint/no-shadow': 'warn',
 
-    "react/require-default-props": 'off',
+    'react/require-default-props': 'off',
 
-    "import/prefer-default-export": "off",
+    'import/prefer-default-export': 'off',
+    'no-continue': 'off',
   },
   settings: {
     'import/resolver': {

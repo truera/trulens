@@ -1,7 +1,7 @@
 import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-component-lib';
 import { ReactNode } from 'react';
 import { DataRaw } from './utils/types';
-import { createTreeFromCalls } from './utils/utils';
+import { createNodeMap, createTreeFromCalls } from './utils/utils';
 import RecordTree from './RecordTree/RecordTree';
 
 class RecordViewer extends StreamlitComponentBase {
@@ -18,8 +18,9 @@ class RecordViewer extends StreamlitComponentBase {
      * Actual code begins
      */
     const root = createTreeFromCalls(recordJSON, appJSON.app_id);
+    const nodeMap = createNodeMap(root);
 
-    return <RecordTree root={root} recordJSON={recordJSON} />;
+    return <RecordTree root={root} recordJSON={recordJSON} nodeMap={nodeMap} />;
   };
 }
 
