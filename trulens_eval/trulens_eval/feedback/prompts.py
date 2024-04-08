@@ -109,35 +109,58 @@ LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM = LANGCHAIN_PROMPT_TEMPLATE_SY
 STEREOTYPES_SYSTEM_PROMPT = v2.Stereotypes.system_prompt.template
 STEREOTYPES_USER_PROMPT = v2.Stereotypes.user_prompt.template
 
+GENERATE_KEY_POINTS_SYSTEM_PROMPT = """
+INSTRUCTIONS:
+
+1. Identify the key points in the provided source text.
+
+2. Assign each point high or low importance level.
+
+3. Remove any points that are not assessed to high importance.
+
+4. All key points should now be assessed to high importance. There is no need to mention a points importance level.
+
+Answer using the entire template below. Each key point must be on a new line.
+
+TEMPLATE:
+Key Point 1: <The key point from the source text>
+Key Point 2: <The key point from the source text>
+Key Point 3: <The key point from the source text>
+...
+"""
+
+GENERATE_KEY_POINTS_USER_PROMPT = """
+/SOURCE TEXT/
+{source}
+/END OF SOURCE TEXT/
+"""
+
 COMPREHENSIVENESS_SYSTEM_PROMPT = """
 You are tasked with evaluating summarization quality. Please follow the instructions below.
 
 INSTRUCTIONS:
 
-1. Identify the key points in the provided source text and assign them high or low importance level.
-
-2. Assess how well the summary captures these key points.
+1. Given a key point, score well the summary captures that key points.
 
 Are the key points from the source text comprehensively included in the summary? More important key points matter more in the evaluation.
 
 Scoring criteria:
-0 - Capturing no key points with high importance level
-5 - Capturing 70 percent of key points with high importance level
-10 - Capturing all key points of high importance level
+0 - The key point is not included in the summary.
+5 - The key point is vaguely mentioned or partially included in the summary.
+10 - The key point is fully included in the summary.
 
 Answer using the entire template below.
 
 TEMPLATE:
-Score: <The score from 0 (capturing none of the important key points) to 10 (captures all key points of high importance).>
-Criteria: <Mention key points from the source text that should be included in the summary>
-Supporting Evidence: <Which key points are present and which key points are absent in the summary.>
-
+Score: <The score from 0 (the key point is not captured at all) to 10 (the key point is fully captured).>
+Key Point: <Mention the key point from the source text being evaluated>
+Supporting Evidence: <Evidence of whether the key point is present or absent in the summary.>
 """
 
 COMPOREHENSIVENESS_USER_PROMPT = """
-/SOURCE TEXT/
-{source}
-/END OF SOURCE TEXT/
+/KEY POINT/
+{key_point}
+/END OF KEY POINT/
 
 /SUMMARY/
 {summary}
