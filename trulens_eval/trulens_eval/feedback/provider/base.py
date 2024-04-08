@@ -189,7 +189,7 @@ class LLMProvider(Provider):
         prefix_template: str = """"""
         """Text to include before all other parts."""
 
-        purpose_template:str = """You are a {purpose} scorer."""
+        interp_template: str = """You are a {purpose} scorer."""
         details_template: str = """"""
 
         low_score: int = 1
@@ -213,7 +213,7 @@ SCORE: """
         """Specific parts to build a scoring prompt out of."""
 
         interp: str
-        """Minimal interpretation of the score."""
+        """A (minimal) interpretation of the score."""
 
         low_interp: str
         """Interpretation of a low score."""
