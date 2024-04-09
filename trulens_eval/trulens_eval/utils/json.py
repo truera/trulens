@@ -181,8 +181,8 @@ def jsonify(
     if isinstance(obj, Path):
         return str(obj)
 
-    if type(obj) in pydantic.v1.json.ENCODERS_BY_TYPE:
-        return pydantic.v1.json.ENCODERS_BY_TYPE[type(obj)](obj)
+    if type(obj) in pydantic.json.ENCODERS_BY_TYPE:
+        return pydantic.json.ENCODERS_BY_TYPE[type(obj)](obj)
 
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = dict(dicted)
