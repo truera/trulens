@@ -13,7 +13,6 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-import queue
 import threading
 from threading import Lock
 from typing import (
@@ -503,7 +502,7 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     function) to their path in this app."""
 
     records_with_pending_feedback_results: Queue[Record] = \
-        pydantic.Field(exclude=True, default_factory=lambda: queue.Queue(maxsize=1024))
+        pydantic.Field(exclude=True, default_factory=lambda: Queue(maxsize=1024))
     """Records produced by this app which might have yet to finish
     feedback runs."""
 
