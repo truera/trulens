@@ -107,6 +107,17 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def delete_app(self, app_id: AppID) -> None:
+        """
+        Delete an `app` from the database.
+
+        Args:
+            app_id: The id of the app to delete.
+        """
+
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def insert_feedback_definition(
         self, feedback_definition: FeedbackDefinition
     ) -> FeedbackDefinitionID:
