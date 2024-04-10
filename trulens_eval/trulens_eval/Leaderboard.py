@@ -32,7 +32,7 @@ def streamlit_app():
     lms = tru.db
 
     # Set the title and subtitle of the app
-    st.title("App Leaderboard")
+    st.title("App Leaderboard - Hotspots are the best!")
     st.write(
         "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
     )
