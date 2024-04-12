@@ -9,12 +9,10 @@ from sqlalchemy import Column
 from sqlalchemy import Engine
 from sqlalchemy import event
 from sqlalchemy import Float
-from sqlalchemy import ForeignKey
 from sqlalchemy import Text
 from sqlalchemy import VARCHAR
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref
-from sqlalchemy.orm import configure_mappers
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
