@@ -207,11 +207,12 @@ nav:
       - Generating Test Cases:
           - trulens_eval/evaluation/generate_test_cases/index.md
       - Feedback Evaluations:
-          # Titles come from notebook and will be overridden if specified here.
           # PLACEHOLDER: - trulens_eval/evaluation/feedback_evaluations/index.md
-          - trulens_eval/evaluation/feedback_evaluations/answer_relevance_smoke_tests.ipynb
-          - trulens_eval/evaluation/feedback_evaluations/context_relevance_smoke_tests.ipynb
-          - trulens_eval/evaluation/feedback_evaluations/groundedness_smoke_tests.ipynb
+          - Answer Relevance Benchmark (small): trulens_eval/evaluation/feedback_evaluations/answer_relevance_benchmark_small.ipynb
+          - Comprehensiveness Benchmark: trulens_eval/evaluation/feedback_evaluations/comprehensiveness_benchmark.ipynb
+          - Context Relevance Benchmark (small): trulens_eval/evaluation/feedback_evaluations/context_relevance_benchmark_small.ipynb
+          - Context Relevance Benchmark (large): trulens_eval/evaluation/feedback_evaluations/context_relevance_benchmark.ipynb
+          - Groundedness Benchmark: trulens_eval/evaluation/feedback_evaluations/groundedness_benchmark.ipynb
   - 🎺 Tracking:
       # PLACEHOLDER: - trulens_eval/tracking/index.md
       - Instrumentation Overview:

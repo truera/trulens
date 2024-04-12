@@ -14,7 +14,6 @@ import pandas as pd
 import pydantic
 
 from trulens_eval import __version__
-from trulens_eval import feedback
 from trulens_eval import schema
 from trulens_eval.database.base import DB
 from trulens_eval.database.base import for_all_methods
