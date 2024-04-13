@@ -90,7 +90,7 @@ test-database:
 	$(CONDA); python -m unittest discover tests.integration.test_database
 	docker compose --file docker/test-database.yaml down
 
-# Thest tests all operate on local file databases and don't require docker.
+# These tests all operate on local file databases and don't require docker.
 test-database-specification:
 	$(CONDA); python -m unittest discover tests.integration.test_database -k TestDBSpecifications
 
