@@ -337,8 +337,6 @@ def _test_db_migration(db: SQLAlchemyDB):
     assert_revision(engine, None, "behind")
 
 
-class db:
-    orm = orm
 
 def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
     db.migrate_database()  # ensure latest revision
@@ -347,47 +345,46 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
     with db.Session.begin() as session:
         print("feedback defs")
-        ress = session.query(db.orm.FeedbackDefinition).all()
+        ress = session.query(orm.FeedbackDefinition).all()
         for res in ress:
             print(res.feedback_definition_id)
 
         print("apps")
-        ress = session.query(db.orm.AppDefinition).all()
+        ress = session.query(orm.AppDefinition).all()
         for res in ress:
             print(res.app_id, res.records) # no feedback results
 
         print("records")
-        ress = session.query(db.orm.Record).all()
+        ress = session.query(orm.Record).all()
         for res in ress:
             print(res.record_id, res.feedback_results)
 
         print("feedbacks")
-        ress = session.query(db.orm.FeedbackResult).all()
+        ress = session.query(orm.FeedbackResult).all()
         for res in ress:
             print(res.feedback_result_id, res.feedback_definition)
 
     with db.Session.begin() as session:
         # delete the only app
-        session.delete(session.query(db.orm.AppDefinition).one())
+        session.delete(session.query(orm.AppDefinition).one())
 
         # records are deleted in cascade
         test.assertEqual(
-            session.query(db.orm.Record).all(),
+            session.query(orm.Record).all(),
             [],
             "Expected no records."
         )
 
         # feedbacks results are deleted in cascade
         test.assertEqual(
-            session.query(db.orm.FeedbackResult).all(),
+            session.query(orm.FeedbackResult).all(),
             [],
             "Expected no feedback results."
         )
 
-
         # feedback defs are preserved
         test.assertEqual(
-            len(session.query(db.orm.FeedbackDefinition).all()), 1,
+            len(session.query(orm.FeedbackDefinition).all()), 1,
             "Expected exactly one feedback to be in the db."
         )
 
@@ -395,39 +392,39 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
     with db.Session.begin() as session:
         test.assertEqual(
-            len(session.query(db.orm.Record).all()), 1,
+            len(session.query(orm.Record).all()), 1,
             "Expected exactly one record."
         )
 
         test.assertEqual(
-            len(session.query(db.orm.FeedbackResult).all()), 1,
+            len(session.query(orm.FeedbackResult).all()), 1,
             "Expected exactly one feedback result."
         )
 
-        ress = session.query(db.orm.FeedbackResult).all()
+        ress = session.query(orm.FeedbackResult).all()
         for res in ress:
             print("result record=", res.record)
             print("result def=", res.feedback_definition)
 
-        for n, t in db.orm.registry.items():
-            print(n, t)
+        #for n, t in orm.registry.items():
+        #    print(n, t)
 
         # delete the only record
-        session.delete(session.query(db.orm.Record).one())
+        session.delete(session.query(orm.Record).one())
 
-        ress = session.query(db.orm.FeedbackResult).all()
+        ress = session.query(orm.FeedbackResult).all()
         for res in ress:
             print("result record=", res.record)
             print("result def=", res.feedback_definition)
 
         # feedbacks results are deleted in cascade
-        test.assertEqual(session.query(db.orm.FeedbackResult).all(), [], "Expected no feedback results.")
+        test.assertEqual(session.query(orm.FeedbackResult).all(), [], "Expected no feedback results.")
 
         # apps are preserved
-        test.assertTrue(session.query(db.orm.AppDefinition).one(), "Expected an app.")
+        test.assertTrue(session.query(orm.AppDefinition).one(), "Expected an app.")
 
         # feedback defs are preserved
-        test.assertTrue(session.query(db.orm.FeedbackDefinition).one(), "Expected a feedback definition.")
+        test.assertTrue(session.query(orm.FeedbackDefinition).one(), "Expected a feedback definition.")
 
 
 def _populate_data(db: DB):
