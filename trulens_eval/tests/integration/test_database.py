@@ -48,15 +48,15 @@ from trulens_eval.database.migrations import get_revision_history
 from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.database.sqlalchemy import AppsExtractor
 from trulens_eval.database.sqlalchemy import SQLAlchemyDB
+from trulens_eval.database.utils import copy_database
 from trulens_eval.database.utils import is_legacy_sqlite
 
 
 class TestDBSpecifications(TestCase):
-    """
-    Tests for database options.
-    """
+    """Tests for database options."""
 
     def test_prefix(self):
+        """Test that the table prefix is correctly used to name tables in the database."""
 
         db_types = ["sqlite_file"]#, "postgres", "mysql", "sqlite_memory"
         # sqlite_memory might have problems with multithreading of tests
@@ -64,14 +64,6 @@ class TestDBSpecifications(TestCase):
         for db_type in db_types:
             with self.subTest(msg=f"prefix for {db_type}"):
                 with clean_db(db_type, table_prefix="test_") as db:
-
-                    tables = ["apps", "records", "feedback_defs", "feedbacks"]
-
-                    #for table in tables:
-                    #    print(table)
-                    #    df = pd.read_sql_table(table_name="test_" + table, con=db.engine)
-                    #    print(df)
-                    #    print()
 
                     _test_db_consistency(self, db)
 
@@ -81,14 +73,74 @@ class TestDBSpecifications(TestCase):
                         print(df)
 
 
-                    # self.assertTrue(db.engine.url.database.startswith("test_"))
-
-
     def test_copy(self):
-        pass
+        """Test copying of databases via [copy_database][trulens_eval.database.utils.copy_database]."""
+
+        db_types = ["sqlite_file"]#, "postgres", "mysql", "sqlite_memory"
+        # sqlite_memory might have problems with multithreading of tests
+
+        for source_db_type in db_types:
+            with self.subTest(msg=f"source prefix for {source_db_type}"):
+                with clean_db(source_db_type, table_prefix="test_prior_") as db_prior:
+
+                    _populate_data(db_prior)
+
+                    for target_db_type in db_types:
+                        with self.subTest(msg=f"target prefix for {target_db_type}"):
+                            with clean_db(target_db_type, table_prefix="test_post_") as db_post:
+
+                                # This makes the database tables:
+                                db_post.migrate_database()
+
+                                # assert database is empty before copying
+                                with db_post.session.begin() as session:
+                                    for orm_class in [db_post.orm.AppDefinition, db_post.orm.FeedbackDefinition, db_post.orm.Record, db_post.orm.FeedbackResult]:
+                                        self.assertEqual(
+                                            session.query(orm_class).all(),
+                                            [],
+                                            f"Expected no {orm_class}."
+                                        )
+
+                                copy_database(
+                                    src_url=db_prior.engine.url,
+                                    tgt_url=db_post.engine.url,
+                                    src_prefix="test_prior_",
+                                    tgt_prefix="test_post_",
+                                )
+
+                                # assert database contains exactly one of each row
+                                with db_post.session.begin() as session:
+                                    for orm_class in [db_post.orm.AppDefinition, db_post.orm.FeedbackDefinition, db_post.orm.Record, db_post.orm.FeedbackResult]:
+                                        self.assertEqual(
+                                            len(session.query(orm_class).all()),
+                                            1,
+                                            f"Expected exactly one {orm_class}."
+                                        )
+
 
     def test_migrate_prefix(self):
-        pass
+        """Test that database migration works across different prefixes."""
+        
+        db_types = ["sqlite_file"]#, "postgres", "mysql", "sqlite_memory"
+        # sqlite_memory might have problems with multithreading of tests
+
+        for db_type in db_types:
+            with self.subTest(msg=f"prefix for {db_type}"):
+                with clean_db(db_type, table_prefix="test_prior_") as db_prior:
+
+                    _test_db_consistency(self, db_prior)
+
+                    # Migrate the database.
+                    with clean_db(db_type, table_prefix="test_post_") as db_post:
+                        db_post.migrate_database(prior_prefix="test_prior_")
+
+                        # Check that we have the correct table names.
+                        with db_post.engine.begin() as conn:
+                            df = pd.read_sql("SELECT * FROM test_post_alembic_version", conn)
+                            print(df)
+
+                        _test_db_consistency(self, db_post)
+
 
 class TestDbV2Migration(TestCase):
     """Migrations from legacy sqlite db to sqlalchemy-managed databases of
@@ -331,31 +383,45 @@ def _test_db_migration(db: SQLAlchemyDB):
     assert_revision(engine, None, "behind")
 
 
+def debug_dump(db: SQLAlchemyDB):
+    """Debug function to dump all tables in the database."""
+
+    print("  # registry")
+    for n, t in db.orm.registry.items():
+        print("   ", n, t)
+
+    with db.session.begin() as session:
+        print("  # feedback_def")
+        ress = session.query(db.orm.FeedbackDefinition).all()
+        for res in ress:
+            print("    feedback_def", res.feedback_definition_id)
+
+        print("  # app")
+        ress = session.query(db.orm.AppDefinition).all()
+        for res in ress:
+            print("    app", res.app_id) # no feedback results
+            for subres in res.records:
+                print("      record", subres.record_id)
+
+        print("  # record")
+        ress = session.query(db.orm.Record).all()
+        for res in ress:
+            print("    record", res.record_id)
+            for subres in res.feedback_results:
+                print("      feedback_result", subres.feedback_result_id)
+
+        print("  # feedback")
+        ress = session.query(db.orm.FeedbackResult).all()
+        for res in ress:
+            print("    feedback_result", res.feedback_result_id, res.feedback_definition)
+
 def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
     db.migrate_database()  # ensure latest revision
 
     _populate_data(db)
 
-    with db.session.begin() as session:
-        print("feedback defs")
-        ress = session.query(db.orm.FeedbackDefinition).all()
-        for res in ress:
-            print(res.feedback_definition_id)
-
-        print("apps")
-        ress = session.query(db.orm.AppDefinition).all()
-        for res in ress:
-            print(res.app_id, res.records) # no feedback results
-
-        print("records")
-        ress = session.query(db.orm.Record).all()
-        for res in ress:
-            print(res.record_id, res.feedback_results)
-
-        print("feedbacks")
-        ress = session.query(db.orm.FeedbackResult).all()
-        for res in ress:
-            print(res.feedback_result_id, res.feedback_definition)
+    print("### before delete app:")
+    debug_dump(db)
 
     with db.session.begin() as session:
         # delete the only app
@@ -375,7 +441,6 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
             "Expected no feedback results."
         )
 
-
         # feedback defs are preserved
         test.assertEqual(
             len(session.query(db.orm.FeedbackDefinition).all()), 1,
@@ -383,6 +448,9 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
         )
 
     _populate_data(db)
+
+    print("### before delete record:")
+    debug_dump(db)
 
     with db.session.begin() as session:
         test.assertEqual(
@@ -395,31 +463,27 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
             "Expected exactly one feedback result."
         )
 
-        ress = session.query(db.orm.FeedbackResult).all()
-        for res in ress:
-            print("result record=", res.record)
-            print("result def=", res.feedback_definition)
-
-        for n, t in db.orm.registry.items():
-            print(n, t)
-
         # delete the only record
         session.delete(session.query(db.orm.Record).one())
 
-        ress = session.query(db.orm.FeedbackResult).all()
-        for res in ress:
-            print("result record=", res.record)
-            print("result def=", res.feedback_definition)
-
         # feedbacks results are deleted in cascade
-        test.assertEqual(session.query(db.orm.FeedbackResult).all(), [], "Expected no feedback results.")
+        test.assertEqual(
+            session.query(db.orm.FeedbackResult).all(), [],
+            "Expected no feedback results."
+        )
 
         # apps are preserved
-        test.assertTrue(session.query(db.orm.AppDefinition).one(), "Expected an app.")
+        test.assertEqual(
+            len(session.query(db.orm.AppDefinition).all()), 1,
+            "Expected an app."
+        )
 
-        # feedback defs are preserved
-        test.assertTrue(session.query(db.orm.FeedbackDefinition).one(), "Expected a feedback definition.")
-
+        # feedback defs are preserved. Note that this requires us to use the
+        # same feedback_definition_id in _populate_data.
+        test.assertEqual(
+            len(session.query(db.orm.FeedbackDefinition).all()), 1,
+            "Expected a feedback definition."
+        )
 
 def _populate_data(db: DB):
     tru = Tru()
@@ -427,7 +491,7 @@ def _populate_data(db: DB):
     
     fb = Feedback(
         imp=MockFeedback().length,
-        # feedback_definition_id="mock",
+        feedback_definition_id="mock",
         selectors={"text": Select.RecordOutput},
     )
     app = TruBasicApp(
@@ -435,11 +499,13 @@ def _populate_data(db: DB):
         # app_id="test",
         db=db,
         feedbacks=[fb],
-        feedback_mode=FeedbackMode.WITH_APP,
+        feedback_mode=FeedbackMode.WITH_APP_THREAD,
     )
     _, rec = app.with_record(app.app.__call__, "boo")
 
-    print(rec.wait_for_feedback_results())
+    print("waiting for feedback results")
+    for res in rec.wait_for_feedback_results():
+        print("  ", res)
 
     return fb, app, rec
 

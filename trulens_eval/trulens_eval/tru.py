@@ -332,8 +332,8 @@ class Tru(python.SingletonPerName):
         record: schema.Record,
         feedback_functions: Sequence[feedback.Feedback],
         app: Optional[schema.AppDefinition] = None,
-        on_done: Optional[Callable[[Future[schema.FeedbackResult]],
-                                   None]] = None
+        on_done: Optional[Callable[[Union[schema.FeedbackResult, Future[schema.FeedbackResult]],
+                                   None]]] = None
     ) -> List[Tuple[feedback.Feedback, Future[schema.FeedbackResult]]]:
         """Schedules to run the given feedback functions.
         
@@ -383,11 +383,28 @@ class Tru(python.SingletonPerName):
         tp: tru_threading.TP = tru_threading.TP()
 
         for ffunc in feedback_functions:
-            fut: Future[schema.FeedbackResult] = \
-                tp.submit(ffunc.run, app=app, record=record)
+            # Run feedback function and the on_done callback. This makes sure
+            # that Future.result() returns only after on_done has finished.
+            def run_and_call_callback(ffunc, app, record):
+                temp = ffunc.run(app=app, record=record)
+                if on_done is not None:
+                    try:
+                        on_done(temp)
+                    finally:
+                        return temp
+                    
+                return temp
+            
 
-            if on_done is not None:
-                fut.add_done_callback(on_done)
+            fut: Future[schema.FeedbackResult] = \
+                tp.submit(run_and_call_callback, ffunc=ffunc, app=app, record=record)
+
+            # Have to roll the on_done callback into the submitted function
+            # because the result() is returned before callback runs otherwise.
+            # We want to do db work before result is returned.
+
+            # if on_done is not None:
+            #    fut.add_done_callback(on_done)
 
             feedbacks_and_futures.append((ffunc, fut))
 

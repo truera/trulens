@@ -11,10 +11,9 @@ import logging
 from pprint import PrettyPrinter
 import threading
 from threading import Lock
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
-    Optional, Sequence, Set, Tuple, Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
+                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
+                    TypeVar, Union)
 
 import pydantic
 
@@ -1285,12 +1284,21 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 """
         )
 
-    def _add_future_feedback(self, future_result: Future[FeedbackResult]):
+    def _add_future_feedback(
+        self, future_or_result: Union[FeedbackResult, Future[FeedbackResult]]
+    ) -> None:
         """
         Callback used to add feedback results to the database once they are
-        done. See `App._handle_record`.
+        done.
+        
+        See [_handle_record][trulens_eval.app.App._handle_record].
         """
-        res = future_result.result()
+        
+        if isinstance(future_or_result, Future):
+            res = future_or_result.result()
+        else:
+            res = future_or_result
+
         self.tru.add_feedback(res)
 
     def _handle_record(
