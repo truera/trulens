@@ -1,0 +1,28 @@
+# Example of a systemd service file to start the trulens leaderboard on system
+# start.
+# These need to be changed to adapt to your deployment:
+# - user: currently "ubuntu"
+# - repo folder: currently "/home/ubuntu/trulens"
+# - conda setup script: currently "init_conda.sh" whih is based on miniconda
+#   installation to /home/ubuntu/miniconda3
+# - conda environment: currently py311_trulens
+
+# To use this service, move it to /etc/systemd/system
+# Then run `sudo systemctl enable trulens`
+# Then run `sudo systemctl start trulens`
+
+# If things are going wrong, you can see the problems with
+# `journalctl -u trulens`
+
+[Unit]
+Description=trulens Leaderboard
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/trulens/trulens_eval
+ExecStart=/usr/bin/bash -lc "source /home/ubuntu/trulens/trulens_eval/tools/systemd/init_conda.sh; source $(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate py311_trulens; PYTHONPATH=. streamlit run trulens_eval/Leaderboard.py"
+# Restart=always
+
+[Install]
+WantedBy=default.target
