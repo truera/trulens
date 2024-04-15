@@ -11,13 +11,14 @@ from unittest import TestCase
 from tests.unit.test import optional_test
 
 from trulens_eval import Feedback
-# NOTE(piotrm): odd interaction with pydantic if we try to import the name
-# "schema"; avoid doing it for now.
-from trulens_eval.schema import FeedbackResult, AppDefinition
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
 from trulens_eval.feedback.provider.hugs import Dummy
 from trulens_eval.keys import check_keys
+# NOTE(piotrm): odd interaction with pydantic if we try to import the name
+# "schema"; avoid doing it for now.
+from trulens_eval.schema import AppDefinition
+from trulens_eval.schema import FeedbackResult
 from trulens_eval.tru_custom_app import TruCustomApp
 
 
