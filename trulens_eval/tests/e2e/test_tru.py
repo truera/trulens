@@ -11,14 +11,11 @@ from unittest import TestCase
 from tests.unit.test import optional_test
 
 from trulens_eval import Feedback
+from trulens_eval import schema
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
 from trulens_eval.feedback.provider.hugs import Dummy
 from trulens_eval.keys import check_keys
-# NOTE(piotrm): odd interaction with pydantic if we try to import the name
-# "schema"; avoid doing it for now.
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import FeedbackResult
 from trulens_eval.tru_custom_app import TruCustomApp
 
 
@@ -313,7 +310,7 @@ class TestTru(TestCase):
 
         # Check that the structure of returned tuples is correct.
         for result in feedback_results:
-            self.assertIsInstance(result, FeedbackResult)
+            self.assertIsInstance(result, schema.FeedbackResult)
             self.assertIsInstance(result.result, float)
 
         # TODO: move tests to test_add_feedbacks.
@@ -380,7 +377,7 @@ class TestTru(TestCase):
             wait([future_result])
 
             result = future_result.result()
-            self.assertIsInstance(result, FeedbackResult)
+            self.assertIsInstance(result, schema.FeedbackResult)
             self.assertIsInstance(result.result, float)
 
             feedback_results.append(result)
@@ -407,7 +404,7 @@ class TestTru(TestCase):
 
     def test_add_app(self):
         app_id = "test_app"
-        app_definition = AppDefinition(app_id=app_id, model_dump_json="{}")
+        app_definition = schema.AppDefinition(app_id=app_id, model_dump_json="{}")
         tru = Tru()
 
         # Action: Add the app to the database
@@ -422,7 +419,7 @@ class TestTru(TestCase):
     def test_delete_app(self):
         # Setup: Add an app to the database
         app_id = "test_app"
-        app_definition = AppDefinition(app_id=app_id, model_dump_json="{}")
+        app_definition = schema.AppDefinition(app_id=app_id, model_dump_json="{}")
         tru = Tru()
         tru.add_app(app_definition)
 
