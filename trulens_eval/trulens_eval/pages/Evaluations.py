@@ -271,7 +271,7 @@ else:
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
-        # gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc="sum", editable=True)
+
         gridOptions = gb.build()
         data = AgGrid(
             evaluations_df,
@@ -303,7 +303,8 @@ else:
             prompt = selected_rows["input"][0]
             response = selected_rows["output"][0]
             details = selected_rows["app_json"][0]
-            record_json = selected_rows["record_json"][0]
+            record_str = selected_rows["record_json"][0]
+            record_json = json.loads(record_str)
             record_metadata = selected_rows["record_metadata"][0]
 
             app_json = json.loads(
@@ -312,44 +313,11 @@ else:
 
             row = selected_rows.head().iloc[0]
 
-            # Display input/response side by side. In each column, we put them in tabs mainly for
-            # formatting/styling purposes.
-            input_col, response_col = st.columns(2)
 
-            (input_tab,) = input_col.tabs(["Input"])
-            with input_tab:
-                with st.expander(
-                        f"Input {render_selector_markdown(Select.RecordInput)}",
-                        expanded=True):
-                    write_or_json(st, obj=prompt)
+            val = record_viewer(record_json, app_json)
+            st.markdown("")
 
-            (response_tab,) = response_col.tabs(["Response"])
-            with response_tab:
-                with st.expander(
-                        f"Response {render_selector_markdown(Select.RecordOutput)}",
-                        expanded=True):
-                    write_or_json(st, obj=response)
-
-            feedback_tab, metadata_tab = st.tabs(["Feedback", "Metadata"])
-
-            with metadata_tab:
-                metadata_dict = json.loads(record_json).get("meta", None)
-                if metadata_dict is None:
-                    st.write("No record metadata available")
-                elif not isinstance(metadata_dict, dict):
-                    st.write(
-                        "Invalid metadata format: expected a dictionary (dict) type"
-                    )
-                else:
-                    metadata_cols = list(metadata_dict.keys())
-
-                    metadata_cols = st.columns(len(metadata_cols))
-
-                    for i, (key, value) in enumerate(metadata_dict.items()):
-                        metadata_cols[i].metric(
-                            label=key,
-                            value=value,
-                        )
+            feedback_tab = st.tabs(["Feedback"])
 
             with feedback_tab:
                 if len(feedback_cols) == 0:
@@ -431,13 +399,9 @@ else:
                              ] = list(instrumented_component_views(app_json))
             classes_map = {path: view for path, view in classes}
 
-            st.markdown("")
-            st.subheader("Trace view")
-            val = record_viewer(record_json, app_json)
-            st.markdown("")
 
             match_query = None
-
+            
             # Assumes record_json['perf']['start_time'] is always present
             if val != "":
                 match = None
@@ -512,14 +476,6 @@ else:
 
                 if has_subcomponents:
                     container.markdown("#### Subcomponents:")
-
-            st.header("More options:")
-
-            if st.button("Display full app json"):
-                st.write(jsonify_for_ui(app_json))
-
-            if st.button("Display full record json"):
-                st.write(jsonify_for_ui(record_json))
 
     with tab2:
         feedback = feedback_cols

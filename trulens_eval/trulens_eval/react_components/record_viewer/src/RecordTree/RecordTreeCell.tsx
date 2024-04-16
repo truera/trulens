@@ -91,9 +91,13 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
         ref={ref as React.Ref<HTMLButtonElement>}
       >
         <Box sx={cellSx}>
-          <Box>
-            <Typography fontWeight="bold">{label}</Typography>
-            <Typography color="grey.600">{selector}</Typography>
+          <Box width="100%">
+            <Typography sx={ellipsisSx} fontWeight="bold">
+              {label}
+            </Typography>
+            <Typography color="grey.600" sx={ellipsisSx}>
+              {selector}
+            </Typography>
 
             <Box sx={tagsContainerSx}>
               <Tag
@@ -129,7 +133,14 @@ const cellSx: SxProps<Theme> = ({ spacing, palette }) => ({
   '& svg': {
     color: palette.grey[600],
   },
+  overflow: 'hidden',
 });
+const ellipsisSx: SxProps<Theme> = {
+  textOverflow: 'ellipsis',
+  overflow: 'hidden',
+  width: '100%',
+  whiteSpace: 'nowrap',
+};
 
 const tagsContainerSx: SxProps<Theme> = { display: 'flex', mt: 0.5, flexWrap: 'wrap' };
 const tagSx: SxProps<Theme> = { alignItems: 'center', '& svg': { color: 'grey.900' } };

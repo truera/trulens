@@ -1,28 +1,39 @@
 import { useEffect, useState } from 'react';
-import ReactJson from '@microlink/react-json-view';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowUpRounded from '@mui/icons-material/KeyboardArrowUpRounded';
 import { Box, Divider, Stack, Typography } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view';
 import { Streamlit } from 'streamlit-component-lib';
-import { RecordJSONRaw, StackTreeNode } from '../utils/types';
+import { AppJSONRaw, RecordJSONRaw, StackTreeNode } from '../utils/types';
 import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 import RecordTreeCellRecursive from './RecordTreeCellRecursive';
-import Panel from '../Panel/Panel';
-import LabelAndValue from '../LabelAndValue/LabelAndValue';
 import { Tabs, Tab } from '../Tabs';
 import { ROOT_NODE_ID } from '../utils/utils';
 import Details from './Details/Details';
+import JSONViewer from '../JSONViewer/JSONViewer';
+
+enum RECORD_TREE_TABS {
+  DETAILS = 'Details',
+  SPAN_JSON = 'Span JSON',
+  RECORD_JSON = 'Record JSON',
+  APP_JSON = 'App JSON',
+  RECORD_METADATA = 'Record Metadata',
+}
+
+const SPAN_TREE_TABS = [RECORD_TREE_TABS.DETAILS, RECORD_TREE_TABS.SPAN_JSON];
+
+const GENERAL_TABS = [RECORD_TREE_TABS.RECORD_METADATA, RECORD_TREE_TABS.RECORD_JSON, RECORD_TREE_TABS.APP_JSON];
 
 type RecordTreeProps = {
+  appJSON: AppJSONRaw;
   nodeMap: Record<string, StackTreeNode>;
   recordJSON: RecordJSONRaw;
   root: StackTreeNode;
 };
 
-export default function RecordTree({ nodeMap, recordJSON, root }: RecordTreeProps) {
+export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: RecordTreeProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState<string>('Details');
+  const [selectedTab, setSelectedTab] = useState<RECORD_TREE_TABS>(RECORD_TREE_TABS.DETAILS);
 
   const handleItemSelectionToggle = (_event: React.SyntheticEvent, itemId: string, isSelected: boolean) => {
     if (isSelected) {
@@ -33,9 +44,32 @@ export default function RecordTree({ nodeMap, recordJSON, root }: RecordTreeProp
   };
   const selectedNode = selectedNodeId ? nodeMap[selectedNodeId] : root;
 
-  useEffect(() => Streamlit.setComponentValue(selectedNodeId), [selectedNodeId]);
+  useEffect(() => Streamlit.setComponentValue(selectedNode?.raw?.perf?.start_time ?? ''), [selectedNode]);
 
   const { timeTaken: totalTime, startTime: treeStart } = getStartAndEndTimesForNode(root);
+
+  const getSelectedView = () => {
+    if (selectedTab === RECORD_TREE_TABS.APP_JSON) {
+      return <JSONViewer src={appJSON} />;
+    }
+
+    if (selectedTab === RECORD_TREE_TABS.SPAN_JSON) {
+      return <JSONViewer src={selectedNodeId === ROOT_NODE_ID ? recordJSON : selectedNode.raw ?? {}} />;
+    }
+
+    if (selectedTab === RECORD_TREE_TABS.RECORD_JSON) {
+      return <JSONViewer src={recordJSON} />;
+    }
+
+    if (selectedTab === RECORD_TREE_TABS.RECORD_METADATA) {
+      const { meta } = recordJSON;
+      if (!meta || !Object.keys(meta as object)?.length) return <Typography>No record metadata available</Typography>;
+
+      return <JSONViewer src={meta} />;
+    }
+
+    return <Details selectedNode={selectedNode} recordJSON={recordJSON} />;
+  };
 
   return (
     <Stack
@@ -44,7 +78,7 @@ export default function RecordTree({ nodeMap, recordJSON, root }: RecordTreeProp
       sx={{ border: ({ palette }) => `1px solid ${palette.grey[300]}`, borderRadius: 0.5 }}
     >
       <SimpleTreeView
-        sx={{ p: 1, overflowY: 'auto', minWidth: 400 }}
+        sx={{ p: 1, overflowY: 'auto', minWidth: 400, flexGrow: 0 }}
         slots={{
           collapseIcon: KeyboardArrowUpRounded,
           expandIcon: KeyboardArrowDownRounded,
@@ -63,22 +97,23 @@ export default function RecordTree({ nodeMap, recordJSON, root }: RecordTreeProp
         <Tabs
           value={selectedTab}
           onChange={(_event, value) => setSelectedTab(value)}
-          sx={{ borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}` }}
+          sx={{
+            borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}`,
+          }}
         >
-          <Tab label="Details" value="Details" id="Details" />
-          <Tab label="Raw JSON" value="Raw JSON" id="Raw JSON" />
+          {SPAN_TREE_TABS.map((tab) => (
+            <Tab label={tab} value={tab} key={tab} id={tab} />
+          ))}
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          {GENERAL_TABS.map((tab) => (
+            <Tab label={tab} value={tab} key={tab} id={tab} />
+          ))}
         </Tabs>
 
         <Stack gap={2} sx={{ flexGrow: 1, p: 1, mb: 4 }}>
-          {selectedTab === 'Details' ? (
-            <Details selectedNode={selectedNode} recordJSON={recordJSON} />
-          ) : (
-            <ReactJson
-              src={selectedNodeId === ROOT_NODE_ID ? recordJSON : selectedNode.raw ?? {}}
-              name={null}
-              style={{ fontSize: '14px' }}
-            />
-          )}
+          {getSelectedView()}
         </Stack>
       </Stack>
     </Stack>

@@ -1,4 +1,4 @@
-import { Box, Grid, Stack, Typography } from '@mui/material';
+import { Grid, Stack, Typography } from '@mui/material';
 import { RecordJSONRaw, StackTreeNode } from '../../utils/types';
 import { getStartAndEndTimesForNode } from '../../utils/treeUtils';
 import Panel from '../../Panel/Panel';
@@ -6,7 +6,7 @@ import LabelAndValue from '../../LabelAndValue/LabelAndValue';
 
 import Section from './Section';
 import { summarySx } from './styles';
-import ReactJson from '@microlink/react-json-view';
+import JSONViewer from '../../JSONViewer/JSONViewer';
 
 type DetailsProps = {
   selectedNode: StackTreeNode;
@@ -23,23 +23,20 @@ export default function NodeDetails({ selectedNode, recordJSON }: DetailsProps) 
   let returnValueDisplay = <Typography>No return values recorded</Typography>;
   if (rets) {
     if (typeof rets === 'string') returnValueDisplay = <Typography>{rets}</Typography>;
-    if (typeof rets === 'object')
-      returnValueDisplay = <ReactJson src={rets as object} name={null} style={{ fontSize: '14px' }} />;
+    if (typeof rets === 'object') returnValueDisplay = <JSONViewer src={rets as object} />;
   }
 
   return (
     <>
       <Stack direction="row" sx={summarySx}>
-        <LabelAndValue label="Latency" value={<Typography>{nodeTime} ms</Typography>} />
+        <LabelAndValue label="Time taken" value={<Typography>{nodeTime} ms</Typography>} />
       </Stack>
 
       <Grid container gap={1}>
         <Grid item xs={12} xl={6}>
           <Panel header="Span I/O">
             <Stack gap={2}>
-              <Section title="Arguments">
-                {args ? <ReactJson src={args} name={null} style={{ fontSize: '14px' }} /> : 'No arguments recorded.'}
-              </Section>
+              <Section title="Arguments">{args ? <JSONViewer src={args} /> : 'No arguments recorded.'}</Section>
 
               <Section title="Return values">{returnValueDisplay}</Section>
             </Stack>
