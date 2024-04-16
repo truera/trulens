@@ -1,7 +1,7 @@
 import asyncio
 import json
-from typing import Dict, Iterable, Tuple
 import pprint as pp
+from typing import Dict, Iterable, Tuple
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -57,20 +57,19 @@ df_results, feedback_cols = lms.get_records_and_feedback([])
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
     (
-        row.feedback_json.get("supplied_name", "") or
-        row.feedback_json["implementation"]["name"]
-    ): (
-        "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
-        else "LOWER_IS_BETTER"
-    ) for _, row in lms.get_feedback_defs().iterrows()
+        row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
+    ):
+        (
+            "HIGHER_IS_BETTER"
+            if row.feedback_json.get("higher_is_better", True) else
+            "LOWER_IS_BETTER"
+        ) for _, row in lms.get_feedback_defs().iterrows()
 }
 default_direction = "HIGHER_IS_BETTER"
 
 
 def render_component(
-    query: Lens,
-    component: ComponentView,
-    header: bool=True
+    query: Lens, component: ComponentView, header: bool = True
 ) -> None:
     """Render the accessor/path within the wrapped app of the component."""
 
@@ -110,12 +109,11 @@ def render_component(
 
 
 def render_record_metrics(
-    app_df: pd.DataFrame,
-    selected_rows: pd.DataFrame
+    app_df: pd.DataFrame, selected_rows: pd.DataFrame
 ) -> None:
     """Render record level metrics (e.g. total tokens, cost, latency) compared
     to the average when appropriate."""
-    
+
     app_specific_df = app_df[app_df["app_id"] == selected_rows["app_id"][0]]
 
     token_col, cost_col, latency_col = st.columns(3)
@@ -318,7 +316,9 @@ else:
             if len(feedback_cols) == 0:
                 st.write("No feedback details")
             else:
-                feedback_with_valid_results = list(filter(lambda fcol: row[fcol] != None, feedback_cols))
+                feedback_with_valid_results = list(
+                    filter(lambda fcol: row[fcol] != None, feedback_cols)
+                )
 
                 def get_icon(feedback_name):
                     cat = CATEGORY.of_score(
@@ -329,11 +329,22 @@ else:
                     )
                     return cat.icon
 
-                icons = list(map(lambda fcol: get_icon(fcol), feedback_with_valid_results))
+                icons = list(
+                    map(
+                        lambda fcol: get_icon(fcol), feedback_with_valid_results
+                    )
+                )
 
-                selected_fcol = pills("Feedback functions (click on a pill to learn more)", feedback_with_valid_results, index=None, format_func = lambda fcol: f"{fcol} {row[fcol]:.4f}", icons=icons)
+                selected_fcol = pills(
+                    "Feedback functions (click on a pill to learn more)",
+                    feedback_with_valid_results,
+                    index=None,
+                    format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
+                    icons=icons
+                )
 
                 def display_feedback_call(call, feedback_name):
+
                     def highlight(s):
                         if "distance" in feedback_name:
                             return [
@@ -362,9 +373,7 @@ else:
                                 if not isinstance(v, str):
                                     args[k] = pp.pformat(v)
 
-                        df = pd.DataFrame.from_records(
-                            c['args'] for c in call
-                        )
+                        df = pd.DataFrame.from_records(c['args'] for c in call)
 
                         df["result"] = pd.DataFrame(
                             [
@@ -380,20 +389,21 @@ else:
                                     ).drop(columns="meta")
 
                         st.dataframe(
-                            df.style.apply(highlight, axis=1).format(
-                                "{:.2f}", subset=["result"]
-                            )
+                            df.style.apply(highlight, axis=1
+                                          ).format("{:.2f}", subset=["result"])
                         )
 
                     else:
-                        st.text("No feedback details.")      
+                        st.text("No feedback details.")
 
                 if selected_fcol != None:
                     try:
                         if MULTI_CALL_NAME_DELIMITER in selected_fcol:
-                            fcol = selected_fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
+                            fcol = selected_fcol.split(
+                                MULTI_CALL_NAME_DELIMITER
+                            )[0]
                         feedback_calls = row[f"{selected_fcol}_calls"]
-                        display_feedback_call(feedback_calls, selected_fcol)   
+                        display_feedback_call(feedback_calls, selected_fcol)
                     except Exception:
                         pass
 
