@@ -16,7 +16,6 @@ export default function Tabs({ children, value = false, onChange, sx = {} }: Pro
       value={value}
       onChange={onChange}
       indicatorColor="primary"
-      textColor="primary"
       variant="scrollable"
       scrollButtons="auto"
       sx={combineSx(tabsSx, sx)}

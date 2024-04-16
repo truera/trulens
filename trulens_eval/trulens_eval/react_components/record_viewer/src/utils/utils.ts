@@ -96,7 +96,9 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
       matchingNode.startTime = startTime;
       matchingNode.endTime = endTime;
       matchingNode.id = matchingNodeId;
-      matchingNode.nodeId = `${matchingNodeId}-${methodName}-${name}`;
+      matchingNode.nodeId = `${matchingNodeId}-${methodName}-${name}-${startTime?.toISOString() ?? ''}-${
+        endTime?.toISOString() ?? ''
+      }`;
       matchingNode.raw = call;
 
       return;

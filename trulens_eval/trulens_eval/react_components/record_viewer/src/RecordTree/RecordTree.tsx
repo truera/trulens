@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowUpRounded from '@mui/icons-material/KeyboardArrowUpRounded';
-import { Box, Divider, Stack, Typography } from '@mui/material';
+import { Box, Grid, Stack, Typography, gridClasses } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view';
 import { Streamlit } from 'streamlit-component-lib';
 import { AppJSONRaw, RecordJSONRaw, StackTreeNode } from '../utils/types';
@@ -17,7 +17,7 @@ enum RECORD_TREE_TABS {
   SPAN_JSON = 'Span JSON',
   RECORD_JSON = 'Record JSON',
   APP_JSON = 'App JSON',
-  RECORD_METADATA = 'Record Metadata',
+  RECORD_METADATA = 'Metadata',
 }
 
 const SPAN_TREE_TABS = [RECORD_TREE_TABS.DETAILS, RECORD_TREE_TABS.SPAN_JSON];
@@ -78,41 +78,45 @@ export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: Recor
   };
 
   return (
-    <Stack
-      direction="row"
-      divider={<Divider orientation="vertical" flexItem />}
-      sx={{ border: ({ palette }) => `1px solid ${palette.grey[300]}`, borderRadius: 0.5, minHeight: 700 }}
+    <Grid
+      container
+      sx={{
+        border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
+        borderRadius: 0.5,
+        minHeight: 700,
+        [`& .${gridClasses.item}`]: {
+          border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
+        },
+      }}
     >
-      <SimpleTreeView
-        sx={{ p: 1, overflowY: 'auto', minWidth: 400, flexGrow: 0 }}
-        slots={{
-          collapseIcon: KeyboardArrowUpRounded,
-          expandIcon: KeyboardArrowDownRounded,
-        }}
-        onExpandedItemsChange={() => {
-          setTimeout(() => Streamlit.setFrameHeight(), 300);
-        }}
-        defaultSelectedItems={ROOT_NODE_ID}
-        defaultExpandedItems={Object.keys(nodeMap) ?? []}
-        onItemSelectionToggle={handleItemSelectionToggle}
-      >
-        <RecordTreeCellRecursive node={root} depth={0} totalTime={totalTime} treeStart={treeStart} />
-      </SimpleTreeView>
+      <Grid item xs={12} sm={4}>
+        <SimpleTreeView
+          sx={{ p: 1, overflowY: 'auto', flexGrow: 0 }}
+          slots={{
+            collapseIcon: KeyboardArrowUpRounded,
+            expandIcon: KeyboardArrowDownRounded,
+          }}
+          onExpandedItemsChange={() => {
+            setTimeout(() => Streamlit.setFrameHeight(), 300);
+          }}
+          defaultSelectedItems={ROOT_NODE_ID}
+          defaultExpandedItems={Object.keys(nodeMap) ?? []}
+          onItemSelectionToggle={handleItemSelectionToggle}
+        >
+          <RecordTreeCellRecursive node={root} depth={0} totalTime={totalTime} treeStart={treeStart} />
+        </SimpleTreeView>
+      </Grid>
 
-      <Stack sx={{ flexGrow: 1 }}>
+      <Grid item xs={12} sm={8}>
         <Tabs
           value={selectedTab}
           onChange={(_event, value) => setSelectedTab(value as RECORD_TREE_TABS)}
-          sx={{
-            borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}`,
-          }}
+          sx={{ borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}` }}
         >
           {SPAN_TREE_TABS.map((tab) => (
             <Tab label={tab} value={tab} key={tab} id={tab} />
           ))}
-
           <Box sx={{ flexGrow: 1 }} />
-
           {GENERAL_TABS.map((tab) => (
             <Tab label={tab} value={tab} key={tab} id={tab} />
           ))}
@@ -121,7 +125,7 @@ export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: Recor
         <Stack gap={2} sx={{ flexGrow: 1, p: 1, mb: 4 }}>
           {getSelectedView()}
         </Stack>
-      </Stack>
-    </Stack>
+      </Grid>
+    </Grid>
   );
 }
