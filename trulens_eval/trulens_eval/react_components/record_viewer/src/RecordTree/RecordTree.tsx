@@ -63,9 +63,15 @@ export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: Recor
 
     if (selectedTab === RECORD_TREE_TABS.RECORD_METADATA) {
       const { meta } = recordJSON;
-      if (!meta || !Object.keys(meta as object)?.length) return <Typography>No record metadata available</Typography>;
+      if (!meta || !Object.keys(meta as object)?.length) return <Typography>No record metadata available.</Typography>;
 
-      return <JSONViewer src={meta} />;
+      if (typeof meta === 'object') {
+        return <JSONViewer src={meta as object} />;
+      }
+
+      return (
+        <Typography>Invalid metadata type. Expected a dictionary but got {String(meta) ?? 'unknown object'}</Typography>
+      );
     }
 
     return <Details selectedNode={selectedNode} recordJSON={recordJSON} />;
@@ -75,7 +81,7 @@ export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: Recor
     <Stack
       direction="row"
       divider={<Divider orientation="vertical" flexItem />}
-      sx={{ border: ({ palette }) => `1px solid ${palette.grey[300]}`, borderRadius: 0.5 }}
+      sx={{ border: ({ palette }) => `1px solid ${palette.grey[300]}`, borderRadius: 0.5, minHeight: 700 }}
     >
       <SimpleTreeView
         sx={{ p: 1, overflowY: 'auto', minWidth: 400, flexGrow: 0 }}
