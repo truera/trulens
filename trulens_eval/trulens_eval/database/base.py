@@ -85,6 +85,15 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def check_db_revision(self):
+        """Check that the database is up to date with the current trulens_eval
+        version.
+        
+        Raises:
+            ValueError: If the database is not up to date.
+        """
+
+    @abc.abstractmethod
     def insert_record(
         self,
         record: Record,

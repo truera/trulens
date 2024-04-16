@@ -5,9 +5,8 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
-)
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Type, Union)
 import warnings
 
 import numpy as np
@@ -30,12 +29,11 @@ from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.database.migrations.data import data_migrate
-from trulens_eval.database.utils import check_db_revision
-from trulens_eval.database.utils import for_all_methods
+from trulens_eval.database.utils import \
+    check_db_revision as alembic_check_db_revision
 from trulens_eval.database.utils import is_legacy_sqlite
 from trulens_eval.database.utils import is_memory_sqlite
 from trulens_eval.database.utils import migrate_legacy_sqlite
-from trulens_eval.database.utils import run_before
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
@@ -53,17 +51,6 @@ from trulens_eval.utils.text import UNICODE_STOP
 logger = logging.getLogger(__name__)
 
 
-@for_all_methods(
-    run_before(
-        lambda self, *args, **kwargs: \
-            check_db_revision(self.engine, prefix=self.table_prefix)
-    ),
-    _except=[
-        "migrate_database",
-        "reload_engine",
-        "reset_database"  # migrates database automatically
-    ]
-)
 class SQLAlchemyDB(DB):
     """Database implemented using sqlalchemy.
     
@@ -192,7 +179,6 @@ class SQLAlchemyDB(DB):
             kwargs: Additional arguments to pass to the database constructor.
 
         Returns:
-
             A database instance.
         """
 
@@ -214,12 +200,24 @@ class SQLAlchemyDB(DB):
 
         return cls(engine_params=engine_params, **kwargs)
 
+    def check_db_revision(self):
+        """See
+        [DB.check_db_revision][trulens_eval.database.base.DB.check_db_revision]."""
+
+        if self.engine is None:
+            raise ValueError("Database engine not initialized.")
+
+        alembic_check_db_revision(self.engine, self.table_prefix)
+
     def migrate_database(self, prior_prefix: Optional[str] = None):
         """See [DB.migrate_database][trulens_eval.database.base.DB.migrate_database]."""
 
+        if self.engine is None:
+            raise ValueError("Database engine not initialized.")
+
         try:
             # Expect to get the the behind exception.
-            check_db_revision(
+            alembic_check_db_revision(
                 self.engine,
                 prefix=self.table_prefix,
                 prior_prefix=prior_prefix

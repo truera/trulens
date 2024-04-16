@@ -14,9 +14,8 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
-)
+from typing import (Any, Callable, Dict, Generic, Iterable, List, Optional,
+                    Sequence, Tuple, TypeVar, Union)
 
 import humanize
 import pandas
@@ -27,6 +26,7 @@ from typing_extensions import Doc
 from trulens_eval import schema
 from trulens_eval.database import sqlalchemy
 from trulens_eval.database.base import DB
+from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.feedback import feedback
 from trulens_eval.utils import notebook_utils
 from trulens_eval.utils import python
@@ -34,6 +34,7 @@ from trulens_eval.utils import serial
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.imports import static_resource
 from trulens_eval.utils.python import Future  # code style exception
+from trulens_eval.utils.python import OpaqueWrapper
 
 pp = PrettyPrinter()
 
@@ -123,8 +124,11 @@ class Tru(python.SingletonPerName):
     DEFERRED_NUM_RUNS: int = 32
     """Number of futures to wait for when evaluating deferred feedback functions."""
 
-    db: DB
-    """Database supporting this workspace."""
+    db: Union[DB, OpaqueWrapper[DB]]
+    """Database supporting this workspace.
+    
+    Will be an opqaue wrapper if it is not ready to use due to migration requirements.
+    """
 
     _dashboard_urls: Optional[str] = None
 
@@ -150,8 +154,14 @@ class Tru(python.SingletonPerName):
         database_file: Optional[str] = None,
         database_redact_keys: Optional[bool] = None,
         database_prefix: Optional[str] = None,
-        database_args: Optional[Dict[str, Any]] = None
+        database_args: Optional[Dict[str, Any]] = None,
+        database_check_revision: bool = True,
     ):
+        """
+        Args:
+            database_check_revision: Whether to check the database revision on
+                init. This prompt determine whether database migration is required.
+        """
 
         if database_args is None:
             database_args = {}
@@ -184,6 +194,13 @@ class Tru(python.SingletonPerName):
             self.db = database
         else:
             self.db = sqlalchemy.SQLAlchemyDB.from_tru_args(**database_args)
+
+        if database_check_revision:
+            try:
+                self.db.check_db_revision()
+            except DatabaseVersionException as e:
+                print(e)
+                self.db = OpaqueWrapper(obj=self.db, e=e)
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict
@@ -280,7 +297,15 @@ class Tru(python.SingletonPerName):
         See [DB.reset_database][trulens_eval.database.base.DB.reset_database].
         """
 
-        self.db.reset_database()
+        if isinstance(self.db, OpaqueWrapper):
+            db = self.db.unwrap()
+        elif isinstance(self.db, DB):
+            db = self.db
+        else:
+            raise RuntimeError("Unhandled database type.")
+
+        db.reset_database()
+        self.db = db
 
     def migrate_database(self, **kwargs: Dict[str, Any]):
         """Migrates the database.
@@ -296,7 +321,15 @@ class Tru(python.SingletonPerName):
         See [DB.migrate_database][trulens_eval.database.base.DB.migrate_database].
         """
 
-        self.db.migrate_database(**kwargs)
+        if isinstance(self.db, OpaqueWrapper):
+            db = self.db.unwrap()
+        elif isinstance(self.db, DB):
+            db = self.db
+        else:
+            raise RuntimeError("Unhandled database type.")
+
+        db.migrate_database(**kwargs)
+        self.db = db
 
     def add_record(
         self,
