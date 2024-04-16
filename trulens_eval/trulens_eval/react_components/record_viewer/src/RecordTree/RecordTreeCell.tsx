@@ -15,10 +15,16 @@ type RecordTreeCellTooltipProps = {
 };
 function RecordTreeCellTooltip({ node, children }: RecordTreeCellTooltipProps) {
   const { startTime, endTime } = getStartAndEndTimesForNode(node);
+  const selector = getSelector(node);
   return (
     <StyledTooltip
       title={
         <Box sx={{ lineHeight: 1.5 }}>
+          <span>
+            <b>Selector: </b>
+            {selector}
+          </span>
+          <br />
           <span>
             <b>Start: </b>
             {new Date(startTime).toLocaleDateString()} {new Date(startTime).toLocaleTimeString()}
@@ -89,7 +95,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
         ref={ref as React.Ref<HTMLButtonElement>}
       >
         <Box sx={cellSx}>
-          <Box width="100%">
+          <Box width={icon ? 'calc(100% - 40px)' : '100%'}>
             <Typography sx={ellipsisSx} fontWeight="bold">
               {label}
             </Typography>
