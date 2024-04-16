@@ -316,9 +316,9 @@ else:
             if len(feedback_cols) == 0:
                 st.write("No feedback details")
             else:
-                feedback_with_valid_results = list(
+                feedback_with_valid_results = sorted(list(
                     filter(lambda fcol: row[fcol] != None, feedback_cols)
-                )
+                ))
 
                 def get_icon(feedback_name):
                     cat = CATEGORY.of_score(

@@ -1,4 +1,4 @@
-import { Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { PropsWithChildren } from 'react';
 
 type SectionProps = PropsWithChildren<{
@@ -10,9 +10,13 @@ type SectionProps = PropsWithChildren<{
 export default function Section({ title, subtitle, body, children }: SectionProps) {
   return (
     <Stack gap={1}>
-      <Typography variant="body2" fontWeight="bold">
-        {title}
-      </Typography>
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'baseline' }}>
+        <Typography variant="body2" fontWeight="bold">
+          {title}
+        </Typography>
+
+        {subtitle && <Typography variant="code">{subtitle}</Typography>}
+      </Box>
 
       <Typography>{body}</Typography>
       {children}

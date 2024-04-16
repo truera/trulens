@@ -102,7 +102,7 @@ export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: Recor
       <Stack sx={{ flexGrow: 1 }}>
         <Tabs
           value={selectedTab}
-          onChange={(_event, value) => setSelectedTab(value)}
+          onChange={(_event, value) => setSelectedTab(value as RECORD_TREE_TABS)}
           sx={{
             borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}`,
           }}

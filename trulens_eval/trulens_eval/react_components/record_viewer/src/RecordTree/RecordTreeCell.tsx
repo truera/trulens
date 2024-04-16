@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { forwardRef, ReactElement } from 'react';
 import clsx from 'clsx';
 import { AccessTimeRounded } from '@mui/icons-material';
@@ -83,7 +81,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
         })}
         className={clsx(className, classes.root, {
           [classes.expanded]: expanded,
-          [classes.selected]: selected, // TODO: fixme
+          [classes.selected]: selected,
           [classes.focused]: focused,
           [classes.disabled]: disabled,
         })}
@@ -109,13 +107,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
             </Box>
           </Box>
 
-          <Box
-            onClick={
-              (event) => handleExpansionClick(event) // TODO: hover styles
-            }
-          >
-            {icon}
-          </Box>
+          <Box onClick={(event) => handleExpansionClick(event)}>{icon}</Box>
         </Box>
       </Box>
     </RecordTreeCellTooltip>

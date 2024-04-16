@@ -1,5 +1,3 @@
-import LabelAndValue from 'components/UI/LabelAndValue/LabelAndValue';
+import LabelAndValue from './LabelAndValue';
 
 export default LabelAndValue;
-export * from 'components/UI/LabelAndValue/LabelAndValue';
-export * from 'components/UI/LabelAndValue/LabelAndValueSkeleton';

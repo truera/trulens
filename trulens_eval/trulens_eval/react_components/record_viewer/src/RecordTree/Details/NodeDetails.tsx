@@ -7,6 +7,8 @@ import LabelAndValue from '../../LabelAndValue/LabelAndValue';
 import Section from './Section';
 import { summarySx } from './styles';
 import JSONViewer from '../../JSONViewer/JSONViewer';
+import TracePanel from './TracePanel';
+import { getSelector } from '../../utils/utils';
 
 type DetailsProps = {
   selectedNode: StackTreeNode;
@@ -15,8 +17,8 @@ type DetailsProps = {
 
 export default function NodeDetails({ selectedNode, recordJSON }: DetailsProps) {
   const { timeTaken: nodeTime } = getStartAndEndTimesForNode(selectedNode);
-  const { main_input: traceInput, main_output: traceOutput, main_error: error } = recordJSON;
   const { raw } = selectedNode;
+  const selector = getSelector(selectedNode);
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { args, rets } = raw ?? {};
 
@@ -36,21 +38,19 @@ export default function NodeDetails({ selectedNode, recordJSON }: DetailsProps) 
         <Grid item xs={12} xl={6}>
           <Panel header="Span I/O">
             <Stack gap={2}>
-              <Section title="Arguments">{args ? <JSONViewer src={args} /> : 'No arguments recorded.'}</Section>
+              <Section title="Arguments" subtitle={selector ? `${selector}.args` : undefined}>
+                {args ? <JSONViewer src={args} /> : 'No arguments recorded.'}
+              </Section>
 
-              <Section title="Return values">{returnValueDisplay}</Section>
+              <Section title="Return values" subtitle={selector ? `${selector}.rets` : undefined}>
+                {returnValueDisplay}
+              </Section>
             </Stack>
           </Panel>
         </Grid>
 
         <Grid item xs={12} xl={6}>
-          <Panel header="Trace I/O">
-            <Stack gap={2}>
-              <Section title="Input" body={traceInput ?? 'No input found.'} />
-              <Section title="Output" body={traceOutput ?? 'No output found.'} />
-              {error && <Section title="Error" body={error ?? 'No error found.'} />}
-            </Stack>
-          </Panel>
+          <TracePanel recordJSON={recordJSON} />
         </Grid>
       </Grid>
     </>
