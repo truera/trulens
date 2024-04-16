@@ -15,7 +15,7 @@ from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_pills import pills
-from ux.add_logo import add_logo_and_style_overrides
+from ux.page_config import set_page_config
 from ux.styles import CATEGORY
 
 from trulens_eval import Tru
@@ -40,14 +40,12 @@ from trulens_eval.ux.components import draw_tool_info
 from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
-
-st.set_page_config(page_title="Evaluations", layout="wide")
-
-st.title("Evaluations")
+import pprint
 
 st.runtime.legacy_caching.clear_cache()
 
-add_logo_and_style_overrides()
+set_page_config(page_title="Evaluations")
+st.title("Evaluations")
 
 tru = Tru()
 lms = tru.db

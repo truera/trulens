@@ -3,8 +3,9 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+)
 import warnings
 
 import numpy as np
@@ -195,6 +196,21 @@ class SqlAlchemyDB(DB):
             logger.info(f"{UNICODE_CHECK} added app {_app.app_id}")
 
             return _app.app_id
+    
+    def delete_app(self, app_id: schema.AppID) -> None:
+        """
+        Deletes an app from the database based on its app_id.
+
+        Args:
+            app_id (schema.AppID): The unique identifier of the app to be deleted.
+        """
+        with self.Session.begin() as session:
+            _app = session.query(orm.AppDefinition).filter_by(app_id=app_id).first()
+            if _app:
+                session.delete(_app)
+                logger.info(f"{UNICODE_CHECK} deleted app {app_id}")
+            else:
+                logger.warning(f"App {app_id} not found for deletion.")
 
     def insert_feedback_definition(
         self, feedback_definition: schema.FeedbackDefinition

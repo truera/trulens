@@ -300,7 +300,7 @@ class LLMProvider(Provider):
             )
             return score, {}
 
-    def context_relevance(self, question: str, context: str) -> float:
+    def context_relevance(self, question: str, context: str, temperature: float = 0.0) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the relevance of the context to the question.
@@ -336,7 +336,8 @@ class LLMProvider(Provider):
                 prompts.CONTEXT_RELEVANCE_USER,
                 question=question,
                 context=context
-            )
+            ),
+            temperature=temperature
         )
 
     def qs_relevance(self, question: str, context: str) -> float:
@@ -352,7 +353,7 @@ class LLMProvider(Provider):
         return self.context_relevance(question, context)
 
     def context_relevance_with_cot_reasons(self, question: str,
-                                           context: str) -> Tuple[float, Dict]:
+                                           context: str, temperature: float = 0.0) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the context to the question.
@@ -388,7 +389,7 @@ class LLMProvider(Provider):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
 
-        return self.generate_score_and_reasons(system_prompt, user_prompt)
+        return self.generate_score_and_reasons(system_prompt, user_prompt, temperature)
 
     def qs_relevance_with_cot_reasons(self, question: str,
                                       context: str) -> Tuple[float, Dict]:
@@ -1244,4 +1245,3 @@ class LLMProvider(Provider):
         )
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
-
