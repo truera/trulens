@@ -259,7 +259,7 @@ nav:
       - 𝄢 Instruments: trulens_eval/api/instruments.md
       - 🗄 Database: trulens_eval/api/db.md
       - Utils:
-          - trulens_eval/api/utils/index.md
+          # - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
           - trulens_eval/api/utils/serial.md
           - trulens_eval/api/utils/json.md
