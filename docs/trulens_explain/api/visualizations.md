@@ -1,3 +1,3 @@
 # Visualization Methods
 
-::: trulens_explain.trulens.visualizations
+::: trulens.visualizations

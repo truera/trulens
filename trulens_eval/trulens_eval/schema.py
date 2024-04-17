@@ -142,6 +142,14 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
     """Datetime after the recorded call."""
 
     @staticmethod
+    def min():
+        """Zero-length span with start and end times at the minimum datetime."""
+
+        return Perf(
+            start_time=datetime.datetime.min, end_time=datetime.datetime.min
+        )
+
+    @staticmethod
     def now(latency: Optional[datetime.timedelta] = None) -> Perf:
         """Create a `Perf` instance starting now and ending now plus latency.
          

@@ -2,6 +2,7 @@ from datetime import datetime
 import inspect
 import logging
 from pathlib import Path
+from pprint import pformat
 import shutil
 import sqlite3
 from tempfile import TemporaryDirectory
@@ -14,10 +15,11 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import inspect as sql_inspect
 
+from trulens_eval.database import base as mod_db
 from trulens_eval.database.exceptions import DatabaseVersionException
+from trulens_eval.database.legacy.sqlite import LocalSQLite
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
-from trulens_eval.db import LocalSQLite
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,7 @@ def for_all_methods(decorator, _except: Optional[List[str]] = None):
             if _except is not None and attr_name in _except:
                 continue
 
-            logger.debug(f"Decorating {attr_name}")
+            logger.debug("Decorating %s", attr_name)
             setattr(cls, attr_name, decorator(attr))
 
         return cls
@@ -86,7 +88,9 @@ def is_legacy_sqlite(engine: Engine) -> bool:
         # brand new db, not even initialized yet
         return False
 
-    return not "alembic_version" in tables
+    version_tables = [t for t in tables if t.endswith("alembic_version")]
+
+    return len(version_tables) == 0
 
     #return DbRevisions.load(engine).current is None
 
@@ -121,21 +125,79 @@ def is_memory_sqlite(
     )
 
 
-def check_db_revision(engine: Engine):
+def check_db_revision(
+    engine: Engine,
+    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
+    prior_prefix: Optional[str] = None
+):
     """
     Check if database schema is at the expected revision.
+
+    Args:
+        engine: SQLAlchemy engine to check.
+
+        prefix: Prefix used for table names including alembic_version in the
+            current code.
+
+        prior_prefix: Table prefix used in the previous version of the
+            database. Before this configuration was an option, the prefix was
+            equivalent to "".
     """
+
+    if not isinstance(prefix, str):
+        raise ValueError("prefix must be a string")
+
+    if prefix == prior_prefix:
+        raise ValueError(
+            "prior_prefix and prefix canot be the same. Use None for prior_prefix if it is unknown."
+        )
+
+    ins = sqlalchemy.inspect(engine)
+    tables = ins.get_table_names()
+
+    # Get all tables we could have made for alembic version. Other apps might
+    # also have made these though.
+    version_tables = [t for t in tables if t.endswith("alembic_version")]
+
+    if prior_prefix is not None:
+        # Check if tables using the old/empty prefix exist.
+        if prior_prefix + "alembic_version" in version_tables:
+            raise DatabaseVersionException.reconfigured(
+                prior_prefix=prior_prefix
+            )
+    else:
+        # Check if the new/expected version table exists.
+
+        if prefix + "alembic_version" not in version_tables:
+            # If not, lets try to figure out the prior prefix.
+
+            if len(version_tables) > 0:
+
+                if len(version_tables) > 1:
+                    # Cannot figure out prior prefix if there is more than one
+                    # version table.
+                    raise ValueError(
+                        f"Found multiple alembic_version tables: {version_tables}. "
+                        "Cannot determine prior prefix. "
+                        "Please specify it using the `prior_prefix` argument."
+                    )
+
+                # Guess prior prefix as the single one with version table name.
+                raise DatabaseVersionException.reconfigured(
+                    prior_prefix=version_tables[0].
+                    replace("alembic_version", "")
+                )
 
     if is_legacy_sqlite(engine):
         logger.info("Found legacy SQLite file: %s", engine.url)
         raise DatabaseVersionException.behind()
 
-    revisions = DbRevisions.load(engine)
+    revisions = DbRevisions.load(engine, prefix=prefix)
 
     if revisions.current is None:
         logger.debug("Creating database")
         upgrade_db(
-            engine, revision="head"
+            engine, revision="head", prefix=prefix
         )  # create automatically if it doesn't exist
 
     elif revisions.in_sync:
@@ -153,7 +215,7 @@ def check_db_revision(engine: Engine):
         )
 
 
-def migrate_legacy_sqlite(engine: Engine):
+def migrate_legacy_sqlite(engine: Engine, prefix: str = "trulens_"):
     """
     Migrate legacy file-based SQLite to the latest Alembic revision:
 
@@ -176,13 +238,15 @@ def migrate_legacy_sqlite(engine: Engine):
     """
 
     # 1. Make sure that original database is at the latest legacy schema
-    assert is_legacy_sqlite(engine)
+    if not is_legacy_sqlite(engine):
+        raise ValueError("Not a legacy SQLite database")
 
     original_file = Path(engine.url.database)
     saved_db_file = original_file.parent / f"{original_file.name}_saved_{uuid.uuid1()}"
     shutil.copy(original_file, saved_db_file)
     logger.info(
-        f"Saved original db file: `{original_file}` to new file: `{saved_db_file}`"
+        "Saved original db file: `%s` to new file: `%s`", original_file,
+        saved_db_file
     )
     logger.info("Handling legacy SQLite file: %s", original_file)
     logger.debug("Applying legacy migration scripts")
@@ -204,7 +268,7 @@ def migrate_legacy_sqlite(engine: Engine):
             pool_pre_ping=True,
             pool_use_lifo=True
         )
-        upgrade_db(stg_engine, revision="1")
+        upgrade_db(stg_engine, revision="1", prefix=prefix)
 
         # 3. Copy records from original database to staging
         src_conn = sqlite3.connect(original_file)
@@ -223,7 +287,7 @@ def migrate_legacy_sqlite(engine: Engine):
 
         # 4. Migrate staging database to the latest Alembic revision
         logger.debug("Applying Alembic migration scripts")
-        upgrade_db(stg_engine, revision="head")
+        upgrade_db(stg_engine, revision="head", prefix=prefix)
 
         # 5. Replace original database file with the staging one
         logger.debug("Replacing database file at %s", original_file)
@@ -240,7 +304,12 @@ def coerce_ts(ts: Union[datetime, str, int, float]) -> datetime:
     raise ValueError(f"Cannot coerce to datetime: {ts}")
 
 
-def _copy_database(src_url: str, tgt_url: str):
+def copy_database(
+    src_url: str,
+    tgt_url: str,
+    src_prefix: str,  # = mod_db.DEFAULT_DATABASE_PREFIX,
+    tgt_prefix: str,  # = mod_db.DEFAULT_DATABASE_PREFIX
+):
     """
     Copy all data from a source database to an EMPTY target database.
 
@@ -249,7 +318,7 @@ def _copy_database(src_url: str, tgt_url: str):
           important that the target database is empty.
 
         - Will fail if the databases are not at the latest schema revision. That
-          can be fixed with `Tru(database_url="...").migrate_database()`
+          can be fixed with `Tru(database_url="...", database_prefix="...").migrate_database()`
 
         - Might fail if the target database enforces relationship constraints,
           because then the order of inserting data matters.
@@ -258,17 +327,43 @@ def _copy_database(src_url: str, tgt_url: str):
           the databases are NOT used by anyone while this process runs.
     """
 
-    from trulens_eval.database.sqlalchemy_db import SqlAlchemyDB
+    from trulens_eval.database.sqlalchemy import SQLAlchemyDB
 
-    src = SqlAlchemyDB.from_db_url(src_url)
-    check_db_revision(src.engine)
+    src = SQLAlchemyDB.from_db_url(src_url, table_prefix=src_prefix)
+    check_db_revision(src.engine, prefix=src_prefix)
 
-    tgt = SqlAlchemyDB.from_db_url(tgt_url)
-    check_db_revision(tgt.engine)
+    tgt = SQLAlchemyDB.from_db_url(tgt_url, table_prefix=tgt_prefix)
+    check_db_revision(tgt.engine, prefix=tgt_prefix)
 
-    for table in ["apps", "feedback_defs", "records", "feedbacks"]:
+    print("Source database:")
+    print(pformat(src))
+
+    print("Target database:")
+    print(pformat(tgt))
+
+    for k, source_table_class in src.orm.registry.items():
+        # ["apps", "feedback_defs", "records", "feedbacks"]:
+
+        if not hasattr(source_table_class, "_table_base_name"):
+            continue
+
+        target_table_class = tgt.orm.registry.get(k)
 
         with src.engine.begin() as src_conn:
+
             with tgt.engine.begin() as tgt_conn:
-                df = pd.read_sql(f"SELECT * FROM {table}", src_conn)
-                df.to_sql(table, tgt_conn, index=False, if_exists="append")
+
+                df = pd.read_sql(
+                    f"SELECT * FROM {source_table_class.__tablename__}",
+                    src_conn
+                )
+                df.to_sql(
+                    target_table_class.__tablename__,
+                    tgt_conn,
+                    index=False,
+                    if_exists="append"
+                )
+
+                print(
+                    f"Copied {len(df)} rows from {source_table_class.__tablename__} in source {target_table_class.__tablename__} in target."
+                )
