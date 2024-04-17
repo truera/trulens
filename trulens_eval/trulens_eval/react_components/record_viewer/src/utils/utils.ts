@@ -1,7 +1,5 @@
-import { v4 } from 'uuid';
-import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw, StackTreeNode } from './types';
-
-export const ROOT_NODE_ID = 'root-root-root';
+import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw } from './types';
+import { StackTreeNode } from './StackTreeNode';
 
 /**
  * Gets the name of the calling class in the stack cell.
@@ -68,23 +66,16 @@ export const getStartAndEndTimes = (perf: PerfJSONRaw) => {
 
 const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONRaw[], index: number) => {
   const stackCell = stack[index];
-
-  // eslint-disable-next-line no-param-reassign
-  if (!tree.children) tree.children = [];
+  const name = getClassNameFromCell(stackCell);
+  const { id } = stackCell.method.obj;
 
   // otherwise, we are deciding which node to go in
   let matchingNode = tree.children.find(
     (node) =>
-      node.name === getClassNameFromCell(stackCell) &&
+      node.name === name &&
       node.startTime <= new Date(call.perf.start_time).getTime() &&
-      (node.endTime === 0 || node.endTime >= new Date(call.perf.end_time).getTime())
+      (!node.endTime || node.endTime >= new Date(call.perf.end_time).getTime())
   );
-
-  const path = getPathName(stackCell);
-  const name = getClassNameFromCell(stackCell);
-  const methodName = getMethodNameFromCell(stackCell);
-  const { id } = stackCell.method.obj;
-  const nodeId = `${id}-${methodName}-${name}`;
 
   // if we are currently at the top most cell of the stack
   if (index === stack.length - 1) {
@@ -95,45 +86,33 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
 
       matchingNode.startTime = startTime;
       matchingNode.endTime = endTime;
-      matchingNode.timeTaken = endTime - startTime;
       matchingNode.id = matchingNodeId;
-      matchingNode.nodeId = `${matchingNodeId}-${methodName}-${name}-${startTime ?? ''}-${endTime ?? ''}`;
       matchingNode.raw = call;
 
       return;
     }
 
-    tree.children.push({
-      children: [],
-      name,
-      path,
-      methodName,
-      nodeId,
-      id,
-      startTime,
-      endTime,
-      timeTaken: (endTime ?? 0) - (startTime ?? 0),
-      raw: call,
-      parentNodes: [...tree.parentNodes, tree],
-      isRoot: false,
-    });
+    tree.children.push(
+      new StackTreeNode({
+        name,
+        id,
+        raw: call,
+        parentNodes: [...tree.parentNodes, tree],
+        perf: call.perf,
+        stackCell,
+      })
+    );
 
     return;
   }
 
   if (!matchingNode) {
-    const newNode: StackTreeNode = {
-      children: [],
+    const newNode = new StackTreeNode({
       name,
-      methodName,
-      path,
-      startTime: 0,
-      endTime: 0,
-      timeTaken: 0,
-      nodeId: `${v4()}-${methodName}-${path}`, // Placeholder
+      stackCell,
       parentNodes: [...tree.parentNodes, tree],
-      isRoot: false,
-    };
+      id,
+    });
 
     // otherwise create a new node
     tree.children.push(newNode);
@@ -144,44 +123,17 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
 };
 
 export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string) => {
-  const startTime = new Date(recordJSON.perf.start_time).getTime();
-  const endTime = new Date(recordJSON.perf.end_time).getTime();
-
-  const tree: StackTreeNode = {
-    children: [],
+  const tree = new StackTreeNode({
     name: appName,
-    startTime,
-    endTime,
-    timeTaken: endTime - startTime,
-    path: '',
-    parentNodes: [],
+    perf: recordJSON.perf,
     id: 0,
-    isRoot: true,
-    nodeId: ROOT_NODE_ID, // ID for the record viewer, since function Ids may not be unique.
-    raw: {
-      stack: [],
-      args: { str_or_query_bundle: '' },
-      error: null,
-      rets: [],
-      perf: recordJSON.perf,
-      pid: -1,
-      tid: -1,
-    },
-  };
+  });
 
   recordJSON.calls.forEach((call) => {
     addCallToTree(tree, call, call.stack, 0);
   });
 
   return tree;
-};
-
-export const getSelector = (node: StackTreeNode) => {
-  if (!node) return '';
-
-  const components = [`Select.Record`, node.path, node.methodName].filter(Boolean);
-
-  return components.join('.');
 };
 
 export const createNodeMap = (node: StackTreeNode) => {

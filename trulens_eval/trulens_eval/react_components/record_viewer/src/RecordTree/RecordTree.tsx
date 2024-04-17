@@ -1,11 +1,9 @@
-import { useEffect } from 'react';
 import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowUpRounded from '@mui/icons-material/KeyboardArrowUpRounded';
 import { SimpleTreeView } from '@mui/x-tree-view';
 import { Streamlit } from 'streamlit-component-lib';
-import { StackTreeNode } from '../utils/types';
 import RecordTreeCellRecursive from './RecordTreeCellRecursive';
-import { ROOT_NODE_ID } from '../utils/utils';
+import { StackTreeNode, ROOT_NODE_ID } from '../utils/StackTreeNode';
 
 type RecordTreeProps = {
   nodeMap: Record<string, StackTreeNode>;
@@ -22,9 +20,6 @@ export default function RecordTree({ nodeMap, root, selectedNodeId, setSelectedN
       setSelectedNodeId(null);
     }
   };
-  const selectedNode = selectedNodeId ? nodeMap[selectedNodeId] : root;
-
-  useEffect(() => Streamlit.setComponentValue(selectedNode?.raw?.perf?.start_time ?? ''), [selectedNode]);
 
   const { timeTaken: totalTime, startTime: treeStart } = root;
 
@@ -36,6 +31,8 @@ export default function RecordTree({ nodeMap, root, selectedNodeId, setSelectedN
         expandIcon: KeyboardArrowDownRounded,
       }}
       onExpandedItemsChange={() => {
+        // Add a delay - streamlit is not great at detecting height changes due to animation, so we wait
+        // until the end of the animation to tell streamlit to set the frame height.
         setTimeout(() => Streamlit.setFrameHeight(), 300);
       }}
       defaultSelectedItems={selectedNodeId ?? ROOT_NODE_ID}

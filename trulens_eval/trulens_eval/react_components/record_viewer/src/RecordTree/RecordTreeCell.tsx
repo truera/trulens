@@ -3,9 +3,8 @@ import clsx from 'clsx';
 import { AccessTimeRounded } from '@mui/icons-material';
 import { Box, SxProps, Theme, Typography } from '@mui/material';
 import { useTreeItemState, TreeItemContentProps } from '@mui/x-tree-view/TreeItem';
-import { StackTreeNode } from '../utils/types';
+import { StackTreeNode } from '../utils/StackTreeNode';
 import Tag from '../Tag/Tag';
-import { getSelector } from '../utils/utils';
 import { SpanTooltip } from '../SpanTooltip';
 
 type RecordTreeCellProps = TreeItemContentProps & {
@@ -16,9 +15,8 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
   const { classes, className, label, itemId, icon: iconProp, expansionIcon, displayIcon, node } = props;
 
   const { disabled, expanded, selected, focused, handleExpansion, handleSelection } = useTreeItemState(itemId);
-  const selector = getSelector(node);
 
-  const { timeTaken } = node;
+  const { selector, timeTaken } = node;
 
   const icon = iconProp || expansionIcon || displayIcon;
 
@@ -66,7 +64,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
             <Typography sx={ellipsisSx} fontWeight="bold">
               {label}
             </Typography>
-            <Typography color="grey.600" sx={ellipsisSx}>
+            <Typography variant="code" sx={ellipsisSx}>
               {selector}
             </Typography>
 

@@ -136,18 +136,3 @@ export interface DataRaw {
   app_json: AppJSONRaw;
   record_json: RecordJSONRaw;
 }
-
-export interface StackTreeNode {
-  children: StackTreeNode[];
-  name: string;
-  path?: string;
-  methodName?: string;
-  startTime: number;
-  endTime: number;
-  timeTaken: number;
-  raw?: CallJSONRaw;
-  id?: number;
-  nodeId: string;
-  parentNodes: StackTreeNode[];
-  isRoot: boolean;
-}

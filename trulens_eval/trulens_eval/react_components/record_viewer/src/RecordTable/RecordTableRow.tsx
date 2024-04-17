@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowDropDown, ArrowRight } from '@mui/icons-material';
 import { Streamlit } from 'streamlit-component-lib';
 import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Typography } from '@mui/material';
-import { StackTreeNode } from '../utils/types';
-import { getSelector } from '../utils/utils';
+import { StackTreeNode } from '../utils/StackTreeNode';
 import { SpanTooltip } from '../SpanTooltip';
 
 type RecordTableRowRecursiveProps = {
@@ -27,11 +26,7 @@ export default function RecordTableRowRecursive({
 
   const [expanded, setExpanded] = useState<boolean>(true);
 
-  const { name, methodName, nodeId, startTime, timeTaken } = node;
-  const selector = getSelector(node);
-
-  const isRoot = !node.path;
-  const itemLabel = isRoot ? name : [name, methodName].join('.');
+  const { nodeId, startTime, timeTaken, selector, label } = node;
 
   const isNodeSelected = selectedNodeId === nodeId;
 
@@ -52,7 +47,7 @@ export default function RecordTableRowRecursive({
               </IconButton>
             )}
             <Box sx={{ display: 'flex', alignItems: 'center', ml: node.children.length === 0 ? 5 : 0 }}>
-              <Typography>{itemLabel}</Typography>
+              <Typography fontWeight="bold">{label}</Typography>
               <Typography variant="code" sx={{ ml: 1, px: 1 }}>
                 {selector}
               </Typography>

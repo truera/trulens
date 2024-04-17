@@ -1,7 +1,6 @@
 import { ReactElement } from 'react';
 import { Box } from '@mui/material';
-import { StackTreeNode } from '../utils/types';
-import { getSelector } from '../utils/utils';
+import { StackTreeNode } from '../utils/StackTreeNode';
 import StyledTooltip from '../StyledTooltip/StyledTooltip';
 
 type SpanTooltipProps = {
@@ -10,8 +9,7 @@ type SpanTooltipProps = {
 };
 
 export default function SpanTooltip({ node, children }: SpanTooltipProps) {
-  const { startTime, endTime } = node;
-  const selector = getSelector(node);
+  const { startTime, endTime, selector } = node;
 
   return (
     <StyledTooltip

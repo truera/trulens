@@ -3,7 +3,7 @@ import { Streamlit } from 'streamlit-component-lib';
 import { SxProps, Theme } from '@mui/material';
 import { TreeItem, treeItemClasses } from '@mui/x-tree-view';
 import { RecordTreeCell } from './RecordTreeCell';
-import { StackTreeNode } from '../utils/types';
+import { StackTreeNode } from '../utils/StackTreeNode';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;
@@ -15,17 +15,13 @@ type RecordTableRowRecursiveProps = {
 export default function RecordTreeCellRecursive({ node, depth, totalTime, treeStart }: RecordTableRowRecursiveProps) {
   useEffect(() => Streamlit.setFrameHeight());
 
-  const isRoot = !node.path;
-
-  const { methodName, name, nodeId } = node;
-
-  const itemLabel = isRoot ? name : [name, methodName].join('.');
+  const { nodeId, label } = node;
 
   return (
     <TreeItem
       sx={treeItemSx}
       itemId={nodeId}
-      label={itemLabel}
+      label={label}
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       /* @ts-ignore */
       ContentComponent={RecordTreeCell}

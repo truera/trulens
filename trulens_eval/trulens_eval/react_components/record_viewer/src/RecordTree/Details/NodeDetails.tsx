@@ -1,5 +1,5 @@
 import { Grid, Stack, Typography } from '@mui/material';
-import { RecordJSONRaw, StackTreeNode } from '../../utils/types';
+import { RecordJSONRaw } from '../../utils/types';
 import Panel from '../../Panel/Panel';
 import LabelAndValue from '../../LabelAndValue/LabelAndValue';
 
@@ -7,7 +7,7 @@ import Section from './Section';
 import { summarySx } from './styles';
 import JSONViewer from '../../JSONViewer/JSONViewer';
 import TracePanel from './TracePanel';
-import { getSelector } from '../../utils/utils';
+import { StackTreeNode } from '../../utils/StackTreeNode';
 
 type DetailsProps = {
   selectedNode: StackTreeNode;
@@ -15,8 +15,8 @@ type DetailsProps = {
 };
 
 export default function NodeDetails({ selectedNode, recordJSON }: DetailsProps) {
-  const { timeTaken: nodeTime, raw } = selectedNode;
-  const selector = getSelector(selectedNode);
+  const { timeTaken: nodeTime, raw, selector } = selectedNode;
+
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { args, rets } = raw ?? {};
 
