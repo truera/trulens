@@ -1,19 +1,26 @@
 import asyncio
 from typing import Optional
 
-import pydantic
-
 from trulens_eval.schema import AppDefinition
 from trulens_eval.schema import Record
+from trulens_eval.tru import Tru
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import Lens
+from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.apps import ChatRecord
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 import streamlit as st
 from ux.page_config import set_page_config
+
+if __name__ == "__main__":
+    # If not imported, gets args from command line and creates Tru singleton
+    init_from_args()
+
+tru = Tru()
+lms = tru.db
 
 st.runtime.legacy_caching.clear_cache()
 
@@ -286,9 +293,6 @@ def end_session():
 
     del st.session_state['records']
 
-
-# NOTE: using callbacks for all interactions as otherwise I'm seeing various
-# problems.
 
 if "records" not in st.session_state:
     # This field only exists after a model is selected. Here no model was
