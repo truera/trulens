@@ -92,6 +92,7 @@ class DB(SerialModel, abc.ABC):
         Raises:
             ValueError: If the database is not up to date.
         """
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def insert_record(
