@@ -1,4 +1,4 @@
-import { forwardRef, ReactElement } from 'react';
+import { forwardRef } from 'react';
 import clsx from 'clsx';
 import { AccessTimeRounded } from '@mui/icons-material';
 import { Box, SxProps, Theme, Typography } from '@mui/material';
@@ -7,41 +7,7 @@ import { StackTreeNode } from '../utils/types';
 import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 import Tag from '../Tag/Tag';
 import { getSelector } from '../utils/utils';
-import StyledTooltip from '../StyledTooltip/StyledTooltip';
-
-type RecordTreeCellTooltipProps = {
-  node: StackTreeNode;
-  children: ReactElement;
-};
-function RecordTreeCellTooltip({ node, children }: RecordTreeCellTooltipProps) {
-  const { startTime, endTime } = getStartAndEndTimesForNode(node);
-  const selector = getSelector(node);
-
-  return (
-    <StyledTooltip
-      title={
-        <Box sx={{ lineHeight: 1.5 }}>
-          <span>
-            <b>Selector: </b>
-            {selector}
-          </span>
-          <br />
-          <span>
-            <b>Start: </b>
-            {new Date(startTime).toLocaleDateString()} {new Date(startTime).toLocaleTimeString()}
-          </span>
-          <br />
-          <span>
-            <b>End: </b>
-            {new Date(endTime).toLocaleDateString()} {new Date(endTime).toLocaleTimeString()}
-          </span>
-        </Box>
-      }
-    >
-      {children}
-    </StyledTooltip>
-  );
-}
+import { SpanTooltip } from '../SpanTooltip';
 
 type RecordTreeCellProps = TreeItemContentProps & {
   node: StackTreeNode;
@@ -64,8 +30,9 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
   const handleSelectionClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     handleSelection(event);
   };
+
   return (
-    <RecordTreeCellTooltip node={node}>
+    <SpanTooltip node={node}>
       <Box
         sx={({ palette }) => ({
           [`&:hover > div`]: {
@@ -117,7 +84,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
           <Box onClick={(event) => handleExpansionClick(event)}>{icon}</Box>
         </Box>
       </Box>
-    </RecordTreeCellTooltip>
+    </SpanTooltip>
   );
 });
 

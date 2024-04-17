@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { ArrowDropDown, ArrowRight } from '@mui/icons-material';
 import { Streamlit } from 'streamlit-component-lib';
-import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Typography } from '@mui/material';
 import { StackTreeNode } from '../utils/types';
 import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 import { getSelector } from '../utils/utils';
+import { SpanTooltip } from '../SpanTooltip';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;
@@ -14,22 +15,6 @@ type RecordTableRowRecursiveProps = {
   selectedNodeId: string | null;
   setSelectedNodeId: (newNode: string | null) => void;
 };
-
-function TooltipDescription({ startTime, endTime }: { startTime: number; endTime: number }) {
-  return (
-    <Box sx={{ lineHeight: 1.5 }}>
-      <span>
-        <b>Start: </b>
-        {new Date(startTime).toISOString()}
-      </span>
-      <br />
-      <span>
-        <b>End: </b>
-        {new Date(endTime).toISOString()}
-      </span>
-    </Box>
-  );
-}
 
 export default function RecordTableRowRecursive({
   node,
@@ -44,7 +29,7 @@ export default function RecordTableRowRecursive({
   const [expanded, setExpanded] = useState<boolean>(true);
 
   const { name, methodName, nodeId } = node;
-  const { startTime, timeTaken, endTime } = getStartAndEndTimesForNode(node);
+  const { startTime, timeTaken } = getStartAndEndTimesForNode(node);
   const selector = getSelector(node);
 
   const isRoot = !node.path;
@@ -78,7 +63,7 @@ export default function RecordTableRowRecursive({
         </TableCell>
         <TableCell align="right">{timeTaken} ms</TableCell>
         <TableCell sx={{ minWidth: 500, padding: 0 }}>
-          <Tooltip title={<TooltipDescription startTime={startTime} endTime={endTime} />}>
+          <SpanTooltip node={node}>
             <Box
               sx={{
                 left: `${((startTime - treeStart) / totalTime) * 100}%`,
@@ -88,7 +73,7 @@ export default function RecordTableRowRecursive({
                 ...recordBarSx,
               }}
             />
-          </Tooltip>
+          </SpanTooltip>
         </TableCell>
       </TableRow>
       {expanded
