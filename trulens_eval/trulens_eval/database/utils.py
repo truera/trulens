@@ -173,21 +173,21 @@ def copy_database(
     src_prefix: str,  # = mod_db.DEFAULT_DATABASE_PREFIX,
     tgt_prefix: str,  # = mod_db.DEFAULT_DATABASE_PREFIX
 ):
-    """
-    Copy all data from a source database to an EMPTY target database.
+    """Copy all data from a source database to an EMPTY target database.
 
     Important considerations:
-        - All source data will be appended to the target tables, so it is
-          important that the target database is empty.
+    
+    - All source data will be appended to the target tables, so it is
+        important that the target database is empty.
 
-        - Will fail if the databases are not at the latest schema revision. That
-          can be fixed with `Tru(database_url="...", database_prefix="...").migrate_database()`
+    - Will fail if the databases are not at the latest schema revision. That
+        can be fixed with `Tru(database_url="...", database_prefix="...").migrate_database()`
 
-        - Might fail if the target database enforces relationship constraints,
-          because then the order of inserting data matters.
+    - Might fail if the target database enforces relationship constraints,
+        because then the order of inserting data matters.
 
-        - This process is NOT transactional, so it is highly recommended that
-          the databases are NOT used by anyone while this process runs.
+    - This process is NOT transactional, so it is highly recommended that
+        the databases are NOT used by anyone while this process runs.
     """
 
     # Avoids circular imports.
