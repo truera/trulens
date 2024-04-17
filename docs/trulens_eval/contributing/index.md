@@ -110,6 +110,10 @@ Parts of the code are nuanced in ways should be avoided by new contributors.
 Discussions of these points are welcome to help the project rid itself of these
 problematic designs. See [Tech debt index](techdebt.md).
 
+### Database Migration
+
+[Database migration](migration.md).
+
 ## 👋👋🏻👋🏼👋🏽👋🏾👋🏿 Contributors
 
 {%

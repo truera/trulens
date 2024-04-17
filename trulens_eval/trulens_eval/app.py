@@ -1,7 +1,3 @@
-"""
-Generalized root type for various libraries like `llama_index` and `langchain` .
-"""
-
 from __future__ import annotations
 
 from abc import ABC
@@ -15,10 +11,9 @@ import logging
 from pprint import PrettyPrinter
 import threading
 from threading import Lock
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
-    Optional, Sequence, Set, Tuple, Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
+                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
+                    TypeVar, Union)
 
 import pydantic
 
@@ -442,11 +437,22 @@ class RecordingContext():
 
 
 class App(AppDefinition, WithInstrumentCallbacks, Hashable):
-    """
-    Generalization of an app recorder.
-    
+    """Base app recorder type.
+
     Non-serialized fields here while the serialized ones are defined in
     [AppDefinition][trulens_eval.schema.AppDefinition].
+
+    This class is abstract. Use one of these concrete subclasses as appropriate:
+    - [TruLlama][trulens_eval.tru_llama.TruLlama] for _LlamaIndex_ apps.
+    - [TruChain][trulens_eval.tru_chain.TruChain] for _LangChain_ apps.
+    - [TruRails][trulens_eval.tru_rails.TruRails] for _NeMo Guardrails_
+        apps.
+    - [TruVirtual][trulens_eval.tru_virtual.TruVirtual] for recording
+        information about invocations of apps without access to those apps.
+    - [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp] for custom
+        apps. These need to be decorated to have appropriate data recorded.
+    - [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp] for apps defined
+        solely by a string-to-string method.
     """
 
     model_config: ClassVar[dict] = {
@@ -468,13 +474,13 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
     (if not already) and used.
     """
 
-    db: Optional[trulens_eval.db.DB] = pydantic.Field(
+    db: Optional[trulens_eval.database.base.DB] = pydantic.Field(
         default=None, exclude=True
     )
     """Database interface.
     
     If this is not provided, a singleton
-    [SqlAlchemyDB][trulens_eval.database.sqlalchemy_db.SqlAlchemyDB] will be
+    [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] will be
     made (if not already) and used.
     """
 
@@ -766,8 +772,10 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 else:
                     # Recursively extract content from nested pydantic models
                     return {
-                        k: self._extract_content(v) if
-                        isinstance(v, (pydantic.BaseModel, dict, list)) else v
+                        k:
+                            self._extract_content(v) if
+                            isinstance(v,
+                                       (pydantic.BaseModel, dict, list)) else v
                         for k, v in value.dict().items()
                     }
         elif isinstance(value, dict):
@@ -779,8 +787,8 @@ class App(AppDefinition, WithInstrumentCallbacks, Hashable):
                 # Recursively extract content from nested dictionaries
                 return {
                     k:
-                    self._extract_content(v) if isinstance(v,
-                                                           (dict, list)) else v
+                        self._extract_content(v) if isinstance(v, (dict,
+                                                                   list)) else v
                     for k, v in value.items()
                 }
         elif isinstance(value, list):
@@ -1276,12 +1284,21 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 """
         )
 
-    def _add_future_feedback(self, future_result: Future[FeedbackResult]):
+    def _add_future_feedback(
+        self, future_or_result: Union[FeedbackResult, Future[FeedbackResult]]
+    ) -> None:
         """
         Callback used to add feedback results to the database once they are
-        done. See `App._handle_record`.
+        done.
+        
+        See [_handle_record][trulens_eval.app.App._handle_record].
         """
-        res = future_result.result()
+        
+        if isinstance(future_or_result, Future):
+            res = future_or_result.result()
+        else:
+            res = future_or_result
+
         self.tru.add_feedback(res)
 
     def _handle_record(
@@ -1479,4 +1496,4 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving tru.Tru
-# and db.DB. Will rebuild each App subclass instead.
+# and database.base.DB. Will rebuild each App subclass instead.

@@ -1,3 +1,3 @@
 # Quantities of Interest
 
-::: trulens_explain.trulens.nn.quantities
+::: trulens.nn.quantities

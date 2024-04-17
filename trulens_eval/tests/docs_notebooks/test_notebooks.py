@@ -8,7 +8,7 @@ from unittest import TestCase
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import read
 
-from trulens_eval import db_migration
+from trulens_eval.database.legacy import migration
 
 
 class DocsNotebookTests(TestCase):
@@ -107,12 +107,12 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
 
         if 'all_tools' in filename or 'llama_index_quickstart' in filename:
             # If you want to test all versions uncomment and replace the below for loop
-            ### for version in db_migration.migration_versions:
+            ### for version in migration.migration_versions:
 
             # Run the oldest and latest migrations to keep testing more manageable
             legacy_sqllite_migrations = [
-                db_migration.migration_versions[0],
-                db_migration.migration_versions[-1]
+                migration.migration_versions[0],
+                migration.migration_versions[-1]
             ]
             sqlalchemy_versions = [
                 compat_versions for compat_versions in listdir('./release_dbs')
