@@ -14,19 +14,19 @@
         <link rel="prev" href="../instruments/">
       
       
-        <link rel="next" href="../utils/">
+        <link rel="next" href="migration/">
       
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.13">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.18">
     
     
       
-        <title>🗄 Database - 🦑 TruLens</title>
+        <title>Index - 🦑 TruLens</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.7e359304.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.66ac8b77.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#database" class="md-skip">
+        <a href="#trulens_eval.database.base" class="md-skip">
           Skip to content
         </a>
       
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              🗄 Database
+              Index
             
           </span>
         </div>
@@ -170,7 +170,7 @@
         <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
     truera/trulens
@@ -412,7 +412,7 @@
       <a href="https://github.com/truera/trulens" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
   </div>
   <div class="md-source__repository">
     truera/trulens
@@ -1001,7 +1001,7 @@
         
   
   <span class="md-ellipsis">
-    Anatomy of a Feedback Function
+    🦴 Anatomy of a Feedback Function
   </span>
   
 
@@ -1468,6 +1468,10 @@
       
         
       
+        
+      
+        
+      
     
     
       
@@ -1508,7 +1512,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/feedback_evaluations/answer_relevance_smoke_tests/" class="md-nav__link">
+      <a href="../../evaluation/feedback_evaluations/answer_relevance_benchmark_small/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1529,7 +1533,28 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/feedback_evaluations/context_relevance_smoke_tests/" class="md-nav__link">
+      <a href="../../evaluation/feedback_evaluations/comprehensiveness_benchmark/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Comprehensiveness Evaluations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_evaluations/context_relevance_benchmark_small/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1550,7 +1575,28 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/feedback_evaluations/groundedness_smoke_tests/" class="md-nav__link">
+      <a href="../../evaluation/feedback_evaluations/context_relevance_benchmark/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Context Relevance Benchmarking: ranking is all you need.
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/feedback_evaluations/groundedness_benchmark/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2273,7 +2319,7 @@
         
   
   <span class="md-ellipsis">
-    TruVirtual
+    ⬚ TruVirtual
   </span>
   
 
@@ -2722,440 +2768,107 @@
   
   
   
-    <li class="md-nav__item md-nav__item--active">
+    
+    
       
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
+        
+          
+        
       
         
       
+        
       
-        <label class="md-nav__link md-nav__link--active" for="__toc">
+    
+    
+      
+      
+        
           
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_7" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="./" class="md-nav__link md-nav__link--active">
+              
   
   <span class="md-ellipsis">
     🗄 Database
   </span>
   
 
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+            </a>
+            
+              
+              <label class="md-nav__link md-nav__link--active" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            🗄 Database
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="migration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    🗄 Database
+    ✨ Migration
   </span>
   
 
       </a>
-      
-        
+    </li>
+  
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+              
+            
+              
+                
   
   
   
-    
   
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#trulens_eval.db" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;db
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label=" db">
-      <ul class="md-nav__list">
+    <li class="md-nav__item">
+      <a href="sqlalchemy/" class="md-nav__link">
         
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db-attributes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Attributes
-    </span>
-  </a>
   
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db-classes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Classes
-    </span>
-  </a>
+  <span class="md-ellipsis">
+    🧪 SQLAlchemy
+  </span>
   
-    <nav class="md-nav" aria-label="Classes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DBMeta" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;DBMeta
-    </span>
-  </a>
+
+      </a>
+    </li>
   
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;DB
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label=" DB">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB-attributes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Attributes
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Attributes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.redact_keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;redact_keys
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.reset_database" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;reset_database
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.insert_record" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_record
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.insert_app" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_app
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.insert_feedback_definition" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_feedback_definition
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_feedback_defs" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback_defs
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.insert_feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_feedback
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_feedback_count_by_status" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback_count_by_status
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_app" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_app
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_records_and_feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_records_and_feedback
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;LocalSQLite
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label=" LocalSQLite">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite.__init__" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__init__
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite.insert_feedback_definition" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_feedback_definition
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite.insert_feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_feedback
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.versioning_decorator" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;versioning_decorator
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.for_all_methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;for_all_methods
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;sqlalchemy_db
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label=" sqlalchemy_db">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db-attributes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Attributes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db-classes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Classes
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Classes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;SqlAlchemyDB
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label=" SqlAlchemyDB">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.migrate_database" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;migrate_database
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.get_feedback_count_by_status" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback_count_by_status
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.get_feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -3170,10 +2883,6 @@
   
     
     
-      
-        
-          
-        
       
         
       
@@ -3203,24 +2912,16 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_8" >
         
           
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../utils/" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="">
+            
   
   <span class="md-ellipsis">
     Utils
   </span>
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_6_8" id="__nav_6_8_label" tabindex="">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6_8">
@@ -3228,8 +2929,6 @@
             Utils
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
-            
-              
             
               
                 
@@ -3370,6 +3069,8 @@
       
         
       
+        
+      
     
     
       
@@ -3467,6 +3168,27 @@
   
   <span class="md-ellipsis">
     💣 Tech Debt
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ✨ Database Migration
   </span>
   
 
@@ -3860,8 +3582,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -3870,55 +3590,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#trulens_eval.db" class="md-nav__link">
+  <a href="#trulens_eval.database.base" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;db
+      <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;base
     </span>
   </a>
   
-    <nav class="md-nav" aria-label=" db">
+    <nav class="md-nav" aria-label=" base">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.db-attributes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Attributes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db-classes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Classes
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Classes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DBMeta" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;DBMeta
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;DB
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label=" DB">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB-attributes" class="md-nav__link">
+  <a href="#trulens_eval.database.base-attributes" class="md-nav__link">
     <span class="md-ellipsis">
       Attributes
     </span>
@@ -3928,9 +3610,27 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.redact_keys" class="md-nav__link">
+  <a href="#trulens_eval.database.base.DEFAULT_DATABASE_PREFIX" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;redact_keys
+      &nbsp;DEFAULT_DATABASE_PREFIX
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DEFAULT_DATABASE_FILE" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;DEFAULT_DATABASE_FILE
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DEFAULT_DATABASE_REDACT_KEYS" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;DEFAULT_DATABASE_REDACT_KEYS
     </span>
   </a>
   
@@ -3942,236 +3642,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.reset_database" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;reset_database
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.insert_record" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_record
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.insert_app" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_app
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.insert_feedback_definition" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_feedback_definition
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_feedback_defs" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback_defs
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.insert_feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_feedback
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_feedback_count_by_status" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback_count_by_status
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_app" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_app
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.DB.get_records_and_feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_records_and_feedback
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;LocalSQLite
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label=" LocalSQLite">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite.__init__" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__init__
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite.insert_feedback_definition" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_feedback_definition
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.LocalSQLite.insert_feedback" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;insert_feedback
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.versioning_decorator" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;versioning_decorator
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.db.for_all_methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;for_all_methods
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;sqlalchemy_db
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label=" sqlalchemy_db">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db-attributes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Attributes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db-classes" class="md-nav__link">
+  <a href="#trulens_eval.database.base-classes" class="md-nav__link">
     <span class="md-ellipsis">
       Classes
     </span>
@@ -4181,17 +3652,50 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB" class="md-nav__link">
+  <a href="#trulens_eval.database.base.DB" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;SqlAlchemyDB
+      &nbsp;DB
     </span>
   </a>
   
-    <nav class="md-nav" aria-label=" SqlAlchemyDB">
+    <nav class="md-nav" aria-label=" DB">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB-functions" class="md-nav__link">
+  <a href="#trulens_eval.database.base.DB-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Attributes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.redact_keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;redact_keys
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.table_prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;table_prefix
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB-functions" class="md-nav__link">
     <span class="md-ellipsis">
       Functions
     </span>
@@ -4201,27 +3705,117 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.migrate_database" class="md-nav__link">
+  <a href="#trulens_eval.database.base.DB.reset_database" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;migrate_database
+      &nbsp;reset_database
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.get_feedback_count_by_status" class="md-nav__link">
+  <a href="#trulens_eval.database.base.DB.migrate_database" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback_count_by_status
+      &nbsp;migrate_database
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.get_feedback" class="md-nav__link">
+  <a href="#trulens_eval.database.base.DB.check_db_revision" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_feedback
+      &nbsp;check_db_revision
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.insert_record" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;insert_record
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.insert_app" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;insert_app
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.insert_feedback_definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;insert_feedback_definition
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.get_feedback_defs" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;get_feedback_defs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.insert_feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;insert_feedback
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.get_feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;get_feedback
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.get_feedback_count_by_status" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;get_feedback_count_by_status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.get_app" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;get_app
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.get_apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;get_apps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.DB.get_records_and_feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;get_records_and_feedback
     </span>
   </a>
   
@@ -4243,11 +3837,35 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.database.sqlalchemy_db-functions" class="md-nav__link">
+  <a href="#trulens_eval.database.base-functions" class="md-nav__link">
     <span class="md-ellipsis">
       Functions
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.versioning_decorator" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;versioning_decorator
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens_eval.database.base.for_all_methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      &nbsp;for_all_methods
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -4274,18 +3892,17 @@
   
 
 
-<h1 id="database">🗄 Database<a class="headerlink" href="#database" title="Permanent link">&para;</a></h1>
-
+  <h1>Index</h1>
 
 <div class="doc doc-object doc-module">
 
 
 
-<h2 id="trulens_eval.db" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>          <span class="doc doc-object-name doc-module-name">trulens_eval.db</span>
+<h2 id="trulens_eval.database.base" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>          <span class="doc doc-object-name doc-module-name">trulens_eval.database.base</span>
 
 
-<a href="#trulens_eval.db" class="headerlink" title="Permanent link">&para;</a></h2>
+<a href="#trulens_eval.database.base" class="headerlink" title="Permanent link">&para;</a></h2>
 
   <div class="doc doc-contents first">
 
@@ -4297,58 +3914,89 @@
 
 
 
-<h3 id="trulens_eval.db-attributes">Attributes<a href="#trulens_eval.db-attributes" class="headerlink" title="Permanent link">&para;</a></h3>
-<h3 id="trulens_eval.db-classes">Classes<a href="#trulens_eval.db-classes" class="headerlink" title="Permanent link">&para;</a></h3>
+<h3 id="trulens_eval.database.base-attributes">Attributes<a href="#trulens_eval.database.base-attributes" class="headerlink" title="Permanent link">&para;</a></h3>
 
-<div class="doc doc-object doc-class">
-
+<div class="doc doc-object doc-attribute">
 
 
-<h4 id="trulens_eval.db.DBMeta" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>          <span class="doc doc-object-name doc-class-name">DBMeta</span>
 
+<h4 id="trulens_eval.database.base.DEFAULT_DATABASE_PREFIX" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>          <span class="doc doc-object-name doc-attribute-name">DEFAULT_DATABASE_PREFIX</span>
 
-<a href="#trulens_eval.db.DBMeta" class="headerlink" title="Permanent link">&para;</a></h4>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
 
+<a href="#trulens_eval.database.base.DEFAULT_DATABASE_PREFIX" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">DEFAULT_DATABASE_PREFIX</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;trulens_&#39;</span>
+</code></pre></div>
 
   <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-external" title="pydantic.BaseModel" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel">BaseModel</a></code></p>
-
   
-      <p>Databasae meta data mostly used for migrating from old db schemas.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
+      <p>Default prefix for table names for trulens_eval to use.</p>
+<p>This includes alembic's version table.</p>
   </div>
-
-  </div>
-
 
 </div>
 
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="trulens_eval.database.base.DEFAULT_DATABASE_FILE" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>          <span class="doc doc-object-name doc-attribute-name">DEFAULT_DATABASE_FILE</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.database.base.DEFAULT_DATABASE_FILE" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">DEFAULT_DATABASE_FILE</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;default.sqlite&#39;</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Filename for default sqlite database.</p>
+<p>The sqlalchemy url for this default local sqlite database is <code>sqlite:///default.sqlite</code>.</p>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="trulens_eval.database.base.DEFAULT_DATABASE_REDACT_KEYS" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>          <span class="doc doc-object-name doc-attribute-name">DEFAULT_DATABASE_REDACT_KEYS</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.database.base.DEFAULT_DATABASE_REDACT_KEYS" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">DEFAULT_DATABASE_REDACT_KEYS</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Default value for option to redact secrets before writing out data to database.</p>
+  </div>
+
+</div>
+<h3 id="trulens_eval.database.base-classes">Classes<a href="#trulens_eval.database.base-classes" class="headerlink" title="Permanent link">&para;</a></h3>
+
 <div class="doc doc-object doc-class">
 
 
 
-<h4 id="trulens_eval.db.DB" class="doc doc-heading">
+<h4 id="trulens_eval.database.base.DB" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>          <span class="doc doc-object-name doc-class-name">DB</span>
 
 
-<a href="#trulens_eval.db.DB" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#trulens_eval.database.base.DB" class="headerlink" title="Permanent link">&para;</a></h4>
 
 
   <div class="doc doc-contents ">
@@ -4357,8 +4005,8 @@
 
   
       <p>Abstract definition of databases used by trulens_eval.</p>
-<p><a class="autorefs autorefs-internal" href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB">SqlAlchemyDB</a> is the main
-and default implementation if this specification.</p>
+<p><a class="autorefs autorefs-internal" href="sqlalchemy/#trulens_eval.database.sqlalchemy.SQLAlchemyDB">SQLAlchemyDB</a> is the main
+and default implementation of this interface.</p>
 
 
   
@@ -4369,13 +4017,13 @@ and default implementation if this specification.</p>
 
 
 
-<h5 id="trulens_eval.db.DB-attributes">Attributes<a href="#trulens_eval.db.DB-attributes" class="headerlink" title="Permanent link">&para;</a></h5>
+<h5 id="trulens_eval.database.base.DB-attributes">Attributes<a href="#trulens_eval.database.base.DB-attributes" class="headerlink" title="Permanent link">&para;</a></h5>
 
 <div class="doc doc-object doc-attribute">
 
 
 
-<h6 id="trulens_eval.db.DB.redact_keys" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.redact_keys" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>          <span class="doc doc-object-name doc-attribute-name">redact_keys</span>
 
   
@@ -4384,8 +4032,8 @@ and default implementation if this specification.</p>
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.redact_keys" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">redact_keys</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
+<a href="#trulens_eval.database.base.DB.redact_keys" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">redact_keys</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.database.base.DEFAULT_DATABASE_REDACT_KEYS" href="#trulens_eval.database.base.DEFAULT_DATABASE_REDACT_KEYS">DEFAULT_DATABASE_REDACT_KEYS</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4395,14 +4043,39 @@ and default implementation if this specification.</p>
 
 </div>
 
-<h5 id="trulens_eval.db.DB-functions">Functions<a href="#trulens_eval.db.DB-functions" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="trulens_eval.database.base.DB.table_prefix" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>          <span class="doc doc-object-name doc-attribute-name">table_prefix</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#trulens_eval.database.base.DB.table_prefix" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">table_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.database.base.DEFAULT_DATABASE_PREFIX" href="#trulens_eval.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Prefix for table names for trulens_eval to use.</p>
+<p>May be useful in some databases where trulens is not the only app.</p>
+  </div>
+
+</div>
+
+<h5 id="trulens_eval.database.base.DB-functions">Functions<a href="#trulens_eval.database.base.DB-functions" class="headerlink" title="Permanent link">&para;</a></h5>
 
 
 <div class="doc doc-object doc-function">
 
 
 
-<h6 id="trulens_eval.db.DB.reset_database" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.reset_database" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">reset_database</span>
 
   
@@ -4410,8 +4083,8 @@ and default implementation if this specification.</p>
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.reset_database" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">reset_database</span><span class="p">()</span>
+<a href="#trulens_eval.database.base.DB.reset_database" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">reset_database</span><span class="p">()</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4427,7 +4100,117 @@ and default implementation if this specification.</p>
 
 
 
-<h6 id="trulens_eval.db.DB.insert_record" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.migrate_database" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">migrate_database</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#trulens_eval.database.base.DB.migrate_database" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">migrate_database</span><span class="p">(</span><span class="n">prior_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Migrade the stored data to the current configuration of the database.</p>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>prior_prefix</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>If given, the database is assumed to have been
+reconfigured from a database with the given prefix. If not
+given, it may be guessed if there is only one table in the
+database with the suffix <code>alembic_version</code>.</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
+                </span>
+                <span class="doc-param-default">
+                  <b>DEFAULT:</b> 
+                    <code>None</code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="trulens_eval.database.base.DB.check_db_revision" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">check_db_revision</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#trulens_eval.database.base.DB.check_db_revision" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_db_revision</span><span class="p">()</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Check that the database is up to date with the current trulens_eval
+version.</p>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RAISES</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+            <span class="doc-raises-annotation">
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/exceptions.html#ValueError">ValueError</a></code>
+            </span>
+          </td>
+          <td class="doc-raises-details">
+            <div class="doc-md-description">
+              <p>If the database is not up to date.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="trulens_eval.database.base.DB.insert_record" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">insert_record</span>
 
   
@@ -4435,8 +4218,8 @@ and default implementation if this specification.</p>
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.insert_record" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">insert_record</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../record/#trulens_eval.schema.Record">Record</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.RecordID" href="../schema/#trulens_eval.schema.RecordID">RecordID</a></span>
+<a href="#trulens_eval.database.base.DB.insert_record" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_record</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../record/#trulens_eval.schema.Record">Record</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.RecordID" href="../schema/#trulens_eval.schema.RecordID">RecordID</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4504,7 +4287,7 @@ and default implementation if this specification.</p>
 
 
 
-<h6 id="trulens_eval.db.DB.insert_app" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.insert_app" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">insert_app</span>
 
   
@@ -4512,8 +4295,8 @@ and default implementation if this specification.</p>
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.insert_app" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">insert_app</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition" href="../app/#trulens_eval.schema.AppDefinition">AppDefinition</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppID" href="../schema/#trulens_eval.schema.AppID">AppID</a></span>
+<a href="#trulens_eval.database.base.DB.insert_app" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_app</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition" href="../app/#trulens_eval.schema.AppDefinition">AppDefinition</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppID" href="../schema/#trulens_eval.schema.AppID">AppID</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4583,7 +4366,7 @@ hence the type hint.</p>
 
 
 
-<h6 id="trulens_eval.db.DB.insert_feedback_definition" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.insert_feedback_definition" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">insert_feedback_definition</span>
 
   
@@ -4591,8 +4374,8 @@ hence the type hint.</p>
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.insert_feedback_definition" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">insert_feedback_definition</span><span class="p">(</span><span class="n">feedback_definition</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinition" href="../feedback/#trulens_eval.schema.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
+<a href="#trulens_eval.database.base.DB.insert_feedback_definition" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_feedback_definition</span><span class="p">(</span><span class="n">feedback_definition</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinition" href="../feedback/#trulens_eval.schema.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4663,7 +4446,7 @@ parts are serialized hence the type hint.</p>
 
 
 
-<h6 id="trulens_eval.db.DB.get_feedback_defs" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.get_feedback_defs" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">get_feedback_defs</span>
 
   
@@ -4671,8 +4454,8 @@ parts are serialized hence the type hint.</p>
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.get_feedback_defs" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_feedback_defs</span><span class="p">(</span><span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span>
+<a href="#trulens_eval.database.base.DB.get_feedback_defs" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_feedback_defs</span><span class="p">(</span><span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4746,7 +4529,7 @@ all feedback definitions are returned.</p>
 
 
 
-<h6 id="trulens_eval.db.DB.insert_feedback" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.insert_feedback" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">insert_feedback</span>
 
   
@@ -4754,8 +4537,8 @@ all feedback definitions are returned.</p>
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.insert_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">insert_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResult" href="../schema/#trulens_eval.schema.FeedbackResult">FeedbackResult</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultID" href="../schema/#trulens_eval.schema.FeedbackResultID">FeedbackResultID</a></span>
+<a href="#trulens_eval.database.base.DB.insert_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResult" href="../schema/#trulens_eval.schema.FeedbackResult">FeedbackResult</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultID" href="../schema/#trulens_eval.schema.FeedbackResultID">FeedbackResultID</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4823,7 +4606,7 @@ all feedback definitions are returned.</p>
 
 
 
-<h6 id="trulens_eval.db.DB.get_feedback" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.get_feedback" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">get_feedback</span>
 
   
@@ -4831,8 +4614,8 @@ all feedback definitions are returned.</p>
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.get_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_feedback</span><span class="p">(</span><span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.RecordID" href="../schema/#trulens_eval.schema.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultID" href="../schema/#trulens_eval.schema.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">last_ts_before</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span>
+<a href="#trulens_eval.database.base.DB.get_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_feedback</span><span class="p">(</span><span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.RecordID" href="../schema/#trulens_eval.schema.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultID" href="../schema/#trulens_eval.schema.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">last_ts_before</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5010,7 +4793,7 @@ given datetime.</p>
 
 
 
-<h6 id="trulens_eval.db.DB.get_feedback_count_by_status" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.get_feedback_count_by_status" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">get_feedback_count_by_status</span>
 
   
@@ -5018,15 +4801,15 @@ given datetime.</p>
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.get_feedback_count_by_status" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_feedback_count_by_status</span><span class="p">(</span><span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.RecordID" href="../schema/#trulens_eval.schema.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultID" href="../schema/#trulens_eval.schema.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">last_ts_before</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span>
+<a href="#trulens_eval.database.base.DB.get_feedback_count_by_status" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_feedback_count_by_status</span><span class="p">(</span><span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.RecordID" href="../schema/#trulens_eval.schema.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultID" href="../schema/#trulens_eval.schema.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">last_ts_before</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
       <p>Get count of feedback results matching a set of optional criteria grouped by
 their status.</p>
-<p>See <a class="autorefs autorefs-internal" href="#trulens_eval.db.DB.get_feedback">get_feedback</a> for the meaning of
+<p>See <a class="autorefs autorefs-internal" href="#trulens_eval.database.base.DB.get_feedback">get_feedback</a> for the meaning of
 the the arguments.</p>
 
 
@@ -5064,7 +4847,7 @@ that match the given filters.</p>
 
 
 
-<h6 id="trulens_eval.db.DB.get_app" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.get_app" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">get_app</span>
 
   
@@ -5072,8 +4855,8 @@ that match the given filters.</p>
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.get_app" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_app</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppID" href="../schema/#trulens_eval.schema.AppID">AppID</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSONized" href="../utils/serial/#trulens_eval.utils.serial.JSONized">JSONized</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.app.App" href="../app/#trulens_eval.app.App">App</a></span><span class="p">]]</span>
+<a href="#trulens_eval.database.base.DB.get_app" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_app</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppID" href="../schema/#trulens_eval.schema.AppID">AppID</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSONized" href="../utils/serial/#trulens_eval.utils.serial.JSONized">JSONized</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.app.App" href="../app/#trulens_eval.app.App">App</a></span><span class="p">]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5116,7 +4899,32 @@ can be done with
 
 
 
-<h6 id="trulens_eval.db.DB.get_records_and_feedback" class="doc doc-heading">
+<h6 id="trulens_eval.database.base.DB.get_apps" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">get_apps</span>
+
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#trulens_eval.database.base.DB.get_apps" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_apps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span><span class="p">]</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Get all apps.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="trulens_eval.database.base.DB.get_records_and_feedback" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">get_records_and_feedback</span>
 
   
@@ -5124,8 +4932,8 @@ can be done with
       <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
   </span>
 
-<a href="#trulens_eval.db.DB.get_records_and_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_records_and_feedback</span><span class="p">(</span><span class="n">app_ids</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppID" href="../schema/#trulens_eval.schema.AppID">AppID</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]]</span>
+<a href="#trulens_eval.database.base.DB.get_records_and_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_records_and_feedback</span><span class="p">(</span><span class="n">app_ids</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppID" href="../schema/#trulens_eval.schema.AppID">AppID</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5213,136 +5021,19 @@ Otherwise all apps are retrieved.</p>
 
 
 </div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h4 id="trulens_eval.db.LocalSQLite" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>          <span class="doc doc-object-name doc-class-name">LocalSQLite</span>
-
-
-<a href="#trulens_eval.db.LocalSQLite" class="headerlink" title="Permanent link">&para;</a></h4>
-
-
-  <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.db.DB" href="#trulens_eval.db.DB">DB</a></code></p>
-
-  
-
-<details class="warning" open>
-  <summary>Warning</summary>
-  <p>This database implementation is deprecated and will be removed in the
-future. Use
-<a class="autorefs autorefs-internal" href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB">SqlAlchemyDB</a>
-instead. Local sqlite databases can be initialized with SqlAlchemyDB.</p>
-</details>
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<h5 id="trulens_eval.db.LocalSQLite-functions">Functions<a href="#trulens_eval.db.LocalSQLite-functions" class="headerlink" title="Permanent link">&para;</a></h5>
+<h3 id="trulens_eval.database.base-functions">Functions<a href="#trulens_eval.database.base-functions" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
 <div class="doc doc-object doc-function">
 
 
 
-<h6 id="trulens_eval.db.LocalSQLite.__init__" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">__init__</span>
-
-
-<a href="#trulens_eval.db.LocalSQLite.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="pathlib.Path" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path">Path</a></span><span class="p">,</span> <span class="n">redact_keys</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Database locally hosted using SQLite.</p>
-<p>Args</p>
-<ul>
-<li>filename: Optional[Path] -- location of sqlite database dump file. It
-  will be created if it does not exist.</li>
-<li>redact_keys: bool -- redact secret keys before writing anything to the
-  db. What is and is not a secret key is determined by
-  <code>keys.py:should_redact_{key, value}</code>.</li>
-</ul>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h6 id="trulens_eval.db.LocalSQLite.insert_feedback_definition" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">insert_feedback_definition</span>
-
-
-<a href="#trulens_eval.db.LocalSQLite.insert_feedback_definition" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">insert_feedback_definition</span><span class="p">(</span><span class="n">feedback</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.feedback.Feedback" href="../feedback/#trulens_eval.feedback.feedback.Feedback">Feedback</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinition" href="../feedback/#trulens_eval.schema.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Insert a feedback definition into the database.</p>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h6 id="trulens_eval.db.LocalSQLite.insert_feedback" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">insert_feedback</span>
-
-
-<a href="#trulens_eval.db.LocalSQLite.insert_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">insert_feedback</span><span class="p">(</span><span class="n">feedback_result</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResult" href="../schema/#trulens_eval.schema.FeedbackResult">FeedbackResult</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultID" href="../schema/#trulens_eval.schema.FeedbackResultID">FeedbackResultID</a></span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Insert a record-feedback link to db or update an existing one.</p>
-
-  </div>
-
-</div>
-
-
-
-  </div>
-
-  </div>
-
-
-</div>
-<h3 id="trulens_eval.db-functions">Functions<a href="#trulens_eval.db-functions" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h4 id="trulens_eval.db.versioning_decorator" class="doc doc-heading">
+<h4 id="trulens_eval.database.base.versioning_decorator" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>          <span class="doc doc-object-name doc-function-name">versioning_decorator</span>
 
 
-<a href="#trulens_eval.db.versioning_decorator" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">versioning_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+<a href="#trulens_eval.database.base.versioning_decorator" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">versioning_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5361,12 +5052,12 @@ trulens_eval version).</p>
 
 
 
-<h4 id="trulens_eval.db.for_all_methods" class="doc doc-heading">
+<h4 id="trulens_eval.database.base.for_all_methods" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>          <span class="doc doc-object-name doc-function-name">for_all_methods</span>
 
 
-<a href="#trulens_eval.db.for_all_methods" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">for_all_methods</span><span class="p">(</span><span class="n">decorator</span><span class="p">)</span>
+<a href="#trulens_eval.database.base.for_all_methods" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">for_all_methods</span><span class="p">(</span><span class="n">decorator</span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5377,142 +5068,6 @@ instantiations, db resets, or version checking.</p>
   </div>
 
 </div>
-
-
-
-  </div>
-
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-module">
-
-
-
-<h2 id="trulens_eval.database.sqlalchemy_db" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>          <span class="doc doc-object-name doc-module-name">trulens_eval.database.sqlalchemy_db</span>
-
-
-<a href="#trulens_eval.database.sqlalchemy_db" class="headerlink" title="Permanent link">&para;</a></h2>
-
-  <div class="doc doc-contents first">
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-<h3 id="trulens_eval.database.sqlalchemy_db-attributes">Attributes<a href="#trulens_eval.database.sqlalchemy_db-attributes" class="headerlink" title="Permanent link">&para;</a></h3>
-<h3 id="trulens_eval.database.sqlalchemy_db-classes">Classes<a href="#trulens_eval.database.sqlalchemy_db-classes" class="headerlink" title="Permanent link">&para;</a></h3>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h4 id="trulens_eval.database.sqlalchemy_db.SqlAlchemyDB" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>          <span class="doc doc-object-name doc-class-name">SqlAlchemyDB</span>
-
-
-<a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB" class="headerlink" title="Permanent link">&para;</a></h4>
-
-
-  <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.db.DB" href="#trulens_eval.db.DB">DB</a></code></p>
-
-  
-      <p>Database implemented using sqlalchemy.</p>
-<p>See abstract class <a class="autorefs autorefs-internal" href="#trulens_eval.db.DB">DB</a> for method reference.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<h5 id="trulens_eval.database.sqlalchemy_db.SqlAlchemyDB-functions">Functions<a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB-functions" class="headerlink" title="Permanent link">&para;</a></h5>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h6 id="trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.migrate_database" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">migrate_database</span>
-
-
-<a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.migrate_database" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">migrate_database</span><span class="p">()</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Migrate database schema to the latest revision.</p>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h6 id="trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.get_feedback_count_by_status" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">get_feedback_count_by_status</span>
-
-
-<a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.get_feedback_count_by_status" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_feedback_count_by_status</span><span class="p">(</span><span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.RecordID" href="../schema/#trulens_eval.schema.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultID" href="../schema/#trulens_eval.schema.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">last_ts_before</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Get the number of feedback results that match the given criteria grouped by status.</p>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h6 id="trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.get_feedback" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">get_feedback</span>
-
-
-<a href="#trulens_eval.database.sqlalchemy_db.SqlAlchemyDB.get_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">get_feedback</span><span class="p">(</span><span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.RecordID" href="../schema/#trulens_eval.schema.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultID" href="../schema/#trulens_eval.schema.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinitionID" href="../schema/#trulens_eval.schema.FeedbackDefinitionID">FeedbackDefinitionID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackResultStatus" href="../schema/#trulens_eval.schema.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">last_ts_before</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>See abstract trulens_eval.db:DB.get_feedback for documentation.</p>
-
-  </div>
-
-</div>
-
-
-
-  </div>
-
-  </div>
-
-
-</div>
-<h3 id="trulens_eval.database.sqlalchemy_db-functions">Functions<a href="#trulens_eval.database.sqlalchemy_db-functions" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
 
@@ -5576,7 +5131,7 @@ instantiations, db resets, or version checking.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.3220b9d7.min.js"></script>
       
         <script src="../../../javascript/config.js"></script>
       
