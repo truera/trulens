@@ -189,7 +189,7 @@ nav:
       # PLACEHOLDER: - trulens_eval/evaluation/index.md
       - ☔ Feedback Functions:
           - trulens_eval/evaluation/feedback_functions/index.md
-          - Anatomy of a Feedback Function: trulens_eval/evaluation/feedback_functions/anatomy.md
+          - 🦴 Anatomy of a Feedback Function: trulens_eval/evaluation/feedback_functions/anatomy.md
       - Feedback Implementations:
           - trulens_eval/evaluation/feedback_implementations/index.md
           - 🧰 Stock Feedback Functions: trulens_eval/evaluation/feedback_implementations/stock.md
@@ -241,7 +241,7 @@ nav:
           - 🦙 TruLlama: trulens_eval/api/app/trullama.md
           - TruRails: trulens_eval/api/app/trurails.md
           - TruCustom: trulens_eval/api/app/trucustom.md
-          - TruVirtual: trulens_eval/api/app/truvirtual.md
+          - ⬚ TruVirtual: trulens_eval/api/app/truvirtual.md
       - Feedback: trulens_eval/api/feedback.md
       - 💾 Record: trulens_eval/api/record.md
       - Provider:
@@ -263,7 +263,7 @@ nav:
         - ✨ Migration: trulens_eval/api/database/migration.md
         - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
       - Utils:
-          - trulens_eval/api/utils/index.md
+          # - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
           - trulens_eval/api/utils/serial.md
           - trulens_eval/api/utils/json.md
