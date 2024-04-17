@@ -68,10 +68,10 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
 
     import inspect
 
-    from trulens_eval.database import orm
+    #from trulens_eval.database import orm
 
     # Dynamically check the orm classes since these could change version to version
-    for _, orm_obj in inspect.getmembers(orm):
+    for _, orm_obj in inspect.getmembers(db.orm):
 
         # Check only classes
         if inspect.isclass(orm_obj):
