@@ -35,7 +35,9 @@ optional_packages = list(
     )
 )
 
+
 class BuildJavascript(build):
+
     def run(self):
         """Custom build command to run npm commands before building the package.
     

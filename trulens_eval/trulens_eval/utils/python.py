@@ -499,6 +499,39 @@ def get_first_local_in_call_stack(
 # Wrapping utilities
 
 
+class OpaqueWrapper(Generic[T]):
+    """Wrap an object preventing all access.
+
+    Any access except to
+    [unwrap][trulens_eval.utils.python.OpaqueWrapper.unwrap] will result in an
+    exception with the given message.
+
+    Args:
+        obj: The object to wrap.
+
+        e: The exception to raise when an attribute is accessed.
+    """
+
+    def __init__(self, obj: T, e: Exception):
+        self._obj = obj
+        self._e = e
+
+    def unwrap(self) -> T:
+        """Get the wrapped object back."""
+        return self._obj
+
+    def __getattr__(self, name):
+        raise self._e
+
+    def __setattr__(self, name, value):
+        if name in ["_obj", "_e"]:
+            return super().__setattr__(name, value)
+        raise self._e
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        raise self._e
+
+
 def wrap_awaitable(
     awaitable: Awaitable[T],
     on_await: Optional[Callable[[], Any]] = None,
