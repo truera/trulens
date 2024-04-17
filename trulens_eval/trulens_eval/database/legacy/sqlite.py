@@ -600,3 +600,7 @@ class LocalSQLite(DB):
     ) -> Dict[schema.FeedbackResultStatus, int]:
 
         raise NotImplementedError("This database implementation is deprecated.")
+
+    def delete_app(self, app_id: schema.AppID) -> None:
+        raise NotImplementedError("This database implementation is deprecated.")
+    
