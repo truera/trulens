@@ -2,8 +2,12 @@ import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-compo
 import { ReactNode } from 'react';
 import { DataRaw } from './utils/types';
 import { createNodeMap, createTreeFromCalls } from './utils/utils';
-import RecordTree from './RecordTree/RecordTree';
+import RecordInfo from './RecordInfo';
 
+/**
+ * This component serves as our entryway into streamlit. Keeping the logic here at a minimum,
+ * primarily parsing and shaping the args/props. Primary component can be found in RecordInfo.
+ */
 class RecordViewer extends StreamlitComponentBase {
   public render = (): ReactNode => {
     /**
@@ -20,7 +24,7 @@ class RecordViewer extends StreamlitComponentBase {
     const root = createTreeFromCalls(recordJSON, appJSON.app_id);
     const nodeMap = createNodeMap(root);
 
-    return <RecordTree root={root} recordJSON={recordJSON} nodeMap={nodeMap} appJSON={appJSON} />;
+    return <RecordInfo root={root} recordJSON={recordJSON} nodeMap={nodeMap} appJSON={appJSON} />;
   };
 }
 
