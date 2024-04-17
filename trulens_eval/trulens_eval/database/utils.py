@@ -1,8 +1,7 @@
 from datetime import datetime
-import inspect
 import logging
 from pprint import pformat
-from typing import Callable, List, Optional, Union
+from typing import Optional, Union
 
 import pandas as pd
 import sqlalchemy
@@ -13,7 +12,6 @@ from trulens_eval.database import base as mod_db
 from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
-from trulens_eval.database.sqlalchemy import SQLAlchemyDB
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +190,8 @@ def copy_database(
           the databases are NOT used by anyone while this process runs.
     """
 
+    # Avoids circular imports.
+    from trulens_eval.database.sqlalchemy import SQLAlchemyDB
 
     src = SQLAlchemyDB.from_db_url(src_url, table_prefix=src_prefix)
     check_db_revision(src.engine, prefix=src_prefix)
