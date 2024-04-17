@@ -236,7 +236,7 @@ class SQLAlchemyDB(DB):
                     raise RuntimeError(
                         "Migrating legacy sqlite database is no longer supported. "
                         "A database reset is required. This will delete all existing data: "
-                        "`tru.reset_database()`.""
+                        "`tru.reset_database()`."
                     )
 
                 else:
