@@ -67,13 +67,6 @@ def is_legacy_sqlite(engine: Engine) -> bool:
     `LocalSQLite` implementation.
     
     This database was removed since trulens_eval 0.29.0 .
-
-    Will also return True for an empty, brand-new SQLite file, but applying the
-    legacy migrations on the empty database before the Alembic scripts will not
-    hurt, so this should be a harmless false positive.
-
-    Checking for the existence of the `meta` table is not safe because in
-    trulens_eval 0.1.2 the meta table may not exist.
     """
 
     inspector = sql_inspect(engine)
