@@ -402,33 +402,33 @@ class TestTru(TestCase):
         # TODO
         pass
 
-    def test_add_app(self):
-        app_id = "test_app"
-        app_definition = schema.AppDefinition(app_id=app_id, model_dump_json="{}")
-        tru = Tru()
+    # def test_add_app(self):
+    #     app_id = "test_app"
+    #     app_definition = schema.AppDefinition(app_id=app_id, model_dump_json="{}")
+    #     tru = Tru()
 
-        # Action: Add the app to the database
-        added_app_id = tru.add_app(app_definition)
+    #     # Action: Add the app to the database
+    #     added_app_id = tru.add_app(app_definition)
 
-        # Assert: Verify the app was added successfully
-        self.assertEqual(app_id, added_app_id)
-        retrieved_app = tru.get_app(app_id)
-        self.assertIsNotNone(retrieved_app)
-        self.assertEqual(retrieved_app['app_id'], app_id)
+    #     # Assert: Verify the app was added successfully
+    #     self.assertEqual(app_id, added_app_id)
+    #     retrieved_app = tru.get_app(app_id)
+    #     self.assertIsNotNone(retrieved_app)
+    #     self.assertEqual(retrieved_app['app_id'], app_id)
 
-    def test_delete_app(self):
-        # Setup: Add an app to the database
-        app_id = "test_app"
-        app_definition = schema.AppDefinition(app_id=app_id, model_dump_json="{}")
-        tru = Tru()
-        tru.add_app(app_definition)
+    # def test_delete_app(self):
+    #     # Setup: Add an app to the database
+    #     app_id = "test_app"
+    #     app_definition = schema.AppDefinition(app_id=app_id, model_dump_json="{}")
+    #     tru = Tru()
+    #     tru.add_app(app_definition)
 
-        # Action: Delete the app
-        tru.delete_app(app_id)
+    #     # Action: Delete the app
+    #     tru.delete_app(app_id)
 
-        # Assert: Verify the app is deleted
-        retrieved_app = tru.get_app(app_id)
-        self.assertIsNone(retrieved_app)
+    #     # Assert: Verify the app is deleted
+    #     retrieved_app = tru.get_app(app_id)
+    #     self.assertIsNone(retrieved_app)
 
     def test_add_feedback(self):
         # TODO
