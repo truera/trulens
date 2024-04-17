@@ -7,7 +7,10 @@ use-case looks like this:
 ```python
 # Context relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+    Feedback(
+        provider.context_relevance_with_cot_reasons,
+        name="Context Relevance"
+    )
     .on(Select.RecordCalls.retrieve.args.query)
     .on(Select.RecordCalls.retrieve.rets)
     .aggregate(numpy.mean)
@@ -23,7 +26,7 @@ Multiple underlying models are available througheach provider, such as GPT-4 or
 Llama-2. In many, but not all cases, the feedback implementation is shared
 cross providers (such as with LLM-based evaluations).
 
-Read more about [feedback providers](../../../api/provider/).
+Read more about [feedback providers](../../api/providers.md).
 
 ## Feedback implementations
 
@@ -38,11 +41,12 @@ has the following signature:
 def context_relevance(self, prompt: str, context: str) -> float:
 ```
 
-That is, [context_relevance][trulens_eval.feedback.provider.openai.OpenAI.context_relevance] is a plain python method that accepts the prompt and
-context, both strings, and produces a float (assumed to be between 0.0 and
-1.0).
+That is,
+[context_relevance][trulens_eval.feedback.provider.openai.OpenAI.context_relevance]
+is a plain python method that accepts the prompt and context, both strings, and
+produces a float (assumed to be between 0.0 and 1.0).
 
-Read more about [feedback implementations](../../feedback_implementations)
+Read more about [feedback implementations](../feedback_implementations/index.md)
 
 ## Feedback constructor
 
@@ -81,4 +85,4 @@ next section. This function is called on the `float` results of feedback
 function evaluations to produce a single float. The default is
 [numpy.mean][numpy.mean].
 
-Read more about [feedback aggregation](../../feedback_aggregation).
+Read more about [feedback aggregation](../feedback_aggregation/index.md).
