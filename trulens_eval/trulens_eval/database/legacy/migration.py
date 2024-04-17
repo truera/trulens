@@ -66,7 +66,7 @@ class VersionException(Exception):
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
 migration_versions: List[str] = [
-    "0.25.2", "0.19.0", "0.9.0", "0.3.0", "0.2.0", "0.1.2"
+    "0.19.0", "0.9.0", "0.3.0", "0.2.0", "0.1.2"
 ]
 
 
@@ -150,12 +150,6 @@ class UnknownClass(pydantic.BaseModel):
         This is a placeholder put into the database in place of methods whose
         information was not recorded in earlier versions of trulens.
         """
-
-
-def migrate_0_25_2(db):
-    # Change in alchemy version table name.
-
-    pass
 
 
 def migrate_0_9_0(db):
@@ -429,8 +423,7 @@ upgrade_paths = {
     "0.1.2": ("0.2.0", migrate_0_1_2),
     "0.2.0": ("0.3.0", migrate_0_2_0),
     "0.3.0": ("0.9.0", migrate_0_3_0),
-    "0.9.0": ("0.19.0", migrate_0_9_0),
-    "0.19.0": ("0.25.2.0", migrate_0_25_2)
+    "0.9.0": ("0.19.0", migrate_0_9_0)
 }
 
 

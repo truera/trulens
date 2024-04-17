@@ -7,7 +7,8 @@ from datetime import datetime
 import json
 from pathlib import Path
 import sqlite3
-from typing import Any, ClassVar, Dict, List, Optional, Sequence, Tuple, Union
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Union)
 
 import numpy as np
 import pandas as pd
@@ -434,7 +435,7 @@ class LocalSQLite(DB):
                 # Add a try-catch here as latency is a DB breaking change, but not a functionality breaking change.
                 # If it fails, we can still continue.
                 row.perf_json = json.loads(row.perf_json)  # perf_json (Perf)
-                row['latency'] = Perf(**row.perf_json).latency
+                row['latency'] = schema.Perf(**row.perf_json).latency
             except:
                 # If it comes here, it is because we have filled the DB with a migration tag that cannot be loaded into perf_json
                 # This is not migrateable because start/end times were not logged and latency is required, but adding a real latency
@@ -527,7 +528,7 @@ class LocalSQLite(DB):
         df_records['total_cost'] = cost.map(lambda v: v.cost)
 
         perf = df_records['perf_json'].apply(
-            lambda perf_json: Perf.model_validate_json(perf_json)
+            lambda perf_json: schema.Perf.model_validate_json(perf_json)
             if perf_json != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
         )
 
@@ -603,4 +604,9 @@ class LocalSQLite(DB):
 
     def delete_app(self, app_id: schema.AppID) -> None:
         raise NotImplementedError("This database implementation is deprecated.")
+
+    def get_apps(self) -> Iterable[JSON]:
+        raise NotImplementedError("This database implementation is deprecated.")
     
+    def check_db_revision(self):
+        raise NotImplementedError("This database implementation is deprecated.")
