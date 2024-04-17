@@ -11,8 +11,9 @@ import { Tabs, Tab } from '../Tabs';
 import { ROOT_NODE_ID } from '../utils/utils';
 import Details from './Details/Details';
 import JSONViewer from '../JSONViewer/JSONViewer';
+import RecordTable from '../RecordTable/RecordTable';
 
-enum RECORD_TREE_TABS {
+enum RECORD_CONTENT_TABS {
   DETAILS = 'Details',
   SPAN_JSON = 'Span JSON',
   RECORD_JSON = 'Record JSON',
@@ -20,9 +21,20 @@ enum RECORD_TREE_TABS {
   RECORD_METADATA = 'Metadata',
 }
 
-const SPAN_TREE_TABS = [RECORD_TREE_TABS.DETAILS, RECORD_TREE_TABS.SPAN_JSON];
+const SPAN_TREE_TABS = [RECORD_CONTENT_TABS.DETAILS, RECORD_CONTENT_TABS.SPAN_JSON];
 
-const GENERAL_TABS = [RECORD_TREE_TABS.RECORD_METADATA, RECORD_TREE_TABS.RECORD_JSON, RECORD_TREE_TABS.APP_JSON];
+const GENERAL_TABS = [
+  RECORD_CONTENT_TABS.RECORD_METADATA,
+  RECORD_CONTENT_TABS.RECORD_JSON,
+  RECORD_CONTENT_TABS.APP_JSON,
+];
+
+enum SPAN_VIEW {
+  TREE = 'Tree',
+  TIMELINE = 'Timeline',
+}
+
+const SPAN_VIEWS = [SPAN_VIEW.TREE, SPAN_VIEW.TIMELINE];
 
 type RecordTreeProps = {
   appJSON: AppJSONRaw;
@@ -33,7 +45,8 @@ type RecordTreeProps = {
 
 export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: RecordTreeProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState<RECORD_TREE_TABS>(RECORD_TREE_TABS.DETAILS);
+  const [selectedSpanView, setSelectedSpanView] = useState<SPAN_VIEW>(SPAN_VIEW.TREE);
+  const [selectedTab, setSelectedTab] = useState<RECORD_CONTENT_TABS>(RECORD_CONTENT_TABS.DETAILS);
 
   const handleItemSelectionToggle = (_event: React.SyntheticEvent, itemId: string, isSelected: boolean) => {
     if (isSelected) {
@@ -49,19 +62,19 @@ export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: Recor
   const { timeTaken: totalTime, startTime: treeStart } = getStartAndEndTimesForNode(root);
 
   const getSelectedView = () => {
-    if (selectedTab === RECORD_TREE_TABS.APP_JSON) {
+    if (selectedTab === RECORD_CONTENT_TABS.APP_JSON) {
       return <JSONViewer src={appJSON} />;
     }
 
-    if (selectedTab === RECORD_TREE_TABS.SPAN_JSON) {
+    if (selectedTab === RECORD_CONTENT_TABS.SPAN_JSON) {
       return <JSONViewer src={selectedNodeId === ROOT_NODE_ID ? recordJSON : selectedNode.raw ?? {}} />;
     }
 
-    if (selectedTab === RECORD_TREE_TABS.RECORD_JSON) {
+    if (selectedTab === RECORD_CONTENT_TABS.RECORD_JSON) {
       return <JSONViewer src={recordJSON} />;
     }
 
-    if (selectedTab === RECORD_TREE_TABS.RECORD_METADATA) {
+    if (selectedTab === RECORD_CONTENT_TABS.RECORD_METADATA) {
       const { meta } = recordJSON;
       if (!meta || !Object.keys(meta as object)?.length) return <Typography>No record metadata available.</Typography>;
 
@@ -83,34 +96,47 @@ export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: Recor
       sx={{
         border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
         borderRadius: 0.5,
-        minHeight: 700,
         [`& .${gridClasses.item}`]: {
           border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
         },
       }}
     >
-      <Grid item xs={12} sm={4}>
-        <SimpleTreeView
-          sx={{ p: 1, overflowY: 'auto', flexGrow: 0 }}
-          slots={{
-            collapseIcon: KeyboardArrowUpRounded,
-            expandIcon: KeyboardArrowDownRounded,
-          }}
-          onExpandedItemsChange={() => {
-            setTimeout(() => Streamlit.setFrameHeight(), 300);
-          }}
-          defaultSelectedItems={ROOT_NODE_ID}
-          defaultExpandedItems={Object.keys(nodeMap) ?? []}
-          onItemSelectionToggle={handleItemSelectionToggle}
+      <Grid item xs={12} sm={selectedSpanView === SPAN_VIEW.TIMELINE ? 12 : 4}>
+        <Tabs
+          value={selectedSpanView}
+          onChange={(_event, value) => setSelectedSpanView(value as SPAN_VIEW)}
+          sx={{ borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}` }}
         >
-          <RecordTreeCellRecursive node={root} depth={0} totalTime={totalTime} treeStart={treeStart} />
-        </SimpleTreeView>
+          {SPAN_VIEWS.map((tab) => (
+            <Tab label={tab} value={tab} key={tab} id={tab} />
+          ))}
+        </Tabs>
+
+        {selectedSpanView === SPAN_VIEW.TIMELINE ? (
+          <RecordTable selectedNodeId={selectedNodeId} setSelectedNodeId={setSelectedNodeId} root={root} />
+        ) : (
+          <SimpleTreeView
+            sx={{ p: 1, overflowY: 'auto', flexGrow: 0 }}
+            slots={{
+              collapseIcon: KeyboardArrowUpRounded,
+              expandIcon: KeyboardArrowDownRounded,
+            }}
+            onExpandedItemsChange={() => {
+              setTimeout(() => Streamlit.setFrameHeight(), 300);
+            }}
+            defaultSelectedItems={selectedNodeId ?? ROOT_NODE_ID}
+            defaultExpandedItems={Object.keys(nodeMap) ?? []}
+            onItemSelectionToggle={handleItemSelectionToggle}
+          >
+            <RecordTreeCellRecursive node={root} depth={0} totalTime={totalTime} treeStart={treeStart} />
+          </SimpleTreeView>
+        )}
       </Grid>
 
-      <Grid item xs={12} sm={8}>
+      <Grid item xs={12} sm={selectedSpanView === SPAN_VIEW.TIMELINE ? 12 : 8}>
         <Tabs
           value={selectedTab}
-          onChange={(_event, value) => setSelectedTab(value as RECORD_TREE_TABS)}
+          onChange={(_event, value) => setSelectedTab(value as RECORD_CONTENT_TABS)}
           sx={{ borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}` }}
         >
           {SPAN_TREE_TABS.map((tab) => (

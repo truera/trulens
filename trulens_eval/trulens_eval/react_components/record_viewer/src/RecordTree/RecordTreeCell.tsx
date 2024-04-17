@@ -16,6 +16,7 @@ type RecordTreeCellTooltipProps = {
 function RecordTreeCellTooltip({ node, children }: RecordTreeCellTooltipProps) {
   const { startTime, endTime } = getStartAndEndTimesForNode(node);
   const selector = getSelector(node);
+
   return (
     <StyledTooltip
       title={
