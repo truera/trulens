@@ -8,7 +8,6 @@ import builtins
 from dataclasses import dataclass
 from importlib import metadata
 from importlib import resources
-
 import inspect
 import logging
 from pathlib import Path

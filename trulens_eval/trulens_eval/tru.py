@@ -14,10 +14,8 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
-)
-import warnings
+from typing import (Any, Callable, Dict, Generic, Iterable, List, Optional,
+                    Sequence, Tuple, TypeVar, Union)
 
 import humanize
 import pandas
@@ -25,17 +23,18 @@ from tqdm.auto import tqdm
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
-from trulens_eval import db
 from trulens_eval import schema
-from trulens_eval.database import sqlalchemy_db
+from trulens_eval.database import sqlalchemy
+from trulens_eval.database.base import DB
+from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.feedback import feedback
 from trulens_eval.utils import notebook_utils
 from trulens_eval.utils import python
 from trulens_eval.utils import serial
-from trulens_eval.utils import text
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.imports import static_resource
 from trulens_eval.utils.python import Future  # code style exception
+from trulens_eval.utils.python import OpaqueWrapper
 
 pp = PrettyPrinter()
 
@@ -80,11 +79,14 @@ class Tru(python.SingletonPerName):
             of methods to instrument.
 
         [TruVirtual][trulens_eval.tru_virtual.TruVirtual]: Virtual
-            apps that do not have a real app to instrument but have a virtual
-            structure and can log existing captured data as if they were trulens
+            apps that do not have a real app to instrument but have a virtual            structure and can log existing captured data as if they were trulens
             records.
 
     Args:
+        database: Database to use. If not provided, an
+            [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] database
+            will be initialized based on the other arguments.
+
         database_url: Database URL. Defaults to a local SQLite
             database file at `"default.sqlite"` See [this
             article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
@@ -95,15 +97,13 @@ class Tru(python.SingletonPerName):
 
             **Deprecated**: Use `database_url` instead.
 
+        database_prefix: Prefix for table names for trulens_eval to use. 
+            May be useful in some databases hosting other apps.
+
         database_redact_keys: Whether to redact secret keys in data to be
             written to database (defaults to `False`)
 
-    """
-
-    DEFAULT_DATABASE_FILE: str = "default.sqlite"
-    """Filename for default sqlite database.
-
-    The sqlalchemy url for this default local sqlite database is `sqlite:///default.sqlite`.
+        database_args: Additional arguments to pass to the database constructor.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -124,8 +124,11 @@ class Tru(python.SingletonPerName):
     DEFERRED_NUM_RUNS: int = 32
     """Number of futures to wait for when evaluating deferred feedback functions."""
 
-    db: db.DB
-    """Database supporting this workspace."""
+    db: Union[DB, OpaqueWrapper[DB]]
+    """Database supporting this workspace.
+    
+    Will be an opqaue wrapper if it is not ready to use due to migration requirements.
+    """
 
     _dashboard_urls: Optional[str] = None
 
@@ -146,56 +149,58 @@ class Tru(python.SingletonPerName):
 
     def __init__(
         self,
+        database: Optional[DB] = None,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
-        database_redact_keys: bool = False,
+        database_redact_keys: Optional[bool] = None,
+        database_prefix: Optional[str] = None,
+        database_args: Optional[Dict[str, Any]] = None,
+        database_check_revision: bool = True,
     ):
+        """
+        Args:
+            database_check_revision: Whether to check the database revision on
+                init. This prompt determine whether database migration is required.
+        """
+
+        if database_args is None:
+            database_args = {}
+
+        database_args.update(
+            {
+                k: v for k, v in {
+                    'database_url': database_url,
+                    'database_file': database_file,
+                    'database_redact_keys': database_redact_keys,
+                    'database_prefix': database_prefix
+                }.items() if v is not None
+            }
+        )
 
         if python.safe_hasattr(self, "db"):
-            if database_url is not None or database_file is not None:
+            # Already initialized by SingletonByName mechanism. Give warning if
+            # any option was specified (not None) as it will be ignored.
+            if sum((1 if v is not None else 0 for v in database_args.values())
+                  ) > 0:
                 logger.warning(
                     "Tru was already initialized. "
-                    "Cannot change database_url=%s "
-                    "or database_file=%s .", database_url, database_file
+                    "Cannot change database configuration after initialization."
                 )
 
             # Already initialized by SingletonByName mechanism.
             return
 
-        if None not in (database_url, database_file):
-            raise ValueError(
-                "Please specify at most one of `database_url` and `database_file`"
-            )
-
-        if database_file:
-            warnings.warn(
-                (
-                    "`database_file` is deprecated, "
-                    "use `database_url` instead as in `database_url='sqlite:///filename'."
-                ),
-                DeprecationWarning,
-                stacklevel=2
-            )
-
-        if database_url is None:
-            database_url = f"sqlite:///{database_file or self.DEFAULT_DATABASE_FILE}"
-
-        self.db: db.DB = sqlalchemy_db.SqlAlchemyDB.from_db_url(
-            database_url, redact_keys=database_redact_keys
-        )
-
-        print(
-            f"{text.UNICODE_SQUID} Tru initialized with db url {self.db.engine.url} ."
-        )
-        if database_redact_keys:
-            print(
-                f"{text.UNICODE_LOCK} Secret keys will not be included in the database."
-            )
+        if database is not None:
+            self.db = database
         else:
-            print(
-                f"{text.UNICODE_STOP} Secret keys may be written to the database. "
-                "See the `database_redact_keys` option of Tru` to prevent this."
-            )
+            self.db = sqlalchemy.SQLAlchemyDB.from_tru_args(**database_args)
+
+        if database_check_revision:
+            try:
+                self.db.check_db_revision()
+            except DatabaseVersionException as e:
+                print(e)
+                self.db = OpaqueWrapper(obj=self.db, e=e)
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict
@@ -287,18 +292,44 @@ class Tru(python.SingletonPerName):
         return TruVirtual(tru=self, app=app, **kwargs)
 
     def reset_database(self):
-        """Reset the database. Clears all tables."""
+        """Reset the database. Clears all tables.
+        
+        See [DB.reset_database][trulens_eval.database.base.DB.reset_database].
+        """
 
-        self.db.reset_database()
+        if isinstance(self.db, OpaqueWrapper):
+            db = self.db.unwrap()
+        elif isinstance(self.db, DB):
+            db = self.db
+        else:
+            raise RuntimeError("Unhandled database type.")
 
-    def migrate_database(self):
+        db.reset_database()
+        self.db = db
+
+    def migrate_database(self, **kwargs: Dict[str, Any]):
         """Migrates the database.
         
         This should be run whenever there are breaking changes in a database
-        created with an older version of trulens_eval.
+        created with an older version of _trulens_eval_.
+
+        Args:
+            **kwargs: Keyword arguments to pass to
+                [migrate_database][trulens_eval.database.base.DB.migrate_database]
+                of the current database.
+
+        See [DB.migrate_database][trulens_eval.database.base.DB.migrate_database].
         """
 
-        self.db.migrate_database()
+        if isinstance(self.db, OpaqueWrapper):
+            db = self.db.unwrap()
+        elif isinstance(self.db, DB):
+            db = self.db
+        else:
+            raise RuntimeError("Unhandled database type.")
+
+        db.migrate_database(**kwargs)
+        self.db = db
 
     def add_record(
         self,
@@ -334,8 +365,8 @@ class Tru(python.SingletonPerName):
         record: schema.Record,
         feedback_functions: Sequence[feedback.Feedback],
         app: Optional[schema.AppDefinition] = None,
-        on_done: Optional[Callable[[Future[schema.FeedbackResult]],
-                                   None]] = None
+        on_done: Optional[Callable[[Union[schema.FeedbackResult, Future[schema.FeedbackResult]],
+                                   None]]] = None
     ) -> List[Tuple[feedback.Feedback, Future[schema.FeedbackResult]]]:
         """Schedules to run the given feedback functions.
         
@@ -359,7 +390,7 @@ class Tru(python.SingletonPerName):
 
         app_id = record.app_id
 
-        self.db: db.DB
+        self.db: DB
 
         if app is None:
             app = schema.AppDefinition.model_validate(
@@ -385,11 +416,28 @@ class Tru(python.SingletonPerName):
         tp: tru_threading.TP = tru_threading.TP()
 
         for ffunc in feedback_functions:
-            fut: Future[schema.FeedbackResult] = \
-                tp.submit(ffunc.run, app=app, record=record)
+            # Run feedback function and the on_done callback. This makes sure
+            # that Future.result() returns only after on_done has finished.
+            def run_and_call_callback(ffunc, app, record):
+                temp = ffunc.run(app=app, record=record)
+                if on_done is not None:
+                    try:
+                        on_done(temp)
+                    finally:
+                        return temp
+                    
+                return temp
+            
 
-            if on_done is not None:
-                fut.add_done_callback(on_done)
+            fut: Future[schema.FeedbackResult] = \
+                tp.submit(run_and_call_callback, ffunc=ffunc, app=app, record=record)
+
+            # Have to roll the on_done callback into the submitted function
+            # because the result() is returned before callback runs otherwise.
+            # We want to do db work before result is returned.
+
+            # if on_done is not None:
+            #    fut.add_done_callback(on_done)
 
             feedbacks_and_futures.append((ffunc, fut))
 
@@ -811,7 +859,9 @@ class Tru(python.SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {name: count for name, count in runs_stats.items()}
+                    {
+                        name: count for name, count in runs_stats.items()
+                    }
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()
@@ -983,7 +1033,8 @@ class Tru(python.SingletonPerName):
 
         args += [
             leaderboard_path, "--", "--database-url",
-            self.db.engine.url.render_as_string(hide_password=False)
+            self.db.engine.url.render_as_string(hide_password=False),
+            "--database-prefix", self.db.table_prefix
         ]
 
         proc = subprocess.Popen(
