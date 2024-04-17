@@ -54,7 +54,7 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
             cell["source"] = cell[
                 "source"
             ] + f"\nfrom trulens_eval import Tru\ntru=Tru()\ntru.migrate_database()\n" \
-            + f"\nfrom trulens_eval.database.migrations.db_data_migration import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n"
+            + f"\nfrom trulens_eval.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n"
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 
         return ret
