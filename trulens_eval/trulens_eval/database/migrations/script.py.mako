@@ -15,10 +15,21 @@ down_revision = ${repr(down_revision)}
 branch_labels = ${repr(branch_labels)}
 depends_on = ${repr(depends_on)}
 
+def upgrade(config) -> None:
+    prefix = config.get_main_option("trulens.table_prefix")
 
-def upgrade() -> None:
+    if prefix is None:
+        raise RuntimeError("trulens.table_prefix is not set")
+
+    # TODO: need to prepend prefix to all table names in the upgrades
     ${upgrades if upgrades else "pass"}
 
 
 def downgrade() -> None:
+    prefix = config.get_main_option("trulens.table_prefix")
+
+    if prefix is None:
+        raise RuntimeError("trulens.table_prefix is not set")
+
+    # TODO: need to prepend prefix to all table names in the upgrades
     ${downgrades if downgrades else "pass"}
