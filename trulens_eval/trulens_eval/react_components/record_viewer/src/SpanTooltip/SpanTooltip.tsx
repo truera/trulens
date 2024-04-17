@@ -1,17 +1,16 @@
 import { ReactElement } from 'react';
 import { Box } from '@mui/material';
 import { StackTreeNode } from '../utils/types';
-import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 import { getSelector } from '../utils/utils';
 import StyledTooltip from '../StyledTooltip/StyledTooltip';
 
-type RecordTreeCellTooltipProps = {
+type SpanTooltipProps = {
   node: StackTreeNode;
   children: ReactElement;
 };
 
-export default function RecordTreeCellTooltip({ node, children }: RecordTreeCellTooltipProps) {
-  const { startTime, endTime } = getStartAndEndTimesForNode(node);
+export default function SpanTooltip({ node, children }: SpanTooltipProps) {
+  const { startTime, endTime } = node;
   const selector = getSelector(node);
 
   return (

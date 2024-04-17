@@ -5,7 +5,6 @@ import { Box, Grid, Stack, Typography, gridClasses } from '@mui/material';
 import { SimpleTreeView } from '@mui/x-tree-view';
 import { Streamlit } from 'streamlit-component-lib';
 import { AppJSONRaw, RecordJSONRaw, StackTreeNode } from '../utils/types';
-import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 import RecordTreeCellRecursive from './RecordTreeCellRecursive';
 import { Tabs, Tab } from '../Tabs';
 import { ROOT_NODE_ID } from '../utils/utils';
@@ -59,7 +58,7 @@ export default function RecordTree({ appJSON, nodeMap, recordJSON, root }: Recor
 
   useEffect(() => Streamlit.setComponentValue(selectedNode?.raw?.perf?.start_time ?? ''), [selectedNode]);
 
-  const { timeTaken: totalTime, startTime: treeStart } = getStartAndEndTimesForNode(root);
+  const { timeTaken: totalTime, startTime: treeStart } = root;
 
   const getSelectedView = () => {
     if (selectedTab === RECORD_CONTENT_TABS.APP_JSON) {

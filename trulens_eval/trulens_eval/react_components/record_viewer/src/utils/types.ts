@@ -142,10 +142,12 @@ export interface StackTreeNode {
   name: string;
   path?: string;
   methodName?: string;
-  startTime?: Date;
-  endTime?: Date;
+  startTime: number;
+  endTime: number;
+  timeTaken: number;
   raw?: CallJSONRaw;
   id?: number;
   nodeId: string;
   parentNodes: StackTreeNode[];
+  isRoot: boolean;
 }

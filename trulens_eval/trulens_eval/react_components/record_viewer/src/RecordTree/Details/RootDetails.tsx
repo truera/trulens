@@ -1,6 +1,5 @@
 import { Stack, SxProps, Theme, Typography } from '@mui/material';
 import { RecordJSONRaw, StackTreeNode } from '../../utils/types';
-import { getStartAndEndTimesForNode } from '../../utils/treeUtils';
 import LabelAndValue from '../../LabelAndValue/LabelAndValue';
 import TracePanel from './TracePanel';
 
@@ -10,7 +9,7 @@ type RootDetailsProps = {
 };
 
 export default function RootDetails({ root, recordJSON }: RootDetailsProps) {
-  const { timeTaken: nodeTime } = getStartAndEndTimesForNode(root);
+  const { timeTaken: nodeTime } = root;
 
   return (
     <>

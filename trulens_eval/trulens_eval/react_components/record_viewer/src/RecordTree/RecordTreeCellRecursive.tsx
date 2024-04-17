@@ -39,7 +39,7 @@ export default function RecordTreeCellRecursive({ node, depth, totalTime, treeSt
           depth={depth + 1}
           totalTime={totalTime}
           treeStart={treeStart}
-          key={`${child.name}-${child.id ?? ''}-${child.endTime?.toISOString() ?? ''}`}
+          key={`${child.name}-${child.id ?? ''}-${child.endTime ?? ''}`}
         />
       ))}
     </TreeItem>

@@ -4,7 +4,6 @@ import { AccessTimeRounded } from '@mui/icons-material';
 import { Box, SxProps, Theme, Typography } from '@mui/material';
 import { useTreeItemState, TreeItemContentProps } from '@mui/x-tree-view/TreeItem';
 import { StackTreeNode } from '../utils/types';
-import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 import Tag from '../Tag/Tag';
 import { getSelector } from '../utils/utils';
 import { SpanTooltip } from '../SpanTooltip';
@@ -19,7 +18,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
   const { disabled, expanded, selected, focused, handleExpansion, handleSelection } = useTreeItemState(itemId);
   const selector = getSelector(node);
 
-  const { timeTaken } = getStartAndEndTimesForNode(node);
+  const { timeTaken } = node;
 
   const icon = iconProp || expansionIcon || displayIcon;
 

@@ -1,6 +1,5 @@
 import { Grid, Stack, Typography } from '@mui/material';
 import { RecordJSONRaw, StackTreeNode } from '../../utils/types';
-import { getStartAndEndTimesForNode } from '../../utils/treeUtils';
 import Panel from '../../Panel/Panel';
 import LabelAndValue from '../../LabelAndValue/LabelAndValue';
 
@@ -16,8 +15,7 @@ type DetailsProps = {
 };
 
 export default function NodeDetails({ selectedNode, recordJSON }: DetailsProps) {
-  const { timeTaken: nodeTime } = getStartAndEndTimesForNode(selectedNode);
-  const { raw } = selectedNode;
+  const { timeTaken: nodeTime, raw } = selectedNode;
   const selector = getSelector(selectedNode);
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { args, rets } = raw ?? {};

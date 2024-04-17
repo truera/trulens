@@ -1,7 +1,6 @@
 import { Table, TableContainer, TableHead, TableRow, TableCell, TableBody, SxProps, Theme } from '@mui/material';
 import { StackTreeNode } from '../utils/types';
 import RecordTableRowRecursive from './RecordTableRow';
-import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 
 type RecordTableProps = {
   root: StackTreeNode;
@@ -10,7 +9,7 @@ type RecordTableProps = {
 };
 
 export default function RecordTable({ root, selectedNodeId, setSelectedNodeId }: RecordTableProps) {
-  const { timeTaken: totalTime, startTime: treeStart } = getStartAndEndTimesForNode(root);
+  const { timeTaken: totalTime, startTime: treeStart } = root;
 
   return (
     <TableContainer>

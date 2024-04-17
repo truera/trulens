@@ -57,12 +57,12 @@ export const getPathName = (stackCell: StackJSONRaw) => {
  *
  * @param perf - PerfJSONRaw The performance data to be analyzed
  * @returns an object containing the start and end times based on the performance
- * data provided
+ * data provided as numbers or undefined
  */
 export const getStartAndEndTimes = (perf: PerfJSONRaw) => {
   return {
-    startTime: perf?.start_time ? new Date(perf.start_time) : undefined,
-    endTime: perf?.end_time ? new Date(perf.end_time) : undefined,
+    startTime: perf?.start_time ? new Date(perf.start_time).getTime() : 0,
+    endTime: perf?.end_time ? new Date(perf.end_time).getTime() : 0,
   };
 };
 
@@ -76,8 +76,8 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
   let matchingNode = tree.children.find(
     (node) =>
       node.name === getClassNameFromCell(stackCell) &&
-      (node.startTime ?? 0) <= new Date(call.perf.start_time) &&
-      (node.endTime ?? Infinity) >= new Date(call.perf.end_time)
+      node.startTime <= new Date(call.perf.start_time).getTime() &&
+      (node.endTime === 0 || node.endTime >= new Date(call.perf.end_time).getTime())
   );
 
   const path = getPathName(stackCell);
@@ -95,10 +95,9 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
 
       matchingNode.startTime = startTime;
       matchingNode.endTime = endTime;
+      matchingNode.timeTaken = endTime - startTime;
       matchingNode.id = matchingNodeId;
-      matchingNode.nodeId = `${matchingNodeId}-${methodName}-${name}-${startTime?.toISOString() ?? ''}-${
-        endTime?.toISOString() ?? ''
-      }`;
+      matchingNode.nodeId = `${matchingNodeId}-${methodName}-${name}-${startTime ?? ''}-${endTime ?? ''}`;
       matchingNode.raw = call;
 
       return;
@@ -113,21 +112,27 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
       id,
       startTime,
       endTime,
+      timeTaken: (endTime ?? 0) - (startTime ?? 0),
       raw: call,
       parentNodes: [...tree.parentNodes, tree],
+      isRoot: false,
     });
 
     return;
   }
 
   if (!matchingNode) {
-    const newNode = {
+    const newNode: StackTreeNode = {
       children: [],
       name,
       methodName,
       path,
+      startTime: 0,
+      endTime: 0,
+      timeTaken: 0,
       nodeId: `${v4()}-${methodName}-${path}`, // Placeholder
       parentNodes: [...tree.parentNodes, tree],
+      isRoot: false,
     };
 
     // otherwise create a new node
@@ -139,14 +144,19 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
 };
 
 export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string) => {
+  const startTime = new Date(recordJSON.perf.start_time).getTime();
+  const endTime = new Date(recordJSON.perf.end_time).getTime();
+
   const tree: StackTreeNode = {
     children: [],
     name: appName,
-    startTime: new Date(recordJSON.perf.start_time),
-    endTime: new Date(recordJSON.perf.end_time),
+    startTime,
+    endTime,
+    timeTaken: endTime - startTime,
     path: '',
     parentNodes: [],
     id: 0,
+    isRoot: true,
     nodeId: ROOT_NODE_ID, // ID for the record viewer, since function Ids may not be unique.
     raw: {
       stack: [],

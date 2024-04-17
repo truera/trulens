@@ -3,7 +3,6 @@ import { ArrowDropDown, ArrowRight } from '@mui/icons-material';
 import { Streamlit } from 'streamlit-component-lib';
 import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Typography } from '@mui/material';
 import { StackTreeNode } from '../utils/types';
-import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 import { getSelector } from '../utils/utils';
 import { SpanTooltip } from '../SpanTooltip';
 
@@ -28,8 +27,7 @@ export default function RecordTableRowRecursive({
 
   const [expanded, setExpanded] = useState<boolean>(true);
 
-  const { name, methodName, nodeId } = node;
-  const { startTime, timeTaken } = getStartAndEndTimesForNode(node);
+  const { name, methodName, nodeId, startTime, timeTaken } = node;
   const selector = getSelector(node);
 
   const isRoot = !node.path;
@@ -85,7 +83,7 @@ export default function RecordTableRowRecursive({
               depth={depth + 1}
               totalTime={totalTime}
               treeStart={treeStart}
-              key={`${child.name}-${child.id ?? ''}-${child.endTime?.toISOString() ?? ''}`}
+              key={`${child.name}-${child.id ?? ''}-${child.endTime ?? ''}`}
             />
           ))
         : null}
