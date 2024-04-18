@@ -59,7 +59,7 @@ const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
       '&::before': {
         // Magic value, based on the height of a single cell.
         height: `calc(54px + ${spacing(1)})`,
-        width: spacing(3),
+        width: spacing(2),
         borderBottom: `1px solid ${palette.grey[300]}`,
       },
     },
@@ -73,13 +73,13 @@ const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
       borderLeft: `1px solid ${palette.grey[300]}`,
 
       // Magic values, based on paddings
-      left: spacing(-3),
+      left: spacing(-2),
       top: spacing(-1),
     },
   },
   [`& .${treeItemClasses.groupTransition}`]: {
     marginLeft: 0,
-    paddingLeft: spacing(3),
+    paddingLeft: spacing(2),
     [`& .${treeItemClasses.root}`]: {
       pt: 1,
     },
@@ -89,7 +89,7 @@ const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
         content: '""',
         position: 'absolute',
         display: 'block',
-        width: spacing(3),
+        width: spacing(2),
         height: spacing(1),
         top: '50%',
         borderBottom: `1px solid ${palette.grey[300]}`,

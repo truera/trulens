@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Box, Grid, Stack, Typography, gridClasses } from '@mui/material';
 import { AppJSONRaw, RecordJSONRaw } from './utils/types';
 import { Tabs, Tab } from './Tabs';
-import { StackTreeNode, ROOT_NODE_ID } from './utils/StackTreeNode';
+import { StackTreeNode } from './utils/StackTreeNode';
 import Details from './RecordTree/Details/Details';
 import JSONViewer from './JSONViewer/JSONViewer';
 import RecordTable from './RecordTable/RecordTable';
@@ -59,7 +59,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
     }
 
     if (selectedTab === RECORD_CONTENT_TABS.SPAN_JSON) {
-      return <JSONViewer src={selectedNodeId === ROOT_NODE_ID ? recordJSON : selectedNode.raw ?? {}} />;
+      return <JSONViewer src={selectedNodeId === root.nodeId ? recordJSON : selectedNode.raw ?? {}} />;
     }
 
     if (selectedTab === RECORD_CONTENT_TABS.RECORD_JSON) {

@@ -64,7 +64,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
             <Typography sx={ellipsisSx} fontWeight="bold">
               {label}
             </Typography>
-            <Typography variant="code" sx={{ ...ellipsisSx, display: 'block', maxWidth: 'fit-content' }}>
+            <Typography variant="code" sx={selectorSx}>
               {selector}
             </Typography>
 
@@ -90,7 +90,7 @@ const cellSx: SxProps<Theme> = ({ spacing, palette }) => ({
   border: `1px solid ${palette.grey[300]}`,
   p: 1,
   borderRadius: spacing(0.5),
-  width: '100%',
+  width: '-webkit-fill-available',
   alignItems: 'center',
   justifyContent: 'space-between',
   '& svg': {
@@ -101,8 +101,16 @@ const cellSx: SxProps<Theme> = ({ spacing, palette }) => ({
 const ellipsisSx: SxProps<Theme> = {
   textOverflow: 'ellipsis',
   overflow: 'hidden',
-  width: '100%',
   whiteSpace: 'nowrap',
+};
+
+const selectorSx: SxProps<Theme> = {
+  textOverflow: 'ellipsis',
+  overflow: 'hidden',
+  whiteSpace: 'nowrap',
+  display: 'inline-block',
+  maxWidth: 350,
+  wordBreak: 'anywhere',
 };
 
 const tagsContainerSx: SxProps<Theme> = { display: 'flex', mt: 0.5, flexWrap: 'wrap' };
