@@ -82,6 +82,8 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
     return <Details selectedNode={selectedNode} recordJSON={recordJSON} />;
   };
 
+  const isTimeline = selectedSpanView === SPAN_VIEW.TIMELINE;
+
   return (
     <Grid
       container
@@ -93,7 +95,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
         },
       }}
     >
-      <Grid item xs={12} sm={selectedSpanView === SPAN_VIEW.TIMELINE ? 12 : 5}>
+      <Grid item xs={12} md={isTimeline ? 12 : 5} lg={isTimeline ? 12 : 4}>
         <Tabs
           value={selectedSpanView}
           onChange={(_event, value) => setSelectedSpanView(value as SPAN_VIEW)}
@@ -104,7 +106,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
           ))}
         </Tabs>
 
-        {selectedSpanView === SPAN_VIEW.TIMELINE ? (
+        {isTimeline ? (
           <RecordTable selectedNodeId={selectedNodeId} setSelectedNodeId={setSelectedNodeId} root={root} />
         ) : (
           <RecordTree
@@ -116,7 +118,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
         )}
       </Grid>
 
-      <Grid item xs={12} sm={selectedSpanView === SPAN_VIEW.TIMELINE ? 12 : 7}>
+      <Grid item xs={12} md={isTimeline ? 12 : 7} lg={isTimeline ? 12 : 8}>
         <Tabs
           value={selectedTab}
           onChange={(_event, value) => setSelectedTab(value as RECORD_CONTENT_TABS)}
