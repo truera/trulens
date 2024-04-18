@@ -690,7 +690,12 @@ class SingletonInfo(Generic[T]):
         logger.warning(
             (
             "Singleton instance of type %s already created at:\n%s\n"
-            "You can delete the singleton by calling `<instance>.delete_singleton()`."
+            "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
+            f"""  ```python
+  from trulens_eval.utils.python import SingletonPerName
+  SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
+  ```
+            """
             ),
             self.cls.__name__, code_line(self.frameinfo, show_source=True)
         )
@@ -754,24 +759,36 @@ class SingletonPerName(Generic[T]):
         return obj
 
     @staticmethod
-    def delete_singleton_by_name(name: str):
+    def delete_singleton_by_name(name: str, cls: Type[SingletonPerName] = None):
         """
-        Delete the singleton instance with the given name. Can be used for testing
-        to create another singleton.
+        Delete the singleton instance with the given name.
+        
+        This can be used for testing to create another singleton.
+
+        Args:
+            name: The name of the singleton instance to delete.
+
+            cls: The class of the singleton instance to delete. If not given, all
+                instances with the given name are deleted.
         """
         for k, v in list(SingletonPerName._instances.items()):
             if k[1] == name:
+                if cls is not None and v.cls != cls:
+                    continue
+
                 del SingletonPerName._instances[k]
-                del SingletonPerName._id_to_name_map[id(v)]
+                del SingletonPerName._id_to_name_map[id(v.val)]
 
     def delete_singleton(self):
         """
         Delete the singleton instance. Can be used for testing to create another
         singleton.
         """
-        if id(self) in SingletonPerName._id_to_name_map:
-            name = SingletonPerName._id_to_name_map[id(self)]
-            del SingletonPerName._id_to_name_map[id(self)]
-            del SingletonPerName._instances[self.__class__.__name__, name]
+        id_ = id(self)
+
+        if id_ in SingletonPerName._id_to_name_map:
+            name = SingletonPerName._id_to_name_map[id_]
+            del SingletonPerName._id_to_name_map[id_]
+            del SingletonPerName._instances[(self.__class__.__name__, name)]
         else:
             logger.warning("Instance %s not found in our records.", self)
