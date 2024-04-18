@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 from concurrent import futures
+import dataclasses
 import inspect
 import logging
 from pprint import PrettyPrinter
@@ -13,10 +14,9 @@ import queue
 import sys
 from types import ModuleType
 import typing
-from typing import (
-    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator,
-    Optional, Sequence, Type, TypeVar, Union
-)
+from typing import (Any, Awaitable, Callable, Dict, Generator, Generic,
+                    Hashable, Iterator, Optional, Sequence, Type, TypeVar,
+                    Union)
 
 T = TypeVar("T")
 
@@ -236,15 +236,37 @@ def safe_issubclass(cls: Type, parent: Type) -> bool:
 # Function utilities.
 
 
-def code_line(func) -> Optional[str]:
+def code_line(func, show_source: bool = False) -> Optional[str]:
     """Get a string representation of the location of the given function
     `func`."""
 
-    if safe_hasattr(func, "__code__"):
+    if isinstance(func, inspect.FrameInfo):
+        ret = f"{func.filename}:{func.lineno}"
+        if show_source:
+            ret += "\n"
+            for line in func.code_context:
+                ret += "\t" + line
+
+        return ret
+    
+    if inspect.isframe(func):
+        code = func.f_code
+        ret = f"{func.f_code.co_filename}:{func.f_code.co_firstlineno}"
+
+    elif safe_hasattr(func, "__code__"):
         code = func.__code__
-        return f"{code.co_filename}:{code.co_firstlineno}"
+        ret = f"{code.co_filename}:{code.co_firstlineno}"
+
     else:
         return None
+
+    if show_source:
+        ret += "\n"
+        for line in inspect.getsourcelines(func)[0]:
+            ret += "\t" + str(line)
+
+    return ret
+    
 
 
 def locals_except(*exceptions):
@@ -270,6 +292,29 @@ def caller_frame(offset=0) -> 'frame':
     """
 
     return inspect.stack()[offset + 1].frame
+
+
+def caller_frameinfo(
+    offset: int = 0,
+    skip_module: Optional[str] = "trulens_eval"
+) ->  Optional[inspect.FrameInfo]:
+    """
+    Get the caller's (of this function) frameinfo. See
+    https://docs.python.org/3/reference/datamodel.html#frame-objects .
+
+    Args:
+        offset: The number of frames to skip. Default is 0.
+        
+        skip_module: Skip frames from the given module. Default is "trulens_eval".
+    """
+
+    for finfo in inspect.stack()[offset + 1:]:
+        if skip_module is None:
+            return finfo
+        if not finfo.frame.f_globals['__name__'].startswith(skip_module):
+            return finfo
+
+    return None
 
 
 def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence['frame']:
@@ -608,6 +653,45 @@ def wrap_generator(
 T = TypeVar("T")
 
 
+@dataclasses.dataclass
+class SingletonInfo(Generic[T]):
+    """
+    Information about a singleton instance.
+    """
+
+    val: T
+    """The singleton instance."""
+
+    name: str
+    """The name of the singleton instance.
+    
+    This is used for the SingletonPerName mechanism to have a seperate singleton
+    for each unique name (and class).
+    """
+
+    cls: Type[T]
+    """The class of the singleton instance."""
+
+    frame: Any
+    """The frame where the singleton was created.
+    
+    This is used for showing "already created" warnings.
+    """
+
+    def __init__(self, name: str, val: Any):
+        self.val = val
+        self.cls = val.__class__
+        self.name = name
+        self.frameinfo = caller_frameinfo(offset=2)
+
+    def warning(self):
+        """Issue warning that this singleton already exists."""
+
+        logger.warning(
+            "Singleton instance of type %s already created at:\n%s",
+            self.cls.__name__, code_line(self.frameinfo, show_source=True)
+        )
+
 class SingletonPerName(Generic[T]):
     """
     Class for creating singleton instances except there being one instance max,
@@ -616,12 +700,29 @@ class SingletonPerName(Generic[T]):
     """
 
     # Hold singleton instances here.
-    _instances: Dict[Hashable, SingletonPerName] = dict()
+    _instances: Dict[Hashable, SingletonInfo[SingletonPerName[T]]] = {}
 
     # Need some way to look up the name of the singleton instance. Cannot attach
     # a new attribute to instance since some metaclasses don't allow this (like
     # pydantic). We instead create a map from instance address to name.
-    _id_to_name_map: Dict[int, Optional[str]] = dict()
+    _id_to_name_map: Dict[int, Optional[str]] = {}
+
+    def warning(self):
+        """Issue warning that this singleton already exists."""
+
+        name = SingletonPerName._id_to_name_map[id(self)]
+        k = self.__class__.__name__, name
+        if k in SingletonPerName._instances:
+            SingletonPerName._instances[k].warning()
+        else:
+            raise RuntimeError(
+                f"Instance of singleton type/name {k} does not exist."
+            )
+
+    #def __init__(self, info):
+        #self._singleton_cls = type(self)
+        #self._singleton_name = name
+        #self.__singleton_info = info
 
     def __new__(
         cls: Type[SingletonPerName[T]],
@@ -645,9 +746,12 @@ class SingletonPerName(Generic[T]):
             instance = super().__new__(cls)
 
             SingletonPerName._id_to_name_map[id(instance)] = name
-            SingletonPerName._instances[k] = instance
+            info = SingletonInfo(name=name, val=instance)
+            SingletonPerName._instances[k] = info
+        else:
+            info = SingletonPerName._instances[k]
 
-        obj: cls = SingletonPerName._instances[k]
+        obj: cls = info.val
 
         return obj
 
