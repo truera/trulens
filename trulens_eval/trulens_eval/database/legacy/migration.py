@@ -66,7 +66,7 @@ class VersionException(Exception):
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
 migration_versions: List[str] = [
-    "0.19.0", "0.9.0", "0.3.0"
+    "0.19.0", "0.9.0"
 ]
 
 
@@ -254,20 +254,8 @@ def migrate_0_9_0(db):
     conn.commit()
 
 
-def migrate_0_3_0(db):
-    conn, c = db._connect()
-    c.execute(
-        """
-        ALTER TABLE feedbacks
-        ADD multi_result TEXT;
-    """
-    )
-    conn.commit()
-
-
 upgrade_paths = {
     #"from_version":("to_version", migrate_method)
-    "0.3.0": ("0.9.0", migrate_0_3_0),
     "0.9.0": ("0.19.0", migrate_0_9_0)
 }
 
