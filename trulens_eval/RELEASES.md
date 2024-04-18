@@ -1,4 +1,4 @@
-# TruLens-Eval v0.28.0
+# 0.28.0
 
 ## What's Changed
 * Meta-eval / feedback functions benchmarking notebooks, ranking-based eval
