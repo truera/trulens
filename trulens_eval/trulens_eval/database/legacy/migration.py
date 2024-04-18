@@ -66,7 +66,7 @@ class VersionException(Exception):
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
 migration_versions: List[str] = [
-    "0.19.0", "0.9.0"
+    "0.19.0"
 ]
 
 
@@ -151,112 +151,9 @@ class UnknownClass(pydantic.BaseModel):
         information was not recorded in earlier versions of trulens.
         """
 
-
-def migrate_0_9_0(db):
-    rename_classinfo = jsonlike_rename_key("__tru_class_info", "tru_class_info")
-    rename_objserial = jsonlike_rename_value("ObjSerial", "Obj")
-
-    def migrate_misc(obj):
-
-        # Old Method format:
-        if isinstance(obj,
-                      dict) and "module_name" in obj and "method_name" in obj:
-            logger.debug("migrating RecordAppCallMethod %s", obj)
-            # example: {'module_name': 'langchain.chains.llm', 'class_name': 'LLMChain', 'method_name': '_call'}
-            return Method(
-                obj=Obj(
-                    cls=Class(
-                        name=obj['class_name'],
-                        module=Module(module_name=obj['module_name'])
-                    ),
-                    id=0
-                ),
-                name=obj['method_name']
-            ).model_dump()
-
-        else:
-            return obj
-
-    dummy_methods = jsonlike_map(fval=migrate_misc)
-
-    all_migrate = lambda obj: dummy_methods(
-        rename_classinfo(rename_objserial(obj))
-    )
-
-    conn, c = db._connect()
-    c.execute(
-        """SELECT * FROM records"""
-    )  # Use hardcode names as versions could go through name change
-    rows = c.fetchall()
-    json_db_col_idx = 4
-
-    for old_entry in tqdm(rows, desc="Migrating Records DB 0.9.0 to 0.19.0"):
-        new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
-
-        _update_db_json_col(
-            db=db,
-            table=
-            "records",  # Use hardcode names as versions could go through name change
-            old_entry=old_entry,
-            json_db_col_idx=json_db_col_idx,
-            new_json=new_json
-        )
-
-    c.execute(f"""SELECT * FROM feedback_defs""")
-    rows = c.fetchall()
-    json_db_col_idx = 1
-    for old_entry in tqdm(rows,
-                          desc="Migrating FeedbackDefs DB 0.9.0 to 0.19.0"):
-        new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
-
-        if CLASS_INFO not in new_json:
-            new_json[CLASS_INFO] = Class.of_class(Feedback).model_dump()
-            logger.debug("adding '%s'", CLASS_INFO)
-
-        if "initial_app_loader" not in new_json:
-            new_json['initial_app_loader'] = None
-            logger.debug("adding 'initial_app_loader'")
-
-        if "initial_app_loader_dump" not in new_json:
-            new_json['initial_app_loader_dump'] = None
-            logger.debug("adding 'initial_app_loader_dump'")
-
-        _update_db_json_col(
-            db=db,
-            table="feedback_defs",
-            old_entry=old_entry,
-            json_db_col_idx=json_db_col_idx,
-            new_json=new_json
-        )
-
-    c.execute("""SELECT * FROM apps""")
-    rows = c.fetchall()
-    json_db_col_idx = 1
-    for old_entry in tqdm(rows, desc="Migrating Apps DB 0.9.0 to 0.19.0"):
-        new_json = all_migrate(json.loads(old_entry[json_db_col_idx]))
-
-        if CLASS_INFO not in new_json:
-            new_json[CLASS_INFO] = Class.of_class(AppDefinition).model_dump()
-            logger.debug("adding `%s`", CLASS_INFO)
-
-        if "app" not in new_json:
-            new_json['app'] = dict()
-            logger.debug("adding `app`")
-
-        _update_db_json_col(
-            db=db,
-            table="apps",
-            old_entry=old_entry,
-            json_db_col_idx=json_db_col_idx,
-            new_json=new_json
-        )
-
-    conn.commit()
-
-
 upgrade_paths = {
-    #"from_version":("to_version", migrate_method)
-    "0.9.0": ("0.19.0", migrate_0_9_0)
+    # "from_version":("to_version", migrate_method)
+    # "0.9.0": ("0.19.0", migrate_0_9_0)
 }
 
 
