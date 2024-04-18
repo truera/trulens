@@ -10,8 +10,6 @@ otherwise you might get circular import errors.
 
 - `tests/`
 
-- `db_migration.py`
-
 - `__init__.py`
 
 - all UI/dashboard components, `pages`, `react_components`, `ux`, `Leaderboard.py`, `appui.py`
@@ -56,8 +54,6 @@ otherwise you might get circular import errors.
 
 - `app.py`
 
-- `db.py`
-
 - `instruments.py`
 
 - `schema.py`
@@ -77,17 +73,17 @@ otherwise you might get circular import errors.
     - `python.py` `text.py` `generated.py` `containers.py` `imports.py`
 
 TO PLACE
+- `database/`
+- `feedback/v2/`
+- `utils/command_line.py`
+- `utils/notebook_utils.py`
+- `utils/asynchro.py`
+- `utils/text.py`
+- `utils/__init__.py`
 
-`database/`
-`feedback/v2/`
-`utils/command_line.py`
-`utils/notebook_utils.py`
-`utils/asynchro.py`
-`utils/text.py`
-`utils/__init__.py`
 """
 
-__version_info__ = (0, 27, 2)
+__version_info__ = (0, 28, 0)
 __version__ = '.'.join(map(str, __version_info__))
 
 # This check is intentionally done ahead of the other imports as we want to

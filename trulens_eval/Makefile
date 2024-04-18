@@ -90,6 +90,10 @@ test-database:
 	$(CONDA); python -m unittest discover tests.integration.test_database
 	docker compose --file docker/test-database.yaml down
 
+# These tests all operate on local file databases and don't require docker.
+test-database-specification:
+	$(CONDA); python -m unittest discover tests.integration.test_database -k TestDBSpecifications
+
 # The next 3 database migration/versioning tests:
 test-database-versioning: test-database-v2migration test-database-legacy-migration test-database-future
 

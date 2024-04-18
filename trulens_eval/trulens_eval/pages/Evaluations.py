@@ -6,6 +6,8 @@ from typing import Dict, Iterable, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
+from pprint import pformat
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -26,12 +28,13 @@ from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
 from trulens_eval.app import Tool
-from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
+from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema import Record
 from trulens_eval.schema import Select
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
+from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
@@ -46,6 +49,10 @@ st.runtime.legacy_caching.clear_cache()
 
 set_page_config(page_title="Evaluations")
 st.title("Evaluations")
+
+if __name__ == "__main__":
+    # If not imported, gets args from command line and creates Tru singleton
+    init_from_args()
 
 tru = Tru()
 lms = tru.db
