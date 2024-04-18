@@ -688,7 +688,10 @@ class SingletonInfo(Generic[T]):
         """Issue warning that this singleton already exists."""
 
         logger.warning(
-            "Singleton instance of type %s already created at:\n%s",
+            (
+            "Singleton instance of type %s already created at:\n%s\n"
+            "You can delete the singleton by calling `<instance>.delete_singleton()`."
+            ),
             self.cls.__name__, code_line(self.frameinfo, show_source=True)
         )
 
@@ -718,11 +721,6 @@ class SingletonPerName(Generic[T]):
             raise RuntimeError(
                 f"Instance of singleton type/name {k} does not exist."
             )
-
-    #def __init__(self, info):
-        #self._singleton_cls = type(self)
-        #self._singleton_name = name
-        #self.__singleton_info = info
 
     def __new__(
         cls: Type[SingletonPerName[T]],
