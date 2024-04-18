@@ -18,8 +18,6 @@ export class StackTreeNode {
 
   raw?: CallJSONRaw;
 
-  id: number;
-
   parentNodes: StackTreeNode[] = [];
 
   constructor({
@@ -28,14 +26,12 @@ export class StackTreeNode {
     stackCell,
     perf,
     raw,
-    id = 0,
     parentNodes = [],
   }: {
     children?: StackTreeNode[];
     name: string;
     stackCell?: StackJSONRaw;
     raw?: CallJSONRaw;
-    id: number;
     parentNodes?: StackTreeNode[];
     perf?: PerfJSONRaw;
   }) {
@@ -49,7 +45,6 @@ export class StackTreeNode {
     this.children = children;
     this.name = name;
     this.raw = raw;
-    this.id = id;
     this.parentNodes = parentNodes;
 
     if (stackCell) {
@@ -71,7 +66,7 @@ export class StackTreeNode {
       return ROOT_NODE_ID;
     }
 
-    return `${this.id}-${this.methodName}-${this.name}-${this.startTime ?? ''}-${this.endTime ?? ''}`;
+    return `${this.methodName}-${this.name}-${this.startTime ?? ''}-${this.endTime ?? ''}`;
   }
 
   get selector() {

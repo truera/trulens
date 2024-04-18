@@ -78,7 +78,7 @@ export default function RecordTableRowRecursive({
               depth={depth + 1}
               totalTime={totalTime}
               treeStart={treeStart}
-              key={`${child.name}-${child.id ?? ''}-${child.endTime ?? ''}`}
+              key={child.nodeId}
             />
           ))
         : null}

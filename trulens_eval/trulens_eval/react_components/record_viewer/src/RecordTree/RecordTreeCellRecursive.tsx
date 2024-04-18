@@ -35,7 +35,7 @@ export default function RecordTreeCellRecursive({ node, depth, totalTime, treeSt
           depth={depth + 1}
           totalTime={totalTime}
           treeStart={treeStart}
-          key={`${child.name}-${child.id ?? ''}-${child.endTime ?? ''}`}
+          key={child.nodeId}
         />
       ))}
     </TreeItem>
@@ -63,6 +63,7 @@ const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
         borderBottom: `1px solid ${palette.grey[300]}`,
       },
     },
+    // Vertical segment connector
     '&::before': {
       content: '""',
       display: 'block',

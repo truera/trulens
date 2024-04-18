@@ -67,9 +67,8 @@ export const getStartAndEndTimes = (perf: PerfJSONRaw) => {
 const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONRaw[], index: number) => {
   const stackCell = stack[index];
   const name = getClassNameFromCell(stackCell);
-  const { id } = stackCell.method.obj;
 
-  // otherwise, we are deciding which node to go in
+  // Given a recorded call, see if its parent already exist as a child of the tree.
   let matchingNode = tree.children.find(
     (node) =>
       node.name === name &&
@@ -77,25 +76,24 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
       (!node.endTime || node.endTime >= new Date(call.perf.end_time).getTime())
   );
 
-  // if we are currently at the top most cell of the stack
+  // if we are currently at the top most cell of the stack...
   if (index === stack.length - 1) {
     const { startTime, endTime } = getStartAndEndTimes(call.perf);
 
+    // ...and there is a matching node, then this call must be for this node. Update
+    // the start/end time, and raw call correspondingly.
     if (matchingNode) {
-      const matchingNodeId = call.stack[index].method.obj.id;
-
       matchingNode.startTime = startTime;
       matchingNode.endTime = endTime;
-      matchingNode.id = matchingNodeId;
       matchingNode.raw = call;
 
       return;
     }
 
+    // Otherwise this is a new call that is unrecorded, add it in
     tree.children.push(
       new StackTreeNode({
         name,
-        id,
         raw: call,
         parentNodes: [...tree.parentNodes, tree],
         perf: call.perf,
@@ -106,15 +104,14 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
     return;
   }
 
+  // No matching node, so this is a new path. Create a new node for it.
   if (!matchingNode) {
     const newNode = new StackTreeNode({
       name,
       stackCell,
       parentNodes: [...tree.parentNodes, tree],
-      id,
     });
 
-    // otherwise create a new node
     tree.children.push(newNode);
     matchingNode = newNode;
   }
@@ -126,7 +123,6 @@ export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string) 
   const tree = new StackTreeNode({
     name: appName,
     perf: recordJSON.perf,
-    id: 0,
   });
 
   recordJSON.calls.forEach((call) => {

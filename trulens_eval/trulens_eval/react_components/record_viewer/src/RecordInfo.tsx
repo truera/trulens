@@ -93,7 +93,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
         },
       }}
     >
-      <Grid item xs={12} sm={selectedSpanView === SPAN_VIEW.TIMELINE ? 12 : 4}>
+      <Grid item xs={12} sm={selectedSpanView === SPAN_VIEW.TIMELINE ? 12 : 5}>
         <Tabs
           value={selectedSpanView}
           onChange={(_event, value) => setSelectedSpanView(value as SPAN_VIEW)}
@@ -116,7 +116,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
         )}
       </Grid>
 
-      <Grid item xs={12} sm={selectedSpanView === SPAN_VIEW.TIMELINE ? 12 : 8}>
+      <Grid item xs={12} sm={selectedSpanView === SPAN_VIEW.TIMELINE ? 12 : 7}>
         <Tabs
           value={selectedTab}
           onChange={(_event, value) => setSelectedTab(value as RECORD_CONTENT_TABS)}

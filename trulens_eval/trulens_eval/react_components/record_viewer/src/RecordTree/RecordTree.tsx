@@ -25,7 +25,14 @@ export default function RecordTree({ nodeMap, root, selectedNodeId, setSelectedN
 
   return (
     <SimpleTreeView
-      sx={{ p: 1, overflowY: 'auto', flexGrow: 0 }}
+      sx={{
+        p: 1,
+        overflowY: 'auto',
+        flexGrow: 0,
+        [`& > li`]: {
+          minWidth: 'fit-content',
+        },
+      }}
       slots={{
         collapseIcon: KeyboardArrowUpRounded,
         expandIcon: KeyboardArrowDownRounded,

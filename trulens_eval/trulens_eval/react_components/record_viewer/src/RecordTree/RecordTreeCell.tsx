@@ -64,7 +64,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
             <Typography sx={ellipsisSx} fontWeight="bold">
               {label}
             </Typography>
-            <Typography variant="code" sx={ellipsisSx}>
+            <Typography variant="code" sx={{ ...ellipsisSx, display: 'block', maxWidth: 'fit-content' }}>
               {selector}
             </Typography>
 
