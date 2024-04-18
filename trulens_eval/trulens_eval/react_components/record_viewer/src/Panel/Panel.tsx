@@ -20,6 +20,7 @@ export default function Panel({ header, children }: PanelProps) {
 const panelSx: SxProps<Theme> = ({ spacing, palette }) => ({
   borderRadius: spacing(0.5),
   border: `1px solid ${palette.grey[300]}`,
+  width: '100%',
 
   '& .panel-header': {
     background: palette.grey[100],

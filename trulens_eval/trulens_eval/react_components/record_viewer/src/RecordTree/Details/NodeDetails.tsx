@@ -33,7 +33,7 @@ export default function NodeDetails({ selectedNode, recordJSON }: DetailsProps) 
       </Stack>
 
       <Grid container gap={1}>
-        <Grid item xs={12} xl={6}>
+        <Grid item xs={12}>
           <Panel header="Span I/O">
             <Stack gap={2}>
               <Section title="Arguments" subtitle={selector ? `${selector}.args` : undefined}>
@@ -47,7 +47,7 @@ export default function NodeDetails({ selectedNode, recordJSON }: DetailsProps) 
           </Panel>
         </Grid>
 
-        <Grid item xs={12} xl={6}>
+        <Grid item xs={12}>
           <TracePanel recordJSON={recordJSON} />
         </Grid>
       </Grid>
