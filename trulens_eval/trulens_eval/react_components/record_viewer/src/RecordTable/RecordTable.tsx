@@ -1,20 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Streamlit } from 'streamlit-component-lib';
 import { Table, TableContainer, TableHead, TableRow, TableCell, TableBody, SxProps, Theme } from '@mui/material';
-import { StackTreeNode } from '../utils/types';
+import { StackTreeNode } from '../utils/StackTreeNode';
 import RecordTableRowRecursive from './RecordTableRow';
-import { getStartAndEndTimesForNode } from '../utils/treeUtils';
 
 type RecordTableProps = {
   root: StackTreeNode;
+  selectedNodeId: string | null;
+  setSelectedNodeId: (newId: string | null) => void;
 };
 
-export default function RecordTable({ root }: RecordTableProps) {
-  const [selectedNode, setSelectedNode] = useState<string>();
-
-  useEffect(() => Streamlit.setComponentValue(selectedNode), [selectedNode]);
-
-  const { timeTaken: totalTime, startTime: treeStart } = getStartAndEndTimesForNode(root);
+export default function RecordTable({ root, selectedNodeId, setSelectedNodeId }: RecordTableProps) {
+  const { timeTaken: totalTime, startTime: treeStart } = root;
 
   return (
     <TableContainer>
@@ -28,8 +23,8 @@ export default function RecordTable({ root }: RecordTableProps) {
         </TableHead>
         <TableBody>
           <RecordTableRowRecursive
-            selectedNode={selectedNode}
-            setSelectedNode={setSelectedNode}
+            selectedNodeId={selectedNodeId}
+            setSelectedNodeId={setSelectedNodeId}
             node={root}
             depth={0}
             totalTime={totalTime}
@@ -43,7 +38,7 @@ export default function RecordTable({ root }: RecordTableProps) {
 
 const recordTableSx: SxProps<Theme> = {
   borderRadius: 4,
-  border: ({ palette }) => `1px solid ${palette.primary.light}`,
+  border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
   minWidth: 650,
 
   '& th': {

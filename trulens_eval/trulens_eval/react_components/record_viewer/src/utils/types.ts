@@ -24,16 +24,20 @@ export interface ModuleJSONRaw {
 }
 
 export interface StackJSONRaw {
-  path: string | /* new serialization is just strings */
-  {path: ( /* old json serialization of paths */ 
-    { item: string } | 
-    { items: string[] } | 
-    { attribute: string } |
-    { item_or_attribute: string } | 
-    { index: number } | 
-    { indices: number[] } | 
-    { collect: null }
-  )[]};
+  path:
+    | string /* new serialization is just strings */
+    | {
+        path: /* old json serialization of paths */
+        (
+          | { item: string }
+          | { items: string[] }
+          | { attribute: string }
+          | { item_or_attribute: string }
+          | { index: number }
+          | { indices: number[] }
+          | { collect: null }
+        )[];
+      };
   method: {
     name: string;
     obj: {
@@ -131,16 +135,4 @@ export interface RecordJSONRaw {
 export interface DataRaw {
   app_json: AppJSONRaw;
   record_json: RecordJSONRaw;
-}
-
-export interface StackTreeNode {
-  children: StackTreeNode[];
-  name: string;
-  path?: string;
-  methodName?: string;
-  startTime?: Date;
-  endTime?: Date;
-  raw?: CallJSONRaw;
-  id?: number;
-  parentNodes: StackTreeNode[];
 }
