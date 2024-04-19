@@ -1,11 +1,12 @@
-import { forwardRef } from 'react';
-import clsx from 'clsx';
 import { AccessTimeRounded } from '@mui/icons-material';
 import { Box, SxProps, Theme, Typography } from '@mui/material';
-import { useTreeItemState, TreeItemContentProps } from '@mui/x-tree-view/TreeItem';
-import { StackTreeNode } from '../utils/StackTreeNode';
-import Tag from '../Tag/Tag';
+import { TreeItemContentProps, useTreeItemState } from '@mui/x-tree-view/TreeItem';
+import clsx from 'clsx';
+import { forwardRef } from 'react';
+
 import { SpanTooltip } from '../SpanTooltip';
+import Tag from '../Tag/Tag';
+import { StackTreeNode } from '../utils/StackTreeNode';
 
 type RecordTreeCellProps = TreeItemContentProps & {
   node: StackTreeNode;

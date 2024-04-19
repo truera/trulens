@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
 import { ArrowDropDown, ArrowRight } from '@mui/icons-material';
-import { Streamlit } from 'streamlit-component-lib';
 import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Typography } from '@mui/material';
-import { StackTreeNode } from '../utils/StackTreeNode';
+import { useEffect, useState } from 'react';
+import { Streamlit } from 'streamlit-component-lib';
+
 import { SpanTooltip } from '../SpanTooltip';
+import { StackTreeNode } from '../utils/StackTreeNode';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;

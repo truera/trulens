@@ -1,8 +1,9 @@
 import { Stack, SxProps, Theme, Typography } from '@mui/material';
-import { RecordJSONRaw } from '../../utils/types';
+
 import LabelAndValue from '../../LabelAndValue/LabelAndValue';
-import TracePanel from './TracePanel';
 import { StackTreeNode } from '../../utils/StackTreeNode';
+import { RecordJSONRaw } from '../../utils/types';
+import TracePanel from './TracePanel';
 
 type RootDetailsProps = {
   root: StackTreeNode;

@@ -50,6 +50,9 @@ module.exports = {
 
     'import/prefer-default-export': 'off',
     'no-continue': 'off',
+
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
   },
   settings: {
     'import/resolver': {

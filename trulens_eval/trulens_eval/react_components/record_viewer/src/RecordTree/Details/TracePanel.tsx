@@ -1,7 +1,7 @@
 import { Stack } from '@mui/material';
-import { RecordJSONRaw } from '../../utils/types';
-import Panel from '../../Panel/Panel';
 
+import Panel from '../../Panel/Panel';
+import { RecordJSONRaw } from '../../utils/types';
 import Section from './Section';
 
 type TracePanelProps = {

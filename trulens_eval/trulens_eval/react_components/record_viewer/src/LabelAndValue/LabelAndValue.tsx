@@ -1,5 +1,6 @@
-import { ReactNode } from 'react';
 import { Box, SxProps, Theme, Typography } from '@mui/material';
+import { ReactNode } from 'react';
+
 import { combineSx } from '../utils/styling';
 
 interface LabelAndValueProps {
