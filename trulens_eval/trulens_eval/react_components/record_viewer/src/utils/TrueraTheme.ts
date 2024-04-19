@@ -208,7 +208,6 @@ TrueraTheme.components = {
       h4: TrueraTheme.typography.h4,
       h5: TrueraTheme.typography.h5,
       p: TrueraTheme.typography.body2,
-      // TODO (Santi) use .link, .disabled, .input
       '.link': {
         color: TrueraTheme.palette.primary.main,
         textDecoration: 'underline',
