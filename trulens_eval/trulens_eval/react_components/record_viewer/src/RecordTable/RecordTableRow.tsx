@@ -1,62 +1,39 @@
 import { useEffect, useState } from 'react';
 import { ArrowDropDown, ArrowRight } from '@mui/icons-material';
 import { Streamlit } from 'streamlit-component-lib';
-import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Tooltip, Typography } from '@mui/material';
-import { StackTreeNode } from '../utils/types';
-import { getStartAndEndTimesForNode } from '../utils/treeUtils';
+import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Typography } from '@mui/material';
+import { StackTreeNode } from '../utils/StackTreeNode';
+import { SpanTooltip } from '../SpanTooltip';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;
   depth: number;
   totalTime: number;
   treeStart: number;
-  selectedNode: string | undefined;
-  setSelectedNode: (newNode: string | undefined) => void;
+  selectedNodeId: string | null;
+  setSelectedNodeId: (newNode: string | null) => void;
 };
-
-function TooltipDescription({ startTime, endTime }: { startTime: number; endTime: number }) {
-  return (
-    <Box sx={{ lineHeight: 1.5 }}>
-      <span>
-        <b>Start: </b>
-        {new Date(startTime).toISOString()}
-      </span>
-      <br />
-      <span>
-        <b>End: </b>
-        {new Date(endTime).toISOString()}
-      </span>
-    </Box>
-  );
-}
 
 export default function RecordTableRowRecursive({
   node,
   depth,
   totalTime,
   treeStart,
-  selectedNode,
-  setSelectedNode,
+  selectedNodeId,
+  setSelectedNodeId,
 }: RecordTableRowRecursiveProps) {
   useEffect(() => Streamlit.setFrameHeight());
 
   const [expanded, setExpanded] = useState<boolean>(true);
 
-  const { startTime, timeTaken, endTime } = getStartAndEndTimesForNode(node);
+  const { nodeId, startTime, timeTaken, selector, label } = node;
 
-  let selector = 'Select.App';
-
-  if (node.path) selector += `.${node.path}`;
-
-  const isRoot = !node.path;
-  const nodeStartTime = isRoot ? '' : node.raw?.perf.start_time;
-
-  const isNodeSelected = selectedNode === nodeStartTime;
+  const isNodeSelected = selectedNodeId === nodeId;
 
   return (
     <>
       <TableRow
-        onClick={() => setSelectedNode(nodeStartTime ?? undefined)}
+        onClick={() => setSelectedNodeId(nodeId ?? null)}
         sx={{
           ...recordRowSx,
           background: isNodeSelected ? ({ palette }) => palette.primary.lighter : undefined,
@@ -70,10 +47,7 @@ export default function RecordTableRowRecursive({
               </IconButton>
             )}
             <Box sx={{ display: 'flex', alignItems: 'center', ml: node.children.length === 0 ? 5 : 0 }}>
-              <Typography>
-                {node.name}
-                {node.methodName ? `.${node.methodName}` : ''}
-              </Typography>
+              <Typography fontWeight="bold">{label}</Typography>
               <Typography variant="code" sx={{ ml: 1, px: 1 }}>
                 {selector}
               </Typography>
@@ -82,29 +56,29 @@ export default function RecordTableRowRecursive({
         </TableCell>
         <TableCell align="right">{timeTaken} ms</TableCell>
         <TableCell sx={{ minWidth: 500, padding: 0 }}>
-          <Tooltip title={<TooltipDescription startTime={startTime} endTime={endTime} />}>
+          <SpanTooltip node={node}>
             <Box
               sx={{
                 left: `${((startTime - treeStart) / totalTime) * 100}%`,
                 width: `${(timeTaken / totalTime) * 100}%`,
                 background: ({ palette }) =>
-                  selectedNode === undefined || isNodeSelected ? palette.grey[500] : palette.grey[300],
+                  selectedNodeId === null || isNodeSelected ? palette.grey[500] : palette.grey[300],
                 ...recordBarSx,
               }}
             />
-          </Tooltip>
+          </SpanTooltip>
         </TableCell>
       </TableRow>
       {expanded
         ? node.children.map((child) => (
             <RecordTableRowRecursive
-              selectedNode={selectedNode}
-              setSelectedNode={setSelectedNode}
+              selectedNodeId={selectedNodeId}
+              setSelectedNodeId={setSelectedNodeId}
               node={child}
               depth={depth + 1}
               totalTime={totalTime}
               treeStart={treeStart}
-              key={`${child.name}-${child.id ?? ''}-${child.endTime?.toISOString() ?? ''}`}
+              key={child.nodeId}
             />
           ))
         : null}

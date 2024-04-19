@@ -3,8 +3,6 @@
  *
  * Defines different typescript types related to Color.
  */
-
-// TODO AB#6180: Implement Stricter Type for Color
 export type Color = string;
 type ColorDictionary = { [k: Color]: Color };
 //  Data Vizualization Color Scale
