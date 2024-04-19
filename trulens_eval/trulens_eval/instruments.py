@@ -19,21 +19,17 @@ import os
 from pprint import pformat
 import threading as th
 import traceback
-from typing import (
-    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
-    Type, Union
-)
+from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
+                    Sequence, Set, Tuple, Type, Union)
 import weakref
 
 import pydantic
 
-from trulens_eval.feedback import Feedback
-from trulens_eval.feedback.provider.endpoint import Endpoint
+from trulens_eval.feedback import feedback as mod_feedback
+from trulens_eval.feedback.provider import endpoint as mod_endpoint
 from trulens_eval.schema import Cost
 from trulens_eval.schema import Perf
-from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
-from trulens_eval.schema import RecordAppCallMethod
+from trulens_eval.schema import record as mod_record
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.imports import Dummy
@@ -135,7 +131,7 @@ class WithInstrumentCallbacks:
         error: Any,
         perf: Perf,
         cost: Cost,
-        existing_record: Optional[Record] = None
+        existing_record: Optional[mod_record.Record] = None
     ):
         """
         Called by instrumented methods if they are root calls (first instrumned
@@ -232,10 +228,10 @@ class Instrument(object):
         MODULES = {"trulens_eval."}
         """Modules (by full name prefix) to instrument."""
 
-        CLASSES = set([Feedback])
+        CLASSES = set([mod_feedback.Feedback])
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": Feedback}
+        METHODS: Dict[str, ClassFilter] = {"__call__": mod_feedback.Feedback}
         """Methods to instrument.
         
         Methods matching name have to pass the filter to be instrumented.
@@ -485,7 +481,7 @@ class Instrument(object):
                 else:
                     stack = ctx_stacks[ctx]
 
-                frame_ident = RecordAppCallMethod(
+                frame_ident = mod_record.RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
 
@@ -505,7 +501,7 @@ class Instrument(object):
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                rets, cost = Endpoint.track_all_costs_tally(
+                rets, cost = mod_endpoint.Endpoint.track_all_costs_tally(
                     func, *args, **kwargs
                 )
 
@@ -550,7 +546,7 @@ class Instrument(object):
 
                     # Note that only the stack differs between each of the records in this loop.
                     record_app_args['stack'] = stack
-                    call = RecordAppCall(**record_app_args)
+                    call = mod_record.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
                     # If stack has only 1 thing on it, we are looking at a "root

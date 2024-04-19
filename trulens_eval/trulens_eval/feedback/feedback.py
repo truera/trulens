@@ -9,9 +9,8 @@ import json
 import logging
 from pprint import pformat
 import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple,
+                    TypeVar, Union)
 import warnings
 
 import munch
@@ -24,17 +23,11 @@ from rich.pretty import pretty_repr
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.schema import AppDefinition
+from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackCall
-from trulens_eval.schema import FeedbackCombinations
-from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import FeedbackOnMissingParameters
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import FeedbackResultID
-from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import Record
-from trulens_eval.schema import Select
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import callable_name
@@ -150,7 +143,7 @@ def rag_triad(
     return ret
 
 
-class Feedback(FeedbackDefinition):
+class Feedback():
     """Feedback function container. 
     
     Typical usage is to specify a feedback implementation function from a
@@ -174,7 +167,7 @@ class Feedback(FeedbackDefinition):
     """Implementation callable.
     
     A serialized version is stored at
-    [FeedbackDefinition.implementation][trulens_eval.schema.FeedbackDefinition.implementation].
+    [FeedbackDefinition.implementation][trulens_eval.schema.feedback.FeedbackDefinition.implementation].
     """
 
     agg: Optional[AggCallable] = pydantic.Field(None, exclude=True)
@@ -182,7 +175,7 @@ class Feedback(FeedbackDefinition):
     result.
     
     A serialized version is stored at
-    [FeedbackDefinition.aggregator][trulens_eval.schema.FeedbackDefinition.aggregator].
+    [FeedbackDefinition.aggregator][trulens_eval.schema.feedback.FeedbackDefinition.aggregator].
     """
 
     def __init__(
@@ -290,12 +283,12 @@ class Feedback(FeedbackDefinition):
         return ret
 
     def _print_guessed_selector(self, par_name, par_path):
-        if par_path == Select.RecordCalls:
-            alias_info = f" or `Select.RecordCalls`"
-        elif par_path == Select.RecordInput:
-            alias_info = f" or `Select.RecordInput`"
-        elif par_path == Select.RecordOutput:
-            alias_info = f" or `Select.RecordOutput`"
+        if par_path == mod_feedback_schema.Select.RecordCalls:
+            alias_info = " or `Select.RecordCalls`"
+        elif par_path == mod_feedback_schema.Select.RecordInput:
+            alias_info = " or `Select.RecordInput`"
+        elif par_path == mod_feedback_schema.Select.RecordOutput:
+            alias_info = " or `Select.RecordOutput`"
         else:
             alias_info = ""
 
@@ -318,8 +311,8 @@ class Feedback(FeedbackDefinition):
 
         if len(par_names) == 1:
             # A single argument remaining. Assume it is record output.
-            selectors = {par_names[0]: Select.RecordOutput}
-            self._print_guessed_selector(par_names[0], Select.RecordOutput)
+            selectors = {par_names[0]: mod_feedback_schema.Select.RecordOutput}
+            self._print_guessed_selector(par_names[0], mod_feedback_schema.Select.RecordOutput)
 
             # TODO: replace with on_output ?
 
@@ -327,11 +320,11 @@ class Feedback(FeedbackDefinition):
             # Two arguments remaining. Assume they are record input and output
             # respectively.
             selectors = {
-                par_names[0]: Select.RecordInput,
-                par_names[1]: Select.RecordOutput
+                par_names[0]: mod_feedback_schema.Select.RecordInput,
+                par_names[1]: mod_feedback_schema.Select.RecordOutput
             }
-            self._print_guessed_selector(par_names[0], Select.RecordInput)
-            self._print_guessed_selector(par_names[1], Select.RecordOutput)
+            self._print_guessed_selector(par_names[0], mod_feedback_schema.Select.RecordInput)
+            self._print_guessed_selector(par_names[1], mod_feedback_schema.Select.RecordOutput)
 
             # TODO: replace on_input_output ?
         else:
@@ -349,12 +342,12 @@ class Feedback(FeedbackDefinition):
         tru: Tru,
         limit: Optional[int] = None,
         shuffle: bool = False
-    ) -> List[Tuple[pandas.Series, Future[FeedbackResult]]]:
+    ) -> List[Tuple[pandas.Series, Future[mod_feedback_schema.FeedbackResult]]]:
         """Evaluates feedback functions that were specified to be deferred.
         
         Returns a list of tuples with the DB row containing the Feedback and
-        initial FeedbackResult as well as the Future which will contain the
-        actual result.
+        initial [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] as
+        well as the Future which will contain the actual result.
         
         Args:
             limit: The maximum number of evals to start.
@@ -372,9 +365,9 @@ class Feedback(FeedbackDefinition):
 
         db = tru.db
 
-        def prepare_feedback(row) -> Optional[FeedbackResultStatus]:
+        def prepare_feedback(row) -> Optional[mod_feedback_schema.FeedbackResultStatus]:
             record_json = row.record_json
-            record = Record.model_validate(record_json)
+            record = mod_record_schema.Record.model_validate(record_json)
 
             app_json = row.app_json
 
@@ -397,8 +390,8 @@ class Feedback(FeedbackDefinition):
         # Get the different status feedbacks except those marked DONE.
         feedbacks_not_done = db.get_feedback(
             status=[
-                FeedbackResultStatus.NONE, FeedbackResultStatus.FAILED,
-                FeedbackResultStatus.RUNNING
+                mod_feedback_schema.FeedbackResultStatus.NONE, mod_feedback_schema.FeedbackResultStatus.FAILED,
+                mod_feedback_schema.FeedbackResultStatus.RUNNING
             ],
             limit=limit,
             shuffle=shuffle,
@@ -406,7 +399,7 @@ class Feedback(FeedbackDefinition):
 
         tp = TP()
 
-        futures: List[Tuple[pandas.Series, Future[FeedbackResult]]] = []
+        futures: List[Tuple[pandas.Series, Future[mod_feedback_schema.FeedbackResult]]] = []
 
         for _, row in feedbacks_not_done.iterrows():
             now = datetime.now().timestamp()
@@ -418,10 +411,10 @@ class Feedback(FeedbackDefinition):
             #    f"{row.fname} for app {row.app_json['app_id']}"
             # )
 
-            if row.status == FeedbackResultStatus.NONE:
+            if row.status == mod_feedback_schema.FeedbackResultStatus.NONE:
                 futures.append((row, tp.submit(prepare_feedback, row)))
 
-            elif row.status == FeedbackResultStatus.RUNNING:
+            elif row.status == mod_feedback_schema.FeedbackResultStatus.RUNNING:
 
                 if elapsed > tru.RETRY_RUNNING_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
@@ -429,7 +422,7 @@ class Feedback(FeedbackDefinition):
                 else:
                     pass
 
-            elif row.status == FeedbackResultStatus.FAILED:
+            elif row.status == mod_feedback_schema.FeedbackResultStatus.FAILED:
 
                 if elapsed > tru.RETRY_FAILED_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
@@ -446,7 +439,7 @@ class Feedback(FeedbackDefinition):
     def aggregate(
         self,
         func: Optional[AggCallable] = None,
-        combinations: Optional[FeedbackCombinations] = None
+        combinations: Optional[mod_feedback_schema.FeedbackCombinations] = None
     ) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
@@ -471,7 +464,7 @@ class Feedback(FeedbackDefinition):
         return Feedback.model_copy(self, update=updates)
 
     @staticmethod
-    def of_feedback_definition(f: FeedbackDefinition):
+    def of_feedback_definition(f: mod_feedback_schema.FeedbackDefinition):
         implementation = f.implementation
         aggregator = f.aggregator
         supplied_name = f.supplied_name
@@ -521,9 +514,9 @@ class Feedback(FeedbackDefinition):
 
         if arg is None:
             arg = self._next_unselected_arg_name()
-            self._print_guessed_selector(arg, Select.RecordInput)
+            self._print_guessed_selector(arg, mod_feedback_schema.Select.RecordInput)
 
-        new_selectors[arg] = Select.RecordInput
+        new_selectors[arg] = mod_feedback_schema.Select.RecordInput
 
         ret = self.model_copy()
 
@@ -544,9 +537,9 @@ class Feedback(FeedbackDefinition):
 
         if arg is None:
             arg = self._next_unselected_arg_name()
-            self._print_guessed_selector(arg, Select.RecordOutput)
+            self._print_guessed_selector(arg, mod_feedback_schema.Select.RecordOutput)
 
-        new_selectors[arg] = Select.RecordOutput
+        new_selectors[arg] = mod_feedback_schema.Select.RecordOutput
 
         ret = self.model_copy()
 
@@ -605,8 +598,8 @@ class Feedback(FeedbackDefinition):
 
     def check_selectors(
         self,
-        app: Union[AppDefinition, JSON],
-        record: Record,
+        app: Union[mod_app_schema.AppDefinition, JSON],
+        record: mod_record_schema.Record,
         source_data: Optional[Dict[str, Any]] = None,
         warning: bool = False
     ) -> bool:
@@ -652,7 +645,7 @@ class Feedback(FeedbackDefinition):
                 redact_keys=True
             )
 
-        elif isinstance(app, AppDefinition):
+        elif isinstance(app, mod_app_schema.AppDefinition):
             app = jsonify(app, skip_specials=True, redact_keys=True)
 
         source_data = self._construct_source_data(
@@ -679,7 +672,7 @@ record:
 ```python
 {q}
 # or equivalently
-{Select.render_for_dashboard(q)}
+{mod_feedback_schema.Select.render_for_dashboard(q)}
 ```
 
 The data used to make this check may be incomplete. If you expect records
@@ -752,11 +745,11 @@ Feedback function signature:
 
     def run(
         self,
-        app: Optional[Union[AppDefinition, JSON]] = None,
-        record: Optional[Record] = None,
+        app: Optional[Union[mod_app_schema.AppDefinition, JSON]] = None,
+        record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
         **kwargs: Dict[str, Any]
-    ) -> FeedbackResult:
+    ) -> mod_feedback_schema.FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
         produced the record is also required to determine input/output argument
@@ -778,7 +771,7 @@ Feedback function signature:
             A FeedbackResult object with the result of the feedback function.
         """
 
-        if isinstance(app, AppDefinition):
+        if isinstance(app, mod_app_schema.AppDefinition):
             app_json = jsonify(app)
         else:
             app_json = app
@@ -787,7 +780,7 @@ Feedback function signature:
 
         feedback_calls = []
 
-        feedback_result = FeedbackResult(
+        feedback_result = mod_feedback_schema.FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
             record_id=record.record_id if record is not None else "no record",
             name=self.supplied_name
@@ -804,7 +797,7 @@ Feedback function signature:
                     "Feedback %s skipped as %s does not exist.", self.name,
                     self.if_exists
                 )
-                feedback_result.status = FeedbackResultStatus.SKIPPED
+                feedback_result.status = mod_feedback_schema.FeedbackResultStatus.SKIPPED
                 return feedback_result
 
         # Separate try block for extracting inputs from records/apps in case a
@@ -823,23 +816,23 @@ Feedback function signature:
             # Handle the cases where a selector named something that does not
             # exist in source data.
 
-            if self.if_missing == FeedbackOnMissingParameters.ERROR:
-                feedback_result.status = FeedbackResultStatus.FAILED
+            if self.if_missing == mod_feedback_schema.FeedbackOnMissingParameters.ERROR:
+                feedback_result.status = mod_feedback_schema.FeedbackResultStatus.FAILED
                 raise e
 
-            if self.if_missing == FeedbackOnMissingParameters.WARN:
-                feedback_result.status = FeedbackResultStatus.SKIPPED
+            if self.if_missing == mod_feedback_schema.FeedbackOnMissingParameters.WARN:
+                feedback_result.status = mod_feedback_schema.FeedbackResultStatus.SKIPPED
                 logger.warning(
                     "Feedback %s cannot run as %s does not exist in record or app.",
                     self.name, e.selector
                 )
                 return feedback_result
 
-            if self.if_missing == FeedbackOnMissingParameters.IGNORE:
-                feedback_result.status = FeedbackResultStatus.SKIPPED
+            if self.if_missing == mod_feedback_schema.FeedbackOnMissingParameters.IGNORE:
+                feedback_result.status = mod_feedback_schema.FeedbackResultStatus.SKIPPED
                 return feedback_result
 
-            feedback_result.status = FeedbackResultStatus.FAILED
+            feedback_result.status = mod_feedback_schema.FeedbackResultStatus.FAILED
             raise ValueError(
                 f"Unknown value for `if_missing` {self.if_missing}."
             ) from e
@@ -883,7 +876,7 @@ Feedback function signature:
                             f"Feedback function output with multivalue must be "
                             f"a dict with float values but encountered {type(val)}."
                         )
-                    feedback_call = FeedbackCall(
+                    feedback_call = mod_feedback_schema.FeedbackCall(
                         args=ins,
                         ret=np.mean(list(result_val.values())),
                         meta=meta
@@ -893,7 +886,7 @@ Feedback function signature:
                     assert isinstance(
                         result_val, float
                     ), f"Feedback function output must be a float or dict but was {type(result_val)}."
-                    feedback_call = FeedbackCall(
+                    feedback_call = mod_feedback_schema.FeedbackCall(
                         args=ins, ret=result_val, meta=meta
                     )
 
@@ -934,7 +927,7 @@ Feedback function signature:
 
             feedback_result.update(
                 result=result,
-                status=FeedbackResultStatus.DONE,
+                status=mod_feedback_schema.FeedbackResultStatus.DONE,
                 cost=cost,
                 calls=feedback_calls,
                 multi_result=json.dumps(multi_result)
@@ -949,17 +942,17 @@ Feedback function signature:
             ).decode('utf-8')
             logger.warning(f"Feedback Function exception caught: %s", exc_tb)
             feedback_result.update(
-                error=exc_tb, status=FeedbackResultStatus.FAILED
+                error=exc_tb, status=mod_feedback_schema.FeedbackResultStatus.FAILED
             )
             return feedback_result
 
     def run_and_log(
         self,
-        record: Record,
+        record: mod_record_schema.Record,
         tru: 'Tru',
-        app: Union[AppDefinition, JSON] = None,
-        feedback_result_id: Optional[FeedbackResultID] = None
-    ) -> Optional[FeedbackResult]:
+        app: Union[mod_app_schema.AppDefinition, JSON] = None,
+        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None
+    ) -> Optional[mod_feedback_schema.FeedbackResult]:
 
         record_id = record.record_id
         app_id = record.app_id
@@ -967,7 +960,7 @@ Feedback function signature:
         db = tru.db
 
         # Placeholder result to indicate a run.
-        feedback_result = FeedbackResult(
+        feedback_result = mod_feedback_schema.FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
             feedback_result_id=feedback_result_id,
             record_id=record_id,
@@ -981,7 +974,7 @@ Feedback function signature:
         try:
             db.insert_feedback(
                 feedback_result.update(
-                    status=FeedbackResultStatus.RUNNING  # in progress
+                    status=mod_feedback_schema.FeedbackResultStatus.RUNNING  # in progress
                 )
             )
 
@@ -996,7 +989,7 @@ Feedback function signature:
             ).decode('utf-8')
             db.insert_feedback(
                 feedback_result.update(
-                    error=exc_tb, status=FeedbackResultStatus.FAILED
+                    error=exc_tb, status=mod_feedback_schema.FeedbackResultStatus.FAILED
                 )
             )
             return
@@ -1026,7 +1019,7 @@ Feedback function signature:
     def _extract_selection(
         self,
         source_data: Dict,
-        combinations: FeedbackCombinations = FeedbackCombinations.PRODUCT,
+        combinations: mod_feedback_schema.FeedbackCombinations = mod_feedback_schema.FeedbackCombinations.PRODUCT,
         **kwargs: Dict[str, Any]
     ) -> Iterable[Dict[str, Any]]:
         """
@@ -1068,9 +1061,9 @@ Feedback function signature:
         keys = arg_vals.keys()
         vals = arg_vals.values()
 
-        if combinations == FeedbackCombinations.PRODUCT:
+        if combinations == mod_feedback_schema.FeedbackCombinations.PRODUCT:
             assignments = itertools.product(*vals)
-        elif combinations == FeedbackCombinations.ZIP:
+        elif combinations == mod_feedback_schema.FeedbackCombinations.ZIP:
             assignments = zip(*vals)
         else:
             raise ValueError(
@@ -1083,8 +1076,8 @@ Feedback function signature:
 
     def _construct_source_data(
         self,
-        app: Optional[Union[AppDefinition, JSON]] = None,
-        record: Optional[Record] = None,
+        app: Optional[Union[mod_app_schema.AppDefinition, JSON]] = None,
+        record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
         **kwargs: dict
     ) -> Dict:
@@ -1122,17 +1115,18 @@ Feedback function signature:
 
     def extract_selection(
         self,
-        app: Optional[Union[AppDefinition, JSON]] = None,
-        record: Optional[Record] = None,
+        app: Optional[Union[mod_app_schema.AppDefinition, JSON]] = None,
+        record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None
     ) -> Iterable[Dict[str, Any]]:
         """
         Given the `app` that produced the given `record`, extract from `record`
         the values that will be sent as arguments to the implementation as
         specified by `self.selectors`. Additional data to select from can be
-        provided in `source_data`. All args are optional. If a `Record` is
-        specified, its calls are laid out as app (see
-        `Record.layout_calls_as_app`).
+        provided in `source_data`. All args are optional. If a
+        [Record][trulens_eval.schema.record.Record] is specified, its calls are
+        laid out as app (see
+        [layout_calls_as_app][trulens_eval.schema.record.Record.layout_calls_as_app]).
         """
 
         return self._extract_selection(
