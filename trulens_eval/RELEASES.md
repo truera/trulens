@@ -1,3 +1,12 @@
+# Releases
+
+Releases are organized in `<major>.<minor>.<patch>` style. A release is made
+about every week around tuesday-thursday. Releases increment the `minor` version
+number. Occasionally bug-fix releases occur after a weekly release. Those
+increment only the `patch` number. No releases have yet made a `major` version
+increment. Those are expected to be major releases that introduce large number
+of breaking changes.
+
 # 0.28.0
 
 ## What's Changed
