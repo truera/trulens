@@ -1,3 +1,3 @@
 # Slices
 
-::: trulens_explain.trulens.nn.slices
+::: trulens.nn.slices
