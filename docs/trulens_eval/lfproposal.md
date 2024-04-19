@@ -36,11 +36,12 @@ https://github.com/truera/trulens
 
 **Issue tracker (GitHub, JIRA, etc)**
 
-We use the github issues for checking issues and feature requests([link](https://github.com/truera/trulens/issues)).
+We use the github issues for checking issues and feature
+requests([link](https://github.com/truera/trulens/issues)).
 
 **Collaboration tools (mailing lists, wiki, IRC, Slack, Glitter, etc.)**
 
-slack
+Slack: `aiqualityforum.slack.com` channel `#trulens-dev`
 
 **External dependencies including licenses (name and version) of those dependencies**
 
@@ -59,7 +60,7 @@ Shayak Sen, Truera,, 1.5 years
 
 **Have the project defined the roles of contributor, committer, maintainer, etc**
 
-We don’t have this doc yet, but will add the MAINTAINERS.md in the future.
+We don’t have this doc yet, but will add `MAINTAINERS.md` in the future.
 
 **Total number of contributors to the project including their affiliations**
 
@@ -67,11 +68,11 @@ trulens: https://github.com/truera/trulens/graphs/contributors (40)
 
 **Does the project have a release methodology**
 
-Python package on PyPi (Release approximately every week)
+Python package on PyPi (Release approximately every week).
 
 Docs on https://www.trulens.org/trulens_eval/getting_started/
 
-We will document the release cadence in RELEASES.md in the future.
+Release cadence is described in `RELEASES.md`.
 
 **Does the project have a code of conduct**
 
