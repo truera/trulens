@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "prettier": "prettier --config .prettierrc . --write",
     "preview": "vite preview"
   },
@@ -34,7 +34,8 @@
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-import": "^2.27.5",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jest": "^27.2.1",
     "eslint-plugin-prettier": "^5.0.0-alpha.2",
     "eslint-plugin-react": "^7.32.1",

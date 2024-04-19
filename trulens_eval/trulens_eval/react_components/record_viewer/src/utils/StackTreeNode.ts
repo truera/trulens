@@ -1,5 +1,5 @@
-import { CallJSONRaw, PerfJSONRaw, StackJSONRaw } from './types';
-import { getMethodNameFromCell, getPathName } from './utils';
+import { CallJSONRaw, PerfJSONRaw, StackJSONRaw } from '@/utils/types';
+import { getMethodNameFromCell, getPathName } from '@/utils/utils';
 
 export const ROOT_NODE_ID = 'root-root-root';
 

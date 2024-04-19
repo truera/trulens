@@ -1,7 +1,7 @@
-import { StackTreeNode } from '../../utils/StackTreeNode';
-import { RecordJSONRaw } from '../../utils/types';
-import NodeDetails from './NodeDetails';
-import RootDetails from './RootDetails';
+import NodeDetails from '@/RecordTree/Details/NodeDetails';
+import RootDetails from '@/RecordTree/Details/RootDetails';
+import { StackTreeNode } from '@/utils/StackTreeNode';
+import { RecordJSONRaw } from '@/utils/types';
 
 type DetailsProps = {
   selectedNode: StackTreeNode;

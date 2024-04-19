@@ -1,13 +1,13 @@
 import { Grid, Stack, Typography } from '@mui/material';
 
-import JSONViewer from '../../JSONViewer/JSONViewer';
-import LabelAndValue from '../../LabelAndValue/LabelAndValue';
-import Panel from '../../Panel/Panel';
-import { StackTreeNode } from '../../utils/StackTreeNode';
-import { RecordJSONRaw } from '../../utils/types';
-import Section from './Section';
-import { summarySx } from './styles';
-import TracePanel from './TracePanel';
+import JSONViewer from '@/JSONViewer';
+import LabelAndValue from '@/LabelAndValue';
+import Panel from '@/Panel';
+import Section from '@/RecordTree/Details/Section';
+import { summarySx } from '@/RecordTree/Details/styles';
+import TracePanel from '@/RecordTree/Details/TracePanel';
+import { StackTreeNode } from '@/utils/StackTreeNode';
+import { RecordJSONRaw } from '@/utils/types';
 
 type DetailsProps = {
   selectedNode: StackTreeNode;

@@ -1,7 +1,7 @@
 import { AlertColor, Box, SxProps, Theme, Typography } from '@mui/material';
 import { PropsWithChildren, ReactNode } from 'react';
 
-import { combineSx } from '../utils/styling';
+import { combineSx } from '@/utils/styling';
 
 export interface TagProps {
   severity: AlertColor;

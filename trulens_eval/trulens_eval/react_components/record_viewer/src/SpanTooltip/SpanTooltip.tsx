@@ -1,8 +1,8 @@
 import { Box } from '@mui/material';
 import { ReactElement } from 'react';
 
-import StyledTooltip from '../StyledTooltip/StyledTooltip';
-import { StackTreeNode } from '../utils/StackTreeNode';
+import StyledTooltip from '@/StyledTooltip';
+import { StackTreeNode } from '@/utils/StackTreeNode';
 
 type SpanTooltipProps = {
   node: StackTreeNode;

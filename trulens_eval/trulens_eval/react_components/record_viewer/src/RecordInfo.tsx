@@ -1,13 +1,13 @@
 import { Box, Grid, gridClasses, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 
-import JSONViewer from './JSONViewer/JSONViewer';
-import RecordTable from './RecordTable/RecordTable';
-import Details from './RecordTree/Details/Details';
-import RecordTree from './RecordTree/RecordTree';
-import { Tab, Tabs } from './Tabs';
-import { StackTreeNode } from './utils/StackTreeNode';
-import { AppJSONRaw, RecordJSONRaw } from './utils/types';
+import JSONViewer from '@/JSONViewer/JSONViewer';
+import RecordTable from '@/RecordTable/RecordTable';
+import Details from '@/RecordTree/Details/Details';
+import RecordTree from '@/RecordTree/RecordTree';
+import { Tab, Tabs } from '@/Tabs';
+import { StackTreeNode } from '@/utils/StackTreeNode';
+import { AppJSONRaw, RecordJSONRaw } from '@/utils/types';
 
 /**
  * Constants and enums for the view

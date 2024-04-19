@@ -1,9 +1,9 @@
 import { ReactNode } from 'react';
 import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-component-lib';
 
-import RecordInfo from './RecordInfo';
-import { DataRaw } from './utils/types';
-import { createNodeMap, createTreeFromCalls } from './utils/utils';
+import RecordInfo from '@/RecordInfo';
+import { DataRaw } from '@/utils/types';
+import { createNodeMap, createTreeFromCalls } from '@/utils/utils';
 
 /**
  * This component serves as our entryway into streamlit. Keeping the logic here at a minimum,

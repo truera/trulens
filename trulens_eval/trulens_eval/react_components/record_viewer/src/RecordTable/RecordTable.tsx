@@ -1,7 +1,7 @@
 import { SxProps, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Theme } from '@mui/material';
 
-import { StackTreeNode } from '../utils/StackTreeNode';
-import RecordTableRowRecursive from './RecordTableRow';
+import RecordTableRowRecursive from '@/RecordTable/RecordTableRow';
+import { StackTreeNode } from '@/utils/StackTreeNode';
 
 type RecordTableProps = {
   root: StackTreeNode;

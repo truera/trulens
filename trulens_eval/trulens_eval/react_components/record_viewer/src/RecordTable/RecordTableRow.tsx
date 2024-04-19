@@ -3,8 +3,8 @@ import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Typography } from
 import { useEffect, useState } from 'react';
 import { Streamlit } from 'streamlit-component-lib';
 
-import { SpanTooltip } from '../SpanTooltip';
-import { StackTreeNode } from '../utils/StackTreeNode';
+import { SpanTooltip } from '@/SpanTooltip';
+import { StackTreeNode } from '@/utils/StackTreeNode';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;

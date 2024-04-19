@@ -4,9 +4,9 @@ import { TreeItemContentProps, useTreeItemState } from '@mui/x-tree-view/TreeIte
 import clsx from 'clsx';
 import { forwardRef } from 'react';
 
-import { SpanTooltip } from '../SpanTooltip';
-import Tag from '../Tag/Tag';
-import { StackTreeNode } from '../utils/StackTreeNode';
+import { SpanTooltip } from '@/SpanTooltip';
+import Tag from '@/Tag';
+import { StackTreeNode } from '@/utils/StackTreeNode';
 
 type RecordTreeCellProps = TreeItemContentProps & {
   node: StackTreeNode;

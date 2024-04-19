@@ -3,7 +3,7 @@
 import { SxProps, tabClasses, Tabs as MUITabs, Theme } from '@mui/material';
 import React, { PropsWithChildren } from 'react';
 
-import { combineSx } from '../../utils/styling';
+import { combineSx } from '@/utils/styling';
 
 interface TabProps {
   value?: any;

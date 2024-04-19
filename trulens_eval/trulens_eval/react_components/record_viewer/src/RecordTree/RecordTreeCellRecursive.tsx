@@ -3,8 +3,8 @@ import { TreeItem, treeItemClasses } from '@mui/x-tree-view';
 import { useEffect } from 'react';
 import { Streamlit } from 'streamlit-component-lib';
 
-import { StackTreeNode } from '../utils/StackTreeNode';
-import { RecordTreeCell } from './RecordTreeCell';
+import { RecordTreeCell } from '@/RecordTree/RecordTreeCell';
+import { StackTreeNode } from '@/utils/StackTreeNode';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;

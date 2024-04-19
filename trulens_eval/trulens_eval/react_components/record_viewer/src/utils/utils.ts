@@ -1,5 +1,5 @@
-import { StackTreeNode } from './StackTreeNode';
-import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw } from './types';
+import { StackTreeNode } from '@/utils/StackTreeNode';
+import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw } from '@/utils/types';
 
 /**
  * Gets the name of the calling class in the stack cell.
