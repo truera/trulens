@@ -7,9 +7,9 @@ increment only the `patch` number. No releases have yet made a `major` version
 increment. Those are expected to be major releases that introduce large number
 of breaking changes.
 
-# 0.28.0
+## 0.28.0
 
-## What's Changed
+### What's Changed
 * Meta-eval / feedback functions benchmarking notebooks, ranking-based eval
   utils, and docs update by @daniel-huang-1230 in
   https://github.com/truera/trulens/pull/991
@@ -22,7 +22,7 @@ of breaking changes.
 * Add example systemd service file by @piotrm0 in
   https://github.com/truera/trulens/pull/1072
 
-## Bug fixes
+### Bug fixes
 * Queue fixed for python version lower than 3.9 by @arn-tru in
   https://github.com/truera/trulens/pull/1066
 * Fix test-tru by @piotrm0 in https://github.com/truera/trulens/pull/1070
@@ -33,7 +33,7 @@ of breaking changes.
 * Release test fixes by @piotrm0 in https://github.com/truera/trulens/pull/1078
 * Docs fixes by @piotrm0 in https://github.com/truera/trulens/pull/1075
 
-## Examples
+### Examples
 * MongoDB Atlas quickstart by @joshreini1 in
   https://github.com/truera/trulens/pull/1056
 * OpenAI Assistants API (quickstart) by @joshreini1 in
