@@ -138,7 +138,7 @@ def rag_triad(
     return ret
 
 
-class Feedback():
+class Feedback(mod_feedback_schema.FeedbackDefinition):
     """Feedback function container. 
     
     Typical usage is to specify a feedback implementation function from a

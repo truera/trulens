@@ -14,13 +14,13 @@ from pydantic import Field
 
 from trulens_eval.app import App
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.schema import Perf
-from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
-from trulens_eval.schema import RecordAppCallMethod
-from trulens_eval.schema import Select
+from trulens_eval.schema.app import FeedbackMode
+from trulens_eval.schema.base import Cost
+from trulens_eval.schema.base import Perf
+from trulens_eval.schema.feedback import Select
+from trulens_eval.schema.record import Record
+from trulens_eval.schema.record import RecordAppCall
+from trulens_eval.schema.record import RecordAppCallMethod
 from trulens_eval.utils import serial
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod

@@ -10,12 +10,12 @@ import pydantic
 from tqdm import tqdm
 
 from trulens_eval.feedback.feedback import Feedback
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackCall
-from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import Perf
-from trulens_eval.schema import Record
+from trulens_eval.schema.app import AppDefinition
+from trulens_eval.schema.base import Cost
+from trulens_eval.schema.base import Perf
+from trulens_eval.schema.feedback import FeedbackCall
+from trulens_eval.schema.feedback import FeedbackDefinition
+from trulens_eval.schema.record import Record
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import FunctionOrMethod

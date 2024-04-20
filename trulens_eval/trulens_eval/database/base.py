@@ -1,7 +1,6 @@
 import abc
 from datetime import datetime
 import logging
-from pprint import PrettyPrinter
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
@@ -10,15 +9,15 @@ import pandas as pd
 from trulens_eval import __version__
 from trulens_eval.app import App
 from trulens_eval.database.legacy import migration
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import AppID
-from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import FeedbackDefinitionID
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import FeedbackResultID
-from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import Record
-from trulens_eval.schema import RecordID
+from trulens_eval.schema.app import AppDefinition
+from trulens_eval.schema.feedback import FeedbackDefinition
+from trulens_eval.schema.feedback import FeedbackResult
+from trulens_eval.schema.feedback import FeedbackResultStatus
+from trulens_eval.schema.record import Record
+from trulens_eval.schema.types import AppID
+from trulens_eval.schema.types import FeedbackDefinitionID
+from trulens_eval.schema.types import FeedbackResultID
+from trulens_eval.schema.types import RecordID
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONized

@@ -431,7 +431,7 @@ class RecordingContext():
         return record
 
 
-class App(mod_app_schema.AppDefinition, WithInstrumentCallbacks, Hashable):
+class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks, Hashable):
     """Base app recorder type.
 
     Non-serialized fields here while the serialized ones are defined in
@@ -552,7 +552,7 @@ class App(mod_app_schema.AppDefinition, WithInstrumentCallbacks, Hashable):
 
         if self.instrument is not None:
             self.instrument.instrument_object(
-                obj=self.app, query=Select.Query().app
+                obj=self.app, query=mod_feedback_schema.Select.Query().app
             )
         else:
             pass

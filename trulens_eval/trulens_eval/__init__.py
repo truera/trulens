@@ -93,45 +93,46 @@ from trulens_eval.utils.imports import check_imports
 
 check_imports()
 
+from trulens_eval import tru as mod_tru
+from trulens_eval import tru_basic_app as mod_tru_basic_app
+from trulens_eval import tru_chain as mod_tru_chain
+from trulens_eval import tru_custom_app as mod_tru_custom_app
+from trulens_eval import tru_virtual as mod_tru_virtual
 from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import base as mod_provider
 from trulens_eval.feedback.provider import hugs as mod_hugs_provider
 from trulens_eval.feedback.provider import langchain as mod_langchain_provider
 from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
-from trulens_eval.tru import Tru
-from trulens_eval.tru_basic_app import TruBasicApp
-from trulens_eval.tru_chain import TruChain
-from trulens_eval.tru_custom_app import TruCustomApp
-from trulens_eval.tru_virtual import TruVirtual
-from trulens_eval.utils.imports import OptionalImports
-from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
-from trulens_eval.utils.imports import REQUIREMENT_LITELLM
-from trulens_eval.utils.imports import REQUIREMENT_LLAMA
-from trulens_eval.utils.imports import REQUIREMENT_OPENAI
-from trulens_eval.utils.imports import REQUIREMENT_RAILS
-from trulens_eval.utils.threading import TP
+from trulens_eval.utils import imports as mod_imports_utils
+from trulens_eval.utils import threading as mod_threading_utils
 
 # Optional provider types.
 
-with OptionalImports(messages=REQUIREMENT_LITELLM):
+with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_LITELLM):
     from trulens_eval.feedback.provider.litellm import LiteLLM
 
-with OptionalImports(messages=REQUIREMENT_BEDROCK):
+with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_BEDROCK):
     from trulens_eval.feedback.provider.bedrock import Bedrock
 
-with OptionalImports(messages=REQUIREMENT_OPENAI):
+with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import AzureOpenAI
     from trulens_eval.feedback.provider.openai import OpenAI
 
 # Optional app types.
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
+with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_LLAMA):
     from trulens_eval.tru_llama import TruLlama
 
-with OptionalImports(messages=REQUIREMENT_RAILS):
+with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_RAILS):
     from trulens_eval.tru_rails import TruRails
 
+Tru = mod_tru.Tru
+TruBasicApp = mod_tru_basic_app.TruBasicApp
+TruChain = mod_tru_chain.TruChain
+TruCustomApp = mod_tru_custom_app.TruCustomApp
+TruVirtual = mod_tru_virtual.TruVirtual
+TP = mod_threading_utils.TP
 Feedback = mod_feedback.Feedback
 Provider = mod_provider.Provider
 Huggingface = mod_hugs_provider.Huggingface

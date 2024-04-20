@@ -11,12 +11,12 @@ from trulens_eval.database.base import DB
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.database.legacy.migration import VersionException
 from trulens_eval.database.migrations import DbRevisions
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackCall
-from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import Perf
-from trulens_eval.schema import Record
+from trulens_eval.schema.app import AppDefinition
+from trulens_eval.schema.base import Cost
+from trulens_eval.schema.base import Perf
+from trulens_eval.schema.record import Record
+from trulens_eval.schema.feedback import FeedbackCall
+from trulens_eval.schema.feedback import FeedbackDefinition
 from trulens_eval.utils.pyschema import FunctionOrMethod
 
 sql_alchemy_migration_versions: List[str] = ["1"]
@@ -69,7 +69,6 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
     import inspect
 
     #from trulens_eval.database import orm
-
     # Dynamically check the orm classes since these could change version to version
     for _, orm_obj in inspect.getmembers(db.orm):
 

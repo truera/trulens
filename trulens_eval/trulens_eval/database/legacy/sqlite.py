@@ -15,13 +15,17 @@ import pandas as pd
 import pydantic
 
 from trulens_eval import __version__
-from trulens_eval import schema
 from trulens_eval.database.base import DB
 from trulens_eval.database.base import for_all_methods
 from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.database.base import versioning_decorator
 from trulens_eval.database.legacy import migration
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -222,8 +226,8 @@ class LocalSQLite(DB):
     # DB requirement
     def insert_record(
         self,
-        record: schema.Record,
-    ) -> schema.RecordID:
+        record: mod_record_schema.Record,
+    ) -> mod_types_schema.RecordID:
         # NOTE: Oddness here in that the entire record is put into the
         # record_json column while some parts of that records are also put in
         # other columns. Might want to keep this so we can query on the columns
@@ -247,7 +251,7 @@ class LocalSQLite(DB):
         return record.record_id
 
     # DB requirement
-    def insert_app(self, app: schema.AppDefinition) -> schema.AppID:
+    def insert_app(self, app: mod_app_schema.AppDefinition) -> mod_types_schema.AppID:
         app_id = app.app_id
         app_str = app.model_dump_json()
 
@@ -259,8 +263,8 @@ class LocalSQLite(DB):
         return app_id
 
     def insert_feedback_definition(
-        self, feedback_definition: schema.FeedbackDefinition
-    ) -> schema.FeedbackDefinitionID:
+        self, feedback_definition: mod_feedback_schema.FeedbackDefinition
+    ) -> mod_types_schema.FeedbackDefinitionID:
         """
         Insert a feedback definition into the database.
         """
@@ -314,8 +318,8 @@ class LocalSQLite(DB):
         self._close(conn)
 
     def insert_feedback(
-        self, feedback_result: schema.FeedbackResult
-    ) -> schema.FeedbackResultID:
+        self, feedback_result: mod_feedback_schema.FeedbackResult
+    ) -> mod_types_schema.FeedbackResultID:
         """
         Insert a record-feedback link to db or update an existing one.
         """
@@ -338,7 +342,7 @@ class LocalSQLite(DB):
 
         self._insert_or_replace_vals(table=self.TABLE_FEEDBACKS, vals=vals)
 
-        if feedback_result.status == schema.FeedbackResultStatus.DONE:
+        if feedback_result.status == mod_feedback_schema.FeedbackResultStatus.DONE:
             print(
                 f"{UNICODE_CHECK} feedback {feedback_result.feedback_result_id} on {feedback_result.record_id} -> {self.filename}"
             )
@@ -349,10 +353,10 @@ class LocalSQLite(DB):
 
     def get_feedback(
         self,
-        record_id: Optional[schema.RecordID] = None,
-        feedback_result_id: Optional[schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[schema.FeedbackDefinitionID] = None,
-        status: Optional[schema.FeedbackResultStatus] = None,
+        record_id: Optional[mod_types_schema.RecordID] = None,
+        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
+        status: Optional[mod_feedback_schema.FeedbackResultStatus] = None,
         last_ts_before: Optional[datetime] = None
     ) -> pd.DataFrame:
 
@@ -435,7 +439,7 @@ class LocalSQLite(DB):
                 # Add a try-catch here as latency is a DB breaking change, but not a functionality breaking change.
                 # If it fails, we can still continue.
                 row.perf_json = json.loads(row.perf_json)  # perf_json (Perf)
-                row['latency'] = schema.Perf(**row.perf_json).latency
+                row['latency'] = mod_base_schema.Perf(**row.perf_json).latency
             except:
                 # If it comes here, it is because we have filled the DB with a migration tag that cannot be loaded into perf_json
                 # This is not migrateable because start/end times were not logged and latency is required, but adding a real latency
@@ -450,7 +454,7 @@ class LocalSQLite(DB):
             row.app_json = json.loads(row.app_json)  # app_json (App)
             app = schema.AppDefinition(**row.app_json)
 
-            row.status = schema.FeedbackResultStatus(row.status)
+            row.status = mod_feedback_schema.FeedbackResultStatus(row.status)
 
             row['total_tokens'] = row.cost_json['n_tokens']
             row['total_cost'] = row.cost_json['cost']
@@ -519,16 +523,16 @@ class LocalSQLite(DB):
         )
 
         apps = df_records['app_json'].apply(
-            schema.AppDefinition.model_validate_json
+            mod_app_schema.AppDefinition.model_validate_json
         )
         df_records['type'] = apps.apply(lambda row: str(row.root_class))
 
-        cost = df_records['cost_json'].map(schema.Cost.model_validate_json)
+        cost = df_records['cost_json'].map(mod_base_schema.Cost.model_validate_json)
         df_records['total_tokens'] = cost.map(lambda v: v.n_tokens)
         df_records['total_cost'] = cost.map(lambda v: v.cost)
 
         perf = df_records['perf_json'].apply(
-            lambda perf_json: schema.Perf.model_validate_json(perf_json)
+            lambda perf_json: mod_base_schema.Perf.model_validate_json(perf_json)
             if perf_json != MIGRATION_UNKNOWN_STR else MIGRATION_UNKNOWN_STR
         )
 
@@ -589,20 +593,20 @@ class LocalSQLite(DB):
 
     def get_feedback_count_by_status(
         self,
-        record_id: Optional[schema.RecordID] = None,
-        feedback_result_id: Optional[schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[schema.FeedbackDefinitionID] = None,
-        status: Optional[Union[schema.FeedbackResultStatus,
-                               Sequence[schema.FeedbackResultStatus]]] = None,
+        record_id: Optional[mod_types_schema.RecordID] = None,
+        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
+        status: Optional[Union[mod_feedback_schema.FeedbackResultStatus,
+                               Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: bool = False
-    ) -> Dict[schema.FeedbackResultStatus, int]:
+    ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
 
         raise NotImplementedError("This database implementation is deprecated.")
 
-    def delete_app(self, app_id: schema.AppID) -> None:
+    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
         raise NotImplementedError("This database implementation is deprecated.")
 
     def get_apps(self) -> Iterable[JSON]:
