@@ -17,8 +17,11 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 
-from trulens_eval import schema
 from trulens_eval.database.base import DEFAULT_DATABASE_PREFIX
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils.json import json_str_of_obj
 
 TYPE_JSON = Text
@@ -156,7 +159,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: schema.AppDefinition,
+                obj: mod_app_schema.AppDefinition,
                 redact_keys: bool = False
             ) -> ORM.AppDefinition:
                 return cls(
@@ -184,7 +187,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: schema.FeedbackDefinition,
+                obj: mod_feedback_schema.FeedbackDefinition,
                 redact_keys: bool = False
             ) -> ORM.FeedbackDefinition:
                 return cls(
@@ -223,7 +226,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: schema.Record,
+                obj: mod_record_schema.Record,
                 redact_keys: bool = False
             ) -> ORM.Record:
                 return cls(
@@ -292,7 +295,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: schema.FeedbackResult,
+                obj: mod_feedback_schema.FeedbackResult,
                 redact_keys: bool = False
             ) -> ORM.FeedbackResult:
                 return cls(

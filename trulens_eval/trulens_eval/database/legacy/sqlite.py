@@ -452,7 +452,7 @@ class LocalSQLite(DB):
                 row.record_json
             )  # record_json (Record)
             row.app_json = json.loads(row.app_json)  # app_json (App)
-            app = schema.AppDefinition(**row.app_json)
+            app = mod_app_schema.AppDefinition(**row.app_json)
 
             row.status = mod_feedback_schema.FeedbackResultStatus(row.status)
 

@@ -23,11 +23,14 @@ from tqdm.auto import tqdm
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
-from trulens_eval import schema
 from trulens_eval.database import sqlalchemy
 from trulens_eval.database.base import DB
 from trulens_eval.database.exceptions import DatabaseVersionException
 from trulens_eval.feedback import feedback
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import notebook_utils
 from trulens_eval.utils import python
 from trulens_eval.utils import serial
@@ -335,7 +338,7 @@ class Tru(python.SingletonPerName):
         self,
         record: Optional[schema.Record] = None,
         **kwargs: dict
-    ) -> schema.RecordID:
+    ) -> mod_types_schema.RecordID:
         """Add a record to the database.
 
         Args:
@@ -350,7 +353,7 @@ class Tru(python.SingletonPerName):
         """
 
         if record is None:
-            record = schema.Record(**kwargs)
+            record = mod_record_schema.Record(**kwargs)
         else:
             record.update(**kwargs)
 
@@ -362,12 +365,12 @@ class Tru(python.SingletonPerName):
     # organization.
     def _submit_feedback_functions(
         self,
-        record: schema.Record,
+        record: mod_record_schema.Record,
         feedback_functions: Sequence[feedback.Feedback],
-        app: Optional[schema.AppDefinition] = None,
-        on_done: Optional[Callable[[Union[schema.FeedbackResult, Future[schema.FeedbackResult]],
+        app: Optional[mod_app_schema.AppDefinition] = None,
+        on_done: Optional[Callable[[Union[mod_feedback_schema.FeedbackResult, Future[mod_feedback_schema.FeedbackResult]],
                                    None]]] = None
-    ) -> List[Tuple[feedback.Feedback, Future[schema.FeedbackResult]]]:
+    ) -> List[Tuple[feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]]:
         """Schedules to run the given feedback functions.
         
         Args:
@@ -393,7 +396,7 @@ class Tru(python.SingletonPerName):
         self.db: DB
 
         if app is None:
-            app = schema.AppDefinition.model_validate(
+            app = mod_app_schema.AppDefinition.model_validate(
                 self.db.get_app(app_id=app_id)
             )
             if app is None:
@@ -429,7 +432,7 @@ class Tru(python.SingletonPerName):
                 return temp
             
 
-            fut: Future[schema.FeedbackResult] = \
+            fut: Future[mod_feedback_schema.FeedbackResult] = \
                 tp.submit(run_and_call_callback, ffunc=ffunc, app=app, record=record)
 
             # Have to roll the on_done callback into the submitted function
@@ -445,12 +448,12 @@ class Tru(python.SingletonPerName):
 
     def run_feedback_functions(
         self,
-        record: schema.Record,
+        record: mod_record_schema.Record,
         feedback_functions: Sequence[feedback.Feedback],
-        app: Optional[schema.AppDefinition] = None,
+        app: Optional[mod_app_schema.AppDefinition] = None,
         wait: bool = True
-    ) -> Union[Iterable[schema.FeedbackResult],
-               Iterable[Future[schema.FeedbackResult]]]:
+    ) -> Union[Iterable[mod_feedback_schema.FeedbackResult],
+               Iterable[Future[mod_feedback_schema.FeedbackResult]]]:
         """Run a collection of feedback functions and report their result.
 
         Args:
@@ -474,7 +477,7 @@ class Tru(python.SingletonPerName):
                 is disabled.
         """
 
-        if not isinstance(record, schema.Record):
+        if not isinstance(record, mod_record_schema.Record):
             raise ValueError("record must be a schema.Record.")
 
         if not isinstance(feedback_functions, Sequence):
@@ -486,13 +489,13 @@ class Tru(python.SingletonPerName):
                 "feedback_functions must be a sequence of feedback.Feedback."
             )
 
-        if not (app is None or isinstance(app, schema.AppDefinition)):
+        if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
             raise ValueError("app must be a trulens_eval.schema.AppDefinition.")
 
         if not isinstance(wait, bool):
             raise ValueError("wait must be a bool.")
 
-        future_feedback_map: Dict[Future[schema.FeedbackResult],
+        future_feedback_map: Dict[Future[mod_feedback_schema.FeedbackResult],
                                   feedback.Feedback] = {
                                       p[1]: p[0]
                                       for p in self._submit_feedback_functions(
@@ -521,7 +524,7 @@ class Tru(python.SingletonPerName):
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(self, app: schema.AppDefinition) -> schema.AppID:
+    def add_app(self, app: mod_app_schema.AppDefinition) -> mod_types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -535,7 +538,7 @@ class Tru(python.SingletonPerName):
 
         return self.db.insert_app(app=app)
     
-    def delete_app(self, app_id: schema.AppID) -> None:
+    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
 
@@ -547,11 +550,11 @@ class Tru(python.SingletonPerName):
 
     def add_feedback(
         self,
-        feedback_result_or_future: Optional[Union[schema.FeedbackResult,
-                                                  Future[schema.FeedbackResult]]
+        feedback_result_or_future: Optional[Union[mod_feedback_schema.FeedbackResult,
+                                                  Future[mod_feedback_schema.FeedbackResult]]
                                            ] = None,
         **kwargs: dict
-    ) -> schema.FeedbackResultID:
+    ) -> mod_types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
         
         Args:
@@ -575,17 +578,17 @@ class Tru(python.SingletonPerName):
         if feedback_result_or_future is None:
             if 'result' in kwargs and 'status' not in kwargs:
                 # If result already present, set status to done.
-                kwargs['status'] = schema.FeedbackResultStatus.DONE
+                kwargs['status'] = mod_feedback_schema.FeedbackResultStatus.DONE
 
-            feedback_result_or_future = schema.FeedbackResult(**kwargs)
+            feedback_result_or_future = mod_feedback_schema.FeedbackResult(**kwargs)
 
         else:
             if isinstance(feedback_result_or_future, Future):
                 futures.wait([feedback_result_or_future])
-                feedback_result_or_future: feedback.FeedbackResult = feedback_result_or_future.result(
+                feedback_result_or_future: mod_feedback_schema.FeedbackResult = feedback_result_or_future.result(
                 )
 
-            elif isinstance(feedback_result_or_future, schema.FeedbackResult):
+            elif isinstance(feedback_result_or_future, mod_feedback_schema.FeedbackResult):
                 pass
             else:
                 raise ValueError(
@@ -599,8 +602,8 @@ class Tru(python.SingletonPerName):
         )
 
     def add_feedbacks(
-        self, feedback_results: Iterable[Union[schema.FeedbackResult,
-                                               Future[schema.FeedbackResult]]]
+        self, feedback_results: Iterable[Union[mod_feedback_schema.FeedbackResult,
+                                               Future[mod_feedback_schema.FeedbackResult]]]
     ) -> List[schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
         
@@ -625,16 +628,16 @@ class Tru(python.SingletonPerName):
         return ids
 
     def get_app(self,
-                app_id: schema.AppID) -> serial.JSONized[schema.AppDefinition]:
+                app_id: mod_types_schema.AppID) -> serial.JSONized[mod_app_schema.AppDefinition]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens_eval.schema.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
         
         Example:
             ```python
-            from trulens_eval import schema
+            from trulens_eval.schema import app
             app_json = tru.get_app(app_id="Custom Application v1")
-            app = schema.AppDefinition.model_validate(app_json)
+            app = app.AppDefinition.model_validate(app_json)
             ```
 
         Warning:
@@ -650,7 +653,7 @@ class Tru(python.SingletonPerName):
 
         return self.db.get_app(app_id)
 
-    def get_apps(self) -> List[serial.JSONized[schema.AppDefinition]]:
+    def get_apps(self) -> List[serial.JSONized[mod_app_schema.AppDefinition]]:
         """Look up all apps from the database.
         
         Returns:
@@ -664,7 +667,7 @@ class Tru(python.SingletonPerName):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[schema.AppID]] = None
+        app_ids: Optional[List[mod_types_schema.AppID]] = None
     ) -> Tuple[pandas.DataFrame, List[str]]:
         """Get records, their feeback results, and feedback names.
         
@@ -686,7 +689,7 @@ class Tru(python.SingletonPerName):
         return df, feedback_columns
 
     def get_leaderboard(
-        self, app_ids: Optional[List[schema.AppID]] = None
+        self, app_ids: Optional[List[mod_types_schema.AppID]] = None
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
@@ -777,7 +780,7 @@ class Tru(python.SingletonPerName):
             # progress bar initial values so that they offer accurate
             # predictions initially after restarting the process.
             queue_stats = self.db.get_feedback_count_by_status()
-            queue_done = queue_stats.get(schema.FeedbackResultStatus.DONE) or 0
+            queue_done = queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE) or 0
             queue_total = sum(queue_stats.values())
 
             # Show the overall counts from the database, not just what has been
@@ -800,14 +803,14 @@ class Tru(python.SingletonPerName):
 
             runs_stats = defaultdict(int)
 
-            futures_map: Dict[Future[schema.FeedbackResult],
+            futures_map: Dict[Future[mod_feedback_schema.FeedbackResult],
                               pandas.Series] = dict()
 
             while fork or not self._evaluator_stop.is_set():
 
                 if len(futures_map) < self.DEFERRED_NUM_RUNS:
                     # Get some new evals to run if some already completed by now.
-                    new_futures: List[Tuple[pandas.Series, Future[schema.FeedbackResult]]] = \
+                    new_futures: List[Tuple[pandas.Series, Future[mod_feedback_schema.FeedbackResult]]] = \
                         feedback.Feedback.evaluate_deferred(
                             tru=self,
                             limit=self.DEFERRED_NUM_RUNS-len(futures_map),
@@ -866,7 +869,7 @@ class Tru(python.SingletonPerName):
 
                 queue_stats = self.db.get_feedback_count_by_status()
                 queue_done = queue_stats.get(
-                    schema.FeedbackResultStatus.DONE
+                    mod_feedback_schema.FeedbackResultStatus.DONE
                 ) or 0
                 queue_total = sum(queue_stats.values())
 
