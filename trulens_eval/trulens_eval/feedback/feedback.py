@@ -21,24 +21,19 @@ from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 
-from trulens_eval.feedback.provider.base import LLMProvider
-from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.feedback.provider import base as mod_base_provider
+from trulens_eval.feedback.provider.endpoint import base as mod_base_endpoint
 from trulens_eval.schema import app as mod_app_schema
-from trulens_eval.schema import Cost
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.schema import types as mod_types_schema
-from trulens_eval.utils.json import jsonify
-from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.python import callable_name
-from trulens_eval.utils.python import class_name
-from trulens_eval.utils.python import Future
-from trulens_eval.utils.serial import GetItemOrAttribute
-from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import Lens
-from trulens_eval.utils.text import retab
-from trulens_eval.utils.text import UNICODE_CHECK
-from trulens_eval.utils.threading import TP
+from trulens_eval.utils import json as mod_json_utils
+from trulens_eval.utils import pyschema as mod_pyschema
+from trulens_eval.utils import python as mod_python_utils
+from trulens_eval.utils import serial as mod_serial_utils
+from trulens_eval.utils import text as mod_text_utils
+from trulens_eval.utils import threading as mod_threading_utils
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
@@ -63,7 +58,7 @@ class InvalidSelector(Exception):
     """Raised when a selector names something that is missing in a record/app."""
 
     def __init__(
-        self, selector: Lens, source_data: Optional[Dict[str, Any]] = None
+        self, selector: mod_serial_utils.Lens, source_data: Optional[Dict[str, Any]] = None
     ):
         self.selector = selector
         self.source_data = source_data
@@ -76,10 +71,10 @@ class InvalidSelector(Exception):
 
 
 def rag_triad(
-    provider: LLMProvider,
-    question: Optional[Lens] = None,
-    answer: Optional[Lens] = None,
-    context: Optional[Lens] = None
+    provider: mod_base_provider.LLMProvider,
+    question: Optional[mod_serial_utils.Lens] = None,
+    answer: Optional[mod_serial_utils.Lens] = None,
+    context: Optional[mod_serial_utils.Lens] = None
 ) -> Dict[str, Feedback]:
     """Create a triad of feedback functions for evaluating context retrieval
     generation steps.
@@ -192,7 +187,7 @@ class Feedback():
             # These are for serialization to/from json and for db storage.
             if 'implementation' not in kwargs:
                 try:
-                    kwargs['implementation'] = FunctionOrMethod.of_callable(
+                    kwargs['implementation'] = mod_pyschema.FunctionOrMethod.of_callable(
                         imp, loadable=True
                     )
 
@@ -203,13 +198,13 @@ class Feedback():
                         imp, e
                     )
 
-                    kwargs['implementation'] = FunctionOrMethod.of_callable(
+                    kwargs['implementation'] = mod_pyschema.FunctionOrMethod.of_callable(
                         imp, loadable=False
                     )
 
         else:
             if "implementation" in kwargs:
-                imp: ImpCallable = FunctionOrMethod.model_validate(
+                imp: ImpCallable = mod_pyschema.FunctionOrMethod.model_validate(
                     kwargs['implementation']
                 ).load() if kwargs['implementation'] is not None else None
 
@@ -218,7 +213,7 @@ class Feedback():
             if kwargs.get('aggregator') is None:
                 try:
                     # These are for serialization to/from json and for db storage.
-                    kwargs['aggregator'] = FunctionOrMethod.of_callable(
+                    kwargs['aggregator'] = mod_pyschema.FunctionOrMethod.of_callable(
                         agg, loadable=True
                     )
                 except Exception as e:
@@ -230,13 +225,13 @@ class Feedback():
                         "%s", agg, e
                     )
                     # These are for serialization to/from json and for db storage.
-                    kwargs['aggregator'] = FunctionOrMethod.of_callable(
+                    kwargs['aggregator'] = mod_pyschema.FunctionOrMethod.of_callable(
                         agg, loadable=False
                     )
 
         else:
             if kwargs.get('aggregator') is not None:
-                agg: AggCallable = FunctionOrMethod.model_validate(
+                agg: AggCallable = mod_pyschema.FunctionOrMethod.model_validate(
                     kwargs['aggregator']
                 ).load()
             else:
@@ -293,7 +288,7 @@ class Feedback():
             alias_info = ""
 
         print(
-            f"{UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, "
+            f"{mod_text_utils.UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, "
             f"input {par_name} will be set to {par_path}{alias_info} ."
         )
 
@@ -342,7 +337,7 @@ class Feedback():
         tru: Tru,
         limit: Optional[int] = None,
         shuffle: bool = False
-    ) -> List[Tuple[pandas.Series, Future[mod_feedback_schema.FeedbackResult]]]:
+    ) -> List[Tuple[pandas.Series, mod_python_utils.Future[mod_feedback_schema.FeedbackResult]]]:
         """Evaluates feedback functions that were specified to be deferred.
         
         Returns a list of tuples with the DB row containing the Feedback and
@@ -397,9 +392,9 @@ class Feedback():
             shuffle=shuffle,
         )
 
-        tp = TP()
+        tp = mod_threading_utils.TP()
 
-        futures: List[Tuple[pandas.Series, Future[mod_feedback_schema.FeedbackResult]]] = []
+        futures: List[Tuple[pandas.Series, mod_python_utils.Future[mod_feedback_schema.FeedbackResult]]] = []
 
         for _, row in feedbacks_not_done.iterrows():
             now = datetime.now().timestamp()
@@ -490,7 +485,7 @@ class Feedback():
                 logger.warning(
                     "Feedback function `%s` has `self` as argument. "
                     "Perhaps it is static method or its Provider class was not initialized?",
-                    callable_name(self.imp)
+                    mod_python_utils.callable_name(self.imp)
                 )
             if len(par_names) == 0:
                 raise TypeError(
@@ -561,18 +556,18 @@ class Feedback():
         new_selectors = self.selectors.copy()
 
         for k, v in kwargs.items():
-            if not isinstance(v, Lens):
+            if not isinstance(v, mod_serial_utils.Lens):
                 raise ValueError(
-                    f"Expected a Lens but got `{v}` of type `{class_name(type(v))}`."
+                    f"Expected a Lens but got `{v}` of type `{mod_python_utils.class_name(type(v))}`."
                 )
             new_selectors[k] = v
 
         new_selectors.update(kwargs)
 
         for path in args:
-            if not isinstance(path, Lens):
+            if not isinstance(path, mod_serial_utils.Lens):
                 raise ValueError(
-                    f"Expected a Lens but got `{path}` of type `{class_name(type(path))}`."
+                    f"Expected a Lens but got `{path}` of type `{mod_python_utils.class_name(type(path))}`."
                 )
 
             argname = self._next_unselected_arg_name()
@@ -598,7 +593,7 @@ class Feedback():
 
     def check_selectors(
         self,
-        app: Union[mod_app_schema.AppDefinition, JSON],
+        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON],
         record: mod_record_schema.Record,
         source_data: Optional[Dict[str, Any]] = None,
         warning: bool = False
@@ -638,7 +633,7 @@ class Feedback():
 
         if isinstance(app, App):
             app_type = f"`{type(app).__name__}`"
-            app = jsonify(
+            app = mod_json_utils.jsonify(
                 app,
                 instrument=app.instrument,
                 skip_specials=True,
@@ -646,7 +641,7 @@ class Feedback():
             )
 
         elif isinstance(app, mod_app_schema.AppDefinition):
-            app = jsonify(app, skip_specials=True, redact_keys=True)
+            app = mod_json_utils.jsonify(app, skip_specials=True, redact_keys=True)
 
         source_data = self._construct_source_data(
             app=app, record=record, source_data=source_data
@@ -695,7 +690,7 @@ Feedback function signature:
                 continue
 
             if len(prefix.path) >= 2 and isinstance(
-                    prefix.path[-1], GetItemOrAttribute
+                    prefix.path[-1], mod_serial_utils.GetItemOrAttribute
             ) and prefix.path[-1].get_item_or_attribute() == "rets":
                 # If the selector check failed because the selector was pointing
                 # to something beyond the rets of a record call, we have to
@@ -704,7 +699,7 @@ Feedback function signature:
                 continue
 
             if len(prefix.path) >= 3 and isinstance(
-                    prefix.path[-2], GetItemOrAttribute
+                    prefix.path[-2], mod_serial_utils.GetItemOrAttribute
             ) and prefix.path[-2].get_item_or_attribute() == "args":
                 # Likewise if failure was because the selector was pointing to
                 # method args beyond their parameter names, we also cannot tell
@@ -720,8 +715,8 @@ Feedback function signature:
                     if isinstance(prefix_obj, munch.Munch):
                         prefix_obj = prefix_obj.toDict()
 
-                    msg += f"- Object of type `{class_name(type(prefix_obj))}` starting with:\n"
-                    msg += "```python\n" + retab(
+                    msg += f"- Object of type `{mod_python_utils.class_name(type(prefix_obj))}` starting with:\n"
+                    msg += "```python\n" + mod_text_utils.retab(
                         tab="\t  ",
                         s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)
                     ) + "\n```\n"
@@ -745,7 +740,7 @@ Feedback function signature:
 
     def run(
         self,
-        app: Optional[Union[mod_app_schema.AppDefinition, JSON]] = None,
+        app: Optional[Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
         **kwargs: Dict[str, Any]
@@ -772,7 +767,7 @@ Feedback function signature:
         """
 
         if isinstance(app, mod_app_schema.AppDefinition):
-            app_json = jsonify(app)
+            app_json = mod_json_utils.jsonify(app)
         else:
             app_json = app
 
@@ -839,12 +834,12 @@ Feedback function signature:
 
         try:
             # Total cost, will accumulate.
-            cost = Cost()
+            cost = mod_base_schema.Cost()
             multi_result = None
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost = Endpoint.track_all_costs_tally(
+                    result_and_meta, part_cost = mod_base_endpoint.Endpoint.track_all_costs_tally(
                         self.imp, **ins
                     )
 
@@ -950,7 +945,7 @@ Feedback function signature:
         self,
         record: mod_record_schema.Record,
         tru: 'Tru',
-        app: Union[mod_app_schema.AppDefinition, JSON] = None,
+        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None
     ) -> Optional[mod_feedback_schema.FeedbackResult]:
 
@@ -1076,7 +1071,7 @@ Feedback function signature:
 
     def _construct_source_data(
         self,
-        app: Optional[Union[mod_app_schema.AppDefinition, JSON]] = None,
+        app: Optional[Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
         **kwargs: dict
@@ -1115,7 +1110,7 @@ Feedback function signature:
 
     def extract_selection(
         self,
-        app: Optional[Union[mod_app_schema.AppDefinition, JSON]] = None,
+        app: Optional[Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None
     ) -> Iterable[Dict[str, Any]]:

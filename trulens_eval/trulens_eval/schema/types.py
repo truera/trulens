@@ -1,7 +1,7 @@
+"""Type aliases."""
+
 from typing import Dict
 import typing_extensions
-
-# Identifier type aliases.
 
 RecordID: typing_extensions.TypeAlias = str
 """Unique identifier for a record."""
@@ -20,4 +20,3 @@ FeedbackDefinitionID: typing_extensions.TypeAlias = str
 
 FeedbackResultID: typing_extensions.TypeAlias = str
 """Unique identifier for a feedback result."""
-

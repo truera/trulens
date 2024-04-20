@@ -1,3 +1,4 @@
+"""Serializable record-related classes."""
 
 from __future__ import annotations
 
@@ -8,16 +9,14 @@ from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
 from munch import Munch as Bunch
 import pydantic
 
+from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.python import Future
-
-from . import Cost
-from . import feedback
-from . import Perf
-from . import types
 
 T = TypeVar("T")
 
@@ -52,7 +51,7 @@ class RecordAppCall(serial.SerialModel):
     error: Optional[str] = None
     """Error message if call raised exception."""
 
-    perf: Optional[Perf] = None
+    perf: Optional[mod_base_schema.Perf] = None
     """Timestamps tracking entrance and exit of the instrumented method."""
 
     pid: int
@@ -84,16 +83,16 @@ class Record(serial.SerialModel, Hashable):
         'arbitrary_types_allowed': True
     }
 
-    record_id: types.RecordID
+    record_id: mod_types_schema.RecordID
     """Unique identifier for this record."""
 
-    app_id: types.AppID
+    app_id: mod_types_schema.AppID
     """The app that produced this record."""
 
-    cost: Optional[Cost] = None
+    cost: Optional[mod_base_schema.Cost] = None
     """Costs associated with the record."""
 
-    perf: Optional[Perf] = None
+    perf: Optional[mod_base_schema.Perf] = None
     """Performance information."""
 
     ts: datetime.datetime = pydantic.Field(
@@ -125,8 +124,8 @@ class Record(serial.SerialModel, Hashable):
     as the app that generated this record via `layout_calls_as_app`.
     """
 
-    feedback_and_future_results: Optional[List[Tuple[feedback.FeedbackDefinition,
-                                                     Future[feedback.FeedbackResult]]]
+    feedback_and_future_results: Optional[List[Tuple[mod_feedback_schema.FeedbackDefinition,
+                                                     Future[mod_feedback_schema.FeedbackResult]]]
                                          ] = pydantic.Field(
                                              None, exclude=True
                                          )
@@ -137,11 +136,11 @@ class Record(serial.SerialModel, Hashable):
     `FeedbackMode.DEFERRED`.
     """
 
-    feedback_results: Optional[List[Future[feedback.FeedbackResult]]] = \
+    feedback_results: Optional[List[Future[mod_feedback_schema.FeedbackResult]]] = \
         pydantic.Field(None, exclude=True)
     """Only the futures part of the above for backwards compatibility."""
 
-    def __init__(self, record_id: Optional[types.RecordID] = None, **kwargs):
+    def __init__(self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs):
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
@@ -154,7 +153,7 @@ class Record(serial.SerialModel, Hashable):
 
     def wait_for_feedback_results(
         self
-    ) -> Dict[feedback.FeedbackDefinition, feedback.FeedbackResult]:
+    ) -> Dict[mod_feedback_schema.FeedbackDefinition, mod_feedback_schema.FeedbackResult]:
         """Wait for feedback results to finish.
 
         Returns:

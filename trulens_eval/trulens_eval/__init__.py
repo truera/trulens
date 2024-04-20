@@ -93,12 +93,12 @@ from trulens_eval.utils.imports import check_imports
 
 check_imports()
 
-from trulens_eval.feedback.feedback import Feedback
-from trulens_eval.feedback.provider.base import Provider
-from trulens_eval.feedback.provider.hugs import Huggingface
-from trulens_eval.feedback.provider.langchain import Langchain
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.schema import Select
+from trulens_eval.feedback import feedback as mod_feedback
+from trulens_eval.feedback.provider import base as mod_provider
+from trulens_eval.feedback.provider import hugs as mod_hugs_provider
+from trulens_eval.feedback.provider import langchain as mod_langchain_provider
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.tru import Tru
 from trulens_eval.tru_basic_app import TruBasicApp
 from trulens_eval.tru_chain import TruChain
@@ -131,6 +131,13 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
 
 with OptionalImports(messages=REQUIREMENT_RAILS):
     from trulens_eval.tru_rails import TruRails
+
+Feedback = mod_feedback.Feedback
+Provider = mod_provider.Provider
+Huggingface = mod_hugs_provider.Huggingface
+Langchain = mod_langchain_provider.Langchain
+FeedbackMode = mod_app_schema.FeedbackMode
+Select = mod_feedback_schema.Select
 
 __all__ = [
     "Tru",  # main interface

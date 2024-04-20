@@ -1,3 +1,5 @@
+"""Serializable app-related classes."""
+
 from __future__ import annotations
 
 from enum import Enum
@@ -8,14 +10,13 @@ import dill
 import humanize
 
 from trulens_eval import app as mod_app
+from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
-
-from . import feedback
-from . import MAX_DILL_SIZE
-from . import types
 
 logger = logging.getLogger(__name__)
 
@@ -45,16 +46,16 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens_eval.app.App]
     contains non-serialized fields."""
 
-    app_id: types.AppID  # str
+    app_id: mod_types_schema.AppID  # str
     """Unique identifier for this app."""
 
-    tags: types.Tags  # str
+    tags: mod_types_schema.Tags  # str
     """Tags for the app."""
 
-    metadata: types.Metadata  # dict  # TODO: rename to meta for consistency with other metas
+    metadata: mod_types_schema.Metadata  # dict  # TODO: rename to meta for consistency with other metas
     """Metadata for the app."""
 
-    feedback_definitions: Sequence[feedback.FeedbackDefinition] = []
+    feedback_definitions: Sequence[mod_feedback_schema.FeedbackDefinition] = []
     """Feedback functions to evaluate on each record."""
 
     feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
@@ -98,9 +99,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     def __init__(
         self,
-        app_id: Optional[types.AppID] = None,
-        tags: Optional[types.Tags] = None,
-        metadata: Optional[types.Metadata] = None,
+        app_id: Optional[mod_types_schema.AppID] = None,
+        tags: Optional[mod_types_schema.Tags] = None,
+        metadata: Optional[mod_types_schema.Metadata] = None,
         feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
         app_extra_json: serial.JSON = None,
         **kwargs
@@ -133,12 +134,12 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             try:
                 dump = dill.dumps(kwargs['initial_app_loader'], recurse=True)
 
-                if len(dump) > MAX_DILL_SIZE:
+                if len(dump) > mod_base_schema.MAX_DILL_SIZE:
                     logger.warning(
                         "`initial_app_loader` dump is too big (%s) > %s bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
                         humanize.naturalsize(len(dump)),
-                        humanize.naturalsize(MAX_DILL_SIZE)
+                        humanize.naturalsize(mod_base_schema.MAX_DILL_SIZE)
                     )
                 else:
                     self.initial_app_loader_dump = serial.SerialBytes(data=dump)
@@ -278,7 +279,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         """Get the path to the main app's call inputs."""
 
         return getattr(
-            feedback.Select.RecordCalls,
+            mod_feedback_schema.Select.RecordCalls,
             cls.root_callable.default_factory().name
         ).args
 
@@ -287,7 +288,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         """Get the path to the main app's call outputs."""
 
         return getattr(
-            feedback.Select.RecordCalls,
+            mod_feedback_schema.Select.RecordCalls,
             cls.root_callable.default_factory().name
         ).rets
 

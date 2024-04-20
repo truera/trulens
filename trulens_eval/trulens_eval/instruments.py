@@ -27,9 +27,8 @@ import pydantic
 
 from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import endpoint as mod_endpoint
-from trulens_eval.schema import Cost
-from trulens_eval.schema import Perf
-from trulens_eval.schema import record as mod_record
+from trulens_eval.schema import base as mod_base_schema 
+from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.imports import Dummy
@@ -129,9 +128,9 @@ class WithInstrumentCallbacks:
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: Perf,
-        cost: Cost,
-        existing_record: Optional[mod_record.Record] = None
+        perf: mod_base_schema.Perf,
+        cost: mod_base_schema.Cost,
+        existing_record: Optional[mod_record_schema.Record] = None
     ):
         """
         Called by instrumented methods if they are root calls (first instrumned
@@ -443,7 +442,7 @@ class Instrument(object):
             end_time = None
 
             bindings = None
-            cost = Cost()
+            cost = mod_base_schema.Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -481,7 +480,7 @@ class Instrument(object):
                 else:
                     stack = ctx_stacks[ctx]
 
-                frame_ident = mod_record.RecordAppCallMethod(
+                frame_ident = mod_record_schema.RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
 
@@ -532,7 +531,7 @@ class Instrument(object):
             def handle_done(rets):
                 record_app_args = dict(
                     args=nonself,
-                    perf=Perf(start_time=start_time, end_time=end_time),
+                    perf=mod_base_schema.Perf(start_time=start_time, end_time=end_time),
                     pid=os.getpid(),
                     tid=th.get_native_id(),
                     rets=jsonify(rets),
@@ -546,7 +545,7 @@ class Instrument(object):
 
                     # Note that only the stack differs between each of the records in this loop.
                     record_app_args['stack'] = stack
-                    call = mod_record.RecordAppCall(**record_app_args)
+                    call = mod_record_schema.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
                     # If stack has only 1 thing on it, we are looking at a "root
@@ -562,7 +561,7 @@ class Instrument(object):
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=Perf(start_time=start_time, end_time=end_time),
+                            perf=mod_base_schema.Perf(start_time=start_time, end_time=end_time),
                             cost=cost,
                             existing_record=records.get(ctx)
                         )
