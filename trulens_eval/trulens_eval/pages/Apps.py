@@ -1,8 +1,8 @@
 import asyncio
 from typing import Optional
 
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import Record
+from trulens_eval.schema.app import AppDefinition
+from trulens_eval.schema.record import Record
 from trulens_eval.tru import Tru
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import JSON

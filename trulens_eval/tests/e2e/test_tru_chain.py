@@ -17,8 +17,8 @@ from tests.unit.test import optional_test
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.keys import check_keys
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.schema import Record
+from trulens_eval.schema.app import FeedbackMode
+from trulens_eval.schema.record import Record
 from trulens_eval.utils.asynchro import sync
 
 

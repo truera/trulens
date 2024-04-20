@@ -8,10 +8,10 @@ import streamlit as st
 from trulens_eval.app import ComponentView
 from trulens_eval.keys import REDACTED_VALUE
 from trulens_eval.keys import should_redact_key
-from trulens_eval.schema import Metadata
-from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
-from trulens_eval.schema import Select
+from trulens_eval.schema.feedback import Select
+from trulens_eval.schema.record import Record
+from trulens_eval.schema.record import RecordAppCall
+from trulens_eval.schema.types import Metadata
 from trulens_eval.utils.containers import is_empty
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import CLASS_INFO

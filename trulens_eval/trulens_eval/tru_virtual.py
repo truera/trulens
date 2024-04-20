@@ -269,7 +269,7 @@ class VirtualRecord(Record):
             'debug': 'optional debugging information'
         }
 
-        from trulens_eval.schema import Select
+        from trulens_eval.schema.feedback import Select
         from trulens_eval.tru_virtual import VirtualApp
 
         virtual_app = VirtualApp(virtual_app)
