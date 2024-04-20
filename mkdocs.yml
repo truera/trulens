@@ -67,6 +67,7 @@ plugins:
             - https://typing-extensions.readthedocs.io/en/latest/objects.inv
             - https://docs.llamaindex.ai/en/stable/objects.inv
             - https://docs.sqlalchemy.org/en/20/objects.inv
+            - https://opentelemetry-python.readthedocs.io/en/latest/objects.inv
           options:
             extensions:
               - pydantic: { schema: true }
