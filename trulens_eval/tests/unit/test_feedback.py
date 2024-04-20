@@ -16,7 +16,7 @@ from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
 from trulens_eval.keys import check_keys
-from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema.app import FeedbackMode
 from trulens_eval.tru_basic_app import TruBasicApp
 from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.utils.json import jsonify
