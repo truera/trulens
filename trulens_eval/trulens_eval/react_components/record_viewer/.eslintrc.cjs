@@ -1,4 +1,5 @@
 /* eslint-env node */
+const { resolve } = require('path');
 
 module.exports = {
   root: true,
@@ -19,7 +20,7 @@ module.exports = {
     project: true,
     tsconfigRootDir: __dirname,
   },
-  plugins: ['react-refresh', '@typescript-eslint', 'react-hooks', 'prettier', 'jest', 'simple-import-sort'],
+  plugins: ['react-refresh', '@typescript-eslint', 'react-hooks', 'prettier', 'jest', 'simple-import-sort', 'import'],
   rules: {
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     '@typescript-eslint/no-non-null-assertion': 'off',
@@ -45,12 +46,28 @@ module.exports = {
     // Note: you must disable the base rule as it can report incorrect errors
     'no-shadow': 'off',
     '@typescript-eslint/no-shadow': 'warn',
+
+    'react/require-default-props': 'off',
+
+    'import/prefer-default-export': 'off',
+    'no-continue': 'off',
+
+    'simple-import-sort/imports': 'error',
+    'simple-import-sort/exports': 'error',
+    'import/first': 'error',
+    'import/newline-after-import': 'error',
+    'import/no-duplicates': 'error',
   },
   settings: {
     'import/resolver': {
       node: {
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
       },
+      alias: {
+        map: [['@', resolve(__dirname, './src')]],
+        extensions: ['.js', '.jsx', '.ts', '.d.ts', '.tsx'],
+      },
     },
   },
+  ignorePatterns: ['*.cjs', '*.config.ts']
 };

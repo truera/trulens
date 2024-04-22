@@ -34,6 +34,7 @@ humanize           >= 4.6.0
 streamlit          >= 1.32.2
 streamlit-aggrid   == 0.3.4 # selected rows is broken in latest version
 streamlit-extras   >= 0.4.0
+streamlit-pills    >= 0.3.0
 rich               >= 13.6.0
 
 # DB and migration
