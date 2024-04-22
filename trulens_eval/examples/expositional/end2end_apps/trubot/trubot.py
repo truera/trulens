@@ -19,7 +19,7 @@ from trulens_eval import Select
 from trulens_eval import Tru
 from trulens_eval.feedback import Feedback
 from trulens_eval.keys import check_keys
-from trulens_eval.schema.app import FeedbackMode
+from trulens_eval.schema.feedback import FeedbackMode
 from trulens_eval.tru_chain import TruChain
 from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 
