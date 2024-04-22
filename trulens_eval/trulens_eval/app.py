@@ -557,7 +557,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         else:
             pass
 
-        if self.feedback_mode == mod_app_schema.FeedbackMode.WITH_APP_THREAD:
+        if self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD:
             self._start_manage_pending_feedback_results()
 
         self._tru_post_init()
@@ -661,13 +661,13 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         """
 
         if self.tru is None:
-            if self.feedback_mode != mod_app_schema.FeedbackMode.NONE:
+            if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 from trulens_eval.tru import Tru
                 logger.debug("Creating default tru.")
                 self.tru = Tru()
 
         else:
-            if self.feedback_mode == mod_app_schema.FeedbackMode.NONE:
+            if self.feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
                 logger.warning(
                     "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
                     "No feedback evaluation and logging will occur."
@@ -678,7 +678,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             self.db.insert_app(app=self)
 
-            if self.feedback_mode != mod_app_schema.FeedbackMode.NONE:
+            if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 logger.debug("Inserting feedback function definitions to db.")
 
                 for f in self.feedbacks:
@@ -690,7 +690,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                     "Feedback logging requires `tru` to be specified."
                 )
 
-        if self.feedback_mode == mod_app_schema.FeedbackMode.DEFERRED:
+        if self.feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
@@ -1113,12 +1113,12 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         if record.feedback_and_future_results is None:
             return record
 
-        if self.feedback_mode == mod_app_schema.FeedbackMode.WITH_APP_THREAD:
+        if self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD:
             # Add the record to ones with pending feedback.
 
             self.records_with_pending_feedback_results.put(record)
 
-        elif self.feedback_mode == mod_app_schema.FeedbackMode.WITH_APP:
+        elif self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP:
             # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
             # evaluating before returning the record.
 
@@ -1299,7 +1299,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     def _handle_record(
         self,
         record: mod_record_schema.Record,
-        feedback_mode: Optional[mod_app_schema.FeedbackMode] = None
+        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None
     ) -> Optional[List[Tuple[mod_feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback
@@ -1323,7 +1323,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return []
 
         # Add empty (to run) feedback to db.
-        if feedback_mode == mod_app_schema.FeedbackMode.DEFERRED:
+        if feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 self.db.insert_feedback(
                     mod_feedback_schema.FeedbackResult(
@@ -1335,8 +1335,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
             return None
 
-        elif feedback_mode in [mod_app_schema.FeedbackMode.WITH_APP,
-                               mod_app_schema.FeedbackMode.WITH_APP_THREAD]:
+        elif feedback_mode in [mod_feedback_schema.FeedbackMode.WITH_APP,
+                               mod_feedback_schema.FeedbackMode.WITH_APP_THREAD]:
 
             return self.tru._submit_feedback_functions(
                 record=record,

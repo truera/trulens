@@ -118,7 +118,7 @@ class Tru(python.SingletonPerName):
     See also:
         [start_evaluator][trulens_eval.tru.Tru.start_evaluator]
 
-        [DEFERRED][trulens_eval.schema.app.FeedbackMode.DEFERRED]
+        [DEFERRED][trulens_eval.schema.feedback.FeedbackMode.DEFERRED]
     """
 
     RETRY_FAILED_SECONDS: float = 5 * 60.0

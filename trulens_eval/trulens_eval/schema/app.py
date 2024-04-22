@@ -20,27 +20,6 @@ from trulens_eval.utils.json import obj_id_of_obj
 
 logger = logging.getLogger(__name__)
 
-class FeedbackMode(str, Enum):
-    """Mode of feedback evaluation.
-
-    Specify this using the `feedback_mode` to [App][trulens_eval.app.App] constructors.
-    """
-
-    NONE = "none"
-    """No evaluation will happen even if feedback functions are specified."""
-
-    WITH_APP = "with_app"
-    """Try to run feedback functions immediately and before app returns a
-    record."""
-
-    WITH_APP_THREAD = "with_app_thread"
-    """Try to run feedback functions in the same process as the app but after
-    it produces a record."""
-
-    DEFERRED = "deferred"
-    """Evaluate later via the process started by
-    `tru.start_deferred_feedback_evaluator`."""
-
 
 class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens_eval.app.App]

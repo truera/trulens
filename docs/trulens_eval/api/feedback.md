@@ -8,8 +8,6 @@ adds non-serializable instantiations.
 
 ::: trulens_eval.feedback.feedback.Feedback
 
-::: trulens_eval.schema.feedback.FeedbackDefinition
-
 ## Feedback-defining utilities
 
 ::: trulens_eval.feedback.feedback.rag_triad
@@ -20,14 +18,4 @@ adds non-serializable instantiations.
 
 ::: trulens_eval.feedback.feedback.AggCallable
 
-::: trulens_eval.schema.feedback.FeedbackCombinations
-
-::: trulens_eval.schema.feedback.FeedbackOnMissingParameters
-
-::: trulens_eval.schema.app.FeedbackMode
-
-::: trulens_eval.schema.feedback.FeedbackResult
-
-::: trulens_eval.schema.feedback.FeedbackResultStatus
-
-::: trulens_eval.schema.feedback.FeedbackCall
+::: trulens_eval.schema.feedback

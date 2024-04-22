@@ -529,7 +529,7 @@ class TruVirtual(mod_app.App):
     def add_record(
         self,
         record: mod_record_schema.Record,
-        feedback_mode: Optional[mod_app_schema.FeedbackMode] = None
+        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None
     ) -> mod_record_schema.Record:
         """Add the given record to the database and evaluate any pre-specified
         feedbacks on it.
@@ -554,7 +554,7 @@ class TruVirtual(mod_app.App):
             ]
 
         # Wait for results if mode is WITH_APP.
-        if feedback_mode == mod_app_schema.FeedbackMode.WITH_APP and record.feedback_results is not None:
+        if feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP and record.feedback_results is not None:
             futs = record.feedback_results
             futures.wait(futs)
 

@@ -61,7 +61,7 @@ Feedback = mod_feedback.Feedback
 Provider = mod_provider.Provider
 Huggingface = mod_hugs_provider.Huggingface
 Langchain = mod_langchain_provider.Langchain
-FeedbackMode = mod_app_schema.FeedbackMode
+FeedbackMode = mod_feedback_schema.FeedbackMode
 Select = mod_feedback_schema.Select
 
 __all__ = [
