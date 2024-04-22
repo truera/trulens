@@ -198,7 +198,7 @@ class TruChain(App):
 
     Args:
         app: A LangChain application.
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App] and [AppDefinition][trulens_eval.app.AppDefinition].
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App] and [AppDefinition][trulens_eval.schema.app.AppDefinition].
     """
 
     app: Any  # Chain

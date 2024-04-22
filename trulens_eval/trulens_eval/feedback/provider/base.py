@@ -122,7 +122,7 @@ class LLMProvider(Provider):
         """
         # text
         raise NotImplementedError()
-        pass
+
 
     def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
         assert self.endpoint is not None, "Endpoint is not set."
@@ -163,11 +163,12 @@ class LLMProvider(Provider):
         document for hypothesis.
 
         Args:
-            premise (str): A source document
-            hypothesis (str): A statement to check
+            premise: A source document
+
+            hypothesis: A statement to check
 
         Returns:
-            str: An LLM response using a scorecard template
+            An LLM response using a scorecard template
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -193,13 +194,16 @@ class LLMProvider(Provider):
         Base method to generate a score only, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formatted system prompt.
-            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
-            normalize (float): The normalization factor for the score. Defaults to 10.0.
-            temperature (float): The temperature for the LLM response. Defaults to 0.0.
+            system_prompt: A pre-formatted system prompt.
+
+            user_prompt: An optional user prompt.
+
+            normalize: The normalization factor for the score.
+
+            temperature: The temperature for the LLM response.
 
         Returns:
-            float: The score on a 0-1 scale.
+            The score on a 0-1 scale.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -226,13 +230,18 @@ class LLMProvider(Provider):
         Base method to generate a score and reason, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formatted system prompt.
-            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
-            normalize (float): The normalization factor for the score. Defaults to 10.0.
-            temperature (float): The temperature for the LLM response. Defaults to 0.0.
+            system_prompt: A pre-formatted system prompt.
+
+            user_prompt: An optional user prompt. Defaults to None.
+
+            normalize: The normalization factor for the score. Defaults to 10.0.
+
+            temperature: The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
-            Tuple[float, Dict]: The score on a 0-1 scale and reason metadata (dict) if returned by the LLM.
+            The score on a 0-1 scale.
+            
+            Reason metadata if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 

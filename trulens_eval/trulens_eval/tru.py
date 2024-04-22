@@ -118,7 +118,7 @@ class Tru(python.SingletonPerName):
     See also:
         [start_evaluator][trulens_eval.tru.Tru.start_evaluator]
 
-        [DEFERRED][trulens_eval.schema.FeedbackMode.DEFERRED]
+        [DEFERRED][trulens_eval.schema.app.FeedbackMode.DEFERRED]
     """
 
     RETRY_FAILED_SECONDS: float = 5 * 60.0
@@ -344,7 +344,7 @@ class Tru(python.SingletonPerName):
         Args:
             record: The record to add.
 
-            **kwargs: [Record][trulens_eval.schema.Record] fields to add to the
+            **kwargs: [Record][trulens_eval.schema.record.Record] fields to add to the
                 given record or a new record if no `record` provided.
             
         Returns:
@@ -471,9 +471,9 @@ class Tru(python.SingletonPerName):
 
         Yields:
             One result for each element of `feedback_functions` of
-                [FeedbackResult][trulens_eval.schema.FeedbackResult] if `wait`
+                [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] if `wait`
                 is enabled (default) or [Future][concurrent.futures.Future] of
-                [FeedbackResult][trulens_eval.schema.FeedbackResult] if `wait`
+                [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] if `wait`
                 is disabled.
         """
 
@@ -490,7 +490,7 @@ class Tru(python.SingletonPerName):
             )
 
         if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
-            raise ValueError("app must be a trulens_eval.schema.AppDefinition.")
+            raise ValueError("app must be a trulens_eval.schema.app.AppDefinition.")
 
         if not isinstance(wait, bool):
             raise ValueError("wait must be a bool.")
@@ -561,14 +561,14 @@ class Tru(python.SingletonPerName):
             feedback_result_or_future: If a [Future][concurrent.futures.Future]
                 is given, call will wait for the result before adding it to the
                 database. If `kwargs` are given and a
-                [FeedbackResult][trulens_eval.schema.FeedbackResult] is also
+                [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] is also
                 given, the `kwargs` will be used to update the
-                [FeedbackResult][trulens_eval.schema.FeedbackResult] otherwise a
+                [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] otherwise a
                 new one will be created with `kwargs` as arguments to its
                 constructor.
 
             **kwargs: Fields to add to the given feedback result or to create a
-                new [FeedbackResult][trulens_eval.schema.FeedbackResult] with.
+                new [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] with.
 
         Returns:
             A unique result identifier [str][].
@@ -608,7 +608,7 @@ class Tru(python.SingletonPerName):
         """Add multiple feedback results to the database and return their unique ids.
         
         Args:
-            feedback_results: An iterable with each iteration being a [FeedbackResult][trulens_eval.schema.FeedbackResult] or
+            feedback_results: An iterable with each iteration being a [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] or
                 [Future][concurrent.futures.Future] of the same. Each given future will be waited.
 
         Returns:
@@ -631,7 +631,7 @@ class Tru(python.SingletonPerName):
                 app_id: mod_types_schema.AppID) -> serial.JSONized[mod_app_schema.AppDefinition]:
         """Look up an app from the database.
 
-        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens_eval.schema.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
+        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens_eval.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
         
         Example:
             ```python

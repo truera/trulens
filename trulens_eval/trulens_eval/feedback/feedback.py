@@ -442,7 +442,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         specify the method of producing combinations of values in such cases.
 
         Returns a new Feedback object with the given aggregation function and/or
-        the given [combination mode][trulens_eval.schema.FeedbackCombinations].
+        the given [combination mode][trulens_eval.schema.feedback.FeedbackCombinations].
         """
 
         if func is None and combinations is None:

@@ -297,7 +297,7 @@ class VirtualRecord(Record):
         """Create a record for a virtual app.
         
         Many arguments are filled in by default values if not provided. See
-        [Record][trulens_eval.schema.Record] for all arguments. Listing here is
+        [Record][trulens_eval.schema.record.Record] for all arguments. Listing here is
         only for those which are required for this method or filled with default values.
 
         Args:
@@ -312,17 +312,17 @@ class VirtualRecord(Record):
                 is extended to make sure it is not of duration zero.
 
         Call values are dictionaries containing arguments to
-        [RecordAppCall][trulens_eval.schema.RecordAppCall] constructor. Values
+        [RecordAppCall][trulens_eval.schema.record.RecordAppCall] constructor. Values
         can also be lists of the same. This happens in non-virtual apps when the
         same method is recorded making multiple calls in a single app
         invocation. The following defaults are used if not provided.
 
         | PARAMETER | TYPE |DEFAULT |
         | --- | ---| --- |
-        | `stack` | [List][typing.List][[RecordAppCallMethod][trulens_eval.schema.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. | 
+        | `stack` | [List][typing.List][[RecordAppCallMethod][trulens_eval.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. | 
         | `args` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
         | `rets` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
-        | `perf` | [Perf][trulens_eval.schema.Perf] | Time spanning the processing of this virtual call. |
+        | `perf` | [Perf][trulens_eval.schema.base.Perf] | Time spanning the processing of this virtual call. |
         | `pid` | [int][] | `0` |
         | `tid` | [int][] | `0` |
         """
@@ -431,7 +431,7 @@ class TruVirtual(App):
     specified here, notably:
 
     See [App][trulens_eval.app.App] and
-    [AppDefinition][trulens_eval.schema.AppDefinition] for constructor
+    [AppDefinition][trulens_eval.schema.app.AppDefinition] for constructor
     arguments.
 
     # The `app` field.

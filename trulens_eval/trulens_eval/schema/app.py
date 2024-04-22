@@ -66,7 +66,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     
     Ideally this would be a [ClassVar][typing.ClassVar] but since we want to check this without
     instantiating the subclass of
-    [AppDefinition][trulens_eval.schema.AppDefinition] that would define it, we
+    [AppDefinition][trulens_eval.schema.app.AppDefinition] that would define it, we
     cannot use [ClassVar][typing.ClassVar].
     """
 

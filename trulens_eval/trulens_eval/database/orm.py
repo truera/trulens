@@ -141,7 +141,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
         """SqlAlchemy metadata object for tables used by trulens_eval."""
 
         class AppDefinition(base):
-            """ORM class for [AppDefinition][trulens_eval.schema.AppDefinition].
+            """ORM class for [AppDefinition][trulens_eval.schema.app.AppDefinition].
 
             Warning:
                 We don't use any of the typical ORM features and this class is only
@@ -168,7 +168,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 )
 
         class FeedbackDefinition(base):
-            """ORM class for [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition].
+            """ORM class for [FeedbackDefinition][trulens_eval.schema.feedback.FeedbackDefinition].
 
             Warning:
                 We don't use any of the typical ORM features and this class is only
@@ -196,7 +196,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 )
 
         class Record(base):
-            """ORM class for [Record][trulens_eval.schema.Record].
+            """ORM class for [Record][trulens_eval.schema.record.Record].
 
             Warning:
                 We don't use any of the typical ORM features and this class is only
@@ -251,7 +251,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
         class FeedbackResult(base):
             """
-            ORM class for [FeedbackResult][trulens_eval.schema.FeedbackResult].
+            ORM class for [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult].
 
             Warning:
                 We don't use any of the typical ORM features and this class is only
@@ -333,7 +333,7 @@ def make_base_for_prefix(
     Create a base class for ORM classes with the given table name prefix.
 
     Args:
-        base_type: Base class to extend. Should be a subclass of
+        base: Base class to extend. Should be a subclass of
             [BaseWithTablePrefix][trulens_eval.database.orm.BaseWithTablePrefix].
 
         table_prefix: Prefix to use for table names.

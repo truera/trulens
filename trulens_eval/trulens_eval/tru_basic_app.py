@@ -100,7 +100,7 @@ class TruBasicApp(App):
             be provided.
         
         **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
-            and [AppDefinition][trulens_eval.app.AppDefinition]
+            and [AppDefinition][trulens_eval.schema.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)

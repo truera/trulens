@@ -117,7 +117,7 @@ class DB(SerialModel, abc.ABC):
 
         Args:
             app: The app to insert or update. Note that only the
-                [AppDefinition][trulens_eval.schema.AppDefinition] parts are serialized
+                [AppDefinition][trulens_eval.schema.app.AppDefinition] parts are serialized
                 hence the type hint.
 
         Returns:
@@ -136,7 +136,7 @@ class DB(SerialModel, abc.ABC):
         Args:
             feedback_definition: The feedback definition to insert or update.
                 Note that only the
-                [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition]
+                [FeedbackDefinition][trulens_eval.schema.feedback.FeedbackDefinition]
                 parts are serialized hence the type hint.
 
         Returns:

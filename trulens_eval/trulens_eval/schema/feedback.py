@@ -195,21 +195,21 @@ class FeedbackOnMissingParameters(str, Enum):
     """Raise an error if a parameter is missing.
     
     The result status will be set to
-    [FAILED][trulens_eval.schema.FeedbackResultStatus.FAILED].
+    [FAILED][trulens_eval.schema.feedback.FeedbackResultStatus.FAILED].
     """
 
     WARN = "warn"
     """Warn if a parameter is missing.
     
     The result status will be set to
-    [SKIPPED][trulens_eval.schema.FeedbackResultStatus.SKIPPED].
+    [SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
 
     IGNORE = "ignore"
     """Do nothing. 
     
     No warning or error message will be shown. The result status will be set to
-    [SKIPPED][trulens_eval.schema.FeedbackResultStatus.SKIPPED].
+    [SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
 
 
@@ -256,7 +256,7 @@ class FeedbackResult(serial.SerialModel):
         record_id (str): Record over which the feedback was evaluated.
 
         feedback_definition_id (str): The id of the
-            [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition] which
+            [FeedbackDefinition][trulens_eval.schema.feedback.FeedbackDefinition] which
             was evaluated to get this result.
 
         last_ts (datetime.datetime): Last timestamp involved in the evaluation.
@@ -340,7 +340,7 @@ class FeedbackCombinations(str, Enum):
     Note that this applies only to cases where selectors pick out more than one
     thing for feedback function arguments. This option is used for the field
     `combinations` of
-    [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition] and can be
+    [FeedbackDefinition][trulens_eval.schema.feedback.FeedbackDefinition] and can be
     specified with
     [Feedback.aggregate][trulens_eval.feedback.feedback.Feedback.aggregate].
     """
@@ -415,14 +415,14 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     
     Can use this to evaluate conditionally on presence of some calls, for
     example. Feedbacks skipped this way will have a status of
-    [FeedbackResultStatus.SKIPPED][trulens_eval.schema.FeedbackResultStatus.SKIPPED].
+    [FeedbackResultStatus.SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
 
     if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR
     """How to handle missing parameters in feedback function calls."""
 
     selectors: Dict[str, serial.Lens]
-    """Selectors; pointers into [Records][trulens_eval.schema.Record] of where
+    """Selectors; pointers into [Records][trulens_eval.schema.record.Record] of where
     to get arguments for `imp`."""
 
     supplied_name: Optional[str] = None

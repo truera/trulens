@@ -176,11 +176,11 @@ class Record(serial.SerialModel, Hashable):
         the app that created this record.
         
         This uses the paths stored in each
-        [RecordAppCall][trulens_eval.schema.RecordAppCall] which are paths into
+        [RecordAppCall][trulens_eval.schema.record.RecordAppCall] which are paths into
         the app.
 
         Note: We cannot create a validated
-        [AppDefinition][trulens_eval.schema.AppDefinition] class (or subclass)
+        [AppDefinition][trulens_eval.schema.app.AppDefinition] class (or subclass)
         object here as the layout of records differ in these ways:
         
         - Records do not include anything that is not an instrumented method

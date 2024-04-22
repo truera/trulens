@@ -435,7 +435,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     """Base app recorder type.
 
     Non-serialized fields here while the serialized ones are defined in
-    [AppDefinition][trulens_eval.schema.AppDefinition].
+    [AppDefinition][trulens_eval.schema.app.AppDefinition].
 
     This class is abstract. Use one of these concrete subclasses as appropriate:
     - [TruLlama][trulens_eval.tru_llama.TruLlama] for _LlamaIndex_ apps.
