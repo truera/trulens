@@ -196,7 +196,7 @@ from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import instrument as base_instrument
 from trulens_eval.utils.pyschema import Class
@@ -216,11 +216,13 @@ pp = PrettyPrinter()
 PLACEHOLDER = "__tru_placeholder"
 
 
-class TruCustomApp(App):
+class TruCustomApp(mod_app.App):
     """
-    This recorder is the most flexible option for instrumenting an application, and can be used to instrument any custom python class.
-    
-    Track any custom app using methods decorated with `@instrument`, or whose methods are instrumented after the fact by `instrument.method`.
+    This recorder is the most flexible option for instrumenting an application,
+    and can be used to instrument any custom python class.
+
+    Track any custom app using methods decorated with `@instrument`, or whose
+    methods are instrumented after the fact by `instrument.method`.
 
     !!! example "Using the `@instrument` decorator"
 
@@ -280,7 +282,9 @@ class TruCustomApp(App):
         instrument.method(CustomApp, "retrieve_chunks")
         ```
 
-    Once a method is tracked, its arguments and returns are available to be used in feedback functions. This is done by using the `Select` class to select the arguments and returns of the method.
+    Once a method is tracked, its arguments and returns are available to be used
+    in feedback functions. This is done by using the `Select` class to select
+    the arguments and returns of the method.
 
     Doing so follows the structure: 
     
@@ -299,7 +303,8 @@ class TruCustomApp(App):
             )
         ```
 
-    Last, the `TruCustomApp` recorder can wrap our custom application, and provide logging and evaluation upon its use.
+    Last, the `TruCustomApp` recorder can wrap our custom application, and
+    provide logging and evaluation upon its use.
 
     !!! example "Using the `TruCustomApp` recorder"
 
@@ -314,7 +319,9 @@ class TruCustomApp(App):
             custom_app.respond_to_query("What is the capital of Indonesia?")
         ```
 
-        See [Feedback Functions](https://www.trulens.org/trulens_eval/api/feedback/) for instantiating feedback functions.
+        See [Feedback
+        Functions](https://www.trulens.org/trulens_eval/api/feedback/) for
+        instantiating feedback functions.
 
     Args:
         app: Any class.

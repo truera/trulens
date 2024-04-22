@@ -19,7 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.database import base as mod_db
 from trulens_eval.database import orm as mod_orm
 from trulens_eval.database.base import DB
@@ -314,7 +314,7 @@ class SQLAlchemyDB(DB):
 
             return _rec.record_id
 
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized[App]]:
+    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized[mod_app.App]]:
         """See [DB.get_app][trulens_eval.database.base.DB.get_app]."""
 
         with self.session.begin() as session:

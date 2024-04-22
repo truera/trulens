@@ -11,7 +11,7 @@ from typing import Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.pyschema import Class
@@ -65,7 +65,7 @@ class TruBasicCallableInstrument(Instrument):
         )
 
 
-class TruBasicApp(App):
+class TruBasicApp(mod_app.App):
     """Instantiates a Basic app that makes little assumptions.
     
     Assumes input text and output text.

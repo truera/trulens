@@ -1,90 +1,14 @@
 """
 # Trulens-eval LLM Evaluation Library
 
-This top-level import should include everything to get started.
-
-## Module organization/dependency
-
-Modules on lower lines should not import modules on same or above lines as
-otherwise you might get circular import errors.
-
-- `tests/`
-
-- `__init__.py`
-
-- all UI/dashboard components, `pages`, `react_components`, `ux`, `Leaderboard.py`, `appui.py`
-
-- `appui.py`
-
-- `tru_chain.py` `tru_custom_app.py` `tru_virtual.py`
-
-- `tru_llama.py` (note: llama_index uses langchain internally for some things)
-
-- `tru.py`
-
-- `utils`
-
-    - `llama.py` `langchain.py` `trulens.py`
-
-- `feedback`
-
-    - `__init__.py`
-
-    - `provider`
-
-        - `__init__.py` 
-
-        - `endpoint`
-
-            - `__init__.py`
-
-            - `openai.py` `hugs.py` `bedrock.py` `litellm.py` `langchain.py`
-
-            - `base.py` 
-
-        - `hugs.py` `openai.py` `bedrock.py` `litellm.py` `langchain.py`
-
-        - `base.py`
-
-    - `groundedness.py` `groundtruth.py` `prompts.py` `embeddings.py`
-
-    - `feedback.py`
-
-- `tru_basic_app.py` TODO: bad placement
-
-- `app.py`
-
-- `instruments.py`
-
-- `schema.py`
-
-- `utils`
-
-    - `json.py`
-
-- `keys.py`
-
-- `utils`
-
-    - `pyschema.py`
-
-    - `threading.py` `serial.py`
-
-    - `python.py` `text.py` `generated.py` `containers.py` `imports.py`
-
-TO PLACE
-- `database/`
-- `feedback/v2/`
-- `utils/command_line.py`
-- `utils/notebook_utils.py`
-- `utils/asynchro.py`
-- `utils/text.py`
-- `utils/__init__.py`
-
+This top-level import includes everything to get started.
 """
 
 __version_info__ = (0, 28, 0)
+"""Version number components for major, minor, patch."""
+
 __version__ = '.'.join(map(str, __version_info__))
+"""Version number string."""
 
 # This check is intentionally done ahead of the other imports as we want to
 # print out a nice warning/error before an import error happens further down

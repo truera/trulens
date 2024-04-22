@@ -12,11 +12,11 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
 from langchain_core.language_models.base import BaseLanguageModel
 from pydantic import Field
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.feedback import feedback
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema.feedback import Select
+from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.tru_chain import LangChainInstrument
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
@@ -45,7 +45,7 @@ with OptionalImports(messages=REQUIREMENT_RAILS):
 OptionalImports(messages=REQUIREMENT_RAILS).assert_installed(nemoguardrails)
 
 
-class RailsActionSelect(Select):
+class RailsActionSelect(mod_feedback_schema.Select):
     """Selector shorthands for _NeMo Guardrails_ apps when used for evaluating
     feedback in actions.
     
@@ -376,7 +376,7 @@ class RailsInstrument(Instrument):
         )
 
 
-class TruRails(App):
+class TruRails(mod_app.App):
     """Recorder for apps defined using _NeMo Guardrails_.
 
     Args:
@@ -437,7 +437,7 @@ class TruRails(App):
         """
         Get the path to the context in the query output.
         """
-        return Select.RecordCalls.kb.search_relevant_chunks.rets[:].body
+        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:].body
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped
