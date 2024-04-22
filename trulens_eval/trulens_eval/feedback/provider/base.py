@@ -234,9 +234,9 @@ class LLMProvider(Provider):
 
             user_prompt: An optional user prompt. Defaults to None.
 
-            normalize: The normalization factor for the score. Defaults to 10.0.
+            normalize: The normalization factor for the score.
 
-            temperature: The temperature for the LLM response. Defaults to 0.0.
+            temperature: The temperature for the LLM response.
 
         Returns:
             The score on a 0-1 scale.

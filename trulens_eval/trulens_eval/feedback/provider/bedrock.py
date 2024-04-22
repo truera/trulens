@@ -3,6 +3,7 @@ from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
+from trulens_eval.utils.python import NoneType
 from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
@@ -194,7 +195,8 @@ class Bedrock(LLMProvider):
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0
+        normalize: float = 10.0,
+        temperature: float = 0.0
     ) -> float:
         """
         Base method to generate a score only, used for evaluation.
@@ -209,6 +211,11 @@ class Bedrock(LLMProvider):
         Returns:
             The score on a 0-1 scale.
         """
+
+        if temperature != 0.0:
+            logger.warning(
+                "The `temperature` argument is ignored for Bedrock provider."
+            )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -225,7 +232,8 @@ class Bedrock(LLMProvider):
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0
+        normalize: float = 10.0,
+        temperature: float = 0.0
     ) -> Union[float, Tuple[float, Dict]]:
         """
         Base method to generate a score and reason, used for evaluation.
@@ -242,6 +250,12 @@ class Bedrock(LLMProvider):
             
             Reason metadata if returned by the LLM.
         """
+
+        if temperature != 0.0:
+            logger.warning(
+                "The `temperature` argument is ignored for Bedrock provider."
+            )
+
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
