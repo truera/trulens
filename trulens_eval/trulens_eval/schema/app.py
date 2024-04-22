@@ -37,7 +37,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     feedback_definitions: Sequence[mod_feedback_schema.FeedbackDefinition] = []
     """Feedback functions to evaluate on each record."""
 
-    feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
+    feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
     """How to evaluate feedback functions upon producing a record."""
 
     root_class: pyschema.Class
@@ -81,7 +81,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_id: Optional[mod_types_schema.AppID] = None,
         tags: Optional[mod_types_schema.Tags] = None,
         metadata: Optional[mod_types_schema.Metadata] = None,
-        feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD,
+        feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
         app_extra_json: serial.JSON = None,
         **kwargs
     ):
