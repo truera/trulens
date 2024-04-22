@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
-import { Streamlit } from 'streamlit-component-lib';
 import { SxProps, Theme } from '@mui/material';
 import { TreeItem, treeItemClasses } from '@mui/x-tree-view';
-import { RecordTreeCell } from './RecordTreeCell';
-import { StackTreeNode } from '../utils/StackTreeNode';
+import { useEffect } from 'react';
+import { Streamlit } from 'streamlit-component-lib';
+
+import { RecordTreeCell } from '@/RecordTree/RecordTreeCell';
+import { StackTreeNode } from '@/utils/StackTreeNode';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;

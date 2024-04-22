@@ -1,3 +1,3 @@
-import LabelAndValue from './LabelAndValue';
+import LabelAndValue from '@/LabelAndValue/LabelAndValue';
 
 export default LabelAndValue;

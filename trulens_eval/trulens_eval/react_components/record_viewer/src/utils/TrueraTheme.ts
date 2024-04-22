@@ -1,6 +1,7 @@
 import { createTheme, Theme } from '@mui/material';
 import grey from '@mui/material/colors/grey';
-import * as Colors from './colors';
+
+import * as Colors from '@/utils/colors';
 
 declare module '@mui/material/styles' {
   interface TypographyVariants {
