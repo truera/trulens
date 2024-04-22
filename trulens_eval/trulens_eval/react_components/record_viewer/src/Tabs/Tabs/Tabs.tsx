@@ -1,8 +1,9 @@
 // MUI Tabs use any, so we're trying to preserve the typing.
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
+import { SxProps, tabClasses, Tabs as MUITabs, Theme } from '@mui/material';
 import React, { PropsWithChildren } from 'react';
-import { SxProps, Tabs as MUITabs, Theme, tabClasses } from '@mui/material';
-import { combineSx } from '../../utils/styling';
+
+import { combineSx } from '@/utils/styling';
 
 interface TabProps {
   value?: any;
