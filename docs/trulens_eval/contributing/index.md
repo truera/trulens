@@ -126,3 +126,10 @@ problematic designs. See [Tech debt index](techdebt.md).
    include-markdown "../../../trulens_explain/CONTRIBUTORS.md"
    heading-offset=2
 %}
+
+## 🧰 Maintainers
+
+{%
+   include-markdown "../../../trulens_eval/MAINTAINERS.md"
+   heading-offset=2
+%}
