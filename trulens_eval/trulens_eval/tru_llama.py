@@ -353,7 +353,7 @@ class TruLlama(mod_app.App):
 
         else:
 
-            return App.main_input(self, func, sig, bindings)
+            return mod_app.App.main_input(self, func, sig, bindings)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -370,7 +370,7 @@ class TruLlama(mod_app.App):
             if attr is not None:
                 return getattr(ret, attr)
             else:  # attr is None
-                return App.main_output(self, func, sig, bindings, ret)
+                return mod_app.App.main_output(self, func, sig, bindings, ret)
 
         except NotImplementedError:
             return None

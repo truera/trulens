@@ -311,7 +311,7 @@ class TruChain(mod_app.App):
 
             return ins[self.app.input_keys[0]]
 
-        return App.main_input(self, func, sig, bindings)
+        return mod_app.App.main_input(self, func, sig, bindings)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -327,7 +327,7 @@ class TruChain(mod_app.App):
             if self.app.output_keys[0] in ret:
                 return ret[self.app.output_keys[0]]
 
-        return App.main_output(self, func, sig, bindings, ret)
+        return mod_app.App.main_output(self, func, sig, bindings, ret)
 
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
