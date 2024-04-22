@@ -11,12 +11,10 @@ from trulens_eval.database.base import DB
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.database.legacy.migration import VersionException
 from trulens_eval.database.migrations import DbRevisions
-from trulens_eval.schema.app import AppDefinition
-from trulens_eval.schema.base import Cost
-from trulens_eval.schema.base import Perf
-from trulens_eval.schema.record import Record
-from trulens_eval.schema.feedback import FeedbackCall
-from trulens_eval.schema.feedback import FeedbackDefinition
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils.pyschema import FunctionOrMethod
 
 sql_alchemy_migration_versions: List[str] = ["1"]
@@ -113,21 +111,21 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                         pass
 
                                 if attr_name == "record_json":
-                                    Record.model_validate(test_json)
+                                    mod_record_schema.Record.model_validate(test_json)
                                 elif attr_name == "cost_json":
-                                    Cost.model_validate(test_json)
+                                    mod_base_schema.Cost.model_validate(test_json)
                                 elif attr_name == "perf_json":
-                                    Perf.model_validate(test_json)
+                                    mod_base_schema.Perf.model_validate(test_json)
                                 elif attr_name == "calls_json":
                                     for record_app_call_json in test_json[
                                             'calls']:
-                                        FeedbackCall.model_validate(
+                                        mod_feedback_schema.FeedbackCall.model_validate(
                                             record_app_call_json
                                         )
                                 elif attr_name == "feedback_json":
-                                    FeedbackDefinition.model_validate(test_json)
+                                    mod_feedback_schema.FeedbackDefinition.model_validate(test_json)
                                 elif attr_name == "app_json":
-                                    AppDefinition.model_validate(test_json)
+                                    mod_app_schema.AppDefinition.model_validate(test_json)
                                 else:
                                     # If this happens, trulens needs to add a migration
                                     raise VersionException(
