@@ -194,6 +194,9 @@ class Tru(python.SingletonPerName):
             return
 
         if database is not None:
+            if not isinstance(database, DB):
+                raise ValueError("`database` must be a `trulens_eval.database.base.DB` instance.")
+            
             self.db = database
         else:
             self.db = sqlalchemy.SQLAlchemyDB.from_tru_args(**database_args)
@@ -336,7 +339,7 @@ class Tru(python.SingletonPerName):
 
     def add_record(
         self,
-        record: Optional[schema.Record] = None,
+        record: Optional[mod_record_schema.Record] = None,
         **kwargs: dict
     ) -> mod_types_schema.RecordID:
         """Add a record to the database.
@@ -478,22 +481,22 @@ class Tru(python.SingletonPerName):
         """
 
         if not isinstance(record, mod_record_schema.Record):
-            raise ValueError("record must be a schema.Record.")
+            raise ValueError("`record` must be a `trulens_eval.schema.record.Record` instance.")
 
         if not isinstance(feedback_functions, Sequence):
-            raise ValueError("feedback_functions must be a sequence.")
+            raise ValueError("`feedback_functions` must be a sequence.")
 
         if not all(isinstance(ffunc, feedback.Feedback)
                    for ffunc in feedback_functions):
             raise ValueError(
-                "feedback_functions must be a sequence of feedback.Feedback."
+                "`feedback_functions` must be a sequence of `trulens_eval.feedback.feedback.Feedback` instances."
             )
 
         if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
-            raise ValueError("app must be a trulens_eval.schema.app.AppDefinition.")
+            raise ValueError("`app` must be a `trulens_eval.schema.app.AppDefinition` instance.")
 
         if not isinstance(wait, bool):
-            raise ValueError("wait must be a bool.")
+            raise ValueError("`wait` must be a bool.")
 
         future_feedback_map: Dict[Future[mod_feedback_schema.FeedbackResult],
                                   feedback.Feedback] = {
