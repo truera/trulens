@@ -11,10 +11,10 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Select
+from trulens_eval.schema.feedback import Select
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
@@ -124,15 +124,17 @@ class LangChainInstrument(Instrument):
         )
 
 
-class TruChain(App):
-    """
-    Recorder for LangChain applications.
+class TruChain(mod_app.App):
+    """Recorder for _LangChain_ applications.
 
-    This recorder is designed for LangChain apps, providing a way to instrument, log, and evaluate their behavior.
+    This recorder is designed for LangChain apps, providing a way to instrument,
+    log, and evaluate their behavior.
 
     !!! example "Creating a LangChain RAG application"
 
-        Consider an example LangChain RAG application. For the complete code example, see [LangChain Quickstart](https://www.trulens.org/trulens_eval/getting_started/quickstarts/langchain_quickstart/).
+        Consider an example LangChain RAG application. For the complete code
+        example, see [LangChain
+        Quickstart](https://www.trulens.org/trulens_eval/getting_started/quickstarts/langchain_quickstart/).
 
         ```python
         from langchain import hub
@@ -153,7 +155,9 @@ class TruChain(App):
         )
         ```
 
-    Feedback functions can utilize the specific context produced by the application's retriever. This is achieved using the `select_context` method, which then can be used by a feedback selector, such as `on(context)`.
+    Feedback functions can utilize the specific context produced by the
+    application's retriever. This is achieved using the `select_context` method,
+    which then can be used by a feedback selector, such as `on(context)`.
 
     !!! example "Defining a feedback function"
 
@@ -175,7 +179,8 @@ class TruChain(App):
         )
         ```
 
-    The application can be wrapped in a `TruChain` recorder to provide logging and evaluation upon the application's use.
+    The application can be wrapped in a `TruChain` recorder to provide logging
+    and evaluation upon the application's use.
 
     !!! example "Using the `TruChain` recorder"
 
@@ -194,11 +199,14 @@ class TruChain(App):
             chain("What is langchain?")
         ```
 
-    Further information about LangChain apps can be found on the [LangChain Documentation](https://python.langchain.com/docs/) page.
+    Further information about LangChain apps can be found on the [LangChain
+    Documentation](https://python.langchain.com/docs/) page.
 
     Args:
         app: A LangChain application.
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App] and [AppDefinition][trulens_eval.app.AppDefinition].
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.schema.app.AppDefinition].
     """
 
     app: Any  # Chain
@@ -303,7 +311,7 @@ class TruChain(App):
 
             return ins[self.app.input_keys[0]]
 
-        return App.main_input(self, func, sig, bindings)
+        return mod_app.App.main_input(self, func, sig, bindings)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -319,7 +327,7 @@ class TruChain(App):
             if self.app.output_keys[0] in ret:
                 return ret[self.app.output_keys[0]]
 
-        return App.main_output(self, func, sig, bindings, ret)
+        return mod_app.App.main_output(self, func, sig, bindings, ret)
 
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.

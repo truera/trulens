@@ -10,17 +10,15 @@ import random
 import sys
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
-    Type, TypeVar
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
+                    Sequence, Tuple, Type, TypeVar)
 
 from pydantic import Field
 import requests
 
-from trulens_eval.schema import Cost
-from trulens_eval.utils.asynchro import CallableMaybeAwaitable
-from trulens_eval.utils.pace import Pace
+from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.utils import asynchro as mod_asynchro_utils
+from trulens_eval.utils import pace as mod_pace
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import callable_name
@@ -60,7 +58,7 @@ class EndpointCallback(SerialModel):
     endpoint: Endpoint = Field(exclude=True)
     """Thhe endpoint owning this callback."""
 
-    cost: Cost = Field(default_factory=Cost)
+    cost: mod_base_schema.Cost = Field(default_factory=mod_base_schema.Cost)
     """Costs tracked by this callback."""
 
     def handle(self, response: Any) -> None:
@@ -152,9 +150,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     post_headers: Dict[str, str] = Field(default_factory=dict, exclude=True)
     """Optional post headers for post requests if done by this class."""
 
-    pace: Pace = Field(
+    pace: mod_pace.Pace = Field(
         default_factory=lambda:
-        Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
+        mod_pace.Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
         exclude=True
     )
     """Pacing instance to maintain a desired rpm."""
@@ -214,7 +212,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         kwargs['callback_class'] = callback_class
         kwargs['global_callback'] = callback_class(endpoint=self)
         kwargs['callback_name'] = f"callback_{name}"
-        kwargs['pace'] = Pace(
+        kwargs['pace'] = mod_pace.Pace(
             seconds_per_period=60.0,  # 1 minute
             marks_per_second=rpm / 60.0
         )
@@ -433,7 +431,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def track_all_costs(
-        __func: CallableMaybeAwaitable[A, T],
+        __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
         *args,
         with_openai: bool = True,
         with_hugs: bool = True,
@@ -480,14 +478,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def track_all_costs_tally(
-        __func: CallableMaybeAwaitable[A, T],
+        __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
         *args,
         with_openai: bool = True,
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
         **kwargs
-    ) -> Tuple[T, Cost]:
+    ) -> Tuple[T, mod_base_schema.Cost]:
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
@@ -505,7 +503,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         if len(cbs) == 0:
             # Otherwise sum returns "0" below.
-            costs = Cost()
+            costs = mod_base_schema.Cost()
         else:
             costs = sum(cb.cost for cb in cbs)
 
@@ -513,7 +511,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def _track_costs(
-        __func: CallableMaybeAwaitable[A, T],
+        __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
         *args,
         with_endpoints: Optional[List[Endpoint]] = None,
         **kwargs
@@ -577,7 +575,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # return others.
         return result, callbacks
 
-    def track_cost(self, __func: CallableMaybeAwaitable[T], *args,
+    def track_cost(self, __func: mod_asynchro_utils.CallableMaybeAwaitable[T], *args,
                    **kwargs) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.

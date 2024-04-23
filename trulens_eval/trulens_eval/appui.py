@@ -3,7 +3,7 @@ from pprint import PrettyPrinter
 from threading import Thread
 from typing import Callable, List, Mapping, Optional, Sequence, Union
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_NOTEBOOK
@@ -232,7 +232,7 @@ class AppUI(traitlets.HasTraits):
 
     def __init__(
         self,
-        app: App,
+        app: mod_app.App,
         use_async: bool = False,
         app_selectors: Optional[List[Union[str, Lens]]] = None,
         record_selectors: Optional[List[Union[str, Lens]]] = None
