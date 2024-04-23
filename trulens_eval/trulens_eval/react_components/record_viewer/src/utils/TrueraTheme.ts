@@ -1,6 +1,7 @@
 import { createTheme, Theme } from '@mui/material';
 import grey from '@mui/material/colors/grey';
-import * as Colors from './colors';
+
+import * as Colors from '@/utils/colors';
 
 declare module '@mui/material/styles' {
   interface TypographyVariants {
@@ -208,7 +209,6 @@ TrueraTheme.components = {
       h4: TrueraTheme.typography.h4,
       h5: TrueraTheme.typography.h5,
       p: TrueraTheme.typography.body2,
-      // TODO (Santi) use .link, .disabled, .input
       '.link': {
         color: TrueraTheme.palette.primary.main,
         textDecoration: 'underline',
