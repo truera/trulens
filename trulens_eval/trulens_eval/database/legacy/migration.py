@@ -1,4 +1,8 @@
-# This is pre-sqlalchemy db migration. This file should not need changes. It is here for backwards compatibility of oldest trulens-eval versions.
+"""
+This is pre-sqlalchemy db migration. This file should not need changes. It is
+here for backwards compatibility of oldest trulens-eval versions.
+"""
+
 import json
 import logging
 import shutil
@@ -9,13 +13,11 @@ import uuid
 import pydantic
 from tqdm import tqdm
 
-from trulens_eval.feedback.feedback import Feedback
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackCall
-from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import Perf
-from trulens_eval.schema import Record
+from trulens_eval.feedback import feedback as mod_feedback
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import FunctionOrMethod
@@ -333,20 +335,20 @@ def _serialization_asserts(db) -> None:
                                 pass
 
                         if col_name == "record_json":
-                            Record.model_validate(test_json)
+                            mod_record_schema.Record.model_validate(test_json)
                         elif col_name == "cost_json":
-                            Cost.model_validate(test_json)
+                            mod_base_schema.Cost.model_validate(test_json)
                         elif col_name == "perf_json":
-                            Perf.model_validate(test_json)
+                            mod_base_schema.Perf.model_validate(test_json)
                         elif col_name == "calls_json":
                             for record_app_call_json in test_json['calls']:
-                                FeedbackCall.model_validate(
+                                mod_feedback_schema.FeedbackCall.model_validate(
                                     record_app_call_json
                                 )
                         elif col_name == "feedback_json":
-                            FeedbackDefinition.model_validate(test_json)
+                            mod_feedback_schema.FeedbackDefinition.model_validate(test_json)
                         elif col_name == "app_json":
-                            AppDefinition.model_validate(test_json)
+                            mod_app_schema.AppDefinition.model_validate(test_json)
                         else:
                             # If this happens, trulens needs to add a migration
 

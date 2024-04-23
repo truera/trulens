@@ -1,10 +1,10 @@
 # Code in support of the Apps.py page.
 
-from typing import Any, ClassVar, Optional
+from typing import ClassVar, Optional
 
 import pydantic
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.utils.serial import JSON
 
 
@@ -23,7 +23,7 @@ class ChatRecord(pydantic.BaseModel):
     record_json: Optional[JSON] = None
 
     # The final app state for continuing the session.
-    app: App
+    app: mod_app.App
 
     # The state of the app as was when this record was produced.
     app_json: JSON

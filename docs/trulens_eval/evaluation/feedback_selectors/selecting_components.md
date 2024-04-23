@@ -1,6 +1,8 @@
-LLM applications come in all shapes and sizes and with a variety of different control
-flows. As a result it’s a challenge to consistently evaluate parts of an LLM
-application trace.
+# Selecting Components
+
+LLM applications come in all shapes and sizes and with a variety of different
+control flows. As a result it’s a challenge to consistently evaluate parts of an
+LLM application trace.
 
 Therefore, we’ve adapted the use of [lenses](https://en.wikipedia.org/wiki/Bidirectional_transformation)
 to refer to parts of an LLM stack trace and use those when defining evaluations.
@@ -64,6 +66,8 @@ from all invocations of `retrieve`.
 ```python
 context_all_calls = Select.RecordCalls.retrieve[:].rets.rets[:]
 ```
+
+See also other [Select][trulens_eval.schema.feedback.Select] shortcuts.
 
 ### Understanding the structure of your app
 
