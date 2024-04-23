@@ -1,7 +1,7 @@
 # Specific feedback functions:
 from trulens_eval.feedback.embeddings import Embeddings
 # Main class holding and running feedback functions:
-from trulens_eval.feedback.feedback import Feedback
+from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.groundedness import Groundedness
 from trulens_eval.feedback.groundtruth import GroundTruthAgreement
 # Providers of feedback functions evaluation:
@@ -21,6 +21,8 @@ with OptionalImports(messages=REQUIREMENT_LITELLM):
 with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import AzureOpenAI
     from trulens_eval.feedback.provider.openai import OpenAI
+
+Feedback = mod_feedback.Feedback
 
 __all__ = [
     "Feedback",

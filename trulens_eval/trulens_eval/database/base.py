@@ -1,24 +1,18 @@
 import abc
 from datetime import datetime
 import logging
-from pprint import PrettyPrinter
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
 import pandas as pd
 
 from trulens_eval import __version__
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.database.legacy import migration
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import AppID
-from trulens_eval.schema import FeedbackDefinition
-from trulens_eval.schema import FeedbackDefinitionID
-from trulens_eval.schema import FeedbackResult
-from trulens_eval.schema import FeedbackResultID
-from trulens_eval.schema import FeedbackResultStatus
-from trulens_eval.schema import Record
-from trulens_eval.schema import RecordID
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSONized
@@ -97,8 +91,8 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_record(
         self,
-        record: Record,
-    ) -> RecordID:
+        record: mod_record_schema.Record,
+    ) -> mod_types_schema.RecordID:
         """
         Upsert a `record` into the database.
         
@@ -112,13 +106,13 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_app(self, app: AppDefinition) -> AppID:
+    def insert_app(self, app: mod_app_schema.AppDefinition) -> mod_types_schema.AppID:
         """
         Upsert an `app` into the database.
 
         Args:
             app: The app to insert or update. Note that only the
-                [AppDefinition][trulens_eval.schema.AppDefinition] parts are serialized
+                [AppDefinition][trulens_eval.schema.app.AppDefinition] parts are serialized
                 hence the type hint.
 
         Returns:
@@ -129,15 +123,15 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def insert_feedback_definition(
-        self, feedback_definition: FeedbackDefinition
-    ) -> FeedbackDefinitionID:
+        self, feedback_definition: mod_feedback_schema.FeedbackDefinition
+    ) -> mod_types_schema.FeedbackDefinitionID:
         """
         Upsert a `feedback_definition` into the databaase.
 
         Args:
             feedback_definition: The feedback definition to insert or update.
                 Note that only the
-                [FeedbackDefinition][trulens_eval.schema.FeedbackDefinition]
+                [FeedbackDefinition][trulens_eval.schema.feedback.FeedbackDefinition]
                 parts are serialized hence the type hint.
 
         Returns:
@@ -149,7 +143,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_feedback_defs(
         self,
-        feedback_definition_id: Optional[FeedbackDefinitionID] = None
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None
     ) -> pd.DataFrame:
         """Retrieve feedback definitions from the database.
         
@@ -167,8 +161,8 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_feedback(
         self,
-        feedback_result: FeedbackResult,
-    ) -> FeedbackResultID:
+        feedback_result: mod_feedback_schema.FeedbackResult,
+    ) -> mod_types_schema.FeedbackResultID:
         """Upsert a `feedback_result` into the the database.
 
         Args:
@@ -183,11 +177,11 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_feedback(
         self,
-        record_id: Optional[RecordID] = None,
-        feedback_result_id: Optional[FeedbackResultID] = None,
-        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        status: Optional[Union[FeedbackResultStatus,
-                               Sequence[FeedbackResultStatus]]] = None,
+        record_id: Optional[mod_types_schema.RecordID] = None,
+        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
+        status: Optional[Union[mod_feedback_schema.FeedbackResultStatus,
+                               Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -223,16 +217,16 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_feedback_count_by_status(
         self,
-        record_id: Optional[RecordID] = None,
-        feedback_result_id: Optional[FeedbackResultID] = None,
-        feedback_definition_id: Optional[FeedbackDefinitionID] = None,
-        status: Optional[Union[FeedbackResultStatus,
-                               Sequence[FeedbackResultStatus]]] = None,
+        record_id: Optional[mod_types_schema.RecordID] = None,
+        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
+        status: Optional[Union[mod_feedback_schema.FeedbackResultStatus,
+                               Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: bool = False
-    ) -> Dict[FeedbackResultStatus, int]:
+    ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
         """Get count of feedback results matching a set of optional criteria grouped by
         their status.
         
@@ -247,7 +241,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_app(self, app_id: AppID) -> Optional[JSONized[App]]:
+    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized[mod_app.App]]:
         """Get the app with the given id from the database.
         
         Returns:
@@ -267,7 +261,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[AppID]] = None
+        app_ids: Optional[List[mod_types_schema.AppID]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Get records fom the database.
         

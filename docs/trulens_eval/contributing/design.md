@@ -112,13 +112,13 @@ instrumented versions.
 
 The instrumented versions of functions/methods record the inputs/outputs and
 some additional data (see
-[RecordAppCallMethod][trulens_eval.schema.RecordAppCallMethod]). As more than
+[RecordAppCallMethod]trulens_eval.schema.record.RecordAppCallMethod]). As more than
 one instrumented call may take place as part of a app invokation, they are
 collected and returned together in the `calls` field of
-[Record][trulens_eval.schema.Record].
+[Record][trulens_eval.schema.record.Record].
 
 Calls can be connected to the components containing the called method via the
-`path` field of [RecordAppCallMethod][trulens_eval.schema.RecordAppCallMethod].
+`path` field of [RecordAppCallMethod][trulens_eval.schema.record.RecordAppCallMethod].
 This class also holds information about the instrumented method.
 
 #### Call Data (Arguments/Returns)
@@ -132,7 +132,7 @@ tools as App Data (see above).
   `Record` if the method makes use of multiple of its versions in the class
   hierarchy (i.e. an extended class calls its parents for part of its task). In
   these circumstances, the `method` field of
-  [RecordAppCallMethod][trulens_eval.schema.RecordAppCallMethod] will
+  [RecordAppCallMethod][trulens_eval.schema.record.RecordAppCallMethod] will
   distinguish the different versions of the method.
 
 - Thread-safety -- it is tricky to use global data to keep track of instrumented
