@@ -1,11 +1,11 @@
 # 💾 Record
 
-::: trulens_eval.schema.Record
+::: trulens_eval.schema.record.Record
 
-::: trulens_eval.schema.RecordAppCall
+::: trulens_eval.schema.record.RecordAppCall
 
-::: trulens_eval.schema.RecordAppCallMethod
+::: trulens_eval.schema.record.RecordAppCallMethod
 
-::: trulens_eval.schema.Cost
+::: trulens_eval.schema.base.Cost
 
-::: trulens_eval.schema.Perf
+::: trulens_eval.schema.base.Perf

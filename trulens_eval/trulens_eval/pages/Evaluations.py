@@ -6,6 +6,7 @@ from typing import Dict, Iterable, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
+import pprint
 from pprint import pformat
 
 import matplotlib.pyplot as plt
@@ -30,8 +31,8 @@ from trulens_eval.app import Prompt
 from trulens_eval.app import Tool
 from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
-from trulens_eval.schema import Record
-from trulens_eval.schema import Select
+from trulens_eval.schema.feedback import Select
+from trulens_eval.schema.record import Record
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.streamlit import init_from_args
@@ -43,7 +44,6 @@ from trulens_eval.ux.components import draw_tool_info
 from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
-import pprint
 
 st.runtime.legacy_caching.clear_cache()
 
