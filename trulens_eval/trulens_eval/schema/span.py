@@ -6,17 +6,22 @@ information into type of call related to types of components.
 
 import datetime
 from enum import Enum
+import time
 from typing import Dict, List, Mapping, Optional, Sequence, Union
 
+import contextvar
+from opentelemetry.trace import status as trace_status
 import opentelemetry.trace.span as ot_span
 from opentelemetry.util import types as ot_types
 import pydantic
 
-SpanID = str
-TraceID = str
-# str | bool | int | float | Sequence[str] | Sequence[bool] | Sequence[int] | Sequence[float]
+TTimestamp = int # uint64, nonoseconds since epoch
+TSpanID = str
+TTraceID = str
+
 
 class DictNamespace(Dict[str, ot_types.AttributeValue]):
+    """View into a dict with keys prefixed by some `namespace` string."""
 
     def __init__(self, parent: Dict, namespace: str):
         super().__init__(**kwargs)
@@ -32,7 +37,6 @@ class DictNamespace(Dict[str, ot_types.AttributeValue]):
 
     def __delitem__(self, key):
         del self.parent[f"{self.namespace}.{key}"]
-
 
 class SpanStatus(Enum, str):
     """Span status."""
@@ -50,36 +54,27 @@ class Span(pydantic.BaseModel, ot_span.Span):
     """Base Span type.
     
     Smallest unit of recorded activity.
+
+    See also [OpenTelemetry Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span).
     """
 
     name: str
     """Name of the span."""
 
-    span_id: SpanID
+    span_id: TSpanID
     """Unique identifier for the span."""
 
-    trace_id: TraceID
+    trace_id: TTraceID
     """Unique identifier for the trace this span belongs to."""
 
-    parent_span_id: Optional[SpanID] = None
+    parent_span_id: Optional[TSpanID] = None
     """Id of parent span if any.
 
     None if this is a root span.
     """
 
-    start_timestamp: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
-    """Datetime when the span's activity started."""
-
-    end_timestamp: Optional[datetime.datetime] = None
-    """Datetime when the span's activity ended.
-    
-    None if not yet ended.
-    """
-
-    status: SpanStatus = SpanStatus.INCOMPLETE
-    """Status of the span's activity."""
-
     tags: List[str] = pydantic.Field(default_factory=list)
+    # make property
 
     # span_type: SpanType = SpanType.OTHER
 
@@ -102,27 +97,60 @@ class Span(pydantic.BaseModel, ot_span.Span):
             namespace="trulens_eval@metadata"
         )
 
+        kwargs['context'] = contextvar.ContextVar("trulens_eval@context")
+
         super().__init__(**kwargs)
 
     input: Dict[str, str] = pydantic.Field(default_factory=dict)
+    # Make property
 
     output: Dict[str, str] = pydantic.Field(default_factory=dict)
+    # Make property
 
-    # for implementing ot_span.Span requirements:
+    # for implementing OpenTelemetry Span requirements:
+
+    status: trace_status.StatusCode = trace_status.StatusCode.UNSET
+    """Status of the span as per OpenTelemetry Span requirements."""
+
+    status_description: Optional[str] = None
+    """Status description as per OpenTelemetry Span requirements."""
+
+    start_timestamp: TTimestamp = pydantic.Field(default_factory=time.time_ns)
+    """Timestamp when the span's activity started in nanoseconds since epoch.
     
+    Format and interpretation comes from OpenTelemetry Span.
+    """
+
+    end_timestamp: Optional[TTimestamp] = None
+    """Timestamp when the span's activity ended in nanoseconds since epoch.
+    
+    None if not yet ended. Format and interpretation comes from OpenTelemetry
+    Span.
+    """
+
+    links: Dict[ot_span.SpanContext, Mapping[str, ot_types.AttributeValue]]
+    """Relationships to other spans with attributes on each link.
+    
+    Conforms to OpenTelemetry Span requirements.
+    """
+
     attributes: Dict[str, ot_types.AttributeValue] = pydantic.Field(default_factory=dict)
-
-    context: Optional[ot_span.SpanContext] = None
-
-    # begin ot_span.Span requirements
-
+    """Attributes of span.
     
-    def end(self, end_time: Optional[int] = None):
+    Conforms to OpenTelemetry Span requirements.
+    """
+
+    context: ot_span.SpanContext
+    """Unique identifier for the span."""
+
+    # begin OpenTelemetry Span requirements
+
+    def end(self, end_time: Optional[TTimestamp] = None):
         """See [end][opentelemetry.trace.span.Span.end]"""
         if end_time:
-            self.end_timestamp = datetime.datetime.fromtimestamp(end_time)
+            self.end_timestamp = end_time
         else:
-            self.end_timestamp = datetime.datetime.now()
+            self.end_timestamp = time.time_ns()
 
     def get_span_context(self) -> ot_span.SpanContext:
         """See [end][opentelemetry.trace.span.Span.get_span_context]"""
@@ -164,6 +192,15 @@ class Span(pydantic.BaseModel, ot_span.Span):
         status: Union[ot_span.Status, ot_span.StatusCode],
         description: Optional[str] = None
     ) -> None:
+        if isinstance(status, ot_span.Status):
+            if description is not None:
+                raise ValueError("Ambiguous status description provided both in `status.description` and in `description`.")
+            self.status = status.status_code
+            self.status_description = status.description
+        else:
+            self.status = status
+            self.status_description = description
+
         raise NotImplementedError("set_status not implemented")
 
     def record_exception(
@@ -175,7 +212,7 @@ class Span(pydantic.BaseModel, ot_span.Span):
     ) -> None:
         raise NotImplementedError("record_exception not implemented")
     
-    # end ot_span.Span requirements
+    # end OpenTelemetry Span requirements
 
 class SpanRoot(Span):
     pass
@@ -203,7 +240,6 @@ class SpanTask(Span):
 
 class SpanOther(Span):
     pass
-
 
 class SpanType(Enum, str):
     """Span types."""
