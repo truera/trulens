@@ -189,10 +189,10 @@ class Tru(python.SingletonPerName):
                     "Tru was already initialized. "
                     "Cannot change database configuration after initialization."
                 )
+                self.warning()
 
-            # Already initialized by SingletonByName mechanism.
             return
-
+        
         if database is not None:
             if not isinstance(database, DB):
                 raise ValueError("`database` must be a `trulens_eval.database.base.DB` instance.")
@@ -207,6 +207,7 @@ class Tru(python.SingletonPerName):
             except DatabaseVersionException as e:
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
+
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict

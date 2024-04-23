@@ -75,6 +75,12 @@ class LiteLLMEndpoint(Endpoint):
     def __init__(self, litellm_provider: str = "openai", **kwargs):
         if hasattr(self, "name"):
             # singleton already made
+            if len(kwargs) > 0:
+                logger.warning(
+                    "Ignoring additional kwargs for singleton endpoint %s: %s",
+                    self.name, pp.pformat(kwargs)
+                )
+                self.warning()
             return
 
         kwargs['name'] = "litellm"
