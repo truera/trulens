@@ -1,5 +1,5 @@
-import { ReactElement, ReactNode } from 'react';
 import Tooltip, { TooltipProps } from '@mui/material/Tooltip';
+import { ReactElement, ReactNode } from 'react';
 
 export default function StyledTooltip({
   title,

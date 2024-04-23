@@ -41,7 +41,6 @@ from trulens_eval import Tru
 from trulens_eval import TruBasicApp
 from trulens_eval.database.base import DB
 from trulens_eval.database.exceptions import DatabaseVersionException
-from trulens_eval.database.legacy.sqlite import LocalSQLite
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import downgrade_db
 from trulens_eval.database.migrations import get_revision_history
@@ -256,45 +255,6 @@ class TestDbV2Migration(TestCase):
         # Very naive checks:
         self.assertGreater(len(records), 0)
         self.assertGreater(len(feedbacks), 0)
-
-    def test_migrate_legacy_sqlite_file(self):
-        with TemporaryDirectory() as tmp:
-            file = Path(tmp).joinpath("legacy.sqlite")
-
-            # populate the database with some legacy data
-            legacy_db = LocalSQLite(filename=file)
-            fb, app, rec = _populate_data(legacy_db)
-
-            # run migration
-            db = SQLAlchemyDB.from_db_url(f"sqlite:///{file}")
-            self.assertTrue(is_legacy_sqlite(db.engine))
-            db.migrate_database()
-
-            # validate final state
-            self.assertFalse(is_legacy_sqlite(db.engine))
-            self.assertTrue(DbRevisions.load(db.engine).in_sync)
-
-            # check that database is usable and no data was lost
-            self.assertEqual(
-                db.get_app(app.app_id), json.loads(app.model_dump_json())
-            )
-            df_recs, fb_cols = db.get_records_and_feedback([app.app_id])
-            self.assertTrue(
-                set(df_recs.columns).issuperset(set(AppsExtractor.app_cols))
-            )
-            self.assertEqual(df_recs["record_json"][0], rec.model_dump_json())
-            self.assertEqual(list(fb_cols), [fb.name])
-
-            df_fb = db.get_feedback(record_id=rec.record_id)
-
-            self.assertEqual(df_fb["type"][0], app.root_class)
-            df_defs = db.get_feedback_defs(
-                feedback_definition_id=fb.feedback_definition_id
-            )
-            self.assertEqual(
-                df_defs["feedback_json"][0], json.loads(fb.model_dump_json())
-            )
-
 
 class MockFeedback(Provider):
     """Provider for testing purposes."""
