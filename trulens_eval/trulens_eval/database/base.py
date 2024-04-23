@@ -281,36 +281,3 @@ class DB(SerialModel, abc.ABC):
             A list of column names that contain feedback results.
         """
         raise NotImplementedError()
-
-
-def versioning_decorator(func):
-    """A function decorator that checks if a DB is up to date.
-     
-    Check that the database is up to date with the current
-    trulens_eval version (or rather the db version used in the current
-    trulens_eval version).
-    """
-
-    def wrapper(self, *args, **kwargs):
-        migration._migration_checker(db=self)
-        returned_value = func(self, *args, **kwargs)
-        return returned_value
-
-    return wrapper
-
-
-def for_all_methods(decorator):
-    """
-    A class decorator that will decorate all DB Access methods except for
-    instantiations, db resets, or version checking.
-    """
-
-    def decorate(cls):
-        for attr in cls.__dict__:
-            if not str(attr).startswith("_") and str(attr) not in [
-                    "get_meta", "reset_database", "migrate_database"
-            ] and callable(getattr(cls, attr)):
-                setattr(cls, attr, decorator(getattr(cls, attr)))
-        return cls
-
-    return decorate
