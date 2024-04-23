@@ -34,33 +34,12 @@ class DictNamespace(Dict[str, ot_types.AttributeValue]):
         del self.parent[f"{self.namespace}.{key}"]
 
 
-class SpanType(Enum, str):
-    """Span types."""
-
-    ROOT = "root"
-
-    RETRIEVER = "retriever"
-
-    RERANKER = "reranker"
-
-    LLM = "llm"
-    
-    EMBEDDING = "embedding"
-
-    TOOL = "tool"
-
-    AGENT = "agent"
-
-    TASK = "task"
-
-    OTHER = "other"
-
 class SpanStatus(Enum, str):
     """Span status."""
 
     INCOMPLETE = "incomplete"
     """Span's activity has not yet finished."""
-    
+
     SUCCESS = "success"
     """Span finished without error."""
 
@@ -102,7 +81,7 @@ class Span(pydantic.BaseModel, ot_span.Span):
 
     tags: List[str] = pydantic.Field(default_factory=list)
 
-    span_type: SpanType = SpanType.OTHER
+    # span_type: SpanType = SpanType.OTHER
 
     _attributes_metadata: Dict[str, ot_types.AttributeValue] 
     # will be set as a DictNamespace indexing elements in attributes
@@ -198,3 +177,51 @@ class Span(pydantic.BaseModel, ot_span.Span):
     
     # end ot_span.Span requirements
 
+class SpanRoot(Span):
+    pass
+
+class SpanRetriever(Span):
+    pass
+
+class SpanReranker(Span):
+    pass
+
+class SpanLLM(Span):
+    pass
+
+class SpanEmbedding(Span):
+    pass
+
+class SpanTool(Span):
+    pass
+
+class SpanAgent(Span):
+    pass
+
+class SpanTask(Span):
+    pass
+
+class SpanOther(Span):
+    pass
+
+
+class SpanType(Enum, str):
+    """Span types."""
+
+    ROOT = "root"
+
+    RETRIEVER = "retriever"
+
+    RERANKER = "reranker"
+
+    LLM = "llm"
+
+    EMBEDDING = "embedding"
+
+    TOOL = "tool"
+
+    AGENT = "agent"
+
+    TASK = "task"
+
+    OTHER = "other"
