@@ -33,7 +33,6 @@ from trulens_eval.database.utils import \
     check_db_revision as alembic_check_db_revision
 from trulens_eval.database.utils import is_legacy_sqlite
 from trulens_eval.database.utils import is_memory_sqlite
-from trulens_eval.database.utils import migrate_legacy_sqlite
 from trulens_eval.schema import FeedbackDefinitionID
 from trulens_eval.schema import FeedbackResultID
 from trulens_eval.schema import FeedbackResultStatus
@@ -233,7 +232,12 @@ class SQLAlchemyDB(DB):
                 from_version = revisions.current
                 ### SCHEMA MIGRATION ###
                 if is_legacy_sqlite(self.engine):
-                    migrate_legacy_sqlite(self.engine)
+                    raise RuntimeError(
+                        "Migrating legacy sqlite database is no longer supported. "
+                        "A database reset is required. This will delete all existing data: "
+                        "`tru.reset_database()`."
+                    ) from e
+
                 else:
                     ## TODO Create backups here. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
                     ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `tru.migrate_database(backup_db_url="...")`)
