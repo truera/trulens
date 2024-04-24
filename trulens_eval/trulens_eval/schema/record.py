@@ -12,11 +12,15 @@ import pydantic
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import types as mod_types_schema
+from trulens_eval.schema import span as mod_span_schema
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.python import Future
+
+import opentelemetry.trace.span as ot_span
+from opentelemetry.util import types as ot_types
 
 T = TypeVar("T")
 
@@ -69,6 +73,22 @@ class RecordAppCall(serial.SerialModel):
         """The method at the top of the stack."""
 
         return self.top().method
+
+    def as_span(
+        self,
+        trace_id: int,
+        parent_span_id: Optional[int]=None
+    ) -> mod_span_schema.Span:
+        """Conert this to Span."""
+
+        return mod_span_schema.Span(
+            name = self.method().name,
+            context = ot_span.SpanContext(0, trace_id, False),
+        )
+        #    parent_span_id = parent_span_id,
+
+
+        pass
 
 
 class Record(serial.SerialModel, Hashable):
