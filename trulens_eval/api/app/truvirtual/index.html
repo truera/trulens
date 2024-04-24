@@ -2369,36 +2369,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label=" VirtualRecord">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.tru_virtual.VirtualRecord-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.tru_virtual.VirtualRecord.__init__" class="md-nav__link">
-    <span class="md-ellipsis">
-      &nbsp;__init__
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -4238,36 +4208,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label=" VirtualRecord">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.tru_virtual.VirtualRecord-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#trulens_eval.tru_virtual.VirtualRecord.__init__" class="md-nav__link">
-    <span class="md-ellipsis">
-      &nbsp;__init__
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -4865,197 +4805,12 @@
 
   <div class="doc doc-contents first">
           <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../../record/#trulens_eval.schema.Record">Record</a></code></p>
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.schema.record.Record" href="../../record/#trulens_eval.schema.record.Record">Record</a></code></p>
 
   
-      <p>The <code>TruVirtual</code> module facilitates the ingestion and evaluation of application logs that were generated outside of TruLens. It allows for the creation of a virtual representation of your application, enabling the evaluation of logged data within the TruLens framework.</p>
-<p>To begin, construct a virtual application representation. This can be achieved through a simple dictionary or by utilizing the <code>VirtualApp</code> class, which allows for a more structured approach to storing application information relevant for feedback evaluation.</p>
-<div class="admonition example">
-<p class="admonition-title">Constructing a Virtual Application</p>
-<div class="highlight"><pre><span></span><code><span class="n">virtual_app</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;llm&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;modelname&#39;</span><span class="p">:</span> <span class="s1">&#39;some llm component model name&#39;</span><span class="p">},</span>
-    <span class="s1">&#39;template&#39;</span><span class="p">:</span> <span class="s1">&#39;information about the template used in the app&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;debug&#39;</span><span class="p">:</span> <span class="s1">&#39;optional fields for additional debugging information&#39;</span>
-<span class="p">}</span>
-<span class="c1"># Converting the dictionary to a VirtualApp instance</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Select</span>
-<span class="kn">from</span> <span class="nn">trulens_eval.tru_virtual</span> <span class="kn">import</span> <span class="n">VirtualApp</span>
-
-<span class="n">virtual_app</span> <span class="o">=</span> <span class="n">VirtualApp</span><span class="p">(</span><span class="n">virtual_app</span><span class="p">)</span>
-<span class="n">virtual_app</span><span class="p">[</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">maxtokens</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1024</span>
-</code></pre></div>
-</div>
-<p>Incorporate components into the virtual app for evaluation by utilizing the <code>Select</code> class. This approach allows for the reuse of setup configurations when defining feedback functions.</p>
-<div class="admonition example">
-<p class="admonition-title">Incorporating Components into the Virtual App</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Setting up a virtual app with a retriever component</span>
-<span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Select</span>
-<span class="n">retriever_component</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retriever</span>
-<span class="n">virtual_app</span><span class="p">[</span><span class="n">retriever_component</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;this is the retriever component&#39;</span>
-</code></pre></div>
-</div>
-<p>With your virtual app configured, it's ready to store logged data. <code>VirtualRecord</code> offers a structured way to build records from your data for ingestion into TruLens, distinguishing itself from direct <code>Record</code> creation by specifying calls through selectors.</p>
-<p>Below is an example of adding records for a context retrieval component, emphasizing that only the data intended for tracking or evaluation needs to be provided.</p>
-<div class="admonition example">
-<p class="admonition-title">Adding Records for a Context Retrieval Component</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.tru_virtual</span> <span class="kn">import</span> <span class="n">VirtualRecord</span>
-
-<span class="c1"># Selector for the context retrieval component&#39;s `get_context` call</span>
-<span class="n">context_call</span> <span class="o">=</span> <span class="n">retriever_component</span><span class="o">.</span><span class="n">get_context</span>
-
-<span class="c1"># Creating virtual records</span>
-<span class="n">rec1</span> <span class="o">=</span> <span class="n">VirtualRecord</span><span class="p">(</span>
-    <span class="n">main_input</span><span class="o">=</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">,</span>
-    <span class="n">main_output</span><span class="o">=</span><span class="s1">&#39;Germany is in Europe&#39;</span><span class="p">,</span>
-    <span class="n">calls</span><span class="o">=</span><span class="p">{</span>
-        <span class="n">context_call</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">],</span>
-            <span class="s1">&#39;rets&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Germany is a country located in Europe.&#39;</span><span class="p">]</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-<span class="n">rec2</span> <span class="o">=</span> <span class="n">VirtualRecord</span><span class="p">(</span>
-    <span class="n">main_input</span><span class="o">=</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">,</span>
-    <span class="n">main_output</span><span class="o">=</span><span class="s1">&#39;Poland is in Europe&#39;</span><span class="p">,</span>
-    <span class="n">calls</span><span class="o">=</span><span class="p">{</span>
-        <span class="n">context_call</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">],</span>
-            <span class="s1">&#39;rets&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Poland is a country located in Europe.&#39;</span><span class="p">]</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-
-<span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">rec1</span><span class="p">,</span> <span class="n">rec2</span><span class="p">]</span>
-</code></pre></div>
-</div>
-<p>For existing datasets, such as a dataframe of prompts, contexts, and responses, iterate through the dataframe to create virtual records for each entry.</p>
-<div class="admonition example">
-<p class="admonition-title">Creating Virtual Records from a DataFrame</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-
-<span class="c1"># Example dataframe</span>
-<span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;prompt&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">,</span> <span class="s1">&#39;What is the capital of France?&#39;</span><span class="p">],</span>
-    <span class="s1">&#39;response&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Germany is in Europe&#39;</span><span class="p">,</span> <span class="s1">&#39;The capital of France is Paris&#39;</span><span class="p">],</span>
-    <span class="s1">&#39;context&#39;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="s1">&#39;Germany is a country located in Europe.&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;France is a country in Europe and its capital is Paris.&#39;</span>
-    <span class="p">]</span>
-<span class="p">}</span>
-<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
-<span class="c1"># Ingesting data from the dataframe into virtual records</span>
-<span class="n">data_dict</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;records&#39;</span><span class="p">)</span>
-<span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
-
-<span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">data_dict</span><span class="p">:</span>
-    <span class="n">rec</span> <span class="o">=</span> <span class="n">VirtualRecord</span><span class="p">(</span>
-        <span class="n">main_input</span><span class="o">=</span><span class="n">record</span><span class="p">[</span><span class="s1">&#39;prompt&#39;</span><span class="p">],</span>
-        <span class="n">main_output</span><span class="o">=</span><span class="n">record</span><span class="p">[</span><span class="s1">&#39;response&#39;</span><span class="p">],</span>
-        <span class="n">calls</span><span class="o">=</span><span class="p">{</span>
-            <span class="n">context_call</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">record</span><span class="p">[</span><span class="s1">&#39;prompt&#39;</span><span class="p">]],</span>
-                <span class="s1">&#39;rets&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">record</span><span class="p">[</span><span class="s1">&#39;context&#39;</span><span class="p">]]</span>
-            <span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">)</span>
-    <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
-</code></pre></div>
-</div>
-<p>After constructing the virtual records, feedback functions can be developed in the same manner as with non-virtual applications, using the newly added <code>context_call</code> selector for reference.</p>
-<div class="admonition example">
-<p class="admonition-title">Developing Feedback Functions</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider</span> <span class="kn">import</span> <span class="n">OpenAI</span>
-<span class="kn">from</span> <span class="nn">trulens_eval.feedback.feedback</span> <span class="kn">import</span> <span class="n">Feedback</span>
-
-<span class="c1"># Initializing the feedback provider</span>
-<span class="n">openai</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
-
-<span class="c1"># Defining the context for feedback using the virtual `get_context` call</span>
-<span class="n">context</span> <span class="o">=</span> <span class="n">context_call</span><span class="o">.</span><span class="n">rets</span><span class="p">[:]</span>
-
-<span class="c1"># Creating a feedback function for context relevance</span>
-<span class="n">f_context_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input</span><span class="p">()</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-</code></pre></div>
-</div>
-<p>These feedback functions are then integrated into <code>TruVirtual</code> to construct the recorder, which can handle most configurations applicable to non-virtual apps.</p>
-<div class="admonition example">
-<p class="admonition-title">Integrating Feedback Functions into TruVirtual</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.tru_virtual</span> <span class="kn">import</span> <span class="n">TruVirtual</span>
-
-<span class="c1"># Setting up the virtual recorder</span>
-<span class="n">virtual_recorder</span> <span class="o">=</span> <span class="n">TruVirtual</span><span class="p">(</span>
-    <span class="n">app_id</span><span class="o">=</span><span class="s1">&#39;a virtual app&#39;</span><span class="p">,</span>
-    <span class="n">app</span><span class="o">=</span><span class="n">virtual_app</span><span class="p">,</span>
-    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_context_relevance</span><span class="p">]</span>
-<span class="p">)</span>
-</code></pre></div>
-</div>
-<p>To process the records and run any feedback functions associated with the recorder, use the <code>add_record</code> method.</p>
-<div class="admonition example">
-<p class="admonition-title">Logging records and running feedback functions</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Ingesting records into the virtual recorder</span>
-<span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-    <span class="n">virtual_recorder</span><span class="o">.</span><span class="n">add_record</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
-</code></pre></div>
-</div>
-<p>Metadata about your application can also be included in the <code>VirtualApp</code> for evaluation purposes, offering a flexible way to store additional information about the components of an LLM app.</p>
-<div class="admonition example">
-<p class="admonition-title">Storing metadata in a VirtualApp</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Example of storing metadata in a VirtualApp</span>
-<span class="n">virtual_app</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;llm&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;modelname&#39;</span><span class="p">:</span> <span class="s1">&#39;some llm component model name&#39;</span><span class="p">},</span>
-    <span class="s1">&#39;template&#39;</span><span class="p">:</span> <span class="s1">&#39;information about the template used in the app&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;debug&#39;</span><span class="p">:</span> <span class="s1">&#39;optional debugging information&#39;</span>
-<span class="p">}</span>
-
-<span class="kn">from</span> <span class="nn">trulens_eval.schema</span> <span class="kn">import</span> <span class="n">Select</span>
-<span class="kn">from</span> <span class="nn">trulens_eval.tru_virtual</span> <span class="kn">import</span> <span class="n">VirtualApp</span>
-
-<span class="n">virtual_app</span> <span class="o">=</span> <span class="n">VirtualApp</span><span class="p">(</span><span class="n">virtual_app</span><span class="p">)</span>
-<span class="n">virtual_app</span><span class="p">[</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">maxtokens</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1024</span>
-</code></pre></div>
-</div>
-<p>This approach is particularly beneficial for evaluating the components of an LLM app.</p>
-<div class="admonition example">
-<p class="admonition-title">Evaluating components of an LLM application</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Adding a retriever component to the virtual app</span>
-<span class="n">retriever_component</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retriever</span>
-<span class="n">virtual_app</span><span class="p">[</span><span class="n">retriever_component</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;this is the retriever component&#39;</span>
-</code></pre></div>
-</div>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-<h3 id="trulens_eval.tru_virtual.VirtualRecord-functions">Functions<a href="#trulens_eval.tru_virtual.VirtualRecord-functions" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h4 id="trulens_eval.tru_virtual.VirtualRecord.__init__" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">__init__</span>
-
-
-<a href="#trulens_eval.tru_virtual.VirtualRecord.__init__" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span><span class="nf">calls</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.Lens" href="../../utils/serial/#trulens_eval.utils.serial.Lens">Lens</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]]],</span> <span class="n">cost</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Cost" href="../../record/#trulens_eval.schema.Cost">Cost</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">perf</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Perf" href="../../record/#trulens_eval.schema.Perf">Perf</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span><span class="p">)</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Create a record for a virtual app.</p>
+      <p>Virtual records for virtual apps.</p>
 <p>Many arguments are filled in by default values if not provided. See
-<a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.Record">Record</a> for all arguments. Listing here is
+<a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.record.Record">Record</a> for all arguments. Listing here is
 only for those which are required for this method or filled with default values.</p>
 
 
@@ -5093,7 +4848,7 @@ section.</p>
             <p>
                 <span class="doc-param-annotation">
                   <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens_eval.schema.Cost" href="../../record/#trulens_eval.schema.Cost">Cost</a>]</code>
+                    <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens_eval.schema.base.Cost" href="../../record/#trulens_eval.schema.base.Cost">Cost</a>]</code>
                 </span>
                 <span class="doc-param-default">
                   <b>DEFAULT:</b> 
@@ -5113,7 +4868,7 @@ is extended to make sure it is not of duration zero.</p>
             <p>
                 <span class="doc-param-annotation">
                   <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens_eval.schema.Perf" href="../../record/#trulens_eval.schema.Perf">Perf</a>]</code>
+                    <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens_eval.schema.base.Perf" href="../../record/#trulens_eval.schema.base.Perf">Perf</a>]</code>
                 </span>
                 <span class="doc-param-default">
                   <b>DEFAULT:</b> 
@@ -5125,7 +4880,7 @@ is extended to make sure it is not of duration zero.</p>
     </tbody>
   </table>
       <p>Call values are dictionaries containing arguments to
-<a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.RecordAppCall">RecordAppCall</a> constructor. Values
+<a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.record.RecordAppCall">RecordAppCall</a> constructor. Values
 can also be lists of the same. This happens in non-virtual apps when the
 same method is recorded making multiple calls in a single app
 invocation. The following defaults are used if not provided.</p>
@@ -5140,7 +4895,7 @@ invocation. The following defaults are used if not provided.</p>
 <tbody>
 <tr>
 <td><code>stack</code></td>
-<td><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.List">List</a>[<a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.RecordAppCallMethod">RecordAppCallMethod</a>]</td>
+<td><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/typing.html#typing.List">List</a>[<a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.record.RecordAppCallMethod">RecordAppCallMethod</a>]</td>
 <td>Two frames: a root call followed by a call by <a class="autorefs autorefs-internal" href="#trulens_eval.tru_virtual.virtual_object">virtual_object</a>, method name derived from the last element of the selector of this call.</td>
 </tr>
 <tr>
@@ -5155,7 +4910,7 @@ invocation. The following defaults are used if not provided.</p>
 </tr>
 <tr>
 <td><code>perf</code></td>
-<td><a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.Perf">Perf</a></td>
+<td><a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.base.Perf">Perf</a></td>
 <td>Time spanning the processing of this virtual call.</td>
 </tr>
 <tr>
@@ -5171,9 +4926,18 @@ invocation. The following defaults are used if not provided.</p>
 </tbody>
 </table>
 
-  </div>
 
-</div>
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
 
 
 
@@ -5272,7 +5036,7 @@ previously-computed results can be added using
 for creating records for this. Fields used by non-virtual apps can be
 specified here, notably:</p>
 <p>See <a class="autorefs autorefs-internal" href="../#trulens_eval.app.App">App</a> and
-<a class="autorefs autorefs-internal" href="../#trulens_eval.schema.AppDefinition">AppDefinition</a> for constructor
+<a class="autorefs autorefs-internal" href="../#trulens_eval.schema.app.AppDefinition">AppDefinition</a> for constructor
 arguments.</p>
 <h3 id="trulens_eval.tru_virtual.TruVirtual--the-app-field">The <code>app</code> field.<a class="headerlink" href="#trulens_eval.tru_virtual.TruVirtual--the-app-field" title="Permanent link">&para;</a></h3>
 <p>You can store any information you would like by passing in a dictionary to
@@ -5328,7 +5092,7 @@ dictionary. Using <code>VirtualApp</code> lets you use Selectors to define compo
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.app_id" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppID" href="../../schema/#trulens_eval.schema.AppID">AppID</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition.app_id" href="../#trulens_eval.schema.AppDefinition.app_id">app_id</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">app_id</span><span class="p">:</span> <span class="n"><span title="trulens_eval.schema.types.AppID">AppID</span></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.app.AppDefinition.app_id" href="../#trulens_eval.schema.app.AppDefinition.app_id">app_id</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5351,7 +5115,7 @@ dictionary. Using <code>VirtualApp</code> lets you use Selectors to define compo
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.tags" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">tags</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Tags" href="../../schema/#trulens_eval.schema.Tags">Tags</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition.tags" href="../#trulens_eval.schema.AppDefinition.tags">tags</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">tags</span><span class="p">:</span> <span class="n"><span title="trulens_eval.schema.types.Tags">Tags</span></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.app.AppDefinition.tags" href="../#trulens_eval.schema.app.AppDefinition.tags">tags</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5374,7 +5138,7 @@ dictionary. Using <code>VirtualApp</code> lets you use Selectors to define compo
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.metadata" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">metadata</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Metadata" href="../../schema/#trulens_eval.schema.Metadata">Metadata</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition.metadata" href="../#trulens_eval.schema.AppDefinition.metadata">metadata</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">metadata</span><span class="p">:</span> <span class="n"><span title="trulens_eval.schema.types.Metadata">Metadata</span></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.app.AppDefinition.metadata" href="../#trulens_eval.schema.app.AppDefinition.metadata">metadata</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5398,7 +5162,7 @@ dictionary. Using <code>VirtualApp</code> lets you use Selectors to define compo
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.feedback_definitions" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_definitions</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackDefinition" href="../../feedback/#trulens_eval.schema.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_definitions</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackDefinition" href="../../feedback/#trulens_eval.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5422,7 +5186,7 @@ dictionary. Using <code>VirtualApp</code> lets you use Selectors to define compo
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.feedback_mode" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_mode</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackMode" href="../../schema/#trulens_eval.schema.FeedbackMode">FeedbackMode</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackMode.WITH_APP_THREAD" href="../../schema/#trulens_eval.schema.FeedbackMode.WITH_APP_THREAD">WITH_APP_THREAD</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_mode</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackMode" href="../../feedback/#trulens_eval.schema.feedback.FeedbackMode">FeedbackMode</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackMode.WITH_APP_THREAD" href="../../feedback/#trulens_eval.schema.feedback.FeedbackMode.WITH_APP_THREAD">WITH_APP_THREAD</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5502,7 +5266,7 @@ of about the app.</p>
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.feedbacks" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedbacks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.feedback.Feedback" href="../../feedback/#trulens_eval.feedback.feedback.Feedback">Feedback</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedbacks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><span title="trulens_eval.feedback.Feedback">Feedback</span></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span><span class="p">)</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5630,7 +5394,7 @@ function) to their path in this app.</p>
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.records_with_pending_feedback_results" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">records_with_pending_feedback_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Queue" href="../../utils/python/#trulens_eval.utils.python.Queue">Queue</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../../record/#trulens_eval.schema.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Queue" href="../../utils/python/#trulens_eval.utils.python.Queue">Queue</a></span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1024</span><span class="p">))</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">records_with_pending_feedback_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Queue" href="../../utils/python/#trulens_eval.utils.python.Queue">Queue</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.record.Record" href="../../record/#trulens_eval.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Queue" href="../../utils/python/#trulens_eval.utils.python.Queue">Queue</a></span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1024</span><span class="p">))</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5817,7 +5581,7 @@ and the path of each.</p>
 
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.on_add_record" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_add_record</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.app.RecordingContext" href="../#trulens_eval.app.RecordingContext">RecordingContext</a></span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="inspect.Signature" href="https://docs.python.org/3/library/inspect.html#inspect.Signature">Signature</a></span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="inspect.BoundArguments" href="https://docs.python.org/3/library/inspect.html#inspect.BoundArguments">BoundArguments</a></span><span class="p">,</span> <span class="n">ret</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="n">perf</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Perf" href="../../record/#trulens_eval.schema.Perf">Perf</a></span><span class="p">,</span> <span class="n">cost</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Cost" href="../../record/#trulens_eval.schema.Cost">Cost</a></span><span class="p">,</span> <span class="n">existing_record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../../record/#trulens_eval.schema.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../../record/#trulens_eval.schema.Record">Record</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_add_record</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.app.RecordingContext" href="../#trulens_eval.app.RecordingContext">RecordingContext</a></span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="inspect.Signature" href="https://docs.python.org/3/library/inspect.html#inspect.Signature">Signature</a></span><span class="p">,</span> <span class="n">bindings</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="inspect.BoundArguments" href="https://docs.python.org/3/library/inspect.html#inspect.BoundArguments">BoundArguments</a></span><span class="p">,</span> <span class="n">ret</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="n">perf</span><span class="p">:</span> <span class="n">Perf</span><span class="p">,</span> <span class="n">cost</span><span class="p">:</span> <span class="n">Cost</span><span class="p">,</span> <span class="n">existing_record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.record.Record" href="../../record/#trulens_eval.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.record.Record" href="../../record/#trulens_eval.schema.record.Record">Record</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5900,7 +5664,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../utils/python/#t
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.continue_session" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">continue_session</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition" href="../#trulens_eval.schema.AppDefinition">AppDefinition</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">continue_session</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.app.AppDefinition" href="../#trulens_eval.schema.app.AppDefinition">AppDefinition</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -5966,7 +5730,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../utils/python/#t
         <tr>
           <td>
               <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition" href="../#trulens_eval.schema.AppDefinition">AppDefinition</a></code>
+                  <code><a class="autorefs autorefs-internal" title="trulens_eval.schema.app.AppDefinition" href="../#trulens_eval.schema.app.AppDefinition">AppDefinition</a></code>
               </span>
           </td>
           <td class="doc-returns-details">
@@ -5997,7 +5761,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../utils/python/#t
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.new_session" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">new_session</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span><span class="p">,</span> <span class="n">initial_app_loader</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.AppDefinition" href="../#trulens_eval.schema.AppDefinition">AppDefinition</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">new_session</span><span class="p">(</span><span class="n">app_definition_json</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span><span class="p">,</span> <span class="n">initial_app_loader</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.app.AppDefinition" href="../#trulens_eval.schema.app.AppDefinition">AppDefinition</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -6327,7 +6091,7 @@ or the <code>App</code> as a context mananger instead.</p>
 
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.with_record" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">with_record</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens_eval.app.A">A</span></span><span class="p">],</span> <span class="n"><span title="trulens_eval.utils.python.T">T</span></span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">record_metadata</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><span title="trulens_eval.utils.python.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../../record/#trulens_eval.schema.Record">Record</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">with_record</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens_eval.app.A">A</span></span><span class="p">],</span> <span class="n"><span title="trulens_eval.utils.python.T">T</span></span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">record_metadata</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><span title="trulens_eval.utils.python.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.record.Record" href="../../record/#trulens_eval.schema.record.Record">Record</a></span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -6353,7 +6117,7 @@ its results as well as a record of the execution.</p>
   </span>
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.awith_record" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">awith_record</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens_eval.app.A">A</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Awaitable" href="https://docs.python.org/3/library/typing.html#typing.Awaitable">Awaitable</a></span><span class="p">[</span><span class="n"><span title="trulens_eval.utils.python.T">T</span></span><span class="p">]],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">record_metadata</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><span title="trulens_eval.utils.python.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../../record/#trulens_eval.schema.Record">Record</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">awith_record</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><span title="trulens_eval.app.A">A</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Awaitable" href="https://docs.python.org/3/library/typing.html#typing.Awaitable">Awaitable</a></span><span class="p">[</span><span class="n"><span title="trulens_eval.utils.python.T">T</span></span><span class="p">]],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">record_metadata</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../../utils/serial/#trulens_eval.utils.serial.JSON">JSON</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><span title="trulens_eval.utils.python.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.record.Record" href="../../record/#trulens_eval.schema.record.Record">Record</a></span><span class="p">]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -6375,7 +6139,7 @@ its results as well as a record of the execution.</p>
 
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.dummy_record" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dummy_record</span><span class="p">(</span><span class="n">cost</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Cost" href="../../record/#trulens_eval.schema.Cost">Cost</a></span> <span class="o">=</span> <span class="n">mod_schema</span><span class="o">.</span><span class="n">Cost</span><span class="p">(),</span> <span class="n">perf</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Perf" href="../../record/#trulens_eval.schema.Perf">Perf</a></span> <span class="o">=</span> <span class="n">mod_schema</span><span class="o">.</span><span class="n">Perf</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">ts</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">main_input</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;main_input are strings.&#39;</span><span class="p">,</span> <span class="n">main_output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;main_output are strings.&#39;</span><span class="p">,</span> <span class="n">main_error</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;main_error are strings.&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;metakey&#39;</span><span class="p">:</span> <span class="s1">&#39;meta are dicts&#39;</span><span class="p">},</span> <span class="n">tags</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;tags are strings&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../../record/#trulens_eval.schema.Record">Record</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">dummy_record</span><span class="p">(</span><span class="n">cost</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.base.Cost" href="../../record/#trulens_eval.schema.base.Cost">Cost</a></span> <span class="o">=</span> <span class="n">mod_base_schema</span><span class="o">.</span><span class="n">Cost</span><span class="p">(),</span> <span class="n">perf</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.base.Perf" href="../../record/#trulens_eval.schema.base.Perf">Perf</a></span> <span class="o">=</span> <span class="n">mod_base_schema</span><span class="o">.</span><span class="n">Perf</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">ts</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">main_input</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;main_input are strings.&#39;</span><span class="p">,</span> <span class="n">main_output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;main_output are strings.&#39;</span><span class="p">,</span> <span class="n">main_error</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;main_error are strings.&#39;</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;metakey&#39;</span><span class="p">:</span> <span class="s1">&#39;meta are dicts&#39;</span><span class="p">},</span> <span class="n">tags</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s1">&#39;tags are strings&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.record.Record" href="../../record/#trulens_eval.schema.record.Record">Record</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -6384,7 +6148,7 @@ its results as well as a record of the execution.</p>
 actually invoking the app.</p>
 <p>The record is a guess of what an actual record might look like but will
 be missing information that can only be determined after a call is made.</p>
-<p>All args are <a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.Record">Record</a> fields except these:</p>
+<p>All args are <a class="autorefs autorefs-internal" href="../../record/#trulens_eval.schema.record.Record">Record</a> fields except these:</p>
 <pre><code>- `record_id` is generated using the default id naming schema.
 - `app_id` is taken from this recorder.
 - `calls` field is constructed based on instrumented methods.
@@ -6530,7 +6294,7 @@ be missing information that can only be determined after a call is made.</p>
 
 
 <a href="#trulens_eval.tru_virtual.TruVirtual.add_record" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_record</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../../record/#trulens_eval.schema.Record">Record</a></span><span class="p">,</span> <span class="n">feedback_mode</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.FeedbackMode" href="../../schema/#trulens_eval.schema.FeedbackMode">FeedbackMode</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.Record" href="../../record/#trulens_eval.schema.Record">Record</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_record</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.record.Record" href="../../record/#trulens_eval.schema.record.Record">Record</a></span><span class="p">,</span> <span class="n">feedback_mode</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackMode" href="../../feedback/#trulens_eval.schema.feedback.FeedbackMode">FeedbackMode</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.record.Record" href="../../record/#trulens_eval.schema.record.Record">Record</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">

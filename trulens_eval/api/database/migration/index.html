@@ -4024,28 +4024,26 @@ of the current database.</p>
   <div class="doc doc-contents first">
   
       <p>Copy all data from a source database to an EMPTY target database.</p>
-
-<details class="important-considerations" open>
-  <summary>Important considerations</summary>
-  <ul>
+<p>Important considerations:</p>
+<ul>
 <li>
 <p>All source data will be appended to the target tables, so it is
-  important that the target database is empty.</p>
+    important that the target database is empty.</p>
 </li>
 <li>
 <p>Will fail if the databases are not at the latest schema revision. That
-  can be fixed with <code>Tru(database_url="...", database_prefix="...").migrate_database()</code></p>
+    can be fixed with <code>Tru(database_url="...", database_prefix="...").migrate_database()</code></p>
 </li>
 <li>
 <p>Might fail if the target database enforces relationship constraints,
-  because then the order of inserting data matters.</p>
+    because then the order of inserting data matters.</p>
 </li>
 <li>
 <p>This process is NOT transactional, so it is highly recommended that
-  the databases are NOT used by anyone while this process runs.</p>
+    the databases are NOT used by anyone while this process runs.</p>
 </li>
 </ul>
-</details>
+
   </div>
 
 </div>

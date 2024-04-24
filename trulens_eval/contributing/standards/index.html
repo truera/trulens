@@ -3986,11 +3986,13 @@ apply when referring to things like package names, classes, methods.</p>
 <p>Generally import modules only as per
   <a href="https://google.github.io/styleguide/pyguide.html#22-imports">https://google.github.io/styleguide/pyguide.html#22-imports</a> with some
   exceptions:</p>
-<ul>
-<li>Very standard names like types from python or widely used packages. Also
-  names meant to stand in for them.</li>
-<li>Other exceptions in the google style guide above.</li>
-</ul>
+</li>
+<li>
+<p>Very standard names like types from python or widely used packages. Also
+    names meant to stand in for them.</p>
+</li>
+<li>
+<p>Other exceptions in the google style guide above.</p>
 </li>
 <li>
 <p>Use full paths when importing internally
@@ -4097,8 +4099,8 @@ function signature.</p>
 <p>See <code>tests/unit</code>.</p>
 <h3 id="static-tests">Static tests<a class="headerlink" href="#static-tests" title="Permanent link">&para;</a></h3>
 <p>See <code>tests/unit/static</code>.</p>
-<p>Static tests run on multiple versions of python: 3.8, 3.9, 3.10, and being a
-subset of unit tests, are also run on latest supported python, 3.11.</p>
+<p>Static tests run on multiple versions of python: <code>3.8</code>, <code>3.9</code>, <code>3.10</code>, <code>3.11</code>, and being a
+subset of unit tests, are also run on latest supported python, <code>3.12</code> .</p>
 <h3 id="test-pipelines">Test pipelines<a class="headerlink" href="#test-pipelines" title="Permanent link">&para;</a></h3>
 <p>Defined in <code>.azure_pipelines/ci-eval{-pr,}.yaml</code>.</p>
 

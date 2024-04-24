@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#understanding-the-structure-of-your-app" class="md-skip">
+        <a href="#selecting-components" class="md-skip">
           Skip to content
         </a>
       
@@ -1220,6 +1220,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -1247,6 +1249,8 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -3671,6 +3675,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -3738,11 +3744,10 @@
   
 
 
-  <h1>Selecting Components</h1>
-
-<p>LLM applications come in all shapes and sizes and with a variety of different control
-flows. As a result it’s a challenge to consistently evaluate parts of an LLM
-application trace.</p>
+<h1 id="selecting-components">Selecting Components<a class="headerlink" href="#selecting-components" title="Permanent link">&para;</a></h1>
+<p>LLM applications come in all shapes and sizes and with a variety of different
+control flows. As a result it’s a challenge to consistently evaluate parts of an
+LLM application trace.</p>
 <p>Therefore, we’ve adapted the use of <a href="https://en.wikipedia.org/wiki/Bidirectional_transformation">lenses</a>
 to refer to parts of an LLM stack trace and use those when defining evaluations.
 For example, the following lens refers to the input to the retrieve step of the
@@ -3787,6 +3792,7 @@ the first invocation of <code>retrieve</code>.</p>
 from all invocations of <code>retrieve</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="n">context_all_calls</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="p">[:]</span><span class="o">.</span><span class="n">rets</span><span class="o">.</span><span class="n">rets</span><span class="p">[:]</span>
 </code></pre></div>
+<p>See also other <a class="autorefs autorefs-internal" href="../../../api/feedback/#trulens_eval.schema.feedback.Select">Select</a> shortcuts.</p>
 <h3 id="understanding-the-structure-of-your-app">Understanding the structure of your app<a class="headerlink" href="#understanding-the-structure-of-your-app" title="Permanent link">&para;</a></h3>
 <p>Because LLM apps have a wide variation in their structure, the feedback selector construction
 can also vary widely. To construct the feedback selector, you must first understand the structure

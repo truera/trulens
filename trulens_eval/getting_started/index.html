@@ -3610,6 +3610,102 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏁 Releases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏁 Releases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#releases_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Releases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Releases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0281" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.28.1
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.28.1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bug fixes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#0280" class="md-nav__link">
+    <span class="md-ellipsis">
+      0.28.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.28.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#whats-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      What's Changed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bug fixes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3685,6 +3781,57 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <ul>
 <li>🙋 <a href="https://communityinviter.com/apps/aiqualityforum/josh">Slack</a>.</li>
 </ul>
+<h2 id="releases">🏁 Releases<a class="headerlink" href="#releases" title="Permanent link">&para;</a></h2>
+<!-- BEGIN INCLUDE ../../../trulens_eval/RELEASES.md -->
+<h3 id="releases_1">Releases<a class="headerlink" href="#releases_1" title="Permanent link">&para;</a></h3>
+<p>Releases are organized in <code>&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;</code> style. A release is made
+about every week around tuesday-thursday. Releases increment the <code>minor</code> version
+number. Occasionally bug-fix releases occur after a weekly release. Those
+increment only the <code>patch</code> number. No releases have yet made a <code>major</code> version
+increment. Those are expected to be major releases that introduce large number
+of breaking changes.</p>
+<h4 id="0281">0.28.1<a class="headerlink" href="#0281" title="Permanent link">&para;</a></h4>
+<h5 id="bug-fixes">Bug fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Fix for missing <code>alembic.ini</code> in package build.</li>
+</ul>
+<h4 id="0280">0.28.0<a class="headerlink" href="#0280" title="Permanent link">&para;</a></h4>
+<h5 id="whats-changed">What's Changed<a class="headerlink" href="#whats-changed" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Meta-eval / feedback functions benchmarking notebooks, ranking-based eval
+  utils, and docs update by @daniel-huang-1230 in
+  <a href="https://github.com/truera/trulens/pull/991">https://github.com/truera/trulens/pull/991</a></li>
+<li>App delete functionality added by @arn-tru in
+  <a href="https://github.com/truera/trulens/pull/1061">https://github.com/truera/trulens/pull/1061</a></li>
+<li>Added test coverage to langchain provider by @arn-tru in
+  <a href="https://github.com/truera/trulens/pull/1062">https://github.com/truera/trulens/pull/1062</a></li>
+<li>Configurable table prefix by @piotrm0 in
+  <a href="https://github.com/truera/trulens/pull/971">https://github.com/truera/trulens/pull/971</a></li>
+<li>Add example systemd service file by @piotrm0 in
+  <a href="https://github.com/truera/trulens/pull/1072">https://github.com/truera/trulens/pull/1072</a></li>
+</ul>
+<h5 id="bug-fixes_1">Bug fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Queue fixed for python version lower than 3.9 by @arn-tru in
+  <a href="https://github.com/truera/trulens/pull/1066">https://github.com/truera/trulens/pull/1066</a></li>
+<li>Fix test-tru by @piotrm0 in <a href="https://github.com/truera/trulens/pull/1070">https://github.com/truera/trulens/pull/1070</a></li>
+<li>Removed broken tests by @arn-tru in
+  <a href="https://github.com/truera/trulens/pull/1076">https://github.com/truera/trulens/pull/1076</a></li>
+<li>Fix legacy db missing abstract method by @piotrm0 in
+  <a href="https://github.com/truera/trulens/pull/1077">https://github.com/truera/trulens/pull/1077</a></li>
+<li>Release test fixes by @piotrm0 in <a href="https://github.com/truera/trulens/pull/1078">https://github.com/truera/trulens/pull/1078</a></li>
+<li>Docs fixes by @piotrm0 in <a href="https://github.com/truera/trulens/pull/1075">https://github.com/truera/trulens/pull/1075</a></li>
+</ul>
+<h5 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h5>
+<ul>
+<li>MongoDB Atlas quickstart by @joshreini1 in
+  <a href="https://github.com/truera/trulens/pull/1056">https://github.com/truera/trulens/pull/1056</a></li>
+<li>OpenAI Assistants API (quickstart) by @joshreini1 in
+  <a href="https://github.com/truera/trulens/pull/1041">https://github.com/truera/trulens/pull/1041</a></li>
+</ul>
+<p><strong>Full Changelog</strong>:
+<a href="https://github.com/truera/trulens/compare/trulens-eval-0.27.2...trulens-eval-0.28.0">https://github.com/truera/trulens/compare/trulens-eval-0.27.2...trulens-eval-0.28.0</a></p>
+<!-- END INCLUDE -->
 
 
 
