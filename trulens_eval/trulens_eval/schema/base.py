@@ -1,4 +1,4 @@
-"""Common/shared serializable app-related classes."""
+"""Common/shared serializable classes."""
 
 from __future__ import annotations
 
