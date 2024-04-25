@@ -10,17 +10,13 @@ import contextvars
 import datetime
 from enum import Enum
 import functools
+from logging import getLogger
+from pprint import pprint
 import random
 import time
-from typing import (ClassVar, Dict, Iterator, List, Mapping, Optional,
-                    Sequence, Tuple, Union, TypeVar)
-from typing import Any
+from typing import (Any, ClassVar, Dict, Iterator, List, Mapping, Optional,
+                    Sequence, Tuple, TypeVar, Union)
 
-from typing_extensions import Annotated
-
-from pydantic import BaseModel, SerializerFunctionWrapHandler, PlainSerializer
-from pydantic.functional_serializers import WrapSerializer
-from pydantic.functional_validators import AfterValidator, BeforeValidator, PlainValidator
 import opentelemetry
 from opentelemetry.trace import status as trace_status
 import opentelemetry.trace as ot_trace
@@ -28,8 +24,9 @@ import opentelemetry.trace.span as ot_span
 from opentelemetry.util import types as ot_types
 from opentelemetry.util._decorator import _agnosticcontextmanager
 import pydantic
-from logging import getLogger
-from pprint import pprint
+from pydantic import PlainSerializer
+from pydantic.functional_validators import PlainValidator
+from typing_extensions import Annotated
 
 logger = getLogger(__name__)
 
