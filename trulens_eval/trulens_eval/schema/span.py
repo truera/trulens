@@ -15,7 +15,7 @@ from pprint import pprint
 import random
 import time
 from typing import (Any, ClassVar, Dict, Iterator, List, Mapping, Optional,
-                    Sequence, Tuple, TypeVar, Union)
+                    Sequence, Tuple, Type, TypeVar, Union)
 
 import opentelemetry
 from opentelemetry.trace import status as trace_status
@@ -75,14 +75,17 @@ class HashableSpanContext(ot_span.SpanContext):
     def __eq__(self, other):
         return self.trace_id == other.trace_id and self.span_id == other.span_id
 
-def deserialize_contextmapping(v: List[Tuple[HashableSpanContext, T]]) -> Dict[HashableSpanContext, T]:
+def deserialize_contextmapping(
+    v: List[Tuple[HashableSpanContext, T]]
+) -> Dict[HashableSpanContext, T]:
     """Deserialize a list of tuples as a dictionary."""
 
-    return {HashableSpanContext(*k[0:-1]): v for k, v in v}
+    # skip last element of SpanContext as it is computed in SpanContext.__init__ from others
+    return {HashableSpanContext(*k[0:5]): v for k, v in v} 
     
 def serialize_contextmapping(
     v: Dict[HashableSpanContext, T],
-) -> List[Tuple[A, B]]:
+) -> List[Tuple[HashableSpanContext, T]]:
     """Serialize a dictionary as a list of tuples."""
 
     return list(v.items())
@@ -116,8 +119,8 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
 
     _vendor: ClassVar[str] = "trulens_eval"
     @classmethod
-    def _attr(self, name):
-        return f"{self._vendor}@{name}"
+    def _attr(cls, name):
+        return f"{cls._vendor}@{name}"
 
     model_config = {
         'arbitrary_types_allowed': True,
@@ -148,7 +151,6 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
 
     context: HashableSpanContext
     """Unique immutable identifier for the span."""
-
 
     events: List[Tuple[str, ot_types.Attributes, TTimestamp]] = pydantic.Field(default_factory=list)
     """Events recorded in the span."""
@@ -403,6 +405,9 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
     ] = pydantic.Field(default_factory=dict)
     """Spans recorded by the tracer."""
 
+    state: ot_span.TraceState = pydantic.Field(default_factory=ot_span.TraceState)
+    """Trace attributes."""
+
     trace_id: TTraceID
     """Unique identifier for the trace."""
 
@@ -418,6 +423,44 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
         kwargs['trace_id'] = trace_id
 
         super().__init__(**kwargs)
+
+    def new_span(
+        self,
+        name: str,
+        cls: Type[Span],
+        context: Optional[ot_trace.Context] = None,
+        kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL,
+        attributes: ot_trace.types.Attributes = None,
+        links: ot_trace._Links = None,
+        start_time: Optional[int] = None,
+        record_exception: bool = True,
+        set_status_on_exception: bool = True,
+    ) -> Span:
+        span_context = HashableSpanContext(
+            trace_id=self.trace_id,
+            span_id=random.getrandbits(NumSpanIDBits),
+            is_remote=False,
+            trace_state = self.state
+        )
+
+        span = cls(
+            name=name,
+            context=span_context,
+            kind=kind,
+            attributes=attributes,
+            links=links,
+            start_time=start_time,
+            record_exception=record_exception,
+            set_status_on_exception=set_status_on_exception
+        )
+
+        if context is not None:
+            context = make_hashable(context)
+            span.add_link(context, {Span._attr("relationship"): "parent"})
+
+        self.spans[span_context] = span
+
+        return span
 
     def start_span(
         self,
@@ -444,7 +487,8 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
         span_context = HashableSpanContext(
             trace_id=self.trace_id,
             span_id=random.getrandbits(NumSpanIDBits),
-            is_remote=False
+            is_remote=False,
+            trace_state = self.state # unsure whether these should be shared across all spans produced by this tracer
         )
 
         span = SpanUntyped(
@@ -477,11 +521,10 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
         record_exception: bool = True,
         set_status_on_exception: bool = True,
         end_on_exit: bool = True,
-    ) -> Iterator[OTSpan]:
+    ) -> Iterator[Span]:
         """See [start_as_current_span][opentelemetry.trace.Tracer.start_as_current_span]."""
 
         if context is not None:
-            print("start_as_current_span", context)
             context = make_hashable(context)
 
         span = self.start_span(

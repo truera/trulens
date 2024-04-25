@@ -74,21 +74,71 @@ class RecordAppCall(serial.SerialModel):
 
         return self.top().method
 
-    def as_span(
-        self,
-        trace_id: int,
-        parent_span_id: Optional[int]=None
+class Categorizer():
+    """Categorizes RecordAppCalls into Spans of various types."""
+
+    @staticmethod
+    def span_of_call(
+        call: RecordAppCall,
+        tracer: mod_span_schema.Tracer,
+        context: Optional[mod_span_schema.HashableSpanContext] = None
     ) -> mod_span_schema.Span:
-        """Conert this to Span."""
+        
+        """Categorizes a call into a span.
 
-        return mod_span_schema.Span(
-            name = self.method().name,
-            context = ot_span.SpanContext(0, trace_id, False),
+        Args:
+            call: The call to categorize.
+
+            tracer: The tracer to create the span in.
+
+            context: The context of the parent span if any.
+
+        Returns:
+
+            The span.
+        """
+
+        method = call.method()
+        package_name = method.obj.cls.module.package_name
+
+        subcategorizer = None
+
+        if package_name is None:
+            logger.warning("Unknown package.")
+
+
+        elif package_name.startswith("lang_chain"):
+            subcategorizer = LangChainCategorizer
+        
+        elif package_name.startswith("llama_index"):
+            subcategorizer = LlamaIndexCategory
+
+        elif package_name.startswith("nemo_guardrails"):
+            subcategorizer = NemoGuardRailsCategorizer
+
+        else:
+            logger.warning("Unknown package: %s", package_name)
+
+        if subcategorizer is not None:
+            return subcategorizer.span_of_call(
+                call=call, tracer=tracer, context=context
+            )
+        
+        return tracer.new_span(
+            name = method.name,
+            cls = mod_span_schema.SpanUntyped, # if no category known
+            context = context
         )
-        #    parent_span_id = parent_span_id,
 
 
-        pass
+class LangChainCategorizer(Categorizer):
+    pass
+
+class LlamaIndexCategory(Categorizer):
+    pass
+
+class NemoGuardRailsCategorizer(Categorizer):
+    pass
 
 
 class Record(serial.SerialModel, Hashable):
@@ -227,6 +277,21 @@ class Record(serial.SerialModel, Hashable):
 
         return ret
 
+    def as_tracer(self) -> mod_span_schema.Tracer:
+        """Convert this record into a tracer with all of the calls populated as spans."""
+
+        tracer = mod_span_schema.Tracer() # determine trace_id from record_id
+
+        root_span = tracer.new_span(
+            name="root", cls=mod_span_schema.SpanRoot
+        )
+
+        for call in self.calls:
+            span = Categorizer.span_of_call(call=call, tracer=tracer, context=root_span.context)
+
+            tracer.spans[span.context] = span
+
+        return tracer
 
 # HACK013: Need these if using __future__.annotations .
 RecordAppCallMethod.model_rebuild()
