@@ -32,6 +32,9 @@ See `instruments.py` docstring for discussion why these are done.
   object that implements `__call__` has been instrumented. Hacks to avoid
   warnings about lack of instrumentation.
 
+- "HACK015" -- Add `__hash__` onto `opentelemetry.trace.span.SpanContext` by
+  changing their `__class__`.
+
 ## Thread overriding
 
 See `instruments.py` docstring for discussion why these are done.

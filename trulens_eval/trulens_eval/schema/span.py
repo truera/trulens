@@ -10,10 +10,17 @@ import contextvars
 import datetime
 from enum import Enum
 import functools
+import random
 import time
 from typing import (ClassVar, Dict, Iterator, List, Mapping, Optional,
-                    Sequence, Tuple, Union)
+                    Sequence, Tuple, Union, TypeVar)
+from typing import Any
 
+from typing_extensions import Annotated
+
+from pydantic import BaseModel, SerializerFunctionWrapHandler, PlainSerializer
+from pydantic.functional_serializers import WrapSerializer
+from pydantic.functional_validators import AfterValidator, BeforeValidator, PlainValidator
 import opentelemetry
 from opentelemetry.trace import status as trace_status
 import opentelemetry.trace as ot_trace
@@ -21,67 +28,88 @@ import opentelemetry.trace.span as ot_span
 from opentelemetry.util import types as ot_types
 from opentelemetry.util._decorator import _agnosticcontextmanager
 import pydantic
+from logging import getLogger
+from pprint import pprint
 
-import trulens_eval
+logger = getLogger(__name__)
 
-TTimestamp = int # uint64, nonoseconds since epoch, as per OpenTelemetry
-TSpanID = int # as per OpenTelemetry
-TTraceID = int # as per OpenTelemetry
+# import trulens_eval
 
-# TODO: look into the open telemetry tracer/traceprovider api, ignoring for now.
+# Type alises
 
-class OTTracer(pydantic.BaseModel, ot_trace.Tracer):
-    context: Optional[ot_trace.Context] = None
+A = TypeVar("A")
+B = TypeVar("B")
 
-    instrumenting_module_name: str = "trulens_eval"
-    instrumenting_library_version: str = trulens_eval.__version__
+TTimestamp = int
+"""Type of timestamps in spans.
 
-    def __init__(self):
-        super().__init__()
+64 bit int representing nanoseconds since epoch as per OpenTelemetry.
+"""
+NumTimestampBits = 64
 
+TSpanID = int # 
+"""Type of span identifiers.
 
-    def start_span(
-        self,
-        name: str,
-        context: Optional[ot_trace.Context] = None,
-        kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL,
-        attributes: ot_trace.types.Attributes = None,
-        links: ot_trace._Links = None,
-        start_time: Optional[int] = None,
-        record_exception: bool = True,
-        set_status_on_exception: bool = True,
-    ) -> OTSpan:
+64 bit int as per OpenTelemetry.
+"""
+NumSpanIDBits = 64
+"""Number of bits in a span identifier."""
+
+TTraceID = int
+"""Type of trace identifiers.
+
+128 bit int as per OpenTelemetry.
+"""
+NumTraceIDBits = 128
+"""Number of bits in a trace identifier."""
+
+T = TypeVar("T")
+
+class HashableSpanContext(ot_span.SpanContext):
+    """SpanContext that can be hashed.
+
+    Does not change data layout or behaviour. Changing SpanContext
+    `__class__` with this should be safe.
+    """
+
+    def __hash__(self):
+        return hash((self.trace_id, self.span_id))
+
+    def __eq__(self, other):
+        return self.trace_id == other.trace_id and self.span_id == other.span_id
+
+def deserialize_contextmapping(v: List[Tuple[HashableSpanContext, T]]) -> Dict[HashableSpanContext, T]:
+    """Deserialize a list of tuples as a dictionary."""
+
+    return {HashableSpanContext(*k[0:-1]): v for k, v in v}
     
-        pass
+def serialize_contextmapping(
+    v: Dict[HashableSpanContext, T],
+) -> List[Tuple[A, B]]:
+    """Serialize a dictionary as a list of tuples."""
 
-    @_agnosticcontextmanager
-    def start_as_current_span(
-        self,
-        name: str,
-        context: Optional[ot_trace.Context] = None,
-        kind: ot_trace.SpanKind = opentelemetry.trace.SpanKind.INTERNAL,
-        attributes: ot_types.Attributes = None,
-        links: ot_trace._Links = None,
-        start_time: Optional[int] = None,
-        record_exception: bool = True,
-        set_status_on_exception: bool = True,
-        end_on_exit: bool = True,
-    ) -> Iterator[OTSpan]:
-        pass
+    return list(v.items())
 
-class OTTracerProvider(ot_trace.TracerProvider):
-    def get_tracer(
-        self,
-        instrumenting_module_name: str,
-        instrumenting_library_version: Optional[str] = None,
-        schema_url: Optional[str] = None,
-    ) -> OTTracer:
+ContextMapping = Annotated[
+    Dict[HashableSpanContext, T],
+    PlainSerializer(serialize_contextmapping),
+    PlainValidator(deserialize_contextmapping)
+]
+"""Type annotation for pydantic fields that store dictionaries whose keys are
+HashableSpanContext.
 
-        return OTTracer(
-            instrumenting_module_name=instrumenting_module_name,
-            instrumenting_library_version=instrumenting_library_version or trulens_eval.__version__
-        )
+This is needed to help pydantic figure out how to serialize and deserialize these dicts.
+"""
 
+
+def make_hashable(context: ot_span.SpanContext) -> HashableSpanContext:
+    # HACK015: replace class of contexts to add hashing
+
+    if context.__class__ is not HashableSpanContext:
+        context.__class__ = HashableSpanContext
+
+    # Return not needed but useful for type checker.
+    return context
 
 class OTSpan(pydantic.BaseModel, ot_span.Span):
     """Implementation of OpenTelemetry Span requirements.
@@ -103,6 +131,9 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     name: str
     """Name of span."""
 
+    kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL
+    """Kind of span."""
+
     status: trace_status.StatusCode = trace_status.StatusCode.UNSET
     """Status of the span as per OpenTelemetry Span requirements."""
 
@@ -118,17 +149,26 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     None if not yet ended.
     """
 
-    context: ot_span.SpanContext
+    context: HashableSpanContext
     """Unique immutable identifier for the span."""
+
 
     events: List[Tuple[str, ot_types.Attributes, TTimestamp]] = pydantic.Field(default_factory=list)
     """Events recorded in the span."""
 
-    links: Dict[ot_span.SpanContext, Mapping[str, ot_types.AttributeValue]] = pydantic.Field(default_factory=dict)
+    links: ContextMapping[Mapping[str, ot_types.AttributeValue]] = pydantic.Field(default_factory=dict)
     """Relationships to other spans with attributes on each link."""
 
     attributes: Dict[str, ot_types.AttributeValue] = pydantic.Field(default_factory=dict)
     """Attributes of span."""
+
+    def __init__(self, name: str, context: ot_span.SpanContext, **kwargs):
+        kwargs['name'] = name
+        kwargs['context'] = make_hashable(context)
+        kwargs['attributes'] = kwargs.get('attributes', {}) or {}
+        kwargs['links'] = kwargs.get('links', {}) or {}
+
+        super().__init__(**kwargs)
 
     def end(self, end_time: Optional[TTimestamp] = None):
         """See [end][opentelemetry.trace.span.Span.end]"""
@@ -158,7 +198,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
         self,
         name: str,
         attributes: ot_types.Attributes = None,
-        timestamp: Optional[int] = None
+        timestamp: Optional[TTimestamp] = None
     ) -> None:
         """See [end][opentelemetry.trace.span.Span.add_event]"""
         self.events.append((name, attributes, timestamp or time.time_ns()))
@@ -169,6 +209,8 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
         attributes: ot_types.Attributes = None
     ) -> None:
         """See [end][opentelemetry.trace.span.Span.add_link]"""
+
+        context = make_hashable(context)
 
         if attributes is None:
             attributes = {}
@@ -240,27 +282,6 @@ class DictNamespace(Dict[str, ot_types.AttributeValue]):
         dict.__delitem__(self, key)
         del self.parent[f"{self.namespace}.{key}"]
 
-class SpanType(Enum):
-    """Span types."""
-
-    ROOT = "root"
-
-    RETRIEVER = "retriever"
-
-    RERANKER = "reranker"
-
-    LLM = "llm"
-
-    EMBEDDING = "embedding"
-
-    TOOL = "tool"
-
-    AGENT = "agent"
-
-    TASK = "task"
-
-    OTHER = "other"
-
 class Span(OTSpan):
     """Base Span type.
     
@@ -280,15 +301,28 @@ class Span(OTSpan):
         return self.context.trace_id
 
     @functools.cached_property
+    def parent_context(self) -> Optional[HashableSpanContext]:
+        """Context of parent span if any.
+
+        None if this is a root span.
+        """
+
+        for link_context, link_attributes in self.links.items():
+            if link_attributes.get(self._attr("relationship")) == "parent":
+                return link_context
+
+        return None
+
+    @functools.cached_property
     def parent_span_id(self) -> Optional[TSpanID]:
         """Id of parent span if any.
 
         None if this is a root span.
         """
 
-        for link in self.links:
-            if link.trace_id == self.trace_id and link.attributes.get(self._attr("relationship")) == "parent":
-                return link.span_id
+        parent_context = self.parent_context
+        if parent_context is not None:
+            return parent_context.span_id
 
         return None
 
@@ -305,7 +339,8 @@ class Span(OTSpan):
     def span_type(self) -> SpanType:
         """Type of span."""
 
-        return self.attributes.get(self._attr("span_type"), SpanType.OTHER)
+        return SpanType(self.attributes.get(self._attr("span_type"), SpanType.UNTYPED.name))
+
     @span_type.setter
     def span_type(self, value: SpanType):
         self.attributes[self._attr("span_type")] = value
@@ -323,16 +358,10 @@ class Span(OTSpan):
 
     # input: Dict[str, str] = pydantic.Field(default_factory=dict)
     # Make property
-
     # output: Dict[str, str] = pydantic.Field(default_factory=dict)
     # Make property
 
-    def __init__(self, name: str, context: ot_span.SpanContext, **kwargs):
-        attr_dict = {}
-        kwargs['attributes'] = attr_dict
-        kwargs['name'] = name
-        kwargs['context'] = context
-
+    def __init__(self, **kwargs):
         kwargs['attributes_metadata'] = DictNamespace(parent={}, namespace="temp")
         # Temporary fake for validation in super.__init__ below.
 
@@ -344,11 +373,181 @@ class Span(OTSpan):
             namespace=self._attr("metadata")
         )
 
-class SpanRoot(Span):
+        self.set_attribute(self._attr("span_type"), self.__class__.__name__)
+
+    @staticmethod
+    def attribute_property(name: str, typ: Type):
+        """A property that will get/set values from self.attributes."""
+
+        def getter(self):
+            return self.attributes.get(self._attr(name))
+        
+        def setter(self, value):
+            if not isinstance(value, typ):
+                raise ValueError(f"Expected {typ} for {self.name} but got {type(value)}.")
+
+            self.attributes[self._attr(name)] = value
+
+        return property(getter, setter)
+
+class Tracer(pydantic.BaseModel, ot_trace.Tracer):
+    """Implementation of OpenTelemetry Tracer requirements."""
+
+    stack: contextvars.ContextVar[HashableSpanContext] = pydantic.Field(
+        default_factory=lambda: contextvars.ContextVar("stack", default=None),
+        exclude=True
+    )
+
+    instrumenting_module_name: str = "trulens_eval"
+    instrumenting_library_version: Optional[str] = None#trulens_eval.__version__
+
+    spans: ContextMapping[
+        Mapping[str, ot_types.AttributeValue],
+    ] = pydantic.Field(default_factory=dict)
+    """Spans recorded by the tracer."""
+
+    trace_id: TTraceID
+    """Unique identifier for the trace."""
+
+    model_config = {
+        'arbitrary_types_allowed': True,
+        'use_attribute_docstrings': True
+    }
+    """Pydantic configuration."""
+
+    def __init__(self, **kwargs):
+        trace_id = random.getrandbits(NumTraceIDBits)
+
+        kwargs['trace_id'] = trace_id
+
+        super().__init__(**kwargs)
+
+    def start_span(
+        self,
+        name: str,
+        context: Optional[ot_trace.Context] = None,
+        kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL,
+        attributes: ot_trace.types.Attributes = None,
+        links: ot_trace._Links = None,
+        start_time: Optional[int] = None,
+        record_exception: bool = True,
+        set_status_on_exception: bool = True,
+    ) -> Span:
+        """See [start_span][opentelemetry.trace.Tracer.start_span]."""
+
+        if context is None:
+            parent_context = self.stack.get()
+
+        else:
+            parent_context = make_hashable(context)
+
+            if parent_context.trace_id != self.trace_id:
+                logger.warning("Parent context is not being traced by this tracer.")
+
+        span_context = HashableSpanContext(
+            trace_id=self.trace_id,
+            span_id=random.getrandbits(NumSpanIDBits),
+            is_remote=False
+        )
+
+        span = SpanUntyped(
+            name=name,
+            context=span_context,
+            kind=kind,
+            attributes=attributes,
+            links=links,
+            start_time=start_time,
+            record_exception=record_exception,
+            set_status_on_exception=set_status_on_exception
+        )
+
+        if parent_context is not None:
+            span.add_link(parent_context, {Span._attr("relationship"): "parent"})
+
+        self.spans[span_context] = span
+
+        return span
+
+    @_agnosticcontextmanager
+    def start_as_current_span(
+        self,
+        name: str,
+        context: Optional[ot_trace.Context] = None,
+        kind: ot_trace.SpanKind = opentelemetry.trace.SpanKind.INTERNAL,
+        attributes: ot_types.Attributes = None,
+        links: ot_trace._Links = None,
+        start_time: Optional[int] = None,
+        record_exception: bool = True,
+        set_status_on_exception: bool = True,
+        end_on_exit: bool = True,
+    ) -> Iterator[OTSpan]:
+        """See [start_as_current_span][opentelemetry.trace.Tracer.start_as_current_span]."""
+
+        if context is not None:
+            print("start_as_current_span", context)
+            context = make_hashable(context)
+
+        span = self.start_span(
+            name,
+            context,
+            kind,
+            attributes,
+            links,
+            start_time,
+            record_exception,
+            set_status_on_exception
+        )
+
+        token = self.stack.set(span.context)
+
+        # Unsure if this ot_trace stuff is needed.
+        span_token = ot_trace.use_span(span, end_on_exit=end_on_exit).__enter__()
+        yield span
+
+        # Same
+        span_token.__exit__(None, None, None)
+
+        self.stack.reset(token)
+        return
+
+class SpanUntyped(Span):
+    """Generic span type.
+    
+    This represents spans that are being recorded but have not yet been
+    determined to be of a particular type.
+    """
+
     pass
 
+class SpanRoot(Span):
+    """A root span encompassing some collection of spans.
+
+    Does not indicate any particular activity by itself beyond its children.
+    """
+
+    def parent_context(self):
+        raise ValueError("Root span has no parent context.")
+
+    def parent_span_id(self):
+        raise ValueError("Root span has no parent span id.")
+
 class SpanRetriever(Span):
-    pass
+    """A retrieval."""
+
+    input_text = Span.attribute_property("input_text", str)
+    """Input text whose related contexts are being retrieved."""
+
+    input_embedding = Span.attribute_property("input_embedding", List[float])
+    """Embedding of the input text."""
+
+    distance_type = Span.attribute_property("distance_type", str)
+    """Distance function used for ranking contexts."""
+
+    num_contexts = Span.attribute_property("num_contexts", int)
+    """The number of contexts requested, not necessarily retrieved."""
+
+    retrieved_contexts = Span.attribute_property("retrieved_contexts", List[str])
+    """The retrieved contexts."""
 
 class SpanReranker(Span):
     pass
@@ -370,3 +569,41 @@ class SpanTask(Span):
 
 class SpanOther(Span):
     pass
+
+class SpanType(Enum):
+    """Span types.
+    
+    This is a bit redundant with the span type hierarchy above. It is here for
+    convenience of looking up types in means other than `__class__` or via
+    `isinstance`.
+    """
+
+    UNTYPED = SpanUntyped.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanUntyped]."""
+
+    ROOT = SpanRoot.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanRoot]."""
+
+    RETRIEVER = SpanRetriever.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanRetriever]."""
+
+    RERANKER = SpanReranker.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanReranker]."""
+
+    LLM = SpanLLM.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanLLM]."""
+
+    EMBEDDING = SpanEmbedding.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanEmbedding]."""
+
+    TOOL = SpanTool.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanTool]."""
+
+    AGENT = SpanAgent.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanAgent]."""
+
+    TASK = SpanTask.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanTask]."""
+
+    OTHER = SpanOther.__name__
+    """See [SpanUntyped][trulens_eval.schema.span.SpanOther]."""
