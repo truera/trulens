@@ -106,7 +106,6 @@ class Categorizer():
         if package_name is None:
             logger.warning("Unknown package.")
 
-
         elif package_name.startswith("lang_chain"):
             subcategorizer = LangChainCategorizer
         
@@ -123,7 +122,7 @@ class Categorizer():
             return subcategorizer.span_of_call(
                 call=call, tracer=tracer, context=context
             )
-        
+
         return tracer.new_span(
             name = method.name,
             cls = mod_span_schema.SpanUntyped, # if no category known
