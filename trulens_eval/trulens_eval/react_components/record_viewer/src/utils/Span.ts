@@ -1,6 +1,6 @@
 import { SpanRaw } from './types';
 
-enum SpanType {
+export enum SpanType {
   UNTYPED = 'SpanUntyped',
   ROOT = 'SpanRoot',
   RETRIEVER = 'SpanRetriever',
@@ -12,6 +12,16 @@ enum SpanType {
   TASK = 'SpanTask',
   OTHER = 'SpanOther',
 }
+
+/**
+ * Utility function to convert the span types above to make them more human-readable
+ * by removing the substring 'Span'.
+ */
+export const toHumanSpanType = (spanType?: SpanType) => {
+  if (!spanType) return 'Other';
+
+  return spanType.split('Span').join('');
+};
 
 /**
  * Base class for spans.
@@ -167,7 +177,7 @@ export class SpanOther extends Span {
 }
 
 export const createSpan = (rawSpan: SpanRaw) => {
-  const rawSpanType = rawSpan.attributes?.[Span.vendorAttr('trulens_eval@span_type')] ?? SpanType.UNTYPED;
+  const rawSpanType = rawSpan.attributes?.[Span.vendorAttr('span_type')] ?? SpanType.UNTYPED;
 
   switch (rawSpanType as SpanType) {
     case SpanType.ROOT:

@@ -1,3 +1,4 @@
+import { Span } from '@/utils/Span';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw } from '@/utils/types';
 
@@ -64,7 +65,13 @@ export const getStartAndEndTimes = (perf: PerfJSONRaw) => {
   };
 };
 
-const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONRaw[], index: number) => {
+const addCallToTree = (
+  tree: StackTreeNode,
+  call: CallJSONRaw,
+  stack: StackJSONRaw[],
+  index: number,
+  span: Span | undefined = undefined
+) => {
   const stackCell = stack[index];
   const name = getClassNameFromCell(stackCell);
 
@@ -98,6 +105,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
         parentNodes: [...tree.parentNodes, tree],
         perf: call.perf,
         stackCell,
+        span,
       })
     );
 
@@ -110,6 +118,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
       name,
       stackCell,
       parentNodes: [...tree.parentNodes, tree],
+      span,
     });
 
     tree.children.push(newNode);
@@ -119,14 +128,15 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
   addCallToTree(matchingNode, call, stack, index + 1);
 };
 
-export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string) => {
+export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string, spans: Span[] = []) => {
   const tree = new StackTreeNode({
     name: appName,
     perf: recordJSON.perf,
+    span: spans[0],
   });
 
-  recordJSON.calls.forEach((call) => {
-    addCallToTree(tree, call, call.stack, 0);
+  recordJSON.calls.forEach((call, index) => {
+    addCallToTree(tree, call, call.stack, 0, spans[index + 1]);
   });
 
   return tree;

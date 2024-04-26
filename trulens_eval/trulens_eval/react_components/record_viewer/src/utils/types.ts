@@ -148,5 +148,5 @@ export interface SpanRaw {
 export interface DataRaw {
   app_json: AppJSONRaw;
   record_json: RecordJSONRaw;
-  spans: SpanRaw[];
+  raw_spans: SpanRaw[];
 }

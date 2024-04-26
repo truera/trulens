@@ -72,7 +72,7 @@ def record_viewer(record_json, app_json, spans, key=None):
 
     """
 
-    spans_list=list(map(lambda span: jsonify(span), spans))
+    raw_spans=list(map(lambda span: jsonify(span), spans))
 
     # Call through to our private component function. Arguments we pass here
     # will be sent to the frontend, where they'll be available in an "args"
@@ -81,7 +81,7 @@ def record_viewer(record_json, app_json, spans, key=None):
     # "default" is a special argument that specifies the initial return
     # value of the component before the user has interacted with it.
     component_value = _record_viewer(
-        record_json=record_json, app_json=app_json, spans=spans_list, key=key, default=""
+        record_json=record_json, app_json=app_json, raw_spans=raw_spans, key=key, default=""
     )
 
     return component_value

@@ -415,7 +415,6 @@ else:
 
             st.subheader("Trace details")
 
-            # TODO: update
             spans = Categorizer.spans_of_record(Record(**record_json))
             val = record_viewer(record_json, app_json, spans)
             st.markdown("")
