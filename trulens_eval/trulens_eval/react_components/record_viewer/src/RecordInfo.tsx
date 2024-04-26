@@ -96,7 +96,13 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
         },
       }}
     >
-      <Grid item xs={12} md={isTimeline ? 12 : 5} lg={isTimeline ? 12 : 4}>
+      <Grid
+        item
+        xs={12}
+        md={isTimeline ? 12 : 5}
+        lg={isTimeline ? 12 : 4}
+        sx={{ display: 'flex', flexDirection: 'column' }}
+      >
         <Tabs
           value={selectedSpanView}
           onChange={(_event, value) => setSelectedSpanView(value as SPAN_VIEW)}

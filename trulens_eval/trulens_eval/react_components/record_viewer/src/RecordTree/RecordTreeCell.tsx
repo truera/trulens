@@ -102,7 +102,13 @@ const cellSx: SxProps<Theme> = () => ({
   overflow: 'hidden',
 });
 
-const iconContainerSx: SxProps<Theme> = ({ palette }) => ({ pr: 1, color: palette.grey[600] });
+const iconContainerSx: SxProps<Theme> = ({ palette }) => ({
+  pr: 1,
+  color: palette.grey[600],
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+});
 
 const ellipsisSx: SxProps<Theme> = {
   textOverflow: 'ellipsis',
