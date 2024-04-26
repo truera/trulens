@@ -84,6 +84,8 @@ class ComponentView(ABC):
     dicts representing various components, not the components themselves.
     """
 
+    # TODO: replacing with trace.category.Categorizer
+
     def __init__(self, json: JSON):
         self.json = json
         self.cls = Class.of_class_info(json)

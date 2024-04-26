@@ -270,6 +270,10 @@ nav:
           - trulens_eval/api/utils/json.md
           - trulens_eval/api/utils/frameworks.md
           - trulens_eval/api/utils/utils.md
+      - "Experimental: Tracing":
+        - trulens_eval/api/trace/index.md
+        - trulens_eval/api/trace/span.md
+        - trulens_eval/api/trace/tracer.md
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
       - 🧭 Design: trulens_eval/contributing/design.md

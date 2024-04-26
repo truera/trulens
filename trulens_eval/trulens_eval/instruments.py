@@ -29,13 +29,12 @@ from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import endpoint as mod_endpoint
 from trulens_eval.schema import base as mod_base_schema 
 from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.trace import span as mod_span
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.imports import Dummy
 from trulens_eval.utils.json import jsonify
-from trulens_eval.utils.pyschema import clean_attributes
-from trulens_eval.utils.pyschema import Method
-from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils import pyschema
 from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import class_name
@@ -208,6 +207,18 @@ def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
 
     raise ValueError(f"Invalid filter {f}. Type, or a Tuple of Types expected.")
 
+TSpanner = Callable[[mod_span.Span, mod_record_schema.RecordAppCall], None]
+
+TSpanInfo = Tuple[
+    mod_span.SpanType, TSpanner
+]
+"""Span type and method that create spans of said type from
+[RecordAppCall][trulens_eval.schema.record.RecordAppCall] objects.
+
+The first argument to callable is the instance of the spec specified and the
+second is the [RecordAppCall][trulens_eval.schema.record.RecordAppCall] object
+to fill in the span info from.
+"""
 
 class Instrument(object):
     """Instrumentation tools."""
@@ -229,6 +240,13 @@ class Instrument(object):
 
         CLASSES = set([mod_feedback.Feedback])
         """Classes to instrument."""
+
+        SPANINFOS: Dict[pyschema.Function, TSpanInfo] = {}
+        """EXPERIMENTAL: Map of method to a function that
+        create a span from a
+        [RecordAppCall][trulens_eval.schema.record.RecordAppCall] made by the named
+        method of that class.
+        """
 
         METHODS: Dict[str, ClassFilter] = {"__call__": mod_feedback.Feedback}
         """Methods to instrument.
@@ -266,6 +284,13 @@ class Instrument(object):
                         f = getattr(cls, method)
                         print(f"{t*2}Method {method}: {inspect.signature(f)}")
 
+                        pyfunc = pyschema.Function.of_function(f, cls=cls)
+
+                        if pyfunc in self.Default.SPANINFOS:
+                            span_type, spanner = self.Default.SPANINFOS[pyfunc]
+                            print(f"{t*3}Span type: {span_type}")
+
+
             print()
 
     def to_instrument_object(self, obj: object) -> bool:
@@ -276,11 +301,14 @@ class Instrument(object):
         # avoid issublcass checks.
         return any(isinstance(obj, cls) for cls in self.include_classes)
 
-    def to_instrument_class(self, cls: type) -> bool:  # class
+    def to_instrument_class(self, cls: Union[type, pyschema.Class]) -> bool:  # type=class
         """Determine whether the given class should be instrumented."""
 
         # Sometimes issubclass is not supported so we return True just to be
         # sure we instrument that thing.
+
+        if isinstance(cls, pyschema.Class):
+            cls = cls.load()
 
         try:
             return any(
@@ -481,7 +509,7 @@ class Instrument(object):
                     stack = ctx_stacks[ctx]
 
                 frame_ident = mod_record_schema.RecordAppCallMethod(
-                    path=path, method=Method.of_method(func, obj=obj, cls=cls)
+                    path=path, method=pyschema.Method.of_method(func, obj=obj, cls=cls)
                 )
 
                 stack = stack + (frame_ident,)
@@ -800,10 +828,10 @@ results. Additional information about this call:
                 # is meant to be instrumented and if so, we  walk over it manually.
                 # NOTE: some llama_index objects are using dataclasses_json but most do
                 # not so this section applies.
-                attrs = clean_attributes(obj, include_props=True).keys()
+                attrs = pyschema.clean_attributes(obj, include_props=True).keys()
 
             if vals is None:
-                vals = [safe_getattr(obj, k, get_prop=True) for k in attrs]
+                vals = [pyschema.safe_getattr(obj, k, get_prop=True) for k in attrs]
 
             for k, v in zip(attrs, vals):
 
@@ -903,11 +931,11 @@ results. Additional information about this call:
             if not safe_hasattr(obj, method_name):
                 pass
             else:
-                method = safe_getattr(obj, method_name)
+                method = pyschema.safe_getattr(obj, method_name)
                 print(f"\t{query}Looking at {method}")
 
                 if safe_hasattr(method, "__func__"):
-                    func = safe_getattr(method, "__func__")
+                    func = pyschema.safe_getattr(method, "__func__")
                     print(
                         f"\t\t{query}: Looking at bound method {method_name} with func {func}"
                     )
@@ -960,12 +988,40 @@ class AddInstruments():
     """Utilities for adding more things to default instrumentation filters."""
 
     @classmethod
-    def method(cls, of_cls: type, name: str) -> None:
-        """Add the class with a method named `name`, its module, and the method
-        `name` to the Default instrumentation walk filters."""
+    def method(
+        cls,
+        of_cls: type,
+        name: str,
+        span_type: Optional[mod_span.SpanType] = None,
+        spanner: Optional[Callable] = None
+    ) -> None:
+        """Name a method to be instrumented.
+        
+        Args:
+            of_cls: The class that contains the method.
+            
+            name: The name of the method.
+            
+            span_type: The type of span to create when converting a record call
+                to a span.
+            
+            spanner: A callable that creates a span of the given type from a
+                [RecordAppCall][trulens_eval.schema.record.RecordAppCall] object.
+        """
 
         Instrument.Default.MODULES.add(of_cls.__module__)
         Instrument.Default.CLASSES.add(of_cls)
+
+        if span_type is not None and spanner is not None:
+            pyfunc = pyschema.Function.of_function(getattr(of_cls, name), cls=of_cls)
+            
+            Instrument.Default.SPANINFOS[pyfunc] = (span_type, spanner)
+
+        else:
+            if span_type is not None or spanner is not None:
+                raise ValueError(
+                    "Both `span_type` and `spanner` must be provided if either is."
+                )
 
         check_o: ClassFilter = Instrument.Default.METHODS.get(name, ())
         Instrument.Default.METHODS[name] = class_filter_disjunction(
@@ -987,8 +1043,29 @@ class instrument(AddInstruments):
     # NOTE(piotrm): Approach taken from:
     # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
 
-    def __init__(self, func: Callable):
+    def __init__(
+        self,
+        func: Optional[Callable] = None,
+    ):
+
         self.func = func
+        self.cls = None
+        self.name = None
+        self.span_type = None
+        self.spanner = None
+
+    def is_span(self, span_type: Union[mod_span.SpanType, Type[mod_span.Span]]):
+        """Decorator for setting span info filler function."""
+
+        if not isinstance(span_type, mod_span.SpanType):
+            span_type = mod_span.SpanType(span_type.__name__)
+
+        self.span_type = span_type
+
+        def set_spanner(spanner: Callable):
+            self.spanner = spanner
+
+        return set_spanner
 
     def __set_name__(self, cls: type, name: str):
         """
@@ -998,6 +1075,19 @@ class instrument(AddInstruments):
         # Important: do this first:
         setattr(cls, name, self.func)
 
+        # Setup the is_span decorator to further mark the decorated method as
+        # one producing a span.
+        self.cls = cls
+        self.name = name
+        # self.func.is_span = self.is_span
+
         # Note that this does not actually change the method, just adds it to
         # list of filters.
-        self.method(cls, name)
+
+        self.method(
+            of_cls=cls,
+            name=name,
+            span_type=self.span_type,
+            spanner=self.spanner
+        )
+

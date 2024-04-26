@@ -4,23 +4,26 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
+from typing import (ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
+                    TypeVar)
 
 from munch import Munch as Bunch
+import opentelemetry.trace.span as ot_span
+from opentelemetry.util import types as ot_types
 import pydantic
 
+from trulens_eval import trace as mod_trace
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import types as mod_types_schema
-from trulens_eval.schema import span as mod_span_schema
+from trulens_eval.trace import span as mod_span
+from trulens_eval.trace import tracer as mod_tracer
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
+from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.python import Future
-
-import opentelemetry.trace.span as ot_span
-from opentelemetry.util import types as ot_types
 
 T = TypeVar("T")
 
@@ -73,72 +76,6 @@ class RecordAppCall(serial.SerialModel):
         """The method at the top of the stack."""
 
         return self.top().method
-
-class Categorizer():
-    """Categorizes RecordAppCalls into Spans of various types."""
-
-    @staticmethod
-    def span_of_call(
-        call: RecordAppCall,
-        tracer: mod_span_schema.Tracer,
-        context: Optional[mod_span_schema.HashableSpanContext] = None
-    ) -> mod_span_schema.Span:
-        
-        """Categorizes a call into a span.
-
-        Args:
-            call: The call to categorize.
-
-            tracer: The tracer to create the span in.
-
-            context: The context of the parent span if any.
-
-        Returns:
-
-            The span.
-        """
-
-        method = call.method()
-        package_name = method.obj.cls.module.package_name
-
-        subcategorizer = None
-
-        if package_name is None:
-            logger.warning("Unknown package.")
-
-        elif package_name.startswith("lang_chain"):
-            subcategorizer = LangChainCategorizer
-        
-        elif package_name.startswith("llama_index"):
-            subcategorizer = LlamaIndexCategory
-
-        elif package_name.startswith("nemo_guardrails"):
-            subcategorizer = NemoGuardRailsCategorizer
-
-        else:
-            logger.warning("Unknown package: %s", package_name)
-
-        if subcategorizer is not None:
-            return subcategorizer.span_of_call(
-                call=call, tracer=tracer, context=context
-            )
-
-        return tracer.new_span(
-            name = method.name,
-            cls = mod_span_schema.SpanUntyped, # if no category known
-            context = context
-        )
-
-
-class LangChainCategorizer(Categorizer):
-    pass
-
-class LlamaIndexCategory(Categorizer):
-    pass
-
-class NemoGuardRailsCategorizer(Categorizer):
-    pass
-
 
 class Record(serial.SerialModel, Hashable):
     """The record of a single main method call.
@@ -275,22 +212,6 @@ class Record(serial.SerialModel, Hashable):
             ret = path.set_or_append(obj=ret, val=call)
 
         return ret
-
-    def as_tracer(self) -> mod_span_schema.Tracer:
-        """Convert this record into a tracer with all of the calls populated as spans."""
-
-        tracer = mod_span_schema.Tracer() # determine trace_id from record_id
-
-        root_span = tracer.new_span(
-            name="root", cls=mod_span_schema.SpanRoot
-        )
-
-        for call in self.calls:
-            span = Categorizer.span_of_call(call=call, tracer=tracer, context=root_span.context)
-
-            tracer.spans[span.context] = span
-
-        return tracer
 
 # HACK013: Need these if using __future__.annotations .
 RecordAppCallMethod.model_rebuild()

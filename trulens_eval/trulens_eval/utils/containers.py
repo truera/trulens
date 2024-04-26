@@ -16,6 +16,30 @@ T = TypeVar("T")
 A = TypeVar("A")
 B = TypeVar("B")
 
+
+# Dicts utilities
+
+class DictNamespace(Dict[str, T]):
+    """View into a dict with keys prefixed by some `namespace` string.
+    
+    Replicates the values without the prefix in self.
+    """
+
+    def __init__(self, parent: Dict[str, T], namespace: str, **kwargs):
+        self.parent = parent
+        self.namespace = namespace
+
+    def __getitem__(self, key: str) -> T:
+        return dict.__getitem__(self, key)
+    
+    def __setitem__(self, key: str, value: T) -> None:
+        dict.__setitem__(self, key, value)
+        self.parent[f"{self.namespace}.{key}"] = value
+
+    def __delitem__(self, key: str) -> None:
+        dict.__delitem__(self, key)
+        del self.parent[f"{self.namespace}.{key}"]
+
 # Collection utilities
 
 
