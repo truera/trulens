@@ -18,11 +18,14 @@ export default function SpanIconDisplay({ spanType = SpanType.UNTYPED }: SpanIco
 }
 
 const iconSx: SxProps<Theme> = {
-  p: 1,
+  p: 0.5,
+  height: '16px',
+  width: '16px',
 };
 
 const containerSx: SxProps<Theme> = {
   display: 'flex',
+  borderRadius: ({ spacing }) => spacing(0.5),
   flexDirection: 'column',
   justifyContent: 'center',
 };
