@@ -22,3 +22,10 @@
 ## 😍 Community
 
 * 🙋 [Slack](https://communityinviter.com/apps/aiqualityforum/josh).
+
+## 🏁 Releases
+
+{%
+   include-markdown "../../../trulens_eval/RELEASES.md"
+   heading-offset=2
+%}

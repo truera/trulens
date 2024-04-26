@@ -109,7 +109,7 @@ General and 🦑_TruLens-Eval_-specific concepts.
 
 - `Record`. A "record" of the execution of a single execution of an app. Single
   execution means invocation of some top-level app method. Corresponds to
-  [Record][trulens_eval.schema.Record].
+  [Record][trulens_eval.schema.record.Record]
   
     !!! note
         This will be renamed to `Trace` in the future.
@@ -122,7 +122,7 @@ General and 🦑_TruLens-Eval_-specific concepts.
 - `Selector` (🦑_TruLens-Eval_-specific concept). A specification of the source
   of data from a `Trace` to use as inputs to a `Feedback Function`. This
   corresponds to [Lens][trulens_eval.utils.serial.Lens] and utilities
-  [Select][trulens_eval.schema.Select].
+  [Select][trulens_eval.schema.feedback.Select].
 
 - `Shot`, `Zero Shot`, `Few Shot`, `<Quantity>-Shot`. The use of zero or more
   examples in an `Instruction Prompt` to help an `LLM` generate desirable
@@ -131,7 +131,7 @@ General and 🦑_TruLens-Eval_-specific concepts.
   indicate some `<Quantity>` of examples are provided.
 
 - `Span`. Some unit of work logged as part of a record. Corresponds to current
-  🦑[RecordAppCallMethod][trulens_eval.schema.RecordAppCall].
+  🦑[RecordAppCallMethod][trulens_eval.schema.record.RecordAppCall].
 
 - `Summarization`. The task of condensing some natural language text into a
   smaller bit of natural language text that preserves the most important parts

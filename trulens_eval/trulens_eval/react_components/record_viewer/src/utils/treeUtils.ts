@@ -1,4 +1,4 @@
-import { StackTreeNode } from './StackTreeNode';
+import { StackTreeNode } from '@/utils/StackTreeNode';
 
 /**
  * Gets the depth of the tree based on the node provided.

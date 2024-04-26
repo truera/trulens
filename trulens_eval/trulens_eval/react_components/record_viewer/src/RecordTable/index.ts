@@ -1,1 +1,1 @@
-export * from './RecordTable';
+export * from '@/RecordTable/RecordTable';

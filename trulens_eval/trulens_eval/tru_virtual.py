@@ -1,7 +1,203 @@
 """
 # Virtual Apps
 
-Log existing results with trulens_eval and run evals against them.
+This module facilitates the ingestion and evaluation of application logs that
+were generated outside of TruLens. It allows for the creation of a virtual
+representation of your application, enabling the evaluation of logged data
+within the TruLens framework.
+
+To begin, construct a virtual application representation. This can be
+achieved through a simple dictionary or by utilizing the `VirtualApp` class,
+which allows for a more structured approach to storing application
+information relevant for feedback evaluation.
+
+!!! example "Constructing a Virtual Application"
+
+    ```python
+    virtual_app = {
+        'llm': {'modelname': 'some llm component model name'},
+        'template': 'information about the template used in the app',
+        'debug': 'optional fields for additional debugging information'
+    }
+    # Converting the dictionary to a VirtualApp instance
+    from trulens_eval import Select
+    from trulens_eval.tru_virtual import VirtualApp
+
+    virtual_app = VirtualApp(virtual_app)
+    virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
+    ```
+
+Incorporate components into the virtual app for evaluation by utilizing the
+`Select` class. This approach allows for the reuse of setup configurations
+when defining feedback functions.
+
+!!! example "Incorporating Components into the Virtual App"
+
+    ```python
+    # Setting up a virtual app with a retriever component
+    from trulens_eval import Select
+    retriever_component = Select.RecordCalls.retriever
+    virtual_app[retriever_component] = 'this is the retriever component'
+    ```
+
+With your virtual app configured, it's ready to store logged data.
+`VirtualRecord` offers a structured way to build records from your data for
+ingestion into TruLens, distinguishing itself from direct `Record` creation
+by specifying calls through selectors.
+
+Below is an example of adding records for a context retrieval component,
+emphasizing that only the data intended for tracking or evaluation needs to
+be provided.
+
+!!! example "Adding Records for a Context Retrieval Component"
+
+    ```python
+    from trulens_eval.tru_virtual import VirtualRecord
+
+    # Selector for the context retrieval component's `get_context` call
+    context_call = retriever_component.get_context
+
+    # Creating virtual records
+    rec1 = VirtualRecord(
+        main_input='Where is Germany?',
+        main_output='Germany is in Europe',
+        calls={
+            context_call: {
+                'args': ['Where is Germany?'],
+                'rets': ['Germany is a country located in Europe.']
+            }
+        }
+    )
+    rec2 = VirtualRecord(
+        main_input='Where is Germany?',
+        main_output='Poland is in Europe',
+        calls={
+            context_call: {
+                'args': ['Where is Germany?'],
+                'rets': ['Poland is a country located in Europe.']
+            }
+        }
+    )
+
+    data = [rec1, rec2]
+    ```
+
+For existing datasets, such as a dataframe of prompts, contexts, and
+responses, iterate through the dataframe to create virtual records for each
+entry.
+
+!!! example "Creating Virtual Records from a DataFrame"
+
+    ```python
+    import pandas as pd
+
+    # Example dataframe
+    data = {
+        'prompt': ['Where is Germany?', 'What is the capital of France?'],
+        'response': ['Germany is in Europe', 'The capital of France is Paris'],
+        'context': [
+            'Germany is a country located in Europe.',
+            'France is a country in Europe and its capital is Paris.'
+        ]
+    }
+    df = pd.DataFrame(data)
+
+    # Ingesting data from the dataframe into virtual records
+    data_dict = df.to_dict('records')
+    data = []
+
+    for record in data_dict:
+        rec = VirtualRecord(
+            main_input=record['prompt'],
+            main_output=record['response'],
+            calls={
+                context_call: {
+                    'args': [record['prompt']],
+                    'rets': [record['context']]
+                }
+            }
+        )
+        data.append(rec)
+    ```
+
+After constructing the virtual records, feedback functions can be developed
+in the same manner as with non-virtual applications, using the newly added
+`context_call` selector for reference.
+
+!!! example "Developing Feedback Functions"
+
+    ```python
+    from trulens_eval.feedback.provider import OpenAI
+    from trulens_eval.feedback.feedback import Feedback
+
+    # Initializing the feedback provider
+    openai = OpenAI()
+
+    # Defining the context for feedback using the virtual `get_context` call
+    context = context_call.rets[:]
+
+    # Creating a feedback function for context relevance
+    f_context_relevance = Feedback(openai.qs_relevance).on_input().on(context)
+    ```
+
+These feedback functions are then integrated into `TruVirtual` to construct
+the recorder, which can handle most configurations applicable to non-virtual
+apps.
+
+!!! example "Integrating Feedback Functions into TruVirtual"
+
+    ```python
+    from trulens_eval.tru_virtual import TruVirtual
+
+    # Setting up the virtual recorder
+    virtual_recorder = TruVirtual(
+        app_id='a virtual app',
+        app=virtual_app,
+        feedbacks=[f_context_relevance]
+    )
+    ```
+
+To process the records and run any feedback functions associated with the
+recorder, use the `add_record` method.
+
+!!! example "Logging records and running feedback functions"
+
+    ```python
+    # Ingesting records into the virtual recorder
+    for record in data:
+        virtual_recorder.add_record(record)
+    ```
+
+Metadata about your application can also be included in the `VirtualApp` for
+evaluation purposes, offering a flexible way to store additional information
+about the components of an LLM app.
+
+!!! example "Storing metadata in a VirtualApp"
+
+    ```python
+    # Example of storing metadata in a VirtualApp
+    virtual_app = {
+        'llm': {'modelname': 'some llm component model name'},
+        'template': 'information about the template used in the app',
+        'debug': 'optional debugging information'
+    }
+
+    from trulens_eval.schema.feedback import Select
+    from trulens_eval.tru_virtual import VirtualApp
+
+    virtual_app = VirtualApp(virtual_app)
+    virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
+    ```
+
+This approach is particularly beneficial for evaluating the components of an LLM app.
+
+!!! example "Evaluating components of an LLM application"
+
+    ```python
+    # Adding a retriever component to the virtual app
+    retriever_component = Select.RecordCalls.retriever
+    virtual_app[retriever_component] = 'this is the retriever component'
+    ```
 """
 
 from concurrent import futures
@@ -12,15 +208,12 @@ from typing import Any, ClassVar, Dict, Optional, Sequence, Union
 
 from pydantic import Field
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Cost
-from trulens_eval.schema import FeedbackMode
-from trulens_eval.schema import Perf
-from trulens_eval.schema import Record
-from trulens_eval.schema import RecordAppCall
-from trulens_eval.schema import RecordAppCallMethod
-from trulens_eval.schema import Select
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils import serial
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
@@ -54,7 +247,7 @@ class VirtualApp(dict):
             return super().__setitem__(__name, __value)
 
         # Chop off __app__ or __record__ prefix if there.
-        __name = Select.dequalify(__name)
+        __name = mod_feedback_schema.Select.dequalify(__name)
 
         # Chop off "app" prefix if there.
         if isinstance(__name.path[0], GetItemOrAttribute) \
@@ -108,226 +301,49 @@ Method name will be replaced by the last attribute in the selector provided by u
 """
 
 
-class VirtualRecord(Record):
-    """
-    The `TruVirtual` module facilitates the ingestion and evaluation of application logs that were generated outside of TruLens. It allows for the creation of a virtual representation of your application, enabling the evaluation of logged data within the TruLens framework.
+class VirtualRecord(mod_record_schema.Record):
+    """Virtual records for virtual apps.
+        
+    Many arguments are filled in by default values if not provided. See
+    [Record][trulens_eval.schema.record.Record] for all arguments. Listing here is
+    only for those which are required for this method or filled with default values.
 
-    To begin, construct a virtual application representation. This can be achieved through a simple dictionary or by utilizing the `VirtualApp` class, which allows for a more structured approach to storing application information relevant for feedback evaluation.
+    Args:
+        calls: A dictionary of calls to be recorded. The keys are selectors
+            and the values are dictionaries with the keys listed in the next
+            section.
 
-    !!! example "Constructing a Virtual Application"
+        cost: Defaults to zero cost.
 
-        ```python
-        virtual_app = {
-            'llm': {'modelname': 'some llm component model name'},
-            'template': 'information about the template used in the app',
-            'debug': 'optional fields for additional debugging information'
-        }
-        # Converting the dictionary to a VirtualApp instance
-        from trulens_eval import Select
-        from trulens_eval.tru_virtual import VirtualApp
+        perf: Defaults to time spanning the processing of this virtual
+            record. Note that individual calls also include perf. Time span
+            is extended to make sure it is not of duration zero.
 
-        virtual_app = VirtualApp(virtual_app)
-        virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
-        ```
+    Call values are dictionaries containing arguments to
+    [RecordAppCall][trulens_eval.schema.record.RecordAppCall] constructor. Values
+    can also be lists of the same. This happens in non-virtual apps when the
+    same method is recorded making multiple calls in a single app
+    invocation. The following defaults are used if not provided.
 
-    Incorporate components into the virtual app for evaluation by utilizing the `Select` class. This approach allows for the reuse of setup configurations when defining feedback functions.
-
-    !!! example "Incorporating Components into the Virtual App"
-
-        ```python
-        # Setting up a virtual app with a retriever component
-        from trulens_eval import Select
-        retriever_component = Select.RecordCalls.retriever
-        virtual_app[retriever_component] = 'this is the retriever component'
-        ```
-
-    With your virtual app configured, it's ready to store logged data. `VirtualRecord` offers a structured way to build records from your data for ingestion into TruLens, distinguishing itself from direct `Record` creation by specifying calls through selectors.
-
-    Below is an example of adding records for a context retrieval component, emphasizing that only the data intended for tracking or evaluation needs to be provided.
-
-    !!! example "Adding Records for a Context Retrieval Component"
-
-        ```python
-        from trulens_eval.tru_virtual import VirtualRecord
-
-        # Selector for the context retrieval component's `get_context` call
-        context_call = retriever_component.get_context
-
-        # Creating virtual records
-        rec1 = VirtualRecord(
-            main_input='Where is Germany?',
-            main_output='Germany is in Europe',
-            calls={
-                context_call: {
-                    'args': ['Where is Germany?'],
-                    'rets': ['Germany is a country located in Europe.']
-                }
-            }
-        )
-        rec2 = VirtualRecord(
-            main_input='Where is Germany?',
-            main_output='Poland is in Europe',
-            calls={
-                context_call: {
-                    'args': ['Where is Germany?'],
-                    'rets': ['Poland is a country located in Europe.']
-                }
-            }
-        )
-
-        data = [rec1, rec2]
-        ```
-
-    For existing datasets, such as a dataframe of prompts, contexts, and responses, iterate through the dataframe to create virtual records for each entry.
-
-    !!! example "Creating Virtual Records from a DataFrame"
-
-        ```python
-        import pandas as pd
-
-        # Example dataframe
-        data = {
-            'prompt': ['Where is Germany?', 'What is the capital of France?'],
-            'response': ['Germany is in Europe', 'The capital of France is Paris'],
-            'context': [
-                'Germany is a country located in Europe.',
-                'France is a country in Europe and its capital is Paris.'
-            ]
-        }
-        df = pd.DataFrame(data)
-
-        # Ingesting data from the dataframe into virtual records
-        data_dict = df.to_dict('records')
-        data = []
-
-        for record in data_dict:
-            rec = VirtualRecord(
-                main_input=record['prompt'],
-                main_output=record['response'],
-                calls={
-                    context_call: {
-                        'args': [record['prompt']],
-                        'rets': [record['context']]
-                    }
-                }
-            )
-            data.append(rec)
-        ```
-
-    After constructing the virtual records, feedback functions can be developed in the same manner as with non-virtual applications, using the newly added `context_call` selector for reference.
-
-    !!! example "Developing Feedback Functions"
-
-        ```python
-        from trulens_eval.feedback.provider import OpenAI
-        from trulens_eval.feedback.feedback import Feedback
-
-        # Initializing the feedback provider
-        openai = OpenAI()
-
-        # Defining the context for feedback using the virtual `get_context` call
-        context = context_call.rets[:]
-
-        # Creating a feedback function for context relevance
-        f_context_relevance = Feedback(openai.qs_relevance).on_input().on(context)
-        ```
-
-    These feedback functions are then integrated into `TruVirtual` to construct the recorder, which can handle most configurations applicable to non-virtual apps.
-
-    !!! example "Integrating Feedback Functions into TruVirtual"
-
-        ```python
-        from trulens_eval.tru_virtual import TruVirtual
-
-        # Setting up the virtual recorder
-        virtual_recorder = TruVirtual(
-            app_id='a virtual app',
-            app=virtual_app,
-            feedbacks=[f_context_relevance]
-        )
-        ```
-
-    To process the records and run any feedback functions associated with the recorder, use the `add_record` method.
-
-    !!! example "Logging records and running feedback functions"
-
-        ```python
-        # Ingesting records into the virtual recorder
-        for record in data:
-            virtual_recorder.add_record(record)
-        ```
-
-    Metadata about your application can also be included in the `VirtualApp` for evaluation purposes, offering a flexible way to store additional information about the components of an LLM app.
-
-    !!! example "Storing metadata in a VirtualApp"
-
-        ```python
-        # Example of storing metadata in a VirtualApp
-        virtual_app = {
-            'llm': {'modelname': 'some llm component model name'},
-            'template': 'information about the template used in the app',
-            'debug': 'optional debugging information'
-        }
-
-        from trulens_eval.schema import Select
-        from trulens_eval.tru_virtual import VirtualApp
-
-        virtual_app = VirtualApp(virtual_app)
-        virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
-        ```
-
-    This approach is particularly beneficial for evaluating the components of an LLM app.
-
-    !!! example "Evaluating components of an LLM application"
-
-        ```python
-        # Adding a retriever component to the virtual app
-        retriever_component = Select.RecordCalls.retriever
-        virtual_app[retriever_component] = 'this is the retriever component'
-        ```
+    | PARAMETER | TYPE |DEFAULT |
+    | --- | ---| --- |
+    | `stack` | [List][typing.List][[RecordAppCallMethod][trulens_eval.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. | 
+    | `args` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
+    | `rets` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
+    | `perf` | [Perf][trulens_eval.schema.base.Perf] | Time spanning the processing of this virtual call. |
+    | `pid` | [int][] | `0` |
+    | `tid` | [int][] | `0` |
     """
 
     def __init__(
         self,
         calls: Dict[serial.Lens, Union[Dict, Sequence[Dict]]],
-        cost: Optional[Cost] = None,
-        perf: Optional[Perf] = None,
-        **kwargs: dict
+        cost: Optional[mod_base_schema.Cost] = None,
+        perf: Optional[mod_base_schema.Perf] = None,
+        **kwargs: Dict[str, Any]
     ):
-        """Create a record for a virtual app.
-        
-        Many arguments are filled in by default values if not provided. See
-        [Record][trulens_eval.schema.Record] for all arguments. Listing here is
-        only for those which are required for this method or filled with default values.
 
-        Args:
-            calls: A dictionary of calls to be recorded. The keys are selectors
-                and the values are dictionaries with the keys listed in the next
-                section.
-
-            cost: Defaults to zero cost.
-
-            perf: Defaults to time spanning the processing of this virtual
-                record. Note that individual calls also include perf. Time span
-                is extended to make sure it is not of duration zero.
-
-        Call values are dictionaries containing arguments to
-        [RecordAppCall][trulens_eval.schema.RecordAppCall] constructor. Values
-        can also be lists of the same. This happens in non-virtual apps when the
-        same method is recorded making multiple calls in a single app
-        invocation. The following defaults are used if not provided.
-
-        | PARAMETER | TYPE |DEFAULT |
-        | --- | ---| --- |
-        | `stack` | [List][typing.List][[RecordAppCallMethod][trulens_eval.schema.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. | 
-        | `args` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
-        | `rets` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
-        | `perf` | [Perf][trulens_eval.schema.Perf] | Time spanning the processing of this virtual call. |
-        | `pid` | [int][] | `0` |
-        | `tid` | [int][] | `0` |
-        """
-
-        root_call = RecordAppCallMethod(
+        root_call = mod_record_schema.RecordAppCallMethod(
             path=serial.Lens(), method=virtual_method_root
         )
 
@@ -346,14 +362,14 @@ class VirtualRecord(Record):
                 substart_time = datetime.datetime.now()
 
                 if "stack" not in call:
-                    path, method_name = Select.path_and_method(
-                        Select.dequalify(lens)
+                    path, method_name = mod_feedback_schema.Select.path_and_method(
+                        mod_feedback_schema.Select.dequalify(lens)
                     )
                     method = virtual_method_call.replace(name=method_name)
 
                     call['stack'] = [
                         root_call,
-                        RecordAppCallMethod(path=path, method=method)
+                        mod_record_schema.RecordAppCallMethod(path=path, method=method)
                     ]
 
                 if "args" not in call:
@@ -374,11 +390,11 @@ class VirtualRecord(Record):
                     subend_time += datetime.timedelta(microseconds=1)
 
                 if "perf" not in call:
-                    call['perf'] = Perf(
+                    call['perf'] = mod_base_schema.Perf(
                         start_time=substart_time, end_time=subend_time
                     )
 
-                rinfo = RecordAppCall(**call)
+                rinfo = mod_record_schema.RecordAppCall(**call)
                 record_calls.append(rinfo)
 
         end_time = datetime.datetime.now()
@@ -390,9 +406,9 @@ class VirtualRecord(Record):
             end_time += datetime.timedelta(microseconds=1)
 
         if "cost" not in kwargs:
-            kwargs['cost'] = Cost()
+            kwargs['cost'] = mod_base_schema.Cost()
         if "perf" not in kwargs:
-            kwargs['perf'] = Perf(start_time=start_time, end_time=end_time)
+            kwargs['perf'] = mod_base_schema.Perf(start_time=start_time, end_time=end_time)
 
         if "main_input" not in kwargs:
             kwargs['main_input'] = "No main_input provided."
@@ -401,7 +417,7 @@ class VirtualRecord(Record):
 
         # append root call
         record_calls.append(
-            RecordAppCall(
+            mod_record_schema.RecordAppCall(
                 stack=[root_call],
                 args=[kwargs['main_input']],
                 rets=[kwargs['main_output']],
@@ -420,7 +436,7 @@ class VirtualRecord(Record):
         super().__init__(calls=record_calls, **kwargs)
 
 
-class TruVirtual(App):
+class TruVirtual(mod_app.App):
     """Recorder for virtual apps.
     
     Virtual apps are data only in that they cannot be executed but for whom
@@ -431,7 +447,7 @@ class TruVirtual(App):
     specified here, notably:
 
     See [App][trulens_eval.app.App] and
-    [AppDefinition][trulens_eval.schema.AppDefinition] for constructor
+    [AppDefinition][trulens_eval.schema.app.AppDefinition] for constructor
     arguments.
 
     # The `app` field.
@@ -512,9 +528,9 @@ class TruVirtual(App):
 
     def add_record(
         self,
-        record: Record,
-        feedback_mode: Optional[FeedbackMode] = None
-    ) -> Record:
+        record: mod_record_schema.Record,
+        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None
+    ) -> mod_record_schema.Record:
         """Add the given record to the database and evaluate any pre-specified
         feedbacks on it.
         
@@ -538,7 +554,7 @@ class TruVirtual(App):
             ]
 
         # Wait for results if mode is WITH_APP.
-        if feedback_mode == FeedbackMode.WITH_APP and record.feedback_results is not None:
+        if feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP and record.feedback_results is not None:
             futs = record.feedback_results
             futures.wait(futs)
 
