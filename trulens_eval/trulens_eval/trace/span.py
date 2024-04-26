@@ -126,7 +126,7 @@ class Span(mod_trace.OTSpan):
             self.attributes[self.vendor_attr(name)] = value
 
         return property(getter, setter)
-
+    
 class SpanRecordAppCall(Span):
     """A Span which corresponds to single
     [RecordAppCall][trulens_eval.schema.record.RecordAppCall].

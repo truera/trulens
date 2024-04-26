@@ -17,8 +17,9 @@ class RecordViewer extends StreamlitComponentBase {
 
     // This seems to currently be the best way to type args, since
     // StreamlitComponentBase appears happy to just give it "any".
-    const { record_json: recordJSON, app_json: appJSON } = this.props.args as DataRaw;
+    const { record_json: recordJSON, app_json: appJSON, spans } = this.props.args as DataRaw;
 
+    console.log(spans);
     /**
      * Actual code begins
      */

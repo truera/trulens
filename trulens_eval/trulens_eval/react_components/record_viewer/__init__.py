@@ -1,12 +1,13 @@
 import os
 
 import streamlit.components.v1 as components
+from trulens_eval.utils.json import jsonify
 
 # Create a _RELEASE constant. We'll set this to False while we're developing
 # the component, and True when we're ready to package and distribute it.
 # (This is, of course, optional - there are innumerable ways to manage your
 # release process.)
-_RELEASE = True
+_RELEASE = False
 
 # Declare a Streamlit component. `declare_component` returns a function
 # that is used to create instances of the component. We're naming this
@@ -44,7 +45,7 @@ else:
 # `declare_component` and call it done. The wrapper allows us to customize
 # our component's API: we can pre-process its input args, post-process its
 # output value, and add a docstring for users.
-def record_viewer(record_json, app_json, key=None):
+def record_viewer(record_json, app_json, spans, key=None):
     """Create a new instance of "record_viewer", which produces a timeline 
 
     Parameters
@@ -54,6 +55,9 @@ def record_viewer(record_json, app_json, key=None):
     
     app_json: obj
         JSON of the app serialized by `json.loads`.
+
+    spans: List[Span]
+        List of spans in the record.
 
     key: str or None
         An optional key that uniquely identifies this component. If this is
@@ -67,6 +71,9 @@ def record_viewer(record_json, app_json, key=None):
         this returns a JavaScript null, which is interpreted in python as a 0.
 
     """
+
+    spans_list=list(map(lambda span: jsonify(span), spans))
+
     # Call through to our private component function. Arguments we pass here
     # will be sent to the frontend, where they'll be available in an "args"
     # dictionary.
@@ -74,7 +81,7 @@ def record_viewer(record_json, app_json, key=None):
     # "default" is a special argument that specifies the initial return
     # value of the component before the user has interacted with it.
     component_value = _record_viewer(
-        record_json=record_json, app_json=app_json, key=key, default=""
+        record_json=record_json, app_json=app_json, spans=spans_list, key=key, default=""
     )
 
     return component_value
