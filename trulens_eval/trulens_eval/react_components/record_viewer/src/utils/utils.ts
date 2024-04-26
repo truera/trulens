@@ -93,6 +93,7 @@ const addCallToTree = (
       matchingNode.startTime = startTime;
       matchingNode.endTime = endTime;
       matchingNode.raw = call;
+      matchingNode.span = span;
 
       return;
     }
@@ -118,14 +119,13 @@ const addCallToTree = (
       name,
       stackCell,
       parentNodes: [...tree.parentNodes, tree],
-      span,
     });
 
     tree.children.push(newNode);
     matchingNode = newNode;
   }
 
-  addCallToTree(matchingNode, call, stack, index + 1);
+  addCallToTree(matchingNode, call, stack, index + 1, span);
 };
 
 export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string, spans: Span[] = []) => {
@@ -136,7 +136,9 @@ export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string, 
   });
 
   recordJSON.calls.forEach((call, index) => {
+    console.log({ call, span: spans[index + 1] });
     addCallToTree(tree, call, call.stack, 0, spans[index + 1]);
+    console.log({ tree });
   });
 
   return tree;

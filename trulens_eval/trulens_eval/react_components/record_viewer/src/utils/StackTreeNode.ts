@@ -4,7 +4,7 @@ import { getMethodNameFromCell, getPathName } from '@/utils/utils';
 
 export const ROOT_NODE_ID = 'root-root-root';
 
-export class StackTreeNode {
+export class StackTreeNode<SpanType extends Span = Span> {
   children: StackTreeNode[];
 
   name: string;
@@ -19,7 +19,7 @@ export class StackTreeNode {
 
   raw?: CallJSONRaw;
 
-  span?: Span;
+  span?: SpanType;
 
   parentNodes: StackTreeNode[] = [];
 
@@ -38,7 +38,7 @@ export class StackTreeNode {
     raw?: CallJSONRaw;
     parentNodes?: StackTreeNode[];
     perf?: PerfJSONRaw;
-    span?: Span;
+    span?: SpanType;
   }) {
     if (perf) {
       const startTime = new Date(perf.start_time).getTime();

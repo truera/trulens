@@ -95,9 +95,8 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
   );
 });
 
-const cellSx: SxProps<Theme> = ({ spacing }) => ({
+const cellSx: SxProps<Theme> = () => ({
   display: 'flex',
-  borderRadius: spacing(0.5),
   width: '-webkit-fill-available',
   alignItems: 'stretch',
   overflow: 'hidden',

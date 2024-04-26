@@ -90,7 +90,7 @@ export default function RecordTableRowRecursive({
 const recordBarSx: SxProps<Theme> = {
   position: 'relative',
   height: 20,
-  borderRadius: 0.5,
+  borderRadius: ({ spacing }) => spacing(0.5),
 };
 
 const recordRowSx: SxProps<Theme> = {

@@ -90,7 +90,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
       container
       sx={{
         border: ({ palette }) => `1px solid ${palette.grey[300]}`,
-        borderRadius: '4px',
+        borderRadius: ({ spacing }) => spacing(0.5),
         [`& > .${gridClasses.item}`]: {
           border: ({ palette }) => `1px solid ${palette.grey[300]}`,
         },
