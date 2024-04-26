@@ -31,7 +31,7 @@ class DictNamespace(Dict[str, T]):
 
     def __getitem__(self, key: str) -> T:
         return dict.__getitem__(self, key)
-    
+
     def __setitem__(self, key: str, value: T) -> None:
         dict.__setitem__(self, key, value)
         self.parent[f"{self.namespace}.{key}"] = value

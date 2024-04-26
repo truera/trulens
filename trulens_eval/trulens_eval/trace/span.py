@@ -82,10 +82,10 @@ class Span(mod_trace.OTSpan):
     def span_type(self, value: SpanType):
         self.attributes[self.vendor_attr("span_type")] = value
 
-    attributes_metadata: mod_container_utils.DictNamespace[str, ot_types.AttributeValue]
+    attributes_metadata: mod_container_utils.DictNamespace[ot_types.AttributeValue]
     # will be set as a DictNamespace indexing elements in attributes
     @property
-    def metadata(self) -> mod_container_utils.DictNamespace[str, ot_types.AttributeValue]:
+    def metadata(self) -> mod_container_utils.DictNamespace[ot_types.AttributeValue]:
         return self.attributes_metadata
 
     @metadata.setter
