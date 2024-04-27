@@ -199,6 +199,7 @@ from pydantic import Field
 from trulens_eval import app as mod_app
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import instrument as base_instrument
+from trulens_eval.trace import span as mod_span
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
@@ -531,12 +532,20 @@ class instrument(base_instrument):
     """
 
     @classmethod
-    def method(self_class, cls: type, name: str) -> None:
-        base_instrument.method(cls, name)
+    def method(
+        cls,
+        of_cls: type,
+        name: str,
+        span_type: Optional[mod_span.SpanType] = None,
+        spanner: Optional[Callable] = None
+    ) -> None:
+        base_instrument.method(
+            of_cls=of_cls, name=name, span_type=span_type, spanner=spanner
+        )
 
         # Also make note of it for verification that it was found by the walk
         # after init.
-        TruCustomApp.functions_to_instrument.add(getattr(cls, name))
+        TruCustomApp.functions_to_instrument.add(getattr(of_cls, name))
 
 
 import trulens_eval  # for App class annotations

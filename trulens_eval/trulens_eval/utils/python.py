@@ -267,7 +267,6 @@ def code_line(func, show_source: bool = False) -> Optional[str]:
             ret += "\t" + str(line)
 
     return ret
-    
 
 
 def locals_except(*exceptions):
