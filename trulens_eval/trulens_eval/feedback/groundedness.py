@@ -128,7 +128,7 @@ class Groundedness(WithClassInfo, SerialModel):
                 )
                 if score_line:
                     groundedness_scores[f"statement_{i}"
-                                       ] = re_0_10_rating(score_line) / 10
+                                       ] = re_0_10_rating(score_line) / self.groundedness_provider.normalize
                     reasons_str += f"\nSTATEMENT {i}:\n{reason}\n\n"
             return groundedness_scores, {"reasons": reasons_str}
 

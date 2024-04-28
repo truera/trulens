@@ -96,6 +96,7 @@ class LLMProvider(Provider):
     # by default. Need the below adjustment but this means we don't get any
     # warnings if we try to override some internal pydantic name.
     model_engine: str
+    normalize: Optional[float] = None
 
     model_config: ClassVar[dict] = dict(protected_namespaces=())
 
@@ -207,6 +208,8 @@ class LLMProvider(Provider):
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
+        normalize = self.normalize if self.normalize is not None else normalize
+
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
@@ -244,6 +247,9 @@ class LLMProvider(Provider):
             Reason metadata if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
+
+        normalize = self.normalize if self.normalize is not None else normalize
+
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
