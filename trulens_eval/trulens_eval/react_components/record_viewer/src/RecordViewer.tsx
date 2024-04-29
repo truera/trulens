@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-component-lib';
 
 import RecordInfo from '@/RecordInfo';
+import { createSpan } from '@/utils/Span';
 import { DataRaw } from '@/utils/types';
 import { createNodeMap, createTreeFromCalls } from '@/utils/utils';
 
@@ -17,12 +18,14 @@ class RecordViewer extends StreamlitComponentBase {
 
     // This seems to currently be the best way to type args, since
     // StreamlitComponentBase appears happy to just give it "any".
-    const { record_json: recordJSON, app_json: appJSON } = this.props.args as DataRaw;
+    const { record_json: recordJSON, app_json: appJSON, raw_spans: rawSpans } = this.props.args as DataRaw;
+
+    const spans = rawSpans?.map(createSpan) ?? [];
 
     /**
      * Actual code begins
      */
-    const root = createTreeFromCalls(recordJSON, appJSON.app_id);
+    const root = createTreeFromCalls(recordJSON, appJSON.app_id, spans);
     const nodeMap = createNodeMap(root);
 
     return <RecordInfo root={root} recordJSON={recordJSON} nodeMap={nodeMap} appJSON={appJSON} />;

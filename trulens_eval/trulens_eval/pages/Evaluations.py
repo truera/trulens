@@ -33,6 +33,7 @@ from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema.feedback import Select
 from trulens_eval.schema.record import Record
+from trulens_eval.trace.category import Categorizer
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.streamlit import init_from_args
@@ -340,13 +341,17 @@ else:
                     )
                 )
 
-                selected_fcol = pills(
-                    "Feedback functions (click on a pill to learn more)",
-                    feedback_with_valid_results,
-                    index=None,
-                    format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
-                    icons=icons
-                )
+                selected_fcol = None
+                if len(feedback_with_valid_results) > 0:
+                    selected_fcol = pills(
+                        "Feedback functions (click on a pill to learn more)",
+                        feedback_with_valid_results,
+                        index=None,
+                        format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
+                        icons=icons
+                    )
+                else: 
+                    st.write("No feedback functions found.")
 
                 def display_feedback_call(call, feedback_name):
 
@@ -413,7 +418,13 @@ else:
                         pass
 
             st.subheader("Trace details")
-            val = record_viewer(record_json, app_json)
+
+            try:
+                spans = Categorizer.spans_of_record(Record(**record_json))
+            except Exception:
+                spans = []
+
+            val = record_viewer(record_json, app_json, spans)
             st.markdown("")
 
     with tab2:

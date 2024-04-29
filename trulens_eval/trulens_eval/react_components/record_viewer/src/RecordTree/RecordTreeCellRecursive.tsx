@@ -80,7 +80,7 @@ const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
   },
   [`& .${treeItemClasses.groupTransition}`]: {
     marginLeft: 0,
-    paddingLeft: spacing(2),
+    paddingLeft: `calc(1px + ${spacing(2)})`,
     [`& .${treeItemClasses.root}`]: {
       pt: 1,
     },
@@ -92,9 +92,10 @@ const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
         display: 'block',
         width: spacing(2),
         height: spacing(1),
+        zIndex: 0,
         top: '50%',
         borderBottom: `1px solid ${palette.grey[300]}`,
-        transform: 'translate(-100%, -50%)',
+        transform: 'translate(calc(-100% - 1px), -50%)',
       },
     },
 

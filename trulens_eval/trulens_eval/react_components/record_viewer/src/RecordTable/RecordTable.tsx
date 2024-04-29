@@ -38,8 +38,7 @@ export default function RecordTable({ root, selectedNodeId, setSelectedNodeId }:
 }
 
 const recordTableSx: SxProps<Theme> = {
-  borderRadius: 4,
-  border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
+  borderRadius: ({ spacing }) => spacing(0.5),
   minWidth: 650,
 
   '& th': {

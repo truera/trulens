@@ -89,18 +89,24 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
     <Grid
       container
       sx={{
-        border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
-        borderRadius: 0.5,
-        [`& .${gridClasses.item}`]: {
-          border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
+        border: ({ palette }) => `1px solid ${palette.grey[300]}`,
+        borderRadius: ({ spacing }) => spacing(0.5),
+        [`& > .${gridClasses.item}`]: {
+          border: ({ palette }) => `1px solid ${palette.grey[300]}`,
         },
       }}
     >
-      <Grid item xs={12} md={isTimeline ? 12 : 5} lg={isTimeline ? 12 : 4}>
+      <Grid
+        item
+        xs={12}
+        md={isTimeline ? 12 : 5}
+        lg={isTimeline ? 12 : 4}
+        sx={{ display: 'flex', flexDirection: 'column' }}
+      >
         <Tabs
           value={selectedSpanView}
           onChange={(_event, value) => setSelectedSpanView(value as SPAN_VIEW)}
-          sx={{ borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}` }}
+          sx={{ borderBottom: ({ palette }) => `2px solid ${palette.grey[300]}` }}
         >
           {SPAN_VIEWS.map((tab) => (
             <Tab label={tab} value={tab} key={tab} id={tab} />
@@ -123,7 +129,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
         <Tabs
           value={selectedTab}
           onChange={(_event, value) => setSelectedTab(value as RECORD_CONTENT_TABS)}
-          sx={{ borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}` }}
+          sx={{ borderBottom: ({ palette }) => `2px solid ${palette.grey[300]}` }}
         >
           {SPAN_TREE_TABS.map((tab) => (
             <Tab label={tab} value={tab} key={tab} id={tab} />

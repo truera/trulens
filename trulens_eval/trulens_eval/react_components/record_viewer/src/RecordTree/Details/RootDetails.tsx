@@ -28,6 +28,6 @@ const rootDetailsContainerSx: SxProps<Theme> = {
   border: ({ palette }) => `1px solid ${palette.grey[300]}`,
   pl: 2,
   py: 1,
-  borderRadius: 0.5,
+  borderRadius: ({ spacing }) => spacing(0.5),
   width: 'fit-content',
 };
