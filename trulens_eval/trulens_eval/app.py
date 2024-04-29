@@ -24,6 +24,7 @@ from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import pyschema
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.asynchro import desync
@@ -347,8 +348,14 @@ class RecordingContext():
     """
 
     def __init__(self, app: mod_app.App, record_metadata: JSON = None):
-        self.calls: List[mod_record_schema.RecordAppCall] = []
-        """A record (in terms of its RecordAppCall) in process of being created."""
+        self.calls: Dict[mod_types_schema.CallID, mod_record_schema.RecordAppCall] = {}
+        """A record (in terms of its RecordAppCall) in process of being created.
+        
+        Storing as a map as we want to override calls with the same id which may
+        happen due to methods producing awaitables or generators. These result
+        in calls before the awaitables are awaited and then get updated after
+        the result is ready.
+        """
 
         self.records: List[mod_record_schema.Record] = []
         """Completed records."""
@@ -403,11 +410,18 @@ class RecordingContext():
         Add the given call to the currently tracked call list.
         """
         with self.lock:
-            self.calls.append(call)
+            # NOTE: This might override existing call record which happens when
+            # processing calls with awaitable or generator results.
+            self.calls[call.call_id] = call
 
     def finish_record(
         self,
-        calls_to_record: Callable[[List[mod_record_schema.RecordAppCall], JSON], mod_record_schema.Record],
+        calls_to_record: Callable[[
+            List[mod_record_schema.RecordAppCall],
+            mod_types_schema.Metadata,
+            Optional[mod_record_schema.Record]
+            ], mod_record_schema.Record
+        ],
         existing_record: Optional[mod_record_schema.Record] = None
     ):
         """
@@ -417,11 +431,11 @@ class RecordingContext():
 
         with self.lock:
             record = calls_to_record(
-                self.calls,
+                list(self.calls.values()),
                 self.record_metadata,
-                existing_record=existing_record
+                existing_record
             )
-            self.calls = []
+            self.calls = {}
 
             if existing_record is None:
                 # If existing record was given, we assume it was already

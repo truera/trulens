@@ -113,7 +113,7 @@ def rag_triad(
          groudedness_provider.grounded_statements_aggregator, "source", context,
          "statement", answer),
         (provider.relevance, np.mean, "prompt", question, "response", context),
-        (provider.qs_relevance, np.mean, "question", question, "statement",
+        (provider.qs_relevance, np.mean, "question", question, "context",
          answer)
     ]:
         f = Feedback(f_imp, if_exists=context).aggregate(f_agg)

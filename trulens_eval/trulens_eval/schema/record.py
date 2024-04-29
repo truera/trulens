@@ -36,6 +36,20 @@ class RecordAppCallMethod(serial.SerialModel):
 class RecordAppCall(serial.SerialModel):
     """Info regarding each instrumented method call."""
 
+    call_id: mod_types_schema.CallID = pydantic.Field(
+        default_factory=mod_types_schema.new_call_id
+    )
+    """Unique identifier for this call.
+    
+    This is shared across different instances of
+    [RecordAppCall][trulens_eval.schema.record.RecordAppCall] if they refer to
+    the same python method call. This may happen if multiple recorders capture
+    the call in which case they will each have a different
+    [RecordAppCall][trulens_eval.schema.record.RecordAppCall] but the
+    [call_id][trulens_eval.schema.record.RecordAppCall.call_id] will be the
+    same.
+    """
+
     stack: List[RecordAppCallMethod]
     """Call stack but only containing paths of instrumented apps/other objects."""
 
@@ -203,7 +217,11 @@ class Record(serial.SerialModel, Hashable):
                 )
             )
 
-            ret = path.set_or_append(obj=ret, val=call)
+            if path.exists(obj=ret):
+                existing = path.get_sole_item(obj=ret)
+                ret = path.set(obj=ret, val=existing + [call])
+            else:
+                ret = path.set(obj=ret, val=[call])
 
         return ret
 
