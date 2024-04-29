@@ -341,13 +341,17 @@ else:
                     )
                 )
 
-                selected_fcol = pills(
-                    "Feedback functions (click on a pill to learn more)",
-                    feedback_with_valid_results,
-                    index=None,
-                    format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
-                    icons=icons
-                )
+                selected_fcol = None
+                if len(feedback_with_valid_results) > 0:
+                    selected_fcol = pills(
+                        "Feedback functions (click on a pill to learn more)",
+                        feedback_with_valid_results,
+                        index=None,
+                        format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
+                        icons=icons
+                    )
+                else: 
+                    st.write("No feedback functions found.")
 
                 def display_feedback_call(call, feedback_name):
 
@@ -415,7 +419,11 @@ else:
 
             st.subheader("Trace details")
 
-            spans = Categorizer.spans_of_record(Record(**record_json))
+            try:
+                spans = Categorizer.spans_of_record(Record(**record_json))
+            except Exception:
+                spans = []
+
             val = record_viewer(record_json, app_json, spans)
             st.markdown("")
 

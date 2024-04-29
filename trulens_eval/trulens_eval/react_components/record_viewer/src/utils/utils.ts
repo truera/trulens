@@ -1,4 +1,4 @@
-import { Span } from '@/utils/Span';
+import { Span, SpanRoot } from '@/utils/Span';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw } from '@/utils/types';
 
@@ -132,13 +132,24 @@ export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string, 
   const tree = new StackTreeNode({
     name: appName,
     perf: recordJSON.perf,
-    span: spans[0],
+    span:
+      spans[0] ??
+      new SpanRoot({
+        name: appName,
+        attributes: {},
+        attributes_metadata: {},
+        status: 'UNSET',
+        status_description: '',
+        kind: 'root',
+        events: [],
+        context: [-1, -1],
+        start_timestamp: new Date(recordJSON.perf.start_time).getDate(),
+        end_timestamp: new Date(recordJSON.perf.end_time).getDate(),
+      }),
   });
 
   recordJSON.calls.forEach((call, index) => {
-    console.log({ call, span: spans[index + 1] });
     addCallToTree(tree, call, call.stack, 0, spans[index + 1]);
-    console.log({ tree });
   });
 
   return tree;
