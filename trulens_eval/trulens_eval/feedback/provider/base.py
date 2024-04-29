@@ -398,7 +398,7 @@ class LLMProvider(Provider):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
 
-        return self.generate_score_and_reasons(system_prompt, user_prompt, temperature)
+        return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, temperature=temperature)
 
     def qs_relevance_with_cot_reasons(self, question: str,
                                       context: str) -> Tuple[float, Dict]:

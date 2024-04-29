@@ -4,10 +4,13 @@ Container class utilities.
 
 from __future__ import annotations
 
+import datetime
 import itertools
 import logging
 from pprint import PrettyPrinter
 from typing import Callable, Dict, Iterable, Sequence, Tuple, TypeVar, Union
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -16,6 +19,15 @@ T = TypeVar("T")
 A = TypeVar("A")
 B = TypeVar("B")
 
+# Time container utilities
+
+def datetime_of_ns_timestamp(timestamp: int) -> datetime.datetime:
+    """Convert a nanosecond timestamp to a datetime."""
+    return pd.Timestamp(timestamp, unit='ns').to_pydatetime()
+
+def ns_timestamp_of_datetime(dt: datetime.datetime) -> int:
+    """Convert a datetime to a nanosecond timestamp."""
+    return pd.Timestamp(dt).as_unit('ns').value
 
 # Dicts utilities
 

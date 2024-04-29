@@ -7,6 +7,8 @@ from typing import List, Optional, Sequence, Set, TypeVar
 
 from trulens_eval import instruments as mod_instruments
 from trulens_eval import trace as mod_trace
+from trulens_eval.utils import containers as mod_containers_utils
+from trulens_eval.trace import tracer as mod_tracer
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.trace import span as mod_span
 from trulens_eval.trace import tracer as mod_tracer
@@ -109,28 +111,75 @@ class Categorizer():
                 call=call, tracer=tracer, context=context
             )
 
-        return tracer.new_span(
+        span = tracer.new_span(
             name = method.name,
-            cls = mod_span.SpanUntyped, # if no category known
+            cls = mod_span.SpanOther, # if no category known
             context = context
         )
+
+        return span
 
     @staticmethod
     def spans_of_record(record: mod_record_schema.Record) -> List[mod_span.Span]:
         """Convert this record into a tracer with all of the calls populated as spans."""
 
-        tracer = mod_trace.tracer.Tracer() # determine trace_id from record_id
-
-        root_span = tracer.new_span(
-            name="root", cls=mod_span.SpanRoot
+        # Init with trace_id that is determined by record_id.
+        tracer = mod_trace.tracer.Tracer(
+            trace_id=mod_tracer.trace_id_of_string_id(record.record_id)
         )
 
-        for call in record.calls:
-            span = Categorizer.span_of_call(call=call, tracer=tracer, context=root_span.context)
+        root_span = tracer.new_span(
+            name="root",
+            cls=mod_span.SpanRoot,
+            start_time=mod_containers_utils.ns_timestamp_of_datetime(record.perf.start_time)
+        )
+        root_span.end(mod_containers_utils.ns_timestamp_of_datetime(record.perf.end_time))
 
+        # TransSpanRecord fields
+        root_span.record = record
+        root_span.record_id = record.record_id
+
+        method_to_span_map = {}
+
+        for call in record.calls:
+            method = call.top()
+            
+            span = Categorizer.span_of_call(
+                call=call,
+                tracer=tracer,
+                context=root_span.context # might be changed below
+            )
+
+            method_to_span_map[method] = span
+
+            # OTSpan fields
+            span.start_timestamp = mod_containers_utils.ns_timestamp_of_datetime(call.perf.start_time)
+            span.end(mod_containers_utils.ns_timestamp_of_datetime(call.perf.end_time))
+
+            # TransSpanRecord fields
+            span.record_id = record.record_id
+            span.record = record
+
+            # TransSpanRecordAppCall fields
+            span.call = call
+            span.inputs = call.args
+            span.output = call.rets
+            span.error = call.error
+
+            # Add to traces. Not needed now but might be later.
             tracer.spans[span.context] = span
 
-        return tracer.spans.values()
+        # Update parent context links.
+        for span in tracer.spans.values():
+            if isinstance(span, mod_span.TransSpanRecordAppCall):
+
+                parent_method = span.call.caller()
+                if parent_method in method_to_span_map:
+
+                    parent_span = method_to_span_map[parent_method]
+                    span.parent_context = parent_span.context
+
+        return list(tracer.spans.values())
 
 
 class LangChainCategorizer(Categorizer):
@@ -271,7 +320,7 @@ class CustomCategorizer(Categorizer):
         tracer: mod_tracer.Tracer,
         context: Optional[mod_trace.HashableSpanContext] = None
     ) -> mod_span.Span:
-        """Converts a call by a _LlamaIndex_ class into the appropriate span."""
+        """Converts a custom instrumentation-annotated method call into the appropriate span."""
 
         pymethod = call.method()
         pyfunc = pymethod.as_func()

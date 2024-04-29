@@ -6,24 +6,121 @@ information into type of call related to types of components.
 
 from __future__ import annotations
 
+import datetime
 from enum import Enum
-import functools
 from logging import getLogger
-from typing import Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
 from opentelemetry.util import types as ot_types
+import pandas as pd
+from pydantic import computed_field
+from pydantic import Field
+from pydantic import TypeAdapter
 
 from trulens_eval import trace as mod_trace
+from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils import containers as mod_container_utils
 
 logger = getLogger(__name__)
 
+T = TypeVar("T")
 
 class Span(mod_trace.OTSpan):
     """Base Span type.
     
     Smallest unit of recorded activity.
     """
+
+    @staticmethod
+    def attribute_property(
+        name: str,
+        typ: Optional[Type[T]] = None,
+        typ_factory: Optional[Callable[[], Type[T]]] = None,
+        default: Optional[T] = None,
+        default_factory: Optional[Callable[[], T]] = None
+    ) -> property:
+        """Utility for creating properties that stores their values in the
+        attributes dictionary with a vendor prefix.
+
+        Validates default and on assignment.
+        
+        Args:
+            name: The name of the property. The key used for storage will be
+                this with the vendor prefix.
+
+            typ: The type of the property.
+
+            typ_factory: A factory function that returns the type of the
+                property. This can be used for forward referenced types.
+
+            default: The default value of the property.
+
+            default_factory: A factory function that returns the default value
+                of the property. This can be used for defaults that make use of
+                forward referenced types.
+        """
+        initialized = False
+        tadapter = None
+
+        def initialize():
+            # Delaying the steps in this method until the first time the
+            # property is used as otherwise forward references might not be
+            # ready.
+
+            nonlocal initialized, tadapter
+
+            if initialized:
+                return
+
+            nonlocal typ, default
+            if typ is None and typ_factory is not None:
+                typ = typ_factory()
+
+            if default is None and default_factory is not None:
+                default = default_factory()
+
+            if typ is None and default is not None:
+                typ = type(default)
+
+            if typ is None:
+                tadapter = None
+            else:
+                tadapter = TypeAdapter(typ)
+                if default is not None:
+                    tadapter.validate_python(default)
+
+        def getter(self) -> T:
+            initialize()
+            return self.attributes.get(self.vendor_attr(name), default)
+
+        def setter(self, value: T) -> None:
+            initialize()
+            if tadapter is not None:
+                tadapter.validate_python(value)
+
+            self.attributes[self.vendor_attr(name)] = value
+
+        prop = property(getter, setter)
+
+        return computed_field(prop)
+
+    @property
+    def start_datetime(self) -> datetime.datetime:
+        """Start time of span as a [datetime][datetime.datetime]."""
+        return mod_container_utils.datetime_of_ns_timestamp(self.start_timestamp)
+    
+    @start_datetime.setter
+    def start_datetime(self, value: datetime.datetime):
+        self.start_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
+
+    @property
+    def end_datetime(self) -> datetime.datetime:
+        """End time of span as a [datetime][datetime.datetime]."""
+        return mod_container_utils.datetime_of_ns_timestamp(self.end_timestamp)
+    
+    @end_datetime.setter
+    def end_datetime(self, value: datetime.datetime):
+        self.end_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
 
     @property
     def span_id(self) -> mod_trace.TSpanID:
@@ -37,11 +134,12 @@ class Span(mod_trace.OTSpan):
 
         return self.context.trace_id
 
-    @functools.cached_property
+    @property # want # @functools.cached_property but those are not allowed to have setters
     def parent_context(self) -> Optional[mod_trace.HashableSpanContext]:
         """Context of parent span if any.
 
-        None if this is a root span.
+        This is stored in OT links with a relationship attribute of "parent".
+        None if this is a root span or otherwise it does not have a parent.
         """
 
         for link_context, link_attributes in self.links.items():
@@ -50,12 +148,21 @@ class Span(mod_trace.OTSpan):
 
         return None
 
-    @functools.cached_property
-    def parent_span_id(self) -> Optional[mod_trace.TSpanID]:
-        """Id of parent span if any.
+    @parent_context.setter
+    def parent_context(self, value: Optional[mod_trace.HashableSpanContext]):
+        if value is None:
+            return
 
-        None if this is a root span.
-        """
+        if self.parent_context is not None:
+            # Delete existing parent if any.
+            del self.links[self.parent_context]
+
+        self.add_link(value, {self.vendor_attr("relationship"): "parent"})
+
+    # want functools.cached_property but need updating due to the above setter
+    @property
+    def parent_span_id(self) -> Optional[mod_trace.TSpanID]:
+        """Id of parent span if any."""
 
         parent_context = self.parent_context
         if parent_context is not None:
@@ -63,24 +170,17 @@ class Span(mod_trace.OTSpan):
 
         return None
 
-    @property
-    def tags(self) -> List[str]:
-        """Tags associated with the span."""
+    tags = attribute_property(
+        "tags", typ=List[str], default_factory=list
+    )
+    """Tags associated with the span."""
 
-        return self.attributes.get(self.vendor_attr("tags"), [])
-    @tags.setter
-    def tags(self, value: List[str]):
-        self.attributes[self.attr("tags")] = value
-
-    @property
-    def span_type(self) -> SpanType:
-        """Type of span."""
-
-        return SpanType(self.attributes.get(self.vendor_attr("span_type"), SpanType.UNTYPED.name))
-
-    @span_type.setter
-    def span_type(self, value: SpanType):
-        self.attributes[self.vendor_attr("span_type")] = value
+    span_type = attribute_property(
+        "span_type",
+        typ_factory=lambda: SpanType,
+        default_factory=lambda: SpanType.UNTYPED
+    )
+    """Type of span."""
 
     attributes_metadata: mod_container_utils.DictNamespace[ot_types.AttributeValue]
     # will be set as a DictNamespace indexing elements in attributes
@@ -92,11 +192,6 @@ class Span(mod_trace.OTSpan):
     def metadata(self, value: Dict[str, str]):
         for k, v in value.items():
             self.attributes_metadata[k] = v
-
-    # input: Dict[str, str] = pydantic.Field(default_factory=dict)
-    # Make property
-    # output: Dict[str, str] = pydantic.Field(default_factory=dict)
-    # Make property
 
     def __init__(self, **kwargs):
         kwargs['attributes_metadata'] = mod_container_utils.DictNamespace(parent={}, namespace="temp")
@@ -112,26 +207,6 @@ class Span(mod_trace.OTSpan):
 
         self.set_attribute(self.vendor_attr("span_type"), self.__class__.__name__)
 
-    @staticmethod
-    def attribute_property(name: str, typ: Type) -> property:
-        """A property that will get/set values from `self.attributes`."""
-
-        def getter(self):
-            return self.attributes.get(self.vendor_attr(name))
-        
-        def setter(self, value):
-            if not isinstance(value, typ):
-                raise ValueError(f"Expected {typ} for {self.name} but got {type(value)}.")
-
-            self.attributes[self.vendor_attr(name)] = value
-
-        return property(getter, setter)
-    
-class SpanRecordAppCall(Span):
-    """A Span which corresponds to single
-    [RecordAppCall][trulens_eval.schema.record.RecordAppCall].
-    """
-
 class SpanUntyped(Span):
     """Generic span type.
     
@@ -139,16 +214,60 @@ class SpanUntyped(Span):
     determined to be of a particular type.
     """
 
-    pass
+class TransSpanRecord(Span):
+    """A span whose activity was recorded in a record.
+    
+    Features references to the record.
 
-class SpanRoot(Span):
+    !!! note
+        This is a transitional type for the traces work.
+    """
+
+    record: mod_record_schema.Record = Field(exclude=True, default=None)
+    record_id = Span.attribute_property("record_id", typ=str, default=None)
+
+class SpanMethodCall(TransSpanRecord):
+    """Span which corresponds to a method call.
+    
+    See also temporary development attributes in
+    [TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordCall].
+    """
+
+    inputs = Span.attribute_property("inputs", typ=Optional[Dict[str, Any]], default_factory=None)
+    # TODO: Need to encode to OT AttributeValue
+
+    output = Span.attribute_property("output", typ=Optional[Any], default_factory=None)
+    # TODO: Need to encode to OT AttributeValue
+
+    error = Span.attribute_property("error", typ=Optional[Any], default_factory=None)
+    # TODO: Need to encode to OT AttributeValue
+
+
+class TransSpanRecordAppCall(SpanMethodCall):
+    """A Span which corresponds to single
+    [RecordAppCall][trulens_eval.schema.record.RecordAppCall].
+
+    Features references to the call.
+
+    !!! note
+        This is a transitional type for the traces work. The non-transitional
+        fields are being placed in
+        [SpanMethodCall][trulens_eval.trace.span.SpanMethodCall] instead.
+    """
+    call: mod_record_schema.RecordAppCall = Field(exclude=True, default=None)
+
+
+class SpanRoot(TransSpanRecord):
     """A root span encompassing some collection of spans.
 
     Does not indicate any particular activity by itself beyond its children.
     """
-    pass
 
-class SpanRetriever(Span):
+SpanTyped = TransSpanRecordAppCall
+"""Alias for the superclass of spans that went through the record call conversion."""
+
+
+class SpanRetriever(SpanTyped):
     """A retrieval."""
 
     input_text = Span.attribute_property("input_text", str)
@@ -166,27 +285,29 @@ class SpanRetriever(Span):
     retrieved_contexts = Span.attribute_property("retrieved_contexts", list)#List[str])
     """The retrieved contexts."""
 
-class SpanReranker(Span):
-    pass
+class SpanReranker(SpanTyped):
+    """A reranker call."""
 
-class SpanLLM(Span):
+class SpanLLM(SpanTyped):
+    """A generation call to an LLM."""
+
     model_name = Span.attribute_property("model_name", str)
     """The model name of the LLM."""
 
-class SpanEmbedding(Span):
-    pass
+class SpanEmbedding(SpanTyped):
+    """An embedding cal."""
 
-class SpanTool(Span):
-    pass
+class SpanTool(SpanTyped):
+    """A tool invocation."""
 
-class SpanAgent(Span):
-    pass
+class SpanAgent(SpanTyped):
+    """An agent invocation."""
 
-class SpanTask(Span):
-    pass
+class SpanTask(SpanTyped):
+    """A task invocation."""
 
-class SpanOther(Span):
-    pass
+class SpanOther(SpanTyped):
+    """Other uncategorized spans."""
 
 class SpanType(Enum):
     """Span types.

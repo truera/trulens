@@ -19,8 +19,30 @@ from trulens_eval.trace import span as mod_span
 
 logger = getLogger(__name__)
 
+def trace_id_of_string_id(s: str) -> mod_trace.TTraceID:
+    """Convert a string id to a trace ID.
+    
+    Not an OT requirement.
+    """
+
+    return hash(s) % (1 << mod_trace.NUM_TRACEID_BITS)
+
+def span_id_of_string_id(s: str) -> mod_trace.TSpanID:
+    """Convert a string id to a span ID.
+    
+    Not an OT requirement.
+    """
+
+    return hash(s) % (1 << mod_trace.NUM_SPANID_BITS)
+
 class Tracer(pydantic.BaseModel, ot_trace.Tracer):
     """Implementation of OpenTelemetry Tracer requirements."""
+
+    model_config = {
+        'arbitrary_types_allowed': True,
+        'use_attribute_docstrings': True
+    }
+    """Pydantic configuration."""
 
     stack: contextvars.ContextVar[mod_trace.HashableSpanContext] = pydantic.Field(
         default_factory=lambda: contextvars.ContextVar("stack", default=None),
@@ -41,14 +63,13 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
     trace_id: mod_trace.TTraceID
     """Unique identifier for the trace."""
 
-    model_config = {
-        'arbitrary_types_allowed': True,
-        'use_attribute_docstrings': True
-    }
-    """Pydantic configuration."""
-
-    def __init__(self, **kwargs):
-        trace_id = random.getrandbits(mod_trace.NUM_TRACEID_BITS)
+    def __init__(
+        self,
+        trace_id: Optional[mod_trace.TTraceId] = None,
+        **kwargs
+    ):
+        if trace_id is None:
+            trace_id = random.getrandbits(mod_trace.NUM_TRACEID_BITS)
 
         kwargs['trace_id'] = trace_id
 
@@ -64,8 +85,10 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
         links: ot_trace._Links = None,
         start_time: Optional[int] = None,
         record_exception: bool = True,
-        set_status_on_exception: bool = True,
+        set_status_on_exception: bool = True
     ) -> mod_trace.Span:
+        """See [new_span][opentelemetry.trace.Tracer.new_span]."""
+
         span_context = mod_trace.HashableSpanContext(
             trace_id=self.trace_id,
             span_id=random.getrandbits(mod_trace.NUM_SPANID_BITS),
