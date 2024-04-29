@@ -4,25 +4,18 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import (ClassVar, Dict, Hashable, List, Optional, Sequence, Tuple,
-                    TypeVar)
+from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
 
 from munch import Munch as Bunch
-import opentelemetry.trace.span as ot_span
-from opentelemetry.util import types as ot_types
 import pydantic
 
-from trulens_eval import trace as mod_trace
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import types as mod_types_schema
-from trulens_eval.trace import span as mod_span
-from trulens_eval.trace import tracer as mod_tracer
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
-from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.python import Future
 
 T = TypeVar("T")
