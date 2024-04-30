@@ -62,7 +62,8 @@ May be checked with
 CallableAwaitable = Callable[[A], Awaitable[B]]
 """Function that produces an awaitable / coroutine function."""
 
-ThunkMaybeAwaitable = Union[mod_python_utils.Thunk[T], mod_python_utils.Thunk[Awaitable[T]]]
+ThunkMaybeAwaitable = Union[mod_python_utils.Thunk[T],
+                            mod_python_utils.Thunk[Awaitable[T]]]
 """Thunk or coroutine thunk. 
 
 May be checked with

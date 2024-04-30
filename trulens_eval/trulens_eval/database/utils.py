@@ -154,6 +154,7 @@ def check_db_revision(
             f"Cannot handle database revisions: {revisions}"
         )
 
+
 def coerce_ts(ts: Union[datetime, str, int, float]) -> datetime:
     """Coerce various forms of timestamp into datetime."""
 
@@ -163,7 +164,7 @@ def coerce_ts(ts: Union[datetime, str, int, float]) -> datetime:
         return datetime.fromisoformat(ts)
     if isinstance(ts, (int, float)):
         return datetime.fromtimestamp(ts)
-    
+
     raise ValueError(f"Cannot coerce to datetime: {ts}")
 
 

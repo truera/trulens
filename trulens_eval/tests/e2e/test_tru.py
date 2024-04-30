@@ -11,13 +11,13 @@ from unittest import TestCase
 from tests.unit.test import optional_test
 
 from trulens_eval import Feedback
-
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
 from trulens_eval.feedback.provider.hugs import Dummy
 from trulens_eval.keys import check_keys
-from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.tru_custom_app import TruCustomApp
+
 
 class TestTru(TestCase):
 
