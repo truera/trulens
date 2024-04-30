@@ -33,22 +33,27 @@ from trulens_eval.utils import threading as mod_threading_utils
 
 # Optional provider types.
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_LITELLM):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_LITELLM):
     from trulens_eval.feedback.provider.litellm import LiteLLM
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_BEDROCK):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_BEDROCK):
     from trulens_eval.feedback.provider.bedrock import Bedrock
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_OPENAI):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import AzureOpenAI
     from trulens_eval.feedback.provider.openai import OpenAI
 
 # Optional app types.
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_LLAMA):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_LLAMA):
     from trulens_eval.tru_llama import TruLlama
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_RAILS):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_RAILS):
     from trulens_eval.tru_rails import TruRails
 
 Tru = mod_tru.Tru

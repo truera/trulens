@@ -279,10 +279,8 @@ class FeedbackActions():
 
         selectors = {
             argname:
-                (
-                    Lens.of_string(arglens)
-                    if isinstance(arglens, str) else arglens
-                ) for argname, arglens in selectors.items()
+            (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
+            for argname, arglens in selectors.items()
         }
 
         feedback_function = feedback_function.on(**selectors)
@@ -437,7 +435,8 @@ class TruRails(mod_app.App):
         """
         Get the path to the context in the query output.
         """
-        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:].body
+        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:
+                                                                                    ].body
 
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped

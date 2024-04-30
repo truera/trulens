@@ -134,11 +134,11 @@ class Record(serial.SerialModel, Hashable):
     as the app that generated this record via `layout_calls_as_app`.
     """
 
-    feedback_and_future_results: Optional[List[Tuple[mod_feedback_schema.FeedbackDefinition,
-                                                     Future[mod_feedback_schema.FeedbackResult]]]
-                                         ] = pydantic.Field(
-                                             None, exclude=True
-                                         )
+    feedback_and_future_results: Optional[List[
+        Tuple[mod_feedback_schema.FeedbackDefinition,
+              Future[mod_feedback_schema.FeedbackResult]]]] = pydantic.Field(
+                  None, exclude=True
+              )
     """Map of feedbacks to the futures for of their results.
      
     These are only filled for records that were just produced. This will not
@@ -150,7 +150,9 @@ class Record(serial.SerialModel, Hashable):
         pydantic.Field(None, exclude=True)
     """Only the futures part of the above for backwards compatibility."""
 
-    def __init__(self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs):
+    def __init__(
+        self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs
+    ):
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
@@ -163,7 +165,8 @@ class Record(serial.SerialModel, Hashable):
 
     def wait_for_feedback_results(
         self
-    ) -> Dict[mod_feedback_schema.FeedbackDefinition, mod_feedback_schema.FeedbackResult]:
+    ) -> Dict[mod_feedback_schema.FeedbackDefinition,
+              mod_feedback_schema.FeedbackResult]:
         """Wait for feedback results to finish.
 
         Returns:

@@ -14,8 +14,10 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Generic, Iterable, List, Optional,
-                    Sequence, Tuple, TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple,
+    TypeVar, Union
+)
 
 import humanize
 import pandas
@@ -192,11 +194,13 @@ class Tru(python.SingletonPerName):
                 self.warning()
 
             return
-        
+
         if database is not None:
             if not isinstance(database, DB):
-                raise ValueError("`database` must be a `trulens_eval.database.base.DB` instance.")
-            
+                raise ValueError(
+                    "`database` must be a `trulens_eval.database.base.DB` instance."
+                )
+
             self.db = database
         else:
             self.db = sqlalchemy.SQLAlchemyDB.from_tru_args(**database_args)
@@ -207,7 +211,6 @@ class Tru(python.SingletonPerName):
             except DatabaseVersionException as e:
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
-
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict
@@ -372,9 +375,12 @@ class Tru(python.SingletonPerName):
         record: mod_record_schema.Record,
         feedback_functions: Sequence[feedback.Feedback],
         app: Optional[mod_app_schema.AppDefinition] = None,
-        on_done: Optional[Callable[[Union[mod_feedback_schema.FeedbackResult, Future[mod_feedback_schema.FeedbackResult]],
-                                   None]]] = None
-    ) -> List[Tuple[feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]]:
+        on_done: Optional[Callable[[
+            Union[mod_feedback_schema.FeedbackResult,
+                  Future[mod_feedback_schema.FeedbackResult]], None
+        ]]] = None
+    ) -> List[Tuple[feedback.Feedback,
+                    Future[mod_feedback_schema.FeedbackResult]]]:
         """Schedules to run the given feedback functions.
         
         Args:
@@ -432,9 +438,9 @@ class Tru(python.SingletonPerName):
                         on_done(temp)
                     finally:
                         return temp
-                    
+
                 return temp
-            
+
 
             fut: Future[mod_feedback_schema.FeedbackResult] = \
                 tp.submit(run_and_call_callback, ffunc=ffunc, app=app, record=record)
@@ -482,7 +488,9 @@ class Tru(python.SingletonPerName):
         """
 
         if not isinstance(record, mod_record_schema.Record):
-            raise ValueError("`record` must be a `trulens_eval.schema.record.Record` instance.")
+            raise ValueError(
+                "`record` must be a `trulens_eval.schema.record.Record` instance."
+            )
 
         if not isinstance(feedback_functions, Sequence):
             raise ValueError("`feedback_functions` must be a sequence.")
@@ -494,7 +502,9 @@ class Tru(python.SingletonPerName):
             )
 
         if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
-            raise ValueError("`app` must be a `trulens_eval.schema.app.AppDefinition` instance.")
+            raise ValueError(
+                "`app` must be a `trulens_eval.schema.app.AppDefinition` instance."
+            )
 
         if not isinstance(wait, bool):
             raise ValueError("`wait` must be a bool.")
@@ -528,7 +538,9 @@ class Tru(python.SingletonPerName):
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(self, app: mod_app_schema.AppDefinition) -> mod_types_schema.AppID:
+    def add_app(
+        self, app: mod_app_schema.AppDefinition
+    ) -> mod_types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -541,7 +553,7 @@ class Tru(python.SingletonPerName):
         """
 
         return self.db.insert_app(app=app)
-    
+
     def delete_app(self, app_id: mod_types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
@@ -554,9 +566,9 @@ class Tru(python.SingletonPerName):
 
     def add_feedback(
         self,
-        feedback_result_or_future: Optional[Union[mod_feedback_schema.FeedbackResult,
-                                                  Future[mod_feedback_schema.FeedbackResult]]
-                                           ] = None,
+        feedback_result_or_future: Optional[
+            Union[mod_feedback_schema.FeedbackResult,
+                  Future[mod_feedback_schema.FeedbackResult]]] = None,
         **kwargs: dict
     ) -> mod_types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
@@ -584,7 +596,9 @@ class Tru(python.SingletonPerName):
                 # If result already present, set status to done.
                 kwargs['status'] = mod_feedback_schema.FeedbackResultStatus.DONE
 
-            feedback_result_or_future = mod_feedback_schema.FeedbackResult(**kwargs)
+            feedback_result_or_future = mod_feedback_schema.FeedbackResult(
+                **kwargs
+            )
 
         else:
             if isinstance(feedback_result_or_future, Future):
@@ -592,7 +606,8 @@ class Tru(python.SingletonPerName):
                 feedback_result_or_future: mod_feedback_schema.FeedbackResult = feedback_result_or_future.result(
                 )
 
-            elif isinstance(feedback_result_or_future, mod_feedback_schema.FeedbackResult):
+            elif isinstance(feedback_result_or_future,
+                            mod_feedback_schema.FeedbackResult):
                 pass
             else:
                 raise ValueError(
@@ -606,8 +621,9 @@ class Tru(python.SingletonPerName):
         )
 
     def add_feedbacks(
-        self, feedback_results: Iterable[Union[mod_feedback_schema.FeedbackResult,
-                                               Future[mod_feedback_schema.FeedbackResult]]]
+        self, feedback_results: Iterable[
+            Union[mod_feedback_schema.FeedbackResult,
+                  Future[mod_feedback_schema.FeedbackResult]]]
     ) -> List[schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
         
@@ -631,8 +647,9 @@ class Tru(python.SingletonPerName):
 
         return ids
 
-    def get_app(self,
-                app_id: mod_types_schema.AppID) -> serial.JSONized[mod_app_schema.AppDefinition]:
+    def get_app(
+        self, app_id: mod_types_schema.AppID
+    ) -> serial.JSONized[mod_app_schema.AppDefinition]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens_eval.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
@@ -693,7 +710,8 @@ class Tru(python.SingletonPerName):
         return df, feedback_columns
 
     def get_leaderboard(
-        self, app_ids: Optional[List[mod_types_schema.AppID]] = None
+        self,
+        app_ids: Optional[List[mod_types_schema.AppID]] = None
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
@@ -784,7 +802,9 @@ class Tru(python.SingletonPerName):
             # progress bar initial values so that they offer accurate
             # predictions initially after restarting the process.
             queue_stats = self.db.get_feedback_count_by_status()
-            queue_done = queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE) or 0
+            queue_done = queue_stats.get(
+                mod_feedback_schema.FeedbackResultStatus.DONE
+            ) or 0
             queue_total = sum(queue_stats.values())
 
             # Show the overall counts from the database, not just what has been
@@ -866,9 +886,7 @@ class Tru(python.SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {
-                        name: count for name, count in runs_stats.items()
-                    }
+                    {name: count for name, count in runs_stats.items()}
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()

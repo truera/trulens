@@ -571,7 +571,9 @@ class Instrument(object):
             def handle_done(rets):
                 record_app_args = dict(
                     args=nonself,
-                    perf=mod_base_schema.Perf(start_time=start_time, end_time=end_time),
+                    perf=mod_base_schema.Perf(
+                        start_time=start_time, end_time=end_time
+                    ),
                     pid=os.getpid(),
                     tid=th.get_native_id(),
                     rets=jsonify(rets),
@@ -601,7 +603,9 @@ class Instrument(object):
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=mod_base_schema.Perf(start_time=start_time, end_time=end_time),
+                            perf=mod_base_schema.Perf(
+                                start_time=start_time, end_time=end_time
+                            ),
                             cost=cost,
                             existing_record=records.get(ctx)
                         )
