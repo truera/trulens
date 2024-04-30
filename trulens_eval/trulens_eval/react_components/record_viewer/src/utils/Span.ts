@@ -11,6 +11,7 @@ export enum SpanType {
   AGENT = 'SpanAgent',
   TASK = 'SpanTask',
   OTHER = 'SpanOther',
+  MEMORY = 'SpanMemory',
 }
 
 /**
@@ -106,10 +107,18 @@ export class SpanRetriever extends Span {
   distanceType: string | null;
 
   // The number of contexts requested, not necessarily retrieved.
-  numContexts: number;
+  numContexts: number | null;
 
   // The retrieved contexts.
-  retrievedContexts: string[] | null;
+  rawRetrievedContexts: string[] | null;
+
+  // The scores of the retrieved contexts.
+  rawRetrievedScores: number[] | null;
+
+  // The embeddings of the retrieved contexts.
+  rawRetrievedEmbeddings: number[][] | null;
+
+  retrievedContexts: { context: string | null; score: number | null; embedding: number[] | null }[] | null;
 
   constructor(rawSpan: SpanRaw) {
     super(rawSpan);
@@ -119,14 +128,60 @@ export class SpanRetriever extends Span {
     this.inputEmbedding = (this.getAttribute('input_embedding') as number[]) ?? null;
     this.distanceType = (this.getAttribute('distance_type') as string) ?? null;
     this.numContexts = (this.getAttribute('num_contexts') as number) ?? null;
-    this.retrievedContexts = (this.getAttribute('retrieved_contexts') as string[]) ?? null;
+    this.rawRetrievedContexts = (this.getAttribute('retrieved_contexts') as string[]) ?? null;
+    this.rawRetrievedScores = (this.getAttribute('retrieved_scores') as number[]) ?? null;
+    this.rawRetrievedEmbeddings = (this.getAttribute('retrieved_embeddings') as number[][]) ?? null;
+
+    this.retrievedContexts = this.rawRetrievedContexts?.map((context, index) => ({
+      context,
+      score: this.rawRetrievedScores?.[index] ?? null,
+      embedding: this.rawRetrievedEmbeddings?.[index] ?? null,
+    }));
   }
 }
 
 export class SpanReranker extends Span {
+  // The query text.
+  queryText: string | null;
+
+  // The model name of the reranker.
+  modelName: string | null;
+
+  // The number of contexts to rerank.
+  topN: number | null;
+
+  // The contexts being reranked.
+  inputContextTexts: string[] | null;
+
+  // The scores of the input contexts.
+  inputContextScores: number[] | null;
+
+  // Reranked indexes into `inputContextTexts`.
+  outputRanks: number[] | null;
+
+  contexts:
+    | {
+        context: string | null;
+        inputScore: number | null;
+        outputRank: number | null;
+      }[]
+    | null;
+
   constructor(rawSpan: SpanRaw) {
     super(rawSpan);
     this.type = SpanType.RERANKER;
+    this.queryText = (this.getAttribute('query_text') as string) ?? null;
+    this.modelName = (this.getAttribute('model_name') as string) ?? null;
+    this.topN = (this.getAttribute('top_n') as number) ?? null;
+    this.inputContextTexts = (this.getAttribute('input_context_texts') as string[]) ?? null;
+    this.inputContextScores = (this.getAttribute('input_context_scores') as number[]) ?? null;
+    this.outputRanks = (this.getAttribute('output_ranks') as number[]) ?? null;
+
+    this.contexts = this.inputContextTexts?.map((context, index) => ({
+      context,
+      inputScore: this.inputContextScores?.[index] ?? null,
+      outputRank: this.outputRanks?.[index] ?? null,
+    }));
   }
 }
 
@@ -134,31 +189,94 @@ export class SpanLLM extends Span {
   // The model name of the LLM
   modelName: string | null;
 
+  // The type of model used.
+  modelType: string | null;
+
+  // The temperature used for generation.
+  temperature: number | null;
+
+  // The prompt given to the LLM.
+  inputMessages: Record<string, string>[] | null;
+
+  // The number of tokens in the input.
+  inputTokenCount: number | null;
+
+  // The returned text.
+  outputMessages: Record<string, string>[] | null;
+
+  // The number of tokens in the output.
+  outputTokenCount: number | null;
+
+  // The cost of the generation.
+  cost: number | null;
+
   constructor(rawSpan: SpanRaw) {
     super(rawSpan);
     this.type = SpanType.LLM;
     this.modelName = (this.getAttribute('model_name') as string) ?? null;
+    this.modelType = (this.getAttribute('model_type') as string) ?? null;
+    this.temperature = (this.getAttribute('temperature') as number) ?? null;
+    this.inputMessages = (this.getAttribute('input_messages') as Record<string, string>[]) ?? null;
+    this.inputTokenCount = (this.getAttribute('input_token_count') as number) ?? null;
+    this.outputMessages = (this.getAttribute('output_messages') as Record<string, string>[]) ?? null;
+    this.outputTokenCount = (this.getAttribute('output_token_count') as number) ?? null;
+    this.cost = (this.getAttribute('cost') as number) ?? null;
+  }
+}
+
+export class SpanMemory extends Span {
+  // The type of memory.
+  memoryType: string | null;
+
+  // The text being integrated into the memory in this span.
+  remembered: string | null;
+
+  constructor(rawSpan: SpanRaw) {
+    super(rawSpan);
+    this.type = SpanType.MEMORY;
+    this.memoryType = (this.getAttribute('memory_type') as string) ?? null;
+    this.remembered = (this.getAttribute('remembered') as string) ?? null;
   }
 }
 
 export class SpanEmbedding extends Span {
+  // The text being embedded.
+  inputText: string | null;
+
+  // The model name of the embedding model.
+  modelName: string | null;
+
+  // The embedding of the input text.
+  embedding: number[] | null;
+
   constructor(rawSpan: SpanRaw) {
     super(rawSpan);
     this.type = SpanType.EMBEDDING;
+    this.inputText = (this.getAttribute('input_text') as string) ?? null;
+    this.modelName = (this.getAttribute('model_name') as string) ?? null;
+    this.embedding = (this.getAttribute('embedding') as number[]) ?? null;
   }
 }
 
 export class SpanTool extends Span {
+  // The description of the tool.
+  description: string | null;
+
   constructor(rawSpan: SpanRaw) {
     super(rawSpan);
     this.type = SpanType.TOOL;
+    this.description = (this.getAttribute('description') as string) ?? null;
   }
 }
 
 export class SpanAgent extends Span {
+  // The description of the tool.
+  description: string | null;
+
   constructor(rawSpan: SpanRaw) {
     super(rawSpan);
     this.type = SpanType.AGENT;
+    this.description = (this.getAttribute('description') as string) ?? null;
   }
 }
 
@@ -198,6 +316,8 @@ export const createSpan = (rawSpan: SpanRaw) => {
       return new SpanTask(rawSpan);
     case SpanType.OTHER:
       return new SpanOther(rawSpan);
+    case SpanType.MEMORY:
+      return new SpanMemory(rawSpan);
     default:
       return new Span(rawSpan);
   }

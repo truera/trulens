@@ -5,5 +5,7 @@ export const summarySx: SxProps<Theme> = {
   pl: 2,
   py: 1,
   borderRadius: ({ spacing }) => spacing(0.5),
+  flexWrap: 'wrap',
+  rowGap: 2,
   width: 'fit-content',
 };
