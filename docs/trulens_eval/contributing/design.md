@@ -62,11 +62,11 @@ In addition to collecting app parameters, we also collect:
 
 - (subset of components) App class information:
 
-    - This allows us to deserialize some objects. Pydantic models can be
-      deserialized once we know their class and fields, for example.
-    - This information is also used to determine component types without having
-      to deserialize them first. 
-    - See [Class][trulens_eval.utils.pyschema.Class] for details.
+  - This allows us to deserialize some objects. Pydantic models can be
+    deserialized once we know their class and fields, for example.
+  - This information is also used to determine component types without having
+    to deserialize them first. 
+  - See [Class][trulens_eval.utils.pyschema.Class] for details.
 
 ### Functions/Methods
 
@@ -158,7 +158,11 @@ our reliance on info stored on the stack. Therefore we have a limitation:
   [ThreadPoolExecutor][trulens_eval.utils.threading.ThreadPoolExecutor] also
   defined in `utils/threading.py` in order for instrumented methods called in a
   thread to be tracked. As we rely on call stack for call instrumentation we
-  need to preserve the stack before a thread start which python does not do. 
+  need to preserve the stack before a thread start which python does not do.
+
+OpenTelemetry has similar problems and comes with similar solutions. See for
+  example [OpenTelemetry thread
+  instrumentation](https://opentelemetry-python-contrib.readthedocs.io/en/latest/instrumentation/threading/threading.html).
 
 #### Async
 

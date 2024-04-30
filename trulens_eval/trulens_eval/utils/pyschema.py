@@ -146,6 +146,9 @@ class Module(SerialModel):
     package_name: Optional[str] = None  # some modules are not in a package
     module_name: str
 
+    def __hash__(self):
+        return hash((self.package_name, self.module_name))
+
     def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':
         if loadable and mod.__name__ == "__main__":
             # running in notebook
@@ -184,6 +187,9 @@ class Class(SerialModel):
     module: Module
 
     bases: Optional[Sequence[Class]] = None
+
+    def __hash__(self):
+        return hash((self.name, self.module))
 
     def __repr__(self):
         return self.module.module_name + "." + self.name
@@ -495,6 +501,15 @@ class Method(FunctionOrMethod):
     obj: Obj
     name: str
 
+    def __hash__(self):
+        return hash((self.obj.cls, self.name))
+
+    def as_function(self) -> Function:
+        """View self as a function instead of method, with the function
+        stripping away object information."""
+        
+        return Function(cls=self.obj.cls, module=self.obj.cls.module, name=self.name)
+
     @staticmethod
     def of_method(
         meth: Callable,
@@ -545,6 +560,9 @@ class Function(FunctionOrMethod):
     cls: Optional[Class]
 
     name: str
+
+    def __hash__(self):
+        return hash((self.module, self.cls, self.name))
 
     @staticmethod
     def of_function(

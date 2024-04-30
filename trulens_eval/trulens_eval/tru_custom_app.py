@@ -192,13 +192,14 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Set
+from typing import Any, Callable, ClassVar, Optional, Set, Type, TypeVar
 
 from pydantic import Field
 
 from trulens_eval import app as mod_app
 from trulens_eval.instruments import Instrument
 from trulens_eval.instruments import instrument as base_instrument
+from trulens_eval.trace import span as mod_span
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
@@ -523,6 +524,7 @@ class TruCustomApp(mod_app.App):
         return generator
     """
 
+T = TypeVar("T")
 
 class instrument(base_instrument):
     """
@@ -531,12 +533,21 @@ class instrument(base_instrument):
     """
 
     @classmethod
-    def method(self_class, cls: type, name: str) -> None:
-        base_instrument.method(cls, name)
+    def method(
+        cls,
+        of_cls: Type[T],
+        name: str,
+        instance: Optional[T] = None,
+        span_type: Optional[mod_span.SpanType] = None,
+        spanner: Optional[Callable] = None
+    ) -> None:
+        base_instrument.method(
+            of_cls=of_cls, name=name, instance=instance, span_type=span_type, spanner=spanner
+        )
 
         # Also make note of it for verification that it was found by the walk
         # after init.
-        TruCustomApp.functions_to_instrument.add(getattr(cls, name))
+        TruCustomApp.functions_to_instrument.add(getattr(of_cls, name))
 
 
 import trulens_eval  # for App class annotations

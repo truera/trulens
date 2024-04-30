@@ -4,6 +4,7 @@ import { TreeItemContentProps, useTreeItemState } from '@mui/x-tree-view/TreeIte
 import clsx from 'clsx';
 import { forwardRef } from 'react';
 
+import SpanIconDisplay from '@/RecordTree/SpanIconDisplay';
 import { SpanTooltip } from '@/SpanTooltip';
 import Tag from '@/Tag';
 import { StackTreeNode } from '@/utils/StackTreeNode';
@@ -33,23 +34,24 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
     <SpanTooltip node={node}>
       <Box
         sx={({ palette }) => ({
-          [`&:hover > div`]: {
+          [`&:hover`]: {
             background: `${palette.grey[100]}`,
           },
-          [`&.${classes.focused} > div`]: {
+          [`&.${classes.focused}`]: {
             background: `${palette.grey[50]}`,
           },
-          [`&.${classes.focused}:hover > div`]: {
+          [`&.${classes.focused}:hover`]: {
             background: `${palette.grey[100]}`,
           },
 
-          [`&.${classes.selected} > div`]: {
+          [`&.${classes.selected}`]: {
             background: `${palette.primary.lighter!}`,
             border: `1px solid ${palette.primary.main}`,
           },
-          [`&.${classes.selected}:hover > div`]: {
+          [`&.${classes.selected}:hover`]: {
             background: `${palette.primary.light}`,
           },
+          border: `1px solid ${palette.grey[300]}`,
         })}
         className={clsx(className, classes.root, {
           [classes.expanded]: expanded,
@@ -61,13 +63,17 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
         ref={ref as React.Ref<HTMLButtonElement>}
       >
         <Box sx={cellSx}>
-          <Box width={icon ? 'calc(100% - 40px)' : '100%'}>
-            <Typography sx={ellipsisSx} fontWeight="bold">
-              {label}
-            </Typography>
-            <Typography variant="code" sx={selectorSx}>
-              {selector}
-            </Typography>
+          <SpanIconDisplay spanType={node.span?.type} />
+
+          <Box width={icon ? 'calc(100% - 80px)' : 'calc(100% - 40px)'} sx={{ p: 1, justifyContent: 'space-between' }}>
+            <Box>
+              <Typography sx={ellipsisSx} fontWeight="bold">
+                {label}
+              </Typography>
+              <Typography variant="code" sx={selectorSx}>
+                {selector}
+              </Typography>
+            </Box>
 
             <Box sx={tagsContainerSx}>
               <Tag
@@ -79,26 +85,30 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
             </Box>
           </Box>
 
-          <Box onClick={(event) => handleExpansionClick(event)}>{icon}</Box>
+          <Box onClick={(event) => handleExpansionClick(event)} sx={iconContainerSx}>
+            {icon}
+          </Box>
         </Box>
       </Box>
     </SpanTooltip>
   );
 });
 
-const cellSx: SxProps<Theme> = ({ spacing, palette }) => ({
+const cellSx: SxProps<Theme> = () => ({
   display: 'flex',
-  border: `1px solid ${palette.grey[300]}`,
-  p: 1,
-  borderRadius: spacing(0.5),
   width: '-webkit-fill-available',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  '& svg': {
-    color: palette.grey[600],
-  },
+  alignItems: 'stretch',
   overflow: 'hidden',
 });
+
+const iconContainerSx: SxProps<Theme> = ({ palette }) => ({
+  pr: 1,
+  color: palette.grey[600],
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+});
+
 const ellipsisSx: SxProps<Theme> = {
   textOverflow: 'ellipsis',
   overflow: 'hidden',

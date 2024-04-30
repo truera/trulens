@@ -32,6 +32,9 @@ class RecordAppCallMethod(serial.SerialModel):
     method: pyschema.Method
     """The method that was called."""
 
+    def __hash__(self):
+        return hash((self.path. self.method))
+
 
 class RecordAppCall(serial.SerialModel):
     """Info regarding each instrumented method call."""
@@ -65,11 +68,18 @@ class RecordAppCall(serial.SerialModel):
 
         return self.stack[-1]
 
+    def caller(self) -> Optional[RecordAppCallMethod]:
+        """The frame right under the top of the stack, i.e. the caller of this frame."""
+
+        if len(self.stack) < 2:
+            return None
+
+        return self.stack[-2]
+
     def method(self) -> pyschema.Method:
         """The method at the top of the stack."""
 
         return self.top().method
-
 
 class Record(serial.SerialModel, Hashable):
     """The record of a single main method call.
@@ -209,7 +219,6 @@ class Record(serial.SerialModel, Hashable):
             ret = path.set_or_append(obj=ret, val=call)
 
         return ret
-
 
 # HACK013: Need these if using __future__.annotations .
 RecordAppCallMethod.model_rebuild()
