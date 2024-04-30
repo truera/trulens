@@ -67,9 +67,7 @@ class VersionException(Exception):
 
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
-migration_versions: List[str] = [
-    "0.19.0"
-]
+migration_versions: List[str] = ["0.19.0"]
 
 
 def _update_db_json_col(
@@ -152,6 +150,7 @@ class UnknownClass(pydantic.BaseModel):
         This is a placeholder put into the database in place of methods whose
         information was not recorded in earlier versions of trulens.
         """
+
 
 upgrade_paths = {
     # "from_version":("to_version", migrate_method)
@@ -346,9 +345,13 @@ def _serialization_asserts(db) -> None:
                                     record_app_call_json
                                 )
                         elif col_name == "feedback_json":
-                            mod_feedback_schema.FeedbackDefinition.model_validate(test_json)
+                            mod_feedback_schema.FeedbackDefinition.model_validate(
+                                test_json
+                            )
                         elif col_name == "app_json":
-                            mod_app_schema.AppDefinition.model_validate(test_json)
+                            mod_app_schema.AppDefinition.model_validate(
+                                test_json
+                            )
                         else:
                             # If this happens, trulens needs to add a migration
 
