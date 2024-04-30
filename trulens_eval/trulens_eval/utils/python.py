@@ -15,8 +15,8 @@ import sys
 from types import ModuleType
 import typing
 from typing import (
-    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator, List,
-    Optional, Sequence, Type, TypeVar, Union
+    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator,
+    List, Optional, Sequence, Type, TypeVar, Union
 )
 
 T = TypeVar("T")
@@ -249,7 +249,7 @@ def code_line(func, show_source: bool = False) -> Optional[str]:
                 ret += "\t" + line
 
         return ret
-    
+
     if inspect.isframe(func):
         code = func.f_code
         ret = f"{func.f_code.co_filename}:{func.f_code.co_firstlineno}"
@@ -267,7 +267,6 @@ def code_line(func, show_source: bool = False) -> Optional[str]:
             ret += "\t" + str(line)
 
     return ret
-    
 
 
 def locals_except(*exceptions):
@@ -307,6 +306,7 @@ def for_all_methods(decorator, _except: Optional[List[str]] = None):
 
     return decorate
 
+
 def run_before(callback: Callable):
     """
     Create decorator to run the callback before the function.
@@ -321,6 +321,7 @@ def run_before(callback: Callable):
         return wrapper
 
     return decorator
+
 
 # Python call stack utilities
 
@@ -340,7 +341,7 @@ def caller_frame(offset=0) -> 'frame':
 def caller_frameinfo(
     offset: int = 0,
     skip_module: Optional[str] = "trulens_eval"
-) ->  Optional[inspect.FrameInfo]:
+) -> Optional[inspect.FrameInfo]:
     """
     Get the caller's (of this function) frameinfo. See
     https://docs.python.org/3/reference/datamodel.html#frame-objects .
@@ -732,16 +733,16 @@ class SingletonInfo(Generic[T]):
 
         logger.warning(
             (
-            "Singleton instance of type %s already created at:\n%s\n"
-            "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
-            f"""  ```python
+                "Singleton instance of type %s already created at:\n%s\n"
+                "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
+                f"""  ```python
   from trulens_eval.utils.python import SingletonPerName
   SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
   ```
             """
-            ),
-            self.cls.__name__, code_line(self.frameinfo, show_source=True)
+            ), self.cls.__name__, code_line(self.frameinfo, show_source=True)
         )
+
 
 class SingletonPerName(Generic[T]):
     """
