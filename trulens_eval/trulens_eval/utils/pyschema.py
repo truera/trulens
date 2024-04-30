@@ -504,7 +504,7 @@ class Method(FunctionOrMethod):
     def __hash__(self):
         return hash((self.obj.cls, self.name))
 
-    def as_func(self) -> Function:
+    def as_function(self) -> Function:
         """View self as a function instead of method, with the function
         stripping away object information."""
         

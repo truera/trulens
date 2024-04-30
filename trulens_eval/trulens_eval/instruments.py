@@ -8,6 +8,7 @@ typical use cases.
 
 from __future__ import annotations
 
+from collections import defaultdict
 import dataclasses
 from datetime import datetime
 import functools
@@ -20,21 +21,22 @@ from pprint import pformat
 import threading as th
 import traceback
 from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
-                    Sequence, Set, Tuple, Type, Union)
+                    Sequence, Set, Tuple, Type, TypeVar, Union)
 import weakref
 
 import pydantic
 
+from trulens_eval import app as mod_app
 from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import endpoint as mod_endpoint
-from trulens_eval.schema import base as mod_base_schema 
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.trace import span as mod_span
+from trulens_eval.utils import pyschema
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.imports import Dummy
 from trulens_eval.utils.json import jsonify
-from trulens_eval.utils import pyschema
 from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import class_name
@@ -121,7 +123,7 @@ class WithInstrumentCallbacks:
     # Called during invocation.
     def on_add_record(
         self,
-        ctx: 'RecordingContext',
+        ctx: mod_app.RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
@@ -207,17 +209,23 @@ def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
 
     raise ValueError(f"Invalid filter {f}. Type, or a Tuple of Types expected.")
 
-TSpanner = Callable[[mod_span.Span, mod_record_schema.RecordAppCall], None]
+TSpanner = Union[
+    Callable[[Any, mod_span.Span, mod_record_schema.RecordAppCall], None], # method, "self" is first arg
+    Callable[[mod_span.Span, mod_record_schema.RecordAppCall], None] # function
+]
+"""Call to Span converter methor or function."""
 
 TSpanInfo = Tuple[
-    mod_span.SpanType, TSpanner
+    mod_span.SpanType, Any, TSpanner
 ]
 """Span type and method that create spans of said type from
 [RecordAppCall][trulens_eval.schema.record.RecordAppCall] objects.
 
-The first argument to callable is the instance of the spec specified and the
-second is the [RecordAppCall][trulens_eval.schema.record.RecordAppCall] object
-to fill in the span info from.
+The first argument to callable is the instance of the spec specified, second is
+an instance if this is for a method call, and the third is the
+[RecordAppCall][trulens_eval.schema.record.RecordAppCall] instance to fill in
+the span info from. If the second argument is None, the span is for a function
+without `self`, i.e. a staticmethod or just a function outside of a class.
 """
 
 class Instrument(object):
@@ -241,7 +249,7 @@ class Instrument(object):
         CLASSES = set([mod_feedback.Feedback])
         """Classes to instrument."""
 
-        SPANINFOS: Dict[pyschema.Function, TSpanInfo] = {}
+        SPANINFOS: Dict[pyschema.Function, Dict[Optional[int], TSpanInfo]] = defaultdict(dict)
         """EXPERIMENTAL: Map of method to a function that
         create a span from a
         [RecordAppCall][trulens_eval.schema.record.RecordAppCall] made by the named
@@ -287,9 +295,13 @@ class Instrument(object):
                         pyfunc = pyschema.Function.of_function(f, cls=cls)
 
                         if pyfunc in self.Default.SPANINFOS:
-                            span_type, spanner = self.Default.SPANINFOS[pyfunc]
-                            print(f"{t*3}Span type: {span_type}")
-
+                            for obj_id, (span_type, instance, spanner) in self.Default.SPANINFOS[pyfunc].items():
+                                print(f"{t*3}Span type: {span_type} ", end="")
+                                if obj_id is None:
+                                    print("(static)", end='')
+                                else:
+                                    print(f"(id: {obj_id}=?{id(instance)})", end='')
+                                print(f", spanner: {spanner}")
 
             print()
 
@@ -984,14 +996,17 @@ results. Additional information about this call:
                         )
 
 
+T = TypeVar("T")
+
 class AddInstruments():
     """Utilities for adding more things to default instrumentation filters."""
 
     @classmethod
     def method(
         cls,
-        of_cls: type,
+        of_cls: Type[T],
         name: str,
+        instance: Optional[T] = None,
         span_type: Optional[mod_span.SpanType] = None,
         spanner: Optional[Callable] = None
     ) -> None:
@@ -1001,6 +1016,9 @@ class AddInstruments():
             of_cls: The class that contains the method.
             
             name: The name of the method.
+
+            instance: The instance of the class that contains the method. If
+                None, the method is assumed to be a static method.
             
             span_type: The type of span to create when converting a record call
                 to a span.
@@ -1014,8 +1032,11 @@ class AddInstruments():
 
         if span_type is not None and spanner is not None:
             pyfunc = pyschema.Function.of_function(getattr(of_cls, name), cls=of_cls)
-            
-            Instrument.Default.SPANINFOS[pyfunc] = (span_type, spanner)
+
+            Instrument.Default.SPANINFOS[pyfunc][None if instance is None else id(instance)] = (span_type, instance, spanner)
+            # None here is object_id and indicates the static method without
+            # object id. Methods/nonstatic functions are added to this structure
+            # when we instrument app instances (as opposed to the classes here).
 
         else:
             if span_type is not None or spanner is not None:
@@ -1047,7 +1068,6 @@ class instrument(AddInstruments):
         self,
         func: Optional[Callable] = None,
     ):
-
         self.func = func
         self.cls = None
         self.name = None
@@ -1065,7 +1085,36 @@ class instrument(AddInstruments):
         def set_spanner(spanner: Callable):
             self.spanner = spanner
 
+            return spanner
+
         return set_spanner
+
+    def __instrument_init(outer_self):
+        if outer_self.cls is None:
+            raise ValueError("Instrumenting __init__ requires a class to be set.")
+
+        original_init = outer_self.cls.__init__
+
+        @functools.wraps(original_init)
+        def wrapped_init(self, *args, **kwargs):
+            original_init(self, *args, **kwargs)
+            outer_self.__handle_init(self, *args, **kwargs)
+
+        outer_self.cls.__init__ = wrapped_init
+
+    def __handle_init(self, wrapped_self, *args, **kwargs):
+        if self.name is None or self.cls is None or self.span_type is None or self.spanner is None:
+            # We don't need to handle init as user did not instrument is_span.
+            return
+
+        # Add the method with the instance id to the SPANINFOs.
+        self.method(
+            of_cls=self.cls,
+            name=self.name,
+            instance=wrapped_self,
+            span_type=self.span_type,
+            spanner=self.spanner
+        )
 
     def __set_name__(self, cls: type, name: str):
         """
@@ -1083,6 +1132,11 @@ class instrument(AddInstruments):
 
         # Note that this does not actually change the method, just adds it to
         # list of filters.
+
+        # Wraps the __init__ method to handle cases where is_span is a method
+        # that expects self. The wrapper also records the instance to use for self.
+
+        self.__instrument_init()
 
         self.method(
             of_cls=cls,

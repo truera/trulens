@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
+import inspect
 import logging
 from typing import List, Optional, Sequence, Set, TypeVar
 
 from trulens_eval import instruments as mod_instruments
 from trulens_eval import trace as mod_trace
-from trulens_eval.utils import containers as mod_containers_utils
-from trulens_eval.trace import tracer as mod_tracer
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.trace import span as mod_span
 from trulens_eval.trace import tracer as mod_tracer
+from trulens_eval.utils import containers as mod_containers_utils
 from trulens_eval.utils import pyschema
 
 T = TypeVar("T")
@@ -143,7 +143,7 @@ class Categorizer():
 
         for call in record.calls:
             method = call.top()
-            
+
             span = Categorizer.span_of_call(
                 call=call,
                 tracer=tracer,
@@ -323,14 +323,27 @@ class CustomCategorizer(Categorizer):
         """Converts a custom instrumentation-annotated method call into the appropriate span."""
 
         pymethod = call.method()
-        pyfunc = pymethod.as_func()
+        pyfunc = pymethod.as_function()
         method_name = pymethod.name
 
-        span_info = mod_instruments.Instrument.Default.SPANINFOS.get(pyfunc)
+        span_info = None
+
+        if pyfunc in mod_instruments.Instrument.Default.SPANINFOS:
+            for obj_id, (span_type, instance, spanner) in mod_instruments.Instrument.Default.SPANINFOS[pyfunc].items():
+                if obj_id is None and isinstance(spanner, staticmethod): # is_span decorator was on a staticmethod
+                    # print("got staticmethod", span_type, spanner)
+                    span_info = (span_type, obj_id, instance, spanner)
+                    break
+
+                if obj_id == pymethod.obj.id: # is_span decorated a method in a class later instantiated with object having this id
+                    # print("got method", span_type, spanner, obj_id)
+                    span_info = (span_type, obj_id, instance, spanner)
+                    break
 
         if span_info is not None:
             cls = span_info[0].to_class()
         else:
+            logger.warning("CustomCategorizer not have a span_info for: %s", pymethod)
             cls = mod_span.SpanOther
 
         span = tracer.new_span(
@@ -338,8 +351,14 @@ class CustomCategorizer(Categorizer):
             context = context,
             cls=cls
         )
-
         if span_info is not None:
-            span_info[1](call=call, span=span)
+            _, obj_id, instance, spanner = span_info
+
+            if obj_id is None:
+                # staticmethod/function
+                spanner(call=call, span=span)
+            else:
+                # method, requiring self
+                spanner(self=instance, call=call, span=span)
 
         return span
