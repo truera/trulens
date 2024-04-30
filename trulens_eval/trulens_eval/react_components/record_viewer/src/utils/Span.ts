@@ -110,13 +110,15 @@ export class SpanRetriever extends Span {
   numContexts: number | null;
 
   // The retrieved contexts.
-  retrievedContexts: string[] | null;
+  rawRetrievedContexts: string[] | null;
 
   // The scores of the retrieved contexts.
-  retrievedScores: number[] | null;
+  rawRetrievedScores: number[] | null;
 
   // The embeddings of the retrieved contexts.
-  retrievedEmbeddings: number[][] | null;
+  rawRetrievedEmbeddings: number[][] | null;
+
+  retrievedContexts: { context: string | null; score: number | null; embedding: number[] | null }[] | null;
 
   constructor(rawSpan: SpanRaw) {
     super(rawSpan);
@@ -126,9 +128,15 @@ export class SpanRetriever extends Span {
     this.inputEmbedding = (this.getAttribute('input_embedding') as number[]) ?? null;
     this.distanceType = (this.getAttribute('distance_type') as string) ?? null;
     this.numContexts = (this.getAttribute('num_contexts') as number) ?? null;
-    this.retrievedContexts = (this.getAttribute('retrieved_contexts') as string[]) ?? null;
-    this.retrievedScores = (this.getAttribute('retrieved_scores') as number[]) ?? null;
-    this.retrievedEmbeddings = (this.getAttribute('retrieved_embeddings') as number[][]) ?? null;
+    this.rawRetrievedContexts = (this.getAttribute('retrieved_contexts') as string[]) ?? null;
+    this.rawRetrievedScores = (this.getAttribute('retrieved_scores') as number[]) ?? null;
+    this.rawRetrievedEmbeddings = (this.getAttribute('retrieved_embeddings') as number[][]) ?? null;
+
+    this.retrievedContexts = this.rawRetrievedContexts?.map((context, index) => ({
+      context,
+      score: this.rawRetrievedScores?.[index] ?? null,
+      embedding: this.rawRetrievedEmbeddings?.[index] ?? null,
+    }));
   }
 }
 
@@ -151,6 +159,14 @@ export class SpanReranker extends Span {
   // Reranked indexes into `inputContextTexts`.
   outputRanks: number[] | null;
 
+  contexts:
+    | {
+        context: string | null;
+        inputScore: number | null;
+        outputRank: number | null;
+      }[]
+    | null;
+
   constructor(rawSpan: SpanRaw) {
     super(rawSpan);
     this.type = SpanType.RERANKER;
@@ -158,8 +174,14 @@ export class SpanReranker extends Span {
     this.modelName = (this.getAttribute('model_name') as string) ?? null;
     this.topN = (this.getAttribute('top_n') as number) ?? null;
     this.inputContextTexts = (this.getAttribute('input_context_texts') as string[]) ?? null;
-    this.inputContextScores = (this.getAttribute('input_score_scores') as number[]) ?? null;
+    this.inputContextScores = (this.getAttribute('input_context_scores') as number[]) ?? null;
     this.outputRanks = (this.getAttribute('output_ranks') as number[]) ?? null;
+
+    this.contexts = this.inputContextTexts?.map((context, index) => ({
+      context,
+      inputScore: this.inputContextScores?.[index] ?? null,
+      outputRank: this.outputRanks?.[index] ?? null,
+    }));
   }
 }
 

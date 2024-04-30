@@ -32,7 +32,7 @@ export default function LLMDetails({ selectedNode, recordJSON }: LLMDetailsProps
       }
     >
       <Grid item xs={12}>
-        <Panel header="Retriever I/O">
+        <Panel header="LLM details">
           <Stack gap={2}>
             <Section title="Input messages">
               {inputMessages ? <JSONViewer src={inputMessages} /> : <Typography>N/A</Typography>}

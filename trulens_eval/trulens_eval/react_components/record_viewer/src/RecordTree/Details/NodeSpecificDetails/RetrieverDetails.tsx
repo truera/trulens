@@ -15,15 +15,7 @@ export default function RetrieverDetails({ selectedNode, recordJSON }: Retriever
 
   if (!span) return <NodeDetailsContainer selectedNode={selectedNode} recordJSON={recordJSON} />;
 
-  const {
-    inputText,
-    inputEmbedding,
-    distanceType,
-    numContexts,
-    retrievedContexts,
-    retrievedScores,
-    retrievedEmbeddings,
-  } = span;
+  const { inputText, inputEmbedding, distanceType, numContexts, retrievedContexts } = span;
 
   return (
     <NodeDetailsContainer
@@ -37,7 +29,7 @@ export default function RetrieverDetails({ selectedNode, recordJSON }: Retriever
       }
     >
       <Grid item xs={12}>
-        <Panel header="Retriever I/O">
+        <Panel header="Retriever details">
           <Stack gap={2}>
             <Section title="Input text">
               <Typography>{inputText ?? 'N/A'}</Typography>
@@ -49,14 +41,6 @@ export default function RetrieverDetails({ selectedNode, recordJSON }: Retriever
 
             <Section title="Retrieved contexts">
               {retrievedContexts?.length ? <JSONViewer src={retrievedContexts} /> : <Typography>N/A</Typography>}
-            </Section>
-
-            <Section title="Retrieved scores">
-              {retrievedScores?.length ? <JSONViewer src={retrievedScores} /> : <Typography>N/A</Typography>}
-            </Section>
-
-            <Section title="Retrieved embeddings">
-              {retrievedEmbeddings?.length ? <JSONViewer src={retrievedEmbeddings} /> : <Typography>N/A</Typography>}
             </Section>
           </Stack>
         </Panel>

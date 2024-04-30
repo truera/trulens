@@ -24,7 +24,7 @@ export default function EmbeddingDetails({ selectedNode, recordJSON }: Embedding
       labels={<LabelAndValue label="Model name" value={<Typography>{modelName ?? 'N/A'}</Typography>} />}
     >
       <Grid item xs={12}>
-        <Panel header="Embedding I/O">
+        <Panel header="Embedding details">
           <Stack gap={2}>
             <Section title="Input text">
               <Typography>{inputText ?? 'N/A'}</Typography>

@@ -23,7 +23,7 @@ export default function MemoryDetails({ selectedNode, recordJSON }: MemoryDetail
       labels={<LabelAndValue label="Memory type" value={<Typography>{memoryType ?? 'N/A'}</Typography>} />}
     >
       <Grid item xs={12}>
-        <Panel header="Memory I/O">
+        <Panel header="Memory details">
           <Stack gap={2}>
             <Section title="Remembered text">
               <Typography>{remembered ?? 'N/A'}</Typography>

@@ -318,7 +318,7 @@ class SpanReranker(SpanTyped):
     input_context_texts = Span.attribute_property("input_context_texts", List[str])
     """The contexts being reranked."""
 
-    input_context_scores = Span.attribute_property("input_score_scores", Optional[List[float]])
+    input_context_scores = Span.attribute_property("input_context_scores", Optional[List[float]])
     """The scores of the input contexts."""
 
     output_ranks = Span.attribute_property("output_ranks", List[int])
