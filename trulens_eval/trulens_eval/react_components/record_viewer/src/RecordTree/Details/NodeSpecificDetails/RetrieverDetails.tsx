@@ -29,7 +29,7 @@ export default function RetrieverDetails({ selectedNode, recordJSON }: Retriever
       }
     >
       <Grid item xs={12}>
-        <Panel header="Retriever I/O">
+        <Panel header="Retriever details">
           <Stack gap={2}>
             <Section title="Input text">
               <Typography>{inputText ?? 'N/A'}</Typography>
