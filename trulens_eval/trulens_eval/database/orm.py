@@ -206,8 +206,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             _table_base_name = "records"
 
             record_id = Column(TYPE_ID, nullable=False, primary_key=True)
-            app_id = Column(TYPE_ID, nullable=False) # foreign key
-            
+            app_id = Column(TYPE_ID, nullable=False)  # foreign key
+
             input = Column(Text)
             output = Column(Text)
             record_json = Column(TYPE_JSON, nullable=False)
@@ -217,7 +217,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             perf_json = Column(TYPE_JSON, nullable=False)
 
             app = relationship(
-               'AppDefinition',
+                'AppDefinition',
                 backref=backref('records', cascade="all,delete"),
                 primaryjoin='AppDefinition.app_id == Record.app_id',
                 foreign_keys=app_id,
@@ -263,11 +263,10 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             feedback_result_id = Column(
                 TYPE_ID, nullable=False, primary_key=True
             )
-            record_id = Column(TYPE_ID, nullable=False) # foreign key
+            record_id = Column(TYPE_ID, nullable=False)  # foreign key
             feedback_definition_id = Column(
-                TYPE_ID,
-                nullable=False
-            ) # foreign key
+                TYPE_ID, nullable=False
+            )  # foreign key
             last_ts = Column(TYPE_TIMESTAMP, nullable=False)
             status = Column(TYPE_ENUM, nullable=False)
             error = Column(Text)

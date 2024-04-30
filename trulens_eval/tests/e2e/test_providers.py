@@ -481,8 +481,10 @@ def get_huggingface_tests(h: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
         #(h.pii_detection_with_cot_reasons, dict(text="sun is a star"), 0.0),
     ]
 
+
 # Alias to LLMProvider tests for LangChain due to the no specialized feedback functions
 get_langchain_tests = get_llmprovider_tests
+
 
 class TestProviders(TestCase):
 
@@ -785,7 +787,6 @@ class TestProviders(TestCase):
         else:
             print(f"{h}: {total_tests}/{total_tests} tests passed.")
 
-
     @optional_test
     def test_langchain_feedback(self):
         """
@@ -797,7 +798,7 @@ class TestProviders(TestCase):
 
         tests = get_langchain_tests(lc)
 
-        failed_tests = lambda : len(failed_subtests)
+        failed_tests = lambda: len(failed_subtests)
         total_tests = 0
         failed_subtests = []
 
@@ -823,6 +824,7 @@ class TestProviders(TestCase):
             )
         else:
             print(f"{lc}: {total_tests}/{total_tests} tests passed.")
+
 
 if __name__ == '__main__':
     main()

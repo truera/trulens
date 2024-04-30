@@ -369,7 +369,9 @@ class VirtualRecord(mod_record_schema.Record):
 
                     call['stack'] = [
                         root_call,
-                        mod_record_schema.RecordAppCallMethod(path=path, method=method)
+                        mod_record_schema.RecordAppCallMethod(
+                            path=path, method=method
+                        )
                     ]
 
                 if "args" not in call:
@@ -408,7 +410,9 @@ class VirtualRecord(mod_record_schema.Record):
         if "cost" not in kwargs:
             kwargs['cost'] = mod_base_schema.Cost()
         if "perf" not in kwargs:
-            kwargs['perf'] = mod_base_schema.Perf(start_time=start_time, end_time=end_time)
+            kwargs['perf'] = mod_base_schema.Perf(
+                start_time=start_time, end_time=end_time
+            )
 
         if "main_input" not in kwargs:
             kwargs['main_input'] = "No main_input provided."
