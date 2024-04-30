@@ -15,7 +15,15 @@ export default function RetrieverDetails({ selectedNode, recordJSON }: Retriever
 
   if (!span) return <NodeDetailsContainer selectedNode={selectedNode} recordJSON={recordJSON} />;
 
-  const { inputText, inputEmbedding, distanceType, numContexts, retrievedContexts } = span;
+  const {
+    inputText,
+    inputEmbedding,
+    distanceType,
+    numContexts,
+    retrievedContexts,
+    retrievedScores,
+    retrievedEmbeddings,
+  } = span;
 
   return (
     <NodeDetailsContainer
@@ -41,6 +49,14 @@ export default function RetrieverDetails({ selectedNode, recordJSON }: Retriever
 
             <Section title="Retrieved contexts">
               {retrievedContexts?.length ? <JSONViewer src={retrievedContexts} /> : <Typography>N/A</Typography>}
+            </Section>
+
+            <Section title="Retrieved scores">
+              {retrievedScores?.length ? <JSONViewer src={retrievedScores} /> : <Typography>N/A</Typography>}
+            </Section>
+
+            <Section title="Retrieved embeddings">
+              {retrievedEmbeddings?.length ? <JSONViewer src={retrievedEmbeddings} /> : <Typography>N/A</Typography>}
             </Section>
           </Stack>
         </Panel>

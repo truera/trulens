@@ -4,11 +4,10 @@ import { TreeItemContentProps, useTreeItemState } from '@mui/x-tree-view/TreeIte
 import clsx from 'clsx';
 import { forwardRef } from 'react';
 
+import SpanIconDisplay from '@/RecordTree/SpanIconDisplay';
 import { SpanTooltip } from '@/SpanTooltip';
 import Tag from '@/Tag';
 import { StackTreeNode } from '@/utils/StackTreeNode';
-
-import SpanIconDisplay from './SpanIconDisplay';
 
 type RecordTreeCellProps = TreeItemContentProps & {
   node: StackTreeNode;

@@ -109,7 +109,7 @@ export const BLACK: Color = '#212121';
 // Data Vizualization Colors
 
 // Data Vizualization Colors
-export const DV_BLUE: DVColorScale = ['#5690C5', '#8DA6BF', '#274F69', '#6D90B1', '#0B1D26'];
+export const DV_BLUE: DVColorScale = ['#5690C5', '#AAC8E6', '#274F69', '#6D90B1', '#0B1D26'];
 export const DV_YELLOW: DVColorScale = ['#F8D06D', '#F0EC89', '#AD743E', '#F4E07B', '#5C291A'];
 export const DV_RED: DVColorScale = ['#E77956', '#FFDBA3', '#A8402D', '#FBAD78', '#571610'];
 export const DV_GREEN: DVColorScale = ['#54A08E', '#A4CBC1', '#366567', '#7BADA4', '#1C383E'];
