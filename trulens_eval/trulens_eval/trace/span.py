@@ -6,6 +6,7 @@ information into type of call related to types of components.
 
 from __future__ import annotations
 
+import dataclasses
 import datetime
 from enum import Enum
 from logging import getLogger
@@ -256,7 +257,6 @@ class TransSpanRecordAppCall(SpanMethodCall):
     """
     call: mod_record_schema.RecordAppCall = Field(exclude=True, default=None)
 
-
 class SpanRoot(TransSpanRecord):
     """A root span encompassing some collection of spans.
 
@@ -266,14 +266,26 @@ class SpanRoot(TransSpanRecord):
 SpanTyped = TransSpanRecordAppCall
 """Alias for the superclass of spans that went through the record call conversion."""
 
+"""
+@dataclasses.dataclass
+class RetrieverQuery:
+    text: str
+    embedding: Optional[List[float]]
+
+@dataclasses.dataclass
+class RetrieverContext:
+    text: str
+    score: Optional[float]
+    embedding: Optional[List[float]]
+"""
 
 class SpanRetriever(SpanTyped):
     """A retrieval."""
 
-    input_text = Span.attribute_property("input_text", str)
+    query_text = Span.attribute_property("query_text", str)
     """Input text whose related contexts are being retrieved."""
 
-    input_embedding = Span.attribute_property("input_embedding", list)#List[float])
+    query_embedding = Span.attribute_property("query_embedding", List[float])
     """Embedding of the input text."""
 
     distance_type = Span.attribute_property("distance_type", str)
@@ -282,11 +294,35 @@ class SpanRetriever(SpanTyped):
     num_contexts = Span.attribute_property("num_contexts", int)
     """The number of contexts requested, not necessarily retrieved."""
 
-    retrieved_contexts = Span.attribute_property("retrieved_contexts", list)#List[str])
+    retrieved_contexts = Span.attribute_property("retrieved_contexts", List[str])
     """The retrieved contexts."""
+
+    retrieved_scores = Span.attribute_property("retrieved_scores", List[float])
+    """The scores of the retrieved contexts."""
+
+    retrieved_embeddings = Span.attribute_property("retrieved_embeddings", List[List[float]])
+    """The embeddings of the retrieved contexts."""
 
 class SpanReranker(SpanTyped):
     """A reranker call."""
+
+    query_text = Span.attribute_property("query_text", str)
+    """The query text."""
+
+    model_name = Span.attribute_property("model_name", str)
+    """The model name of the reranker."""
+
+    top_n = Span.attribute_property("top_n", int)
+    """The number of contexts to rerank."""
+
+    input_context_texts = Span.attribute_property("input_context_texts", List[str])
+    """The contexts being reranked."""
+
+    input_context_scores = Span.attribute_property("input_score_scores", Optional[List[float]])
+    """The scores of the input contexts."""
+
+    output_ranks = Span.attribute_property("output_ranks", List[int])
+    """Reranked indexes into `input_context_texts`."""
 
 class SpanLLM(SpanTyped):
     """A generation call to an LLM."""
@@ -294,14 +330,59 @@ class SpanLLM(SpanTyped):
     model_name = Span.attribute_property("model_name", str)
     """The model name of the LLM."""
 
+    model_type = Span.attribute_property("model_type", str)
+    """The type of model used."""
+
+    temperature = Span.attribute_property("temperature", float)
+    """The temperature used for generation."""
+
+    input_messages = Span.attribute_property("input_messages", List[dict])
+    """The prompt given to the LLM."""
+
+    input_token_count = Span.attribute_property("input_token_count", int)
+    """The number of tokens in the input."""
+
+    output_messages = Span.attribute_property("output_messages", List[dict])
+    """The returned text."""
+
+    output_token_count = Span.attribute_property("output_token_count", int)
+    """The number of tokens in the output."""
+
+    cost = Span.attribute_property("cost", float)
+    """The cost of the generation."""
+
+class SpanMemory(SpanTyped):
+    """A memory call."""
+
+    memory_type = Span.attribute_property("memory_type", str)
+    """The type of memory."""
+
+    remembered = Span.attribute_property("remembered", str)
+    """The text being integrated into the memory in this span."""
+
 class SpanEmbedding(SpanTyped):
     """An embedding cal."""
+
+    input_text = Span.attribute_property("input_text", str)
+    """The text being embedded."""
+
+    model_name = Span.attribute_property("model_name", str)
+    """The model name of the embedding model."""
+
+    embedding = Span.attribute_property("embedding", List[float])
+    """The embedding of the input text."""
 
 class SpanTool(SpanTyped):
     """A tool invocation."""
 
+    description = Span.attribute_property("description", str)
+    """The description of the tool."""
+
 class SpanAgent(SpanTyped):
     """An agent invocation."""
+
+    description = Span.attribute_property("description", str)
+    """The description of the agent."""
 
 class SpanTask(SpanTyped):
     """A task invocation."""
@@ -339,6 +420,9 @@ class SpanType(Enum):
 
     LLM = SpanLLM.__name__
     """See [SpanLLM][trulens_eval.trace.span.SpanLLM]."""
+
+    MEMORY = SpanMemory.__name__
+    """See [SpanMemory][trulens_eval.trace.span.SpanMemory]."""
 
     EMBEDDING = SpanEmbedding.__name__
     """See [SpanEmbedding][trulens_eval.trace.span.SpanEmbedding]."""

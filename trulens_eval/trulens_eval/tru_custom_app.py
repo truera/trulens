@@ -192,7 +192,7 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Set
+from typing import Any, Callable, ClassVar, Optional, Set, Type, TypeVar
 
 from pydantic import Field
 
@@ -524,6 +524,7 @@ class TruCustomApp(mod_app.App):
         return generator
     """
 
+T = TypeVar("T")
 
 class instrument(base_instrument):
     """
@@ -534,13 +535,14 @@ class instrument(base_instrument):
     @classmethod
     def method(
         cls,
-        of_cls: type,
+        of_cls: Type[T],
         name: str,
+        instance: Optional[T] = None,
         span_type: Optional[mod_span.SpanType] = None,
         spanner: Optional[Callable] = None
     ) -> None:
         base_instrument.method(
-            of_cls=of_cls, name=name, span_type=span_type, spanner=spanner
+            of_cls=of_cls, name=name, instance=instance, span_type=span_type, spanner=spanner
         )
 
         # Also make note of it for verification that it was found by the walk
