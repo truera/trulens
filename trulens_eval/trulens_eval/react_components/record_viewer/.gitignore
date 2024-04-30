@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Avoid committing changes to the RELEASE variable.
+./__init__.py
