@@ -1,12 +1,12 @@
 # AzureOpenAI Provider
 
-Below is how you can instantiate _AzureOpenAI_ as a provider.
+Below is how you can instantiate _Azure OpenAI_ as a provider.
 
 All feedback functions listed in the base [LLMProvider
-class][trulens_eval.feedback.provider.base.LLMProvider] can be run with the _AzureOpenAI_ Provider.
+class][trulens_eval.feedback.provider.base.LLMProvider] can be run with the AzureOpenAI Provider.
 
 !!! warning
 
-    _AzureOpenAI_ does not support the _OpenAI_ moderation endpoint.
+    _Azure OpenAI_ does not support the _OpenAI_ moderation endpoint.
 
 ::: trulens_eval.feedback.provider.openai.AzureOpenAI
