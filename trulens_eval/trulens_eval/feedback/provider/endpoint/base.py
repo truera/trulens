@@ -10,8 +10,10 @@ import random
 import sys
 from time import sleep
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
-                    Sequence, Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
+    Type, TypeVar
+)
 
 from pydantic import Field
 import requests
@@ -151,8 +153,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     """Optional post headers for post requests if done by this class."""
 
     pace: mod_pace.Pace = Field(
-        default_factory=lambda:
-        mod_pace.Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
+        default_factory=lambda: mod_pace.
+        Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
         exclude=True
     )
     """Pacing instance to maintain a desired rpm."""
@@ -355,8 +357,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(
-                wrapped_thing if wrapped_thing !=
-                object else "unknown dynamically generated class(es)"
+                wrapped_thing if wrapped_thing != object else
+                "unknown dynamically generated class(es)"
             )
             for original, _, endpoint in wrappers:
                 print(
@@ -575,8 +577,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # return others.
         return result, callbacks
 
-    def track_cost(self, __func: mod_asynchro_utils.CallableMaybeAwaitable[T], *args,
-                   **kwargs) -> Tuple[T, EndpointCallback]:
+    def track_cost(
+        self, __func: mod_asynchro_utils.CallableMaybeAwaitable[T], *args,
+        **kwargs
+    ) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.
         Returns the thunk's result alongside the EndpointCallback object that
