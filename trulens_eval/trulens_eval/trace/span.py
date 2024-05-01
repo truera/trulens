@@ -21,6 +21,7 @@ from pydantic import TypeAdapter
 from trulens_eval import trace as mod_trace
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils import containers as mod_container_utils
+from trulens_eval.utils.serial import JSON
 
 logger = getLogger(__name__)
 
