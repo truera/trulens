@@ -1031,8 +1031,10 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         return Lens(path=self.path + (step,))
 
     def __getitem__(
-        self, item: Union[int, str, slice, Sequence[int], Sequence[str]]
+        self, item: Union[int, str, slice, Sequence[int], Sequence[str], Step]
     ) -> 'Lens':
+        if isinstance(item, Step):
+            return self._append(item)
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
@@ -1063,8 +1065,8 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             # overwritten and it will not try to use any of the _repr_*_ methods
             # to display the object. In our case, this will result Lenses being
             # constructed with this canary attribute name. We instead return
-            # None here to let ipython know we have overwritten __getattr__ but
-            # we do not construct any Lenses.
+            # something here to let ipython know we have overwritten __getattr__
+            # but we do not construct any Lenses.
             return 0xdead
 
         return self._append(GetItemOrAttribute(item_or_attribute=attr))

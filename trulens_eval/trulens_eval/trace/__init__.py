@@ -90,7 +90,9 @@ ContextMapping = Annotated[
 """Type annotation for pydantic fields that store dictionaries whose keys are
 HashableSpanContext.
 
-This is needed to help pydantic figure out how to serialize and deserialize these dicts.
+This is needed to help pydantic figure out how to serialize and deserialize
+these dicts. SpanContext contains some non-hashable parts hence we convert these
+mappings to/from lists of tuples.
 """
 
 
@@ -110,7 +112,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     See also [OpenTelemetry Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span).
     """
 
-    _vendor: ClassVar[str] = "trulens_eval"
+    _vendor: ClassVar[str] = "tle" # "trulens_eval"
     """Vendor name as per OpenTelemetry attribute keys specifications."""
 
     @classmethod
