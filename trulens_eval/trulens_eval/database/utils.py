@@ -131,28 +131,28 @@ def check_db_revision(
     if is_legacy_sqlite(engine):
         logger.info("Found legacy SQLite file: %s", engine.url)
         raise DatabaseVersionException.behind()
+    
+    # revisions = DbRevisions.load(engine, prefix=prefix)
 
-    revisions = DbRevisions.load(engine, prefix=prefix)
+    # if revisions.current is None:
+    #     logger.debug("Creating database")
+    #     upgrade_db(
+    #         engine, revision="head", prefix=prefix
+    #     )  # create automatically if it doesn't exist
 
-    if revisions.current is None:
-        logger.debug("Creating database")
-        upgrade_db(
-            engine, revision="head", prefix=prefix
-        )  # create automatically if it doesn't exist
+    # elif revisions.in_sync:
+    #     logger.debug("Database schema is up to date: %s", revisions)
 
-    elif revisions.in_sync:
-        logger.debug("Database schema is up to date: %s", revisions)
+    # elif revisions.behind:
+    #     raise DatabaseVersionException.behind()
 
-    elif revisions.behind:
-        raise DatabaseVersionException.behind()
+    # elif revisions.ahead:
+    #     raise DatabaseVersionException.ahead()
 
-    elif revisions.ahead:
-        raise DatabaseVersionException.ahead()
-
-    else:
-        raise NotImplementedError(
-            f"Cannot handle database revisions: {revisions}"
-        )
+    # else:
+    #     raise NotImplementedError(
+    #         f"Cannot handle database revisions: {revisions}"
+    #     )
 
 
 def coerce_ts(ts: Union[datetime, str, int, float]) -> datetime:
