@@ -119,7 +119,7 @@ def rag_triad(
         (provider.qs_relevance, np.mean, "question", question, "context",
          context, "Context Relevance")
     ]:
-        f = Feedback(f_imp, if_exists=context).aggregate(f_agg)
+        f = Feedback(f_imp, if_exists=context, name = f_name).aggregate(f_agg)
         if arg1lens is not None:
             f = f.on(**{arg1name: arg1lens})
         else:
