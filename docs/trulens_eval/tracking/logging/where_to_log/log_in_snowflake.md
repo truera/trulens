@@ -43,7 +43,7 @@ For now, we need to use a working branch of TruLens that supports snowflake data
 
 ## Create required TruLens tables and schemas in Snowflake.
 
-Navigate to the Snowflake console and create tables with SQL. Then run the following commands to create the tables.
+Navigate to the Snowflake console and create tables with SQL. Then run the following commands to create the tables. This is not required if the tables have already been created.
 
 !!! example "Create TruLens tables in Snowflake database"
 
