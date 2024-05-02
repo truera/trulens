@@ -17,3 +17,7 @@ After which you should receive the following message:
 ```
 🦑 Tru initialized with db url postgresql://trulensuser:password@localhost/trulens.
 ```
+
+For more detailed instructions on logging to select database, see the following guides:
+
+- [Logging in Snowflake](log_in_snowflake.md)
