@@ -112,7 +112,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     See also [OpenTelemetry Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span).
     """
 
-    _vendor: ClassVar[str] = "tle" # "trulens_eval"
+    _vendor: ClassVar[str] = "trulens_eval"
     """Vendor name as per OpenTelemetry attribute keys specifications."""
 
     @classmethod
