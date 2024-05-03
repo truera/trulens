@@ -97,10 +97,14 @@ Navigate to the Snowflake console and create tables with SQL. Then run the follo
     from trulens_eval import Tru
     tru = Tru(database_url=(
         'snowflake://{user}:{password}@{account_identifier}/'
-        'TRULENS_TEST_V0/TRULENS?warehouse=COMPUTE_WH&role=ACCOUNTADMIN'
+        '{database}/{schema}?warehouse={warehouse}&role={role}'
     ).format(
         user='<user>',
         password='<password>',
-        account_identifier='<account-identifer>', # oaztwkp-bnb75599
+        account_identifier='<account-identifer>',
+        database='<database>',
+        schema='<schema>',
+        warehouse='<warehouse>',
+        role='<role>'
     ))
     ```
