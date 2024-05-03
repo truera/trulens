@@ -367,6 +367,8 @@ class SpanLLMOTEL(SpanTyped):
     [llm_spans.md](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/llm-spans.md)
     and
     [constants](https://github.com/traceloop/openllmetry/blob/main/packages/opentelemetry-semantic-conventions-ai/opentelemetry/semconv/ai/__init__.py)
+
+    There is also Arize's [openinference conventions](https://github.com/Arize-ai/openinference/blob/main/python/openinference-semantic-conventions/src/openinference/semconv/trace/__init__.py).
     """
 
     request_model = Span.attribute_property(ai.LLM_REQUEST_MODEL, str)
@@ -374,9 +376,9 @@ class SpanLLMOTEL(SpanTyped):
     system = Span.attribute_property(ai.LLM_REQUEST_SYSTEM, str)
 
     request_max_tokens = Span.attribute_property(ai.LLM_REQUEST_MAX_TOKENS, Optional[int])
-    
+
     request_temperature = Span.attribute_property(ai.LLM_REQUEST_TEMPERATURE, Optional[float])
-    
+
     request_top_p = Span.attribute_property(ai.LLM_REQUEST_TOP_P, Optional[float])
 
     response_finish_reasons = Span.attribute_property("gen_ai.response.finish_reasons", Optional[List[str]])
