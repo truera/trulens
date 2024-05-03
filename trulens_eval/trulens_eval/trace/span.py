@@ -21,15 +21,18 @@ from pydantic import TypeAdapter
 from trulens_eval import trace as mod_trace
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils import containers as mod_container_utils
+from trulens_eval.utils.serial import JSON
 
 logger = getLogger(__name__)
 
 T = TypeVar("T")
 
 class Span(mod_trace.OTSpan):
-    """Base Span type.
-    
-    Smallest unit of recorded activity.
+    """Base Span type for trulens_eval additions over base Open Telemetry spans.
+
+    Note that though this class and subclasses contain a variety of attributes
+    for data, everything is stored in the underlying Open Telemetry attributes/links
+    The attributes here map to/from Open Telemetry span attributes/links.
     """
 
     @staticmethod
@@ -60,7 +63,10 @@ class Span(mod_trace.OTSpan):
                 of the property. This can be used for defaults that make use of
                 forward referenced types.
         """
+        # Remember whether we already called `initialize`.
         initialized = False
+
+        # pydantic type validator to be filled in later.
         tadapter = None
 
         def initialize():
@@ -68,12 +74,11 @@ class Span(mod_trace.OTSpan):
             # property is used as otherwise forward references might not be
             # ready.
 
-            nonlocal initialized, tadapter
+            nonlocal initialized, tadapter, typ, default
 
             if initialized:
                 return
 
-            nonlocal typ, default
             if typ is None and typ_factory is not None:
                 typ = typ_factory()
 
@@ -86,15 +91,20 @@ class Span(mod_trace.OTSpan):
             if typ is None:
                 tadapter = None
             else:
+                # Get the pydantic type checker and run it on the default value.
                 tadapter = TypeAdapter(typ)
                 if default is not None:
                     tadapter.validate_python(default)
 
         def getter(self) -> T:
+            nonlocal default
+
             initialize()
             return self.attributes.get(self.vendor_attr(name), default)
 
         def setter(self, value: T) -> None:
+            nonlocal tadapter
+
             initialize()
             if tadapter is not None:
                 tadapter.validate_python(value)
@@ -109,7 +119,6 @@ class Span(mod_trace.OTSpan):
     def start_datetime(self) -> datetime.datetime:
         """Start time of span as a [datetime][datetime.datetime]."""
         return mod_container_utils.datetime_of_ns_timestamp(self.start_timestamp)
-    
     @start_datetime.setter
     def start_datetime(self, value: datetime.datetime):
         self.start_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
@@ -118,7 +127,6 @@ class Span(mod_trace.OTSpan):
     def end_datetime(self) -> datetime.datetime:
         """End time of span as a [datetime][datetime.datetime]."""
         return mod_container_utils.datetime_of_ns_timestamp(self.end_timestamp)
-    
     @end_datetime.setter
     def end_datetime(self, value: datetime.datetime):
         self.end_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
@@ -140,7 +148,7 @@ class Span(mod_trace.OTSpan):
         """Context of parent span if any.
 
         This is stored in OT links with a relationship attribute of "parent".
-        None if this is a root span or otherwise it does not have a parent.
+        None if this is a root span or otherwise does not have a parent.
         """
 
         for link_context, link_attributes in self.links.items():
@@ -187,8 +195,8 @@ class Span(mod_trace.OTSpan):
     # will be set as a DictNamespace indexing elements in attributes
     @property
     def metadata(self) -> mod_container_utils.DictNamespace[ot_types.AttributeValue]:
+        """Metadata regarding a span."""
         return self.attributes_metadata
-
     @metadata.setter
     def metadata(self, value: Dict[str, str]):
         for k, v in value.items():
@@ -242,7 +250,6 @@ class SpanMethodCall(TransSpanRecord):
 
     error = Span.attribute_property("error", typ=Optional[Any], default_factory=None)
     # TODO: Need to encode to OT AttributeValue
-
 
 class TransSpanRecordAppCall(SpanMethodCall):
     """A Span which corresponds to single
@@ -403,7 +410,7 @@ class SpanType(Enum):
 
         if hasattr(mod_trace.span, self.value):
             return getattr(mod_trace.span, self.value)
-        
+
         raise ValueError(f"Span type {self.value} not found in module.")
 
     UNTYPED = SpanUntyped.__name__

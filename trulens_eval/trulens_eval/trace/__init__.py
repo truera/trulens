@@ -90,7 +90,9 @@ ContextMapping = Annotated[
 """Type annotation for pydantic fields that store dictionaries whose keys are
 HashableSpanContext.
 
-This is needed to help pydantic figure out how to serialize and deserialize these dicts.
+This is needed to help pydantic figure out how to serialize and deserialize
+these dicts. SpanContext contains some non-hashable parts hence we convert these
+mappings to/from lists of tuples.
 """
 
 
