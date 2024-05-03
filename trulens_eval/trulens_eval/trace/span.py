@@ -12,6 +12,7 @@ from enum import Enum
 from logging import getLogger
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
+from opentelemetry.semconv import ai
 from opentelemetry.util import types as ot_types
 import pandas as pd
 from pydantic import computed_field
@@ -303,6 +304,41 @@ class SpanRetriever(SpanTyped):
     retrieved_embeddings = Span.attribute_property("retrieved_embeddings", List[List[float]])
     """The embeddings of the retrieved contexts."""
 
+class SpanVectorDBOTEL(SpanTyped):
+    """VectorDB attributes from OpenTelemetry Semantic Conventions for AI.
+
+    See [OpenTelemetry Semantic Conventions for AI
+    constants](https://github.com/traceloop/openllmetry/blob/main/packages/opentelemetry-semantic-conventions-ai/opentelemetry/semconv/ai/__init__.py)
+    """
+
+    # span attributes
+
+    vector_db_vendor = Span.attribute_property(ai.VECTOR_DB_VENDOR, str) # optionality not known
+
+    vector_db_query_top_k = Span.attribute_property(ai.VECTOR_DB_QUERY_TOP_K, int) # optionality not known
+
+    # events
+
+    """
+    ai.DB_QUERY_EMBEDDINGS
+    ai.DB_QUERY_RESULT
+    """
+
+    # event attributes
+
+    """
+    ai.DB_QUERY_EMBEDDINGS_VECTOR
+    ai.DB_QUERY_RESULT_ID
+    ai.DB_QUERY_RESULT_SCORE
+    ai.DB_QUERY_RESULT_DISTANCE
+    ai.DB_QUERY_RESULT_METADATA
+    ai.DB_QUERY_RESULT_VECTOR
+    ai.DB_QUERY_RESULT_DOCUMENT
+    """
+
+class SpanVectorDB(SpanVectorDBOTEL, SpanTyped):
+    pass
+
 class SpanReranker(SpanTyped):
     """A reranker call."""
 
@@ -324,29 +360,83 @@ class SpanReranker(SpanTyped):
     output_ranks = Span.attribute_property("output_ranks", List[int])
     """Reranked indexes into `input_context_texts`."""
 
-class SpanLLM(SpanTyped):
-    """A generation call to an LLM."""
+class SpanLLMOTEL(SpanTyped):
+    """LLM attributes from OpenTelemetry Semantic Conventions for AI.
 
-    model_name = Span.attribute_property("model_name", str)
-    """The model name of the LLM."""
+    See Open Telemetry Semantic Convetions for AI
+    [llm_spans.md](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/llm-spans.md)
+    and
+    [constants](https://github.com/traceloop/openllmetry/blob/main/packages/opentelemetry-semantic-conventions-ai/opentelemetry/semconv/ai/__init__.py)
+    """
+
+    request_model = Span.attribute_property(ai.LLM_REQUEST_MODEL, str)
+
+    system = Span.attribute_property(ai.LLM_REQUEST_SYSTEM, str)
+
+    request_max_tokens = Span.attribute_property(ai.LLM_REQUEST_MAX_TOKENS, Optional[int])
+    
+    request_temperature = Span.attribute_property(ai.LLM_REQUEST_TEMPERATURE, Optional[float])
+    
+    request_top_p = Span.attribute_property(ai.LLM_REQUEST_TOP_P, Optional[float])
+
+    response_finish_reasons = Span.attribute_property("gen_ai.response.finish_reasons", Optional[List[str]])
+    # Not yet a constant in otel sem ai
+
+    response_id = Span.attribute_property("gen_ai.response.id", Optional[str])
+    # Not yet a constant in otel sem ai
+
+    response_model = Span.attribute_property(ai.LLM_RESPONSE_MODEL, Optional[str])
+
+    usage_completion_tokens = Span.attribute_property(ai.LLM_RESPONSE_COMPLETION_TOKENS, Optional[int])
+
+    usage_promot_tokens = Span.attribute_property(ai.LLM_RESPONSE_USAGE_PROMPT_TOKENS, Optional[int])
+
+    """
+    # These below are in the constants file but are not described in the
+    # markdown so their details or optionality is not know.
+
+    request_type = Span.attribute_property(ai.LLM_REQUEST_TYPE, Optional[str]) # optionality not known
+
+    usage_total_tokens = Span.attribute_property(ai.LLM_USAGE_TOTAL_TOKENS, Optional[int]) # optionality not known
+
+    user = Span.attribute_property(ai.LLM_REQUEST_USER, Optional[str]) # optionality not known
+
+    headers = Span.attribute_property(ai.LLM_REQUEST_HEADERS, Optional[str]) # optionality, type not known
+
+    top_k = Span.attribute_property(ai.LLM_REQUEST_TOP_K, Optional[int]) # optionality not known
+
+    is_streaming = Span.attribute_property(ai.LLM_REQUEST_IS_STREAMING, Optional[bool]) # optionality not known
+
+    frequency_penalty = Span.attribute_property(ai.LLM_REQUEST_FREQUENCY_PENALTY, Optional[float]) # optionality not known
+
+    presence_penalty = Span.attribute_property(ai.LLM_REQUEST_PRESENCE_PENALTY, Optional[float]) # optionality not known
+
+    chat_stop_sequences = Span.attribute_property(ai.LLM_REQUEST_CHAT_STOP_SEQUENCES, Optional[List[str]]) # optionality, type not known
+
+    request_functions = Span.attribute_property(ai.LLM_REQUEST_FUNCTIONS, Optional[List[str]]) # optionality, type not known
+    """
+
+    # Events in description but not yet in python package
+    # Events named "gen_ai.content.prompt"
+    # Attributes:
+    # - "gen_ai.prompt": str (json data)
+    # - "gen_ai.completion": str (json data)
+
+class SpanLLM(SpanLLMOTEL, SpanTyped):
+    """A generation call to an LLM.
+    
+    This features attributes not covered by the OpenTelemetry Semantic
+    Conventions for AI attributes in [SpanLLMOtel][trulens_eval.trace.span.SpanLLMOtel].
+    """
 
     model_type = Span.attribute_property("model_type", str)
     """The type of model used."""
 
-    temperature = Span.attribute_property("temperature", float)
-    """The temperature used for generation."""
-
     input_messages = Span.attribute_property("input_messages", List[dict])
     """The prompt given to the LLM."""
 
-    input_token_count = Span.attribute_property("input_token_count", int)
-    """The number of tokens in the input."""
-
     output_messages = Span.attribute_property("output_messages", List[dict])
     """The returned text."""
-
-    output_token_count = Span.attribute_property("output_token_count", int)
-    """The number of tokens in the output."""
 
     cost = Span.attribute_property("cost", float)
     """The cost of the generation."""

@@ -11,6 +11,7 @@ psutil             >= 5.9.8  # tru.py dashboard starting/ending
 pip                >= 24.0   # for requirements management
 opentelemetry-api  >= 1.24.0 # spans
 opentelemetry-sdk  >= 1.24.0 # spans
+opentelemetry-semantic-conventions-ai >= 0.0.2.0 # spans
 
 packaging          >= 23.2   # for requirements, resources management
 # also: resolves version conflict with langchain-core
