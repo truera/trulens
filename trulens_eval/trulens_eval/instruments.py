@@ -19,15 +19,17 @@ import os
 from pprint import pformat
 import threading as th
 import traceback
-from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
-                    Sequence, Set, Tuple, Type, Union)
+from typing import (
+    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
+    Type, Union
+)
 import weakref
 
 import pydantic
 
 from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import endpoint as mod_endpoint
-from trulens_eval.schema import base as mod_base_schema 
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
@@ -531,7 +533,9 @@ class Instrument(object):
             def handle_done(rets):
                 record_app_args = dict(
                     args=nonself,
-                    perf=mod_base_schema.Perf(start_time=start_time, end_time=end_time),
+                    perf=mod_base_schema.Perf(
+                        start_time=start_time, end_time=end_time
+                    ),
                     pid=os.getpid(),
                     tid=th.get_native_id(),
                     rets=jsonify(rets),
@@ -561,7 +565,9 @@ class Instrument(object):
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=mod_base_schema.Perf(start_time=start_time, end_time=end_time),
+                            perf=mod_base_schema.Perf(
+                                start_time=start_time, end_time=end_time
+                            ),
                             cost=cost,
                             existing_record=records.get(ctx)
                         )

@@ -142,7 +142,8 @@ def draw_selector(
     # Get the relevant JSON to path into.
     obj = rec.app_json
     if type == "record":
-        obj = mod_record_schema.Record.model_validate(rec.record_json).layout_calls_as_app()
+        obj = mod_record_schema.Record.model_validate(rec.record_json
+                                                     ).layout_calls_as_app()
 
     # Try to parse the selector as a Lens.
     path = None
@@ -238,7 +239,9 @@ def select_app(app_json: JSON):
     Select the app to start a session with by its JSON.
     """
 
-    tru_app = mod_app_schema.AppDefinition.new_session(app_definition_json=app_json)
+    tru_app = mod_app_schema.AppDefinition.new_session(
+        app_definition_json=app_json
+    )
 
     st.session_state.records = [ChatRecord(app_json=app_json, app=tru_app)]
 
