@@ -97,6 +97,7 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
         """Latency in seconds."""
         return self.end_time - self.start_time
 
+
 # HACK013: Need these if using __future__.annotations .
 Cost.model_rebuild()
 Perf.model_rebuild()

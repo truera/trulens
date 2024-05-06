@@ -3,10 +3,10 @@ from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
-from trulens_eval.utils.python import NoneType
 from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
+from trulens_eval.utils.python import NoneType
 
 logger = logging.getLogger(__name__)
 

@@ -409,7 +409,8 @@ class OpenAI(LLMProvider):
 class AzureOpenAI(OpenAI):
     """
     Out of the box feedback functions calling AzureOpenAI APIs. Has the same
-    functionality as OpenAI out of the box feedback functions. Please export the
+    functionality as OpenAI out of the box feedback functions, excluding the 
+    moderation endpoint which is not supported by Azure. Please export the
     following env variables. These can be retrieved from https://oai.azure.com/
     .
 
