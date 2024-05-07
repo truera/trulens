@@ -599,11 +599,8 @@ NOTE from trulens_eval:
 This app produced an asynchronous response of type `{class_name(type(rets))}`.
 This record will be updated once the response is available. If this message
 persists, check that you are using the correct version of the app method and
-`await` any asynchronous results. Additional information about this call:
-```
-{pformat(locals())}
-```
-    """
+`await` any asynchronous results.
+"""
                     ),
                 )
 
