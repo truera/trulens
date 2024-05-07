@@ -107,7 +107,10 @@ def make_hashable(context: ot_span.SpanContext) -> HashableSpanContext:
 class OTSpan(pydantic.BaseModel, ot_span.Span):
     """Implementation of OpenTelemetry Span requirements.
     
-    See also [OpenTelemetry Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span).
+    See also [OpenTelemetry
+    Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span) and
+    [OpenTelemetry Span
+    specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md).
     """
 
     _vendor: ClassVar[str] = "trulens_eval"
