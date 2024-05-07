@@ -2,6 +2,7 @@
 
 from typing import Dict
 import uuid
+
 import typing_extensions
 
 RecordID: typing_extensions.TypeAlias = str

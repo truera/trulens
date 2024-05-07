@@ -62,13 +62,12 @@ df_results, feedback_cols = lms.get_records_and_feedback([])
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
     (
-        row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
-    ):
-        (
-            "HIGHER_IS_BETTER"
-            if row.feedback_json.get("higher_is_better", True) else
-            "LOWER_IS_BETTER"
-        ) for _, row in lms.get_feedback_defs().iterrows()
+        row.feedback_json.get("supplied_name", "") or
+        row.feedback_json["implementation"]["name"]
+    ): (
+        "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
+        else "LOWER_IS_BETTER"
+    ) for _, row in lms.get_feedback_defs().iterrows()
 }
 default_direction = "HIGHER_IS_BETTER"
 
@@ -321,9 +320,9 @@ else:
             if len(feedback_cols) == 0:
                 st.write("No feedback details")
             else:
-                feedback_with_valid_results = sorted(list(
-                    filter(lambda fcol: row[fcol] != None, feedback_cols)
-                ))
+                feedback_with_valid_results = sorted(
+                    list(filter(lambda fcol: row[fcol] != None, feedback_cols))
+                )
 
                 def get_icon(feedback_name):
                     cat = CATEGORY.of_score(
@@ -340,13 +339,17 @@ else:
                     )
                 )
 
-                selected_fcol = pills(
-                    "Feedback functions (click on a pill to learn more)",
-                    feedback_with_valid_results,
-                    index=None,
-                    format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
-                    icons=icons
-                )
+                selected_fcol = None
+                if len(feedback_with_valid_results) > 0:
+                    selected_fcol = pills(
+                        "Feedback functions (click on a pill to learn more)",
+                        feedback_with_valid_results,
+                        index=None,
+                        format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
+                        icons=icons
+                    )
+                else:
+                    st.write("No feedback functions found.")
 
                 def display_feedback_call(call, feedback_name):
 

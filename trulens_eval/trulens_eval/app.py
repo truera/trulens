@@ -11,9 +11,10 @@ import logging
 from pprint import PrettyPrinter
 import threading
 from threading import Lock
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
-                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
-                    TypeVar, Union)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
+    Optional, Sequence, Set, Tuple, Type, TypeVar, Union
+)
 
 import pydantic
 
@@ -445,7 +446,8 @@ class RecordingContext():
         return record
 
 
-class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks, Hashable):
+class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
+          Hashable):
     """Base app recorder type.
 
     Non-serialized fields here while the serialized ones are defined in
@@ -496,7 +498,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""
 
-    instrument: Optional[mod_instruments.Instrument] = pydantic.Field(None, exclude=True)
+    instrument: Optional[mod_instruments.Instrument] = pydantic.Field(
+        None, exclude=True
+    )
     """Instrumentation class.
     
     This is needed for serialization as it tells us which objects we want to be
@@ -781,10 +785,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                 else:
                     # Recursively extract content from nested pydantic models
                     return {
-                        k:
-                            self._extract_content(v) if
-                            isinstance(v,
-                                       (pydantic.BaseModel, dict, list)) else v
+                        k: self._extract_content(v) if
+                        isinstance(v, (pydantic.BaseModel, dict, list)) else v
                         for k, v in value.dict().items()
                     }
         elif isinstance(value, dict):
@@ -796,8 +798,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                 # Recursively extract content from nested dictionaries
                 return {
                     k:
-                        self._extract_content(v) if isinstance(v, (dict,
-                                                                   list)) else v
+                    self._extract_content(v) if isinstance(v,
+                                                           (dict, list)) else v
                     for k, v in value.items()
                 }
         elif isinstance(value, list):
@@ -1294,7 +1296,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         )
 
     def _add_future_feedback(
-        self, future_or_result: Union[mod_feedback_schema.FeedbackResult, Future[mod_feedback_schema.FeedbackResult]]
+        self,
+        future_or_result: Union[mod_feedback_schema.FeedbackResult,
+                                Future[mod_feedback_schema.FeedbackResult]]
     ) -> None:
         """
         Callback used to add feedback results to the database once they are
@@ -1302,7 +1306,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         
         See [_handle_record][trulens_eval.app.App._handle_record].
         """
-        
+
         if isinstance(future_or_result, Future):
             res = future_or_result.result()
         else:
@@ -1314,7 +1318,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         record: mod_record_schema.Record,
         feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None
-    ) -> Optional[List[Tuple[mod_feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]]]:
+    ) -> Optional[List[Tuple[mod_feedback.Feedback,
+                             Future[mod_feedback_schema.FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback
         functions to be evaluated. If feedback_mode is provided, will use that
@@ -1350,7 +1355,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return None
 
         elif feedback_mode in [mod_feedback_schema.FeedbackMode.WITH_APP,
-                               mod_feedback_schema.FeedbackMode.WITH_APP_THREAD]:
+                               mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+                              ]:
 
             return self.tru._submit_feedback_functions(
                 record=record,
@@ -1478,9 +1484,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Build a string containing a listing of instrumented methods."""
 
         return "\n".join(
-            f"Object at 0x{obj:x}:\n\t" + "\n\t".
-            join(f"{m} with path {mod_feedback_schema.Select.App + path}"
-                 for m, path in p.items())
+            f"Object at 0x{obj:x}:\n\t" + "\n\t".join(
+                f"{m} with path {mod_feedback_schema.Select.App + path}"
+                for m, path in p.items()
+            )
             for obj, p in self.instrumented_methods.items()
         )
 
