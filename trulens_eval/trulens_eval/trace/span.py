@@ -12,7 +12,8 @@ from enum import Enum
 from logging import getLogger
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
-from opentelemetry.semconv import ai
+
+from opentelemetry.semconv.ai import SpanAttributes as ai_span
 from opentelemetry.util import types as ot_types
 import pandas as pd
 from pydantic import computed_field
@@ -313,27 +314,27 @@ class SpanVectorDBOTEL(SpanTyped):
 
     # span attributes
 
-    vector_db_vendor = Span.attribute_property(ai.VECTOR_DB_VENDOR, str) # optionality not known
+    vector_db_vendor = Span.attribute_property(ai_span.VECTOR_DB_VENDOR, str) # optionality not known
 
-    vector_db_query_top_k = Span.attribute_property(ai.VECTOR_DB_QUERY_TOP_K, int) # optionality not known
+    vector_db_query_top_k = Span.attribute_property(ai_span.VECTOR_DB_QUERY_TOP_K, int) # optionality not known
 
     # events
 
     """
-    ai.DB_QUERY_EMBEDDINGS
-    ai.DB_QUERY_RESULT
+    ai_span.DB_QUERY_EMBEDDINGS
+    ai_span.DB_QUERY_RESULT
     """
 
     # event attributes
 
     """
-    ai.DB_QUERY_EMBEDDINGS_VECTOR
-    ai.DB_QUERY_RESULT_ID
-    ai.DB_QUERY_RESULT_SCORE
-    ai.DB_QUERY_RESULT_DISTANCE
-    ai.DB_QUERY_RESULT_METADATA
-    ai.DB_QUERY_RESULT_VECTOR
-    ai.DB_QUERY_RESULT_DOCUMENT
+    ai_span.DB_QUERY_EMBEDDINGS_VECTOR
+    ai_span.DB_QUERY_RESULT_ID
+    ai_span.DB_QUERY_RESULT_SCORE
+    ai_span.DB_QUERY_RESULT_DISTANCE
+    ai_span.DB_QUERY_RESULT_METADATA
+    ai_span.DB_QUERY_RESULT_VECTOR
+    ai_span.DB_QUERY_RESULT_DOCUMENT
     """
 
 class SpanVectorDB(SpanVectorDBOTEL, SpanTyped):
@@ -371,51 +372,51 @@ class SpanLLMOTEL(SpanTyped):
     There is also Arize's [openinference conventions](https://github.com/Arize-ai/openinference/blob/main/python/openinference-semantic-conventions/src/openinference/semconv/trace/__init__.py).
     """
 
-    request_model = Span.attribute_property(ai.LLM_REQUEST_MODEL, str)
+    request_model = Span.attribute_property(ai_span.LLM_REQUEST_MODEL, str)
 
-    system = Span.attribute_property(ai.LLM_REQUEST_SYSTEM, str)
+    # system = Span.attribute_property(ai_span.LLM_REQUEST_SYSTEM, str)
 
-    request_max_tokens = Span.attribute_property(ai.LLM_REQUEST_MAX_TOKENS, Optional[int])
+    request_max_tokens = Span.attribute_property(ai_span.LLM_REQUEST_MAX_TOKENS, Optional[int])
 
-    request_temperature = Span.attribute_property(ai.LLM_REQUEST_TEMPERATURE, Optional[float])
+    request_temperature = Span.attribute_property(ai_span.LLM_REQUEST_TEMPERATURE, Optional[float])
 
-    request_top_p = Span.attribute_property(ai.LLM_REQUEST_TOP_P, Optional[float])
+    request_top_p = Span.attribute_property(ai_span.LLM_REQUEST_TOP_P, Optional[float])
 
     response_finish_reasons = Span.attribute_property("gen_ai.response.finish_reasons", Optional[List[str]])
     # Not yet a constant in otel sem ai
 
-    response_id = Span.attribute_property("gen_ai.response.id", Optional[str])
+    # response_id = Span.attribute_property("gen_ai.response.id", Optional[str])
     # Not yet a constant in otel sem ai
 
-    response_model = Span.attribute_property(ai.LLM_RESPONSE_MODEL, Optional[str])
+    response_model = Span.attribute_property(ai_span.LLM_RESPONSE_MODEL, Optional[str])
 
-    usage_completion_tokens = Span.attribute_property(ai.LLM_RESPONSE_COMPLETION_TOKENS, Optional[int])
+    # usage_completion_tokens = Span.attribute_property(ai_span.LLM_RESPONSE_COMPLETION_TOKENS, Optional[int])
 
-    usage_promot_tokens = Span.attribute_property(ai.LLM_RESPONSE_USAGE_PROMPT_TOKENS, Optional[int])
+    # usage_promot_tokens = Span.attribute_property(ai_span.LLM_RESPONSE_USAGE_PROMPT_TOKENS, Optional[int])
 
     """
     # These below are in the constants file but are not described in the
     # markdown so their details or optionality is not know.
 
-    request_type = Span.attribute_property(ai.LLM_REQUEST_TYPE, Optional[str]) # optionality not known
+    request_type = Span.attribute_property(ai_span.LLM_REQUEST_TYPE, Optional[str]) # optionality not known
 
-    usage_total_tokens = Span.attribute_property(ai.LLM_USAGE_TOTAL_TOKENS, Optional[int]) # optionality not known
+    usage_total_tokens = Span.attribute_property(ai_span.LLM_USAGE_TOTAL_TOKENS, Optional[int]) # optionality not known
 
-    user = Span.attribute_property(ai.LLM_REQUEST_USER, Optional[str]) # optionality not known
+    user = Span.attribute_property(ai_span.LLM_REQUEST_USER, Optional[str]) # optionality not known
 
-    headers = Span.attribute_property(ai.LLM_REQUEST_HEADERS, Optional[str]) # optionality, type not known
+    headers = Span.attribute_property(ai_span.LLM_REQUEST_HEADERS, Optional[str]) # optionality, type not known
 
-    top_k = Span.attribute_property(ai.LLM_REQUEST_TOP_K, Optional[int]) # optionality not known
+    top_k = Span.attribute_property(ai_span.LLM_REQUEST_TOP_K, Optional[int]) # optionality not known
 
-    is_streaming = Span.attribute_property(ai.LLM_REQUEST_IS_STREAMING, Optional[bool]) # optionality not known
+    is_streaming = Span.attribute_property(ai_span.LLM_REQUEST_IS_STREAMING, Optional[bool]) # optionality not known
 
-    frequency_penalty = Span.attribute_property(ai.LLM_REQUEST_FREQUENCY_PENALTY, Optional[float]) # optionality not known
+    frequency_penalty = Span.attribute_property(ai_span.LLM_REQUEST_FREQUENCY_PENALTY, Optional[float]) # optionality not known
 
-    presence_penalty = Span.attribute_property(ai.LLM_REQUEST_PRESENCE_PENALTY, Optional[float]) # optionality not known
+    presence_penalty = Span.attribute_property(ai_span.LLM_REQUEST_PRESENCE_PENALTY, Optional[float]) # optionality not known
 
-    chat_stop_sequences = Span.attribute_property(ai.LLM_REQUEST_CHAT_STOP_SEQUENCES, Optional[List[str]]) # optionality, type not known
+    chat_stop_sequences = Span.attribute_property(ai_span.LLM_REQUEST_CHAT_STOP_SEQUENCES, Optional[List[str]]) # optionality, type not known
 
-    request_functions = Span.attribute_property(ai.LLM_REQUEST_FUNCTIONS, Optional[List[str]]) # optionality, type not known
+    request_functions = Span.attribute_property(ai_span.LLM_REQUEST_FUNCTIONS, Optional[List[str]]) # optionality, type not known
     """
 
     # Events in description but not yet in python package

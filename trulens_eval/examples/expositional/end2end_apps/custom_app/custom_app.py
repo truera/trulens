@@ -11,6 +11,8 @@ from examples.expositional.end2end_apps.custom_app.custom_reranker import \
 from examples.expositional.end2end_apps.custom_app.custom_retriever import \
     CustomRetriever
 from examples.expositional.end2end_apps.custom_app.custom_tool import \
+    CustomStackTool
+from examples.expositional.end2end_apps.custom_app.custom_tool import \
     CustomTool
 from examples.expositional.end2end_apps.custom_app.dummy import Dummy
 
@@ -64,7 +66,7 @@ class CustomApp(Dummy):
             "The answer to {question} is probably {answer} or something ..."
         )
 
-        self.tools = [CustomTool(**kwargs) for _ in range(3)]
+        self.tools = [CustomTool(**kwargs) for _ in range(3)] + [CustomStackTool(**kwargs)]
 
         self.agents = [] # TODO
 
@@ -73,6 +75,10 @@ class CustomApp(Dummy):
         self.dummy_allocate()
 
         # Tasks ?
+
+    @instrument
+    def process_chunk_by_random_tool(self, chunk_and_score: Tuple[str, float]) -> str:
+        return self.tools[random.randint(0, len(self.tools) - 1)].invoke(chunk_and_score[0])
 
     @instrument
     def get_context(self, input: str):
@@ -86,15 +92,12 @@ class CustomApp(Dummy):
             chunk_scores=None
         ) if self.reranker else chunks
 
-        def process_chunk_by_random_tool(chunk_and_score: Tuple[str, float]) -> str:
-            return self.tools[random.randint(0, len(self.tools) - 1)].invoke(chunk_and_score[0])
-
         # Creates a few threads to process chunks in parallel to test apps that
         # make use of threads.
         ex = ThreadPoolExecutor(max_workers=max(1, len(chunks)))
 
         futures = list(
-            ex.submit(process_chunk_by_random_tool, chunk_and_score=chunk)
+            ex.submit(self.process_chunk_by_random_tool, chunk_and_score=chunk)
             for chunk in chunks
         )
 
