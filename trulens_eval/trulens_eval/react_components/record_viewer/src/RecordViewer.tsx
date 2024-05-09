@@ -1,9 +1,14 @@
-import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-component-lib';
 import { ReactNode } from 'react';
-import { DataRaw } from './utils/types';
-import { createTreeFromCalls } from './utils/utils';
-import RecordTable from './RecordTable/RecordTable';
+import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-component-lib';
 
+import RecordInfo from '@/RecordInfo';
+import { DataRaw } from '@/utils/types';
+import { createNodeMap, createTreeFromCalls } from '@/utils/utils';
+
+/**
+ * This component serves as our entryway into streamlit. Keeping the logic here at a minimum,
+ * primarily parsing and shaping the args/props. Primary component can be found in RecordInfo.
+ */
 class RecordViewer extends StreamlitComponentBase {
   public render = (): ReactNode => {
     /**
@@ -12,20 +17,15 @@ class RecordViewer extends StreamlitComponentBase {
 
     // This seems to currently be the best way to type args, since
     // StreamlitComponentBase appears happy to just give it "any".
-    const { record_json: recordJSON } = this.props.args as DataRaw;
-
-    const { font: fontFamily } = this.props.theme as { font: string };
+    const { record_json: recordJSON, app_json: appJSON } = this.props.args as DataRaw;
 
     /**
      * Actual code begins
      */
-    const root = createTreeFromCalls(recordJSON);
+    const root = createTreeFromCalls(recordJSON, appJSON.app_id);
+    const nodeMap = createNodeMap(root);
 
-    return (
-      <div style={{ fontFamily, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <RecordTable root={root} />
-      </div>
-    );
+    return <RecordInfo root={root} recordJSON={recordJSON} nodeMap={nodeMap} appJSON={appJSON} />;
   };
 }
 

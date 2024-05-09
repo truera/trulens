@@ -10,7 +10,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from pydantic import Field
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.containers import dict_set_with_multikey
@@ -220,15 +220,17 @@ class LlamaInstrument(Instrument):
         )
 
 
-class TruLlama(App):
-    """
-    Recorder for LlamaIndex applications.
+class TruLlama(mod_app.App):
+    """Recorder for _LlamaIndex_ applications.
 
-    This recorder is designed for LlamaIndex apps, providing a way to instrument, log, and evaluate their behavior.
+    This recorder is designed for LlamaIndex apps, providing a way to
+    instrument, log, and evaluate their behavior.
 
     !!! example "Creating a LlamaIndex application"
 
-        Consider an example LlamaIndex application. For the complete code example, see [LlamaIndex Quickstart](https://docs.llamaindex.ai/en/stable/getting_started/starter_example.html).
+        Consider an example LlamaIndex application. For the complete code
+        example, see [LlamaIndex
+        Quickstart](https://docs.llamaindex.ai/en/stable/getting_started/starter_example.html).
 
         ```python
         from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
@@ -239,7 +241,9 @@ class TruLlama(App):
         query_engine = index.as_query_engine()
         ```
 
-    Feedback functions can utilize the specific context produced by the application's retriever. This is achieved using the `select_context` method, which then can be used by a feedback selector, such as `on(context)`.
+    Feedback functions can utilize the specific context produced by the
+    application's retriever. This is achieved using the `select_context` method,
+    which then can be used by a feedback selector, such as `on(context)`.
 
     !!! example "Defining a feedback function"
 
@@ -261,7 +265,8 @@ class TruLlama(App):
         )
         ```
 
-    The application can be wrapped in a `TruLlama` recorder to provide logging and evaluation upon the application's use.
+    The application can be wrapped in a `TruLlama` recorder to provide logging
+    and evaluation upon the application's use.
 
     !!! example "Using the `TruLlama` recorder"
 
@@ -276,13 +281,19 @@ class TruLlama(App):
             query_engine.query("What is llama index?")
         ```
 
-    Feedback functions can utilize the specific context produced by the application's query engine. This is achieved using the `select_context` method, which then can be used by a feedback selector, such as `on(context)`.
+    Feedback functions can utilize the specific context produced by the
+    application's query engine. This is achieved using the `select_context`
+    method, which then can be used by a feedback selector, such as
+    `on(context)`.
 
-    Further information about LlamaIndex apps can be found on the [🦙 LlamaIndex Documentation](https://docs.llamaindex.ai/en/stable/) page.
+    Further information about LlamaIndex apps can be found on the [🦙 LlamaIndex
+    Documentation](https://docs.llamaindex.ai/en/stable/) page.
 
     Args:
         app: A LlamaIndex application.
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App] and [AppDefinition][trulens_eval.app.AppDefinition].
+
+        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
+            and [AppDefinition][trulens_eval.schema.app.AppDefinition].
     """
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
@@ -342,7 +353,7 @@ class TruLlama(App):
 
         else:
 
-            return App.main_input(self, func, sig, bindings)
+            return mod_app.App.main_input(self, func, sig, bindings)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -359,7 +370,7 @@ class TruLlama(App):
             if attr is not None:
                 return getattr(ret, attr)
             else:  # attr is None
-                return App.main_output(self, func, sig, bindings, ret)
+                return mod_app.App.main_output(self, func, sig, bindings, ret)
 
         except NotImplementedError:
             return None

@@ -18,6 +18,11 @@ config = context.config
 
 # Interpret the `alembic.ini` file for Python logging.
 if config.config_file_name is not None:
+    if not os.path.exists(config.config_file_name):
+        raise FileNotFoundError(
+            f"Alembic config file not found: {config.config_file_name}."
+        )
+
     fileConfig(config.config_file_name)
 
 # Get `sqlalchemy.url` from the environment.

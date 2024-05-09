@@ -231,6 +231,8 @@ class OpenAIEndpoint(Endpoint):
                     "OpenAIClient singleton already made, ignoring arguments %s",
                     kwargs
                 )
+                self.warning(
+                )  # issue info about where the singleton was originally created
             return
 
         self_kwargs = {

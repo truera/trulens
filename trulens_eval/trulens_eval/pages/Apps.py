@@ -1,8 +1,8 @@
 import asyncio
 from typing import Optional
 
-from trulens_eval.schema import AppDefinition
-from trulens_eval.schema import Record
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.tru import Tru
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import JSON
@@ -142,7 +142,8 @@ def draw_selector(
     # Get the relevant JSON to path into.
     obj = rec.app_json
     if type == "record":
-        obj = Record.model_validate(rec.record_json).layout_calls_as_app()
+        obj = mod_record_schema.Record.model_validate(rec.record_json
+                                                     ).layout_calls_as_app()
 
     # Try to parse the selector as a Lens.
     path = None
@@ -238,12 +239,14 @@ def select_app(app_json: JSON):
     Select the app to start a session with by its JSON.
     """
 
-    tru_app = AppDefinition.new_session(app_definition_json=app_json)
+    tru_app = mod_app_schema.AppDefinition.new_session(
+        app_definition_json=app_json
+    )
 
     st.session_state.records = [ChatRecord(app_json=app_json, app=tru_app)]
 
-    for type in ["app", "record"]:
-        st.session_state[f'selectors_{type}'] = []
+    for typ in ["app", "record"]:
+        st.session_state[f'selectors_{typ}'] = []
 
 
 def run_record(col):
@@ -271,7 +274,7 @@ def run_record(col):
     # Run the app and collect the record.
     with tru_app as rec:
         comp_response = tru_app.main_call(human_input)
-    record: Record = rec.get()
+    record: mod_record_schema.Record = rec.get()
 
     # Update ChatRecord.
     current_record.computer = comp_response
@@ -301,7 +304,7 @@ if "records" not in st.session_state:
 
     st.title("App Runner")
 
-    loadable_apps = AppDefinition.get_loadable_apps()
+    loadable_apps = mod_app_schema.AppDefinition.get_loadable_apps()
 
     st.divider()
 

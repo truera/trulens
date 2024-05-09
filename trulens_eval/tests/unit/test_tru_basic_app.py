@@ -2,7 +2,6 @@
 Tests for TruBasicApp.
 """
 
-import unittest
 from unittest import main
 
 from tests.unit.test import JSONTestCase
@@ -10,7 +9,7 @@ from tests.unit.test import JSONTestCase
 from trulens_eval import Tru
 from trulens_eval import TruBasicApp
 from trulens_eval.keys import check_keys
-from trulens_eval.schema import FeedbackMode
+from trulens_eval.schema.feedback import FeedbackMode
 
 check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
