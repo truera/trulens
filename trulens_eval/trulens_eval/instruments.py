@@ -587,23 +587,10 @@ class Instrument(object):
                 return records
 
             if isinstance(rets, Awaitable):
-                # If method produced an awaitable, add a placeholder record
-                # stating that results are not ready and return an awaitable
-                # that will capture the results when they are ready.
-
-                # Placeholder:
-                records: Dict = handle_done(
-                    rets=(
-                        f"""
-NOTE from trulens_eval:
-This app produced an asynchronous response of type `{class_name(type(rets))}`.
-This record will be updated once the response is available. If this message
-persists, check that you are using the correct version of the app method and
-`await` any asynchronous results.
-"""
-                    ),
-                )
-
+                # If method produced an awaitable
+                logger.info(f"""This app produced an asynchronous response of type `{class_name(type(rets))}`. 
+                            This record will be updated once the response is available""")
+                            
                 # TODO(piotrm): need to track costs of awaiting the ret in the
                 # below.
 
