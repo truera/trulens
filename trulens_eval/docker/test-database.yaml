@@ -1,6 +1,6 @@
 # Docker compose environment setup for running
-# integration tests of `trulens_eval.db_v2`
-# Use with `make test-it-db-v2`
+# integration tests for `trulens_eval.database.sqlalchemy`
+# Use with `make test-database`.
 
 version: "3.9"
 

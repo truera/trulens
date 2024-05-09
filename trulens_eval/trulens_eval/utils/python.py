@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 from concurrent import futures
+import dataclasses
 import inspect
 import logging
 from pprint import PrettyPrinter
@@ -15,7 +16,7 @@ from types import ModuleType
 import typing
 from typing import (
     Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator,
-    Optional, Sequence, Type, TypeVar, Union
+    List, Optional, Sequence, Type, TypeVar, Union
 )
 
 T = TypeVar("T")
@@ -236,15 +237,36 @@ def safe_issubclass(cls: Type, parent: Type) -> bool:
 # Function utilities.
 
 
-def code_line(func) -> Optional[str]:
+def code_line(func, show_source: bool = False) -> Optional[str]:
     """Get a string representation of the location of the given function
     `func`."""
 
-    if safe_hasattr(func, "__code__"):
+    if isinstance(func, inspect.FrameInfo):
+        ret = f"{func.filename}:{func.lineno}"
+        if show_source:
+            ret += "\n"
+            for line in func.code_context:
+                ret += "\t" + line
+
+        return ret
+
+    if inspect.isframe(func):
+        code = func.f_code
+        ret = f"{func.f_code.co_filename}:{func.f_code.co_firstlineno}"
+
+    elif safe_hasattr(func, "__code__"):
         code = func.__code__
-        return f"{code.co_filename}:{code.co_firstlineno}"
+        ret = f"{code.co_filename}:{code.co_firstlineno}"
+
     else:
         return None
+
+    if show_source:
+        ret += "\n"
+        for line in inspect.getsourcelines(func)[0]:
+            ret += "\t" + str(line)
+
+    return ret
 
 
 def locals_except(*exceptions):
@@ -255,6 +277,50 @@ def locals_except(*exceptions):
     locs = caller_frame(offset=1).f_locals  # 1 to skip this call
 
     return {k: v for k, v in locs.items() if k not in exceptions}
+
+
+def for_all_methods(decorator, _except: Optional[List[str]] = None):
+    """
+    Applies decorator to all methods except classmethods, private methods and
+    the ones specified with `_except`.
+    """
+
+    def decorate(cls):
+
+        for attr_name, attr in cls.__dict__.items(
+        ):  # does not include classmethods
+
+            if not inspect.isfunction(attr):
+                continue  # skips non-method attributes
+
+            if attr_name.startswith("_"):
+                continue  # skips private methods
+
+            if _except is not None and attr_name in _except:
+                continue
+
+            logger.debug("Decorating %s", attr_name)
+            setattr(cls, attr_name, decorator(attr))
+
+        return cls
+
+    return decorate
+
+
+def run_before(callback: Callable):
+    """
+    Create decorator to run the callback before the function.
+    """
+
+    def decorator(func):
+
+        def wrapper(*args, **kwargs):
+            callback(*args, **kwargs)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 # Python call stack utilities
@@ -270,6 +336,29 @@ def caller_frame(offset=0) -> 'frame':
     """
 
     return inspect.stack()[offset + 1].frame
+
+
+def caller_frameinfo(
+    offset: int = 0,
+    skip_module: Optional[str] = "trulens_eval"
+) -> Optional[inspect.FrameInfo]:
+    """
+    Get the caller's (of this function) frameinfo. See
+    https://docs.python.org/3/reference/datamodel.html#frame-objects .
+
+    Args:
+        offset: The number of frames to skip. Default is 0.
+        
+        skip_module: Skip frames from the given module. Default is "trulens_eval".
+    """
+
+    for finfo in inspect.stack()[offset + 1:]:
+        if skip_module is None:
+            return finfo
+        if not finfo.frame.f_globals['__name__'].startswith(skip_module):
+            return finfo
+
+    return None
 
 
 def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence['frame']:
@@ -499,6 +588,39 @@ def get_first_local_in_call_stack(
 # Wrapping utilities
 
 
+class OpaqueWrapper(Generic[T]):
+    """Wrap an object preventing all access.
+
+    Any access except to
+    [unwrap][trulens_eval.utils.python.OpaqueWrapper.unwrap] will result in an
+    exception with the given message.
+
+    Args:
+        obj: The object to wrap.
+
+        e: The exception to raise when an attribute is accessed.
+    """
+
+    def __init__(self, obj: T, e: Exception):
+        self._obj = obj
+        self._e = e
+
+    def unwrap(self) -> T:
+        """Get the wrapped object back."""
+        return self._obj
+
+    def __getattr__(self, name):
+        raise self._e
+
+    def __setattr__(self, name, value):
+        if name in ["_obj", "_e"]:
+            return super().__setattr__(name, value)
+        raise self._e
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        raise self._e
+
+
 def wrap_awaitable(
     awaitable: Awaitable[T],
     on_await: Optional[Callable[[], Any]] = None,
@@ -575,6 +697,53 @@ def wrap_generator(
 T = TypeVar("T")
 
 
+@dataclasses.dataclass
+class SingletonInfo(Generic[T]):
+    """
+    Information about a singleton instance.
+    """
+
+    val: T
+    """The singleton instance."""
+
+    name: str
+    """The name of the singleton instance.
+    
+    This is used for the SingletonPerName mechanism to have a seperate singleton
+    for each unique name (and class).
+    """
+
+    cls: Type[T]
+    """The class of the singleton instance."""
+
+    frame: Any
+    """The frame where the singleton was created.
+    
+    This is used for showing "already created" warnings.
+    """
+
+    def __init__(self, name: str, val: Any):
+        self.val = val
+        self.cls = val.__class__
+        self.name = name
+        self.frameinfo = caller_frameinfo(offset=2)
+
+    def warning(self):
+        """Issue warning that this singleton already exists."""
+
+        logger.warning(
+            (
+                "Singleton instance of type %s already created at:\n%s\n"
+                "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
+                f"""  ```python
+  from trulens_eval.utils.python import SingletonPerName
+  SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
+  ```
+            """
+            ), self.cls.__name__, code_line(self.frameinfo, show_source=True)
+        )
+
+
 class SingletonPerName(Generic[T]):
     """
     Class for creating singleton instances except there being one instance max,
@@ -583,12 +752,24 @@ class SingletonPerName(Generic[T]):
     """
 
     # Hold singleton instances here.
-    _instances: Dict[Hashable, SingletonPerName] = dict()
+    _instances: Dict[Hashable, SingletonInfo[SingletonPerName[T]]] = {}
 
     # Need some way to look up the name of the singleton instance. Cannot attach
     # a new attribute to instance since some metaclasses don't allow this (like
     # pydantic). We instead create a map from instance address to name.
-    _id_to_name_map: Dict[int, Optional[str]] = dict()
+    _id_to_name_map: Dict[int, Optional[str]] = {}
+
+    def warning(self):
+        """Issue warning that this singleton already exists."""
+
+        name = SingletonPerName._id_to_name_map[id(self)]
+        k = self.__class__.__name__, name
+        if k in SingletonPerName._instances:
+            SingletonPerName._instances[k].warning()
+        else:
+            raise RuntimeError(
+                f"Instance of singleton type/name {k} does not exist."
+            )
 
     def __new__(
         cls: Type[SingletonPerName[T]],
@@ -612,31 +793,46 @@ class SingletonPerName(Generic[T]):
             instance = super().__new__(cls)
 
             SingletonPerName._id_to_name_map[id(instance)] = name
-            SingletonPerName._instances[k] = instance
+            info = SingletonInfo(name=name, val=instance)
+            SingletonPerName._instances[k] = info
+        else:
+            info = SingletonPerName._instances[k]
 
-        obj: cls = SingletonPerName._instances[k]
+        obj: cls = info.val
 
         return obj
 
     @staticmethod
-    def delete_singleton_by_name(name: str):
+    def delete_singleton_by_name(name: str, cls: Type[SingletonPerName] = None):
         """
-        Delete the singleton instance with the given name. Can be used for testing
-        to create another singleton.
+        Delete the singleton instance with the given name.
+        
+        This can be used for testing to create another singleton.
+
+        Args:
+            name: The name of the singleton instance to delete.
+
+            cls: The class of the singleton instance to delete. If not given, all
+                instances with the given name are deleted.
         """
         for k, v in list(SingletonPerName._instances.items()):
             if k[1] == name:
+                if cls is not None and v.cls != cls:
+                    continue
+
                 del SingletonPerName._instances[k]
-                del SingletonPerName._id_to_name_map[id(v)]
+                del SingletonPerName._id_to_name_map[id(v.val)]
 
     def delete_singleton(self):
         """
         Delete the singleton instance. Can be used for testing to create another
         singleton.
         """
-        if id(self) in SingletonPerName._id_to_name_map:
-            name = SingletonPerName._id_to_name_map[id(self)]
-            del SingletonPerName._id_to_name_map[id(self)]
-            del SingletonPerName._instances[self.__class__.__name__, name]
+        id_ = id(self)
+
+        if id_ in SingletonPerName._id_to_name_map:
+            name = SingletonPerName._id_to_name_map[id_]
+            del SingletonPerName._id_to_name_map[id_]
+            del SingletonPerName._instances[(self.__class__.__name__, name)]
         else:
             logger.warning("Instance %s not found in our records.", self)

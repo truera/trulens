@@ -3,8 +3,8 @@ from typing import ClassVar, Dict, Optional, Sequence, Tuple, List
 import warnings
 
 from trulens_eval.feedback import prompts
-from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.utils.generated import re_0_10_rating
+from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
+from trulens_eval.utils import generated as mod_generated_utils
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
@@ -64,7 +64,7 @@ class Provider(WithClassInfo, SerialModel):
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    endpoint: Optional[Endpoint] = None
+    endpoint: Optional[mod_endpoint.Endpoint] = None
     """Endpoint supporting this provider.
     
     Remote API invocations are handled by the endpoint.
@@ -122,7 +122,6 @@ class LLMProvider(Provider):
         """
         # text
         raise NotImplementedError()
-        pass
 
     def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
         assert self.endpoint is not None, "Endpoint is not set."
@@ -163,11 +162,12 @@ class LLMProvider(Provider):
         document for hypothesis.
 
         Args:
-            premise (str): A source document
-            hypothesis (str): A statement to check
+            premise: A source document
+
+            hypothesis: A statement to check
 
         Returns:
-            str: An LLM response using a scorecard template
+            An LLM response using a scorecard template
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -193,13 +193,16 @@ class LLMProvider(Provider):
         Base method to generate a score only, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formatted system prompt.
-            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
-            normalize (float): The normalization factor for the score. Defaults to 10.0.
-            temperature (float): The temperature for the LLM response. Defaults to 0.0.
+            system_prompt: A pre-formatted system prompt.
+
+            user_prompt: An optional user prompt.
+
+            normalize: The normalization factor for the score.
+
+            temperature: The temperature for the LLM response.
 
         Returns:
-            float: The score on a 0-1 scale.
+            The score on a 0-1 scale.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -213,7 +216,7 @@ class LLMProvider(Provider):
             temperature=temperature
         )
 
-        return re_0_10_rating(response) / normalize
+        return mod_generated_utils.re_0_10_rating(response) / normalize
 
     def generate_score_and_reasons(
         self,
@@ -226,13 +229,18 @@ class LLMProvider(Provider):
         Base method to generate a score and reason, used for evaluation.
 
         Args:
-            system_prompt (str): A pre-formatted system prompt.
-            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
-            normalize (float): The normalization factor for the score. Defaults to 10.0.
-            temperature (float): The temperature for the LLM response. Defaults to 0.0.
+            system_prompt: A pre-formatted system prompt.
+
+            user_prompt: An optional user prompt. Defaults to None.
+
+            normalize: The normalization factor for the score.
+
+            temperature: The temperature for the LLM response.
 
         Returns:
-            Tuple[float, Dict]: The score on a 0-1 scale and reason metadata (dict) if returned by the LLM.
+            The score on a 0-1 scale.
+            
+            Reason metadata if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -250,7 +258,7 @@ class LLMProvider(Provider):
             criteria = None
             for line in response.split('\n'):
                 if "Score" in line:
-                    score = re_0_10_rating(line) / normalize
+                    score = mod_generated_utils.re_0_10_rating(line) / normalize
                 criteria_lines = []
                 supporting_evidence_lines = []
                 collecting_criteria = False
@@ -293,14 +301,16 @@ class LLMProvider(Provider):
             return score, reasons
 
         else:
-            score = re_0_10_rating(response) / normalize
+            score = mod_generated_utils.re_0_10_rating(response) / normalize
             warnings.warn(
                 "No supporting evidence provided. Returning score only.",
                 UserWarning
             )
             return score, {}
 
-    def context_relevance(self, question: str, context: str, temperature: float = 0.0) -> float:
+    def context_relevance(
+        self, question: str, context: str, temperature: float = 0.0
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the relevance of the context to the question.
@@ -352,8 +362,12 @@ class LLMProvider(Provider):
 
         return self.context_relevance(question, context)
 
-    def context_relevance_with_cot_reasons(self, question: str,
-                                           context: str, temperature: float = 0.0) -> Tuple[float, Dict]:
+    def context_relevance_with_cot_reasons(
+        self,
+        question: str,
+        context: str,
+        temperature: float = 0.0
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the context to the question.
@@ -389,7 +403,11 @@ class LLMProvider(Provider):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
 
-        return self.generate_score_and_reasons(system_prompt, user_prompt, temperature)
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            temperature=temperature
+        )
 
     def qs_relevance_with_cot_reasons(self, question: str,
                                       context: str) -> Tuple[float, Dict]:
@@ -576,7 +594,7 @@ class LLMProvider(Provider):
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
         )
-        return re_0_10_rating(agreement_txt) / 10.0
+        return mod_generated_utils.re_0_10_rating(agreement_txt) / 10.0
 
     def _langchain_evaluate(self, text: str, criteria: str) -> float:
         """

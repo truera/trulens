@@ -52,10 +52,10 @@ apply when referring to things like package names, classes, methods.
 - Generally import modules only as per
   <https://google.github.io/styleguide/pyguide.html#22-imports> with some
   exceptions:
-  
-    - Very standard names like types from python or widely used packages. Also
-      names meant to stand in for them.
-    - Other exceptions in the google style guide above.
+
+  - Very standard names like types from python or widely used packages. Also
+    names meant to stand in for them.
+  - Other exceptions in the google style guide above.
 
 - Use full paths when importing internally
   <https://google.github.io/styleguide/pyguide.html#23-packages>. Aliases still
@@ -172,8 +172,8 @@ See `tests/unit`.
 
 See `tests/unit/static`.
 
-Static tests run on multiple versions of python: 3.8, 3.9, 3.10, and being a
-subset of unit tests, are also run on latest supported python, 3.11.
+Static tests run on multiple versions of python: `3.8`, `3.9`, `3.10`, `3.11`, and being a
+subset of unit tests, are also run on latest supported python, `3.12` .
 
 ### Test pipelines
 

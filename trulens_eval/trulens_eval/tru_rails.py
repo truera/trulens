@@ -12,11 +12,11 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
 from langchain_core.language_models.base import BaseLanguageModel
 from pydantic import Field
 
-from trulens_eval.app import App
+from trulens_eval import app as mod_app
 from trulens_eval.feedback import feedback
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import Select
+from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.tru_chain import LangChainInstrument
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
@@ -45,7 +45,7 @@ with OptionalImports(messages=REQUIREMENT_RAILS):
 OptionalImports(messages=REQUIREMENT_RAILS).assert_installed(nemoguardrails)
 
 
-class RailsActionSelect(Select):
+class RailsActionSelect(mod_feedback_schema.Select):
     """Selector shorthands for _NeMo Guardrails_ apps when used for evaluating
     feedback in actions.
     
@@ -374,7 +374,7 @@ class RailsInstrument(Instrument):
         )
 
 
-class TruRails(App):
+class TruRails(mod_app.App):
     """Recorder for apps defined using _NeMo Guardrails_.
 
     Args:
@@ -435,19 +435,16 @@ class TruRails(App):
         """
         Get the path to the context in the query output.
         """
-        return Select.RecordCalls.kb.search_relevant_chunks.rets[:].body
+        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:
+                                                                                    ].body
 
-    def __getattr__(self, __name: str) -> Any:
-        # A message for cases where a user calls something that the wrapped
-        # app has but we do not wrap yet.
-
-        if safe_hasattr(self.app, __name):
-            return RuntimeError(
-                f"TruRails has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
-                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruRails`. "
-            )
+    def __getattr__(self, name):
+        if name == "__name__":
+            return self.__class__.__name__  # Return the class name of TruRails
+        elif safe_hasattr(self.app, name):
+            return getattr(self.app, name)  # Delegate to the wrapped app if it has the attribute
         else:
-            raise RuntimeError(f"TruRails has no attribute named {__name}.")
+            raise AttributeError(f"TruRails has no attribute named {name}")
 
 
 import trulens_eval  # for App class annotations

@@ -1,9 +1,13 @@
 import asyncio
 import json
+import pprint as pp
 from typing import Dict, Iterable, Tuple
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
+
+import pprint
+from pprint import pformat
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +17,7 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
+from streamlit_pills import pills
 from ux.page_config import set_page_config
 from ux.styles import CATEGORY
 
@@ -24,12 +29,13 @@ from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
 from trulens_eval.app import Tool
-from trulens_eval.db import MULTI_CALL_NAME_DELIMITER
+from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
-from trulens_eval.schema import Record
-from trulens_eval.schema import Select
+from trulens_eval.schema.feedback import Select
+from trulens_eval.schema.record import Record
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
+from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.components import draw_agent_info
 from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
@@ -38,12 +44,15 @@ from trulens_eval.ux.components import draw_tool_info
 from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
-import pprint
 
 st.runtime.legacy_caching.clear_cache()
 
 set_page_config(page_title="Evaluations")
 st.title("Evaluations")
+
+if __name__ == "__main__":
+    # If not imported, gets args from command line and creates Tru singleton
+    init_from_args()
 
 tru = Tru()
 lms = tru.db
@@ -265,7 +274,7 @@ else:
         gb.configure_pagination()
         gb.configure_side_bar()
         gb.configure_selection(selection_mode="single", use_checkbox=False)
-        # gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc="sum", editable=True)
+
         gridOptions = gb.build()
         data = AgGrid(
             evaluations_df,
@@ -297,7 +306,8 @@ else:
             prompt = selected_rows["input"][0]
             response = selected_rows["output"][0]
             details = selected_rows["app_json"][0]
-            record_json = selected_rows["record_json"][0]
+            record_str = selected_rows["record_json"][0]
+            record_json = json.loads(record_str)
             record_metadata = selected_rows["record_metadata"][0]
 
             app_json = json.loads(
@@ -306,214 +316,108 @@ else:
 
             row = selected_rows.head().iloc[0]
 
-            # Display input/response side by side. In each column, we put them in tabs mainly for
-            # formatting/styling purposes.
-            input_col, response_col = st.columns(2)
+            st.markdown("#### Feedback results")
+            if len(feedback_cols) == 0:
+                st.write("No feedback details")
+            else:
+                feedback_with_valid_results = sorted(
+                    list(filter(lambda fcol: row[fcol] != None, feedback_cols))
+                )
 
-            (input_tab,) = input_col.tabs(["Input"])
-            with input_tab:
-                with st.expander(
-                        f"Input {render_selector_markdown(Select.RecordInput)}",
-                        expanded=True):
-                    write_or_json(st, obj=prompt)
+                def get_icon(feedback_name):
+                    cat = CATEGORY.of_score(
+                        row[feedback_name],
+                        higher_is_better=feedback_directions.get(
+                            feedback_name, default_direction
+                        ) == default_direction
+                    )
+                    return cat.icon
 
-            (response_tab,) = response_col.tabs(["Response"])
-            with response_tab:
-                with st.expander(
-                        f"Response {render_selector_markdown(Select.RecordOutput)}",
-                        expanded=True):
-                    write_or_json(st, obj=response)
+                icons = list(
+                    map(
+                        lambda fcol: get_icon(fcol), feedback_with_valid_results
+                    )
+                )
 
-            feedback_tab, metadata_tab = st.tabs(["Feedback", "Metadata"])
-
-            with metadata_tab:
-                metadata_dict = json.loads(record_json).get("meta", None)
-                if metadata_dict is None:
-                    st.write("No record metadata available")
-                elif not isinstance(metadata_dict, dict):
-                    st.write(
-                        "Invalid metadata format: expected a dictionary (dict) type"
+                selected_fcol = None
+                if len(feedback_with_valid_results) > 0:
+                    selected_fcol = pills(
+                        "Feedback functions (click on a pill to learn more)",
+                        feedback_with_valid_results,
+                        index=None,
+                        format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
+                        icons=icons
                     )
                 else:
-                    metadata_cols = list(metadata_dict.keys())
+                    st.write("No feedback functions found.")
 
-                    metadata_cols = st.columns(len(metadata_cols))
+                def display_feedback_call(call, feedback_name):
 
-                    for i, (key, value) in enumerate(metadata_dict.items()):
-                        metadata_cols[i].metric(
-                            label=key,
-                            value=value,
+                    def highlight(s):
+                        if "distance" in feedback_name:
+                            return [
+                                f"background-color: {CATEGORY.UNKNOWN.color}"
+                            ] * len(s)
+                        cat = CATEGORY.of_score(
+                            s.result,
+                            higher_is_better=feedback_directions.get(
+                                feedback_name, default_direction
+                            ) == default_direction
+                        )
+                        return [f"background-color: {cat.color}"] * len(s)
+
+                    if call is not None and len(call) > 0:
+                        # NOTE(piotrm for garett): converting feedback
+                        # function inputs to strings here as other
+                        # structures get rendered as [object Object] in the
+                        # javascript downstream. If the first input/column
+                        # is a list, the DataFrame.from_records does create
+                        # multiple rows, one for each element, but if the
+                        # second or other column is a list, it will not do
+                        # this.
+                        for c in call:
+                            args = c['args']
+                            for k, v in args.items():
+                                if not isinstance(v, str):
+                                    args[k] = pp.pformat(v)
+
+                        df = pd.DataFrame.from_records(c['args'] for c in call)
+
+                        df["result"] = pd.DataFrame(
+                            [
+                                float(call[i]["ret"])
+                                if call[i]["ret"] is not None else -1
+                                for i in range(len(call))
+                            ]
+                        )
+                        df["meta"] = pd.Series(
+                            [call[i]["meta"] for i in range(len(call))]
+                        )
+                        df = df.join(df.meta.apply(lambda m: pd.Series(m))
+                                    ).drop(columns="meta")
+
+                        st.dataframe(
+                            df.style.apply(highlight, axis=1
+                                          ).format("{:.2f}", subset=["result"])
                         )
 
-            with feedback_tab:
-                if len(feedback_cols) == 0:
-                    st.write("No feedback details")
+                    else:
+                        st.text("No feedback details.")
 
-                for fcol in feedback_cols:
-                    feedback_name = fcol
-                    feedback_result = row[fcol]
+                if selected_fcol != None:
+                    try:
+                        if MULTI_CALL_NAME_DELIMITER in selected_fcol:
+                            fcol = selected_fcol.split(
+                                MULTI_CALL_NAME_DELIMITER
+                            )[0]
+                        feedback_calls = row[f"{selected_fcol}_calls"]
+                        display_feedback_call(feedback_calls, selected_fcol)
+                    except Exception:
+                        pass
 
-                    if MULTI_CALL_NAME_DELIMITER in fcol:
-                        fcol = fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
-                    feedback_calls = row[f"{fcol}_calls"]
-
-                    def display_feedback_call(call):
-
-                        def highlight(s):
-                            if "distance" in feedback_name:
-                                return [
-                                    f"background-color: {CATEGORY.UNKNOWN.color}"
-                                ] * len(s)
-                            cat = CATEGORY.of_score(
-                                s.result,
-                                higher_is_better=feedback_directions.get(
-                                    fcol, default_direction
-                                ) == default_direction
-                            )
-                            return [f"background-color: {cat.color}"] * len(s)
-
-                        if call is not None and len(call) > 0:
-                            # NOTE(piotrm for garett): converting feedback
-                            # function inputs to strings here as other
-                            # structures get rendered as [object Object] in the
-                            # javascript downstream. If the first input/column
-                            # is a list, the DataFrame.from_records does create
-                            # multiple rows, one for each element, but if the
-                            # second or other column is a list, it will not do
-                            # this.
-                            for c in call:
-                                args = c['args']
-                                for k, v in args.items():
-                                    if not isinstance(v, str):
-                                        args[k] = pprint.pformat(v)
-
-                            df = pd.DataFrame.from_records(
-                                c['args'] for c in call
-                            )
-
-                            df["result"] = pd.DataFrame(
-                                [
-                                    float(call[i]["ret"])
-                                    if call[i]["ret"] is not None else -1
-                                    for i in range(len(call))
-                                ]
-                            )
-                            df["meta"] = pd.Series(
-                                [call[i]["meta"] for i in range(len(call))]
-                            )
-                            df = df.join(df.meta.apply(lambda m: pd.Series(m))
-                                        ).drop(columns="meta")
-
-                            st.dataframe(
-                                df.style.apply(highlight, axis=1).format(
-                                    "{:.2f}", subset=["result"]
-                                )
-                            )
-
-                        else:
-                            st.text("No feedback details.")
-
-                    with st.expander(f"{feedback_name} = {feedback_result}",
-                                     expanded=True):
-                        display_feedback_call(feedback_calls)
-
-            record_str = selected_rows["record_json"][0]
-            record_json = json.loads(record_str)
-            record = Record.model_validate(record_json)
-
-            classes: Iterable[Tuple[Lens, ComponentView]
-                             ] = list(instrumented_component_views(app_json))
-            classes_map = {path: view for path, view in classes}
-
-            st.markdown("")
-            st.subheader("Timeline")
+            st.subheader("Trace details")
             val = record_viewer(record_json, app_json)
             st.markdown("")
-
-            match_query = None
-
-            # Assumes record_json['perf']['start_time'] is always present
-            if val != "":
-                match = None
-                for call in record.calls:
-                    if call.perf.start_time.isoformat() == val:
-                        match = call
-                        break
-
-                if match:
-                    length = len(match.stack)
-                    app_call = match.stack[length - 1]
-
-                    match_query = match.top().path
-
-                    st.subheader(
-                        f"{app_call.method.obj.cls.name} {render_selector_markdown(Select.for_app(match_query))}"
-                    )
-
-                    draw_call(match)
-
-                    view = classes_map.get(match_query)
-                    if view is not None:
-                        render_component(
-                            query=match_query, component=view, header=False
-                        )
-                    else:
-                        st.write(
-                            f"Call by `{match_query}` was not associated with any instrumented"
-                            " component."
-                        )
-                        # Look up whether there was any data at that path even if not an instrumented component:
-
-                        try:
-                            app_component_json = list(
-                                match_query.get(app_json)
-                            )[0]
-                            if app_component_json is not None:
-                                with st.expander(
-                                        "Uninstrumented app component details."
-                                ):
-                                    if isinstance(app_component_json, Dict):
-                                        st.json(app_component_json)
-                                    else:
-                                        st.write(app_component_json)
-
-                        except Exception:
-                            st.write(
-                                f"Recorded invocation by component `{match_query}` but cannot find this component in the app json."
-                            )
-
-                else:
-                    st.text("No match found")
-            else:
-                st.subheader(f"App {render_selector_markdown(Select.App)}")
-                with st.expander("App Details:"):
-                    st.json(jsonify_for_ui(app_json))
-
-            if match_query is not None:
-                container = st.empty()
-
-                has_subcomponents = False
-                for query, component in classes:
-                    if not match_query.is_immediate_prefix_of(query):
-                        continue
-
-                    if len(query.path) == 0:
-                        # Skip App, will still list App.app under "app".
-                        continue
-
-                    has_subcomponents = True
-                    render_component(query, component)
-
-                if has_subcomponents:
-                    container.markdown("#### Subcomponents:")
-
-            st.header("More options:")
-
-            if st.button("Display full app json"):
-                st.write(jsonify_for_ui(app_json))
-
-            if st.button("Display full record json"):
-                st.write(jsonify_for_ui(record_json))
 
     with tab2:
         feedback = feedback_cols

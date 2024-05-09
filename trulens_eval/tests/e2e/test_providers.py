@@ -482,6 +482,10 @@ def get_huggingface_tests(h: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
     ]
 
 
+# Alias to LLMProvider tests for LangChain due to the no specialized feedback functions
+get_langchain_tests = get_llmprovider_tests
+
+
 class TestProviders(TestCase):
 
     def setUp(self):
@@ -782,6 +786,44 @@ class TestProviders(TestCase):
             )
         else:
             print(f"{h}: {total_tests}/{total_tests} tests passed.")
+
+    @optional_test
+    def test_langchain_feedback(self):
+        """
+        Check that LangChain feedback functions produce values within the expected range
+        and adhere to the expected format.
+        """
+        from trulens_eval.feedback.provider.langchain import LangChain
+        lc = LangChain()
+
+        tests = get_langchain_tests(lc)
+
+        failed_tests = lambda: len(failed_subtests)
+        total_tests = 0
+        failed_subtests = []
+
+        for imp, args, expected in tests:
+            subtest_name = f"{imp.__name__}-{args}"
+            actual = imp(**args)
+            with self.subTest(subtest_name):
+                total_tests += 1
+                try:
+                    self.assertAlmostEqual(actual, expected, delta=0.2)
+                except AssertionError:
+                    failed_subtests.append((subtest_name, actual, expected))
+
+        if failed_tests() > 0:
+            failed_subtests_str = ", ".join(
+                [
+                    f"{name} (actual: {act}, expected: {exp})"
+                    for name, act, exp in failed_subtests
+                ]
+            )
+            self.fail(
+                f"{lc}: {failed_tests()}/{total_tests} tests failed ({failed_subtests_str})"
+            )
+        else:
+            print(f"{lc}: {total_tests}/{total_tests} tests passed.")
 
 
 if __name__ == '__main__':

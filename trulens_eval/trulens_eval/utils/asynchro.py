@@ -35,15 +35,14 @@ from typing import Awaitable, Callable, TypeVar, Union
 
 import nest_asyncio
 
-from trulens_eval.utils.python import is_really_coroutinefunction
-from trulens_eval.utils.python import T
-from trulens_eval.utils.python import Thunk
-from trulens_eval.utils.threading import Thread
+from trulens_eval.utils import python as mod_python_utils
+from trulens_eval.utils import threading as mod_threading_utils
 
 nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 A = TypeVar("A")
 B = TypeVar("B")
 
@@ -56,15 +55,19 @@ May be checked with [isawaitable][inspect.isawaitable].
 CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]
 """Function or coroutine function.
 
-May be checked with [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction]."""
+May be checked with
+[is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].
+"""
 
 CallableAwaitable = Callable[[A], Awaitable[B]]
 """Function that produces an awaitable / coroutine function."""
 
-ThunkMaybeAwaitable = Union[Thunk[T], Thunk[Awaitable[T]]]
+ThunkMaybeAwaitable = Union[mod_python_utils.Thunk[T],
+                            mod_python_utils.Thunk[Awaitable[T]]]
 """Thunk or coroutine thunk. 
 
-May be checked with [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].
+May be checked with
+[is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].
 """
 
 
@@ -79,7 +82,7 @@ async def desync(
     run asynchronously.
     """
 
-    if is_really_coroutinefunction(func):
+    if mod_python_utils.is_really_coroutinefunction(func):
         return await func(*args, **kwargs)
 
     else:
@@ -98,7 +101,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
     block until it is finished. Runs in a new thread in such cases.
     """
 
-    if is_really_coroutinefunction(func):
+    if mod_python_utils.is_really_coroutinefunction(func):
         func: Callable[[A], Awaitable[T]]
         awaitable: Awaitable[T] = func(*args, **kwargs)
 
@@ -134,7 +137,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         # new thread to run the awaitable until completion.
 
         def run_in_new_loop():
-            th: Thread = current_thread()
+            th: mod_threading_utils.Thread = current_thread()
             # Attach return value and possibly exception to thread object so we
             # can retrieve from the starter of the thread.
             th.ret = None
@@ -147,7 +150,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             except Exception as e:
                 th.error = e
 
-        thread = Thread(target=run_in_new_loop)
+        thread = mod_threading_utils.Thread(target=run_in_new_loop)
 
         # Start thread and wait for it to finish.
         thread.start()
