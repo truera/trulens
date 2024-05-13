@@ -1286,4 +1286,7 @@ class LLMProvider(Provider):
             if score_line:
                 groundedness_scores[f"statement_{i}"] = re_0_10_rating(score_line) / 10
                 reasons_str += f"\nSTATEMENT {i}:\n{reason}\n\n"
-        return groundedness_scores, {"reasons": reasons_str}
+
+        # Calculate the average groundedness score from the scores dictionary
+        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
+        return average_groundedness_score, {"reasons": reasons_str}

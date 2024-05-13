@@ -227,7 +227,7 @@ class Huggingface(Provider):
         nltk.download('punkt')
         groundedness_scores = {}
 
-        reason = ""
+        reasons_str = ""
         if isinstance(source, list):
             source = ' '.join(map(str, source))
         hypotheses = sent_tokenize(statement)
@@ -236,14 +236,15 @@ class Huggingface(Provider):
             score = self._doc_groundedness(
                 premise=source, hypothesis=hypothesis
             )
-            reason = reason + str.format(
+            reasons_str = reasons_str + str.format(
                 prompts.GROUNDEDNESS_REASON_TEMPLATE,
                 statement_sentence=hypothesis,
                 supporting_evidence="[Doc NLI Used full source]",
                 score=score * 10,
             )
             groundedness_scores[f"statement_{i}"] = score
-        return groundedness_scores, {"reason": reason}
+        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
+        return average_groundedness_score, {"reasons": reasons_str}
 
     @_tci
     def context_relevance(self, prompt: str, context: str) -> float:
