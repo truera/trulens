@@ -73,8 +73,11 @@ class OpenAI(LLMProvider):
         self_kwargs.update(**kwargs)
         self_kwargs['model_engine'] = model_engine
 
+        # Exclude 'normalize' key from kwargs when creating endpoint_kwargs
+        endpoint_kwargs = {k: v for k, v in kwargs.items() if k != 'normalize'}
+
         self_kwargs['endpoint'] = OpenAIEndpoint(
-            *args, pace=pace, rpm=rpm, **kwargs
+            *args, pace=pace, rpm=rpm, **endpoint_kwargs
         )
 
         super().__init__(
