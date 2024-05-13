@@ -1287,34 +1287,3 @@ class LLMProvider(Provider):
                 groundedness_scores[f"statement_{i}"] = re_0_10_rating(score_line) / 10
                 reasons_str += f"\nSTATEMENT {i}:\n{reason}\n\n"
         return groundedness_scores, {"reasons": reasons_str}
-
-    def grounded_statements_aggregator(
-        self, source_statements_multi_output: List[Dict]
-    ) -> float:
-        """Compute the mean groundedness based on the best evidence available for each statement.
-
-        Args:
-            source_statements_multi_output (List[Dict]): A list of scores. Each list index is a context. The Dict is a per statement score.
-
-        Returns:
-            float: for each statement, gets the max score, then averages over that.
-        """
-        all_results = []
-
-        statements_to_scores = {}
-
-        # Ensure source_statements_multi_output is a list
-        if not isinstance(source_statements_multi_output, list):
-            source_statements_multi_output = [source_statements_multi_output]
-
-        for multi_output in source_statements_multi_output:
-            for k in multi_output:
-                if k not in statements_to_scores:
-                    statements_to_scores[k] = []
-                statements_to_scores[k].append(multi_output[k])
-
-        for k in statements_to_scores:
-            all_results.append(np.max(statements_to_scores[k]))
-
-        return np.mean(all_results)
-
