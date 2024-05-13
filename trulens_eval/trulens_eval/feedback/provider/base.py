@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple
+from typing import ClassVar, Dict, Optional, Sequence, Tuple, List
 import warnings
 
 from trulens_eval.feedback import prompts
@@ -7,6 +7,12 @@ from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
 from trulens_eval.utils import generated as mod_generated_utils
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.generated import re_0_10_rating
+
+import nltk
+from nltk.tokenize import sent_tokenize
+import numpy as np
+from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -122,65 +128,6 @@ class LLMProvider(Provider):
         """
         # text
         raise NotImplementedError()
-
-    def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
-        assert self.endpoint is not None, "Endpoint is not set."
-
-        return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            prompt=str.format(
-                prompts.SYSTEM_FIND_SUPPORTING,
-                prompt=full_source,
-            ) + "\n" +
-            str.format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
-        )
-
-    def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
-        """
-        A groundedness measure best used for summarized premise against simple
-        hypothesis. This LLM implementation uses information overlap prompts.
-
-        Args:
-            premise (str): Summarized source sentences.
-            hypothesis (str): Single statement setnece.
-
-        Returns:
-            float: Information Overlap
-        """
-        return self.generate_score(
-            system_prompt=prompts.LLM_GROUNDEDNESS_SYSTEM,
-            user_prompt=str.format(
-                prompts.LLM_GROUNDEDNESS_USER,
-                premise=premise,
-                hypothesis=hypothesis
-            )
-        )
-
-    def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
-        """
-        An LLM prompt using the entire document for premise and entire statement
-        document for hypothesis.
-
-        Args:
-            premise: A source document
-
-            hypothesis: A statement to check
-
-        Returns:
-            An LLM response using a scorecard template
-        """
-        assert self.endpoint is not None, "Endpoint is not set."
-
-        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
-        llm_messages = [{"role": "system", "content": system_prompt}]
-        user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-            premise="""{}""".format(premise),
-            hypothesis="""{}""".format(hypothesis)
-        ) + prompts.GROUNDEDNESS_REASON_TEMPLATE
-        llm_messages.append({"role": "user", "content": user_prompt})
-        return self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
-        )
 
     def generate_score(
         self,
@@ -1263,3 +1210,111 @@ class LLMProvider(Provider):
         )
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
+    
+    def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
+        """
+        An LLM prompt using the entire document for premise and entire statement
+        document for hypothesis.
+
+        Args:
+            premise: A source document
+
+            hypothesis: A statement to check
+
+        Returns:
+            An LLM response using a scorecard template
+        """
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+            premise="""{}""".format(premise),
+            hypothesis="""{}""".format(hypothesis)
+        ) + prompts.GROUNDEDNESS_REASON_TEMPLATE
+        llm_messages.append({"role": "user", "content": user_prompt})
+        return self.endpoint.run_in_pace(
+            func=self._create_chat_completion, messages=llm_messages
+        )
+    
+    def groundedness_measure_with_cot_reasons(
+        self, source: str, statement: str
+    ) -> Tuple[float, dict]:
+        """A measure to track if the source material supports each sentence in
+        the statement using an LLM provider.
+
+        The LLM will process the entire statement at once, using chain of
+        thought methodology to emit the reasons. 
+
+        Usage on RAG Contexts:
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback import Groundedness
+            from trulens_eval.feedback.provider.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_groundedness = feedback.Feedback(provider.groundedness_measure_with_cot_reasons).on(
+                Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
+            ).on_output().aggregate(provider.grounded_statements_aggregator)
+            ```
+
+            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+        Args:
+            source: The source that should support the statement.
+
+            statement: The statement to check groundedness.
+
+        Returns:
+            A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+        """
+        nltk.download('punkt')
+        groundedness_scores = {}
+        
+        hypotheses = sent_tokenize(statement)
+        reasons_str = ""
+        for i, hypothesis in enumerate(tqdm(
+            hypotheses, desc="Groundedness per statement in source")):
+            reason = self._groundedness_doc_in_out(
+                premise=source, hypothesis=hypothesis
+            )
+            score_line = next(
+                (line for line in reason.split('\n') if "Score" in line),
+                None
+            )
+            if score_line:
+                groundedness_scores[f"statement_{i}"] = re_0_10_rating(score_line) / 10
+                reasons_str += f"\nSTATEMENT {i}:\n{reason}\n\n"
+        return groundedness_scores, {"reasons": reasons_str}
+
+    def grounded_statements_aggregator(
+        self, source_statements_multi_output: List[Dict]
+    ) -> float:
+        """Compute the mean groundedness based on the best evidence available for each statement.
+
+        Args:
+            source_statements_multi_output (List[Dict]): A list of scores. Each list index is a context. The Dict is a per statement score.
+
+        Returns:
+            float: for each statement, gets the max score, then averages over that.
+        """
+        all_results = []
+
+        statements_to_scores = {}
+
+        # Ensure source_statements_multi_output is a list
+        if not isinstance(source_statements_multi_output, list):
+            source_statements_multi_output = [source_statements_multi_output]
+
+        for multi_output in source_statements_multi_output:
+            for k in multi_output:
+                if k not in statements_to_scores:
+                    statements_to_scores[k] = []
+                statements_to_scores[k].append(multi_output[k])
+
+        for k in statements_to_scores:
+            all_results.append(np.max(statements_to_scores[k]))
+
+        return np.mean(all_results)
+
