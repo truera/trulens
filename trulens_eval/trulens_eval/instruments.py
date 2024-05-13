@@ -31,6 +31,7 @@ from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import endpoint as mod_endpoint
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.imports import Dummy
@@ -495,6 +496,11 @@ class Instrument(object):
             # Start of run wrapped block.
             start_time = datetime.now()
 
+            # Create a unique call_id for this method call. This will be the
+            # same across everyone Record or RecordAppCall that refers to this
+            # method invocation.
+            call_id = mod_types_schema.new_call_id()
+
             error_str = None
 
             try:
@@ -515,8 +521,6 @@ class Instrument(object):
                 )
                 logger.error(traceback.format_exc())
 
-            end_time = datetime.now()
-
             # Done running the wrapped function. Lets collect the results.
             # Create common information across all records.
 
@@ -531,7 +535,12 @@ class Instrument(object):
             records = {}
 
             def handle_done(rets):
+                # (re) renerate end_time here because cases where the initial end_time was
+                # just to produce an awaitable before being awaited.
+                end_time = datetime.now()
+
                 record_app_args = dict(
+                    call_id=call_id,
                     args=nonself,
                     perf=mod_base_schema.Perf(
                         start_time=start_time, end_time=end_time
@@ -578,27 +587,10 @@ class Instrument(object):
                 return records
 
             if isinstance(rets, Awaitable):
-                # If method produced an awaitable, add a placeholder record
-                # stating that results are not ready and return an awaitable
-                # that will capture the results when they are ready.
-
-                # Placeholder:
-                records: Dict = handle_done(
-                    rets=(
-                        f"""
-NOTE from trulens_eval:
-This app produced an asynchronous response of type `{class_name(type(rets))}`. This record will be updated once
-the response is available. If this message persists, check that you are
-using the correct version of the app method and `await` any asynchronous
-results. Additional information about this call: 
-    
-```
-{pformat(locals())}
-```
-    """
-                    ),
-                )
-
+                # If method produced an awaitable
+                logger.info(f"""This app produced an asynchronous response of type `{class_name(type(rets))}`. 
+                            This record will be updated once the response is available""")
+                            
                 # TODO(piotrm): need to track costs of awaiting the ret in the
                 # below.
 
