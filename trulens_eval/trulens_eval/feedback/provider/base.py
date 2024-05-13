@@ -1,5 +1,6 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple
+import sys
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 import warnings
 
 from trulens_eval.feedback import prompts
@@ -181,6 +182,142 @@ class LLMProvider(Provider):
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion, messages=llm_messages
         )
+
+    class ScoringPromptBase(SerialModel):
+        """Common parts to build a scoring prompt out of."""
+
+        prefix_template: str = """"""
+        """Text to include before all other parts."""
+
+        interp_template: str = """You are a {purpose} scorer."""
+        details_template: str = """"""
+
+        low_score: int = 1
+        high_score: int = 10
+
+        shots_template: str = """EXAMPLES:"""
+        shot_template: str = """
+INPUTS:
+{shot_inputs}
+EXPECTED OUTPUT: {shot_output}"""
+
+        suffix_template = """
+Answer only with an integer from {low_score} ({low_interp}) to {high_score} ({high_interp}).
+
+INPUTS:
+{inputs}
+SCORE: """
+        """Text to include after all other parts."""
+
+    class ScoringPrompt(ScoringPromptBase):
+        """Specific parts to build a scoring prompt out of."""
+
+        interp: str
+        """A (minimal) interpretation of the score."""
+
+        low_interp: str
+        """Interpretation of a low score."""
+
+        high_interp: str
+        """Interpretation of a high score."""
+
+        details: str
+        """Text to include after the purpose to provide some more details about
+        the purpose."""
+
+        shots: List[Tuple[Dict[str, str], int]] = []
+
+        def build(
+            self,
+            max_tokens: int = sys.maxsize,
+            inputs: Optional[Dict[str, str]] = None
+        ) -> str:
+            """Build a prompt for the given inputs while staying under the token
+            limit.
+            
+            The built prompt will have at least:
+                - filled prefix_template,
+                - filled interp_template,
+                - filled suffix_template.
+
+            If space allows, it will also include:
+                - filled details_template,
+                - filled shots_template (if at least one of the below is
+                  included),
+                - filled in shot_template for each shot.
+
+            Args:
+                max_tokens: The maximum number of tokens to use. Defaults to
+                    sys.maxsize (effectively infinite).
+
+                inputs: The inputs to fill in the prompts
+                    with other than the ones defining the scoring task. Those
+                    are contained in self.
+            
+            Returns:
+                str: The built prompt.
+
+            Raises:
+                ValueError: If the prompt would be too long to fit within the
+                    token limit even at its miminum size.
+
+            """
+
+            source_data = {**inputs} if inputs is not None else {}
+
+            source_data['interp'] = self.interp
+            source_data['details'] = self.details
+            source_data['low_interp'] = self.low_interp
+            source_data['high_interp'] = self.high_interp
+            source_data['low_score'] = str(self.low_score)
+            source_data['high_score'] = str(self.high_score)
+
+            filled_prefix = self.prefix_template.format(**source_data)
+            filled_purpose = self.purpose_template.format(**source_data)
+            filled_suffix = self.suffix_template.format(**source_data)
+
+            # Store how many tokens we have left to fill here. It will be
+            # updated below as more parts are added to the prompt.
+            rem: int = max_tokens - len(filled_prefix) - len(filled_purpose) - len(filled_suffix)
+
+            if rem < 0:
+                raise ValueError(f"`max_tokens` is too small. Minimum prompt length is {max_tokens-rem}.")
+
+            # Not yet adding suffix but already counted its length in rem.
+            prompt = filled_prefix + filled_purpose
+
+            filled_details = self.details_template.format(**source_data)
+
+            if rem - len(filled_details) > 0:
+                prompt += filled_details
+                rem -= len(filled_details)
+
+            added_shot_template = False
+            filled_shots_template = self.shots_template.format(**source_data)
+
+            if rem - len(filled_shots_template) > 0:
+                # Count as added but don't yet add, wait until we include at
+                # least one shot.
+                rem -= len(filled_shots_template)
+
+            for shot in self.shots:
+                filled_shot = self.shot_template.format(shot_output=shot[1], shot_inputs="\n".join(
+                    [f"  {k}: {v}" for k, v in shot[0].items()]
+                ))
+                if rem - len(filled_shot) < 0:
+                    break
+
+                if not added_shot_template:
+                    prompt += filled_shots_template
+                    added_shot_template = True
+
+                prompt += filled_shot
+                rem -= len(filled_shot)
+
+            # Remember to add suffix.
+            prompt += filled_suffix
+
+            return prompt
 
     def generate_score(
         self,
