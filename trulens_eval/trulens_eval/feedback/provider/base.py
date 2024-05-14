@@ -275,9 +275,6 @@ class LLMProvider(Provider):
                 )
             ```
 
-            The `on(...)` selector can be changed. See [Feedback Function Guide :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
         Args:
             question (str): A question being asked.
             
@@ -332,7 +329,6 @@ class LLMProvider(Provider):
                 .aggregate(np.mean)
                 )
             ```
-            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             question (str): A question being asked.
@@ -380,9 +376,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.relevance).on_input_output()
             ```
-            
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Usage on RAG Contexts:
             ```python
@@ -390,9 +383,6 @@ class LLMProvider(Provider):
                 TruLlama.select_source_nodes().node.text # See note below
             ).aggregate(np.mean) 
             ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Parameters:
             prompt (str): A text prompt to an agent.
@@ -420,18 +410,10 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            feedback = Feedback(provider.relevance_with_cot_reasons).on_input_output()
-            ```
-
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Usage on RAG Contexts:
-            ```python
-
-            feedback = Feedback(provider.relevance_with_cot_reasons).on_input().on(
-                TruLlama.select_source_nodes().node.text # See note below
-            ).aggregate(np.mean) 
+            feedback = (
+                Feedback(provider.relevance_with_cot_reasons)
+                .on_input()
+                .on_output()
             ```
 
             The `on(...)` selector can be changed. See [Feedback Function Guide :
@@ -439,7 +421,6 @@ class LLMProvider(Provider):
 
         Args:
             prompt (str): A text prompt to an agent. 
-
             response (str): The agent's response to the prompt.
 
         Returns:
@@ -467,9 +448,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.sentiment).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: The text to evaluate sentiment of.
 
@@ -492,9 +470,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.sentiment_with_cot_reasons).on_output() 
             ```
-            
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -518,9 +493,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.model_agreement).on_input_output() 
             ```
-
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent.
@@ -653,9 +625,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.correctness).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: A prompt to an agent.
 
@@ -678,9 +647,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
@@ -701,9 +667,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.coherence).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -750,9 +713,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.harmfulness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
             
         Args:
             text (str): The text to evaluate.
@@ -798,9 +758,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.maliciousness).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -824,9 +781,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -847,9 +801,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.helpfulness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -873,9 +824,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -897,9 +845,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.controversiality).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -925,9 +870,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
             
         Args:
             text (str): The text to evaluate.
@@ -950,9 +892,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.misogyny).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1000,9 +939,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.criminality).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -1025,9 +961,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1074,9 +1007,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1234,8 +1164,6 @@ class LLMProvider(Provider):
                 Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
             ).on_output()
             ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             source: The source that should support the statement.
