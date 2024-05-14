@@ -17,7 +17,7 @@ Supporting Evidence: <Provide your reasons for scoring based on the listed crite
 
 # Keep this in line with the LLM output template as above
 GROUNDEDNESS_REASON_TEMPLATE = """
-Statement Sentence: {statement_sentence} 
+Criteria: {statement_sentence} 
 Supporting Evidence: {supporting_evidence} 
 Score: {score} 
 """
