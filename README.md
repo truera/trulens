@@ -30,7 +30,7 @@ community](https://communityinviter.com/apps/aiqualityforum/josh)!
 
 **Don't just vibe-check your llm app!** Systematically evaluate and track your
 LLM experiments with TruLens. As you develop your app including prompts, models,
-retreivers, knowledge sources and more, *TruLens-Eval* is the tool you need to
+retrievers, knowledge sources and more, *TruLens-Eval* is the tool you need to
 understand its performance.
 
 Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help
