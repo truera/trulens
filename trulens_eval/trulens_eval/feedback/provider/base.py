@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple
+from typing import ClassVar, Dict, Optional, Sequence, Tuple, List
 import warnings
 
 from trulens_eval.feedback import prompts
@@ -7,6 +7,12 @@ from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
 from trulens_eval.utils import generated as mod_generated_utils
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils.generated import re_0_10_rating
+
+import nltk
+from nltk.tokenize import sent_tokenize
+import numpy as np
+from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -123,65 +129,6 @@ class LLMProvider(Provider):
         """
         # text
         raise NotImplementedError()
-
-    def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
-        assert self.endpoint is not None, "Endpoint is not set."
-
-        return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            prompt=str.format(
-                prompts.SYSTEM_FIND_SUPPORTING,
-                prompt=full_source,
-            ) + "\n" +
-            str.format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
-        )
-
-    def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
-        """
-        A groundedness measure best used for summarized premise against simple
-        hypothesis. This LLM implementation uses information overlap prompts.
-
-        Args:
-            premise (str): Summarized source sentences.
-            hypothesis (str): Single statement setnece.
-
-        Returns:
-            float: Information Overlap
-        """
-        return self.generate_score(
-            system_prompt=prompts.LLM_GROUNDEDNESS_SYSTEM,
-            user_prompt=str.format(
-                prompts.LLM_GROUNDEDNESS_USER,
-                premise=premise,
-                hypothesis=hypothesis
-            )
-        )
-
-    def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
-        """
-        An LLM prompt using the entire document for premise and entire statement
-        document for hypothesis.
-
-        Args:
-            premise: A source document
-
-            hypothesis: A statement to check
-
-        Returns:
-            An LLM response using a scorecard template
-        """
-        assert self.endpoint is not None, "Endpoint is not set."
-
-        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
-        llm_messages = [{"role": "system", "content": system_prompt}]
-        user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-            premise="""{}""".format(premise),
-            hypothesis="""{}""".format(hypothesis)
-        ) + prompts.GROUNDEDNESS_REASON_TEMPLATE
-        llm_messages.append({"role": "user", "content": user_prompt})
-        return self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
-        )
 
     def generate_score(
         self,
@@ -334,9 +281,6 @@ class LLMProvider(Provider):
                 )
             ```
 
-            The `on(...)` selector can be changed. See [Feedback Function Guide :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
         Args:
             question (str): A question being asked.
             
@@ -391,7 +335,6 @@ class LLMProvider(Provider):
                 .aggregate(np.mean)
                 )
             ```
-            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             question (str): A question being asked.
@@ -439,9 +382,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.relevance).on_input_output()
             ```
-            
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Usage on RAG Contexts:
             ```python
@@ -449,9 +389,6 @@ class LLMProvider(Provider):
                 TruLlama.select_source_nodes().node.text # See note below
             ).aggregate(np.mean) 
             ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Parameters:
             prompt (str): A text prompt to an agent.
@@ -479,26 +416,14 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            feedback = Feedback(provider.relevance_with_cot_reasons).on_input_output()
+            feedback = (
+                Feedback(provider.relevance_with_cot_reasons)
+                .on_input()
+                .on_output()
             ```
-
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Usage on RAG Contexts:
-            ```python
-
-            feedback = Feedback(provider.relevance_with_cot_reasons).on_input().on(
-                TruLlama.select_source_nodes().node.text # See note below
-            ).aggregate(np.mean) 
-            ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             prompt (str): A text prompt to an agent. 
-
             response (str): The agent's response to the prompt.
 
         Returns:
@@ -526,9 +451,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.sentiment).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: The text to evaluate sentiment of.
 
@@ -551,9 +473,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.sentiment_with_cot_reasons).on_output() 
             ```
-            
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -577,9 +496,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.model_agreement).on_input_output() 
             ```
-
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent.
@@ -661,9 +577,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.conciseness).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: The text to evaluate the conciseness of.
 
@@ -685,10 +598,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.conciseness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: The text to evaluate the conciseness of.
 
@@ -712,9 +621,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.correctness).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: A prompt to an agent.
 
@@ -737,9 +643,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
@@ -760,9 +663,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.coherence).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -786,9 +686,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -809,9 +706,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.harmfulness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
             
         Args:
             text (str): The text to evaluate.
@@ -857,9 +751,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.maliciousness).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -883,9 +774,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -906,9 +794,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.helpfulness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -932,9 +817,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -956,9 +838,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.controversiality).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -984,9 +863,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
             
         Args:
             text (str): The text to evaluate.
@@ -1010,9 +886,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.misogyny).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -1034,10 +907,7 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
+            
         Args:
             text (str): The text to evaluate.
 
@@ -1058,9 +928,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.criminality).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1085,9 +952,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -1108,9 +972,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.insensitivity).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1134,9 +995,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -1156,9 +1014,7 @@ class LLMProvider(Provider):
 
         Args:
             text (str): A prompt to an agent.
-
             response (str): The agent's response to the prompt.
-
             check_response(str): The response to check against.
 
         Returns:
@@ -1189,7 +1045,6 @@ class LLMProvider(Provider):
 
         Args:
             source (str): Text corresponding to source material. 
-
             summary (str): Text corresponding to a summary.
 
         Returns:
@@ -1250,8 +1105,9 @@ class LLMProvider(Provider):
         prompt.
 
         !!! example
+
             ```python
-            feedback = Feedback(provider.stereotypes).on_input_output()
+            feedback = Feedback(provider.stereotypes_with_cot_reasons).on_input_output()
             ```
 
         Args:
@@ -1269,3 +1125,53 @@ class LLMProvider(Provider):
         )
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
+    
+    def groundedness_measure_with_cot_reasons(
+        self, source: str, statement: str
+    ) -> Tuple[float, dict]:
+        """A measure to track if the source material supports each sentence in
+        the statement using an LLM provider.
+
+        The LLM will process the entire statement at once, using chain of
+        thought methodology to emit the reasons. 
+
+        !!! example
+
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_groundedness = (
+                Feedback(provider.groundedness_measure_with_cot_reasons)
+                .on(context.collect()
+                .on_output()
+                )
+            ```
+        Args:
+            source: The source that should support the statement.
+            statement: The statement to check groundedness.
+
+        Returns:
+            A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+        """
+        nltk.download('punkt')
+        groundedness_scores = {}
+        reasons_str = ""
+        
+        hypotheses = sent_tokenize(statement)
+        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+        for i, hypothesis in enumerate(tqdm(
+            hypotheses, desc="Groundedness per statement in source")):
+            user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+                premise=f"{source}",
+                hypothesis=f"{hypothesis}"
+            )
+            score, reason = self.generate_score_and_reasons(system_prompt, user_prompt)
+            groundedness_scores[f"statement_{i}"] = score
+            reasons_str += f"STATEMENT {i}:\n{reason['reason']}\n"
+
+        # Calculate the average groundedness score from the scores dictionary
+        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
+        return average_groundedness_score, {"reasons": reasons_str}

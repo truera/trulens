@@ -290,3 +290,4 @@ class Groundedness(WithClassInfo, SerialModel):
             all_results.append(np.max(statements_to_scores[k]))
 
         return np.mean(all_results)
+
