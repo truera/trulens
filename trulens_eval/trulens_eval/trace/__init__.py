@@ -13,6 +13,7 @@ import time
 from typing import (ClassVar, Dict, List, Mapping, Optional, Tuple, TypeVar,
                     Union)
 
+from opentelemetry.sdk import trace as otsdk_trace
 from opentelemetry.trace import status as trace_status
 import opentelemetry.trace as ot_trace
 import opentelemetry.trace.span as ot_span
@@ -134,6 +135,12 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL
     """Kind of span."""
 
+    parent_context: Optional[HashableSpanContext] = None
+    """Parent span context.
+    
+    None if no parent.
+    """
+
     status: trace_status.StatusCode = trace_status.StatusCode.UNSET
     """Status of the span as per OpenTelemetry Span requirements."""
 
@@ -163,6 +170,25 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     attributes: Dict[str, ot_types.AttributeValue] = \
         pydantic.Field(default_factory=dict)
     """Attributes of span."""
+
+    def freeze(self) -> otsdk_trace.ReadableSpan:
+        """Freeze the span into a ReadableSpan."""
+
+        return otsdk_trace.ReadableSpan(
+            name=self.name,
+            context=self.context,
+            parent=self.parent_context,
+            resource = None,
+            attributes=self.attributes,
+            events=self.events,
+            links=self.links,
+            kind=self.kind,
+            instrumentation_info = None,
+            status=self.status,
+            start_time=self.start_timestamp,
+            end_time=self.end_timestamp,
+            instrumentation_scope = None
+        )
 
     def __init__(self, name: str, context: ot_span.SpanContext, **kwargs):
         kwargs['name'] = name
@@ -265,3 +291,39 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
             timestamp
         )
 
+    @property
+    def span_id(self) -> TSpanID:
+        """Identifier for the span."""
+
+        return self.context.span_id
+
+    @property
+    def trace_id(self) -> TTraceID:
+        """Identifier for the trace this span belongs to."""
+
+        return self.context.trace_id
+
+    # OTEL specificaiton is ambiguous on how parent relationship is to be
+    # stored. The python api does not include a parent_context or other such
+    # field but api as described in
+    # https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md
+    # does.
+    @property
+    def parent_span_id(self) -> Optional[TSpanID]:
+        """Id of parent span if any."""
+
+        parent_context = self.parent_context
+        if parent_context is not None:
+            return parent_context.span_id
+
+        return None
+
+    @property
+    def parent_trace_id(self) -> Optional[TTraceID]:
+        """Id of parent trace if any."""
+
+        parent_context = self.parent_context
+        if parent_context is not None:
+            return parent_context.trace_id
+
+        return None

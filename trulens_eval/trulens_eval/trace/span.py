@@ -121,54 +121,6 @@ class Span(mod_trace.OTSpan):
     def end_datetime(self, value: datetime.datetime):
         self.end_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
 
-    @property
-    def span_id(self) -> mod_trace.TSpanID:
-        """Identifier for the span."""
-
-        return self.context.span_id
-
-    @property
-    def trace_id(self) -> mod_trace.TTraceID:
-        """Identifier for the trace this span belongs to."""
-
-        return self.context.trace_id
-
-    @property # want # @functools.cached_property but those are not allowed to have setters
-    def parent_context(self) -> Optional[mod_trace.HashableSpanContext]:
-        """Context of parent span if any.
-
-        This is stored in OT links with a relationship attribute of "parent".
-        None if this is a root span or otherwise it does not have a parent.
-        """
-
-        for link_context, link_attributes in self.links.items():
-            if link_attributes.get(self.vendor_attr("relationship")) == "parent":
-                return link_context
-
-        return None
-
-    @parent_context.setter
-    def parent_context(self, value: Optional[mod_trace.HashableSpanContext]):
-        if value is None:
-            return
-
-        if self.parent_context is not None:
-            # Delete existing parent if any.
-            del self.links[self.parent_context]
-
-        self.add_link(value, {self.vendor_attr("relationship"): "parent"})
-
-    # want functools.cached_property but need updating due to the above setter
-    @property
-    def parent_span_id(self) -> Optional[mod_trace.TSpanID]:
-        """Id of parent span if any."""
-
-        parent_context = self.parent_context
-        if parent_context is not None:
-            return parent_context.span_id
-
-        return None
-
     tags = attribute_property(
         "tags", typ=List[str], default_factory=list
     )
