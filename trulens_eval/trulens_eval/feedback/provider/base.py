@@ -1191,8 +1191,9 @@ class LLMProvider(Provider):
         prompt.
 
         !!! example
+
             ```python
-            feedback = Feedback(provider.stereotypes).on_input_output()
+            feedback = Feedback(provider.stereotypes_with_cot_reasons).on_input_output()
             ```
 
         Args:
@@ -1220,7 +1221,8 @@ class LLMProvider(Provider):
         The LLM will process the entire statement at once, using chain of
         thought methodology to emit the reasons. 
 
-        Usage on RAG Contexts:
+        !!! example
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback import Groundedness
