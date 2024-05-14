@@ -1250,7 +1250,7 @@ class LLMProvider(Provider):
         reasons_str = ""
         
         hypotheses = sent_tokenize(statement)
-        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM + prompts.GROUNDEDNESS_REASON_TEMPLATE
+        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
         for i, hypothesis in enumerate(tqdm(
             hypotheses, desc="Groundedness per statement in source")):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
