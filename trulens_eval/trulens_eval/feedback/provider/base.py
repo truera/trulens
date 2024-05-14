@@ -1230,7 +1230,7 @@ class LLMProvider(Provider):
 
             f_groundedness = feedback.Feedback(provider.groundedness_measure_with_cot_reasons).on(
                 Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
-            ).on_output().aggregate(provider.grounded_statements_aggregator)
+            ).on_output()
             ```
 
             The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
