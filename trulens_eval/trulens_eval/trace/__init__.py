@@ -264,3 +264,4 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
             attributes,
             timestamp
         )
+
