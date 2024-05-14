@@ -163,7 +163,7 @@ class Groundedness(Semantics, WithPrompt):
         
         Please answer with the template below for all statement sentences:
 
-        Statement Sentence: <Sentence>, 
+        Criteria: <Statement Sentence>, 
         Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND>
         Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
         """

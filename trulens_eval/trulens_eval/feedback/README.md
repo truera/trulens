@@ -3,7 +3,7 @@
 The `Feedback` class contains the starting point for feedback function
 specification and evaluation. A typical use-case looks like this:
 
-```python 
+```python
 from trulens_eval import feedback, Select, Feedback
 
 hugs = feedback.Huggingface()
@@ -18,21 +18,21 @@ The components of this specifications are:
   implementations like `qs_relevance`. Other classes subtyping
   `feedback.Provider` include `Huggingface` and `Cohere`.
 
-- **Feedback implementations** -- `openai.qs_relevance` is a feedback function
+- **Feedback implementations** -- `provider.context_relevance` is a feedback function
   implementation. Feedback implementations are simple callables that can be run
   on any arguments matching their signatures. In the example, the implementation
-  has the following signature: 
+  has the following signature:
 
-    ```python
-    def language_match(self, text1: str, text2: str) -> float:
-    ```
+  ```python
+  def language_match(self, text1: str, text2: str) -> float:
+  ```
 
   That is, `language_match` is a plain python method that accepts two pieces
   of text, both strings, and produces a float (assumed to be between 0.0 and
   1.0).
 
-- **Feedback constructor** -- The line `Feedback(openai.language_match)`
-  constructs a Feedback object with a feedback implementation. 
+- **Feedback constructor** -- The line `Feedback(provider.language_match)`
+  constructs a Feedback object with a feedback implementation.
 
 - **Argument specification** -- The next line, `on_input_output`, specifies how
   the `language_match` arguments are to be determined from an app record or app
@@ -43,26 +43,45 @@ The components of this specifications are:
 
   Several utility methods starting with `.on` provide shorthands:
 
-    - `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
+  - `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
     unspecified argument or `arg` should be the main app input.
 
-    - `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
+  - `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
     argument or `arg` should be the main app output.
 
-    - `on_input_output() == on_input().on_output()` -- specifies that the first
+  - `on_input_output() == on_input().on_output()` -- specifies that the first
     two arguments of implementation should be the main app input and main app
     output, respectively.
 
-    - `on_default()` -- depending on signature of implementation uses either
+  - `on_default()` -- depending on signature of implementation uses either
     `on_output()` if it has a single argument, or `on_input_output` if it has
     two arguments.
 
-    Some wrappers include additional shorthands:
+  Some wrappers include additional shorthands:
 
-    ### llama_index-specific selectors
+  ### llama_index-specific selectors
 
-    - `TruLlama.select_source_nodes()` -- outputs the selector of the source
-        documents part of the engine output.
+  - `TruLlama.select_source_nodes()` -- outputs the selector for the source
+    documents part of the engine output.
+  - `TruLlama.select_context()` -- outputs the selector for the text of
+    the source documents part of the engine output.
+
+  ### langchain-specific selectors
+
+  - `Langchain.select_context()` -- outputs the selector for retrieved context
+    from the app's internal `get_relevant_documents` method.
+
+  ### NeMo-specific selectors
+
+  - `NeMo.select_context()` -- outputs the selector for the retrieved context
+    from the app's internal `search_relevant_chunks` method.
+
+For ease of switching between frameworks, the select_context shortcut is also available from the trulens_eval.app.App.
+
+```python
+from trulens_eval.app import App
+context = App.select_context(rag_chain) # can be langchain, llama-index or nemo app.
+```
 
 ## Fine-grained Selection and Aggregation
 
@@ -70,7 +89,7 @@ For more advanced control on the feedback function operation, we allow data
 selection and aggregation. Consider this feedback example:
 
 ```python
-f_qs_relevance = Feedback(openai.qs_relevance)
+f_context_relevance = Feedback(openai.context_relevance)
     .on_input()
     .on(Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].page_content)
     .aggregate(numpy.min)
@@ -115,7 +134,7 @@ app: App = tru.Chain(...., feedbacks=[f_qs_relevance])
 
 The function or method provided to the `Feedback` constructor is the
 implementation of the feedback function which does the actual work of producing
-a float indicating some quantity of interest. 
+a float indicating some quantity of interest.
 
 **Note regarding FeedbackMode.DEFERRED** -- Any function or method (not static
 or class methods presently supported) can be provided here but there are
@@ -164,7 +183,7 @@ argument names. The types of `selector1` is `JSONPath` which we elaborate on in
 the "Selector Details".
 
 If argument names are ommitted, they are taken from the feedback function
-implementation signature in order. That is, 
+implementation signature in order. That is,
 
 ```python
 Feedback(...).on(argname1=selector1, argname2=selector2)
@@ -187,8 +206,8 @@ to be run on outputs of app evaluation (the "Records"). Specifically,
 `Feedback.run` has this definition:
 
 ```python
-def run(self, 
-    app: Union[AppDefinition, JSON], 
+def run(self,
+    app: Union[AppDefinition, JSON],
     record: Record
 ) -> FeedbackResult:
 ```
@@ -206,7 +225,7 @@ attributes (see **Selectors** section below).
 
 Selectors are of type `JSONPath` defined in `util.py` but are also aliased in
 `schema.py` as `Select.Query`. Objects of this type specify paths into JSON-like
-structures (enumerating `Record` or `App` contents). 
+structures (enumerating `Record` or `App` contents).
 
 By JSON-like structures we mean python objects that can be converted into JSON
 or are base types. This includes:
@@ -237,24 +256,24 @@ The syntax of this specification mirrors the syntax one would use with
 instantiations of JSON-like objects. For every `obj` generated by `query: JSONPath`:
 
 - `query[somekey]` generates the `somekey` element of `obj` assuming it is a
-    dictionary with key `somekey`.
+  dictionary with key `somekey`.
 
 - `query[someindex]` generates the index `someindex` of `obj` assuming it is
-    a sequence.
+  a sequence.
 
-- `query[slice]` generates the __multiple__ elements of `obj` assuming it is a
-    sequence. Slices include `:` or in general `startindex:endindex:step`.
+- `query[slice]` generates the **multiple** elements of `obj` assuming it is a
+  sequence. Slices include `:` or in general `startindex:endindex:step`.
 
-- `query[somekey1, somekey2, ...]` generates __multiple__ elements of `obj`
-    assuming `obj` is a dictionary and `somekey1`... are its keys.
+- `query[somekey1, somekey2, ...]` generates **multiple** elements of `obj`
+  assuming `obj` is a dictionary and `somekey1`... are its keys.
 
-- `query[someindex1, someindex2, ...]` generates __multiple__ elements
-    indexed by `someindex1`... from a sequence `obj`.
+- `query[someindex1, someindex2, ...]` generates **multiple** elements
+  indexed by `someindex1`... from a sequence `obj`.
 
 - `query.someattr` depends on type of `obj`. If `obj` is a dictionary, then
-    `query.someattr` is an alias for `query[someattr]`. Otherwise if
-    `someattr` is an attribute of a python object `obj`, then `query.someattr`
-    generates the named attribute.
+  `query.someattr` is an alias for `query[someattr]`. Otherwise if
+  `someattr` is an attribute of a python object `obj`, then `query.someattr`
+  generates the named attribute.
 
 For feedback argument specification, the selectors should start with either
 `__record__` or `__app__` indicating which of the two JSON-like structures to
@@ -265,18 +284,18 @@ The full set of Query aliases are as follows:
 
 - `Record = Query().__record__` -- points to the Record.
 
-- App = Query().__app__ -- points to the App.
+- App = Query().**app** -- points to the App.
 
 - `RecordInput = Record.main_input` -- points to the main input part of a
-    Record. This is the first argument to the root method of an app (for
-    langchain Chains this is the `__call__` method).
+  Record. This is the first argument to the root method of an app (for
+  langchain Chains this is the `__call__` method).
 
 - `RecordOutput = Record.main_output` -- points to the main output part of a
-    Record. This is the output of the root method of an app (i.e. `__call__`
-    for langchain Chains).
+  Record. This is the output of the root method of an app (i.e. `__call__`
+  for langchain Chains).
 
 - `RecordCalls = Record.app` -- points to the root of the app-structured
-    mirror of calls in a record. See **App-organized Calls** Section above.
+  mirror of calls in a record. See **App-organized Calls** Section above.
 
 ## Multiple Inputs Per Argument
 
