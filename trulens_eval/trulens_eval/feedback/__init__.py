@@ -26,7 +26,6 @@ Feedback = mod_feedback.Feedback
 __all__ = [
     "Feedback",
     "Embeddings",
-    "Groundedness",
     "GroundTruthAgreement",
     "OpenAI",
     "AzureOpenAI",
