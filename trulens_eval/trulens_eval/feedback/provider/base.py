@@ -1211,32 +1211,6 @@ class LLMProvider(Provider):
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
     
-    def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
-        """
-        An LLM prompt using the entire document for premise and entire statement
-        document for hypothesis.
-
-        Args:
-            premise: A source document
-
-            hypothesis: A statement to check
-
-        Returns:
-            An LLM response using a scorecard template
-        """
-        assert self.endpoint is not None, "Endpoint is not set."
-
-        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
-        llm_messages = [{"role": "system", "content": system_prompt}]
-        user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-            premise="""{}""".format(premise),
-            hypothesis="""{}""".format(hypothesis)
-        ) + prompts.GROUNDEDNESS_REASON_TEMPLATE
-        llm_messages.append({"role": "user", "content": user_prompt})
-        return self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
-        )
-    
     def groundedness_measure_with_cot_reasons(
         self, source: str, statement: str
     ) -> Tuple[float, dict]:
@@ -1271,21 +1245,19 @@ class LLMProvider(Provider):
         """
         nltk.download('punkt')
         groundedness_scores = {}
+        reasons_str = ""
         
         hypotheses = sent_tokenize(statement)
-        reasons_str = ""
+        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM + prompts.GROUNDEDNESS_REASON_TEMPLATE
         for i, hypothesis in enumerate(tqdm(
             hypotheses, desc="Groundedness per statement in source")):
-            reason = self._groundedness_doc_in_out(
-                premise=source, hypothesis=hypothesis
+            user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+                premise="""{}""".format(source),
+                hypothesis="""{}""".format(hypothesis)
             )
-            score_line = next(
-                (line for line in reason.split('\n') if "Score" in line),
-                None
-            )
-            if score_line:
-                groundedness_scores[f"statement_{i}"] = re_0_10_rating(score_line) / 10
-                reasons_str += f"\nSTATEMENT {i}:\n{reason}\n\n"
+            score, reason = self.generate_score_and_reasons(system_prompt, user_prompt)
+            groundedness_scores[f"statement_{i}"] = score
+            reasons_str += f"STATEMENT {i}:\n{reason['reason']}\n"
 
         # Calculate the average groundedness score from the scores dictionary
         average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
