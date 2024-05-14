@@ -310,6 +310,11 @@ class SpanVectorDBOTEL(SpanTyped):
 
     See [OpenTelemetry Semantic Conventions for AI
     constants](https://github.com/traceloop/openllmetry/blob/main/packages/opentelemetry-semantic-conventions-ai/opentelemetry/semconv/ai/__init__.py)
+
+    !!! Warning
+
+        The OpenTelemetry Semantic Conventions for AI are still in development.
+        Lets not rely on this class until things calm down.
     """
 
     # span attributes
@@ -337,8 +342,10 @@ class SpanVectorDBOTEL(SpanTyped):
     ai_span.DB_QUERY_RESULT_DOCUMENT
     """
 
-class SpanVectorDB(SpanVectorDBOTEL, SpanTyped):
-    pass
+class SpanVectorDB(SpanTyped): # make SpanVectorDBOTEL once otel is ready
+    """A vector database call."""
+
+    
 
 class SpanReranker(SpanTyped):
     """A reranker call."""
@@ -369,7 +376,13 @@ class SpanLLMOTEL(SpanTyped):
     and
     [constants](https://github.com/traceloop/openllmetry/blob/main/packages/opentelemetry-semantic-conventions-ai/opentelemetry/semconv/ai/__init__.py)
 
-    There is also Arize's [openinference conventions](https://github.com/Arize-ai/openinference/blob/main/python/openinference-semantic-conventions/src/openinference/semconv/trace/__init__.py).
+    There is also Arize's [openinference
+    conventions](https://github.com/Arize-ai/openinference/blob/main/python/openinference-semantic-conventions/src/openinference/semconv/trace/__init__.py).
+    
+    !!! Warning
+
+        The OpenTelemetry Semantic Conventions for AI are still in development.
+        Lets not rely on this class until things calm down.
     """
 
     request_model = Span.attribute_property(ai_span.LLM_REQUEST_MODEL, str)
@@ -392,7 +405,7 @@ class SpanLLMOTEL(SpanTyped):
 
     # usage_completion_tokens = Span.attribute_property(ai_span.LLM_RESPONSE_COMPLETION_TOKENS, Optional[int])
 
-    # usage_promot_tokens = Span.attribute_property(ai_span.LLM_RESPONSE_USAGE_PROMPT_TOKENS, Optional[int])
+    # usage_prompt_tokens = Span.attribute_property(ai_span.LLM_RESPONSE_USAGE_PROMPT_TOKENS, Optional[int])
 
     """
     # These below are in the constants file but are not described in the
@@ -425,21 +438,33 @@ class SpanLLMOTEL(SpanTyped):
     # - "gen_ai.prompt": str (json data)
     # - "gen_ai.completion": str (json data)
 
-class SpanLLM(SpanLLMOTEL, SpanTyped):
+class SpanLLM(SpanTyped): # make SpanLLMOTEL once otel is ready
     """A generation call to an LLM.
     
     This features attributes not covered by the OpenTelemetry Semantic
     Conventions for AI attributes in [SpanLLMOtel][trulens_eval.trace.span.SpanLLMOtel].
     """
 
+    model_name = Span.attribute_property("model_name", str) # to replace with otel's LLM_REQUEST_MODEL
+    """The model name of the LLM."""
+
     model_type = Span.attribute_property("model_type", str)
     """The type of model used."""
+
+    input_token_count = Span.attribute_property("input_token_count", int) # to replace with otel's LLM_RESPONSE_USAGE_PROMPT_TOKENS
+    """The number of tokens in the input."""
 
     input_messages = Span.attribute_property("input_messages", List[dict])
     """The prompt given to the LLM."""
 
+    output_token_count = Span.attribute_property("output_token_count", int) # to replace with otel's LLM_RESPONSE_COMPLETION_TOKENS
+    """The number of tokens in the output."""
+
     output_messages = Span.attribute_property("output_messages", List[dict])
     """The returned text."""
+
+    temperature = Span.attribute_property("temperature", float) # to replace with otel's LLM_REQUEST_TEMPERATURE
+    """The temperature used for generation."""
 
     cost = Span.attribute_property("cost", float)
     """The cost of the generation."""
