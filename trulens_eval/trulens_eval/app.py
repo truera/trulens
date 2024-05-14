@@ -349,7 +349,8 @@ class RecordingContext():
     """
 
     def __init__(self, app: mod_app.App, record_metadata: JSON = None):
-        self.calls: Dict[mod_types_schema.CallID, mod_record_schema.RecordAppCall] = {}
+        self.calls: Dict[mod_types_schema.CallID,
+                         mod_record_schema.RecordAppCall] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
         
         Storing as a map as we want to override calls with the same id which may
@@ -418,11 +419,9 @@ class RecordingContext():
     def finish_record(
         self,
         calls_to_record: Callable[[
-            List[mod_record_schema.RecordAppCall],
-            mod_types_schema.Metadata,
-            Optional[mod_record_schema.Record]
-            ], mod_record_schema.Record
-        ],
+            List[mod_record_schema.RecordAppCall], mod_types_schema.
+            Metadata, Optional[mod_record_schema.Record]
+        ], mod_record_schema.Record],
         existing_record: Optional[mod_record_schema.Record] = None
     ):
         """
@@ -432,9 +431,7 @@ class RecordingContext():
 
         with self.lock:
             record = calls_to_record(
-                list(self.calls.values()),
-                self.record_metadata,
-                existing_record
+                list(self.calls.values()), self.record_metadata, existing_record
             )
             self.calls = {}
 
