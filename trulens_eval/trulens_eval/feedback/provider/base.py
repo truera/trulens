@@ -416,9 +416,6 @@ class LLMProvider(Provider):
                 .on_output()
             ```
 
-            The `on(...)` selector can be changed. See [Feedback Function Guide :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
-
         Args:
             prompt (str): A text prompt to an agent. 
             response (str): The agent's response to the prompt.
@@ -574,9 +571,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.conciseness).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: The text to evaluate the conciseness of.
 
@@ -598,10 +592,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.conciseness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: The text to evaluate the conciseness of.
 
@@ -689,9 +679,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -914,10 +901,7 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
+            
         Args:
             text (str): The text to evaluate.
 
@@ -983,9 +967,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.insensitivity).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
@@ -1027,9 +1008,7 @@ class LLMProvider(Provider):
 
         Args:
             text (str): A prompt to an agent.
-
             response (str): The agent's response to the prompt.
-
             check_response(str): The response to check against.
 
         Returns:
@@ -1060,7 +1039,6 @@ class LLMProvider(Provider):
 
         Args:
             source (str): Text corresponding to source material. 
-
             summary (str): Text corresponding to a summary.
 
         Returns:
@@ -1155,19 +1133,18 @@ class LLMProvider(Provider):
 
             ```python
             from trulens_eval import Feedback
-            from trulens_eval.feedback import Groundedness
             from trulens_eval.feedback.provider.openai import OpenAI
 
             provider = OpenAI()
 
-            f_groundedness = feedback.Feedback(provider.groundedness_measure_with_cot_reasons).on(
-                Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content # See note below
-            ).on_output()
+            f_groundedness = (
+                Feedback(provider.groundedness_measure_with_cot_reasons)
+                .on(context.collect()
+                .on_output()
+                )
             ```
-
         Args:
             source: The source that should support the statement.
-
             statement: The statement to check groundedness.
 
         Returns:
