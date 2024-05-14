@@ -1252,8 +1252,8 @@ class LLMProvider(Provider):
         for i, hypothesis in enumerate(tqdm(
             hypotheses, desc="Groundedness per statement in source")):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-                premise="""{}""".format(source),
-                hypothesis="""{}""".format(hypothesis)
+                premise=f"{source}",
+                hypothesis=f"{hypothesis}"
             )
             score, reason = self.generate_score_and_reasons(system_prompt, user_prompt)
             groundedness_scores[f"statement_{i}"] = score
