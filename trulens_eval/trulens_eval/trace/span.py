@@ -111,7 +111,7 @@ class Span(mod_trace.OTSpan):
     def start_datetime(self) -> datetime.datetime:
         """Start time of span as a [datetime][datetime.datetime]."""
         return mod_container_utils.datetime_of_ns_timestamp(self.start_timestamp)
-    
+
     @start_datetime.setter
     def start_datetime(self, value: datetime.datetime):
         self.start_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
@@ -120,7 +120,7 @@ class Span(mod_trace.OTSpan):
     def end_datetime(self) -> datetime.datetime:
         """End time of span as a [datetime][datetime.datetime]."""
         return mod_container_utils.datetime_of_ns_timestamp(self.end_timestamp)
-    
+
     @end_datetime.setter
     def end_datetime(self, value: datetime.datetime):
         self.end_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
