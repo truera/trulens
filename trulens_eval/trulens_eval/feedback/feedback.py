@@ -109,13 +109,14 @@ def rag_triad(
     ret = {}
 
     for f_imp, f_agg, arg1name, arg1lens, arg2name, arg2lens, f_name in [
-        (provider.groundedness_measure_with_cot_reasons, np.mean, "source", context.collect(),
-         "statement", answer, "Groundedness"),
-        (provider.relevance_with_cot_reasons, np.mean, "prompt", question, "response", answer, "Answer Relevance"),
-        (provider.context_relevance_with_cot_reasons, np.mean, "question", question, "context",
-         context, "Context Relevance")
+        (provider.groundedness_measure_with_cot_reasons, np.mean, "source",
+         context.collect(), "statement", answer, "Groundedness"),
+        (provider.relevance_with_cot_reasons, np.mean, "prompt", question,
+         "response", answer, "Answer Relevance"),
+        (provider.context_relevance_with_cot_reasons, np.mean, "question",
+         question, "context", context, "Context Relevance")
     ]:
-        f = Feedback(f_imp, if_exists=context, name = f_name).aggregate(f_agg)
+        f = Feedback(f_imp, if_exists=context, name=f_name).aggregate(f_agg)
         if arg1lens is not None:
             f = f.on(**{arg1name: arg1lens})
         else:
