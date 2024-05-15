@@ -304,10 +304,9 @@ class OpenAIEndpoint(Endpoint):
             model_name = bindings.kwargs["model"]
 
         if isinstance(response, oai.Stream):
-            # NOTE(piotrm): Merely checking membership in these will exhaust
-            # internal genertors or iterators which will break users' code.
-            # While we work out something, I'm disabling any cost-tracking for
-            # these streams.
+            # NOTE(piotrm): Merely checking membership in these will exhaust internal
+            # genertors or iterators which will break users' code. While we work
+            # out something, I'm disabling any cost-tracking for these streams.
             logger.warning("Cannot track costs from a OpenAI Stream.")
             return
 
@@ -320,7 +319,6 @@ class OpenAIEndpoint(Endpoint):
 
             counted_something = True
 
-            """
             if isinstance(response.usage, pydantic.BaseModel):
                 usage = response.usage.model_dump()
             elif isinstance(response.usage, pydantic.v1.BaseModel):
@@ -329,7 +327,6 @@ class OpenAIEndpoint(Endpoint):
                 usage = response.usage
             else:
                 usage = None
-            """
 
             # See how to construct in langchain.llms.openai.OpenAIChat._generate
             llm_res = LLMResult(
@@ -365,6 +362,6 @@ class OpenAIEndpoint(Endpoint):
 
         if not counted_something:
             logger.warning(
-                f"Could not find usage information in openai response:\n" +
+                "Could not find usage information in openai response:\n%s",
                 pp.pformat(response)
             )
