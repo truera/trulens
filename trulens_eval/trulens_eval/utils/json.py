@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import dataclasses
 from enum import Enum
+import inspect
 import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 from typing import Any, Dict, Optional, Sequence, Set, TypeVar
+import typing
 
 from merkle_json import MerkleJson
 import pydantic
@@ -139,6 +141,29 @@ def jsonify(
         object is either a JSON base type, a list, or a dict with the containing
         elements of the same.
     """
+
+    # NOTE(piotrm): We might need to do something special for the below types as
+    # they are stateful if iterated. That is, they might be iteratable only once
+    # and iterating will break their user's interfaces.
+    """
+    if isinstance(obj, typing.Iterator):
+        raise ValueError("Cannot jsonify an iterator object.")
+    if inspect.isawaitable(obj):
+        raise ValueError("Cannot jsonify an awaitable object.")
+    if inspect.isgenerator(obj):
+        raise ValueError("Cannot jsonify a generator object.")
+    if inspect.iscoroutine(obj):
+        raise ValueError("Cannot jsonify a coroutine object.")
+    if inspect.isasyncgen(obj):
+        raise ValueError("Cannot jsonify an async generator object.")
+    if inspect.isasyncgenfunction(obj):
+        raise ValueError("Cannot jsonify an async generator function.")
+    if inspect.iscoroutinefunction(obj):
+        raise ValueError("Cannot jsonify a coroutine function.")
+    if inspect.isgeneratorfunction(obj):
+        raise ValueError("Cannot jsonify a generator function.")
+    """
+
     skip_excluded = not include_excluded
     # Hack so that our models do not get exludes dumped which causes many
     # problems. Another variable set here so we can recurse with the original

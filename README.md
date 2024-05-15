@@ -30,7 +30,7 @@ community](https://communityinviter.com/apps/aiqualityforum/josh)!
 
 **Don't just vibe-check your llm app!** Systematically evaluate and track your
 LLM experiments with TruLens. As you develop your app including prompts, models,
-retrievers, knowledge sources and more, *TruLens-Eval* is the tool you need to
+retreivers, knowledge sources and more, *TruLens-Eval* is the tool you need to
 understand its performance.
 
 Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help
@@ -38,7 +38,7 @@ you to identify failure modes & systematically iterate to improve your
 application.
 
 Read more about the core concepts behind TruLens including [Feedback
-Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/),
+Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/
 [The RAG Triad](https://www.trulens.org/trulens_eval/getting_started/core_concepts/rag_triad/),
 and [Honest, Harmless and Helpful
 Evals](https://www.trulens.org/trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals/).

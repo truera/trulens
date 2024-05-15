@@ -2,9 +2,13 @@ from concurrent.futures import wait
 import logging
 from typing import Dict, get_args, get_origin, Optional, Tuple, Union
 
+import nltk
+from nltk.tokenize import sent_tokenize
 import numpy as np
 import requests
+from tqdm.auto import tqdm
 
+from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
@@ -12,12 +16,6 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.threading import ThreadPoolExecutor
-from trulens_eval.feedback import prompts
-
-import nltk
-from nltk.tokenize import sent_tokenize
-import numpy as np
-from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +191,7 @@ class Huggingface(Provider):
         l1: float = float(1.0 - (np.linalg.norm(diff, ord=1)) / 2.0)
 
         return l1, dict(text1_scores=scores1, text2_scores=scores2)
-    
+
     def groundedness_measure_with_nli(self, source: str,
                                       statement: str) -> Tuple[float, dict]:
         """
@@ -242,7 +240,9 @@ class Huggingface(Provider):
                 score=score * 10,
             )
             groundedness_scores[f"statement_{i}"] = score
-        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
+        average_groundedness_score = float(
+            np.mean(list(groundedness_scores.values()))
+        )
         return average_groundedness_score, {"reasons": reasons_str}
 
     @_tci

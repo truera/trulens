@@ -294,14 +294,21 @@ class OpenAIEndpoint(Endpoint):
         # see what sort of data to process based on the call made.
 
         logger.debug(
-            f"Handling openai instrumented call to func: {func},\n"
-            f"\tbindings: {bindings},\n"
-            f"\tresponse: {response}"
+            "Handling openai instrumented call to func: %s,\n"
+            "\tbindings: %s,\n"
+            "\tresponse: %s", func, bindings, response
         )
 
         model_name = ""
         if 'model' in bindings.kwargs:
             model_name = bindings.kwargs["model"]
+
+        if isinstance(response, oai.Stream):
+            # NOTE(piotrm): Merely checking membership in these will exhaust internal
+            # genertors or iterators which will break users' code. While we work
+            # out something, I'm disabling any cost-tracking for these streams.
+            logger.warning("Cannot track costs from a OpenAI Stream.")
+            return
 
         results = None
         if "results" in response:
@@ -355,6 +362,6 @@ class OpenAIEndpoint(Endpoint):
 
         if not counted_something:
             logger.warning(
-                f"Could not find usage information in openai response:\n" +
+                "Could not find usage information in openai response:\n%s",
                 pp.pformat(response)
             )
