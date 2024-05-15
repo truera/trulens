@@ -748,7 +748,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         raise NotImplementedError()
 
-    def _extract_content(self, value, content_keys = ['content']):
+    def _extract_content(self, value, content_keys=['content']):
         """
         Extracts the 'content' from various data types commonly used by libraries
         like OpenAI, Canopy, LiteLLM, etc. This method navigates nested data
@@ -770,23 +770,22 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             content = getattr(value, 'content', None)
             if content is not None:
                 return content
-            
+
             # If 'content' is not found, check for 'choices' attribute which indicates a ChatResponse
             choices = getattr(value, 'choices', None)
             if choices is not None:
                 # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
                 return [
-                    self._extract_content(choice.message)
-                    for choice in choices
+                    self._extract_content(choice.message) for choice in choices
                 ]
-            
+
             # Recursively extract content from nested pydantic models
             return {
-                k: self._extract_content(v) if
-                isinstance(v, (pydantic.BaseModel, dict, list)) else v
+                k: self._extract_content(v)
+                if isinstance(v, (pydantic.BaseModel, dict, list)) else v
                 for k, v in value.dict().items()
             }
-        
+
         elif isinstance(value, dict):
             # Check for 'content' key in the dictionary
             for key in content_keys:
@@ -796,12 +795,11 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             # Recursively extract content from nested dictionaries
             return {
-                k:
-                self._extract_content(v) if isinstance(v,
-                                                        (dict, list)) else v
+                k: self._extract_content(v) if isinstance(v,
+                                                          (dict, list)) else v
                 for k, v in value.items()
             }
-        
+
         elif isinstance(value, list):
             # Handle lists by extracting content from each item
             return [self._extract_content(item) for item in value]
@@ -830,8 +828,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         while not isinstance(focus, JSON_BASES) and len(focus) == 1:
             focus = focus[0]
             focus = self._extract_content(
-                focus,
-                content_keys=['content', 'input']
+                focus, content_keys=['content', 'input']
             )
 
             if not isinstance(focus, Sequence):
@@ -877,10 +874,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         """
 
         # Use _extract_content to get the content out of the return value
-        content = self._extract_content(
-            ret,
-            content_keys=['content', 'output']
-        )
+        content = self._extract_content(ret, content_keys=['content', 'output'])
 
         if isinstance(content, str):
             return content
