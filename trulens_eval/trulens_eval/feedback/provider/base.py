@@ -1,18 +1,18 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple, List
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 import warnings
-
-from trulens_eval.feedback import prompts
-from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
-from trulens_eval.utils import generated as mod_generated_utils
-from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.generated import re_0_10_rating
 
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
 from tqdm.auto import tqdm
+
+from trulens_eval.feedback import prompts
+from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
+from trulens_eval.utils import generated as mod_generated_utils
+from trulens_eval.utils.generated import re_0_10_rating
+from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 
@@ -1125,7 +1125,7 @@ class LLMProvider(Provider):
         )
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
-    
+
     def groundedness_measure_with_cot_reasons(
         self, source: str, statement: str
     ) -> Tuple[float, dict]:
@@ -1159,19 +1159,22 @@ class LLMProvider(Provider):
         nltk.download('punkt')
         groundedness_scores = {}
         reasons_str = ""
-        
+
         hypotheses = sent_tokenize(statement)
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
         for i, hypothesis in enumerate(tqdm(
-            hypotheses, desc="Groundedness per statement in source")):
+                hypotheses, desc="Groundedness per statement in source")):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-                premise=f"{source}",
-                hypothesis=f"{hypothesis}"
+                premise=f"{source}", hypothesis=f"{hypothesis}"
             )
-            score, reason = self.generate_score_and_reasons(system_prompt, user_prompt)
+            score, reason = self.generate_score_and_reasons(
+                system_prompt, user_prompt
+            )
             groundedness_scores[f"statement_{i}"] = score
             reasons_str += f"STATEMENT {i}:\n{reason['reason']}\n"
 
         # Calculate the average groundedness score from the scores dictionary
-        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
+        average_groundedness_score = float(
+            np.mean(list(groundedness_scores.values()))
+        )
         return average_groundedness_score, {"reasons": reasons_str}

@@ -115,14 +115,11 @@ from trulens_eval.app import App
 
 context = App.select_context(rag_chain)
 
-from trulens_eval.feedback import Groundedness
-
-grounded = Groundedness(groundedness_provider=OpenAI())
 # Define a groundedness feedback function
 f_groundedness = (
-    Feedback(grounded.groundedness_measure_with_cot_reasons
+    Feedback(provider.groundedness_measure_with_cot_reasons
             ).on(context.collect())  # collect context chunks into a list
-    .on_output().aggregate(grounded.grounded_statements_aggregator)
+    .on_output()
 )
 
 # Question/answer relevance between overall question and answer.
@@ -345,14 +342,11 @@ from trulens_eval.app import App
 
 context = App.select_context(query_engine)
 
-from trulens_eval.feedback import Groundedness
-
-grounded = Groundedness(groundedness_provider=OpenAI())
 # Define a groundedness feedback function
 f_groundedness = (
-    Feedback(grounded.groundedness_measure_with_cot_reasons
+    Feedback(provider.groundedness_measure_with_cot_reasons
             ).on(context.collect())  # collect context chunks into a list
-    .on_output().aggregate(grounded.grounded_statements_aggregator)
+    .on_output().aggregate(provider.grounded_statements_aggregator)
 )
 
 # Question/answer relevance between overall question and answer.
@@ -447,6 +441,7 @@ tru.run_dashboard()  # open a local streamlit app to explore
 import os
 
 os.environ["OPENAI_API_KEY"] = "sk-..."
+os.environ["HUGGINGFACE_API_KEY"] = "hf_..."
 
 # ## Get Data
 #
@@ -500,6 +495,10 @@ tru = Tru()
 
 # In[ ]:
 
+from openai import OpenAI
+
+oai_client = OpenAI()
+
 
 class RAG_from_scratch:
 
@@ -509,7 +508,7 @@ class RAG_from_scratch:
         Retrieve relevant text from vector store.
         """
         results = vector_store.query(query_texts=query, n_results=2)
-        return results['documents'][0]
+        return results['documents']
 
     @instrument
     def generate_completion(self, query: str, context_str: list) -> str:
@@ -552,21 +551,16 @@ import numpy as np
 
 from trulens_eval import Feedback
 from trulens_eval import Select
-from trulens_eval.feedback import Groundedness
 from trulens_eval.feedback.provider.openai import OpenAI
 
 provider = OpenAI()
 
-grounded = Groundedness(groundedness_provider=provider)
-
 # Define a groundedness feedback function
 f_groundedness = (
     Feedback(
-        grounded.groundedness_measure_with_cot_reasons, name="Groundedness"
-    ).on(Select.RecordCalls.retrieve.rets.collect()
-        ).on_output().aggregate(grounded.grounded_statements_aggregator)
+        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
+    ).on(Select.RecordCalls.retrieve.rets.collect()).on_output()
 )
-
 # Question/answer relevance between overall question and answer.
 f_answer_relevance = (
     Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance").on(
@@ -574,12 +568,13 @@ f_answer_relevance = (
     ).on_output()
 )
 
-# Question/statement relevance between question and each context chunk.
+# Context relevance between question and each context chunk.
 f_context_relevance = (
     Feedback(
         provider.context_relevance_with_cot_reasons, name="Context Relevance"
-    ).on(Select.RecordCalls.retrieve.args.query
-        ).on(Select.RecordCalls.retrieve.rets.collect()).aggregate(np.mean)
+    ).on(Select.RecordCalls.retrieve.args.query).on(
+        Select.RecordCalls.retrieve.rets
+    ).aggregate(np.mean)  # choose a different aggregation method if you wish
 )
 
 # ## Construct the app
@@ -1193,38 +1188,37 @@ from trulens_eval.feedback import prompts
 
 class Custom_AzureOpenAI(AzureOpenAI):
 
-    def qs_relevance_with_cot_reasons_extreme(
-        self, question: str, statement: str
+    def context_relevance_with_cot_reasons_extreme(
+        self, question: str, context: str
     ) -> Tuple[float, Dict]:
         """
-        Tweaked version of question statement relevance, extending AzureOpenAI provider.
+        Tweaked version of context relevance, extending AzureOpenAI provider.
         A function that completes a template to check the relevance of the statement to the question.
         Scoring guidelines for scores 5-8 are removed to push the LLM to more extreme scores.
         Also uses chain of thought methodology and emits the reasons.
 
         Args:
             question (str): A question being asked. 
-            statement (str): A statement to the question.
+            context (str): A statement to the question.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
 
-        system_prompt = str.format(
-            prompts.QS_RELEVANCE, question=question, statement=statement
-        )
-
         # remove scoring guidelines around middle scores
-        system_prompt = system_prompt.replace(
+        system_prompt = prompts.CONTEXT_RELEVANCE_SYSTEM.replace(
             "- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.\n\n",
             ""
         )
 
-        system_prompt = system_prompt.replace(
+        user_prompt = str.format(
+            prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
+        )
+        user_prompt = user_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
 
-        return self.generate_score_and_reasons(system_prompt)
+        return self.generate_score_and_reasons(system_prompt, user_prompt)
 
 
 # ## Multi-Output Feedback functions
