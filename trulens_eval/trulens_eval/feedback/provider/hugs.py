@@ -12,6 +12,12 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.threading import ThreadPoolExecutor
+from trulens_eval.feedback import prompts
+
+import nltk
+from nltk.tokenize import sent_tokenize
+import numpy as np
+from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +193,57 @@ class Huggingface(Provider):
         l1: float = float(1.0 - (np.linalg.norm(diff, ord=1)) / 2.0)
 
         return l1, dict(text1_scores=scores1, text2_scores=scores2)
+    
+    def groundedness_measure_with_nli(self, source: str,
+                                      statement: str) -> Tuple[float, dict]:
+        """
+        A measure to track if the source material supports each sentence in the statement using an NLI model.
+
+        First the response will be split into statements using a sentence tokenizer.The NLI model will process each statement using a natural language inference model, and will use the entire source.
+
+        !!! example
+        
+            ```
+            from trulens_eval.feedback import Feedback
+            from trulens_eval.feedback.provider.hugs = Huggingface
+
+            provider = Huggingface()
+    
+            f_groundedness = (
+                Feedback(provider.groundedness_measure_with_nli)
+                .on(context)
+                .on_output()
+            ```
+
+        Args:
+            source (str): The source that should support the statement
+            statement (str): The statement to check groundedness
+
+        Returns:
+            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+            str: 
+        """
+        nltk.download('punkt')
+        groundedness_scores = {}
+
+        reasons_str = ""
+        if isinstance(source, list):
+            source = ' '.join(map(str, source))
+        hypotheses = sent_tokenize(statement)
+        for i, hypothesis in enumerate(tqdm(
+                hypotheses, desc="Groundendess per statement in source")):
+            score = self._doc_groundedness(
+                premise=source, hypothesis=hypothesis
+            )
+            reasons_str = reasons_str + str.format(
+                prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                statement_sentence=hypothesis,
+                supporting_evidence="[Doc NLI Used full source]",
+                score=score * 10,
+            )
+            groundedness_scores[f"statement_{i}"] = score
+        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
+        return average_groundedness_score, {"reasons": reasons_str}
 
     @_tci
     def context_relevance(self, prompt: str, context: str) -> float:

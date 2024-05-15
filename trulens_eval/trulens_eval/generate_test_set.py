@@ -7,7 +7,6 @@ from trulens_eval import Tru
 from trulens_eval import TruChain
 from trulens_eval import TruLlama
 from trulens_eval.app import App
-from trulens_eval.feedback import Groundedness
 
 logger = logging.getLogger(__name__)
 from ast import literal_eval
