@@ -346,7 +346,7 @@ context = App.select_context(query_engine)
 f_groundedness = (
     Feedback(provider.groundedness_measure_with_cot_reasons
             ).on(context.collect())  # collect context chunks into a list
-    .on_output().aggregate(provider.grounded_statements_aggregator)
+    .on_output()
 )
 
 # Question/answer relevance between overall question and answer.
