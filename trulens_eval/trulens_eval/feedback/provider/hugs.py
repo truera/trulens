@@ -248,16 +248,21 @@ class Huggingface(Provider):
         Uses Huggingface's truera/context_relevance model, a
         model that uses computes the relevance of a given context to the prompt. 
         The model can be found at https://huggingface.co/truera/context_relevance.
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.hugs import Huggingface
-        huggingface_provider = Huggingface()
+        
+        !!! example
 
-        feedback = Feedback(huggingface_provider.context_relevance).on_input_output() 
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            provider = Huggingface()
+
+            feedback = (
+                Feedback(provider.context_relevance)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
 
         Args:
             prompt (str): The given prompt.
