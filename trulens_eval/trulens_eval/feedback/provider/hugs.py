@@ -435,10 +435,10 @@ class Huggingface(Provider):
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            text: A text prompt that may contain a name.
+            text: A text prompt that may contain a PII.
 
         Returns:
-            The likelihood that a name is contained in the input text.
+            float: The likelihood that a PII is contained in the input text.
         """
 
         # Initialize a list to store scores for "NAME" entities
@@ -495,6 +495,12 @@ class Huggingface(Provider):
             The `on(...)` selector can be changed. See [Feedback Function Guide
             :
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+            Args:
+                text: A text prompt that may contain a name.
+
+            Returns:
+                Tuple[float, str]: A tuple containing a the likelihood that a PII is contained in the input text and a string containing what PII is detected (if any).
         """
 
         # Initialize a dictionary to store reasons
