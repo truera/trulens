@@ -140,9 +140,6 @@ class OpenAI(LLMProvider):
             ).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
@@ -169,9 +166,6 @@ class OpenAI(LLMProvider):
                 openai_provider.moderation_hatethreatening, higher_is_better=False
             ).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -201,9 +195,6 @@ class OpenAI(LLMProvider):
             ).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
@@ -232,9 +223,6 @@ class OpenAI(LLMProvider):
             ).on_output()
             ```
 
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
@@ -262,9 +250,6 @@ class OpenAI(LLMProvider):
                 openai_provider.moderation_sexualminors, higher_is_better=False
             ).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -295,9 +280,6 @@ class OpenAI(LLMProvider):
             ).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
@@ -325,9 +307,6 @@ class OpenAI(LLMProvider):
                 openai_provider.moderation_violencegraphic, higher_is_better=False
             ).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -357,9 +336,6 @@ class OpenAI(LLMProvider):
             ).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
@@ -386,9 +362,6 @@ class OpenAI(LLMProvider):
                 openai_provider.moderation_harassment_threatening, higher_is_better=False
             ).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
