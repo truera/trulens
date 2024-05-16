@@ -3587,15 +3587,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens_eval.feedback.provider.hugs.Huggingface.__init__" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__init__
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.hugs.Huggingface.language_match" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;language_match
@@ -4418,37 +4409,6 @@
 
 
 
-<h4 id="trulens_eval.feedback.provider.hugs.Huggingface.__init__" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">__init__</span>
-
-
-<a href="#trulens_eval.feedback.provider.hugs.Huggingface.__init__" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
-    <span class="n">name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.endpoint.base.Endpoint" href="../endpoint/#trulens_eval.feedback.provider.endpoint.base.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">)</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Create a Huggingface Provider with out of the box feedback functions.</p>
-<div class="admonition example">
-<p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
-<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
-</code></pre></div>
-</div>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
 <h4 id="trulens_eval.feedback.provider.hugs.Huggingface.language_match" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">language_match</span>
 
@@ -5129,9 +5089,7 @@ Returns:
   </div>
 
 
-</div><p>options:
-filters: - "!^*"</p>
-
+</div>
 
 <div class="doc doc-object doc-class">
 
@@ -5146,7 +5104,7 @@ filters: - "!^*"</p>
 
   <div class="doc doc-contents first">
           <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.base.LLMProvider" href="../../evaluation/feedback_implementations/stock/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</a></code></p>
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.base.LLMProvider" href="../provider/llmprovider/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</a></code></p>
 
   
       <p>Out of the box feedback functions calling OpenAI APIs.</p>
@@ -6097,7 +6055,7 @@ Guide</a></p>
 <p>This is an abstract class and needs to be initialized as one of these:</p>
 <ul>
 <li>
-<p><a class="autorefs autorefs-internal" href="../../evaluation/feedback_implementations/stock/#trulens_eval.feedback.provider.openai.OpenAI">OpenAI</a> and subclass
+<p><a class="autorefs autorefs-internal" href="../provider/openai/#trulens_eval.feedback.provider.openai.OpenAI">OpenAI</a> and subclass
   <a class="autorefs autorefs-internal" href="../provider/openai/azureopenai/#trulens_eval.feedback.provider.openai.AzureOpenAI">AzureOpenAI</a>.</p>
 </li>
 <li>
