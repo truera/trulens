@@ -21,7 +21,7 @@ lab:
 	$(CONDA) .conda/docs; jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 # Serve the documentation website.
-serve:
+serve: .conda/docs
 	$(CONDA) .conda/docs; mkdocs serve -a 127.0.0.1:8000
 
 # The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to

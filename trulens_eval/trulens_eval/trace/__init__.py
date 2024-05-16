@@ -96,7 +96,8 @@ This is needed to help pydantic figure out how to serialize and deserialize thes
 
 
 def make_hashable(context: ot_span.SpanContext) -> HashableSpanContext:
-    # HACK015: replace class of contexts to add hashing
+    """Make a SpanContext a HashableSpanContext."""
+    # HACK015: replacing class of contexts to add hashing
 
     if context.__class__ is not HashableSpanContext:
         context.__class__ = HashableSpanContext
@@ -172,7 +173,10 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     """Attributes of span."""
 
     def freeze(self) -> otsdk_trace.ReadableSpan:
-        """Freeze the span into a ReadableSpan."""
+        """Freeze the span into a [ReadableSpan][opentelemetry.sdk.trace.ReadableSpan].
+    
+        These are the views of spans that are exported by exporters.
+        """
 
         return otsdk_trace.ReadableSpan(
             name=self.name,
@@ -188,6 +192,24 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
             start_time=self.start_timestamp,
             end_time=self.end_timestamp,
             instrumentation_scope = None
+        )
+
+    @classmethod
+    def thaw(cls, span: otsdk_trace.ReadableSpan) -> OTSpan:
+        """Import a [ReadableSpan][opentelemetry.sdk.trace.ReadableSpan] as a
+        [OTSpan][trulens_eval.trace.OTSpan]."""
+
+        return cls(
+            name=span.name,
+            context=make_hashable(span.context),
+            parent_context=make_hashable(span.parent),
+            attributes=span.attributes,
+            events=span.events,
+            links=span.links,
+            kind=span.kind,
+            status=span.status,
+            start_timestamp=span.start_time,
+            end_timestamp=span.end_time
         )
 
     def __init__(self, name: str, context: ot_span.SpanContext, **kwargs):
