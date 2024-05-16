@@ -270,8 +270,7 @@ class OpenAI(LLMProvider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not sexual minors) and 1.0 (sexual
-            minors).
+            float: A value between 0.0 (not sexual minors) and 1.0 (sexual minors).
         """
 
         openai_response = self._moderation(text)
@@ -334,8 +333,7 @@ class OpenAI(LLMProvider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not graphic violence) and 1.0 (graphic
-            violence).
+            float: A value between 0.0 (not graphic violence) and 1.0 (graphic violence).
         """
         openai_response = self._moderation(text)
 
