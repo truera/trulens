@@ -4010,10 +4010,35 @@ Guide</a></p>
         </tr>
     </tbody>
   </table>
-      <p>Returns:</p>
-<pre><code>float: A value between 0 and 1. 0 being "different languages" and 1
-being "same languages".
-</code></pre>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <code>float</code>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>A value between 0 and 1. 0 being "different languages" and 1 being "same languages".</p>
+            </div>
+              <p>
+                <span class="doc-returns-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
+                </span>
+              </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
@@ -4043,10 +4068,10 @@ being "same languages".
 <div class="highlight"><pre><span></span><code>from trulens_eval.feedback import Feedback
 from trulens_eval.feedback.provider.hugs = Huggingface
 
-provider = Huggingface()
+huggingface_provider = Huggingface()
 
 f_groundedness = (
-    Feedback(provider.groundedness_measure_with_nli)
+    Feedback(huggingface_provider.groundedness_measure_with_nli)
     .on(context)
     .on_output()
 </code></pre></div>
@@ -4105,34 +4130,14 @@ f_groundedness = (
     <tbody>
         <tr>
           <td>
-              <code>float</code>
+              <span class="doc-returns-annotation">
+                  <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a>]</code>
+              </span>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A measure between 0 and 1, where 1 means each sentence is grounded in the source.</p>
+              <p>Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.</p>
             </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-                </span>
-              </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-              <code>str</code>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              
-            </div>
-              <p>
-                <span class="doc-returns-annotation">
-                  <b>TYPE:</b>
-                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
-                </span>
-              </p>
           </td>
         </tr>
     </tbody>
@@ -4159,16 +4164,21 @@ f_groundedness = (
   
       <p>Uses Huggingface's truera/context_relevance model, a
 model that uses computes the relevance of a given context to the prompt. 
-The model can be found at <a href="https://huggingface.co/truera/context_relevance">https://huggingface.co/truera/context_relevance</a>.
-<strong>Usage:</strong>
+The model can be found at <a href="https://huggingface.co/truera/context_relevance">https://huggingface.co/truera/context_relevance</a>.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
 <span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
-<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span> 
+<span class="n">feedback</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="p">)</span>
 </code></pre></div>
-The <code>on_input_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
-Guide</a></p>
+</div>
 
 
 
@@ -4227,7 +4237,7 @@ Guide</a></p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A value between 0 and 1. 0 being irrelevant and 1</p>
+              <p>A value between 0 and 1. 0 being irrelevant and 1 being a relevant context for addressing the prompt.</p>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -4235,18 +4245,6 @@ Guide</a></p>
                     <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                 </span>
               </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-              <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-              </span>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>being a relevant context for addressing the prompt.</p>
-            </div>
           </td>
         </tr>
     </tbody>
@@ -4281,8 +4279,6 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 <span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">positive_sentiment</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
 </code></pre></div>
-<p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
-Guide</a></p>
 </div>
 
 
@@ -4328,7 +4324,7 @@ Guide</a></p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A value between 0 and 1. 0 being "negative sentiment" and 1</p>
+              <p>A value between 0 (negative sentiment) and 1 (positive sentiment).</p>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -4336,18 +4332,6 @@ Guide</a></p>
                     <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                 </span>
               </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-              <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-              </span>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>being "positive sentiment".</p>
-            </div>
           </td>
         </tr>
     </tbody>
@@ -4380,10 +4364,8 @@ uses a toxic comment classifier on <code>text</code>.</p>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
 <span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
-<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">not_toxic</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
+<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">huggingface_provider</span><span class="o">.</span><span class="n">toxic</span><span class="p">)</span><span class="o">.</span><span class="n">on_output</span><span class="p">()</span> 
 </code></pre></div>
-<p>The <code>on_output()</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/">Feedback Function
-Guide</a></p>
 </div>
 
 
@@ -4429,7 +4411,7 @@ Guide</a></p>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>A value between 0 and 1. 1 being "toxic" and 0 being "not</p>
+              <p>A value between 0 (not toxic) and 1 (toxic).</p>
             </div>
               <p>
                 <span class="doc-returns-annotation">
@@ -4437,18 +4419,6 @@ Guide</a></p>
                     <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                 </span>
               </p>
-          </td>
-        </tr>
-        <tr>
-          <td>
-              <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-              </span>
-          </td>
-          <td class="doc-returns-details">
-            <div class="doc-md-description">
-              <p>toxic".</p>
-            </div>
           </td>
         </tr>
     </tbody>
@@ -4499,7 +4469,7 @@ Selectors</a></p>
           <td><code>text</code></td>
           <td class="doc-param-details">
             <div class="doc-md-description">
-              <p>A text prompt that may contain a name.</p>
+              <p>A text prompt that may contain a PII.</p>
             </div>
             <p>
                 <span class="doc-param-annotation">
@@ -4524,14 +4494,18 @@ Selectors</a></p>
     <tbody>
         <tr>
           <td>
-              <span class="doc-returns-annotation">
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
-              </span>
+              <code>float</code>
           </td>
           <td class="doc-returns-details">
             <div class="doc-md-description">
-              <p>The likelihood that a name is contained in the input text.</p>
+              <p>The likelihood that a PII is contained in the input text.</p>
             </div>
+              <p>
+                <span class="doc-returns-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                </span>
+              </p>
           </td>
         </tr>
     </tbody>
@@ -4567,6 +4541,10 @@ Selectors</a></p>
 <p>The <code>on(...)</code> selector can be changed. See <a href="https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details">Feedback Function Guide
 :
 Selectors</a></p>
+<p>Args:
+    text: A text prompt that may contain a name.</p>
+<p>Returns:
+    Tuple[float, str]: A tuple containing a the likelihood that a PII is contained in the input text and a string containing what PII is detected (if any).</p>
 </div>
 
   </div>
@@ -4590,25 +4568,87 @@ Selectors</a></p>
 
   <div class="doc doc-contents ">
   
-      <pre><code>Evaluates the hallucination score for a combined input of two statements as a float 0&lt;x&lt;1 representing a 
+      <p>Evaluates the hallucination score for a combined input of two statements as a float 0&lt;x&lt;1 representing a 
 true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
-less than 0.5 the statement is evaluated as a hallucination.
+less than 0.5 the statement is evaluated as a hallucination.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.hugs</span> <span class="kn">import</span> <span class="n">Huggingface</span>
+<span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 
-**!!! example
-</code></pre>
-<p>**
-    <code>python
-    from trulens_eval.feedback.provider.hugs import Huggingface
-    huggingface_provider = Huggingface()
+<span class="n">score</span> <span class="o">=</span> <span class="n">huggingface_provider</span><span class="o">.</span><span class="n">hallucination_evaluator</span><span class="p">(</span><span class="s2">&quot;The sky is blue. [SEP] Apples are red , the grass is green.&quot;</span><span class="p">)</span>
+</code></pre></div>
+</div>
 
-    score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")</code></p>
-<pre><code>Args:
-    model_output (str): This is what an LLM returns based on the text chunks retrieved during RAG
-    retrieved_text_chunk (str): These are the text chunks you have retrieved during RAG
 
-Returns:
-    float: Hallucination score
-</code></pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>PARAMETER</b></th>
+        <th><b> DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>model_output</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>This is what an LLM returns based on the text chunks retrieved during RAG</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td><code>retrieved_text_chunk</code></td>
+          <td class="doc-param-details">
+            <div class="doc-md-description">
+              <p>These are the text chunks you have retrieved during RAG</p>
+            </div>
+            <p>
+                <span class="doc-param-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                </span>
+            </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <table>
+    <thead>
+      <tr>
+        <th><b>RETURNS</b></th>
+        <th><b>DESCRIPTION</b></th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+              <code>float</code>
+          </td>
+          <td class="doc-returns-details">
+            <div class="doc-md-description">
+              <p>Hallucination score</p>
+            </div>
+              <p>
+                <span class="doc-returns-annotation">
+                  <b>TYPE:</b>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                </span>
+              </p>
+          </td>
+        </tr>
+    </tbody>
+  </table>
 
   </div>
 
