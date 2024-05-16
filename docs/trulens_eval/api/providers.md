@@ -1,15 +1,12 @@
 # 📖 Stock Feedback Functions
 
-::: trulens_eval.feedback.provider.hugs.Huggingface
-    options:
-        filters:
-            - "!^_"
+::: trulens*eval.feedback.provider.hugs.Huggingface
+options:
+filters: - "!^*"
 
 ::: trulens_eval.feedback.provider.openai.OpenAI
 
 ::: trulens_eval.feedback.provider.base.LLMProvider
-
-::: trulens_eval.feedback.groundedness
 
 ::: trulens_eval.feedback.groundtruth
 
