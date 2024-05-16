@@ -276,9 +276,20 @@ def generate_meetingbank_comprehensiveness_benchmark(
 
         for model, details in annotations.items():
             summary = details["summary"]
-            avg_informativeness_score = sum(details["informativeness"]) / len(
-                details["informativeness"]
-            )  # informativeness maps to comprehensiveness
+
+            
+            # informativeness maps to comprehensiveness
+            min_informativeness_score = 1
+            max_informativeness_score = 5
+            normalized_informativeness_scores = [
+                (score - min_informativeness_score) / (max_informativeness_score - min_informativeness_score)
+                for score in details["informativeness"]
+            ]
+            avg_informativeness_score = sum(normalized_informativeness_scores) / len(
+                normalized_informativeness_scores
+            )  
+
+            # [1, 3, 5] -> [0, 0.5, 1]
             yield {
                 # "summarizer_model": model,
                 "query":
@@ -287,7 +298,7 @@ def generate_meetingbank_comprehensiveness_benchmark(
                     summary,
                 "expected_score":
                     calculate_expected_score(
-                        [avg_informativeness_score / 5
+                        [avg_informativeness_score
                         ],  #  normalize score from 1 to 5 to 0 to 1.0
                         [1.0]
                     )
