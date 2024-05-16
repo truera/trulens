@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.17">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.13">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.bcfcd587.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -4346,7 +4346,7 @@ data = [rec1, rec2]</div>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.feedback</span> <span class="kn">import</span> <span class="n">Feedback</span>
 
 <span class="c1"># Initialize provider class</span>
-<span class="n">openai</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
 <span class="c1"># Select context to be used in feedback. We select the return values of the</span>
 <span class="c1"># virtual `get_context` call in the virtual `retriever` component. Names are</span>
@@ -4355,25 +4355,21 @@ data = [rec1, rec2]</div>
 
 <span class="c1"># Question/statement relevance between question and each context chunk.</span>
 <span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
 <span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Groundedness</span>
-<span class="n">grounded</span> <span class="o">=</span> <span class="n">Groundedness</span><span class="p">(</span><span class="n">groundedness_provider</span><span class="o">=</span><span class="n">openai</span><span class="p">)</span>
-
 <span class="c1"># Define a groundedness feedback function</span>
 <span class="n">f_groundedness</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">grounded</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Groundedness"</span><span class="p">)</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Groundedness"</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span>
     <span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
-    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">grounded</span><span class="o">.</span><span class="n">grounded_statements_aggregator</span><span class="p">)</span>
 <span class="p">)</span>
 
 <span class="c1"># Question/answer relevance between overall question and answer.</span>
 <span class="n">f_qa_relevance</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Answer Relevance"</span><span class="p">)</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Answer Relevance"</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
 <span class="p">)</span>
 </pre></div>
@@ -4381,7 +4377,7 @@ data = [rec1, rec2]</div>
 from trulens_eval.feedback.feedback import Feedback
 
 # Initialize provider class
-openai = OpenAI()
+provider = OpenAI()
 
 # Select context to be used in feedback. We select the return values of the
 # virtual `get_context` call in the virtual `retriever` component. Names are
@@ -4390,25 +4386,21 @@ context = context_call.rets[:]
 
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(openai.qs_relevance)
+    Feedback(provider.context_relevance_with_cot_reasons)
     .on_input()
     .on(context)
 )
 
-from trulens_eval.feedback import Groundedness
-grounded = Groundedness(groundedness_provider=openai)
-
 # Define a groundedness feedback function
 f_groundedness = (
-    Feedback(grounded.groundedness_measure_with_cot_reasons, name = "Groundedness")
+    Feedback(provider.groundedness_measure_with_cot_reasons, name = "Groundedness")
     .on(context.collect())
     .on_output()
-    .aggregate(grounded.grounded_statements_aggregator)
 )
 
 # Question/answer relevance between overall question and answer.
 f_qa_relevance = (
-    Feedback(openai.relevance_with_cot_reasons, name = "Answer Relevance")
+    Feedback(provider.relevance_with_cot_reasons, name = "Answer Relevance")
     .on_input_output()
 )</div>
 </div>
@@ -4613,7 +4605,7 @@ tru.run_dashboard(force=True)</div>
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.1e8ae164.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.17">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.13">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.bcfcd587.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -2590,7 +2590,7 @@
         <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.openai.AzureOpenAI" class="md-nav__link">
     <span class="md-ellipsis">
-      &nbsp;AzureOpenAI
+      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;AzureOpenAI
     </span>
   </a>
   
@@ -3645,7 +3645,7 @@
         <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.openai.AzureOpenAI" class="md-nav__link">
     <span class="md-ellipsis">
-      &nbsp;AzureOpenAI
+      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;AzureOpenAI
     </span>
   </a>
   
@@ -3670,12 +3670,13 @@
 
 
 <h1 id="azureopenai-provider">AzureOpenAI Provider<a class="headerlink" href="#azureopenai-provider" title="Permanent link">&para;</a></h1>
-<p>Below is how you can instantiate AzureOpenAI as a provider.</p>
-<p>Additionally, all feedback functions listed in these two classes can be run with AzureOpenAI:</p>
-<ul>
-<li><a class="autorefs autorefs-internal" href="../#trulens_eval.feedback.provider.openai.OpenAI">OpenAI class</a></li>
-<li><a class="autorefs autorefs-internal" href="../../llmprovider/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider class</a></li>
-</ul>
+<p>Below is how you can instantiate <em>Azure OpenAI</em> as a provider.</p>
+<p>All feedback functions listed in the base <a class="autorefs autorefs-internal" href="../../../../evaluation/feedback_implementations/stock/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider
+class</a> can be run with the AzureOpenAI Provider.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><em>Azure OpenAI</em> does not support the <em>OpenAI</em> moderation endpoint.</p>
+</div>
 
 
 <div class="doc doc-object doc-class">
@@ -3691,11 +3692,12 @@
 
   <div class="doc doc-contents first">
           <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.openai.OpenAI" href="../#trulens_eval.feedback.provider.openai.OpenAI">OpenAI</a></code></p>
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.openai.OpenAI" href="../../../../evaluation/feedback_implementations/stock/#trulens_eval.feedback.provider.openai.OpenAI">OpenAI</a></code></p>
 
   
       <p>Out of the box feedback functions calling AzureOpenAI APIs. Has the same
-functionality as OpenAI out of the box feedback functions. Please export the
+functionality as OpenAI out of the box feedback functions, excluding the 
+moderation endpoint which is not supported by Azure. Please export the
 following env variables. These can be retrieved from <a href="https://oai.azure.com/">https://oai.azure.com/</a>
 .</p>
 <ul>
@@ -3819,7 +3821,7 @@ following env variables. These can be retrieved from <a href="https://oai.azure.
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.1e8ae164.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       

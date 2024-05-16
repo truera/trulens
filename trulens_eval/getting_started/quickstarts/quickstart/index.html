@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.17">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.13">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.bcfcd587.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -4246,9 +4246,11 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"OPENAI_API_KEY"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sk-..."</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"HUGGINGFACE_API_KEY"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"hf_..."</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-2">import os
-os.environ["OPENAI_API_KEY"] = "sk-..."</div>
+os.environ["OPENAI_API_KEY"] = "sk-..."
+os.environ["HUGGINGFACE_API_KEY"] = "hf_..."</div>
 </div>
 </div>
 </div>
@@ -4334,45 +4336,6 @@ including one of the largest library systems in the world.
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
-<span class="n">oai_client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
-
-<span class="n">oai_client</span><span class="o">.</span><span class="n">embeddings</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-        <span class="n">model</span><span class="o">=</span><span class="s2">"text-embedding-ada-002"</span><span class="p">,</span>
-        <span class="nb">input</span><span class="o">=</span><span class="n">university_info</span>
-    <span class="p">)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-4">from openai import OpenAI
-oai_client = OpenAI()
-
-oai_client.embeddings.create(
-        model="text-embedding-ada-002",
-        input=university_info
-    )</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy for="cell-5">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">chromadb</span>
 <span class="kn">from</span> <span class="nn">chromadb.utils.embedding_functions</span> <span class="kn">import</span> <span class="n">OpenAIEmbeddingFunction</span>
 
@@ -4384,7 +4347,7 @@ oai_client.embeddings.create(
 <span class="n">vector_store</span> <span class="o">=</span> <span class="n">chroma_client</span><span class="o">.</span><span class="n">get_or_create_collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Universities"</span><span class="p">,</span>
                                                       <span class="n">embedding_function</span><span class="o">=</span><span class="n">embedding_function</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5">import chromadb
+<div class="clipboard-copy-txt" id="cell-4">import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
 embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'),
@@ -4419,7 +4382,7 @@ vector_store = chroma_client.get_or_create_collection(name="Universities",
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-6">
+<clipboard-copy for="cell-5">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4431,7 +4394,7 @@ vector_store = chroma_client.get_or_create_collection(name="Universities",
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">vector_store</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"uni_info"</span><span class="p">,</span> <span class="n">documents</span><span class="o">=</span><span class="n">university_info</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6">vector_store.add("uni_info", documents=university_info)</div>
+<div class="clipboard-copy-txt" id="cell-5">vector_store.add("uni_info", documents=university_info)</div>
 </div>
 </div>
 </div>
@@ -4457,7 +4420,7 @@ vector_store = chroma_client.get_or_create_collection(name="Universities",
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-7">
+<clipboard-copy for="cell-6">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4471,7 +4434,7 @@ vector_store = chroma_client.get_or_create_collection(name="Universities",
 <span class="kn">from</span> <span class="nn">trulens_eval.tru_custom_app</span> <span class="kn">import</span> <span class="n">instrument</span>
 <span class="n">tru</span> <span class="o">=</span> <span class="n">Tru</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-7">from trulens_eval import Tru
+<div class="clipboard-copy-txt" id="cell-6">from trulens_eval import Tru
 from trulens_eval.tru_custom_app import instrument
 tru = Tru()</div>
 </div>
@@ -4488,7 +4451,7 @@ tru = Tru()</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-8">
+<clipboard-copy for="cell-7">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4498,7 +4461,10 @@ tru = Tru()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="k">class</span> <span class="nc">RAG_from_scratch</span><span class="p">:</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="n">oai_client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+
+<span class="k">class</span> <span class="nc">RAG_from_scratch</span><span class="p">:</span>
     <span class="nd">@instrument</span>
     <span class="k">def</span> <span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
@@ -4508,7 +4474,7 @@ tru = Tru()</div>
         <span class="n">query_texts</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
         <span class="n">n_results</span><span class="o">=</span><span class="mi">2</span>
     <span class="p">)</span>
-        <span class="k">return</span> <span class="n">results</span><span class="p">[</span><span class="s1">'documents'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">results</span><span class="p">[</span><span class="s1">'documents'</span><span class="p">]</span>
 
     <span class="nd">@instrument</span>
     <span class="k">def</span> <span class="nf">generate_completion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context_str</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -4540,7 +4506,10 @@ tru = Tru()</div>
 
 <span class="n">rag</span> <span class="o">=</span> <span class="n">RAG_from_scratch</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8">class RAG_from_scratch:
+<div class="clipboard-copy-txt" id="cell-7">from openai import OpenAI
+oai_client = OpenAI()
+
+class RAG_from_scratch:
     @instrument
     def retrieve(self, query: str) -&gt; list:
         """
@@ -4550,7 +4519,7 @@ tru = Tru()</div>
         query_texts=query,
         n_results=2
     )
-        return results['documents'][0]
+        return results['documents']
 
     @instrument
     def generate_completion(self, query: str, context_str: list) -&gt; str:
@@ -4606,7 +4575,7 @@ rag = RAG_from_scratch()</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-9">
+<clipboard-copy for="cell-8">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4617,23 +4586,18 @@ rag = RAG_from_scratch()</div>
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">Feedback</span><span class="p">,</span> <span class="n">Select</span>
-<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Groundedness</span>
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback.provider.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
 
-<span class="n">grounded</span> <span class="o">=</span> <span class="n">Groundedness</span><span class="p">(</span><span class="n">groundedness_provider</span><span class="o">=</span><span class="n">provider</span><span class="p">)</span>
-
 <span class="c1"># Define a groundedness feedback function</span>
 <span class="n">f_groundedness</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">grounded</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Groundedness"</span><span class="p">)</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Groundedness"</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">rets</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span>
     <span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
-    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">grounded</span><span class="o">.</span><span class="n">grounded_statements_aggregator</span><span class="p">)</span>
 <span class="p">)</span>
-
 <span class="c1"># Question/answer relevance between overall question and answer.</span>
 <span class="n">f_answer_relevance</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Answer Relevance"</span><span class="p">)</span>
@@ -4641,32 +4605,27 @@ rag = RAG_from_scratch()</div>
     <span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
 <span class="p">)</span>
 
-<span class="c1"># Question/statement relevance between question and each context chunk.</span>
+<span class="c1"># Context relevance between question and each context chunk.</span>
 <span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Context Relevance"</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">rets</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span>
-    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">rets</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> <span class="c1"># choose a different aggregation method if you wish</span>
 <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9">from trulens_eval import Feedback, Select
-from trulens_eval.feedback import Groundedness
+<div class="clipboard-copy-txt" id="cell-8">from trulens_eval import Feedback, Select
 from trulens_eval.feedback.provider.openai import OpenAI
 
 import numpy as np
 
 provider = OpenAI()
 
-grounded = Groundedness(groundedness_provider=provider)
-
 # Define a groundedness feedback function
 f_groundedness = (
-    Feedback(grounded.groundedness_measure_with_cot_reasons, name = "Groundedness")
+    Feedback(provider.groundedness_measure_with_cot_reasons, name = "Groundedness")
     .on(Select.RecordCalls.retrieve.rets.collect())
     .on_output()
-    .aggregate(grounded.grounded_statements_aggregator)
 )
-
 # Question/answer relevance between overall question and answer.
 f_answer_relevance = (
     Feedback(provider.relevance_with_cot_reasons, name = "Answer Relevance")
@@ -4674,12 +4633,12 @@ f_answer_relevance = (
     .on_output()
 )
 
-# Question/statement relevance between question and each context chunk.
+# Context relevance between question and each context chunk.
 f_context_relevance = (
     Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
     .on(Select.RecordCalls.retrieve.args.query)
-    .on(Select.RecordCalls.retrieve.rets.collect())
-    .aggregate(np.mean)
+    .on(Select.RecordCalls.retrieve.rets)
+    .aggregate(np.mean) # choose a different aggregation method if you wish
 )</div>
 </div>
 </div>
@@ -4706,7 +4665,7 @@ f_context_relevance = (
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-10">
+<clipboard-copy for="cell-9">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4721,7 +4680,7 @@ f_context_relevance = (
     <span class="n">app_id</span> <span class="o">=</span> <span class="s1">'RAG v1'</span><span class="p">,</span>
     <span class="n">feedbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">f_groundedness</span><span class="p">,</span> <span class="n">f_answer_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-10">from trulens_eval import TruCustomApp
+<div class="clipboard-copy-txt" id="cell-9">from trulens_eval import TruCustomApp
 tru_rag = TruCustomApp(rag,
     app_id = 'RAG v1',
     feedbacks = [f_groundedness, f_answer_relevance, f_context_relevance])</div>
@@ -4750,7 +4709,7 @@ tru_rag = TruCustomApp(rag,
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-11">
+<clipboard-copy for="cell-10">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4763,8 +4722,35 @@ tru_rag = TruCustomApp(rag,
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="k">with</span> <span class="n">tru_rag</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
     <span class="n">rag</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"When was the University of Washington founded?"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11">with tru_rag as recording:
+<div class="clipboard-copy-txt" id="cell-10">with tru_rag as recording:
     rag.query("When was the University of Washington founded?")</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-11">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_leaderboard</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[</span><span class="s2">"RAG v1"</span><span class="p">])</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-11">tru.get_leaderboard(app_ids=["RAG v1"])</div>
 </div>
 </div>
 </div>
@@ -4789,36 +4775,9 @@ tru_rag = TruCustomApp(rag,
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_leaderboard</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[</span><span class="s2">"RAG v1"</span><span class="p">])</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-12">tru.get_leaderboard(app_ids=["RAG v1"])</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy for="cell-13">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13">tru.run_dashboard()</div>
+<div class="clipboard-copy-txt" id="cell-12">tru.run_dashboard()</div>
 </div>
 </div>
 </div>
@@ -4887,7 +4846,7 @@ tru_rag = TruCustomApp(rag,
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.1e8ae164.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

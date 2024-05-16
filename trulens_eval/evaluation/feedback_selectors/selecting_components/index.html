@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.17">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.13">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.bcfcd587.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3752,9 +3752,14 @@ LLM application trace.</p>
 to refer to parts of an LLM stack trace and use those when defining evaluations.
 For example, the following lens refers to the input to the retrieve step of the
 app called query.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">query</span>
 </code></pre></div>
+</div>
 <p>Such lenses can then be used to define evaluations as so:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Context relevance between question and each context chunk.</span>
 <span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Context Relevance&quot;</span><span class="p">)</span>
@@ -3763,6 +3768,7 @@ app called query.</p>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
+</div>
 <p>In most cases, the Select object produces only a single item but can also
 address multiple items.</p>
 <p>For example: <code>Select.RecordCalls.retrieve.args.query</code> refers to only one item.</p>
@@ -3770,16 +3776,15 @@ address multiple items.</p>
 the documents returned by the <code>retrieve</code> method. These items can be evaluated separately,
 as shown above, or can be collected into an array for evaluation with <code>.collect()</code>.
 This is most commonly used for groundedness evaluations.</p>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="n">grounded</span> <span class="o">=</span> <span class="n">Groundedness</span><span class="p">(</span><span class="n">groundedness_provider</span><span class="o">=</span><span class="n">provider</span><span class="p">)</span>
-
-<span class="n">f_groundedness</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">grounded</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Groundedness&quot;</span><span class="p">)</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="n">f_groundedness</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Groundedness&quot;</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">rets</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span>
     <span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
-    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">grounded</span><span class="o">.</span><span class="n">grounded_statements_aggregator</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
+</div>
 <p>Selectors can also access multiple calls to the same component. In agentic applications,
 this is an increasingly common practice. For example, an agent could complete multiple
 calls to a <code>retrieve</code> method to complete the task required.</p>
@@ -3956,7 +3961,7 @@ reason behind the <code>Select.RecordCalls</code> alias.</p>
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.1e8ae164.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

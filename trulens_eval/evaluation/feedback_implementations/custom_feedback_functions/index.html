@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.17">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.13">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.bcfcd587.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -4403,63 +4403,61 @@ class Custom_AzureOpenAI(AzureOpenAI):
 <span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">prompts</span>
 
 <span class="k">class</span> <span class="nc">Custom_AzureOpenAI</span><span class="p">(</span><span class="n">AzureOpenAI</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">qs_relevance_with_cot_reasons_extreme</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">context_relevance_with_cot_reasons_extreme</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Tweaked version of question statement relevance, extending AzureOpenAI provider.</span>
+<span class="sd">        Tweaked version of context relevance, extending AzureOpenAI provider.</span>
 <span class="sd">        A function that completes a template to check the relevance of the statement to the question.</span>
 <span class="sd">        Scoring guidelines for scores 5-8 are removed to push the LLM to more extreme scores.</span>
 <span class="sd">        Also uses chain of thought methodology and emits the reasons.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            question (str): A question being asked. </span>
-<span class="sd">            statement (str): A statement to the question.</span>
+<span class="sd">            context (str): A statement to the question.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".</span>
 <span class="sd">        """</span>
 
-        <span class="n">system_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prompts</span><span class="o">.</span><span class="n">QS_RELEVANCE</span><span class="p">,</span> <span class="n">question</span> <span class="o">=</span> <span class="n">question</span><span class="p">,</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">statement</span><span class="p">)</span>
-
         <span class="c1"># remove scoring guidelines around middle scores</span>
-        <span class="n">system_prompt</span> <span class="o">=</span> <span class="n">system_prompt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="n">prompts</span><span class="o">.</span><span class="n">CONTEXT_RELEVANCE_SYSTEM</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
         <span class="s2">"- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
         
-        <span class="n">system_prompt</span> <span class="o">=</span> <span class="n">system_prompt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+        <span class="n">user_prompt</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prompts</span><span class="o">.</span><span class="n">CONTEXT_RELEVANCE_USER</span><span class="p">,</span> <span class="n">question</span> <span class="o">=</span> <span class="n">question</span><span class="p">,</span> <span class="n">context</span> <span class="o">=</span> <span class="n">context</span><span class="p">)</span>
+        <span class="n">user_prompt</span> <span class="o">=</span> <span class="n">user_prompt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
             <span class="s2">"RELEVANCE:"</span><span class="p">,</span> <span class="n">prompts</span><span class="o">.</span><span class="n">COT_REASONS_TEMPLATE</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_score_and_reasons</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_score_and_reasons</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-5">from typing import Tuple, Dict
 from trulens_eval.feedback import prompts
 
 class Custom_AzureOpenAI(AzureOpenAI):
-    def qs_relevance_with_cot_reasons_extreme(self, question: str, statement: str) -&gt; Tuple[float, Dict]:
+    def context_relevance_with_cot_reasons_extreme(self, question: str, context: str) -&gt; Tuple[float, Dict]:
         """
-        Tweaked version of question statement relevance, extending AzureOpenAI provider.
+        Tweaked version of context relevance, extending AzureOpenAI provider.
         A function that completes a template to check the relevance of the statement to the question.
         Scoring guidelines for scores 5-8 are removed to push the LLM to more extreme scores.
         Also uses chain of thought methodology and emits the reasons.
 
         Args:
             question (str): A question being asked. 
-            statement (str): A statement to the question.
+            context (str): A statement to the question.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
 
-        system_prompt = str.format(prompts.QS_RELEVANCE, question = question, statement = statement)
-
         # remove scoring guidelines around middle scores
-        system_prompt = system_prompt.replace(
+        system_prompt = prompts.CONTEXT_RELEVANCE_SYSTEM.replace(
         "- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.\n\n", "")
         
-        system_prompt = system_prompt.replace(
+        user_prompt = str.format(prompts.CONTEXT_RELEVANCE_USER, question = question, context = context)
+        user_prompt = user_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
 
-        return self.generate_score_and_reasons(system_prompt)</div>
+        return self.generate_score_and_reasons(system_prompt, user_prompt)</div>
 </div>
 </div>
 </div>
@@ -4680,7 +4678,7 @@ tru.add_feedbacks(feedback_results)
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.1e8ae164.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

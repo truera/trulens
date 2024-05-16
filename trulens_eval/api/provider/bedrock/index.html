@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.17">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.13">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.bcfcd587.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -2617,7 +2617,7 @@
         <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.bedrock.Bedrock" class="md-nav__link">
     <span class="md-ellipsis">
-      &nbsp;Bedrock
+      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Bedrock
     </span>
   </a>
   
@@ -2637,7 +2637,7 @@
           <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.bedrock.Bedrock.generate_score" class="md-nav__link">
     <span class="md-ellipsis">
-      &nbsp;generate_score
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;generate_score
     </span>
   </a>
   
@@ -2646,7 +2646,7 @@
           <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.bedrock.Bedrock.generate_score_and_reasons" class="md-nav__link">
     <span class="md-ellipsis">
-      &nbsp;generate_score_and_reasons
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;generate_score_and_reasons
     </span>
   </a>
   
@@ -3682,7 +3682,7 @@
         <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.bedrock.Bedrock" class="md-nav__link">
     <span class="md-ellipsis">
-      &nbsp;Bedrock
+      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Bedrock
     </span>
   </a>
   
@@ -3702,7 +3702,7 @@
           <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.bedrock.Bedrock.generate_score" class="md-nav__link">
     <span class="md-ellipsis">
-      &nbsp;generate_score
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;generate_score
     </span>
   </a>
   
@@ -3711,7 +3711,7 @@
           <li class="md-nav__item">
   <a href="#trulens_eval.feedback.provider.bedrock.Bedrock.generate_score_and_reasons" class="md-nav__link">
     <span class="md-ellipsis">
-      &nbsp;generate_score_and_reasons
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;generate_score_and_reasons
     </span>
   </a>
   
@@ -3750,7 +3750,7 @@
 Bedrock</a> is a fully managed service that makes
 FMs from leading AI startups and Amazon available via an API, so you can choose
 from a wide range of FMs to find the model that is best suited for your use case</p>
-<p>All feedback functions listed in the base <a class="autorefs autorefs-internal" href="../llmprovider/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider
+<p>All feedback functions listed in the base <a class="autorefs autorefs-internal" href="../../../evaluation/feedback_implementations/stock/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider
 class</a> can be run with AWS
 Bedrock.</p>
 
@@ -3768,7 +3768,7 @@ Bedrock.</p>
 
   <div class="doc doc-contents first">
           <p class="doc doc-class-bases">
-            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.base.LLMProvider" href="../llmprovider/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</a></code></p>
+            Bases: <code><a class="autorefs autorefs-internal" title="trulens_eval.feedback.provider.base.LLMProvider" href="../../../evaluation/feedback_implementations/stock/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider</a></code></p>
 
   
       <p>A set of AWS Feedback Functions.</p>
@@ -3807,7 +3807,12 @@ Bedrock.</p>
 
 
 <a href="#trulens_eval.feedback.provider.bedrock.Bedrock.generate_score" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">generate_score</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score</span><span class="p">(</span>
+    <span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
+    <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -3916,7 +3921,12 @@ Bedrock.</p>
 
 
 <a href="#trulens_eval.feedback.provider.bedrock.Bedrock.generate_score_and_reasons" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">generate_score_and_reasons</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">generate_score_and_reasons</span><span class="p">(</span>
+    <span class="n">system_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
+    <span class="n">user_prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]]</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
@@ -4090,7 +4100,7 @@ Bedrock.</p>
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.1e8ae164.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

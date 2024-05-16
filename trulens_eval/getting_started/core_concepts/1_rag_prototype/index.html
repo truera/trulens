@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.17">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.13">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.bcfcd587.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -4404,19 +4404,19 @@ rag_basic = index.as_query_engine(text_qa_template = system_prompt)</div>
 <span class="c1"># start fresh</span>
 <span class="n">tru</span><span class="o">.</span><span class="n">reset_database</span><span class="p">()</span>
 
-<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Groundedness</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">fOpenAI</span><span class="p">()</span>
 
-<span class="n">openai</span> <span class="o">=</span> <span class="n">fOpenAI</span><span class="p">()</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="o">.</span><span class="n">select_context</span><span class="p">()</span>
 
-<span class="n">qa_relevance</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"Answer Relevance"</span><span class="p">)</span>
+<span class="n">answer_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"Answer Relevance"</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
 <span class="p">)</span>
 
-<span class="n">qs_relevance</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Context Relevance"</span><span class="p">)</span>
+<span class="n">context_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Context Relevance"</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
-    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">TruLlama</span><span class="o">.</span><span class="n">select_source_nodes</span><span class="p">()</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
 <span class="p">)</span>
 
@@ -4435,21 +4435,16 @@ rag_basic = index.as_query_engine(text_qa_template = system_prompt)</div>
 <span class="n">f_embed_dist</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Feedback</span><span class="p">(</span><span class="n">embed</span><span class="o">.</span><span class="n">cosine_distance</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
-    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">TruLlama</span><span class="o">.</span><span class="n">select_source_nodes</span><span class="p">()</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
 <span class="p">)</span>
-
-<span class="kn">from</span> <span class="nn">trulens_eval.feedback</span> <span class="kn">import</span> <span class="n">Groundedness</span>
-
-<span class="n">grounded</span> <span class="o">=</span> <span class="n">Groundedness</span><span class="p">(</span><span class="n">groundedness_provider</span><span class="o">=</span><span class="n">openai</span><span class="p">)</span>
 
 <span class="n">f_groundedness</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">grounded</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"Groundedness"</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">TruLlama</span><span class="o">.</span><span class="n">select_source_nodes</span><span class="p">()</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"Groundedness"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">collect</span><span class="p">())</span>
         <span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
-        <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">grounded</span><span class="o">.</span><span class="n">grounded_statements_aggregator</span><span class="p">)</span>
 <span class="p">)</span>
 
-<span class="n">honest_feedbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">qa_relevance</span><span class="p">,</span> <span class="n">qs_relevance</span><span class="p">,</span> <span class="n">f_embed_dist</span><span class="p">,</span> <span class="n">f_groundedness</span><span class="p">]</span>
+<span class="n">honest_feedbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">answer_relevance</span><span class="p">,</span> <span class="n">context_relevance</span><span class="p">,</span> <span class="n">f_embed_dist</span><span class="p">,</span> <span class="n">f_groundedness</span><span class="p">]</span>
 
 <span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">FeedbackMode</span>
 
@@ -4467,19 +4462,19 @@ tru = Tru()
 # start fresh
 tru.reset_database()
 
-from trulens_eval.feedback import Groundedness
+provider = fOpenAI()
 
-openai = fOpenAI()
+context = TruLlama.select_context()
 
-qa_relevance = (
-    Feedback(openai.relevance_with_cot_reasons, name="Answer Relevance")
+answer_relevance = (
+    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
     .on_input_output()
 )
 
-qs_relevance = (
-    Feedback(openai.relevance_with_cot_reasons, name = "Context Relevance")
+context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
     .on_input()
-    .on(TruLlama.select_source_nodes().node.text)
+    .on(context)
     .aggregate(np.mean)
 )
 
@@ -4498,21 +4493,16 @@ embed = Embeddings(embed_model=embed_model)
 f_embed_dist = (
     Feedback(embed.cosine_distance)
     .on_input()
-    .on(TruLlama.select_source_nodes().node.text)
+    .on(context)
 )
-
-from trulens_eval.feedback import Groundedness
-
-grounded = Groundedness(groundedness_provider=openai)
 
 f_groundedness = (
-    Feedback(grounded.groundedness_measure_with_cot_reasons, name="Groundedness")
-        .on(TruLlama.select_source_nodes().node.text.collect())
+    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
+        .on(context.collect())
         .on_output()
-        .aggregate(grounded.grounded_statements_aggregator)
 )
 
-honest_feedbacks = [qa_relevance, qs_relevance, f_embed_dist, f_groundedness]
+honest_feedbacks = [answer_relevance, context_relevance, f_embed_dist, f_groundedness]
 
 from trulens_eval import FeedbackMode
 
@@ -4687,7 +4677,7 @@ with tru_recorder_rag_basic as recording:
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "toc.follow", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.1e8ae164.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       
