@@ -203,10 +203,10 @@ class Huggingface(Provider):
             from trulens_eval.feedback import Feedback
             from trulens_eval.feedback.provider.hugs = Huggingface
 
-            provider = Huggingface()
+            huggingface_provider = Huggingface()
     
             f_groundedness = (
-                Feedback(provider.groundedness_measure_with_nli)
+                Feedback(huggingface_provider.groundedness_measure_with_nli)
                 .on(context)
                 .on_output()
             ```
@@ -254,10 +254,10 @@ class Huggingface(Provider):
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.hugs import Huggingface
-            provider = Huggingface()
+            huggingface_provider = Huggingface()
 
             feedback = (
-                Feedback(provider.context_relevance)
+                Feedback(huggingface_provider.context_relevance)
                 .on_input()
                 .on(context)
                 .aggregate(np.mean)
@@ -305,14 +305,11 @@ class Huggingface(Provider):
             feedback = Feedback(huggingface_provider.positive_sentiment).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
+            float: A value between 0 (negative sentiment) and 1 (positive sentiment).
         """
 
         max_length = 500
@@ -343,18 +340,14 @@ class Huggingface(Provider):
             from trulens_eval.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
-            feedback = Feedback(huggingface_provider.not_toxic).on_output() 
+            feedback = Feedback(huggingface_provider.toxic).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 1 being "toxic" and 0 being "not toxic".
+            float: A value between 0 (not toxic) and 1 (toxic).
         """
 
         assert len(text) > 0, "Input cannot be blank."
