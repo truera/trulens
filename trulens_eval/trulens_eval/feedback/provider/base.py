@@ -1028,6 +1028,50 @@ class LLMProvider(Provider):
             prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response)) +
             response
         )
+    
+    def _generate_key_points(self, source: str):
+        """
+        Uses chat completion model. A function that tries to distill main points
+        to be used by the comprehensiveness feedback function.
+
+         Args:
+            source (str): Text corresponding to source material. 
+
+        Returns:
+            (str) key points of the source text.
+        """
+
+        return self._create_chat_completion(prompt = 
+            prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT + str.format(
+                prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source)
+        )
+
+    def _assess_key_point_inclusion(self, key_points: str, summary: str) -> List:
+        """
+        Splits key points by newlines and assesses if each one is included in the summary.
+
+        Args:
+            key_points (str): Key points separated by newlines.
+            summary (str): The summary text to check for inclusion of key points.
+
+        Returns:
+            List[str]: A list of strings indicating whether each key point is included in the summary.
+        """
+        key_points_list = key_points.split('\n')
+
+        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
+        inclusion_assessments = []
+        for key_point in key_points_list:
+            user_prompt = str.format(
+                prompts.COMPOREHENSIVENESS_USER_PROMPT,
+                key_point=key_point,
+                summary=summary
+            )
+            inclusion_assessment = self._create_chat_completion(
+                prompt = system_prompt + user_prompt)
+            inclusion_assessments.append(inclusion_assessment)
+
+        return inclusion_assessments
 
     def comprehensiveness_with_cot_reasons(self, source: str,
                                            summary: str) -> Tuple[float, Dict]:
@@ -1052,23 +1096,28 @@ class LLMProvider(Provider):
                 points missed).
         """
 
-        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
-        user_prompt = str.format(
-            prompts.COMPOREHENSIVENESS_USER_PROMPT,
-            source=source,
-            summary=summary
-        )
-        return self.generate_score_and_reasons(system_prompt, user_prompt)
-
+        key_points = self._generate_key_points(source)
+        key_point_inclusion_assessments = self._assess_key_point_inclusion(key_points, summary)
+        scores = []
+        reasons = ""
+        for assessment in key_point_inclusion_assessments:
+            reasons += assessment + "\n\n"
+            if assessment:
+                first_line = assessment.split('\n')[0]
+                score = re_0_10_rating(first_line) / 10
+                scores.append(score)
+                
+        score = sum(scores) / len(scores) if scores else 0
+        return score, {"reasons": reasons}
+    
     def summarization_with_cot_reasons(self, source: str,
                                        summary: str) -> Tuple[float, Dict]:
         """
-        Summarization is deprecated in place of comprehensiveness. Defaulting to comprehensiveness_with_cot_reasons.
+        Summarization is deprecated in place of comprehensiveness. This function is no longer implemented.
         """
-        logger.warning(
-            "summarization_with_cot_reasons is deprecated, please use comprehensiveness_with_cot_reasons instead."
+        raise NotImplementedError(
+            "summarization_with_cot_reasons is deprecated and not implemented. Please use comprehensiveness_with_cot_reasons instead."
         )
-        return self.comprehensiveness_with_cot_reasons(source, summary)
 
     def stereotypes(self, prompt: str, response: str) -> float:
         """
