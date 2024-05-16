@@ -157,9 +157,7 @@ class Huggingface(Provider):
             text2 (str): Comparative text to evaluate.
 
         Returns:
-
-            float: A value between 0 and 1. 0 being "different languages" and 1
-            being "same languages".
+            float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
         """
 
         def get_scores(text):
@@ -218,8 +216,7 @@ class Huggingface(Provider):
             statement (str): The statement to check groundedness
 
         Returns:
-            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
-            str: 
+            Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.
         """
         nltk.download('punkt')
         groundedness_scores = {}
@@ -267,8 +264,7 @@ class Huggingface(Provider):
             context (str): Comparative contextual information.
 
         Returns:
-            float: A value between 0 and 1. 0 being irrelevant and 1
-            being a relevant context for addressing the prompt.
+            float: A value between 0 and 1. 0 being irrelevant and 1 being a relevant context for addressing the prompt.
         """
 
         if prompt[len(prompt) - 1] != '.':
@@ -311,8 +307,7 @@ class Huggingface(Provider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1
-            being "positive sentiment".
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1 being "positive sentiment".
         """
 
         max_length = 500
@@ -354,8 +349,7 @@ class Huggingface(Provider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 1 being "toxic" and 0 being "not
-            toxic".
+            float: A value between 0 and 1. 1 being "toxic" and 0 being "not toxic".
         """
 
         assert len(text) > 0, "Input cannot be blank."
@@ -570,14 +564,14 @@ class Huggingface(Provider):
         true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
         less than 0.5 the statement is evaluated as a hallucination.
 
-        **!!! example
-    **
-        ```python
-        from trulens_eval.feedback.provider.hugs import Huggingface
-        huggingface_provider = Huggingface()
+        !!! example
 
-        score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")
-        ```
+            ```python
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            huggingface_provider = Huggingface()
+
+            score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")
+            ```
 
         Args:
             model_output (str): This is what an LLM returns based on the text chunks retrieved during RAG
