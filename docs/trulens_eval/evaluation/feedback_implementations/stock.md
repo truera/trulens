@@ -26,7 +26,7 @@ API Reference: [Huggingface][trulens_eval.feedback.provider.hugs.Huggingface].
         summary: false
         group_by_category: false
         members_order: alphabetical
-        filters: 
+        filters:
             - "!^_"
 
 ### OpenAI
@@ -53,7 +53,7 @@ API Reference: [OpenAI][trulens_eval.feedback.provider.openai.OpenAI].
         summary: false
         group_by_category: false
         members_order: alphabetical
-        filters: 
+        filters:
             - "!^_"
 
 ## Generation-based: LLMProvider
@@ -80,7 +80,7 @@ API Reference: [LLMProvider][trulens_eval.feedback.provider.base.LLMProvider].
         summary: false
         group_by_category: false
         members_order: alphabetical
-        filters: 
+        filters:
             - "!^_"
 
 ## Embedding-based
@@ -107,7 +107,7 @@ API Reference: [Embeddings][trulens_eval.feedback.embeddings.Embeddings].
         summary: false
         group_by_category: false
         members_order: alphabetical
-        filters: 
+        filters:
             - "!^_"
 
 ## Combinations
@@ -136,5 +136,5 @@ API Reference: [GroundTruthAgreement][trulens_eval.feedback.groundtruth.GroundTr
         summary: false
         group_by_category: false
         members_order: alphabetical
-        filters: 
+        filters:
             - "!^_"
