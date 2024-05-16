@@ -1,8 +1,9 @@
 # 📖 Stock Feedback Functions
 
 ::: trulens_eval.feedback.provider.hugs.Huggingface
-options:
-filters: - "!^\*"
+    options:
+        filters:
+            - "!^_"
 
 ::: trulens_eval.feedback.provider.openai.OpenAI
 
