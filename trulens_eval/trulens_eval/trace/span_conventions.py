@@ -1,21 +1,11 @@
+"""
+Enumarete places were we may want to conform to otel semantic conventions for
+AI. These are still in progress so we are not integrating them yet.
+"""
+
 import dataclasses
 from opentelemetry.semconv.ai import SpanAttributes as ai_span
 
-# TODO: structured data types for attributes?
-"""
-@dataclasses.dataclass
-class RetrieverQuery:
-    text: str
-    embedding: Optional[List[float]]
-
-@dataclasses.dataclass
-class RetrieverContext:
-    text: str
-    score: Optional[float]
-    embedding: Optional[List[float]]
-"""
-
-# TODO: semantic conventions from otel
 
 class SpanVectorDBOTEL(SpanTyped):
     """VectorDB attributes from OpenTelemetry Semantic Conventions for AI.
