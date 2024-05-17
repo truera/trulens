@@ -40,9 +40,9 @@ class CustomAgent(dummy.Dummy):
         with self.tru_app as recorder:
             self.app.respond_to_query(query=data)
 
+        return recorder.get().model_dump_json()
+    
         return "Record placeholder"
-
-        # return recorder.get().model_dump_json()
 
     @invoke.is_span(span_type=mod_span.SpanAgent)
     def set_agent_span(

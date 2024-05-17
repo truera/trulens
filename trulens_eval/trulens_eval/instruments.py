@@ -378,7 +378,7 @@ class Instrument(object):
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
-        print(f"{query}: instrumenting {method_name}={func}")
+        # print(f"{query}: instrumenting {method_name}={func}")
 
         if self.app is None:
             raise ValueError("Instrumentation requires an app but is None.")
@@ -402,7 +402,7 @@ class Instrument(object):
             existing_apps = getattr(func, Instrument.APPS)
             existing_apps.add(self.app)  # weakref set
 
-            print(f"adding app {self.app.app_id} to apps for {query}")
+            # print(f"adding app {self.app.app_id} to apps for {query}")
 
             return func
 
@@ -432,7 +432,7 @@ class Instrument(object):
 
             apps = getattr(tru_wrapper.__wrapped__, Instrument.APPS)
 
-            print(f"got {len(apps)} apps for {query}.{method_name}")
+            # print(f"got {len(apps)} apps for {query}.{method_name}")
 
             # If not within a root method, call the wrapped function without
             # any recording.
@@ -455,9 +455,9 @@ class Instrument(object):
             # call stack hence this might be the first time they are seeing an
             # instrumented method being called.
             for app in apps:
-                print(f"consider app {app.app_id} for {query}.{method_name}")
+                # print(f"consider app {app.app_id} for {query}.{method_name}")
                 for ctx in app.on_new_record(func):
-                    print("  adding ctx", ctx)
+                    # print("  adding ctx", ctx)
                     contexts.add(ctx)
 
             if len(contexts) == 0:
@@ -524,12 +524,12 @@ class Instrument(object):
                         class_name(type(app)), id_str(args[0]),
                         callable_name(func)
                     )
-                    raise RuntimeError(
-                        ("App of type %s no longer knows about object %s method %s. "
-                        "Something might be going wrong.") % (
-                        class_name(type(app)), id_str(args[0]),
-                        callable_name(func))
-                    )
+                    #raise RuntimeError(
+                    #    ("App of type %s no longer knows about object %s method %s. "
+                    #    "Something might be going wrong.") % (
+                    #    class_name(type(app)), id_str(args[0]),
+                    #    callable_name(func))
+                    #)
                     continue
 
                 if ctx not in ctx_stacks:
