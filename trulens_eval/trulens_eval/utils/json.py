@@ -26,7 +26,7 @@ from trulens_eval.utils.pyschema import noserio
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
@@ -109,12 +109,12 @@ def jsonify_for_ui(*args, **kwargs):
 
 def jsonify(
     obj: Any,
-    dicted: Optional[Dict[int, JSON]] = None,
+    dicted: Optional[Dict[int, TJSONLike]] = None,
     instrument: Optional['Instrument'] = None,
     skip_specials: bool = False,
     redact_keys: bool = False,
     include_excluded: bool = True
-) -> JSON:
+) -> TJSONLike:
     """Convert the given object into types that can be serialized in json.
 
     Args:

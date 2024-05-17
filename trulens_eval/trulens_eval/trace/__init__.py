@@ -22,6 +22,7 @@ import pydantic
 from pydantic import PlainSerializer
 from pydantic.functional_validators import PlainValidator
 from typing_extensions import Annotated
+from typing_extensions import TypeAliasType
 
 logger = getLogger(__name__)
 
@@ -37,7 +38,7 @@ TTimestamp = int
 """
 NUM_TIMESTAMP_BITS = 64
 
-TSpanID = int # 
+TSpanID = int
 """Type of span identifiers.
 
 64 bit int as per OpenTelemetry.
@@ -52,6 +53,20 @@ TTraceID = int
 """
 NUM_TRACEID_BITS = 128
 """Number of bits in a trace identifier."""
+
+TLensedAttributeValue = TypeAliasType(
+    "TLensedAttributeValue", 
+    Union[
+        str, int, float, bool,
+        List['TLensedAttributeValue'], Dict[str, 'TLensedAttributeValue']
+    ]
+)
+"""Type of values in span attributes."""
+
+# NOTE(piotrm): pydantic will fail if you specify a recursive type alias without
+# the TypeAliasType schema as above.
+
+TLensedAttributes = Dict[str, TLensedAttributeValue]
 
 T = TypeVar("T")
 
@@ -95,9 +110,17 @@ This is needed to help pydantic figure out how to serialize and deserialize thes
 """
 
 
-def make_hashable(context: ot_span.SpanContext) -> HashableSpanContext:
-    """Make a SpanContext a HashableSpanContext."""
+def make_hashable(
+    context: Optional[ot_span.SpanContext]
+) -> Optional[HashableSpanContext]:
+    """Make a SpanContext a HashableSpanContext.
+    
+    Returns None if input is None.
+    """
     # HACK015: replacing class of contexts to add hashing
+
+    if context is None:
+        return None
 
     if context.__class__ is not HashableSpanContext:
         context.__class__ = HashableSpanContext
@@ -113,6 +136,23 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span) and
     [OpenTelemetry Span
     specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md).
+
+    There are a few places where this class deviates from OT specification.
+    However, the conversion to
+    [ReadableSpan][opentelemetry.sdk.trace.ReadableSpan] with
+    [freeze][trulens_eval.trace.OTSpan.freeze] produces to-spec representations.
+    The deviations are:
+
+    - contexts are stored as
+      [HashableSpanContext][trulens_eval.trace.HashableSpanContext] instead
+      of [SpanContext][opentelemetry.trace.span.SpanContext].
+
+    - attributes are not strictly as per spec which does not allow recursive
+      types. They are instead json-like which allows storing recursive
+      unstructured type. When freezing with
+      [freeze][trulens_eval.trace.OTSpan.freeze], non-spec values are mapped to
+      multiple in-spec attributes. The reverse is done when thawing with
+      [thaw][trulens_eval.trace.OTSpan.thaw].
     """
 
     _vendor: ClassVar[str] = "trulens_eval"
@@ -162,13 +202,19 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
 
     events: List[Tuple[str, ot_types.Attributes, TTimestamp]] = \
         pydantic.Field(default_factory=list)
-    """Events recorded in the span."""
+    """Events recorded in the span.
+    
+    !!! Warning
+
+        Events in OpenTelemetry seem to be synonymous to logs. Do not store
+        anything we want to query or process in events.
+    """
 
     links: ContextMapping[Mapping[str, ot_types.AttributeValue]] = \
         pydantic.Field(default_factory=dict)
     """Relationships to other spans with attributes on each link."""
 
-    attributes: Dict[str, ot_types.AttributeValue] = \
+    attributes: TLensedAttributes = \
         pydantic.Field(default_factory=dict)
     """Attributes of span."""
 
@@ -349,3 +395,5 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
             return parent_context.trace_id
 
         return None
+
+OTSpan.update_forward_refs()

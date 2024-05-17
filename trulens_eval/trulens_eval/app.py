@@ -44,9 +44,9 @@ from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import T
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import JSON_BASES
-from trulens_eval.utils.serial import JSON_BASES_T
+from trulens_eval.utils.serial import TJSONBase
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
@@ -87,12 +87,12 @@ class ComponentView(ABC):
 
     # TODO: replacing with trace.category.Categorizer
 
-    def __init__(self, json: JSON):
+    def __init__(self, json: TJSONLike):
         self.json = json
         self.cls = Class.of_class_info(json)
 
     @staticmethod
-    def of_json(json: JSON) -> 'ComponentView':
+    def of_json(json: TJSONLike) -> 'ComponentView':
         """
         Sort the given json into the appropriate component view type.
         """
@@ -121,7 +121,7 @@ class ComponentView(ABC):
         """
         pass
 
-    def unsorted_parameters(self, skip: Set[str]) -> Dict[str, JSON_BASES_T]:
+    def unsorted_parameters(self, skip: Set[str]) -> Dict[str, TJSONBase]:
         """
         All basic parameters not organized by other accessors.
         """
@@ -171,7 +171,7 @@ class LangChainComponent(ComponentView):
         return False
 
     @staticmethod
-    def of_json(json: JSON) -> 'LangChainComponent':
+    def of_json(json: TJSONLike) -> 'LangChainComponent':
         from trulens_eval.utils.langchain import component_of_json
         return component_of_json(json)
 
@@ -186,7 +186,7 @@ class LlamaIndexComponent(ComponentView):
         return False
 
     @staticmethod
-    def of_json(json: JSON) -> 'LlamaIndexComponent':
+    def of_json(json: TJSONLike) -> 'LlamaIndexComponent':
         from trulens_eval.utils.llama import component_of_json
         return component_of_json(json)
 
@@ -207,7 +207,7 @@ class TrulensComponent(ComponentView):
         return False
 
     @staticmethod
-    def of_json(json: JSON) -> 'TrulensComponent':
+    def of_json(json: TJSONLike) -> 'TrulensComponent':
         from trulens_eval.utils.trulens import component_of_json
         return component_of_json(json)
 
@@ -284,7 +284,7 @@ class CustomComponent(ComponentView):
         raise TypeError(f"Unknown custom component type with class {cls}")
 
     @staticmethod
-    def component_of_json(json: JSON) -> 'CustomComponent':
+    def component_of_json(json: TJSONLike) -> 'CustomComponent':
         cls = Class.of_class_info(json)
 
         view = CustomComponent.constructor_of_class(cls)
@@ -297,7 +297,7 @@ class CustomComponent(ComponentView):
         return True
 
     @staticmethod
-    def of_json(json: JSON) -> 'CustomComponent':
+    def of_json(json: TJSONLike) -> 'CustomComponent':
         return CustomComponent.component_of_json(json)
 
 
@@ -349,7 +349,7 @@ class RecordingContext():
     - Combinations of the above.
     """
 
-    def __init__(self, app: mod_app.App, record_metadata: JSON = None):
+    def __init__(self, app: mod_app.App, record_metadata: TJSONLike = None):
         self.calls: List[mod_record_schema.RecordAppCall] = []
         """A record (in terms of its RecordAppCall) in process of being created."""
 
@@ -410,7 +410,7 @@ class RecordingContext():
 
     def finish_record(
         self,
-        calls_to_record: Callable[[List[mod_record_schema.RecordAppCall], JSON],
+        calls_to_record: Callable[[List[mod_record_schema.RecordAppCall], TJSONLike],
                                   mod_record_schema.Record],
         existing_record: Optional[mod_record_schema.Record] = None
     ):
@@ -799,7 +799,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> JSON:
+    ) -> TJSONLike:
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
@@ -854,7 +854,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> JSON:
+    ) -> TJSONLike:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -1068,7 +1068,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         def build_record(
             calls: Iterable[mod_record_schema.RecordAppCall],
-            record_metadata: JSON,
+            record_metadata: TJSONLike,
             existing_record: Optional[mod_record_schema.Record] = None
         ) -> mod_record_schema.Record:
             calls = list(calls)
@@ -1202,7 +1202,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         func: Callable[[A], T],
         *args,
-        record_metadata: JSON = None,
+        record_metadata: TJSONLike = None,
         **kwargs
     ) -> Tuple[T, mod_record_schema.Record]:
         """
@@ -1227,7 +1227,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         func: Callable[[A], Awaitable[T]],
         *args,
-        record_metadata: JSON = None,
+        record_metadata: TJSONLike = None,
         **kwargs
     ) -> Tuple[T, mod_record_schema.Record]:
         """

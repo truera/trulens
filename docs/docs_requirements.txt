@@ -11,6 +11,8 @@ mkdocs-jupyter       >= 0.24.6
 mkdocs-redirects     >= 1.2.1
 mkdocs-include-markdown-plugin >= 6.0.4
 
+black >= 24.4.2 # for signature formatting in mkdocs
+
 python-markdown-math >= 0.8
 markdown-include     >= 0.8.1
 

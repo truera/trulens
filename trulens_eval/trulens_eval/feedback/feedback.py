@@ -616,7 +616,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
     def check_selectors(
         self,
-        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON],
+        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.TJSONLike],
         record: mod_record_schema.Record,
         source_data: Optional[Dict[str, Any]] = None,
         warning: bool = False
@@ -766,7 +766,7 @@ Feedback function signature:
     def run(
         self,
         app: Optional[Union[mod_app_schema.AppDefinition,
-                            mod_serial_utils.JSON]] = None,
+                            mod_serial_utils.TJSONLike]] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
         **kwargs: Dict[str, Any]
@@ -972,7 +972,7 @@ Feedback function signature:
         self,
         record: mod_record_schema.Record,
         tru: 'Tru',
-        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON] = None,
+        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.TJSONLike] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None
     ) -> Optional[mod_feedback_schema.FeedbackResult]:
 
@@ -1102,7 +1102,7 @@ Feedback function signature:
     def _construct_source_data(
         self,
         app: Optional[Union[mod_app_schema.AppDefinition,
-                            mod_serial_utils.JSON]] = None,
+                            mod_serial_utils.TJSONLike]] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
         **kwargs: dict
@@ -1142,7 +1142,7 @@ Feedback function signature:
     def extract_selection(
         self,
         app: Optional[Union[mod_app_schema.AppDefinition,
-                            mod_serial_utils.JSON]] = None,
+                            mod_serial_utils.TJSONLike]] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None
     ) -> Iterable[Dict[str, Any]]:

@@ -1,8 +1,16 @@
+"""Custom app example.
+
+This app does not make any external network requests or hard work but has some
+delays and allocs to mimic the effects of such things.
+"""
+
 import asyncio
 from concurrent.futures import wait
 import random
 from typing import Tuple
 
+from examples.expositional.end2end_apps.custom_app.custom_agent import \
+    CustomAgent
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
 from examples.expositional.end2end_apps.custom_app.custom_memory import \
     CustomMemory
@@ -45,15 +53,23 @@ class CustomApp(Dummy):
     
     Contains:
     - A memory component.
+
     - A retriever component.
+
     - A language model component.
+
     - A template component.
-    - A few tools.
+
+    - A few tools. Each is a random string->string method that is applied to
+      retrieved chunks.
+
     - A reranker component.
-    - A few agents (TODO).
+
+    - A few agents. Be careful about these as these replicate the custom app
+      itself and might produce infinite loops.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, num_agents: int = 2, **kwargs):
         super().__init__(**kwargs)
         
         self.memory = CustomMemory(**kwargs)
@@ -68,7 +84,9 @@ class CustomApp(Dummy):
 
         self.tools = [CustomTool(**kwargs) for _ in range(3)] + [CustomStackTool(**kwargs)]
 
-        self.agents = [] # TODO
+        self.agents = [
+            CustomAgent(app=CustomApp(num_agents=0), description=f"ensamble agent {i}") for i in range(num_agents)
+        ]
 
         self.reranker = CustomReranker(**kwargs)
 
@@ -77,8 +95,13 @@ class CustomApp(Dummy):
         # Tasks ?
 
     @instrument
-    def process_chunk_by_random_tool(self, chunk_and_score: Tuple[str, float]) -> str:
-        return self.tools[random.randint(0, len(self.tools) - 1)].invoke(chunk_and_score[0])
+    def process_chunk_by_random_tool(
+        self,
+        chunk_and_score: Tuple[str, float]
+    ) -> str:
+        return self\
+            .tools[random.randint(0, len(self.tools) - 1)]\
+            .invoke(chunk_and_score[0])
 
     @instrument
     def get_context(self, input: str):
@@ -107,20 +130,24 @@ class CustomApp(Dummy):
         return chunks
 
     @instrument
-    def respond_to_query(self, input: str):
+    def respond_to_query(self, query: str):
         """Respond to a query. This is the main method."""
 
+        # Run the agents on the same input. These perform the same steps as this app.
+        for agent in self.agents:
+            agent.invoke(query)
+
         # Get rerankined, process chunks.
-        chunks = self.get_context(input)
+        chunks = self.get_context(query)
 
         # Do some remembering.
-        self.memory.remember(input)
+        self.memory.remember(query)
 
         # Do some generation.
         answer = self.llm.generate(",".join(chunks))
 
         # Do some templating.
-        output = self.template.fill(question=input, answer=answer)
+        output = self.template.fill(question=query, answer=answer)
 
         # Do some more remembering.
         self.memory.remember(output)

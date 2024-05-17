@@ -14,7 +14,7 @@ from pydantic import Field
 
 from trulens_eval import app as mod_app
 from trulens_eval.feedback import feedback
-from trulens_eval.instruments import ClassFilter
+from trulens_eval.instruments import TClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.tru_chain import LangChainInstrument
@@ -25,7 +25,7 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import retab
 
@@ -341,7 +341,7 @@ class RailsInstrument(Instrument):
         }.union(LangChainInstrument.Default.CLASSES())
         """Instrument only these classes."""
 
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
+        METHODS: Dict[str, TClassFilter] = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS),  # copy
             {
                 ("execute_action"):
@@ -399,7 +399,7 @@ class TruRails(mod_app.App):
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> JSON:
+    ) -> TJSONLike:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -414,7 +414,7 @@ class TruRails(mod_app.App):
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> JSON:
+    ) -> TJSONLike:
         """
         Determine the main input string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has

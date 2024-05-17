@@ -1,6 +1,7 @@
 import inspect
 import random
 from typing import Callable, Optional
+import dis
 
 from examples.expositional.end2end_apps.custom_app.dummy import Dummy
 
@@ -54,7 +55,7 @@ class CustomTool(Dummy):
         return self.imp(data)
     
     @invoke.is_span(span_type=mod_span.SpanTool)
-    def set_memory_span(
+    def set_tool_span(
         self,
         call: mod_record_schema.RecordAppCall,
         span: mod_span.SpanMemory
@@ -71,11 +72,29 @@ class CustomStackTool(CustomTool):
     that processes the return from the tool in destructive ways."""
 
     @instrument
-    def invoke(self, data: str):
+    def invoke(self, data: str) -> str:
         CustomStackTool.last_stack = list(superstack())
 
-        ret = ""
+        ret = "<table>\n"
         for frame in CustomStackTool.last_stack:
-            ret += f"{frame}\n"
+            fmod = inspect.getmodule(frame)
+            if fmod is None:
+                continue
+            else:
+                fmod = fmod.__name__
+            ffunc = frame.f_code.co_name
+            if not fmod.startswith("examples.") or fmod.startswith("trulens_eval"):
+                continue
+
+            bytecode = dis.Bytecode(frame.f_code)
+            ret += f"""
+            <tr>
+                <td>{fmod}</td>
+                <td>{ffunc}</td>
+                <td><pre><code>{bytecode.dis()}</code></pre></td>
+            </tr>
+            """
         
+        ret += "</table>"
+
         return ret

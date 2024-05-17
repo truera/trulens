@@ -42,10 +42,10 @@ class RecordAppCall(serial.SerialModel):
     stack: List[RecordAppCallMethod]
     """Call stack but only containing paths of instrumented apps/other objects."""
 
-    args: serial.JSON
+    args: serial.TJSONLike
     """Arguments to the instrumented method."""
 
-    rets: Optional[serial.JSON] = None
+    rets: Optional[serial.TJSONLike] = None
     """Returns of the instrumented method if successful.
     
     Sometimes this is a dict, sometimes a sequence, and sometimes a base value.
@@ -115,16 +115,16 @@ class Record(serial.SerialModel, Hashable):
     tags: Optional[str] = ""
     """Tags for the record."""
 
-    meta: Optional[serial.JSON] = None
+    meta: Optional[serial.TJSONLike] = None
     """Metadata for the record."""
 
-    main_input: Optional[serial.JSON] = None
+    main_input: Optional[serial.TJSONLike] = None
     """The app's main input."""
 
-    main_output: Optional[serial.JSON] = None  # if no error
+    main_output: Optional[serial.TJSONLike] = None  # if no error
     """The app's main output if there was no error."""
 
-    main_error: Optional[serial.JSON] = None  # if error
+    main_error: Optional[serial.TJSONLike] = None  # if error
     """The app's main error if there was an error."""
 
     calls: List[RecordAppCall] = []

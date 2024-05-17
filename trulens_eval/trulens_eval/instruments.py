@@ -25,6 +25,7 @@ from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
 import weakref
 
 import pydantic
+from typing_extensions import TypeAliasType
 
 from trulens_eval import app as mod_app
 from trulens_eval.feedback import feedback as mod_feedback
@@ -50,6 +51,32 @@ from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import retab
 
 logger = logging.getLogger(__name__)
+
+
+T = TypeVar("T")
+
+TClassFilter = TypeAliasType("TClassFilter", Union[Type, Tuple[Type, ...]])
+
+TSpanner = TypeAliasType("TSpanner", Union[
+    Callable[[Any, mod_span.Span, mod_record_schema.RecordAppCall], None],
+    # method, "self" is first arg
+    Callable[[mod_span.Span, mod_record_schema.RecordAppCall], None]
+    # function
+])
+"""Call to Span converter methor or function."""
+
+TSpanInfo = TypeAliasType("TSpanInfo", Tuple[
+    mod_span.SpanType, Any, TSpanner
+])
+"""Span type and method that create spans of said type from
+[RecordAppCall][trulens_eval.schema.record.RecordAppCall] objects.
+
+The first argument to callable is the instance of the spec specified, second is
+an instance if this is for a method call, and the third is the
+[RecordAppCall][trulens_eval.schema.record.RecordAppCall] instance to fill in
+the span info from. If the second argument is None, the span is for a function
+without `self`, i.e. a staticmethod or just a function outside of a class.
+"""
 
 
 class WithInstrumentCallbacks:
@@ -162,10 +189,7 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
 
-ClassFilter = Union[Type, Tuple[Type, ...]]
-
-
-def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
+def class_filter_disjunction(f1: TClassFilter, f2: TClassFilter) -> TClassFilter:
     """Create a disjunction of two class filters.
     
     Args:
@@ -183,7 +207,7 @@ def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
     return f1 + f2
 
 
-def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
+def class_filter_matches(f: TClassFilter, obj: Union[Type, object]) -> bool:
     """Check whether given object matches a class-based filter.
     
     A class-based filter here means either a type to match against object
@@ -209,24 +233,6 @@ def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
 
     raise ValueError(f"Invalid filter {f}. Type, or a Tuple of Types expected.")
 
-TSpanner = Union[
-    Callable[[Any, mod_span.Span, mod_record_schema.RecordAppCall], None], # method, "self" is first arg
-    Callable[[mod_span.Span, mod_record_schema.RecordAppCall], None] # function
-]
-"""Call to Span converter methor or function."""
-
-TSpanInfo = Tuple[
-    mod_span.SpanType, Any, TSpanner
-]
-"""Span type and method that create spans of said type from
-[RecordAppCall][trulens_eval.schema.record.RecordAppCall] objects.
-
-The first argument to callable is the instance of the spec specified, second is
-an instance if this is for a method call, and the third is the
-[RecordAppCall][trulens_eval.schema.record.RecordAppCall] instance to fill in
-the span info from. If the second argument is None, the span is for a function
-without `self`, i.e. a staticmethod or just a function outside of a class.
-"""
 
 class Instrument(object):
     """Instrumentation tools."""
@@ -256,7 +262,7 @@ class Instrument(object):
         method of that class.
         """
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": mod_feedback.Feedback}
+        METHODS: Dict[str, TClassFilter] = {"__call__": mod_feedback.Feedback}
         """Methods to instrument.
         
         Methods matching name have to pass the filter to be instrumented.
@@ -295,12 +301,12 @@ class Instrument(object):
                         pyfunc = pyschema.Function.of_function(f, cls=cls)
 
                         if pyfunc in self.Default.SPANINFOS:
-                            for obj_id, (span_type, instance, spanner) in self.Default.SPANINFOS[pyfunc].items():
+                            for obj_id, (span_type, _, spanner) in self.Default.SPANINFOS[pyfunc].items():
                                 print(f"{t*3}Span type: {span_type} ", end="")
                                 if obj_id is None:
                                     print("(static)", end='')
                                 else:
-                                    print(f"(id: {obj_id}=?{id(instance)})", end='')
+                                    print(f"(0x{obj_id:x})", end='')
                                 print(f", spanner: {spanner}")
 
             print()
@@ -340,7 +346,7 @@ class Instrument(object):
         self,
         include_modules: Optional[Iterable[str]] = None,
         include_classes: Optional[Iterable[type]] = None,
-        include_methods: Optional[Dict[str, ClassFilter]] = None,
+        include_methods: Optional[Dict[str, TClassFilter]] = None,
         app: Optional[WithInstrumentCallbacks] = None
     ):
         if include_modules is None:
@@ -372,6 +378,8 @@ class Instrument(object):
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
+        print(f"{query}: instrumenting {method_name}={func}")
+
         if self.app is None:
             raise ValueError("Instrumentation requires an app but is None.")
 
@@ -393,6 +401,8 @@ class Instrument(object):
             # calls.
             existing_apps = getattr(func, Instrument.APPS)
             existing_apps.add(self.app)  # weakref set
+
+            print(f"adding app {self.app.app_id} to apps for {query}")
 
             return func
 
@@ -420,7 +430,9 @@ class Instrument(object):
                 inspect.isasyncgenfunction(func)
             )
 
-            apps = getattr(tru_wrapper, Instrument.APPS)
+            apps = getattr(tru_wrapper.__wrapped__, Instrument.APPS)
+
+            print(f"got {len(apps)} apps for {query}.{method_name}")
 
             # If not within a root method, call the wrapped function without
             # any recording.
@@ -443,7 +455,9 @@ class Instrument(object):
             # call stack hence this might be the first time they are seeing an
             # instrumented method being called.
             for app in apps:
+                print(f"consider app {app.app_id} for {query}.{method_name}")
                 for ctx in app.on_new_record(func):
+                    print("  adding ctx", ctx)
                     contexts.add(ctx)
 
             if len(contexts) == 0:
@@ -476,7 +490,7 @@ class Instrument(object):
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = {k: v for k, v in ctx_stacks.items()}
+            stacks = dict(ctx_stacks.items())
 
             start_time = None
             end_time = None
@@ -509,6 +523,12 @@ class Instrument(object):
                         "Something might be going wrong.",
                         class_name(type(app)), id_str(args[0]),
                         callable_name(func)
+                    )
+                    raise RuntimeError(
+                        ("App of type %s no longer knows about object %s method %s. "
+                        "Something might be going wrong.") % (
+                        class_name(type(app)), id_str(args[0]),
+                        callable_name(func))
                     )
                     continue
 
@@ -583,7 +603,7 @@ class Instrument(object):
 
                 # Now record calls to each context.
                 for ctx in contexts:
-                    stack = stacks[ctx]
+                    stack = stacks.get(ctx, ())
 
                     # Note that only the stack differs between each of the records in this loop.
                     record_app_args['stack'] = stack
@@ -629,7 +649,7 @@ This app produced an asynchronous response of type `{class_name(type(rets))}`. T
 the response is available. If this message persists, check that you are
 using the correct version of the app method and `await` any asynchronous
 results. Additional information about this call: 
-    
+
 ```
 {pformat(locals())}
 ```
@@ -655,6 +675,9 @@ results. Additional information about this call:
         setattr(tru_wrapper, Instrument.INSTRUMENT, func)
         setattr(tru_wrapper, Instrument.APPS, apps)
 
+        setattr(func, Instrument.INSTRUMENT, func)
+        setattr(func, Instrument.APPS, apps)
+
         return tru_wrapper
 
     def instrument_method(self, method_name: str, obj: Any, query: Lens):
@@ -674,6 +697,7 @@ results. Additional information about this call:
                     "\t\t%s: instrumenting %s.%s", query, class_name(base),
                     method_name
                 )
+
                 setattr(
                     base, method_name,
                     self.tracked_method_wrapper(
@@ -792,8 +816,10 @@ results. Additional information about this call:
                     # their methods, the wrapper will capture an uninstrumented
                     # version of the inner method which we may fail to
                     # instrument.
-                    if hasattr(original_fun, "__wrapped__"):
-                        original_fun = original_fun.__wrapped__
+                    # if hasattr(original_fun, "__wrapped__"):
+                    #     original_fun = original_fun.__wrapped__
+                    # TODO(piotrm): had to disable to re-enable nested contexts.
+                    # Needs debugging work.
 
                     # Sometimes the base class may be in some module but when a
                     # method is looked up from it, it actually comes from some
@@ -986,7 +1012,7 @@ results. Additional information about this call:
                             setattr(obj, method_name, bound)
                         except Exception as e:
                             logger.debug(
-                                f"\t\t\t{query}: cound not instrument because {e}"
+                                "\t\t\t%s: cound not instrument because %s", query, e
                             )
 
                 else:
@@ -999,8 +1025,6 @@ results. Additional information about this call:
                             f"\t\t{query} Bound method {method} is NOT instrumented."
                         )
 
-
-T = TypeVar("T")
 
 class AddInstruments():
     """Utilities for adding more things to default instrumentation filters."""
@@ -1048,7 +1072,7 @@ class AddInstruments():
                     "Both `span_type` and `spanner` must be provided if either is."
                 )
 
-        check_o: ClassFilter = Instrument.Default.METHODS.get(name, ())
+        check_o: TClassFilter = Instrument.Default.METHODS.get(name, ())
         Instrument.Default.METHODS[name] = class_filter_disjunction(
             check_o, of_cls
         )

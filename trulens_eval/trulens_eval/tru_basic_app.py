@@ -12,7 +12,7 @@ from typing import Callable, ClassVar, Dict, Optional
 from pydantic import Field
 
 from trulens_eval import app as mod_app
-from trulens_eval.instruments import ClassFilter
+from trulens_eval.instruments import TClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
@@ -54,7 +54,7 @@ class TruBasicCallableInstrument(Instrument):
         CLASSES = lambda: {TruWrapperApp}
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, ClassFilter] = {"_call": TruWrapperApp}
+        METHODS: Dict[str, TClassFilter] = {"_call": TruWrapperApp}
 
     def __init__(self, *args, **kwargs):
         super().__init__(

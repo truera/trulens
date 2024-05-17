@@ -2,6 +2,12 @@
 
 These are roughly equivalent to `RecordAppCall` but abstract away specific method
 information into type of call related to types of components.
+
+!!! Note
+
+    Names that begin with "trans" or "Trans" are temporary ("transitional") and
+    will be removed or replaced in the future. Try to minimize referencing those
+    names in other code.
 """
 
 from __future__ import annotations
@@ -42,7 +48,7 @@ class Span(mod_trace.OTSpan):
         attributes dictionary with a vendor prefix.
 
         Validates default and on assignment.
-        
+
         Args:
             name: The name of the property. The key used for storage will be
                 this with the vendor prefix.
@@ -169,32 +175,32 @@ class TransSpanRecord(Span):
     """A span whose activity was recorded in a record.
     
     Features references to the record.
-
-    !!! note
-        This is a transitional type for the traces work.
     """
 
     record: mod_record_schema.Record = Field(exclude=True, default=None)
-    record_id = Span.attribute_property("record_id", typ=str, default=None)
+    """The record that this span was recorded in."""
 
-class SpanMethodCall(TransSpanRecord):
+    record_id = Span.attribute_property("record_id", typ=str, default=None)
+    """The ID of the record that this span was recorded in."""
+
+class SpanMethodCall(TransSpanRecord): # transition
     """Span which corresponds to a method call.
     
     See also temporary development attributes in
-    [TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordCall].
+    [TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordAppCall].
     """
 
     inputs = Span.attribute_property("inputs", typ=Optional[Dict[str, Any]], default_factory=None)
-    # TODO: Need to encode to OT AttributeValue
+    """Input arguments to the method call."""
 
     output = Span.attribute_property("output", typ=Optional[Any], default_factory=None)
-    # TODO: Need to encode to OT AttributeValue
+    """Output of the method call."""
 
     error = Span.attribute_property("error", typ=Optional[Any], default_factory=None)
-    # TODO: Need to encode to OT AttributeValue
+    """Error raised by the method call if any."""
 
 
-class TransSpanRecordAppCall(SpanMethodCall):
+class TransSpanRecordAppCall(SpanMethodCall): # transition
     """A Span which corresponds to single
     [RecordAppCall][trulens_eval.schema.record.RecordAppCall].
 
@@ -207,13 +213,13 @@ class TransSpanRecordAppCall(SpanMethodCall):
     """
     call: mod_record_schema.RecordAppCall = Field(exclude=True, default=None)
 
-class SpanRoot(TransSpanRecord):
+class SpanRoot(TransSpanRecord): # transition
     """A root span encompassing some collection of spans.
 
     Does not indicate any particular activity by itself beyond its children.
     """
 
-SpanTyped = TransSpanRecordAppCall
+SpanTyped = TransSpanRecordAppCall # transition
 """Alias for the superclass of spans that went through the record call conversion."""
 
 
@@ -270,11 +276,7 @@ class SpanReranker(SpanTyped):
 
 
 class SpanLLM(SpanTyped): # make SpanLLMOTEL once otel is ready
-    """A generation call to an LLM.
-    
-    This features attributes not covered by the OpenTelemetry Semantic
-    Conventions for AI attributes in [SpanLLMOtel][trulens_eval.trace.span.SpanLLMOtel].
-    """
+    """A generation call to an LLM."""
 
     model_name = Span.attribute_property("model_name", str) # to replace with otel's LLM_REQUEST_MODEL
     """The model name of the LLM."""

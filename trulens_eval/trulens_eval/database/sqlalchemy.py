@@ -41,7 +41,7 @@ from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import text
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.python import locals_except
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import JSONized
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -331,7 +331,7 @@ class SQLAlchemyDB(DB):
                                     ).filter_by(app_id=app_id).first():
                 return json.loads(_app.app_json)
 
-    def get_apps(self) -> Iterable[JSON]:
+    def get_apps(self) -> Iterable[TJSONLike]:
         """See [DB.get_apps][trulens_eval.database.base.DB.get_apps]."""
 
         with self.session.begin() as session:

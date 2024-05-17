@@ -33,7 +33,7 @@ from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.python import wrap_awaitable
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
@@ -238,7 +238,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def post(
         self,
         url: str,
-        payload: JSON,
+        payload: TJSONLike,
         timeout: float = DEFAULT_NETWORK_TIMEOUT
     ) -> Any:
         self.pace_me()
@@ -801,7 +801,7 @@ class DummyEndpoint(Endpoint):
         """Dummy handler does nothing."""
 
     def post(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self, url: str, payload: TJSONLike, timeout: Optional[float] = None
     ) -> Any:
         """Pretend to make a classification request similar to huggingface API.
         
@@ -828,7 +828,7 @@ class DummyEndpoint(Endpoint):
             sleep(max(0.0, np_random.normal(self.delay, self.delay / 2)))
 
         r = random.random()
-        j: Optional[JSON] = None
+        j: Optional[TJSONLike] = None
 
         if r < self.freeze_prob:
             # Simulated freeze outcome.

@@ -242,7 +242,7 @@ class FeedbackCall(serial.SerialModel):
     Note that a single `Feedback` instance might require more than one call.
     """
 
-    args: Dict[str, Optional[serial.JSON]]
+    args: Dict[str, Optional[serial.TJSONLike]]
     """Arguments to the feedback function."""
 
     ret: float

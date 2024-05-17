@@ -568,9 +568,9 @@ def get_all_local_in_call_stack(
             continue
 
         if func(f.f_code):
-            logger.debug(f"Looking via {func.__name__}; found {f}")
+            logger.debug("Looking via %s; found %s", func.__name__, f)
             if skip is not None and f == skip:
-                logger.debug(f"Skipping.")
+                logger.debug("Skipping.")
                 continue
 
             locs = f.f_locals
@@ -613,7 +613,10 @@ def get_first_local_in_call_stack(
         )
     except StopIteration:
         logger.debug("no frames found")
-        return None
+    except KeyError:
+        logger.debug("%s not found in frame.", key)
+    
+    return None
 
 
 # Wrapping utilities

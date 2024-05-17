@@ -1,5 +1,4 @@
-"""
-Serialization utilities.
+"""Serialization utilities.
 
 TODO: Lens class: can we store just the python AST instead of building up our
 own "Step" classes to hold the same data? We are already using AST for parsing.
@@ -13,10 +12,9 @@ from ast import parse
 from contextvars import ContextVar
 from copy import copy
 import logging
-from typing import (
-    Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable, List, Optional,
-    Sequence, Set, Sized, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable,
+                    List, Optional, Sequence, Set, Sized, Tuple, TypeVar,
+                    Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -25,47 +23,53 @@ from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 from pydantic_core import CoreSchema
 import rich
+from typing_extensions import TypeAliasType
 
 from trulens_eval.utils.containers import iterable_peek
 from trulens_eval.utils.python import class_name
+from trulens_eval.utils.python import NoneType
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
-JSON_BASES: Tuple[type, ...] = (str, int, float, bytes, type(None))
-"""
-Tuple of JSON-able base types.
+JSON_BASES: Tuple[type, ...] = (str, int, float, bytes, NoneType)
+"""Tuple of JSON-able base types.
 
 Can be used in `isinstance` checks.
 """
 
-JSON_BASES_T = Union[\
-    str, int, float, bytes, None
-                    ]
+TJSONBase = TypeAliasType(
+    "TJSONBase", 
+    Union[
+        str, int, float, bytes, NoneType
+    ])
 """
 Alias for JSON-able base types.
+
+These are types that the json module can (de)serialize without specifying any
+additional (en|de)coders.
 """
 
-JSON = Union[\
-    JSON_BASES_T,
-    Sequence[Any],
-    Dict[str, Any]
-            ]
-"""Alias for (non-strict) JSON-able data (`Any` = `JSON`).
-
-If used with type argument, that argument indicates what the JSON represents and
-can be desererialized into.
+TJSONLike = TypeAliasType(
+    "TJSONLike", Union[
+        TJSONBase,
+        List["TJSONLike"],
+        Dict[str, "TJSONLike"]
+    ])
+"""Alias for (non-strict) JSON-able data.
 
 Formal JSON must be a `dict` at the root but non-strict here means that the root
 can be a basic type or a sequence as well.
 """
 
-JSON_STRICT = Dict[str, JSON]
+TJSON = TypeAliasType("TJSON", Dict[str, TJSONLike])
 """
 Alias for (strictly) JSON-able data.
 
-Python object that is directly mappable to JSON.
+This represents python objects that are directly mappable to JSON without
+additional encoders. See also [TJSONLike][trulens_eval.utils.serial.TJSONLike]
+for data that is not strictly json as it allows non-dict root items.
 """
 
 
@@ -1076,7 +1080,7 @@ Lens.model_rebuild()
 JSONPath = Lens
 
 
-def leaf_queries(obj_json: JSON, query: Lens = None) -> Iterable[Lens]:
+def leaf_queries(obj_json: TJSONLike, query: Lens = None) -> Iterable[Lens]:
     """
     Get all queries for the given object that select all of its leaf values.
     """

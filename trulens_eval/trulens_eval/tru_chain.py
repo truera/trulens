@@ -12,7 +12,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 from pydantic import Field
 
 from trulens_eval import app as mod_app
-from trulens_eval.instruments import ClassFilter
+from trulens_eval.instruments import TClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema.feedback import Select
 from trulens_eval.utils.containers import dict_set_with_multikey
@@ -86,7 +86,7 @@ class LangChainInstrument(Instrument):
         """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
+        METHODS: Dict[str, TClassFilter] = dict_set_with_multikey(
             {},
             {
                 ("invoke", "ainvoke"):
