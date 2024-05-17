@@ -1025,7 +1025,7 @@ class LLMProvider(Provider):
             prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response)) +
             response
         )
-    
+
     def _generate_key_points(self, source: str):
         """
         Uses chat completion model. A function that tries to distill main points
@@ -1038,12 +1038,14 @@ class LLMProvider(Provider):
             (str) key points of the source text.
         """
 
-        return self._create_chat_completion(prompt = 
-            prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT + str.format(
-                prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source)
+        return self._create_chat_completion(
+            prompt=prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT +
+            str.format(prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source)
         )
 
-    def _assess_key_point_inclusion(self, key_points: str, summary: str) -> List:
+    def _assess_key_point_inclusion(
+        self, key_points: str, summary: str
+    ) -> List:
         """
         Splits key points by newlines and assesses if each one is included in the summary.
 
@@ -1065,7 +1067,8 @@ class LLMProvider(Provider):
                 summary=summary
             )
             inclusion_assessment = self._create_chat_completion(
-                prompt = system_prompt + user_prompt)
+                prompt=system_prompt + user_prompt
+            )
             inclusion_assessments.append(inclusion_assessment)
 
         return inclusion_assessments
@@ -1093,7 +1096,9 @@ class LLMProvider(Provider):
         """
 
         key_points = self._generate_key_points(source)
-        key_point_inclusion_assessments = self._assess_key_point_inclusion(key_points, summary)
+        key_point_inclusion_assessments = self._assess_key_point_inclusion(
+            key_points, summary
+        )
         scores = []
         reasons = ""
         for assessment in key_point_inclusion_assessments:
@@ -1102,10 +1107,10 @@ class LLMProvider(Provider):
                 first_line = assessment.split('\n')[0]
                 score = re_0_10_rating(first_line) / 10
                 scores.append(score)
-                
+
         score = sum(scores) / len(scores) if scores else 0
         return score, {"reasons": reasons}
-    
+
     def summarization_with_cot_reasons(self, source: str,
                                        summary: str) -> Tuple[float, Dict]:
         """
