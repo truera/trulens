@@ -553,8 +553,7 @@ class LLMProvider(Provider):
             criteria (str): The specific criteria for evaluation.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified
-                evaluation, and a string containing the reasons for the evaluation.
+            Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified evaluation, and a string containing the reasons for the evaluation.
         """
 
         system_prompt = str.format(
@@ -602,9 +601,7 @@ class LLMProvider(Provider):
             text: The text to evaluate the conciseness of.
 
         Returns:
-            A value between 0.0 (not concise) and 1.0 (concise)
-            
-            A dictionary containing the reasons for the evaluation.
+            Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
@@ -647,7 +644,7 @@ class LLMProvider(Provider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not correct) and 1.0 (correct).
+            Tuple[float, str]: A tuple containing a value between 0 (not correct) and 1.0 (correct) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
@@ -690,7 +687,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not coherent) and 1.0 (coherent).
+            Tuple[float, str]: A tuple containing a value between 0 (not coherent) and 1.0 (coherent) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
@@ -733,7 +730,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not harmful) and 1.0 (harmful).
+            Tuple[float, str]: A tuple containing a value between 0 (not harmful) and 1.0 (harmful) and a string containing the reasons for the evaluation.
         """
 
         return self._langchain_evaluate_with_cot_reasons(
@@ -778,7 +775,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not malicious) and 1.0 (malicious).
+            Tuple[float, str]: A tuple containing a value between 0 (not malicious) and 1.0 (malicious) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
@@ -821,7 +818,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not helpful) and 1.0 (helpful).
+            Tuple[float, str]: A tuple containing a value between 0 (not helpful) and 1.0 (helpful) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
@@ -868,7 +865,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not controversial) and 1.0 (controversial).
+            Tuple[float, str]: A tuple containing a value between 0 (not controversial) and 1.0 (controversial) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -912,7 +909,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
+            Tuple[float, str]: A tuple containing a value between 0.0 (not misogynistic) and 1.0 (misogynistic) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
@@ -956,7 +953,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not criminal) and 1.0 (criminal).
+            Tuple[float, str]: A tuple containing a value between 0.0 (not criminal) and 1.0 (criminal) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
@@ -999,7 +996,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
+            Tuple[float, str]: A tuple containing a value between 0.0 (not insensitive) and 1.0 (insensitive) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
@@ -1092,8 +1089,7 @@ class LLMProvider(Provider):
             summary (str): Text corresponding to a summary.
 
         Returns:
-            A value between 0.0 (main points missed) and 1.0 (no main
-                points missed).
+            Tuple[float, str]: A tuple containing a value between 0.0 (not comprehensive) and 1.0 (comprehensive) and a string containing the reasons for the evaluation.
         """
 
         key_points = self._generate_key_points(source)
@@ -1137,8 +1133,7 @@ class LLMProvider(Provider):
             response (str): The agent's response to the prompt.
 
         Returns:
-            A value between 0.0 (no stereotypes assumed) and 1.0
-                (stereotypes assumed).
+            A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
         """
         system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT
         user_prompt = str.format(
@@ -1165,8 +1160,7 @@ class LLMProvider(Provider):
             response (str): The agent's response to the prompt.
 
         Returns:
-            A value between 0.0 (no stereotypes assumed) and 1.0
-                (stereotypes assumed).
+            Tuple[float, str]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a string containing the reasons for the evaluation.
         """
         system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT + prompts.COT_REASONS_TEMPLATE
         user_prompt = str.format(
@@ -1203,7 +1197,7 @@ class LLMProvider(Provider):
             statement: The statement to check groundedness.
 
         Returns:
-            A measure between 0 and 1, where 1 means each sentence is grounded in the source.
+            Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.
         """
         nltk.download('punkt')
         groundedness_scores = {}

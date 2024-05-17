@@ -143,9 +143,6 @@ class OpenAI(LLMProvider):
             ).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
@@ -172,9 +169,6 @@ class OpenAI(LLMProvider):
                 openai_provider.moderation_hatethreatening, higher_is_better=False
             ).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -204,9 +198,6 @@ class OpenAI(LLMProvider):
             ).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
@@ -234,9 +225,6 @@ class OpenAI(LLMProvider):
                 openai_provider.moderation_sexual, higher_is_better=False
             ).on_output()
             ```
-
-        The `on_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -266,15 +254,11 @@ class OpenAI(LLMProvider):
             ).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not sexual minors) and 1.0 (sexual
-            minors).
+            float: A value between 0.0 (not sexual minors) and 1.0 (sexual minors).
         """
 
         openai_response = self._moderation(text)
@@ -298,9 +282,6 @@ class OpenAI(LLMProvider):
                 openai_provider.moderation_violence, higher_is_better=False
             ).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -330,15 +311,11 @@ class OpenAI(LLMProvider):
             ).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not graphic violence) and 1.0 (graphic
-            violence).
+            float: A value between 0.0 (not graphic violence) and 1.0 (graphic violence).
         """
         openai_response = self._moderation(text)
 
@@ -361,9 +338,6 @@ class OpenAI(LLMProvider):
                 openai_provider.moderation_harassment, higher_is_better=False
             ).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -391,9 +365,6 @@ class OpenAI(LLMProvider):
                 openai_provider.moderation_harassment_threatening, higher_is_better=False
             ).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
