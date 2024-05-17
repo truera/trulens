@@ -83,7 +83,6 @@ API Reference: [LLMProvider][trulens_eval.feedback.provider.base.LLMProvider].
         filters:
             - "!^_"
 
-
 ## Embedding-based
 
 API Reference: [Embeddings][trulens_eval.feedback.embeddings.Embeddings].
@@ -111,35 +110,7 @@ API Reference: [Embeddings][trulens_eval.feedback.embeddings.Embeddings].
         filters:
             - "!^_"
 
-## Combinators
-
-### Groundedness
-
-API Reference: [Groundedness][trulens_eval.feedback.groundedness.Groundedness]
-
-::: trulens_eval.feedback.groundedness.Groundedness
-    options:
-        heading_level: 4
-        show_bases: false
-        show_root_heading: false
-        show_root_toc_entry: false
-        show_source: false
-        show_docstring_classes: false
-        show_docstring_modules: false
-        show_docstring_parameters: false
-        show_docstring_returns: false
-        show_docstring_description: true
-        show_docstring_examples: false
-        show_docstring_other_parameters: false
-        show_docstring_attributes: false
-        show_signature: false
-        separate_signature: false
-        summary: false
-        group_by_category: false
-        members_order: alphabetical
-        filters:
-            - "!^_"
-
+## Combinations
 
 ### Ground Truth Agreement
 
@@ -167,4 +138,3 @@ API Reference: [GroundTruthAgreement][trulens_eval.feedback.groundtruth.GroundTr
         members_order: alphabetical
         filters:
             - "!^_"
-

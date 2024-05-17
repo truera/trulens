@@ -4,7 +4,7 @@
 This top-level import includes everything to get started.
 """
 
-__version_info__ = (0, 28, 1)
+__version_info__ = (0, 29, 0)
 """Version number components for major, minor, patch."""
 
 __version__ = '.'.join(map(str, __version_info__))
