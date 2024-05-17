@@ -157,9 +157,7 @@ class Huggingface(Provider):
             text2 (str): Comparative text to evaluate.
 
         Returns:
-
-            float: A value between 0 and 1. 0 being "different languages" and 1
-            being "same languages".
+            float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
         """
 
         def get_scores(text):
@@ -205,10 +203,10 @@ class Huggingface(Provider):
             from trulens_eval.feedback import Feedback
             from trulens_eval.feedback.provider.hugs = Huggingface
 
-            provider = Huggingface()
+            huggingface_provider = Huggingface()
     
             f_groundedness = (
-                Feedback(provider.groundedness_measure_with_nli)
+                Feedback(huggingface_provider.groundedness_measure_with_nli)
                 .on(context)
                 .on_output()
             ```
@@ -218,8 +216,7 @@ class Huggingface(Provider):
             statement (str): The statement to check groundedness
 
         Returns:
-            float: A measure between 0 and 1, where 1 means each sentence is grounded in the source.
-            str: 
+            Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.
         """
         nltk.download('punkt')
         groundedness_scores = {}
@@ -251,24 +248,28 @@ class Huggingface(Provider):
         Uses Huggingface's truera/context_relevance model, a
         model that uses computes the relevance of a given context to the prompt. 
         The model can be found at https://huggingface.co/truera/context_relevance.
-        **Usage:**
-        ```python
-        from trulens_eval import Feedback
-        from trulens_eval.feedback.provider.hugs import Huggingface
-        huggingface_provider = Huggingface()
+        
+        !!! example
 
-        feedback = Feedback(huggingface_provider.context_relevance).on_input_output() 
-        ```
-        The `on_input_output()` selector can be changed. See [Feedback Function
-        Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            huggingface_provider = Huggingface()
+
+            feedback = (
+                Feedback(huggingface_provider.context_relevance)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
 
         Args:
             prompt (str): The given prompt.
             context (str): Comparative contextual information.
 
         Returns:
-            float: A value between 0 and 1. 0 being irrelevant and 1
-            being a relevant context for addressing the prompt.
+            float: A value between 0 and 1. 0 being irrelevant and 1 being a relevant context for addressing the prompt.
         """
 
         if prompt[len(prompt) - 1] != '.':
@@ -304,15 +305,11 @@ class Huggingface(Provider):
             feedback = Feedback(huggingface_provider.positive_sentiment).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "negative sentiment" and 1
-            being "positive sentiment".
+            float: A value between 0 (negative sentiment) and 1 (positive sentiment).
         """
 
         max_length = 500
@@ -343,19 +340,14 @@ class Huggingface(Provider):
             from trulens_eval.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
-            feedback = Feedback(huggingface_provider.not_toxic).on_output() 
+            feedback = Feedback(huggingface_provider.toxic).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 1 being "toxic" and 0 being "not
-            toxic".
+            float: A value between 0 (not toxic) and 1 (toxic).
         """
 
         assert len(text) > 0, "Input cannot be blank."
@@ -441,10 +433,10 @@ class Huggingface(Provider):
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            text: A text prompt that may contain a name.
+            text: A text prompt that may contain a PII.
 
         Returns:
-            The likelihood that a name is contained in the input text.
+            float: The likelihood that a PII is contained in the input text.
         """
 
         # Initialize a list to store scores for "NAME" entities
@@ -501,6 +493,12 @@ class Huggingface(Provider):
             The `on(...)` selector can be changed. See [Feedback Function Guide
             :
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+
+            Args:
+                text: A text prompt that may contain a name.
+
+            Returns:
+                Tuple[float, str]: A tuple containing a the likelihood that a PII is contained in the input text and a string containing what PII is detected (if any).
         """
 
         # Initialize a dictionary to store reasons
@@ -570,14 +568,14 @@ class Huggingface(Provider):
         true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
         less than 0.5 the statement is evaluated as a hallucination.
 
-        **!!! example
-    **
-        ```python
-        from trulens_eval.feedback.provider.hugs import Huggingface
-        huggingface_provider = Huggingface()
+        !!! example
 
-        score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")
-        ```
+            ```python
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            huggingface_provider = Huggingface()
+
+            score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")
+            ```
 
         Args:
             model_output (str): This is what an LLM returns based on the text chunks retrieved during RAG
