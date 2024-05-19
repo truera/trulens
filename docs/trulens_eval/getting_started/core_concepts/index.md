@@ -65,16 +65,16 @@ General and 🦑_TruLens-Eval_-specific concepts.
 - `Fine-tuning`. The process of training an already pre-trained model on
   additional data. While the initial training of a `Large Language Model` is
   resource intensive (read "large"), the subsequent fine-tuning may not be and
-  can improve the performance of the LLM on data that sufficiently deviates or
+  can improve the performance of the `LLM` on data that sufficiently deviates or
   specializes its original training data. Fine-tuning aims to preserve the
   generality of the original and transfer of its capabilities to specialized
   tasks. Examples include fining-tuning on:
   
-  - financial data
+  - financial articles
   
-  - medical data
+  - medical notes
   
-  - programming languages or a specific programming language
+  - synthetic languages (programming or otherwise)
 
   While fine-tuning generally requires access to the original model parameters,
   some model providers give users the ability to fine-tune through their remote APIs.
@@ -94,8 +94,10 @@ General and 🦑_TruLens-Eval_-specific concepts.
   is said to be `Zero Shot`.
 
 - `Language Model`. A model whose tasks is to model text distributions typically
-  in the form of predicting token distributions for text that follows some given
-  input prefix text. 
+  in the form of predicting token distributions for text that follows the given
+  prefix. Propriety models usually do not give users access to token
+  distributions and instead `Complete` a piece of input text via multiple token
+  predictions and methods such as beam search.
 
 - `LLM`, `Large Language Model` (see `Language Model`). The `Component` of an
   `Application` that performs `Completion`. LLM's are usually trained on a large
