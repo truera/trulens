@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from logging import getLogger
 import time
-from typing import (ClassVar, Dict, List, Mapping, Optional, Tuple, TypeVar,
+from typing import (ClassVar, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar,
                     Union)
 
 from opentelemetry.sdk import trace as otsdk_trace
@@ -23,6 +23,9 @@ from pydantic import PlainSerializer
 from pydantic.functional_validators import PlainValidator
 from typing_extensions import Annotated
 from typing_extensions import TypeAliasType
+
+from trulens_eval.utils.python import NoneType
+from trulens_eval.utils.serial import Lens
 
 logger = getLogger(__name__)
 
@@ -54,11 +57,15 @@ TTraceID = int
 NUM_TRACEID_BITS = 128
 """Number of bits in a trace identifier."""
 
+TLensedBaseTypes = Union[str, int, float, bool, NoneType]
+
 TLensedAttributeValue = TypeAliasType(
     "TLensedAttributeValue", 
     Union[
         str, int, float, bool,
-        List['TLensedAttributeValue'], Dict[str, 'TLensedAttributeValue']
+        # NoneType, # NOTE(piotrm): None is not technically allowed as an attribute value.
+        Sequence['TLensedAttributeValue'],
+        'TLensedAttributes'
     ]
 )
 """Type of values in span attributes."""
@@ -67,6 +74,67 @@ TLensedAttributeValue = TypeAliasType(
 # the TypeAliasType schema as above.
 
 TLensedAttributes = Dict[str, TLensedAttributeValue]
+
+def inflate_lensed_mapping(
+    m: ot_types.Attributes
+) -> TLensedAttributes:
+    """Inflate OpenTelemetry attributes into lensed attributes."""
+
+    ret = {}
+
+    for k, v in m.items():
+        path = Lens.of_string(k)
+        ret = path.set(ret, v)
+
+    return ret
+
+def flatten_value(
+    v: TLensedAttributeValue,
+    path: Optional[Lens] = None
+) -> Iterable[Tuple[Lens, ot_types.AttributeValue]]:
+
+    """Flatten a lensed value into OpenTelemetry attribute values."""
+
+    if path is None:
+        path = Lens()
+
+    #if v is None:
+        # OpenTelemetry does not allow None as an attribute value. Unsure what
+        # is best to do here. Returning "None" for now.
+    #    yield (path, "None")
+
+    elif isinstance(v, TLensedBaseTypes):
+        yield (Lens(), v)
+
+    elif isinstance(v, Sequence) and all(isinstance(e, TLensedBaseTypes) for e in v):
+        yield (Lens(), v)
+
+    elif isinstance(v, Sequence):
+        for i, e in enumerate(v):
+            yield from flatten_value(v=e, path=path[i])
+
+    elif isinstance(v, Mapping):
+        for k, e in v.items():
+            yield from flatten_value(v=e, path=path[k])
+
+    else:
+        raise ValueError(f"Do not know how to flatten value of type {type(v)} to OTEL attributes.")
+
+def flatten_lensed_attributes(
+    m: TLensedAttributes,
+    path: Optional[Lens] = None
+) -> ot_types.Attributes:
+    """Flatten lensed attributes into OpenTelemetry attributes."""
+
+    if path is None:
+        path = Lens()
+
+    ret = {}
+    for k, v in m.items():
+        for p, a in flatten_value(v, path[k]):
+            ret[str(p)] = a
+
+    return ret
 
 T = TypeVar("T")
 
@@ -210,7 +278,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
         anything we want to query or process in events.
     """
 
-    links: ContextMapping[Mapping[str, ot_types.AttributeValue]] = \
+    links: ContextMapping[TLensedAttributes] = \
         pydantic.Field(default_factory=dict)
     """Relationships to other spans with attributes on each link."""
 
@@ -229,9 +297,9 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
             context=self.context,
             parent=self.parent_context,
             resource = None,
-            attributes=self.attributes,
+            attributes=flatten_lensed_attributes(self.attributes),
             events=self.events,
-            links=self.links,
+            links=[ot_trace.Link(context=s[0], attributes=s[1]) for s in self.links],
             kind=self.kind,
             instrumentation_info = None,
             status=self.status,
@@ -249,9 +317,9 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
             name=span.name,
             context=make_hashable(span.context),
             parent_context=make_hashable(span.parent),
-            attributes=span.attributes,
+            attributes=inflate_lensed_mapping(span.attributes),
             events=span.events,
-            links=span.links,
+            links={link.context: inflate_lensed_mapping(link.attributes) for link in span.links},
             kind=span.kind,
             status=span.status,
             start_timestamp=span.start_time,
