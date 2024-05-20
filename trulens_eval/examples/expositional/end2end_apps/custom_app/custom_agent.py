@@ -27,7 +27,7 @@ class CustomAgent(dummy.Dummy):
 
         self.description = description or "Custom Agent"
         self.app = app
-        self.tru_app = TruCustomApp(self.app, app_id=description)
+        # self.tru_app = TruCustomApp(self.app, app_id=description)
 
         self.dummy_allocate()
 
@@ -37,10 +37,10 @@ class CustomAgent(dummy.Dummy):
 
         self.dummy_wait()
 
-        with self.tru_app as recorder:
-            self.app.respond_to_query(query=data)
+        #with self.tru_app as recorder:
+        #    self.app.respond_to_query(query=data)
 
-        return recorder.get().model_dump_json()
+        # return recorder.get().model_dump_json()
     
         return "Record placeholder"
 

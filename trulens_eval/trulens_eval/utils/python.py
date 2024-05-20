@@ -16,7 +16,7 @@ from types import ModuleType
 import typing
 from typing import (
     Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator,
-    List, Optional, Sequence, Type, TypeVar, Union
+    List, Optional, Sequence, Set, Type, TypeVar, Union
 )
 
 T = TypeVar("T")
@@ -120,6 +120,48 @@ def module_name(obj: Union[ModuleType, Type, Any]) -> str:
 
     return "unknown module"
 
+
+def callable_info(c: Callable, ids: Optional[Set[int]]=None) -> str:
+    """Get a string representation of the given callable.
+    
+    Includes name, id, and the same for any wrapped callables.
+    """
+
+    if ids is None:
+        ids = set()
+
+    
+    if not isinstance(c, Callable):
+        raise ValueError(
+            f"Expected a callable. Got {class_name(type(c))} instead."
+        )
+
+    if safe_hasattr(c, "__name__"):
+        name = c.__name__
+    else:
+        name = "?"
+
+    ret = f"{name}:{type(c).__name__}@0x{id(c):x}"
+
+    if id(c) in ids:
+        return ret + " recurs"
+
+    ids.add(id(c))
+
+    #if safe_hasattr(c, "__call__"):
+    #    return ret + callable_info(c.__call__, typ="__call__", ids=ids)
+
+    if hasattr(c, "__self__"):
+        ret += f" with __self__:{type(c.__self__).__name__}@0x{id(c.__self__):x}"
+
+    if safe_hasattr(c, "__func__"):
+        return ret + " __func__=" + callable_info(c.__func__, ids=ids)
+
+    if safe_hasattr(c, "__wrapped__"):
+        return ret + " __wrapped__=" + callable_info(c.__wrapped__, ids=ids)
+
+
+    return ret
 
 def callable_name(c: Callable):
     """Get the name of the given callable."""

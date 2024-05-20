@@ -193,6 +193,7 @@ from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set, Type, TypeVar
+import weakref
 
 from pydantic import Field
 
@@ -203,6 +204,7 @@ from trulens_eval.trace import span as mod_span
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import Function
 from trulens_eval.utils.pyschema import FunctionOrMethod
+from trulens_eval.utils.python import callable_info
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import UNICODE_CHECK
@@ -211,11 +213,13 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-# Keys used in app_extra_json to indicate an automatically added structure for
-# places an instrumented method exists but no instrumented data exists
-# otherwise.
 PLACEHOLDER = "__tru_placeholder"
+"""
+Keys used in app_extra_json to indicate an automatically added structure for
+places an instrumented method exists but no instrumented data exists otherwise.
+"""
 
+T = TypeVar("T")
 
 class TruCustomApp(mod_app.App):
     """
@@ -337,12 +341,16 @@ class TruCustomApp(mod_app.App):
 
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
 
-    functions_to_instrument: ClassVar[Set[Callable]] = set([])
+    functions_to_instrument: ClassVar[weakref.WeakSet[Callable]] = weakref.WeakSet([])
     """Methods marked as needing instrumentation.
     
     These are checked to make sure the object walk finds them. If not, a message
     is shown to let user know how to let the TruCustomApp constructor know where
     these methods are.
+    
+    This is a weakref in case the classes that need instrumentation get reloaded
+    with different references (to methods). The old ones should get evicted from
+    this set under those circumstances.
     """
 
     main_method_loaded: Optional[Callable] = Field(None, exclude=True)
@@ -446,9 +454,10 @@ class TruCustomApp(mod_app.App):
 
             except Exception:
                 logger.warning(
-                    f"App has no component at path {full_path} . "
-                    f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
-                    f"Creating a placeholder there for now."
+                    ("App has no component at path %s . "
+                    "Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
+                    "Creating a placeholder there for now."),
+                    full_path
                 )
 
                 path.set(
@@ -467,9 +476,10 @@ class TruCustomApp(mod_app.App):
 
             if len(obj_ids_methods_and_full_paths) == 0:
                 logger.warning(
-                    f"Function {f} was not found during instrumentation walk. "
-                    f"Make sure it is accessible by traversing app {app} "
-                    f"or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`."
+                    ("Function %s was not found during instrumentation walk. "
+                    "Make sure it is accessible by traversing app %s "
+                    "or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`."),
+                    callable_info(f), app
                 )
 
             else:
@@ -504,27 +514,6 @@ class TruCustomApp(mod_app.App):
 
         return self.main_method_loaded(*bindings.args, **bindings.kwargs)
 
-    """
-    # Async work ongoing:
-    async def main_acall(self, human: str):
-        # TODO: work in progress
-
-        # must return an async generator of tokens/pieces that can be appended to create the full response
-
-        if self.main_async_method is None:
-            raise RuntimeError(
-                "`main_async_method` was not specified so we do not know how to run this app."
-            )
-
-        sig = signature(self.main_async_method)
-        bindings = sig.bind(self.app, human)  # self.app is app's "self"
-
-        generator = await self.main_async_method(*bindings.args, **bindings.kwargs)
-
-        return generator
-    """
-
-T = TypeVar("T")
 
 class instrument(base_instrument):
     """
@@ -541,13 +530,22 @@ class instrument(base_instrument):
         span_type: Optional[mod_span.SpanType] = None,
         spanner: Optional[Callable] = None
     ) -> None:
+
+        # This will make the associations between instances and the spanner.
         base_instrument.method(
             of_cls=of_cls, name=name, instance=instance, span_type=span_type, spanner=spanner
         )
 
+        func = getattr(of_cls, name)
+        if func in TruCustomApp.functions_to_instrument:
+            print(f"TruCustomApp.instrument: {name} of {of_cls} is already marked instrumentation.")
+            return
+
+        print(f"TruCustomApp.instrument: marking {name} of {of_cls} for instrumentation.")
+
         # Also make note of it for verification that it was found by the walk
         # after init.
-        TruCustomApp.functions_to_instrument.add(getattr(of_cls, name))
+        TruCustomApp.functions_to_instrument.add(func)
 
 
 import trulens_eval  # for App class annotations

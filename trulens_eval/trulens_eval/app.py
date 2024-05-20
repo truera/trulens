@@ -559,7 +559,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         if self.instrument is not None:
             self.instrument.instrument_object(
-                obj=self.app, query=mod_feedback_schema.Select.Query().app
+                obj=self.app,
+                query=mod_feedback_schema.Select.Query().app
             )
         else:
             pass

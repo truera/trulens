@@ -33,6 +33,7 @@ class CustomTool(Dummy):
         self,
         *args,
         description: Optional[str] = None,
+        imp: Optional[Callable] = None,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -71,8 +72,11 @@ class CustomStackTool(CustomTool):
     You can use this to get the readout even if this tool is used deep in an app
     that processes the return from the tool in destructive ways."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(imp = self.save_stack, *args, **kwargs)
+
     @instrument
-    def invoke(self, data: str) -> str:
+    def save_stack(self, data: str) -> str:
         CustomStackTool.last_stack = list(superstack())
 
         ret = "<table>\n"

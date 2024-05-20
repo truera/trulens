@@ -4,7 +4,6 @@ This app does not make any external network requests or hard work but has some
 delays and allocs to mimic the effects of such things.
 """
 
-import asyncio
 from concurrent.futures import wait
 import random
 from typing import Tuple
@@ -27,9 +26,7 @@ from examples.expositional.end2end_apps.custom_app.dummy import Dummy
 from trulens_eval.tru_custom_app import instrument
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
-instrument.method(CustomRetriever, "retrieve_chunks")
 instrument.method(CustomMemory, "remember")
-
 
 class CustomTemplate(Dummy):
     """Simple template class that fills in a question and answer."""
@@ -153,30 +150,3 @@ class CustomApp(Dummy):
         self.memory.remember(output)
 
         return output
-
-    @instrument
-    async def arespond_to_query(self, input: str):
-        """Fake async call, must return an async token generator and final
-        result.
-        
-        TODO: This probably does not work.
-        """
-
-        res = self.respond_to_query(input)
-
-        async def async_generator():
-            for tok in res.split(" "):
-                if self.delay > 0.0:
-                    await asyncio.sleep(self.delay)
-
-                yield tok + " "
-
-        gen_task = asyncio.Task(async_generator())
-
-        async def collect_gen():
-            ret = ""
-            async for tok in gen_task:
-                ret += tok
-            return ret
-
-        return gen_task, collect_gen
