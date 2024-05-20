@@ -35,7 +35,7 @@ General and 🦑_TruLens-Eval_-specific concepts.
 - `Completion`, `Generation`. The process or result of LLM responding to some
   `Prompt`.
 
-- `Component`. Part of an `Application` giving it some capability. Typical
+- `Component`. Part of an `Application` giving it some capability. Common
   components include:
 
   - `Retriever`
@@ -43,6 +43,8 @@ General and 🦑_TruLens-Eval_-specific concepts.
   - `Memory`
   
   - `Tool`
+
+  - `Agent`
 
   - `Prompt Template`
 
@@ -60,19 +62,51 @@ General and 🦑_TruLens-Eval_-specific concepts.
 - `Feedback Function`. A method that implements an `Evaluation`. This
   corresponds to [Feedback][trulens_eval.feedback.feedback.Feedback].
 
+- `Fine-tuning`. The process of training an already pre-trained model on
+  additional data. While the initial training of a `Large Language Model` is
+  resource intensive (read "large"), the subsequent fine-tuning may not be and
+  can improve the performance of the `LLM` on data that sufficiently deviates or
+  specializes its original training data. Fine-tuning aims to preserve the
+  generality of the original and transfer of its capabilities to specialized
+  tasks. Examples include fining-tuning on:
+  
+  - financial articles
+  
+  - medical notes
+  
+  - synthetic languages (programming or otherwise)
+
+  While fine-tuning generally requires access to the original model parameters,
+  some model providers give users the ability to fine-tune through their remote APIs.
+
 - `Generation`. See `Completion`.
 
 - `Human Feedback`. A feedback that is provided by a human, e.g. a thumbs
   up/down in response to a `Completion`.
 
+- `In-Context Learning`. The use of examples in an `Instruction Prompt` to help
+  an `LLM` generate intended `Completions`. See also `Shot`.
+
 - `Instruction Prompt`, `System Prompt`. A part of a `Prompt` given to an `LLM`
   to complete that contains instructions describing the task that the
   `Completion` should solve. Sometimes such prompts include examples of correct
-  or desirable completions (see `Shots`). A prompt that does not include examples
+  or intended completions (see `Shots`). A prompt that does not include examples
   is said to be `Zero Shot`.
 
-- `LLM`, `Large Language Model`. The `Component` of an `Application` that
-  performs `Completion`.
+- `Language Model`. A model whose tasks is to model text distributions typically
+  in the form of predicting token distributions for text that follows the given
+  prefix. Propriety models usually do not give users access to token
+  distributions and instead `Complete` a piece of input text via multiple token
+  predictions and methods such as beam search.
+
+- `LLM`, `Large Language Model` (see `Language Model`). The `Component` of an
+  `Application` that performs `Completion`. LLM's are usually trained on a large
+  amount of text across multiple natural and synthetic languages. They are also
+  trained to follow instructions provided in their `Instruction Prompt`. This
+  makes them general in that they can be applied to many structured or
+  unstructured tasks and even tasks which they have not seen in their training
+  data (See `Instruction Prompt`, `In-Context Learning`). LLMs can be further
+  improved to rare/specialized settings using `Fine-Tuning`.
 
 - `Memory`. The state maintained by an `Application` or an `Agent` indicating
   anything relevant to continuing, refining, or guiding it towards its
@@ -124,11 +158,14 @@ General and 🦑_TruLens-Eval_-specific concepts.
   corresponds to [Lens][trulens_eval.utils.serial.Lens] and utilities
   [Select][trulens_eval.schema.feedback.Select].
 
-- `Shot`, `Zero Shot`, `Few Shot`, `<Quantity>-Shot`. The use of zero or more
-  examples in an `Instruction Prompt` to help an `LLM` generate desirable
-  `Completions`. `Zero Shot` describes prompts that do not have any examples and
-  only offer a natural language description of the task, while `<Quantity>-Shot`
-  indicate some `<Quantity>` of examples are provided.
+- `Shot`, `Zero Shot`, `Few Shot`, `<Quantity>-Shot`. `Zero Shot` describes
+  prompts that do not have any examples and only offer a natural language
+  description of the task to be solved, while `<Quantity>-Shot` indicate some
+  `<Quantity>` of examples are provided. The "shot" terminology predates
+  instruction-based LLM's where techniques then used other information to handle
+  unseed classes such as label descriptions in the seen/trained data.
+  `In-context Learning` is the recent term that describes the use of examples in
+  `Instruction Prompts`.
 
 - `Span`. Some unit of work logged as part of a record. Corresponds to current
   🦑[RecordAppCallMethod][trulens_eval.schema.record.RecordAppCall].
