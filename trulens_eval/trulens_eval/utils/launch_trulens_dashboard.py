@@ -6,7 +6,8 @@ from threading import Thread
 
 
 class DashboardLauncher(tk.Tk):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        tk.Tk.__init__(self, *args, **kwargs)
         self.trulens_object = None
         self.init_ui()
 
@@ -135,3 +136,7 @@ class DashboardLauncher(tk.Tk):
 def main():
     dashboard_launcher = DashboardLauncher()
     dashboard_launcher.mainloop()
+
+
+if __name__ == "__main__":
+    main()
