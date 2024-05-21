@@ -11,8 +11,9 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import event
 from sqlalchemy import Float
-from sqlalchemy import Integer, LargeBinary
+from sqlalchemy import Integer
 from sqlalchemy import JSON
+from sqlalchemy import LargeBinary
 from sqlalchemy import Text
 from sqlalchemy import VARCHAR
 from sqlalchemy.ext.declarative import declared_attr
