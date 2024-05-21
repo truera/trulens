@@ -57,13 +57,20 @@ TTraceID = int
 NUM_TRACEID_BITS = 128
 """Number of bits in a trace identifier."""
 
-TLensedBaseTypes = Union[str, int, float, bool, NoneType]
+TLensedBaseType = Union[str, int, float, bool, NoneType]
+"""Type of base types in span attributes.
+
+!!! Warning
+
+    OpenTelemetry does not allow None as an attribute value. However, we allow
+    it in lensed attributes.
+"""
 
 TLensedAttributeValue = TypeAliasType(
     "TLensedAttributeValue", 
     Union[
         str, int, float, bool,
-        # NoneType, # NOTE(piotrm): None is not technically allowed as an attribute value.
+        NoneType, # NOTE(piotrm): None is not technically allowed as an attribute value.
         Sequence['TLensedAttributeValue'],
         'TLensedAttributes'
     ]
@@ -76,14 +83,20 @@ TLensedAttributeValue = TypeAliasType(
 TLensedAttributes = Dict[str, TLensedAttributeValue]
 
 def inflate_lensed_mapping(
-    m: ot_types.Attributes
+    m: ot_types.Attributes,
+    prefix: str = "trulens_eval@"
 ) -> TLensedAttributes:
     """Inflate OpenTelemetry attributes into lensed attributes."""
 
     ret = {}
 
     for k, v in m.items():
-        path = Lens.of_string(k)
+        if not k.startswith(prefix):
+            logger.warning("Attribute %s does not start with %s. Skipping.", k, prefix)
+            continue
+
+        path = Lens.of_string(k[len(prefix):])
+        path.path[0].item_or_attribute = prefix + path.path[0].item_or_attribute
         ret = path.set(ret, v)
 
     return ret
@@ -103,11 +116,11 @@ def flatten_value(
         # is best to do here. Returning "None" for now.
     #    yield (path, "None")
 
-    elif isinstance(v, TLensedBaseTypes):
-        yield (Lens(), v)
+    elif isinstance(v, TLensedBaseType):
+        yield (path, v)
 
-    elif isinstance(v, Sequence) and all(isinstance(e, TLensedBaseTypes) for e in v):
-        yield (Lens(), v)
+    elif isinstance(v, Sequence) and all(isinstance(e, TLensedBaseType) for e in v):
+        yield (path, v)
 
     elif isinstance(v, Sequence):
         for i, e in enumerate(v):
@@ -122,7 +135,8 @@ def flatten_value(
 
 def flatten_lensed_attributes(
     m: TLensedAttributes,
-    path: Optional[Lens] = None
+    path: Optional[Lens] = None,
+    prefix: str = "trulens_eval@"
 ) -> ot_types.Attributes:
     """Flatten lensed attributes into OpenTelemetry attributes."""
 
@@ -131,8 +145,13 @@ def flatten_lensed_attributes(
 
     ret = {}
     for k, v in m.items():
-        for p, a in flatten_value(v, path[k]):
-            ret[str(p)] = a
+        if k.startswith(prefix):
+            # Only flattening those attributes that begin with `prefix` are
+            # those are the ones coming from trulens_eval.
+            for p, a in flatten_value(v, path[k]):
+                ret[str(p)] = a
+        else:
+            ret[k] = v
 
     return ret
 
@@ -151,13 +170,23 @@ class HashableSpanContext(ot_span.SpanContext):
     def __eq__(self, other):
         return self.trace_id == other.trace_id and self.span_id == other.span_id
 
-def deserialize_contextmapping(
-    v: List[Tuple[HashableSpanContext, T]]
+def validate_contextmapping(
+    v: Union[
+        List[Tuple[HashableSpanContext, T]],
+        Dict[HashableSpanContext, T]
+    ]
+
 ) -> Dict[HashableSpanContext, T]:
     """Deserialize a list of tuples as a dictionary."""
 
+    if isinstance(v, dict):
+        # Already a dict.
+        return v
+
     # skip last element of SpanContext as it is computed in SpanContext.__init__ from others
-    return {HashableSpanContext(*k[0:5]): v for k, v in v} 
+    return {
+        HashableSpanContext(*k[0:5]): v for k, v in v
+    } 
 
 def serialize_contextmapping(
     v: Dict[HashableSpanContext, T],
@@ -169,7 +198,7 @@ def serialize_contextmapping(
 ContextMapping = Annotated[
     Dict[HashableSpanContext, T],
     PlainSerializer(serialize_contextmapping),
-    PlainValidator(deserialize_contextmapping)
+    PlainValidator(validate_contextmapping)
 ]
 """Type annotation for pydantic fields that store dictionaries whose keys are
 HashableSpanContext.
@@ -299,10 +328,10 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
             resource = None,
             attributes=flatten_lensed_attributes(self.attributes),
             events=self.events,
-            links=[ot_trace.Link(context=s[0], attributes=s[1]) for s in self.links],
+            links=[ot_trace.Link(context=c, attributes=a) for c, a in self.links.items()],
             kind=self.kind,
             instrumentation_info = None,
-            status=self.status,
+            status=ot_span.Status(self.status, self.status_description),
             start_time=self.start_timestamp,
             end_time=self.end_timestamp,
             instrumentation_scope = None
@@ -319,9 +348,10 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
             parent_context=make_hashable(span.parent),
             attributes=inflate_lensed_mapping(span.attributes),
             events=span.events,
-            links={link.context: inflate_lensed_mapping(link.attributes) for link in span.links},
+            links={make_hashable(link.context): inflate_lensed_mapping(link.attributes) for link in span.links},
             kind=span.kind,
-            status=span.status,
+            status=span.status.status_code,
+            status_description=span.status.description,
             start_timestamp=span.start_time,
             end_timestamp=span.end_time
         )

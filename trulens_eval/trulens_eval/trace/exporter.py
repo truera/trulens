@@ -4,14 +4,15 @@ from typing import Sequence, Union
 from opentelemetry.sdk import trace as otsdk_trace
 from opentelemetry.sdk.trace import export
 from opentelemetry.sdk.trace import ReadableSpan
-from opentelemetry.sdk.trace import Span
 from opentelemetry.sdk.trace import SpanProcessor
-from sqlaclhemy import Integer
+from sqlalchemy import BigInteger
 from sqlalchemy import Column
 from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import event
 from sqlalchemy import Float
+from sqlalchemy import Integer, LargeBinary
+from sqlalchemy import JSON
 from sqlalchemy import Text
 from sqlalchemy import VARCHAR
 from sqlalchemy.ext.declarative import declared_attr
@@ -21,32 +22,39 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import MetaData
 
+from trulens_eval.trace import flatten_lensed_attributes
+from trulens_eval.trace import OTSpan
+
 # Temporary database design seperate from the main database.
 base = declarative_base()
+
+Int128 = LargeBinary(128)
+Int64 = LargeBinary(64)
+
 
 class DBSpan(base):
     """Temporary db implementation for storing spans."""
 
     __tablename__ = "span"
 
-    span_id = Column(Integer, primary_key=True)
-    trace_id = Column(Integer, primary_key=True)
+    span_id = Column(Int64, primary_key=True)
+    trace_id = Column(Int128, primary_key=True) # need double big int
 
-    parent_span_id = Column(Integer)
-    parent_trace_id = Column(Integer)
+    parent_span_id = Column(Int64)
+    parent_trace_id = Column(Int128) # need double big int
 
-    name = Column(VARCHAR(255))
-    kind = Column(VARCHAR(255))
+    name = Column(VARCHAR(256))
+    kind = Column(VARCHAR(256))
 
-    start_time = Column(Integer)
-    end_time = Column(Integer)
+    #start_time = Column(BigInteger)
+    #end_time = Column(BigInteger)
 
-    status_code = Column(VARCHAR(16))
+    status_code = Column(VARCHAR(32))
     status_description = Column(Text)
 
-    attributes = Column(Text) # JSON
-    events = Column(Text) # JSON
-    links = Column(Text) # JSON
+    attributes = Column(JSON) # JSON
+    # events = Column(Text) # JSON
+    # links = Column(Text) # JSON
 
     # attributes = relationship("DBSpanAttribute", backref=backref("span"))
     # events = relationship("DBSpanEvent", backref=backref("span"))
@@ -61,28 +69,30 @@ class TempDB():
 
         base.metadata.create_all(self.engine)
 
-    def add_span(self, span: Union[Span, otsdk_trace.ReadableSpan]):
+    def add_span(self, span: Union[OTSpan, otsdk_trace.ReadableSpan]):
         """Add a span to the database."""
 
-        if isinstance(span, Span):
-            span: otsdk_trace.ReadableSpan = span.freeze()
+        if isinstance(span, otsdk_trace.ReadableSpan):
+            span: OTSpan = OTSpan.thaw(span)
 
         db_span = DBSpan(
-            span_id = span.span_id,
-            trace_id = span.trace_id,
-            parent_span_id = span.parent_span_id,
-            parent_trace_id = span.parent_trace_id,
+            span_id = span.context.span_id.to_bytes(64),
+            trace_id = span.context.trace_id.to_bytes(128),
+            parent_span_id = span.parent_context.span_id.to_bytes(64) if span.parent_context else None,
+            parent_trace_id = span.parent_context.trace_id.to_bytes(128) if span.parent_context else None,
             name = span.name,
-            kind = span.kind,
-            start_time = span.start_time,
-            end_time = span.end_time,
-            status_code = span.status,
+            kind = span.kind.name,
+            #start_time = span.start_time,
+            #end_time = span.end_time,
+            status_code = span.status.name,
             status_description = span.status_description,
-            attributes = json.dumps(span.attributes),
-            events = json.dumps(span.events),
-            links = json.dumps(span.links)
+            attributes = span.attributes,
+            #events = json.dumps(span.events),
+            #links = json.dumps(span.links)
         )
-        self.session.add(db_span)
+
+        with self.session.begin() as s:
+            s.add(db_span)
 
 class AlchemyExporter(export.SpanExporter):
     """Exporter for spans to a SQLAlchemy database."""
