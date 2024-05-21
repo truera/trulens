@@ -23,50 +23,44 @@ from setuptools.logging import logging
 required_packages = list(
     map(
         lambda pip_req: str(pip_req.requirement),
-        parse_requirements("trulens_eval/requirements.txt", session=None)
+        parse_requirements("trulens_eval/requirements.txt", session=None),
     )
 )
 optional_packages = list(
     map(
         lambda pip_req: str(pip_req.requirement),
-        parse_requirements(
-            "trulens_eval/requirements.optional.txt", session=None
-        )
+        parse_requirements("trulens_eval/requirements.optional.txt", session=None),
     )
 )
 
 
 class BuildJavascript(build):
-
     def run(self):
         """Custom build command to run npm commands before building the package.
-    
+
         This builds the record timeline component for the dashboard.
         """
 
         logging.info("running npm i")
         os.system("npm i --prefix trulens_eval/react_components/record_viewer")
         logging.info("running npm run build")
-        os.system(
-            "npm run --prefix trulens_eval/react_components/record_viewer build"
-        )
+        os.system("npm run --prefix trulens_eval/react_components/record_viewer build")
         build.run(self)
 
 
 setup(
     name="trulens_eval",
     cmdclass={
-        'build': BuildJavascript,
+        "build": BuildJavascript,
     },
     include_package_data=True,  # includes things specified in MANIFEST.in
-    packages=find_namespace_packages(
-        include=["trulens_eval", "trulens_eval.*"]
-    ),
-    python_requires='>= 3.8, < 3.13',
+    packages=find_namespace_packages(include=["trulens_eval", "trulens_eval.*"]),
+    python_requires=">= 3.8, < 3.13",
     entry_points={
-        'console_scripts': [
-            'trulens-eval=trulens_eval.utils.command_line:main'
+        "console_scripts": [
+            "trulens-eval=trulens_eval.utils.command_line:main",
+            "trulens-eval-dashboard=trulens_eval.utils.launch_trulens_dashboard:main",
         ],
     },
-    install_requires=required_packages
+    install_requires=required_packages,
 )
