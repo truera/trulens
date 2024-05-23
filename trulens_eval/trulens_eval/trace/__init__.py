@@ -20,6 +20,7 @@ from opentelemetry.util import types as ot_types
 import pydantic
 from pydantic import PlainSerializer
 from pydantic.functional_validators import PlainValidator
+from pydantic.json_schema import JsonSchemaValue
 from typing_extensions import Annotated
 
 logger = getLogger(__name__)
@@ -66,6 +67,27 @@ class HashableSpanContext(ot_span.SpanContext):
 
     def __eq__(self, other):
         return self.trace_id == other.trace_id and self.span_id == other.span_id
+    
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _core_schema, _handler) -> JsonSchemaValue:
+        return { 
+            'description': 'SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.',
+            'items': {
+                'maxItems': 5,
+                'minItems': 5,
+                'prefixItems': [
+                    {"type": "integer", "description": "The ID of the trace that this span belongs to." },
+                    {"type": "integer", "description": "This span's ID." },
+                    {"type": "boolean", "description": "True if propagated from a remote parent." },
+                    {"type": "integer", "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details." },
+                    {"type": "integer", "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values." },
+                    {"type": "boolean", "description": "True if the span context is valid." },
+                ]
+            },
+            'title': 'SpanContext',
+            'type': 'array'
+        }
 
 def deserialize_contextmapping(
     v: List[Tuple[HashableSpanContext, T]]
@@ -153,8 +175,6 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
         pydantic.Field(default_factory=list)
     """Events recorded in the span."""
 
-    links: ContextMapping[Mapping[str, ot_types.AttributeValue]] = \
-        pydantic.Field(default_factory=dict)
     """Relationships to other spans with attributes on each link."""
 
     attributes: Dict[str, ot_types.AttributeValue] = \
