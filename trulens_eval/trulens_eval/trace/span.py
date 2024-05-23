@@ -17,6 +17,11 @@ import pandas as pd
 from pydantic import computed_field
 from pydantic import Field
 from pydantic import TypeAdapter
+from pydantic_core import core_schema as cs
+from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler, TypeAdapter
+from pydantic.json_schema import JsonSchemaValue
+import json
+
 
 from trulens_eval import trace as mod_trace
 from trulens_eval.schema import record as mod_record_schema
@@ -302,6 +307,15 @@ class SpanRetriever(SpanTyped):
 
     retrieved_embeddings = Span.attribute_property("retrieved_embeddings", List[List[float]])
     """The embeddings of the retrieved contexts."""
+
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls, core_schema: cs.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        json_schema = handler(core_schema)
+        json_schema = handler.resolve_ref_schema(json_schema)
+        json.dumps(json_schema, indent=2)
+        return json_schema
 
 class SpanReranker(SpanTyped):
     """A reranker call."""

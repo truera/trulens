@@ -74,8 +74,8 @@ class HashableSpanContext(ot_span.SpanContext):
         return { 
             'description': 'SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.',
             'items': {
-                'maxItems': 5,
-                'minItems': 5,
+                'maxItems': 6,
+                'minItems': 6,
                 'prefixItems': [
                     {"type": "integer", "description": "The ID of the trace that this span belongs to." },
                     {"type": "integer", "description": "This span's ID." },
