@@ -9,6 +9,7 @@ import itertools
 import logging
 from pprint import PrettyPrinter
 from typing import Callable, Dict, Iterable, Sequence, Tuple, TypeVar, Union
+from pydantic.json_schema import JsonSchemaValue
 
 import pandas as pd
 
@@ -51,6 +52,14 @@ class DictNamespace(Dict[str, T]):
     def __delitem__(self, key: str) -> None:
         dict.__delitem__(self, key)
         del self.parent[f"{self.namespace}.{key}"]
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _core_schema, _handler) -> JsonSchemaValue:
+        return { 
+            'description': 'View into a dict with keys prefixed by some `namespace` string.',
+            'title': 'DictNamespace',
+            'type': 'object'
+        }
 
 # Collection utilities
 

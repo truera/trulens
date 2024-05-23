@@ -1,0 +1,3897 @@
+{
+  "$defs": {
+    "Span": {
+      "description": "Base Span type.\n\nSmallest unit of recorded activity.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type"
+      ],
+      "title": "Span",
+      "type": "object"
+    },
+    "SpanAgent": {
+      "description": "An agent invocation.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        },
+        "description": {
+          "readOnly": true,
+          "title": "Description"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error",
+        "description"
+      ],
+      "title": "SpanAgent",
+      "type": "object"
+    },
+    "SpanEmbedding": {
+      "description": "An embedding cal.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        },
+        "input_text": {
+          "readOnly": true,
+          "title": "Input Text"
+        },
+        "model_name": {
+          "readOnly": true,
+          "title": "Model Name"
+        },
+        "embedding": {
+          "readOnly": true,
+          "title": "Embedding"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error",
+        "input_text",
+        "model_name",
+        "embedding"
+      ],
+      "title": "SpanEmbedding",
+      "type": "object"
+    },
+    "SpanKind": {
+      "description": "Specifies additional details on how this span relates to its parent span.\n\nNote that this enumeration is experimental and likely to change. See\nhttps://github.com/open-telemetry/opentelemetry-specification/pull/226.",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "title": "SpanKind",
+      "type": "integer"
+    },
+    "SpanLLM": {
+      "description": "A generation call to an LLM.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        },
+        "model_name": {
+          "readOnly": true,
+          "title": "Model Name"
+        },
+        "model_type": {
+          "readOnly": true,
+          "title": "Model Type"
+        },
+        "temperature": {
+          "readOnly": true,
+          "title": "Temperature"
+        },
+        "input_messages": {
+          "readOnly": true,
+          "title": "Input Messages"
+        },
+        "input_token_count": {
+          "readOnly": true,
+          "title": "Input Token Count"
+        },
+        "output_messages": {
+          "readOnly": true,
+          "title": "Output Messages"
+        },
+        "output_token_count": {
+          "readOnly": true,
+          "title": "Output Token Count"
+        },
+        "cost": {
+          "readOnly": true,
+          "title": "Cost"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error",
+        "model_name",
+        "model_type",
+        "temperature",
+        "input_messages",
+        "input_token_count",
+        "output_messages",
+        "output_token_count",
+        "cost"
+      ],
+      "title": "SpanLLM",
+      "type": "object"
+    },
+    "SpanMemory": {
+      "description": "A memory call.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        },
+        "memory_type": {
+          "readOnly": true,
+          "title": "Memory Type"
+        },
+        "remembered": {
+          "readOnly": true,
+          "title": "Remembered"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error",
+        "memory_type",
+        "remembered"
+      ],
+      "title": "SpanMemory",
+      "type": "object"
+    },
+    "SpanMethodCall": {
+      "description": "Span which corresponds to a method call.\n\nSee also temporary development attributes in\n[TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordCall].",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error"
+      ],
+      "title": "SpanMethodCall",
+      "type": "object"
+    },
+    "SpanOther": {
+      "description": "Other uncategorized spans.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error"
+      ],
+      "title": "SpanOther",
+      "type": "object"
+    },
+    "SpanReranker": {
+      "description": "A reranker call.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        },
+        "query_text": {
+          "readOnly": true,
+          "title": "Query Text"
+        },
+        "model_name": {
+          "readOnly": true,
+          "title": "Model Name"
+        },
+        "top_n": {
+          "readOnly": true,
+          "title": "Top N"
+        },
+        "input_context_texts": {
+          "readOnly": true,
+          "title": "Input Context Texts"
+        },
+        "input_context_scores": {
+          "readOnly": true,
+          "title": "Input Context Scores"
+        },
+        "output_ranks": {
+          "readOnly": true,
+          "title": "Output Ranks"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error",
+        "query_text",
+        "model_name",
+        "top_n",
+        "input_context_texts",
+        "input_context_scores",
+        "output_ranks"
+      ],
+      "title": "SpanReranker",
+      "type": "object"
+    },
+    "SpanRetriever": {
+      "description": "A retrieval.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        },
+        "query_text": {
+          "readOnly": true,
+          "title": "Query Text"
+        },
+        "query_embedding": {
+          "readOnly": true,
+          "title": "Query Embedding"
+        },
+        "distance_type": {
+          "readOnly": true,
+          "title": "Distance Type"
+        },
+        "num_contexts": {
+          "readOnly": true,
+          "title": "Num Contexts"
+        },
+        "retrieved_contexts": {
+          "readOnly": true,
+          "title": "Retrieved Contexts"
+        },
+        "retrieved_scores": {
+          "readOnly": true,
+          "title": "Retrieved Scores"
+        },
+        "retrieved_embeddings": {
+          "readOnly": true,
+          "title": "Retrieved Embeddings"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error",
+        "query_text",
+        "query_embedding",
+        "distance_type",
+        "num_contexts",
+        "retrieved_contexts",
+        "retrieved_scores",
+        "retrieved_embeddings"
+      ],
+      "title": "SpanRetriever",
+      "type": "object"
+    },
+    "SpanRoot": {
+      "description": "A root span encompassing some collection of spans.\n\nDoes not indicate any particular activity by itself beyond its children.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id"
+      ],
+      "title": "SpanRoot",
+      "type": "object"
+    },
+    "SpanTask": {
+      "description": "A task invocation.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error"
+      ],
+      "title": "SpanTask",
+      "type": "object"
+    },
+    "SpanTool": {
+      "description": "A tool invocation.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        },
+        "description": {
+          "readOnly": true,
+          "title": "Description"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error",
+        "description"
+      ],
+      "title": "SpanTool",
+      "type": "object"
+    },
+    "SpanUntyped": {
+      "description": "Generic span type.\n\nThis represents spans that are being recorded but have not yet been\ndetermined to be of a particular type.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type"
+      ],
+      "title": "SpanUntyped",
+      "type": "object"
+    },
+    "StatusCode": {
+      "description": "Represents the canonical set of status codes of a finished Span.",
+      "enum": [
+        0,
+        1,
+        2
+      ],
+      "title": "StatusCode",
+      "type": "integer"
+    },
+    "TransSpanRecord": {
+      "description": "A span whose activity was recorded in a record.\n\nFeatures references to the record.\n\n!!! note\n    This is a transitional type for the traces work.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id"
+      ],
+      "title": "TransSpanRecord",
+      "type": "object"
+    },
+    "TransSpanRecordAppCall": {
+      "description": "A Span which corresponds to single\n[RecordAppCall][trulens_eval.schema.record.RecordAppCall].\n\nFeatures references to the call.\n\n!!! note\n    This is a transitional type for the traces work. The non-transitional\n    fields are being placed in\n    [SpanMethodCall][trulens_eval.trace.span.SpanMethodCall] instead.",
+      "properties": {
+        "name": {
+          "description": "Name of span.",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SpanKind"
+            }
+          ],
+          "default": 0,
+          "description": "Kind of span."
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/StatusCode"
+            }
+          ],
+          "default": 0,
+          "description": "Status of the span as per OpenTelemetry Span requirements."
+        },
+        "status_description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Status description as per OpenTelemetry Span requirements.",
+          "title": "Status Description"
+        },
+        "start_timestamp": {
+          "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
+          "title": "Start Timestamp",
+          "type": "integer"
+        },
+        "end_timestamp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
+          "title": "End Timestamp"
+        },
+        "context": {
+          "description": "Unique immutable identifier for the span.",
+          "items": {
+            "maxItems": 5,
+            "minItems": 5,
+            "prefixItems": [
+              {
+                "description": "The ID of the trace that this span belongs to.",
+                "type": "integer"
+              },
+              {
+                "description": "This span's ID.",
+                "type": "integer"
+              },
+              {
+                "description": "True if propagated from a remote parent.",
+                "type": "boolean"
+              },
+              {
+                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                "type": "integer"
+              },
+              {
+                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                "type": "integer"
+              },
+              {
+                "description": "True if the span context is valid.",
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "SpanContext",
+          "type": "array"
+        },
+        "events": {
+          "description": "Events recorded in the span.",
+          "items": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "boolean"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "integer"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "boolean"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Attributes of span.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "attributes_metadata": {
+          "description": "View into a dict with keys prefixed by some `namespace` string.",
+          "title": "DictNamespace",
+          "type": "object"
+        },
+        "tags": {
+          "readOnly": true,
+          "title": "Tags"
+        },
+        "span_type": {
+          "readOnly": true,
+          "title": "Span Type"
+        },
+        "record_id": {
+          "readOnly": true,
+          "title": "Record Id"
+        },
+        "inputs": {
+          "readOnly": true,
+          "title": "Inputs"
+        },
+        "output": {
+          "readOnly": true,
+          "title": "Output"
+        },
+        "error": {
+          "readOnly": true,
+          "title": "Error"
+        }
+      },
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id",
+        "inputs",
+        "output",
+        "error"
+      ],
+      "title": "TransSpanRecordAppCall",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "Span": {
+      "$ref": "#/$defs/Span"
+    },
+    "SpanAgent": {
+      "$ref": "#/$defs/SpanAgent"
+    },
+    "SpanEmbedding": {
+      "$ref": "#/$defs/SpanEmbedding"
+    },
+    "SpanLLM": {
+      "$ref": "#/$defs/SpanLLM"
+    },
+    "SpanMemory": {
+      "$ref": "#/$defs/SpanMemory"
+    },
+    "SpanMethodCall": {
+      "$ref": "#/$defs/SpanMethodCall"
+    },
+    "SpanOther": {
+      "$ref": "#/$defs/SpanOther"
+    },
+    "SpanReranker": {
+      "$ref": "#/$defs/SpanReranker"
+    },
+    "SpanRetriever": {
+      "$ref": "#/$defs/SpanRetriever"
+    },
+    "SpanRoot": {
+      "$ref": "#/$defs/SpanRoot"
+    },
+    "SpanTask": {
+      "$ref": "#/$defs/SpanTask"
+    },
+    "SpanTool": {
+      "$ref": "#/$defs/SpanTool"
+    },
+    "TransSpanRecordAppCall": {
+      "$ref": "#/$defs/TransSpanRecordAppCall"
+    },
+    "SpanUntyped": {
+      "$ref": "#/$defs/SpanUntyped"
+    },
+    "TransSpanRecord": {
+      "$ref": "#/$defs/TransSpanRecord"
+    }
+  },
+  "required": [
+    "Span",
+    "SpanAgent",
+    "SpanEmbedding",
+    "SpanLLM",
+    "SpanMemory",
+    "SpanMethodCall",
+    "SpanOther",
+    "SpanReranker",
+    "SpanRetriever",
+    "SpanRoot",
+    "SpanTask",
+    "SpanTool",
+    "TransSpanRecordAppCall",
+    "SpanUntyped",
+    "TransSpanRecord"
+  ],
+  "title": "_Master_",
+  "type": "object"
+}
