@@ -5,7 +5,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -36,12 +35,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -54,8 +51,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -89,7 +85,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -157,7 +152,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -202,21 +196,17 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         }
       },
       "required": [
@@ -234,7 +224,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -265,12 +254,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -283,8 +270,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -318,7 +304,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -386,7 +371,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -431,41 +415,32 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         },
         "description": {
-          "readOnly": true,
-          "title": "Description"
+          "readOnly": true
         }
       },
       "required": [
@@ -488,7 +463,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -519,12 +493,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -537,8 +509,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -572,7 +543,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -640,7 +610,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -685,49 +654,38 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         },
         "input_text": {
-          "readOnly": true,
-          "title": "Input Text"
+          "readOnly": true
         },
         "model_name": {
-          "readOnly": true,
-          "title": "Model Name"
+          "readOnly": true
         },
         "embedding": {
-          "readOnly": true,
-          "title": "Embedding"
+          "readOnly": true
         }
       },
       "required": [
@@ -764,7 +722,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -795,12 +752,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -813,8 +768,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -848,7 +802,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -916,7 +869,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -961,69 +913,53 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         },
         "model_name": {
-          "readOnly": true,
-          "title": "Model Name"
+          "readOnly": true
         },
         "model_type": {
-          "readOnly": true,
-          "title": "Model Type"
+          "readOnly": true
         },
         "temperature": {
-          "readOnly": true,
-          "title": "Temperature"
+          "readOnly": true
         },
         "input_messages": {
-          "readOnly": true,
-          "title": "Input Messages"
+          "readOnly": true
         },
         "input_token_count": {
-          "readOnly": true,
-          "title": "Input Token Count"
+          "readOnly": true
         },
         "output_messages": {
-          "readOnly": true,
-          "title": "Output Messages"
+          "readOnly": true
         },
         "output_token_count": {
-          "readOnly": true,
-          "title": "Output Token Count"
+          "readOnly": true
         },
         "cost": {
-          "readOnly": true,
-          "title": "Cost"
+          "readOnly": true
         }
       },
       "required": [
@@ -1053,7 +989,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -1084,12 +1019,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -1102,8 +1035,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -1137,7 +1069,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -1205,7 +1136,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -1250,45 +1180,35 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         },
         "memory_type": {
-          "readOnly": true,
-          "title": "Memory Type"
+          "readOnly": true
         },
         "remembered": {
-          "readOnly": true,
-          "title": "Remembered"
+          "readOnly": true
         }
       },
       "required": [
@@ -1312,7 +1232,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -1343,12 +1262,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -1361,8 +1278,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -1396,7 +1312,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -1464,7 +1379,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -1509,37 +1423,29 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         }
       },
       "required": [
@@ -1561,7 +1467,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -1592,12 +1497,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -1610,8 +1513,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -1645,7 +1547,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -1713,7 +1614,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -1758,37 +1658,29 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         }
       },
       "required": [
@@ -1810,7 +1702,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -1841,12 +1732,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -1859,8 +1748,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -1894,7 +1782,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -1962,7 +1849,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -2007,61 +1893,47 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         },
         "query_text": {
-          "readOnly": true,
-          "title": "Query Text"
+          "readOnly": true
         },
         "model_name": {
-          "readOnly": true,
-          "title": "Model Name"
+          "readOnly": true
         },
         "top_n": {
-          "readOnly": true,
-          "title": "Top N"
+          "readOnly": true
         },
         "input_context_texts": {
-          "readOnly": true,
-          "title": "Input Context Texts"
+          "readOnly": true
         },
         "input_context_scores": {
-          "readOnly": true,
-          "title": "Input Context Scores"
+          "readOnly": true
         },
         "output_ranks": {
-          "readOnly": true,
-          "title": "Output Ranks"
+          "readOnly": true
         }
       },
       "required": [
@@ -2089,7 +1961,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -2120,12 +1991,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -2138,8 +2007,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -2173,7 +2041,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -2241,7 +2108,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -2286,65 +2152,50 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         },
         "query_text": {
-          "readOnly": true,
-          "title": "Query Text"
+          "readOnly": true
         },
         "query_embedding": {
-          "readOnly": true,
-          "title": "Query Embedding"
+          "readOnly": true
         },
         "distance_type": {
-          "readOnly": true,
-          "title": "Distance Type"
+          "readOnly": true
         },
         "num_contexts": {
-          "readOnly": true,
-          "title": "Num Contexts"
+          "readOnly": true
         },
         "retrieved_contexts": {
-          "readOnly": true,
-          "title": "Retrieved Contexts"
+          "readOnly": true
         },
         "retrieved_scores": {
-          "readOnly": true,
-          "title": "Retrieved Scores"
+          "readOnly": true
         },
         "retrieved_embeddings": {
-          "readOnly": true,
-          "title": "Retrieved Embeddings"
+          "readOnly": true
         }
       },
       "required": [
@@ -2373,7 +2224,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -2404,12 +2254,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -2422,8 +2270,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -2457,7 +2304,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -2525,7 +2371,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -2570,25 +2415,20 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         }
       },
       "required": [
@@ -2607,7 +2447,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -2638,12 +2477,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -2656,8 +2493,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -2691,7 +2527,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -2759,7 +2594,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -2804,37 +2638,29 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         }
       },
       "required": [
@@ -2856,7 +2682,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -2887,12 +2712,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -2905,8 +2728,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -2940,7 +2762,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -3008,7 +2829,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -3053,41 +2873,32 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         },
         "description": {
-          "readOnly": true,
-          "title": "Description"
+          "readOnly": true
         }
       },
       "required": [
@@ -3110,7 +2921,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -3141,12 +2951,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -3159,8 +2967,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -3194,7 +3001,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -3262,7 +3068,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -3307,21 +3112,17 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         }
       },
       "required": [
@@ -3349,7 +3150,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -3380,12 +3180,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -3398,8 +3196,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -3433,7 +3230,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -3501,7 +3297,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -3546,25 +3341,20 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         }
       },
       "required": [
@@ -3583,7 +3373,6 @@
       "properties": {
         "name": {
           "description": "Name of span.",
-          "title": "Name",
           "type": "string"
         },
         "kind": {
@@ -3614,12 +3403,10 @@
             }
           ],
           "default": null,
-          "description": "Status description as per OpenTelemetry Span requirements.",
-          "title": "Status Description"
+          "description": "Status description as per OpenTelemetry Span requirements."
         },
         "start_timestamp": {
           "description": "Timestamp when the span's activity started in nanoseconds since epoch.",
-          "title": "Start Timestamp",
           "type": "integer"
         },
         "end_timestamp": {
@@ -3632,8 +3419,7 @@
             }
           ],
           "default": null,
-          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended.",
-          "title": "End Timestamp"
+          "description": "Timestamp when the span's activity ended in nanoseconds since epoch.\n\nNone if not yet ended."
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
@@ -3667,7 +3453,6 @@
               }
             ]
           },
-          "title": "SpanContext",
           "type": "array"
         },
         "events": {
@@ -3735,7 +3520,6 @@
             ],
             "type": "array"
           },
-          "title": "Events",
           "type": "array"
         },
         "attributes": {
@@ -3780,37 +3564,29 @@
             ]
           },
           "description": "Attributes of span.",
-          "title": "Attributes",
           "type": "object"
         },
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
-          "title": "DictNamespace",
           "type": "object"
         },
         "tags": {
-          "readOnly": true,
-          "title": "Tags"
+          "readOnly": true
         },
         "span_type": {
-          "readOnly": true,
-          "title": "Span Type"
+          "readOnly": true
         },
         "record_id": {
-          "readOnly": true,
-          "title": "Record Id"
+          "readOnly": true
         },
         "inputs": {
-          "readOnly": true,
-          "title": "Inputs"
+          "readOnly": true
         },
         "output": {
-          "readOnly": true,
-          "title": "Output"
+          "readOnly": true
         },
         "error": {
-          "readOnly": true,
-          "title": "Error"
+          "readOnly": true
         }
       },
       "required": [

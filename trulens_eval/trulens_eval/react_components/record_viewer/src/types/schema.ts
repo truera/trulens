@@ -6,10 +6,6 @@
  */
 
 /**
- * Name of span.
- */
-export type Name = string;
-/**
  * Specifies additional details on how this span relates to its parent span.
  *
  * Note that this enumeration is experimental and likely to change. See
@@ -20,422 +16,6 @@ export type SpanKind = 0 | 1 | 2 | 3 | 4;
  * Represents the canonical set of status codes of a finished Span.
  */
 export type StatusCode = 0 | 1 | 2;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name1 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription1 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp1 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp1 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext1 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events1 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name2 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription2 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp2 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp2 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext2 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events2 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name3 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription3 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp3 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp3 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext3 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events3 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name4 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription4 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp4 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp4 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext4 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events4 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name5 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription5 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp5 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp5 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext5 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events5 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name6 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription6 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp6 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp6 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext6 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events6 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name7 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription7 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp7 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp7 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext7 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events7 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name8 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription8 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp8 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp8 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext8 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events8 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name9 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription9 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp9 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp9 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext9 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events9 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name10 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription10 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp10 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp10 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext10 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events10 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name11 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription11 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp11 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp11 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext11 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events11 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name12 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription12 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp12 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp12 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext12 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events12 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name13 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription13 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp13 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp13 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext13 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events13 = [unknown, unknown, unknown][];
-/**
- * Name of span.
- */
-export type Name14 = string;
-/**
- * Status description as per OpenTelemetry Span requirements.
- */
-export type StatusDescription14 = string | null;
-/**
- * Timestamp when the span's activity started in nanoseconds since epoch.
- */
-export type StartTimestamp14 = number;
-/**
- * Timestamp when the span's activity ended in nanoseconds since epoch.
- *
- * None if not yet ended.
- */
-export type EndTimestamp14 = number | null;
-/**
- * Unique immutable identifier for the span.
- */
-export type SpanContext14 = {
-  [k: string]: unknown;
-}[];
-/**
- * Events recorded in the span.
- */
-export type Events14 = [unknown, unknown, unknown][];
 
 export interface _Master_ {
   Span: Span;
@@ -461,7 +41,10 @@ export interface _Master_ {
  * Smallest unit of recorded activity.
  */
 export interface Span {
-  name: Name;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -470,40 +53,58 @@ export interface Span {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription;
-  start_timestamp?: StartTimestamp;
-  end_timestamp?: EndTimestamp;
-  context: SpanContext;
-  events?: Events;
-  attributes?: Attributes;
-  attributes_metadata: DictNamespace;
-  tags: Tags;
-  span_type: SpanType;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace {
-  [k: string]: unknown;
-}
-export interface Tags {
-  [k: string]: unknown;
-}
-export interface SpanType {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
  * An agent invocation.
  */
 export interface SpanAgent {
-  name: Name1;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -512,60 +113,73 @@ export interface SpanAgent {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription1;
-  start_timestamp?: StartTimestamp1;
-  end_timestamp?: EndTimestamp1;
-  context: SpanContext1;
-  events?: Events1;
-  attributes?: Attributes1;
-  attributes_metadata: DictNamespace1;
-  tags: Tags1;
-  span_type: SpanType1;
-  record_id: RecordId;
-  inputs: Inputs;
-  output: Output;
-  error: Error;
-  description: Description;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes1 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace1 {
-  [k: string]: unknown;
-}
-export interface Tags1 {
-  [k: string]: unknown;
-}
-export interface SpanType1 {
-  [k: string]: unknown;
-}
-export interface RecordId {
-  [k: string]: unknown;
-}
-export interface Inputs {
-  [k: string]: unknown;
-}
-export interface Output {
-  [k: string]: unknown;
-}
-export interface Error {
-  [k: string]: unknown;
-}
-export interface Description {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
+  description: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
  * An embedding cal.
  */
 export interface SpanEmbedding {
-  name: Name2;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -574,68 +188,79 @@ export interface SpanEmbedding {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription2;
-  start_timestamp?: StartTimestamp2;
-  end_timestamp?: EndTimestamp2;
-  context: SpanContext2;
-  events?: Events2;
-  attributes?: Attributes2;
-  attributes_metadata: DictNamespace2;
-  tags: Tags2;
-  span_type: SpanType2;
-  record_id: RecordId1;
-  inputs: Inputs1;
-  output: Output1;
-  error: Error1;
-  input_text: InputText;
-  model_name: ModelName;
-  embedding: Embedding;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes2 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace2 {
-  [k: string]: unknown;
-}
-export interface Tags2 {
-  [k: string]: unknown;
-}
-export interface SpanType2 {
-  [k: string]: unknown;
-}
-export interface RecordId1 {
-  [k: string]: unknown;
-}
-export interface Inputs1 {
-  [k: string]: unknown;
-}
-export interface Output1 {
-  [k: string]: unknown;
-}
-export interface Error1 {
-  [k: string]: unknown;
-}
-export interface InputText {
-  [k: string]: unknown;
-}
-export interface ModelName {
-  [k: string]: unknown;
-}
-export interface Embedding {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
+  input_text: {
+    [k: string]: unknown;
+  };
+  model_name: {
+    [k: string]: unknown;
+  };
+  embedding: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
  * A generation call to an LLM.
  */
 export interface SpanLLM {
-  name: Name3;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -644,88 +269,94 @@ export interface SpanLLM {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription3;
-  start_timestamp?: StartTimestamp3;
-  end_timestamp?: EndTimestamp3;
-  context: SpanContext3;
-  events?: Events3;
-  attributes?: Attributes3;
-  attributes_metadata: DictNamespace3;
-  tags: Tags3;
-  span_type: SpanType3;
-  record_id: RecordId2;
-  inputs: Inputs2;
-  output: Output2;
-  error: Error2;
-  model_name: ModelName1;
-  model_type: ModelType;
-  temperature: Temperature;
-  input_messages: InputMessages;
-  input_token_count: InputTokenCount;
-  output_messages: OutputMessages;
-  output_token_count: OutputTokenCount;
-  cost: Cost;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes3 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace3 {
-  [k: string]: unknown;
-}
-export interface Tags3 {
-  [k: string]: unknown;
-}
-export interface SpanType3 {
-  [k: string]: unknown;
-}
-export interface RecordId2 {
-  [k: string]: unknown;
-}
-export interface Inputs2 {
-  [k: string]: unknown;
-}
-export interface Output2 {
-  [k: string]: unknown;
-}
-export interface Error2 {
-  [k: string]: unknown;
-}
-export interface ModelName1 {
-  [k: string]: unknown;
-}
-export interface ModelType {
-  [k: string]: unknown;
-}
-export interface Temperature {
-  [k: string]: unknown;
-}
-export interface InputMessages {
-  [k: string]: unknown;
-}
-export interface InputTokenCount {
-  [k: string]: unknown;
-}
-export interface OutputMessages {
-  [k: string]: unknown;
-}
-export interface OutputTokenCount {
-  [k: string]: unknown;
-}
-export interface Cost {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
+  model_name: {
+    [k: string]: unknown;
+  };
+  model_type: {
+    [k: string]: unknown;
+  };
+  temperature: {
+    [k: string]: unknown;
+  };
+  input_messages: {
+    [k: string]: unknown;
+  };
+  input_token_count: {
+    [k: string]: unknown;
+  };
+  output_messages: {
+    [k: string]: unknown;
+  };
+  output_token_count: {
+    [k: string]: unknown;
+  };
+  cost: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
  * A memory call.
  */
 export interface SpanMemory {
-  name: Name4;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -734,57 +365,66 @@ export interface SpanMemory {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription4;
-  start_timestamp?: StartTimestamp4;
-  end_timestamp?: EndTimestamp4;
-  context: SpanContext4;
-  events?: Events4;
-  attributes?: Attributes4;
-  attributes_metadata: DictNamespace4;
-  tags: Tags4;
-  span_type: SpanType4;
-  record_id: RecordId3;
-  inputs: Inputs3;
-  output: Output3;
-  error: Error3;
-  memory_type: MemoryType;
-  remembered: Remembered;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes4 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace4 {
-  [k: string]: unknown;
-}
-export interface Tags4 {
-  [k: string]: unknown;
-}
-export interface SpanType4 {
-  [k: string]: unknown;
-}
-export interface RecordId3 {
-  [k: string]: unknown;
-}
-export interface Inputs3 {
-  [k: string]: unknown;
-}
-export interface Output3 {
-  [k: string]: unknown;
-}
-export interface Error3 {
-  [k: string]: unknown;
-}
-export interface MemoryType {
-  [k: string]: unknown;
-}
-export interface Remembered {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
+  memory_type: {
+    [k: string]: unknown;
+  };
+  remembered: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
@@ -794,7 +434,10 @@ export interface Remembered {
  * [TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordCall].
  */
 export interface SpanMethodCall {
-  name: Name5;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -803,56 +446,70 @@ export interface SpanMethodCall {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription5;
-  start_timestamp?: StartTimestamp5;
-  end_timestamp?: EndTimestamp5;
-  context: SpanContext5;
-  events?: Events5;
-  attributes?: Attributes5;
-  attributes_metadata: DictNamespace5;
-  tags: Tags5;
-  span_type: SpanType5;
-  record_id: RecordId4;
-  inputs: Inputs4;
-  output: Output4;
-  error: Error4;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes5 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace5 {
-  [k: string]: unknown;
-}
-export interface Tags5 {
-  [k: string]: unknown;
-}
-export interface SpanType5 {
-  [k: string]: unknown;
-}
-export interface RecordId4 {
-  [k: string]: unknown;
-}
-export interface Inputs4 {
-  [k: string]: unknown;
-}
-export interface Output4 {
-  [k: string]: unknown;
-}
-export interface Error4 {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
  * Other uncategorized spans.
  */
 export interface SpanOther {
-  name: Name6;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -861,56 +518,70 @@ export interface SpanOther {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription6;
-  start_timestamp?: StartTimestamp6;
-  end_timestamp?: EndTimestamp6;
-  context: SpanContext6;
-  events?: Events6;
-  attributes?: Attributes6;
-  attributes_metadata: DictNamespace6;
-  tags: Tags6;
-  span_type: SpanType6;
-  record_id: RecordId5;
-  inputs: Inputs5;
-  output: Output5;
-  error: Error5;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes6 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace6 {
-  [k: string]: unknown;
-}
-export interface Tags6 {
-  [k: string]: unknown;
-}
-export interface SpanType6 {
-  [k: string]: unknown;
-}
-export interface RecordId5 {
-  [k: string]: unknown;
-}
-export interface Inputs5 {
-  [k: string]: unknown;
-}
-export interface Output5 {
-  [k: string]: unknown;
-}
-export interface Error5 {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
  * A reranker call.
  */
 export interface SpanReranker {
-  name: Name7;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -919,80 +590,88 @@ export interface SpanReranker {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription7;
-  start_timestamp?: StartTimestamp7;
-  end_timestamp?: EndTimestamp7;
-  context: SpanContext7;
-  events?: Events7;
-  attributes?: Attributes7;
-  attributes_metadata: DictNamespace7;
-  tags: Tags7;
-  span_type: SpanType7;
-  record_id: RecordId6;
-  inputs: Inputs6;
-  output: Output6;
-  error: Error6;
-  query_text: QueryText;
-  model_name: ModelName2;
-  top_n: TopN;
-  input_context_texts: InputContextTexts;
-  input_context_scores: InputContextScores;
-  output_ranks: OutputRanks;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes7 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace7 {
-  [k: string]: unknown;
-}
-export interface Tags7 {
-  [k: string]: unknown;
-}
-export interface SpanType7 {
-  [k: string]: unknown;
-}
-export interface RecordId6 {
-  [k: string]: unknown;
-}
-export interface Inputs6 {
-  [k: string]: unknown;
-}
-export interface Output6 {
-  [k: string]: unknown;
-}
-export interface Error6 {
-  [k: string]: unknown;
-}
-export interface QueryText {
-  [k: string]: unknown;
-}
-export interface ModelName2 {
-  [k: string]: unknown;
-}
-export interface TopN {
-  [k: string]: unknown;
-}
-export interface InputContextTexts {
-  [k: string]: unknown;
-}
-export interface InputContextScores {
-  [k: string]: unknown;
-}
-export interface OutputRanks {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
+  query_text: {
+    [k: string]: unknown;
+  };
+  model_name: {
+    [k: string]: unknown;
+  };
+  top_n: {
+    [k: string]: unknown;
+  };
+  input_context_texts: {
+    [k: string]: unknown;
+  };
+  input_context_scores: {
+    [k: string]: unknown;
+  };
+  output_ranks: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
  * A retrieval.
  */
 export interface SpanRetriever {
-  name: Name8;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -1001,77 +680,81 @@ export interface SpanRetriever {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription8;
-  start_timestamp?: StartTimestamp8;
-  end_timestamp?: EndTimestamp8;
-  context: SpanContext8;
-  events?: Events8;
-  attributes?: Attributes8;
-  attributes_metadata: DictNamespace8;
-  tags: Tags8;
-  span_type: SpanType8;
-  record_id: RecordId7;
-  inputs: Inputs7;
-  output: Output7;
-  error: Error7;
-  query_text: QueryText1;
-  query_embedding: QueryEmbedding;
-  distance_type: DistanceType;
-  num_contexts: NumContexts;
-  retrieved_contexts: RetrievedContexts;
-  retrieved_scores: RetrievedScores;
-  retrieved_embeddings: RetrievedEmbeddings;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes8 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace8 {
-  [k: string]: unknown;
-}
-export interface Tags8 {
-  [k: string]: unknown;
-}
-export interface SpanType8 {
-  [k: string]: unknown;
-}
-export interface RecordId7 {
-  [k: string]: unknown;
-}
-export interface Inputs7 {
-  [k: string]: unknown;
-}
-export interface Output7 {
-  [k: string]: unknown;
-}
-export interface Error7 {
-  [k: string]: unknown;
-}
-export interface QueryText1 {
-  [k: string]: unknown;
-}
-export interface QueryEmbedding {
-  [k: string]: unknown;
-}
-export interface DistanceType {
-  [k: string]: unknown;
-}
-export interface NumContexts {
-  [k: string]: unknown;
-}
-export interface RetrievedContexts {
-  [k: string]: unknown;
-}
-export interface RetrievedScores {
-  [k: string]: unknown;
-}
-export interface RetrievedEmbeddings {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
+  query_text: {
+    [k: string]: unknown;
+  };
+  query_embedding: {
+    [k: string]: unknown;
+  };
+  distance_type: {
+    [k: string]: unknown;
+  };
+  num_contexts: {
+    [k: string]: unknown;
+  };
+  retrieved_contexts: {
+    [k: string]: unknown;
+  };
+  retrieved_scores: {
+    [k: string]: unknown;
+  };
+  retrieved_embeddings: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
@@ -1080,7 +763,10 @@ export interface RetrievedEmbeddings {
  * Does not indicate any particular activity by itself beyond its children.
  */
 export interface SpanRoot {
-  name: Name9;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -1089,44 +775,61 @@ export interface SpanRoot {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription9;
-  start_timestamp?: StartTimestamp9;
-  end_timestamp?: EndTimestamp9;
-  context: SpanContext9;
-  events?: Events9;
-  attributes?: Attributes9;
-  attributes_metadata: DictNamespace9;
-  tags: Tags9;
-  span_type: SpanType9;
-  record_id: RecordId8;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes9 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace9 {
-  [k: string]: unknown;
-}
-export interface Tags9 {
-  [k: string]: unknown;
-}
-export interface SpanType9 {
-  [k: string]: unknown;
-}
-export interface RecordId8 {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
  * A task invocation.
  */
 export interface SpanTask {
-  name: Name10;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -1135,56 +838,70 @@ export interface SpanTask {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription10;
-  start_timestamp?: StartTimestamp10;
-  end_timestamp?: EndTimestamp10;
-  context: SpanContext10;
-  events?: Events10;
-  attributes?: Attributes10;
-  attributes_metadata: DictNamespace10;
-  tags: Tags10;
-  span_type: SpanType10;
-  record_id: RecordId9;
-  inputs: Inputs8;
-  output: Output8;
-  error: Error8;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes10 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace10 {
-  [k: string]: unknown;
-}
-export interface Tags10 {
-  [k: string]: unknown;
-}
-export interface SpanType10 {
-  [k: string]: unknown;
-}
-export interface RecordId9 {
-  [k: string]: unknown;
-}
-export interface Inputs8 {
-  [k: string]: unknown;
-}
-export interface Output8 {
-  [k: string]: unknown;
-}
-export interface Error8 {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
  * A tool invocation.
  */
 export interface SpanTool {
-  name: Name11;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -1193,53 +910,63 @@ export interface SpanTool {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription11;
-  start_timestamp?: StartTimestamp11;
-  end_timestamp?: EndTimestamp11;
-  context: SpanContext11;
-  events?: Events11;
-  attributes?: Attributes11;
-  attributes_metadata: DictNamespace11;
-  tags: Tags11;
-  span_type: SpanType11;
-  record_id: RecordId10;
-  inputs: Inputs9;
-  output: Output9;
-  error: Error9;
-  description: Description1;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes11 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace11 {
-  [k: string]: unknown;
-}
-export interface Tags11 {
-  [k: string]: unknown;
-}
-export interface SpanType11 {
-  [k: string]: unknown;
-}
-export interface RecordId10 {
-  [k: string]: unknown;
-}
-export interface Inputs9 {
-  [k: string]: unknown;
-}
-export interface Output9 {
-  [k: string]: unknown;
-}
-export interface Error9 {
-  [k: string]: unknown;
-}
-export interface Description1 {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
+  description: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
@@ -1254,7 +981,10 @@ export interface Description1 {
  *     [SpanMethodCall][trulens_eval.trace.span.SpanMethodCall] instead.
  */
 export interface TransSpanRecordAppCall {
-  name: Name12;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -1263,49 +993,60 @@ export interface TransSpanRecordAppCall {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription12;
-  start_timestamp?: StartTimestamp12;
-  end_timestamp?: EndTimestamp12;
-  context: SpanContext12;
-  events?: Events12;
-  attributes?: Attributes12;
-  attributes_metadata: DictNamespace12;
-  tags: Tags12;
-  span_type: SpanType12;
-  record_id: RecordId11;
-  inputs: Inputs10;
-  output: Output10;
-  error: Error10;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes12 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace12 {
-  [k: string]: unknown;
-}
-export interface Tags12 {
-  [k: string]: unknown;
-}
-export interface SpanType12 {
-  [k: string]: unknown;
-}
-export interface RecordId11 {
-  [k: string]: unknown;
-}
-export interface Inputs10 {
-  [k: string]: unknown;
-}
-export interface Output10 {
-  [k: string]: unknown;
-}
-export interface Error10 {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
+  inputs: {
+    [k: string]: unknown;
+  };
+  output: {
+    [k: string]: unknown;
+  };
+  error: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
@@ -1315,7 +1056,10 @@ export interface Error10 {
  * determined to be of a particular type.
  */
 export interface SpanUntyped {
-  name: Name13;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -1324,33 +1068,48 @@ export interface SpanUntyped {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription13;
-  start_timestamp?: StartTimestamp13;
-  end_timestamp?: EndTimestamp13;
-  context: SpanContext13;
-  events?: Events13;
-  attributes?: Attributes13;
-  attributes_metadata: DictNamespace13;
-  tags: Tags13;
-  span_type: SpanType13;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes13 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace13 {
-  [k: string]: unknown;
-}
-export interface Tags13 {
-  [k: string]: unknown;
-}
-export interface SpanType13 {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
 /**
@@ -1362,7 +1121,10 @@ export interface SpanType13 {
  *     This is a transitional type for the traces work.
  */
 export interface TransSpanRecord {
-  name: Name14;
+  /**
+   * Name of span.
+   */
+  name: string;
   /**
    * Kind of span.
    */
@@ -1371,36 +1133,50 @@ export interface TransSpanRecord {
    * Status of the span as per OpenTelemetry Span requirements.
    */
   status?: StatusCode & number;
-  status_description?: StatusDescription14;
-  start_timestamp?: StartTimestamp14;
-  end_timestamp?: EndTimestamp14;
-  context: SpanContext14;
-  events?: Events14;
-  attributes?: Attributes14;
-  attributes_metadata: DictNamespace14;
-  tags: Tags14;
-  span_type: SpanType14;
-  record_id: RecordId12;
-  [k: string]: unknown;
-}
-/**
- * Attributes of span.
- */
-export interface Attributes14 {
-  [k: string]: string | boolean | number | string[] | boolean[] | number[];
-}
-/**
- * View into a dict with keys prefixed by some `namespace` string.
- */
-export interface DictNamespace14 {
-  [k: string]: unknown;
-}
-export interface Tags14 {
-  [k: string]: unknown;
-}
-export interface SpanType14 {
-  [k: string]: unknown;
-}
-export interface RecordId12 {
+  /**
+   * Status description as per OpenTelemetry Span requirements.
+   */
+  status_description?: string | null;
+  /**
+   * Timestamp when the span's activity started in nanoseconds since epoch.
+   */
+  start_timestamp?: number;
+  /**
+   * Timestamp when the span's activity ended in nanoseconds since epoch.
+   *
+   * None if not yet ended.
+   */
+  end_timestamp?: number | null;
+  /**
+   * Unique immutable identifier for the span.
+   */
+  context: {
+    [k: string]: unknown;
+  }[];
+  /**
+   * Events recorded in the span.
+   */
+  events?: [unknown, unknown, unknown][];
+  /**
+   * Attributes of span.
+   */
+  attributes?: {
+    [k: string]: string | boolean | number | string[] | boolean[] | number[];
+  };
+  /**
+   * View into a dict with keys prefixed by some `namespace` string.
+   */
+  attributes_metadata: {
+    [k: string]: unknown;
+  };
+  tags: {
+    [k: string]: unknown;
+  };
+  span_type: {
+    [k: string]: unknown;
+  };
+  record_id: {
+    [k: string]: unknown;
+  };
   [k: string]: unknown;
 }
