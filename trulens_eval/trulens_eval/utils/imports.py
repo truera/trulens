@@ -544,7 +544,7 @@ class OptionalImports(object):
         if not isinstance(mods, Iterable):
             mods = [mods]
 
-        if not all(isinstance(mod, Dummy) for mod in mods):
+        if any(isinstance(mod, Dummy) for mod in mods):
             raise ModuleNotFoundError(self.messages.module_not_found)
 
     def __init__(self, messages: ImportErrorMessages, fail: bool = False):
