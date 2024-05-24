@@ -538,7 +538,7 @@ class OptionalImports(object):
 
     def assert_installed(self, mods: Union[Any, Iterable[Any]]):
         """
-        Check that the given module `mod` is not a dummy. If it is, show the
+        Check that the given modules `mods` are not dummies. If any is, show the
         optional requirement message.
         """
         if not isinstance(mods, Iterable):
