@@ -13,7 +13,7 @@
 
 # In[ ]:
 
-# ! pip install trulens_eval openai langchain langchain-openai faiss-cpu bs4 tiktoken
+# ! pip install trulens_eval openai langchain langchain-openai langchain_community faiss-cpu bs4 tiktoken
 
 # In[ ]:
 
