@@ -20,7 +20,6 @@ from packaging import version
 from pip._internal.req import parse_requirements
 
 from trulens_eval import __name__ as trulens_name
-from trulens_eval.utils.text import retab
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -662,9 +661,7 @@ class OptionalImports(object):
                 raise exc_value
 
             raise ModuleNotFoundError(
-                self.messages.module_not_found +
-                "\nError that caused this problem:\n\n" +
-                retab(tab="    ", s=repr(exc_value))
+                self.messages.module_not_found
             ) from exc_value
 
         elif isinstance(exc_value, ImportError):
@@ -673,9 +670,7 @@ class OptionalImports(object):
                 raise exc_value
 
             raise ImportError(
-                self.messages.import_error +
-                "\nError that caused this problem:\n\n" +
-                retab(tab="    ", s=repr(exc_value))
+                self.messages.import_error
             ) from exc_value
 
         # Exception will be propagated unless we return True so we don't return it.
