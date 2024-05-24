@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sys
-from typing import Any, Dict, Optional, Sequence, Type, Union
+from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union
 
 from packaging import requirements
 from packaging import version
@@ -355,7 +355,7 @@ REQUIREMENT_BEDROCK = format_import_errors(
 )
 
 REQUIREMENT_OPENAI = format_import_errors(
-    'openai', purpose="using OpenAI models"
+    ['openai', 'langchain_community'], purpose="using OpenAI models"
 )
 
 REQUIREMENT_GROUNDEDNESS = format_import_errors(
@@ -445,7 +445,7 @@ class Dummy(type, object):
         self.original_exception = original_exception
 
     def __call__(self, *args, **kwargs):
-        raise self.exception_class(self.message)
+        raise self.exception_class(self.message) from self.original_exception
 
     def __instancecheck__(self, __instance: Any) -> bool:
         """Nothing is an instance of this dummy.
@@ -463,7 +463,7 @@ class Dummy(type, object):
         return False
 
     def _wasused(self, *args, **kwargs):
-        raise self.exception_class(self.message)
+        raise self.exception_class(self.message) from self.original_exception
 
     # If someone tries to use dummy in an expression, raise our usage exception:
     __add__ = _wasused
@@ -536,12 +536,15 @@ class OptionalImports(object):
         specified message (unless llama_index is installed of course).
     """
 
-    def assert_installed(self, mod):
+    def assert_installed(self, mods: Union[Any, Iterable[Any]]):
         """
         Check that the given module `mod` is not a dummy. If it is, show the
         optional requirement message.
         """
-        if isinstance(mod, Dummy):
+        if not isinstance(mods, Iterable):
+            mods = [mods]
+
+        if not all(isinstance(mod, Dummy) for mod in mods):
             raise ModuleNotFoundError(self.messages.module_not_found)
 
     def __init__(self, messages: ImportErrorMessages, fail: bool = False):
