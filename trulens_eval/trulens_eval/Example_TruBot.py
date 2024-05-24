@@ -3,7 +3,7 @@ import os
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 from langchain.chains import ConversationalRetrievalChain
-from langchain.embeddings.openai import OpenAIEmbeddings
+
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain_community.callbacks import get_openai_callback
 from langchain_community.llms import OpenAI
@@ -22,8 +22,11 @@ from trulens_eval.utils.imports import REQUIREMENT_PINECONE
 
 with OptionalImports(messages=REQUIREMENT_PINECONE):
     import pinecone
+    from langchain.embeddings.openai import OpenAIEmbeddings
 
-OptionalImports(messages=REQUIREMENT_PINECONE).assert_installed(pinecone)
+OptionalImports(messages=REQUIREMENT_PINECONE).assert_installed(
+    mods=[pinecone, OpenAIEmbeddings]
+)
 
 check_keys("OPENAI_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV")
 
