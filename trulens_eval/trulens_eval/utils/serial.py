@@ -1087,7 +1087,7 @@ __deprecated = {'JSONPath': Deprecated(replacement='Lens')}
 _JSONPath = Lens
 
 def __getattr__(name: str) -> Any:
-    # TODO: generalize this and put somewhere else: https://peps.python.org/pep-0562/
+    # TODO: generalize this and put somewhere else. See https://peps.python.org/pep-0562/
     if name in __deprecated:
         dep = __deprecated[name]
         if not dep.warned:
