@@ -338,7 +338,7 @@ REQUIREMENT_RAILS = format_import_errors(
 
 REQUIREMENT_PINECONE = format_import_errors(
     # package name is "pinecone-client" but module is "pinecone"
-    'pinecone-client',
+    ['pinecone-client', 'langchain_community'],
     purpose="running TruBot"
 )
 
