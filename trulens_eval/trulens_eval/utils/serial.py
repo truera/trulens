@@ -11,6 +11,7 @@ from ast import dump
 from ast import parse
 from contextvars import ContextVar
 from copy import copy
+import dataclasses
 import logging
 from typing import (Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable,
                     List, Optional, Sequence, Set, Sized, Tuple, TypeVar,
@@ -73,7 +74,7 @@ for data that is not strictly json as it allows non-dict root items.
 """
 
 
-class JSONized(dict, Generic[T]):  # really JSON_STRICT
+class JSONized(dict, Generic[T]):  # really TJSON
     """JSON-encoded data the can be deserialized into a given type `T`.
     
     This class is meant only for type annotations. Any
@@ -90,6 +91,7 @@ class JSONized(dict, Generic[T]):  # really JSON_STRICT
 
 
 mj = MerkleJson()
+"""JSONLike hasher."""
 
 
 def model_dump(obj: Union[pydantic.BaseModel, pydantic.v1.BaseModel]) -> dict:
@@ -1076,11 +1078,31 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
 Lens.model_rebuild()
 
-# TODO: Deprecate old name.
-JSONPath = Lens
+@dataclasses.dataclass
+class Deprecated:
+    replacement: Optional[str] = None
+    warned: bool = False
+
+__deprecated = {'JSONPath': Deprecated(replacement='Lens')}
+_JSONPath = Lens
+
+def __getattr__(name: str) -> Any:
+    # TODO: generalize this and put somewhere else: https://peps.python.org/pep-0562/
+    if name in __deprecated:
+        dep = __deprecated[name]
+        if not dep.warned:
+            msg = f"`{__name__}.{name}` is deprecated"
+            if dep.replacement:
+                msg += f", use `{__name__}.{dep.replacement}` instead."
+            logger.warning(msg)
+            dep.warned = True
+
+        return globals()["_" + name]
+    else:
+        raise AttributeError(name)
 
 
-def leaf_queries(obj_json: TJSONLike, query: Lens = None) -> Iterable[Lens]:
+def leaf_queries(obj_json: TJSONLike, query: Optional[Lens] = None) -> Iterable[Lens]:
     """
     Get all queries for the given object that select all of its leaf values.
     """
