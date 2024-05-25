@@ -25,7 +25,6 @@ import logging
 import pprint
 from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
 
-from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
@@ -44,8 +43,13 @@ from trulens_eval.utils.serial import SerialModel
 with OptionalImports(messages=REQUIREMENT_OPENAI):
     import openai as oai
 
-# check that oai is not a dummy:
-OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(oai)
+    # This is also required for running openai endpoints in trulens_eval:
+    from langchain.callbacks.openai_info import OpenAICallbackHandler
+
+# check that oai is not a dummy, also the langchain component required for handling openai endpoint
+OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(
+    mods=[oai, OpenAICallbackHandler]
+)
 
 logger = logging.getLogger(__name__)
 
