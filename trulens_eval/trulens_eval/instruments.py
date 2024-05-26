@@ -588,9 +588,11 @@ class Instrument(object):
 
             if isinstance(rets, Awaitable):
                 # If method produced an awaitable
-                logger.info(f"""This app produced an asynchronous response of type `{class_name(type(rets))}`. 
-                            This record will be updated once the response is available""")
-                            
+                logger.info(
+                    f"""This app produced an asynchronous response of type `{class_name(type(rets))}`. 
+                            This record will be updated once the response is available"""
+                )
+
                 # TODO(piotrm): need to track costs of awaiting the ret in the
                 # below.
 

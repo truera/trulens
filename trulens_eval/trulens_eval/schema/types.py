@@ -18,9 +18,11 @@ CallID: typing_extensions.TypeAlias = str
 See [RecordAppCall.call_id][trulens_eval.schema.record.RecordAppCall.call_id].
 """
 
+
 def new_call_id() -> CallID:
     """Generate a new call id."""
     return str(uuid.uuid4())
+
 
 AppID: typing_extensions.TypeAlias = str
 """Unique identifier for an app.

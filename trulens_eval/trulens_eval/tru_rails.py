@@ -442,7 +442,9 @@ class TruRails(mod_app.App):
         if name == "__name__":
             return self.__class__.__name__  # Return the class name of TruRails
         elif safe_hasattr(self.app, name):
-            return getattr(self.app, name)  # Delegate to the wrapped app if it has the attribute
+            return getattr(
+                self.app, name
+            )  # Delegate to the wrapped app if it has the attribute
         else:
             raise AttributeError(f"TruRails has no attribute named {name}")
 

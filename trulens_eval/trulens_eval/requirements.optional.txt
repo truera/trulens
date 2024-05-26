@@ -9,7 +9,7 @@ evaluate     >= 0.4.0  # same
 
 # Apps: LangChain (optional parts)
 langchainhub        >= 0.1.14  # example notebooks
-langchain_community >= 0.0.17  # example notebooks, now required for Pinecone, others
+langchain_community >= 0.0.17  # example notebooks, openai endpoint, now required for Pinecone, others
 langchain_openai    >= 0.0.5  # unit tests, sample apps
 
 # Apps: LlamaIndex

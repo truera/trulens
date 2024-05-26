@@ -428,9 +428,8 @@ class GetItemOrAttribute(StepItemOrAttribute):
                 logger.warning(
                     "Object (of type %s is a sequence containing more than one dictionary. "
                     "Lookup by item or attribute `%s` is ambiguous. "
-                    "Use a lookup by index(es) or slice first to disambiguate.", 
-                    type(obj).__name__,
-                    self.item_or_attribute
+                    "Use a lookup by index(es) or slice first to disambiguate.",
+                    type(obj).__name__, self.item_or_attribute
                 )
                 for sub_obj in obj:
                     try:
