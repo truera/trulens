@@ -20,6 +20,7 @@ from opentelemetry.util import types as ot_types
 import pydantic
 from pydantic import PlainSerializer
 from pydantic.functional_validators import PlainValidator
+from pydantic.json_schema import JsonSchemaValue
 from typing_extensions import Annotated
 
 logger = getLogger(__name__)
@@ -54,54 +55,69 @@ NUM_TRACEID_BITS = 128
 
 T = TypeVar("T")
 
-class HashableSpanContext(ot_span.SpanContext):
-    """SpanContext that can be hashed.
+class WithHashableSpanContext(): # must be mixed into SpanContext
+    """Mixin into SpanContext that adds hashing.
 
     Does not change data layout or behaviour. Changing SpanContext
-    `__class__` with this should be safe.
+    `__class__` or `__bases__` to include this should be safe.
     """
 
-    def __hash__(self):
+    def __hash__(self: ot_span.SpanContext):
         return hash((self.trace_id, self.span_id))
 
-    def __eq__(self, other):
+    def __eq__(self: ot_span.SpanContext, other: ot_span.SpanContext):
         return self.trace_id == other.trace_id and self.span_id == other.span_id
+    
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _core_schema, _handler) -> JsonSchemaValue:
+        return { 
+            'description': 'SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.',
+            'items': {
+                'maxItems': 6,
+                'minItems': 6,
+                'prefixItems': [
+                    {"type": "integer", "description": "The ID of the trace that this span belongs to." },
+                    {"type": "integer", "description": "This span's ID." },
+                    {"type": "boolean", "description": "True if propagated from a remote parent." },
+                    {"type": "integer", "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details." },
+                    {"type": "integer", "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values." },
+                    {"type": "boolean", "description": "True if the span context is valid." },
+                ]
+            },
+            'title': 'SpanContext',
+            'type': 'array'
+        }
+
+# HACK015: add hashing to contexts
+# Patch span context to use the above hashing and schema defs.
+ot_span.SpanContext.__bases__ = (WithHashableSpanContext, *ot_span.SpanContext.__bases__, )
 
 def deserialize_contextmapping(
-    v: List[Tuple[HashableSpanContext, T]]
-) -> Dict[HashableSpanContext, T]:
+    v: List[Tuple[ot_span.SpanContext, T]]
+) -> Dict[ot_span.SpanContext, T]:
     """Deserialize a list of tuples as a dictionary."""
 
     # skip last element of SpanContext as it is computed in SpanContext.__init__ from others
-    return {HashableSpanContext(*k[0:5]): v for k, v in v} 
+    return {ot_span.SpanContext(*k[0:5]): v for k, v in v} 
 
 def serialize_contextmapping(
-    v: Dict[HashableSpanContext, T],
-) -> List[Tuple[HashableSpanContext, T]]:
+    v: Dict[ot_span.SpanContext, T],
+) -> List[Tuple[ot_span.SpanContext, T]]:
     """Serialize a dictionary as a list of tuples."""
 
     return list(v.items())
 
 ContextMapping = Annotated[
-    Dict[HashableSpanContext, T],
+    Dict[ot_span.SpanContext, T],
     PlainSerializer(serialize_contextmapping),
     PlainValidator(deserialize_contextmapping)
 ]
 """Type annotation for pydantic fields that store dictionaries whose keys are
-HashableSpanContext.
+(Hashable) SpanContext.
 
 This is needed to help pydantic figure out how to serialize and deserialize these dicts.
 """
 
-
-def make_hashable(context: ot_span.SpanContext) -> HashableSpanContext:
-    # HACK015: replace class of contexts to add hashing
-
-    if context.__class__ is not HashableSpanContext:
-        context.__class__ = HashableSpanContext
-
-    # Return not needed but useful for type checker.
-    return context
 
 
 class OTSpan(pydantic.BaseModel, ot_span.Span):
@@ -146,7 +162,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     None if not yet ended.
     """
 
-    context: HashableSpanContext
+    context: ot_span.SpanContext
     """Unique immutable identifier for the span."""
 
     events: List[Tuple[str, ot_types.Attributes, TTimestamp]] = \
@@ -163,7 +179,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
 
     def __init__(self, name: str, context: ot_span.SpanContext, **kwargs):
         kwargs['name'] = name
-        kwargs['context'] = make_hashable(context)
+        kwargs['context'] = context
         kwargs['attributes'] = kwargs.get('attributes', {}) or {}
         kwargs['links'] = kwargs.get('links', {}) or {}
 
@@ -210,8 +226,6 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
         attributes: ot_types.Attributes = None
     ) -> None:
         """See [add_link][opentelemetry.trace.span.Span.add_link]."""
-
-        context = make_hashable(context)
 
         if attributes is None:
             attributes = {}
