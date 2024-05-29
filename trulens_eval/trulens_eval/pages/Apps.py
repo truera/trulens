@@ -5,7 +5,7 @@ from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.tru import Tru
 from trulens_eval.utils.json import jsonify_for_ui
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.apps import ChatRecord
@@ -234,7 +234,7 @@ def add_selector(type: str):
         print(f"{type} selector {val} already exists")
 
 
-def select_app(app_json: JSON):
+def select_app(app_json: TJSONLike):
     """
     Select the app to start a session with by its JSON.
     """

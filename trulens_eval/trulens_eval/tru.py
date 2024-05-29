@@ -50,6 +50,10 @@ DASHBOARD_START_TIMEOUT: Annotated[int, Doc("Seconds to wait for dashboard to st
 
 
 def humanize_seconds(seconds: float):
+    """Convert seconds to a human-readable time string."""
+
+    # TODO: move this to somewhere else
+
     return humanize.naturaldelta(timedelta(seconds=seconds))
 
 

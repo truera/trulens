@@ -332,21 +332,19 @@ class CustomCategorizer(Categorizer):
         span_info = None
 
         if pyfunc in mod_instruments.Instrument.Default.SPANINFOS:
-            for obj_id, (span_type, instance, spanner) in mod_instruments.Instrument.Default.SPANINFOS[pyfunc].items():
-                if obj_id is None and isinstance(spanner, staticmethod): # is_span decorator was on a staticmethod
-                    # print("got staticmethod", span_type, spanner)
-                    span_info = (span_type, obj_id, instance, spanner)
+            for instance_or_class, si in mod_instruments.Instrument.Default.SPANINFOS[pyfunc].items():
+                if isinstance(instance_or_class, type) and isinstance(si.spanner, staticmethod): # is_span decorator was on a staticmethod
+                    span_info = (si.span_type, id(instance_or_class), instance_or_class, si.spanner)
                     break
 
-                if obj_id == pymethod.obj.id: # is_span decorated a method in a class later instantiated with object having this id
-                    # print("got method", span_type, spanner, obj_id)
-                    span_info = (span_type, obj_id, instance, spanner)
+                if id(instance_or_class) == pymethod.obj.id: # is_span decorated a method in a class later instantiated with object having this id
+                    span_info = (si.span_type, id(instance_or_class), instance_or_class, si.spanner)
                     break
 
         if span_info is not None:
             cls = span_info[0].to_class()
         else:
-            logger.warning("CustomCategorizer not have a span_info for: %s", pymethod)
+            logger.warning("No custom spanner for: %s", pymethod)
             cls = mod_span.SpanOther
 
         span = tracer.new_span(

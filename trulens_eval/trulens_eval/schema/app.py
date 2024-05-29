@@ -68,7 +68,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         Experimental work in progress.
     """
 
-    app_extra_json: serial.JSON
+    app_extra_json: serial.TJSONLike
     """Info to store about the app and to display in dashboard. 
     
     This can be used even if app itself cannot be serialized. `app_extra_json`,
@@ -83,7 +83,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         metadata: Optional[mod_types_schema.Metadata] = None,
         feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.
         FeedbackMode.WITH_APP_THREAD,
-        app_extra_json: serial.JSON = None,
+        app_extra_json: serial.TJSONLike = None,
         **kwargs
     ):
 
@@ -149,7 +149,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def continue_session(
-        app_definition_json: serial.JSON, app: Any
+        app_definition_json: serial.TJSONLike, app: Any
     ) -> AppDefinition:
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
         """Instantiate the given `app` with the given state
@@ -176,7 +176,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def new_session(
-        app_definition_json: serial.JSON,
+        app_definition_json: serial.TJSONLike,
         initial_app_loader: Optional[Callable] = None
     ) -> AppDefinition:
         """Create an app instance at the start of a session.
@@ -190,7 +190,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         """
 
         serial_bytes_json: Optional[
-            serial.JSON] = app_definition_json['initial_app_loader_dump']
+            serial.TJSONLike] = app_definition_json['initial_app_loader_dump']
 
         if initial_app_loader is None:
             assert serial_bytes_json is not None, "Cannot create new session without `initial_app_loader`."

@@ -1,15 +1,17 @@
+import inspect
 import random
 from typing import Callable, Optional
+import dis
 
 from examples.expositional.end2end_apps.custom_app.dummy import Dummy
 
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.trace import span as mod_span
 from trulens_eval.tru_custom_app import instrument
+from trulens_eval.utils.python import superstack
 
 # Collect a few string methods to use as "tools".
 str_maps = []
-
 
 for name in dir(str):
     func = getattr(str, name)
@@ -31,6 +33,7 @@ class CustomTool(Dummy):
         self,
         *args,
         description: Optional[str] = None,
+        imp: Optional[Callable] = None,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -53,9 +56,49 @@ class CustomTool(Dummy):
         return self.imp(data)
     
     @invoke.is_span(span_type=mod_span.SpanTool)
-    def set_memory_span(
+    def set_tool_span(
         self,
         call: mod_record_schema.RecordAppCall,
         span: mod_span.SpanMemory
     ):
         span.description = self.description
+
+class CustomStackTool(CustomTool):
+    """A tool that returns a rendering of the call stack when it is invokved."""
+
+    last_stack = None
+    """The last stack that was rendered.
+    
+    You can use this to get the readout even if this tool is used deep in an app
+    that processes the return from the tool in destructive ways."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(imp = self.save_stack, *args, **kwargs)
+
+    @instrument
+    def save_stack(self, data: str) -> str:
+        CustomStackTool.last_stack = list(superstack())
+
+        ret = "<table>\n"
+        for frame in CustomStackTool.last_stack:
+            fmod = inspect.getmodule(frame)
+            if fmod is None:
+                continue
+            else:
+                fmod = fmod.__name__
+            ffunc = frame.f_code.co_name
+            if not fmod.startswith("examples.") or fmod.startswith("trulens_eval"):
+                continue
+
+            bytecode = dis.Bytecode(frame.f_code)
+            ret += f"""
+            <tr>
+                <td>{fmod}</td>
+                <td>{ffunc}</td>
+                <td><pre><code>{bytecode.dis()}</code></pre></td>
+            </tr>
+            """
+        
+        ret += "</table>"
+
+        return ret

@@ -14,7 +14,7 @@ from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils.json import json_str_of_obj
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import JSONized
 from trulens_eval.utils.serial import SerialModel
 
@@ -262,7 +262,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_apps(self) -> Iterable[JSON]:
+    def get_apps(self) -> Iterable[TJSONLike]:
         """Get all apps."""
 
         raise NotImplementedError()

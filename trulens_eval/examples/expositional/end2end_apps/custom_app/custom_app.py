@@ -1,8 +1,15 @@
-import asyncio
+"""Custom app example.
+
+This app does not make any external network requests or hard work but has some
+delays and allocs to mimic the effects of such things.
+"""
+
 from concurrent.futures import wait
 import random
 from typing import Tuple
 
+from examples.expositional.end2end_apps.custom_app.custom_agent import \
+    CustomAgent
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
 from examples.expositional.end2end_apps.custom_app.custom_memory import \
     CustomMemory
@@ -11,15 +18,15 @@ from examples.expositional.end2end_apps.custom_app.custom_reranker import \
 from examples.expositional.end2end_apps.custom_app.custom_retriever import \
     CustomRetriever
 from examples.expositional.end2end_apps.custom_app.custom_tool import \
+    CustomStackTool
+from examples.expositional.end2end_apps.custom_app.custom_tool import \
     CustomTool
 from examples.expositional.end2end_apps.custom_app.dummy import Dummy
 
 from trulens_eval.tru_custom_app import instrument
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
-instrument.method(CustomRetriever, "retrieve_chunks")
 instrument.method(CustomMemory, "remember")
-
 
 class CustomTemplate(Dummy):
     """Simple template class that fills in a question and answer."""
@@ -43,15 +50,23 @@ class CustomApp(Dummy):
     
     Contains:
     - A memory component.
+
     - A retriever component.
+
     - A language model component.
+
     - A template component.
-    - A few tools.
+
+    - A few tools. Each is a random string->string method that is applied to
+      retrieved chunks.
+
     - A reranker component.
-    - A few agents (TODO).
+
+    - A few agents. Be careful about these as these replicate the custom app
+      itself and might produce infinite loops.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, num_agents: int = 2, **kwargs):
         super().__init__(**kwargs)
         
         self.memory = CustomMemory(**kwargs)
@@ -64,15 +79,26 @@ class CustomApp(Dummy):
             "The answer to {question} is probably {answer} or something ..."
         )
 
-        self.tools = [CustomTool(**kwargs) for _ in range(3)]
+        self.tools = [CustomTool(**kwargs) for _ in range(3)] + [CustomStackTool(**kwargs)]
 
-        self.agents = [] # TODO
+        self.agents = [
+            CustomAgent(app=CustomApp(num_agents=0), description=f"ensamble agent {i}") for i in range(num_agents)
+        ]
 
         self.reranker = CustomReranker(**kwargs)
 
         self.dummy_allocate()
 
         # Tasks ?
+
+    @instrument
+    def process_chunk_by_random_tool(
+        self,
+        chunk_and_score: Tuple[str, float]
+    ) -> str:
+        return self\
+            .tools[random.randint(0, len(self.tools) - 1)]\
+            .invoke(chunk_and_score[0])
 
     @instrument
     def get_context(self, input: str):
@@ -86,15 +112,12 @@ class CustomApp(Dummy):
             chunk_scores=None
         ) if self.reranker else chunks
 
-        def process_chunk_by_random_tool(chunk_and_score: Tuple[str, float]) -> str:
-            return self.tools[random.randint(0, len(self.tools) - 1)].invoke(chunk_and_score[0])
-
         # Creates a few threads to process chunks in parallel to test apps that
         # make use of threads.
         ex = ThreadPoolExecutor(max_workers=max(1, len(chunks)))
 
         futures = list(
-            ex.submit(process_chunk_by_random_tool, chunk_and_score=chunk)
+            ex.submit(self.process_chunk_by_random_tool, chunk_and_score=chunk)
             for chunk in chunks
         )
 
@@ -104,49 +127,26 @@ class CustomApp(Dummy):
         return chunks
 
     @instrument
-    def respond_to_query(self, input: str):
+    def respond_to_query(self, query: str):
         """Respond to a query. This is the main method."""
 
+        # Run the agents on the same input. These perform the same steps as this app.
+        for agent in self.agents:
+            agent.invoke(query)
+
         # Get rerankined, process chunks.
-        chunks = self.get_context(input)
+        chunks = self.get_context(query)
 
         # Do some remembering.
-        self.memory.remember(input)
+        self.memory.remember(query)
 
         # Do some generation.
         answer = self.llm.generate(",".join(chunks))
 
         # Do some templating.
-        output = self.template.fill(question=input, answer=answer)
+        output = self.template.fill(question=query, answer=answer)
 
         # Do some more remembering.
         self.memory.remember(output)
 
         return output
-
-    @instrument
-    async def arespond_to_query(self, input: str):
-        """Fake async call, must return an async token generator and final
-        result.
-        
-        TODO: This probably does not work.
-        """
-
-        res = self.respond_to_query(input)
-
-        async def async_generator():
-            for tok in res.split(" "):
-                if self.delay > 0.0:
-                    await asyncio.sleep(self.delay)
-
-                yield tok + " "
-
-        gen_task = asyncio.Task(async_generator())
-
-        async def collect_gen():
-            ret = ""
-            async for tok in gen_task:
-                ret += tok
-            return ret
-
-        return gen_task, collect_gen

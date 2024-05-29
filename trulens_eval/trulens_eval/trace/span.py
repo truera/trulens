@@ -2,35 +2,35 @@
 
 These are roughly equivalent to `RecordAppCall` but abstract away specific method
 information into type of call related to types of components.
+
+!!! Note
+
+    Names that begin with "trans" or "Trans" are temporary ("transitional") and
+    will be removed or replaced in the future. Try to minimize referencing those
+    names in other code.
 """
 
 from __future__ import annotations
 
-import dataclasses
 import datetime
 from enum import Enum
+import json
 from logging import getLogger
-from typing import Annotated, Any, Callable, Dict, Generic, List, Optional, Type, TypeVar
+from typing import (Annotated, Any, Callable, Dict, Generic, List, Optional,
+                    Type, TypeVar)
 
 import opentelemetry.trace.span as ot_span
-
 from opentelemetry.util import types as ot_types
 import pandas as pd
-import pydantic_core
 import pydantic
 from pydantic import computed_field
 from pydantic import Field
-from pydantic import TypeAdapter, PlainValidator
-from pydantic_core import core_schema as cs
-from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler, TypeAdapter
-from pydantic.json_schema import JsonSchemaValue
-import json
-
+from pydantic import TypeAdapter
 
 from trulens_eval import trace as mod_trace
 from trulens_eval.schema import record as mod_record_schema
-from trulens_eval.utils.serial import JSON
 from trulens_eval.utils import containers as mod_container_utils
+from trulens_eval.utils.serial import TJSONLike
 
 logger = getLogger(__name__)
 
@@ -40,7 +40,23 @@ class AttributeProperty(property, Generic[T]):
     """Property that stores its value in the attributes dictionary with a
     vendor prefix.
     
-    This is meant to be used only in SpanType instances (or subclasses).
+    Validates default and on assignment. This is meant to be used only in
+    SpanType instances (or subclasses).
+        
+        Args:
+            name: The name of the property. The key used for storage will be
+                this with the vendor prefix.
+
+            typ: The type of the property.
+
+            typ_factory: A factory function that returns the type of the
+                property. This can be used for forward referenced types.
+
+            default: The default value of the property.
+
+            default_factory: A factory function that returns the default value
+                of the property. This can be used for defaults that make use of
+                forward referenced types.
     """
 
     def __init__(
@@ -127,27 +143,8 @@ class Span(mod_trace.OTSpan):
         default: Optional[T] = None,
         default_factory: Optional[Callable[[], T]] = None
     ) -> property:
-        """Utility for creating properties that store their values in the
-        attributes dictionary with a vendor prefix.
-
-        Validates default and on assignment.
-
-        TODO: Make sure pydantic can generate the schema for these.
-        
-        Args:
-            name: The name of the property. The key used for storage will be
-                this with the vendor prefix.
-
-            typ: The type of the property.
-
-            typ_factory: A factory function that returns the type of the
-                property. This can be used for forward referenced types.
-
-            default: The default value of the property.
-
-            default_factory: A factory function that returns the default value
-                of the property. This can be used for defaults that make use of
-                forward referenced types.
+        """
+        See AttributeProperty.
         """
 
         return computed_field(
@@ -159,7 +156,7 @@ class Span(mod_trace.OTSpan):
     def start_datetime(self) -> datetime.datetime:
         """Start time of span as a [datetime][datetime.datetime]."""
         return mod_container_utils.datetime_of_ns_timestamp(self.start_timestamp)
-    
+
     @start_datetime.setter
     def start_datetime(self, value: datetime.datetime):
         self.start_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
@@ -168,7 +165,7 @@ class Span(mod_trace.OTSpan):
     def end_datetime(self) -> datetime.datetime:
         """End time of span as a [datetime][datetime.datetime]."""
         return mod_container_utils.datetime_of_ns_timestamp(self.end_timestamp)
-    
+
     @end_datetime.setter
     def end_datetime(self, value: datetime.datetime):
         self.end_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
@@ -184,31 +181,6 @@ class Span(mod_trace.OTSpan):
         """Identifier for the trace this span belongs to."""
 
         return self.context.trace_id
-
-    @property # want # @functools.cached_property but those are not allowed to have setters
-    def parent_context(self) -> Optional[ot_span.SpanContext]:
-        """Context of parent span if any.
-
-        This is stored in OT links with a relationship attribute of "parent".
-        None if this is a root span or otherwise it does not have a parent.
-        """
-
-        for link_context, link_attributes in self.links.items():
-            if link_attributes.get(self.vendor_attr("relationship")) == "parent":
-                return link_context
-
-        return None
-
-    @parent_context.setter
-    def parent_context(self, value: Optional[ot_span.SpanContext]):
-        if value is None:
-            return
-
-        if self.parent_context is not None:
-            # Delete existing parent if any.
-            del self.links[self.parent_context]
-
-        self.add_link(value, {self.vendor_attr("relationship"): "parent"})
 
     # want functools.cached_property but need updating due to the above setter
     @property
@@ -269,35 +241,41 @@ class TransSpanRecord(Span):
     """A span whose activity was recorded in a record.
     
     Features references to the record.
-
-    !!! note
-        This is a transitional type for the traces work.
     """
 
     record: Annotated[
         mod_record_schema.Record,
-        pydantic.WithJsonSchema(None)
+        pydantic.WithJsonSchema(None) # don't include in json schema
     ] = Field(exclude=True, default=None)
-    record_id = Span.attribute_property("record_id", typ=str, default=None)
+    """Record that this span was recorded in."""
 
-class SpanMethodCall(TransSpanRecord):
+    record_id = Span.attribute_property("record_id", typ=str, default=None)
+    """The ID of the record that this span was recorded in."""
+
+class SpanMethodCall(TransSpanRecord): # transition
     """Span which corresponds to a method call.
     
     See also temporary development attributes in
-    [TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordCall].
+    [TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordAppCall].
     """
 
     inputs = Span.attribute_property("inputs", typ=Optional[Dict[str, Any]], default_factory=None)
-    # TODO: Need to encode to OT AttributeValue
+    """Input arguments to the method call."""
 
-    output = Span.attribute_property("output", typ=Optional[JSON], default_factory=None)
-    # TODO: Need to encode to OT AttributeValue
+    output = Span.attribute_property("output", typ=Optional[TJSONLike], default_factory=None)
+    """Output of the method call.
+    
+    This and error are mutually exclusive.
+    """
 
     error = Span.attribute_property("error", typ=Optional[Any], default_factory=None)
-    # TODO: Need to encode to OT AttributeValue
+    """Error raised by the method call if any.
+    
+    This and output are mutually exclusive.
+    """
 
 
-class TransSpanRecordAppCall(SpanMethodCall):
+class TransSpanRecordAppCall(SpanMethodCall): # transition
     """A Span which corresponds to single
     [RecordAppCall][trulens_eval.schema.record.RecordAppCall].
 
@@ -313,27 +291,16 @@ class TransSpanRecordAppCall(SpanMethodCall):
          pydantic.WithJsonSchema(None)
     ] = Field(exclude=True, default=None)
 
-class SpanRoot(TransSpanRecord):
+class SpanRoot(TransSpanRecord): # transition
     """A root span encompassing some collection of spans.
 
     Does not indicate any particular activity by itself beyond its children.
     """
 
-SpanTyped = TransSpanRecordAppCall
+SpanTyped = TransSpanRecordAppCall # transition
 """Alias for the superclass of spans that went through the record call conversion."""
 
-"""
-@dataclasses.dataclass
-class RetrieverQuery:
-    text: str
-    embedding: Optional[List[float]]
 
-@dataclasses.dataclass
-class RetrieverContext:
-    text: str
-    score: Optional[float]
-    embedding: Optional[List[float]]
-"""
 
 class SpanRetriever(SpanTyped):
     """A retrieval."""
@@ -359,14 +326,6 @@ class SpanRetriever(SpanTyped):
     retrieved_embeddings = Span.attribute_property("retrieved_embeddings", List[List[float]])
     """The embeddings of the retrieved contexts."""
 
-    @classmethod
-    def __get_pydantic_json_schema__(
-        cls, core_schema: cs.CoreSchema, handler: GetJsonSchemaHandler
-    ) -> JsonSchemaValue:
-        json_schema = handler(core_schema)
-        json_schema = handler.resolve_ref_schema(json_schema)
-        json.dumps(json_schema, indent=2)
-        return json_schema
 
 class SpanReranker(SpanTyped):
     """A reranker call."""
@@ -389,29 +348,30 @@ class SpanReranker(SpanTyped):
     output_ranks = Span.attribute_property("output_ranks", List[int])
     """Reranked indexes into `input_context_texts`."""
 
-class SpanLLM(SpanTyped):
+
+class SpanLLM(SpanTyped): # make SpanLLMOTEL once otel is ready
     """A generation call to an LLM."""
 
-    model_name = Span.attribute_property("model_name", str)
+    model_name = Span.attribute_property("model_name", str) # to replace with otel's LLM_REQUEST_MODEL
     """The model name of the LLM."""
 
     model_type = Span.attribute_property("model_type", str)
     """The type of model used."""
 
-    temperature = Span.attribute_property("temperature", float)
-    """The temperature used for generation."""
+    input_token_count = Span.attribute_property("input_token_count", int) # to replace with otel's LLM_RESPONSE_USAGE_PROMPT_TOKENS
+    """The number of tokens in the input."""
 
     input_messages = Span.attribute_property("input_messages", List[dict])
     """The prompt given to the LLM."""
 
-    input_token_count = Span.attribute_property("input_token_count", int)
-    """The number of tokens in the input."""
+    output_token_count = Span.attribute_property("output_token_count", int) # to replace with otel's LLM_RESPONSE_COMPLETION_TOKENS
+    """The number of tokens in the output."""
 
     output_messages = Span.attribute_property("output_messages", List[dict])
     """The returned text."""
 
-    output_token_count = Span.attribute_property("output_token_count", int)
-    """The number of tokens in the output."""
+    temperature = Span.attribute_property("temperature", float) # to replace with otel's LLM_REQUEST_TEMPERATURE
+    """The temperature used for generation."""
 
     cost = Span.attribute_property("cost", float)
     """The cost of the generation."""

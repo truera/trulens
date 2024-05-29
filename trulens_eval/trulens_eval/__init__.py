@@ -2,9 +2,11 @@
 # Trulens-eval LLM Evaluation Library
 
 This top-level import includes everything to get started.
+
+TODO: Make most of the imports here lazy. See https://peps.python.org/pep-0562/ .
 """
 
-__version_info__ = (0, 28, 1)
+__version_info__ = (0, 30, 1)
 """Version number components for major, minor, patch."""
 
 __version__ = '.'.join(map(str, __version_info__))
@@ -26,7 +28,6 @@ from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import base as mod_provider
 from trulens_eval.feedback.provider import hugs as mod_hugs_provider
 from trulens_eval.feedback.provider import langchain as mod_langchain_provider
-from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.utils import imports as mod_imports_utils
 from trulens_eval.utils import threading as mod_threading_utils

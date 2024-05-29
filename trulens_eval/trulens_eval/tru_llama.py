@@ -11,7 +11,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Union
 from pydantic import Field
 
 from trulens_eval import app as mod_app
-from trulens_eval.instruments import ClassFilter
+from trulens_eval.instruments import TClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import Dummy
@@ -159,7 +159,7 @@ class LlamaInstrument(Instrument):
         }.union(LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
+        METHODS: Dict[str, TClassFilter] = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS),
             {
                 # LLM:
