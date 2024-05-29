@@ -400,11 +400,13 @@ class GetItem(StepItemOrAttribute):
 
 
 class GetItemOrAttribute(StepItemOrAttribute):
-    # For item/attribute agnostic addressing.
+    """A step in a path lens that selects an item or an attribute.
 
-    # NOTE: We also allow to lookup elements within sequences if the subelements
-    # have the item or attribute. We issue warning if this is ambiguous (looking
-    # up in a sequence of more than 1 element).
+    !!! note:
+        _TruLens-Eval_ allows lookuping elements within sequences if the subelements
+        have the item or attribute. We issue warning if this is ambiguous (looking
+        up in a sequence of more than 1 element).
+    """
 
     item_or_attribute: str  # distinct from "item" for deserialization
 
@@ -419,7 +421,8 @@ class GetItemOrAttribute(StepItemOrAttribute):
     # Step requirement
     def get(self, obj: Dict[str, T]) -> Iterable[T]:
         # Special handling of sequences. See NOTE above.
-        if isinstance(obj, Sequence):
+
+        if isinstance(obj, Sequence) and not isinstance(obj, str):
             if len(obj) == 1:
                 for r in self.get(obj=obj[0]):
                     yield r
@@ -429,12 +432,17 @@ class GetItemOrAttribute(StepItemOrAttribute):
                 )
             else:  # len(obj) > 1
                 logger.warning(
-                    f"Object (of type {type(obj).__name__}) is a sequence containing more than one dictionary. "
-                    f"Lookup by item or attribute `{self.item_or_attribute}` is ambiguous. "
-                    f"Use a lookup by index(es) or slice first to disambiguate."
+                    "Object (of type %s is a sequence containing more than one dictionary. "
+                    "Lookup by item or attribute `%s` is ambiguous. "
+                    "Use a lookup by index(es) or slice first to disambiguate.",
+                    type(obj).__name__, self.item_or_attribute
                 )
-                for r in self.get(obj=obj[0]):
-                    yield r
+                for sub_obj in obj:
+                    try:
+                        for r in self.get(obj=sub_obj):
+                            yield r
+                    except Exception:
+                        pass
 
         # Otherwise handle a dict or object with the named attribute.
         elif isinstance(obj, Dict):
@@ -449,7 +457,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
                 yield getattr(obj, self.item_or_attribute)
             else:
                 raise ValueError(
-                    f"Object {obj} does not have item or attribute {self.item_or_attribute}."
+                    f"Object {repr(obj)} of type {type(obj)} does not have item or attribute {repr(self.item_or_attribute)}."
                 )
 
     # Step requirement

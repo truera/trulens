@@ -6,7 +6,7 @@ This top-level import includes everything to get started.
 TODO: Make most of the imports here lazy. See https://peps.python.org/pep-0562/ .
 """
 
-__version_info__ = (0, 28, 1)
+__version_info__ = (0, 30, 1)
 """Version number components for major, minor, patch."""
 
 __version__ = '.'.join(map(str, __version_info__))

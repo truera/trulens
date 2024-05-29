@@ -25,6 +25,7 @@ from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import pyschema
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.asynchro import desync
@@ -350,8 +351,15 @@ class RecordingContext():
     """
 
     def __init__(self, app: mod_app.App, record_metadata: TJSONLike = None):
-        self.calls: List[mod_record_schema.RecordAppCall] = []
-        """A record (in terms of its RecordAppCall) in process of being created."""
+        self.calls: Dict[mod_types_schema.CallID,
+                         mod_record_schema.RecordAppCall] = {}
+        """A record (in terms of its RecordAppCall) in process of being created.
+        
+        Storing as a map as we want to override calls with the same id which may
+        happen due to methods producing awaitables or generators. These result
+        in calls before the awaitables are awaited and then get updated after
+        the result is ready.
+        """
 
         self.records: List[mod_record_schema.Record] = []
         """Completed records."""
@@ -406,12 +414,16 @@ class RecordingContext():
         Add the given call to the currently tracked call list.
         """
         with self.lock:
-            self.calls.append(call)
+            # NOTE: This might override existing call record which happens when
+            # processing calls with awaitable or generator results.
+            self.calls[call.call_id] = call
 
     def finish_record(
         self,
-        calls_to_record: Callable[[List[mod_record_schema.RecordAppCall], TJSONLike],
-                                  mod_record_schema.Record],
+        calls_to_record: Callable[[
+            List[mod_record_schema.RecordAppCall], mod_types_schema.
+            Metadata, Optional[mod_record_schema.Record]
+        ], mod_record_schema.Record],
         existing_record: Optional[mod_record_schema.Record] = None
     ):
         """
@@ -421,11 +433,9 @@ class RecordingContext():
 
         with self.lock:
             record = calls_to_record(
-                self.calls,
-                self.record_metadata,
-                existing_record=existing_record
+                list(self.calls.values()), self.record_metadata, existing_record
             )
-            self.calls = []
+            self.calls = {}
 
             if existing_record is None:
                 # If existing record was given, we assume it was already
@@ -741,7 +751,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         raise NotImplementedError()
 
-    def _extract_content(self, value):
+    def _extract_content(self, value, content_keys=['content']):
         """
         Extracts the 'content' from various data types commonly used by libraries
         like OpenAI, Canopy, LiteLLM, etc. This method navigates nested data
@@ -763,38 +773,40 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             content = getattr(value, 'content', None)
             if content is not None:
                 return content
-            else:
-                # If 'content' is not found, check for 'choices' attribute which indicates a ChatResponse
-                choices = getattr(value, 'choices', None)
-                if choices is not None:
-                    # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
-                    return [
-                        self._extract_content(choice.message)
-                        for choice in choices
-                    ]
-                else:
-                    # Recursively extract content from nested pydantic models
-                    return {
-                        k: self._extract_content(v) if
-                        isinstance(v, (pydantic.BaseModel, dict, list)) else v
-                        for k, v in value.dict().items()
-                    }
+
+            # If 'content' is not found, check for 'choices' attribute which indicates a ChatResponse
+            choices = getattr(value, 'choices', None)
+            if choices is not None:
+                # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
+                return [
+                    self._extract_content(choice.message) for choice in choices
+                ]
+
+            # Recursively extract content from nested pydantic models
+            return {
+                k: self._extract_content(v)
+                if isinstance(v, (pydantic.BaseModel, dict, list)) else v
+                for k, v in value.dict().items()
+            }
+
         elif isinstance(value, dict):
             # Check for 'content' key in the dictionary
-            content = value.get('content')
-            if content is not None:
-                return content
-            else:
-                # Recursively extract content from nested dictionaries
-                return {
-                    k:
-                    self._extract_content(v) if isinstance(v,
-                                                           (dict, list)) else v
-                    for k, v in value.items()
-                }
+            for key in content_keys:
+                content = value.get(key)
+                if content is not None:
+                    return content
+
+            # Recursively extract content from nested dictionaries
+            return {
+                k: self._extract_content(v) if isinstance(v,
+                                                          (dict, list)) else v
+                for k, v in value.items()
+            }
+
         elif isinstance(value, list):
             # Handle lists by extracting content from each item
             return [self._extract_content(item) for item in value]
+
         else:
             return value
 
@@ -818,7 +830,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         while not isinstance(focus, JSON_BASES) and len(focus) == 1:
             focus = focus[0]
-            focus = self._extract_content(focus)
+            focus = self._extract_content(
+                focus, content_keys=['content', 'input']
+            )
 
             if not isinstance(focus, Sequence):
                 logger.warning("Focus %s is not a sequence.", focus)
@@ -863,7 +877,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         """
 
         # Use _extract_content to get the content out of the return value
-        content = self._extract_content(ret)
+        content = self._extract_content(ret, content_keys=['content', 'output'])
 
         if isinstance(content, str):
             return content

@@ -438,17 +438,15 @@ class TruRails(mod_app.App):
         return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:
                                                                                     ].body
 
-    def __getattr__(self, __name: str) -> Any:
-        # A message for cases where a user calls something that the wrapped
-        # app has but we do not wrap yet.
-
-        if safe_hasattr(self.app, __name):
-            return RuntimeError(
-                f"TruRails has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
-                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruRails`. "
-            )
+    def __getattr__(self, name):
+        if name == "__name__":
+            return self.__class__.__name__  # Return the class name of TruRails
+        elif safe_hasattr(self.app, name):
+            return getattr(
+                self.app, name
+            )  # Delegate to the wrapped app if it has the attribute
         else:
-            raise RuntimeError(f"TruRails has no attribute named {__name}.")
+            raise AttributeError(f"TruRails has no attribute named {name}")
 
 
 import trulens_eval  # for App class annotations

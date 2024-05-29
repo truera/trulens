@@ -305,9 +305,9 @@ class TruChain(mod_app.App):
 
             if len(self.app.input_keys) == 0:
                 logger.warning(
-                    "langchain app has no inputs. `main_input` will be `None`."
+                    "langchain app has no `input_keys`. `main_input` might not be detected."
                 )
-                return None
+                return super().main_input(func, sig, bindings)
 
             return ins[self.app.input_keys[0]]
 
@@ -324,6 +324,12 @@ class TruChain(mod_app.App):
 
         if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
             # langchain specific:
+            if len(self.app.output_keys) == 0:
+                logger.warning(
+                    "langchain app has no `output_keys`. `main_output` might not be detected."
+                )
+                return super().main_output(func, sig, bindings, ret)
+
             if self.app.output_keys[0] in ret:
                 return ret[self.app.output_keys[0]]
 
