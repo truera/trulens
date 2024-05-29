@@ -89,12 +89,8 @@ export interface Span {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
   [k: string]: unknown;
 }
 /**
@@ -149,27 +145,22 @@ export interface SpanAgent {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
-  description: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
+  description: string;
   [k: string]: unknown;
 }
 /**
@@ -224,33 +215,24 @@ export interface SpanEmbedding {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
-  input_text: {
-    [k: string]: unknown;
-  };
-  model_name: {
-    [k: string]: unknown;
-  };
-  embedding: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
+  input_text: string;
+  model_name: string;
+  embedding: number[];
   [k: string]: unknown;
 }
 /**
@@ -305,48 +287,33 @@ export interface SpanLLM {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
-  model_name: {
-    [k: string]: unknown;
-  };
-  model_type: {
-    [k: string]: unknown;
-  };
-  temperature: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
+  model_name: string;
+  model_type: string;
+  temperature: number;
   input_messages: {
     [k: string]: unknown;
-  };
-  input_token_count: {
-    [k: string]: unknown;
-  };
+  }[];
+  input_token_count: number;
   output_messages: {
     [k: string]: unknown;
-  };
-  output_token_count: {
-    [k: string]: unknown;
-  };
-  cost: {
-    [k: string]: unknown;
-  };
+  }[];
+  output_token_count: number;
+  cost: number;
   [k: string]: unknown;
 }
 /**
@@ -401,30 +368,23 @@ export interface SpanMemory {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
-  memory_type: {
-    [k: string]: unknown;
-  };
-  remembered: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
+  memory_type: string;
+  remembered: string;
   [k: string]: unknown;
 }
 /**
@@ -482,24 +442,21 @@ export interface SpanMethodCall {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
   [k: string]: unknown;
 }
 /**
@@ -554,24 +511,21 @@ export interface SpanOther {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
   [k: string]: unknown;
 }
 /**
@@ -626,42 +580,27 @@ export interface SpanReranker {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
-  query_text: {
-    [k: string]: unknown;
-  };
-  model_name: {
-    [k: string]: unknown;
-  };
-  top_n: {
-    [k: string]: unknown;
-  };
-  input_context_texts: {
-    [k: string]: unknown;
-  };
-  input_context_scores: {
-    [k: string]: unknown;
-  };
-  output_ranks: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
+  query_text: string;
+  model_name: string;
+  top_n: number;
+  input_context_texts: string[];
+  input_context_scores: number[] | null;
+  output_ranks: number[];
   [k: string]: unknown;
 }
 /**
@@ -716,45 +655,31 @@ export interface SpanRetriever {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  /**
+   * Input text whose related contexts are being retrieved.
+   */
+  query_text: string;
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
-  query_text: {
-    [k: string]: unknown;
-  };
-  query_embedding: {
-    [k: string]: unknown;
-  };
-  distance_type: {
-    [k: string]: unknown;
-  };
-  num_contexts: {
-    [k: string]: unknown;
-  };
-  retrieved_contexts: {
-    [k: string]: unknown;
-  };
-  retrieved_scores: {
-    [k: string]: unknown;
-  };
-  retrieved_embeddings: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
+  query_embedding: number[];
+  distance_type: string;
+  num_contexts: number;
+  retrieved_contexts: string[];
+  retrieved_scores: number[];
+  retrieved_embeddings: number[][];
   [k: string]: unknown;
 }
 /**
@@ -811,15 +736,9 @@ export interface SpanRoot {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   [k: string]: unknown;
 }
 /**
@@ -874,24 +793,21 @@ export interface SpanTask {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
   [k: string]: unknown;
 }
 /**
@@ -946,27 +862,22 @@ export interface SpanTool {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
-  description: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
+  description: string;
   [k: string]: unknown;
 }
 /**
@@ -1029,24 +940,21 @@ export interface TransSpanRecordAppCall {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   inputs: {
     [k: string]: unknown;
-  };
-  output: {
-    [k: string]: unknown;
-  };
-  error: {
-    [k: string]: unknown;
-  };
+  } | null;
+  output:
+    | string
+    | number
+    | unknown[]
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  error: unknown;
   [k: string]: unknown;
 }
 /**
@@ -1104,12 +1012,8 @@ export interface SpanUntyped {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
   [k: string]: unknown;
 }
 /**
@@ -1169,14 +1073,8 @@ export interface TransSpanRecord {
   attributes_metadata: {
     [k: string]: unknown;
   };
-  tags: {
-    [k: string]: unknown;
-  };
-  span_type: {
-    [k: string]: unknown;
-  };
-  record_id: {
-    [k: string]: unknown;
-  };
+  tags: string[];
+  span_type: null;
+  record_id: string;
   [k: string]: unknown;
 }
