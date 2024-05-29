@@ -21,6 +21,7 @@ from opentelemetry.util import types as ot_types
 import pydantic
 from pydantic import PlainSerializer
 from pydantic.functional_validators import PlainValidator
+from pydantic.json_schema import JsonSchemaValue
 from typing_extensions import Annotated
 from typing_extensions import TypeAliasType
 
@@ -157,26 +158,46 @@ def flatten_lensed_attributes(
 
 T = TypeVar("T")
 
-class HashableSpanContext(ot_span.SpanContext):
-    """SpanContext that can be hashed.
+class WithHashableSpanContext(): # must be mixed into SpanContext
+    """Mixin into SpanContext that adds hashing.
 
     Does not change data layout or behaviour. Changing SpanContext
-    `__class__` with this should be safe.
+    `__class__` or `__bases__` to include this should be safe.
     """
 
-    def __hash__(self):
+    def __hash__(self: ot_span.SpanContext):
         return hash((self.trace_id, self.span_id))
 
-    def __eq__(self, other):
+    def __eq__(self: ot_span.SpanContext, other: ot_span.SpanContext):
         return self.trace_id == other.trace_id and self.span_id == other.span_id
+    
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _core_schema, _handler) -> JsonSchemaValue:
+        return { 
+            'description': 'SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.',
+            'items': {
+                'maxItems': 6,
+                'minItems': 6,
+                'prefixItems': [
+                    {"type": "integer", "description": "The ID of the trace that this span belongs to." },
+                    {"type": "integer", "description": "This span's ID." },
+                    {"type": "boolean", "description": "True if propagated from a remote parent." },
+                    {"type": "integer", "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details." },
+                    {"type": "integer", "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values." },
+                    {"type": "boolean", "description": "True if the span context is valid." },
+                ]
+            },
+            'title': 'SpanContext',
+            'type': 'array'
+        }
+
+# HACK015: add hashing to contexts
+# Patch span context to use the above hashing and schema defs.
+ot_span.SpanContext.__bases__ = (WithHashableSpanContext, *ot_span.SpanContext.__bases__, )
 
 def validate_contextmapping(
-    v: Union[
-        List[Tuple[HashableSpanContext, T]],
-        Dict[HashableSpanContext, T]
-    ]
-
-) -> Dict[HashableSpanContext, T]:
+    v: List[Tuple[ot_span.SpanContext, T]]
+) -> Dict[ot_span.SpanContext, T]:
     """Deserialize a list of tuples as a dictionary."""
 
     if isinstance(v, dict):
@@ -184,46 +205,25 @@ def validate_contextmapping(
         return v
 
     # skip last element of SpanContext as it is computed in SpanContext.__init__ from others
-    return {
-        HashableSpanContext(*k[0:5]): v for k, v in v
-    } 
+    return {ot_span.SpanContext(*k[0:5]): v for k, v in v} 
 
 def serialize_contextmapping(
-    v: Dict[HashableSpanContext, T],
-) -> List[Tuple[HashableSpanContext, T]]:
+    v: Dict[ot_span.SpanContext, T],
+) -> List[Tuple[ot_span.SpanContext, T]]:
     """Serialize a dictionary as a list of tuples."""
 
     return list(v.items())
 
 ContextMapping = Annotated[
-    Dict[HashableSpanContext, T],
+    Dict[ot_span.SpanContext, T],
     PlainSerializer(serialize_contextmapping),
     PlainValidator(validate_contextmapping)
 ]
 """Type annotation for pydantic fields that store dictionaries whose keys are
-HashableSpanContext.
+(Hashable) SpanContext.
 
 This is needed to help pydantic figure out how to serialize and deserialize these dicts.
 """
-
-
-def make_hashable(
-    context: Optional[ot_span.SpanContext]
-) -> Optional[HashableSpanContext]:
-    """Make a SpanContext a HashableSpanContext.
-    
-    Returns None if input is None.
-    """
-    # HACK015: replacing class of contexts to add hashing
-
-    if context is None:
-        return None
-
-    if context.__class__ is not HashableSpanContext:
-        context.__class__ = HashableSpanContext
-
-    # Return not needed but useful for type checker.
-    return context
 
 
 class OTSpan(pydantic.BaseModel, ot_span.Span):
@@ -238,12 +238,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     However, the conversion to
     [ReadableSpan][opentelemetry.sdk.trace.ReadableSpan] with
     [freeze][trulens_eval.trace.OTSpan.freeze] produces to-spec representations.
-    The deviations are:
-
-    - contexts are stored as
-      [HashableSpanContext][trulens_eval.trace.HashableSpanContext] instead
-      of [SpanContext][opentelemetry.trace.span.SpanContext].
-
+    
     - attributes are not strictly as per spec which does not allow recursive
       types. They are instead json-like which allows storing recursive
       unstructured type. When freezing with
@@ -273,7 +268,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL
     """Kind of span."""
 
-    parent_context: Optional[HashableSpanContext] = None
+    parent_context: Optional[ot_span.SpanContext] = None
     """Parent span context.
     
     None if no parent.
@@ -294,7 +289,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     None if not yet ended.
     """
 
-    context: HashableSpanContext
+    context: ot_span.SpanContext
     """Unique immutable identifier for the span."""
 
     events: List[Tuple[str, ot_types.Attributes, TTimestamp]] = \
@@ -344,11 +339,11 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
 
         return cls(
             name=span.name,
-            context=make_hashable(span.context),
-            parent_context=make_hashable(span.parent),
+            context=span.context,
+            parent_context=span.parent,
             attributes=inflate_lensed_mapping(span.attributes),
             events=span.events,
-            links={make_hashable(link.context): inflate_lensed_mapping(link.attributes) for link in span.links},
+            links={link.context: inflate_lensed_mapping(link.attributes) for link in span.links},
             kind=span.kind,
             status=span.status.status_code,
             status_description=span.status.description,
@@ -358,7 +353,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
 
     def __init__(self, name: str, context: ot_span.SpanContext, **kwargs):
         kwargs['name'] = name
-        kwargs['context'] = make_hashable(context)
+        kwargs['context'] = context
         kwargs['attributes'] = kwargs.get('attributes', {}) or {}
         kwargs['links'] = kwargs.get('links', {}) or {}
 
@@ -405,8 +400,6 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
         attributes: ot_types.Attributes = None
     ) -> None:
         """See [add_link][opentelemetry.trace.span.Span.add_link]."""
-
-        context = make_hashable(context)
 
         if attributes is None:
             attributes = {}

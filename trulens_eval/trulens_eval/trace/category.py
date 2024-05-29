@@ -6,6 +6,9 @@ import inspect
 import logging
 from typing import List, Optional, Sequence, Set, TypeVar
 
+
+import opentelemetry.trace.span as ot_span
+
 from trulens_eval import instruments as mod_instruments
 from trulens_eval import trace as mod_trace
 from trulens_eval.schema import record as mod_record_schema
@@ -70,7 +73,7 @@ class Categorizer():
     def span_of_call(
         call: mod_record_schema.RecordAppCall,
         tracer: mod_tracer.Tracer,
-        context: Optional[mod_trace.HashableSpanContext] = None
+        context: Optional[ot_span.SpanContext] = None
     ) -> mod_span.Span:
         """Categorizes a [RecordAppCall][trulens_eval.schema.record.RecordAppCall] into a span.
 
@@ -196,7 +199,7 @@ class LangChainCategorizer(Categorizer):
     def span_of_call(
         call: mod_record_schema.RecordAppCall,
         tracer: mod_tracer.Tracer,
-        context: Optional[mod_trace.HashableSpanContext] = None
+        context: Optional[ot_span.SpanContext] = None
     ) -> mod_span.Span:
         """Converts a call by a _LangChain_ class into the appropriate span."""
         
@@ -243,7 +246,7 @@ class LlamaIndexCategory(Categorizer):
     def span_of_call(
         call: mod_record_schema.RecordAppCall,
         tracer: mod_tracer.Tracer,
-        context: Optional[mod_trace.HashableSpanContext] = None
+        context: Optional[ot_span.SpanContext] = None
     ) -> mod_span.Span:
         """Converts a call by a _LlamaIndex_ class into the appropriate span."""
         
@@ -318,7 +321,7 @@ class CustomCategorizer(Categorizer):
     def span_of_call(
         call: mod_record_schema.RecordAppCall,
         tracer: mod_tracer.Tracer,
-        context: Optional[mod_trace.HashableSpanContext] = None
+        context: Optional[ot_span.SpanContext] = None
     ) -> mod_span.Span:
         """Converts a custom instrumentation-annotated method call into the appropriate span."""
 

@@ -14,10 +14,15 @@ from __future__ import annotations
 
 import datetime
 from enum import Enum
+import json
 from logging import getLogger
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
+from typing import (Annotated, Any, Callable, Dict, Generic, List, Optional,
+                    Type, TypeVar)
 
+import opentelemetry.trace.span as ot_span
 from opentelemetry.util import types as ot_types
+import pandas as pd
+import pydantic
 from pydantic import computed_field
 from pydantic import Field
 from pydantic import TypeAdapter
@@ -25,10 +30,104 @@ from pydantic import TypeAdapter
 from trulens_eval import trace as mod_trace
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils import containers as mod_container_utils
+from trulens_eval.utils.serial import TJSONLike
 
 logger = getLogger(__name__)
 
 T = TypeVar("T")
+
+class AttributeProperty(property, Generic[T]):
+    """Property that stores its value in the attributes dictionary with a
+    vendor prefix.
+    
+    Validates default and on assignment. This is meant to be used only in
+    SpanType instances (or subclasses).
+        
+        Args:
+            name: The name of the property. The key used for storage will be
+                this with the vendor prefix.
+
+            typ: The type of the property.
+
+            typ_factory: A factory function that returns the type of the
+                property. This can be used for forward referenced types.
+
+            default: The default value of the property.
+
+            default_factory: A factory function that returns the default value
+                of the property. This can be used for defaults that make use of
+                forward referenced types.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        typ: Optional[Type[T]] = None,
+        typ_factory: Optional[Callable[[], Type[T]]] = None,
+        default: Optional[T] = None,
+        default_factory: Optional[Callable[[], T]] = None
+    ):
+        self.name = name
+        self.typ = typ
+        self.typ_factory = typ_factory
+        self.default = default
+        self.default_factory = default_factory
+
+        self.forward_initialized = False
+
+    def init_forward(self):
+        if self.forward_initialized:
+            return
+
+        self.forward_initialized = True
+
+        if self.typ is None and self.typ_factory is not None:
+            self.typ = self.typ_factory()
+
+        if self.default is None and self.default_factory is not None:
+            self.default = self.default_factory()
+
+        if self.typ is None and self.default is not None:
+            self.typ = type(self.default)
+
+        if self.typ is None:
+            self.tadapter = None
+        else:
+            self.tadapter = TypeAdapter(self.typ)
+            if self.default is not None:
+                self.tadapter.validate_python(self.default)
+    
+    def __get__(self, obj, objtype) -> Optional[T]:
+        if obj is None:
+            return self
+
+        self.init_forward()
+        return obj.attributes.get(obj.vendor_attr(self.name), self.default)
+
+    def __set__(self, obj, value: T) -> None:
+        self.init_forward()
+
+        if self.tadapter is not None:
+            self.tadapter.validate_python(value)
+
+        obj.attributes[obj.vendor_attr(self.name)] = value
+
+    def __delete__(self, obj):
+        del obj.attributes[obj.vendor_attr(self.name)]
+
+    def __set_name__(self, cls, name):
+        if name in cls.__annotations__:
+            # If type is specified in annotation, take it from there.
+            self.typ = cls.__annotations__[name]
+            self.tadapter = TypeAdapter(self.typ)
+
+            # Update the recorded return type as well.
+            # TODO: cannot do this at this point as the below dict is not yet populated
+            # if name in cls.model_computed_fields:
+            #     cls.model_computed_fields[name].return_type = self.typ
+
+            # Have to remove it as pydantic will complain about overriding fields with computed fields.
+            del cls.__annotations__[name]
 
 class Span(mod_trace.OTSpan):
     """Base Span type.
@@ -44,70 +143,14 @@ class Span(mod_trace.OTSpan):
         default: Optional[T] = None,
         default_factory: Optional[Callable[[], T]] = None
     ) -> property:
-        """Utility for creating properties that stores their values in the
-        attributes dictionary with a vendor prefix.
-
-        Validates default and on assignment.
-
-        Args:
-            name: The name of the property. The key used for storage will be
-                this with the vendor prefix.
-
-            typ: The type of the property.
-
-            typ_factory: A factory function that returns the type of the
-                property. This can be used for forward referenced types.
-
-            default: The default value of the property.
-
-            default_factory: A factory function that returns the default value
-                of the property. This can be used for defaults that make use of
-                forward referenced types.
         """
-        initialized = False
-        tadapter = None
+        See AttributeProperty.
+        """
 
-        def initialize():
-            # Delaying the steps in this method until the first time the
-            # property is used as otherwise forward references might not be
-            # ready.
-
-            nonlocal initialized, tadapter
-
-            if initialized:
-                return
-
-            nonlocal typ, default
-            if typ is None and typ_factory is not None:
-                typ = typ_factory()
-
-            if default is None and default_factory is not None:
-                default = default_factory()
-
-            if typ is None and default is not None:
-                typ = type(default)
-
-            if typ is None:
-                tadapter = None
-            else:
-                tadapter = TypeAdapter(typ)
-                if default is not None:
-                    tadapter.validate_python(default)
-
-        def getter(self) -> T:
-            initialize()
-            return self.attributes.get(self.vendor_attr(name), default)
-
-        def setter(self, value: T) -> None:
-            initialize()
-            if tadapter is not None:
-                tadapter.validate_python(value)
-
-            self.attributes[self.vendor_attr(name)] = value
-
-        prop = property(getter, setter)
-
-        return computed_field(prop)
+        return computed_field(
+            AttributeProperty(name, typ, typ_factory, default, default_factory),
+            return_type=typ
+        )
 
     @property
     def start_datetime(self) -> datetime.datetime:
@@ -126,6 +169,29 @@ class Span(mod_trace.OTSpan):
     @end_datetime.setter
     def end_datetime(self, value: datetime.datetime):
         self.end_timestamp = mod_container_utils.ns_timestamp_of_datetime(value)
+
+    @property
+    def span_id(self) -> mod_trace.TSpanID:
+        """Identifier for the span."""
+
+        return self.context.span_id
+
+    @property
+    def trace_id(self) -> mod_trace.TTraceID:
+        """Identifier for the trace this span belongs to."""
+
+        return self.context.trace_id
+
+    # want functools.cached_property but need updating due to the above setter
+    @property
+    def parent_span_id(self) -> Optional[mod_trace.TSpanID]:
+        """Id of parent span if any."""
+
+        parent_context = self.parent_context
+        if parent_context is not None:
+            return parent_context.span_id
+
+        return None
 
     tags = attribute_property(
         "tags", typ=List[str], default_factory=list
@@ -177,8 +243,11 @@ class TransSpanRecord(Span):
     Features references to the record.
     """
 
-    record: mod_record_schema.Record = Field(exclude=True, default=None)
-    """The record that this span was recorded in."""
+    record: Annotated[
+        mod_record_schema.Record,
+        pydantic.WithJsonSchema(None) # don't include in json schema
+    ] = Field(exclude=True, default=None)
+    """Record that this span was recorded in."""
 
     record_id = Span.attribute_property("record_id", typ=str, default=None)
     """The ID of the record that this span was recorded in."""
@@ -193,11 +262,17 @@ class SpanMethodCall(TransSpanRecord): # transition
     inputs = Span.attribute_property("inputs", typ=Optional[Dict[str, Any]], default_factory=None)
     """Input arguments to the method call."""
 
-    output = Span.attribute_property("output", typ=Optional[Any], default_factory=None)
-    """Output of the method call."""
+    output = Span.attribute_property("output", typ=Optional[TJSONLike], default_factory=None)
+    """Output of the method call.
+    
+    This and error are mutually exclusive.
+    """
 
     error = Span.attribute_property("error", typ=Optional[Any], default_factory=None)
-    """Error raised by the method call if any."""
+    """Error raised by the method call if any.
+    
+    This and output are mutually exclusive.
+    """
 
 
 class TransSpanRecordAppCall(SpanMethodCall): # transition
@@ -211,7 +286,10 @@ class TransSpanRecordAppCall(SpanMethodCall): # transition
         fields are being placed in
         [SpanMethodCall][trulens_eval.trace.span.SpanMethodCall] instead.
     """
-    call: mod_record_schema.RecordAppCall = Field(exclude=True, default=None)
+    call: Annotated[
+        mod_record_schema.RecordAppCall,
+         pydantic.WithJsonSchema(None)
+    ] = Field(exclude=True, default=None)
 
 class SpanRoot(TransSpanRecord): # transition
     """A root span encompassing some collection of spans.
@@ -247,10 +325,6 @@ class SpanRetriever(SpanTyped):
 
     retrieved_embeddings = Span.attribute_property("retrieved_embeddings", List[List[float]])
     """The embeddings of the retrieved contexts."""
-
-
-class SpanVectorDB(SpanTyped): # make SpanVectorDBOTEL once otel is ready
-    """A vector database call."""
 
 
 class SpanReranker(SpanTyped):
