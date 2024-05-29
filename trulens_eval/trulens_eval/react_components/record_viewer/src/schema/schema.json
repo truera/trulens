@@ -203,10 +203,15 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         }
       },
       "required": [
@@ -422,25 +427,71 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "description": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         }
       },
       "required": [
@@ -661,31 +712,82 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "input_text": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "model_name": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "embedding": {
-          "readOnly": true
+          "items": {
+            "type": "number"
+          },
+          "readOnly": true,
+          "type": "array"
         }
       },
       "required": [
@@ -920,46 +1022,105 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "model_name": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "model_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "temperature": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "number"
         },
         "input_messages": {
-          "readOnly": true
+          "items": {
+            "type": "object"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "input_token_count": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "integer"
         },
         "output_messages": {
-          "readOnly": true
+          "items": {
+            "type": "object"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "output_token_count": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "integer"
         },
         "cost": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "number"
         }
       },
       "required": [
@@ -1187,28 +1348,75 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "memory_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "remembered": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         }
       },
       "required": [
@@ -1430,21 +1638,66 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         }
       },
@@ -1665,21 +1918,66 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         }
       },
@@ -1900,40 +2198,107 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "query_text": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "model_name": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "top_n": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "integer"
         },
         "input_context_texts": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "input_context_scores": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output_ranks": {
-          "readOnly": true
+          "items": {
+            "type": "integer"
+          },
+          "readOnly": true,
+          "type": "array"
         }
       },
       "required": [
@@ -2158,57 +2523,124 @@
           "description": "View into a dict with keys prefixed by some `namespace` string.",
           "type": "object"
         },
+        "query_text": {
+          "description": "Input text whose related contexts are being retrieved.",
+          "type": "string"
+        },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
-          "readOnly": true
-        },
-        "query_text": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "query_embedding": {
-          "readOnly": true
+          "items": {
+            "type": "number"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "distance_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "num_contexts": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "integer"
         },
         "retrieved_contexts": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "retrieved_scores": {
-          "readOnly": true
+          "items": {
+            "type": "number"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "retrieved_embeddings": {
-          "readOnly": true
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "readOnly": true,
+          "type": "array"
         }
       },
       "required": [
         "name",
         "context",
         "attributes_metadata",
+        "query_text",
         "tags",
         "span_type",
         "record_id",
         "inputs",
         "output",
         "error",
-        "query_text",
         "query_embedding",
         "distance_type",
         "num_contexts",
@@ -2422,13 +2854,19 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         }
       },
       "required": [
@@ -2645,21 +3083,66 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         }
       },
@@ -2880,25 +3363,71 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "description": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         }
       },
       "required": [
@@ -3119,10 +3648,15 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         }
       },
       "required": [
@@ -3348,13 +3882,19 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         }
       },
       "required": [
@@ -3571,21 +4111,66 @@
           "type": "object"
         },
         "tags": {
-          "readOnly": true
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
         },
         "span_type": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "null"
         },
         "record_id": {
-          "readOnly": true
+          "readOnly": true,
+          "type": "string"
         },
         "inputs": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "format": "binary",
+              "type": "string"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         },
         "error": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
           "readOnly": true
         }
       },
