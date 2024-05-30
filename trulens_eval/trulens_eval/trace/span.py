@@ -19,6 +19,7 @@ from logging import getLogger
 from typing import (Annotated, Any, Callable, Dict, Generic, List, Optional,
                     Type, TypeVar)
 
+from opentelemetry.trace import status as trace_status
 import opentelemetry.trace.span as ot_span
 from opentelemetry.util import types as ot_types
 import pandas as pd
@@ -259,7 +260,7 @@ class SpanMethodCall(TransSpanRecord): # transition
     [TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordAppCall].
     """
 
-    inputs = Span.attribute_property("inputs", typ=Optional[Dict[str, Any]], default_factory=None)
+    inputs = Span.attribute_property("inputs", typ=Optional[Dict[str, TJSONLike]], default_factory=None)
     """Input arguments to the method call."""
 
     output = Span.attribute_property("output", typ=Optional[TJSONLike], default_factory=None)
@@ -268,7 +269,7 @@ class SpanMethodCall(TransSpanRecord): # transition
     This and error are mutually exclusive.
     """
 
-    error = Span.attribute_property("error", typ=Optional[Any], default_factory=None)
+    error = Span.attribute_property("error", typ=Optional[TJSONLike], default_factory=None)
     """Error raised by the method call if any.
     
     This and output are mutually exclusive.

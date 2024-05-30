@@ -1038,6 +1038,17 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         token = self.recording_contexts.set(ctx)
         ctx.token = token
 
+        """
+        from opentelemetry import trace
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import (
+            BatchSpanProcessor,
+            ConsoleSpanExporter,
+        )
+
+        trace.set_trace_provider()
+        """
+        
         return ctx
 
     # For use as a context manager.

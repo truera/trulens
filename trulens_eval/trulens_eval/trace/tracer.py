@@ -198,3 +198,20 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
 
         self.stack.reset(token)
         return
+
+
+class TracerProvider(ot_trace.TracerProvider):
+    """Implementation of OpenTelemetry TracerProvider requirements."""
+
+    def get_tracer(
+        self,
+        instrumenting_module_name: str,
+        instrumenting_library_version: Optional[str] = None,
+        schema_url: Optional[str] = None
+    ) -> Tracer:
+        """See [get_tracer][opentelemetry.trace.TracerProvider.get_tracer]."""
+
+        return Tracer(
+            instrumenting_module_name=instrumenting_module_name,
+            instrumenting_library_version=instrumenting_library_version
+        )

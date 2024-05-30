@@ -262,6 +262,14 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     }
     """Pydantic configuration."""
 
+    def __init__(self, name: str, context: ot_span.SpanContext, **kwargs):
+        kwargs['name'] = name
+        kwargs['context'] = context
+        kwargs['attributes'] = kwargs.get('attributes', {}) or {}
+        kwargs['links'] = kwargs.get('links', {}) or {}
+
+        super().__init__(**kwargs)
+        
     name: str
     """Name of span."""
 
@@ -285,7 +293,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
 
     end_timestamp: Optional[TTimestamp] = None
     """Timestamp when the span's activity ended in nanoseconds since epoch.
-
+    
     None if not yet ended.
     """
 
@@ -297,7 +305,7 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
     """Events recorded in the span.
     
     !!! Warning
-
+    
         Events in OpenTelemetry seem to be synonymous to logs. Do not store
         anything we want to query or process in events.
     """
@@ -350,14 +358,6 @@ class OTSpan(pydantic.BaseModel, ot_span.Span):
             start_timestamp=span.start_time,
             end_timestamp=span.end_time
         )
-
-    def __init__(self, name: str, context: ot_span.SpanContext, **kwargs):
-        kwargs['name'] = name
-        kwargs['context'] = context
-        kwargs['attributes'] = kwargs.get('attributes', {}) or {}
-        kwargs['links'] = kwargs.get('links', {}) or {}
-
-        super().__init__(**kwargs)
 
     def end(self, end_time: Optional[TTimestamp] = None):
         """See [end][opentelemetry.trace.span.Span.end]"""

@@ -28,6 +28,23 @@ from trulens_eval.utils.threading import ThreadPoolExecutor
 
 instrument.method(CustomMemory, "remember")
 
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+)
+
+provider = TracerProvider()
+processor = BatchSpanProcessor(ConsoleSpanExporter())
+provider.add_span_processor(processor)
+
+# Sets the global default tracer provider
+trace.set_tracer_provider(provider)
+
+# Creates a tracer from the global tracer provider
+tracer = trace.get_tracer("my.tracer.name")
+
 class CustomTemplate(Dummy):
     """Simple template class that fills in a question and answer."""
 
@@ -129,6 +146,9 @@ class CustomApp(Dummy):
     @instrument
     def respond_to_query(self, query: str):
         """Respond to a query. This is the main method."""
+
+        with tracer.start_as_current_span("internally_respond_to_query") as span:
+            print("in span", span)
 
         # Run the agents on the same input. These perform the same steps as this app.
         for agent in self.agents:
