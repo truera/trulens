@@ -135,38 +135,49 @@ for index, row in df_results.iterrows():
     groundedness = row['Groundedness']
     answer_relevance = row['Answer Relevance']
     context_relevance = row['Context Relevance']
+
+    context = None
     
     g_call = row['Groundedness_calls']
-    context = g_call[0]['args']['source']
-    g_cot = g_call[0]['meta']['reasons']
+    if len(g_call) != 0:
+        context = g_call[0]['args']['source']
+        g_cot = g_call[0]['meta']['reasons']
     
     ar_call = row['Answer Relevance_calls']
-    ar_cot = ar_call[0]['meta']['reason']
+    if len(ar_call) != 0:
+        ar_cot = ar_call[0]['meta']['reason']
     
     cr_call = row['Context Relevance_calls']
-    cr_cot = cr_call[0]['meta']['reason']
+    if len(cr_call) != 0:
+        cr_cot = cr_call[0]['meta']['reason']
+        if context == None:
+            context = cr_call['0']['context']
     
     question = row['input']
     #context = loaded_record['calls'][0]['args']['context_str']
     answer = row['output']
     
+    #even if a certain value for one of the feedback functions in this row was NaN, it's still a query with a topic, so it should be counted in the overall count
     overall_count[topic] += 1
     
-    if groundedness < warning_threshold:
+    if groundedness < warning_threshold: #if groundedness is NaN, the if condition will automatically return False and the block won't be executed
         fail_count_g[topic] += 1
         bad_questions_g[topic].append(question)
         bad_contexts_g[topic].append(context)
         bad_answers_g[topic].append(answer)
         bad_reasons_g[topic].append(g_cot)
         bad_scores_g[topic].append(groundedness)
-    if answer_relevance < warning_threshold:
+    if answer_relevance < warning_threshold: #same as above for NaN values
         fail_count_ar[topic] += 1
         bad_questions_ar[topic].append(question)
-        bad_contexts_ar[topic].append(context)
+        if context == None:
+            bad_contexts_ar[topic].append("") #if the context can't be retrieved from either the groundedness or context relevance calls, just substitute the context for an empty string, as context isn't relevant for answer relevance
+        else:
+            bad_contexts_ar[topic].append(context)
         bad_answers_ar[topic].append(answer)
         bad_reasons_ar[topic].append(ar_cot)
         bad_scores_ar[topic].append(answer_relevance)
-    if context_relevance < warning_threshold:
+    if context_relevance < warning_threshold: #same as above for NaN values
         fail_count_cr[topic] += 1
         bad_questions_cr[topic].append(question)
         bad_contexts_cr[topic].append(context)
