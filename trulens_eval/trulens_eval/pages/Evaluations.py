@@ -6,9 +6,6 @@ from typing import Dict, Iterable, Tuple
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
-import pprint
-from pprint import pformat
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,26 +20,9 @@ from ux.styles import CATEGORY
 
 from trulens_eval import Tru
 from trulens_eval.app import Agent
-from trulens_eval.app import ComponentView
-from trulens_eval.app import instrumented_component_views
-from trulens_eval.app import LLM
-from trulens_eval.app import Other
-from trulens_eval.app import Prompt
-from trulens_eval.app import Tool
 from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
-from trulens_eval.schema.feedback import Select
-from trulens_eval.schema.record import Record
-from trulens_eval.utils.json import jsonify_for_ui
-from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.streamlit import init_from_args
-from trulens_eval.ux.components import draw_agent_info
-from trulens_eval.ux.components import draw_call
-from trulens_eval.ux.components import draw_llm_info
-from trulens_eval.ux.components import draw_prompt_info
-from trulens_eval.ux.components import draw_tool_info
-from trulens_eval.ux.components import render_selector_markdown
-from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
 
 set_page_config(page_title="Evaluations")
@@ -66,46 +46,6 @@ feedback_directions = {
     ) for _, row in lms.get_feedback_defs().iterrows()
 }
 default_direction = "HIGHER_IS_BETTER"
-
-
-def render_component(
-    query: Lens, component: ComponentView, header: bool = True
-) -> None:
-    """Render the accessor/path within the wrapped app of the component."""
-
-    if header:
-        st.markdown(
-            f"##### Component {render_selector_markdown(Select.for_app(query))}"
-        )
-
-    # Draw the python class information of this component.
-    cls = component.cls
-    base_cls = cls.base_class()
-    label = f"__{repr(cls)}__"
-    if str(base_cls) != str(cls):
-        label += f" < __{repr(base_cls)}__"
-    st.write("Python class: " + label)
-
-    # Per-component-type drawing routines.
-    if isinstance(component, LLM):
-        draw_llm_info(component=component, query=query)
-
-    elif isinstance(component, Prompt):
-        draw_prompt_info(component=component, query=query)
-
-    elif isinstance(component, Agent):
-        draw_agent_info(component=component, query=query)
-
-    elif isinstance(component, Tool):
-        draw_tool_info(component=component, query=query)
-
-    elif isinstance(component, Other):
-        with st.expander("Uncategorized Component Details:"):
-            st.json(jsonify_for_ui(component.json))
-
-    else:
-        with st.expander("Unhandled Component Details:"):
-            st.json(jsonify_for_ui(component.json))
 
 
 def render_record_metrics(
