@@ -17,7 +17,7 @@ def set_page_config(page_title="TruLens"):
 
     logo = static_resource("ux/trulens_logo.svg")
 
-    st.logo(str(logo), link="https://www.https://www.trulens.org/")
+    st.logo(str(logo), link="https://www.trulens.org/")
 
     st.markdown(
         f"""
