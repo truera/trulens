@@ -14,10 +14,8 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (
-    Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple,
-    TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Generic, Iterable, List, Optional,
+                    Sequence, Tuple, TypeVar, Union)
 
 import humanize
 import pandas
@@ -25,6 +23,7 @@ from tqdm.auto import tqdm
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
+from trulens_eval import trace as mod_trace
 from trulens_eval.database import sqlalchemy
 from trulens_eval.database.base import DB
 from trulens_eval.database.exceptions import DatabaseVersionException

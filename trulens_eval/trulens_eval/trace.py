@@ -81,16 +81,66 @@ class Tracer():
 
         return
 
+class NullTracer(Tracer):
+    """Tracer that does not save the spans it makes."""
+
+    def __init__(self, context: Optional[Context] = None):
+        self.context: contextvars.ContextVar[Optional[Context]] = \
+            contextvars.ContextVar("context", default=context)
+        self.trace_id = uuid.uuid4()
+
+    @contextlib.contextmanager
+    def record(self):
+        context = Context(trace_id=self.trace_id)
+        span = SpanRecord(context=context, tracer=self, parent=self.context.get())
+        token = self.context.set(context)
+
+        yield span
+
+        self.context.reset(token)
+
+        return
+
+    @contextlib.contextmanager
+    def method(self):
+        context = Context(trace_id=self.trace_id)
+        span = SpanMethodCall(context=context, tracer=self, parent=self.context.get())
+        token = self.context.set(context)
+
+        yield span
+
+        self.context.reset(token)
+
+        return
+
 class TracerProvider():
     def __init__(self):
         self.context: contextvars.ContextVar[Optional[Context]] = \
             contextvars.ContextVar("context", default=None)
+        
+        self.tracer: Tracer = NullTracer()
 
     @contextlib.contextmanager
     def trace(self):
-        tracer = Tracer(context=self.context.get())
-        with tracer.record() as root:
+        prior_tracer = self.tracer
+
+        self.tracer = Tracer(context=self.context.get())
+        with self.tracer.record() as root:
             tok = self.context.set(root.context)
-            yield tracer
+            yield self.tracer
 
         self.context.reset(tok)
+
+        self.tracer = prior_tracer
+
+    def get_tracer(self):
+        return self.tracer
+
+tracer_provider = TracerProvider()
+"""Global tracer provider.
+
+All traces are mady by this provider.
+"""
+
+def get_tracer():
+    return tracer_provider.get_tracer()

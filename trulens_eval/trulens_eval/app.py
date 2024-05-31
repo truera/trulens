@@ -21,6 +21,7 @@ import pydantic
 from trulens_eval import app as mod_app
 from trulens_eval import feedback as mod_feedback
 from trulens_eval import instruments as mod_instruments
+from trulens_eval import trace as mod_trace
 from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
@@ -83,8 +84,8 @@ def instrumented_component_views(
 ) -> Iterable[Tuple[Lens, JSON]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
-    attribute/key. Returns triples with the accessor/selector, the Class object
-    instantiated from CLASS_INFO, and the annotated object itself.
+    attribute/key. Returns tuples with the accessor/selector and the annotated
+    object itself.
     """
 
     for q, o in all_objects(obj):
@@ -126,7 +127,12 @@ class RecordingContext():
     - Combinations of the above.
     """
 
-    def __init__(self, app: mod_app.App, record_metadata: JSON = None):
+    def __init__(
+        self,
+        app: mod_app.App,
+        record_metadata: JSON = None,
+        tracer: Optional[mod_trace.Tracer] = None
+    ):
         self.calls: Dict[mod_types_schema.CallID,
                          mod_record_schema.RecordAppCall] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
@@ -151,6 +157,14 @@ class RecordingContext():
 
         self.record_metadata = record_metadata
         """Metadata to attach to all records produced in this context."""
+
+        self.tracer: Optional[mod_trace.Tracer] = tracer
+        """OTEL-like tracer for recording.
+        
+        !!! Warning
+
+            This is transitional alternate recording mechanism to aid in the otel-compatibility work.
+        """
 
     def __iter__(self):
         return iter(self.records)
@@ -808,7 +822,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
     # For use as a context manager.
     def __enter__(self):
-        ctx = RecordingContext(app=self)
+        tracer = mod_trace.tracer_provider.trace().__enter__()
+
+        ctx = RecordingContext(app=self, tracer=tracer)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -818,7 +834,12 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
         ctx = self.recording_contexts.get()
+
+        assert ctx is not None, "Not in a tracing context."
+        assert ctx.tracer is not None, "Not in a tracing context."
+        
         self.recording_contexts.reset(ctx.token)
+        ctx.tracer.__end__()
 
         if exc_type is not None:
             raise exc_value
