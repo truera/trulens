@@ -15,17 +15,16 @@ def set_page_config(page_title="TruLens"):
         layout="wide"
     )
 
-    logo = static_resource("ux/trulens_logo.svg").open("rb").read()
+    logo = static_resource("ux/trulens_logo.svg")
 
-    logo_encoded = base64.b64encode(logo).decode()
+    st.logo(str(logo), link="https://www.https://www.trulens.org/")
+
     st.markdown(
         f"""
         <style>
             [data-testid="stSidebarNav"] {{
-                background-image: url('data:image/svg+xml;base64,{logo_encoded}');
                 background-repeat: no-repeat;
                 background-size: 300px auto;
-                padding-top: 50px;
                 background-position: 20px 20px;
                 height: calc(100vh - 80px);
             }}
