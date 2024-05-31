@@ -9,12 +9,12 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
+import random
 import threading
 from threading import Lock
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
-    Optional, Sequence, Set, Tuple, Type, TypeVar, Union
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
+                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
+                    TypeVar, Union)
 
 import pydantic
 
@@ -78,231 +78,9 @@ manager as in this example:
 ```
 """
 
-
-class ComponentView(ABC):
-    """
-    Views of common app component types for sorting them and displaying them in
-    some unified manner in the UI. Operates on components serialized into json
-    dicts representing various components, not the components themselves.
-    """
-
-    def __init__(self, json: JSON):
-        self.json = json
-        self.cls = Class.of_class_info(json)
-
-    @staticmethod
-    def of_json(json: JSON) -> 'ComponentView':
-        """
-        Sort the given json into the appropriate component view type.
-        """
-
-        cls = Class.of_class_info(json)
-
-        if LangChainComponent.class_is(cls):
-            return LangChainComponent.of_json(json)
-        elif LlamaIndexComponent.class_is(cls):
-            return LlamaIndexComponent.of_json(json)
-        elif TrulensComponent.class_is(cls):
-            return TrulensComponent.of_json(json)
-        elif CustomComponent.class_is(cls):
-            return CustomComponent.of_json(json)
-        else:
-            # TODO: custom class
-
-            raise TypeError(f"Unhandled component type with class {cls}")
-
-    @staticmethod
-    @abstractmethod
-    def class_is(cls: Class) -> bool:
-        """
-        Determine whether the given class representation `cls` is of the type to
-        be viewed as this component type.
-        """
-        pass
-
-    def unsorted_parameters(self, skip: Set[str]) -> Dict[str, JSON_BASES_T]:
-        """
-        All basic parameters not organized by other accessors.
-        """
-
-        ret = {}
-
-        for k, v in self.json.items():
-            if k not in skip and isinstance(v, JSON_BASES):
-                ret[k] = v
-
-        return ret
-
-    @staticmethod
-    def innermost_base(
-        bases: Optional[Sequence[Class]] = None,
-        among_modules=set(["langchain", "llama_index", "trulens_eval"])
-    ) -> Optional[str]:
-        """
-        Given a sequence of classes, return the first one which comes from one
-        of the `among_modules`. You can use this to determine where ultimately
-        the encoded class comes from in terms of langchain, llama_index, or
-        trulens_eval even in cases they extend each other's classes. Returns
-        None if no module from `among_modules` is named in `bases`.
-        """
-        if bases is None:
-            return None
-
-        for base in bases:
-            if "." in base.module.module_name:
-                root_module = base.module.module_name.split(".")[0]
-            else:
-                root_module = base.module.module_name
-
-            if root_module in among_modules:
-                return root_module
-
-        return None
-
-
-class LangChainComponent(ComponentView):
-
-    @staticmethod
-    def class_is(cls: Class) -> bool:
-        if ComponentView.innermost_base(cls.bases) == "langchain":
-            return True
-
-        return False
-
-    @staticmethod
-    def of_json(json: JSON) -> 'LangChainComponent':
-        from trulens_eval.utils.langchain import component_of_json
-        return component_of_json(json)
-
-
-class LlamaIndexComponent(ComponentView):
-
-    @staticmethod
-    def class_is(cls: Class) -> bool:
-        if ComponentView.innermost_base(cls.bases) == "llama_index":
-            return True
-
-        return False
-
-    @staticmethod
-    def of_json(json: JSON) -> 'LlamaIndexComponent':
-        from trulens_eval.utils.llama import component_of_json
-        return component_of_json(json)
-
-
-class TrulensComponent(ComponentView):
-    """
-    Components provided in trulens.
-    """
-
-    @staticmethod
-    def class_is(cls: Class) -> bool:
-        if ComponentView.innermost_base(cls.bases) == "trulens_eval":
-            return True
-
-        #if any(base.module.module_name.startswith("trulens.") for base in cls.bases):
-        #    return True
-
-        return False
-
-    @staticmethod
-    def of_json(json: JSON) -> 'TrulensComponent':
-        from trulens_eval.utils.trulens import component_of_json
-        return component_of_json(json)
-
-
-class Prompt(ComponentView):
-    # langchain.prompts.base.BasePromptTemplate
-    # llama_index.prompts.base.Prompt
-
-    @property
-    @abstractmethod
-    def template(self) -> str:
-        pass
-
-
-class LLM(ComponentView):
-    # langchain.llms.base.BaseLLM
-    # llama_index.llms.base.LLM
-
-    @property
-    @abstractmethod
-    def model_name(self) -> str:
-        pass
-
-
-class Tool(ComponentView):
-    # langchain ???
-    # llama_index.tools.types.BaseTool
-
-    @property
-    @abstractmethod
-    def tool_name(self) -> str:
-        pass
-
-
-class Agent(ComponentView):
-    # langchain ???
-    # llama_index.agent.types.BaseAgent
-
-    @property
-    @abstractmethod
-    def agent_name(self) -> str:
-        pass
-
-
-class Memory(ComponentView):
-    # langchain.schema.BaseMemory
-    # llama_index ???
-    pass
-
-
-class Other(ComponentView):
-    # Any component that does not fit into the other named categories.
-    pass
-
-
-class CustomComponent(ComponentView):
-
-    class Custom(Other):
-        # No categorization of custom class components for now. Using just one
-        # "Custom" catch-all.
-
-        @staticmethod
-        def class_is(cls: Class) -> bool:
-            return True
-
-    COMPONENT_VIEWS = [Custom]
-
-    @staticmethod
-    def constructor_of_class(cls: Class) -> Type['CustomComponent']:
-        for view in CustomComponent.COMPONENT_VIEWS:
-            if view.class_is(cls):
-                return view
-
-        raise TypeError(f"Unknown custom component type with class {cls}")
-
-    @staticmethod
-    def component_of_json(json: JSON) -> 'CustomComponent':
-        cls = Class.of_class_info(json)
-
-        view = CustomComponent.constructor_of_class(cls)
-
-        return view(json)
-
-    @staticmethod
-    def class_is(cls: Class) -> bool:
-        # Assumes this is the last check done.
-        return True
-
-    @staticmethod
-    def of_json(json: JSON) -> 'CustomComponent':
-        return CustomComponent.component_of_json(json)
-
-
 def instrumented_component_views(
     obj: object
-) -> Iterable[Tuple[Lens, ComponentView]]:
+) -> Iterable[Tuple[Lens, JSON]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
     attribute/key. Returns triples with the accessor/selector, the Class object
@@ -311,10 +89,10 @@ def instrumented_component_views(
 
     for q, o in all_objects(obj):
         if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.model_fields:
-            yield q, ComponentView.of_json(json=o)
+            yield q, o.model_dump()
 
         if isinstance(o, Dict) and CLASS_INFO in o:
-            yield q, ComponentView.of_json(json=o)
+            yield q, o
 
 
 class RecordingContext():
@@ -1460,7 +1238,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             tags=tags
         )
 
-    def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
+    def instrumented(self) -> Iterable[Tuple[Lens, JSON]]:
         """
         Iteration over instrumented components and their categories.
         """
@@ -1503,10 +1281,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         object_strings = []
 
         for t in self.instrumented():
+            t: Tuple[Lens, JSON]
             path = Lens(t[0].path[1:])
             obj = next(iter(path.get(self)))
             object_strings.append(
-                f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
+                f"\t{type(obj).__name__} ({obj.__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )
 
         print("\n".join(object_strings))
