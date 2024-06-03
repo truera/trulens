@@ -16,6 +16,7 @@ import uuid
 
 import pydantic
 
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class Context(pydantic.BaseModel):
     span_id: int = pydantic.Field(default_factory=lambda: random.getrandbits(64))
 
     def __str__(self):
-        return f"{self.trace_id.int % 0xff:02x}/{self.span_id % 0xff:02x})"
+        return f"{self.trace_id.int % 0xff:02x}/{self.span_id % 0xff:02x}"
 
     def __repr__(self):
         return str(self)
@@ -46,18 +47,22 @@ class SpanRecord(Span):
 class SpanMethodCall(Span):
     call: Optional[mod_record_schema.RecordAppCall] = None
 
+class SpanCost(Span):
+    cost: Optional[mod_base_schema.Cost] = None
+
 class Tracer():
     def __init__(self, context: Optional[Context] = None):
         self.context: contextvars.ContextVar[Optional[Context]] = \
             contextvars.ContextVar("context", default=context)
         self.trace_id = uuid.uuid4()
-        self.spans: Dict[Context, Span] = {}
+        self._spans: Dict[Context, Span] = {}
 
     @contextlib.contextmanager
     def record(self):
+        print("record record")
         context = Context(trace_id=self.trace_id)
         span = SpanRecord(context=context, tracer=self, parent=self.context.get())
-        self.spans[context] = span
+        self._spans[context] = span
 
         token = self.context.set(context)
 
@@ -69,6 +74,7 @@ class Tracer():
 
     @contextlib.contextmanager
     def method(self):
+        print("record method")
         context = Context(trace_id=self.trace_id)
         span = SpanMethodCall(context=context, tracer=self, parent=self.context.get())
         self.spans[context] = span
@@ -80,6 +86,26 @@ class Tracer():
         self.context.reset(token)
 
         return
+
+    @contextlib.contextmanager
+    def cost(self):
+        print("record cost")
+        context = Context(trace_id=self.trace_id)
+        span = SpanCost(context=context, tracer=self, parent=self.context.get())
+        self.spans[context] = span
+
+        token = self.context.set(context)
+
+        yield span
+
+        self.context.reset(token)
+
+        return
+
+
+    @property
+    def spans(self):
+        return self._spans
 
 class NullTracer(Tracer):
     """Tracer that does not save the spans it makes."""
@@ -91,6 +117,7 @@ class NullTracer(Tracer):
 
     @contextlib.contextmanager
     def record(self):
+        print("null record")
         context = Context(trace_id=self.trace_id)
         span = SpanRecord(context=context, tracer=self, parent=self.context.get())
         token = self.context.set(context)
@@ -103,6 +130,7 @@ class NullTracer(Tracer):
 
     @contextlib.contextmanager
     def method(self):
+        print("null method")
         context = Context(trace_id=self.trace_id)
         span = SpanMethodCall(context=context, tracer=self, parent=self.context.get())
         token = self.context.set(context)
@@ -112,6 +140,23 @@ class NullTracer(Tracer):
         self.context.reset(token)
 
         return
+
+    @contextlib.contextmanager
+    def cost(self):
+        print("null cost")
+        context = Context(trace_id=self.trace_id)
+        span = SpanCost(context=context, tracer=self, parent=self.context.get())
+        token = self.context.set(context)
+
+        yield span
+
+        self.context.reset(token)
+
+        return
+
+    @property
+    def spans(self):
+        return []
 
 class TracerProvider():
     def __init__(self):

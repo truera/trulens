@@ -1,8 +1,10 @@
+"""Aliases for importing things related to feedback functions."""
+
 # Specific feedback functions:
 # Main class holding and running feedback functions:
 from trulens_eval.feedback import feedback as mod_feedback
-from trulens_eval.feedback.embeddings import Embeddings
-from trulens_eval.feedback.groundtruth import GroundTruthAgreement
+from trulens_eval.feedback import embeddings as mod_embeddings
+from trulens_eval.feedback import groundtruth as mod_groundtruth
 # Providers of feedback functions evaluation:
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.langchain import Langchain
@@ -22,6 +24,8 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import OpenAI
 
 Feedback = mod_feedback.Feedback
+Embeddings = mod_embeddings.Embeddings
+GroundTruthAgreement = mod_groundtruth.GroundTruthAgreement
 
 __all__ = [
     "Feedback",

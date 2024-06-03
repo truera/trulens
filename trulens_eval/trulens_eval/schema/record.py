@@ -12,10 +12,9 @@ import pydantic
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import types as mod_types_schema
+from trulens_eval.utils import json as mod_json_utils
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
-from trulens_eval.utils.json import jsonify
-from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.python import Future
 
 T = TypeVar("T")
@@ -160,7 +159,7 @@ class Record(serial.SerialModel, Hashable):
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
-            record_id = obj_id_of_obj(jsonify(self), prefix="record")
+            record_id = mod_json_utils.obj_id_of_obj(mod_json_utils.jsonify(self), prefix="record")
 
         self.record_id = record_id
 

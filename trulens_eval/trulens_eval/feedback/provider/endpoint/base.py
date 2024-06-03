@@ -18,6 +18,7 @@ from typing import (
 from pydantic import Field
 import requests
 
+from trulens_eval import trace as mod_trace
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.utils import asynchro as mod_asynchro_utils
 from trulens_eval.utils import pace as mod_pace
@@ -667,7 +668,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             # Get the result of the wrapped function:
 
-            response = func(*args, **kwargs)
+            with mod_trace.get_tracer().method() as span:
+                response = func(*args, **kwargs)
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
