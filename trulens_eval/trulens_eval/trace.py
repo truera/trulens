@@ -40,6 +40,7 @@ class Context(pydantic.BaseModel):
 class Span(pydantic.BaseModel):
     context: Context
     parent: Optional[Context] = None
+    error: Optional[str] = None
 
 class SpanRecord(Span):
     record: Optional[mod_record_schema.Record] = None
@@ -58,50 +59,30 @@ class Tracer():
         self._spans: Dict[Context, Span] = {}
 
     @contextlib.contextmanager
-    def record(self):
-        print("record record")
+    def _span(self, cls):
+        print("tracer", cls.__name__)
         context = Context(trace_id=self.trace_id)
-        span = SpanRecord(context=context, tracer=self, parent=self.context.get())
+        span = cls(context=context, tracer=self, parent=self.context.get())
         self._spans[context] = span
 
         token = self.context.set(context)
 
-        yield span
+        try:
+            yield span
+        except BaseException as e:
+            span.error = str(e)
+        finally:
+            self.context.reset(token)
+            return
 
-        self.context.reset(token)
-
-        return
-
-    @contextlib.contextmanager
+    def record(self):
+        return self._span(SpanRecord)
+    
     def method(self):
-        print("record method")
-        context = Context(trace_id=self.trace_id)
-        span = SpanMethodCall(context=context, tracer=self, parent=self.context.get())
-        self.spans[context] = span
-
-        token = self.context.set(context)
-
-        yield span
-
-        self.context.reset(token)
-
-        return
-
-    @contextlib.contextmanager
+        return self._span(SpanMethodCall)
+    
     def cost(self):
-        print("record cost")
-        context = Context(trace_id=self.trace_id)
-        span = SpanCost(context=context, tracer=self, parent=self.context.get())
-        self.spans[context] = span
-
-        token = self.context.set(context)
-
-        yield span
-
-        self.context.reset(token)
-
-        return
-
+        return self._span(SpanCost)
 
     @property
     def spans(self):
@@ -116,44 +97,21 @@ class NullTracer(Tracer):
         self.trace_id = uuid.uuid4()
 
     @contextlib.contextmanager
-    def record(self):
-        print("null record")
+    def _span(self, cls):
+        print("null", cls.__name__)
         context = Context(trace_id=self.trace_id)
-        span = SpanRecord(context=context, tracer=self, parent=self.context.get())
+        span = cls(context=context, tracer=self, parent=self.context.get())
         token = self.context.set(context)
 
-        yield span
-
-        self.context.reset(token)
-
-        return
-
-    @contextlib.contextmanager
-    def method(self):
-        print("null method")
-        context = Context(trace_id=self.trace_id)
-        span = SpanMethodCall(context=context, tracer=self, parent=self.context.get())
-        token = self.context.set(context)
-
-        yield span
-
-        self.context.reset(token)
-
-        return
-
-    @contextlib.contextmanager
-    def cost(self):
-        print("null cost")
-        context = Context(trace_id=self.trace_id)
-        span = SpanCost(context=context, tracer=self, parent=self.context.get())
-        token = self.context.set(context)
-
-        yield span
-
-        self.context.reset(token)
-
-        return
-
+        try:
+            yield span
+        except BaseException as e:
+            # ignore exception since spans are also ignored/not recorded
+            pass
+        finally:
+            self.context.reset(token)
+            return
+    
     @property
     def spans(self):
         return []
