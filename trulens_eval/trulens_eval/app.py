@@ -808,13 +808,21 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             return value
 
     def main_input(
-        self, func: Callable, sig: Signature, bindings: BoundArguments
+        self, func: Callable, sig: Signature, bindings: BoundArguments, args_transform: Optional[Callable] = None
     ) -> JSON:
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
+
+        if args_transform:
+            try:
+                args = bindings.arguments['args'] if 'args' in bindings.arguments else []
+                kwargs = bindings.arguments['kwargs'] if 'kwargs' in bindings.arguments else {}
+                return str(args_transform(*args, **kwargs))
+            except Exception as e:
+                logger.warning(f"Got {type(e)} exception when calling `args_transfrom` on {bindings.arguments}")
 
         # ignore self
         all_args = list(v for k, v in bindings.arguments.items() if k != "self")
@@ -834,7 +842,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             if not isinstance(focus, Sequence):
                 logger.warning("Focus %s is not a sequence.", focus)
                 break
-
+        
         if isinstance(focus, JSON_BASES):
             return str(focus)
 
@@ -865,13 +873,20 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         return "Could not determine main input from " + str(all_args)
 
     def main_output(
-        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
+        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any, ret_transform: Optional[Callable] = None
     ) -> JSON:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
         returned `ret`.
         """
+
+        if ret_transform:
+            try:
+                return str(ret_transform(ret))
+            except Exception as e:
+                logger.warning(f"Got {type(e)} exception when calling `ret_transform` on {bindings.arguments}")
+                pass
 
         # Use _extract_content to get the content out of the return value
         content = self._extract_content(ret, content_keys=['content', 'output'])
@@ -1071,7 +1086,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         error: Any,
         perf: Perf,
         cost: Cost,
-        existing_record: Optional[mod_record_schema.Record] = None
+        existing_record: Optional[mod_record_schema.Record] = None,
+        args_transform: Optional[Callable] = None,
+        ret_transform: Optional[Callable] = None
     ) -> mod_record_schema.Record:
         """Called by instrumented methods if they use _new_record to construct a record call list.
 
@@ -1087,8 +1104,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             assert len(calls) > 0, "No information recorded in call."
 
-            main_in = self.main_input(func, sig, bindings)
-            main_out = self.main_output(func, sig, bindings, ret)
+            main_in = self.main_input(func, sig, bindings, args_transform=args_transform)
+            main_out = self.main_output(func, sig, bindings, ret, ret_transform=ret_transform)
 
             updates = dict(
                 main_input=jsonify(main_in),

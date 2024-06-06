@@ -133,7 +133,9 @@ class WithInstrumentCallbacks:
         error: Any,
         perf: mod_base_schema.Perf,
         cost: mod_base_schema.Cost,
-        existing_record: Optional[mod_record_schema.Record] = None
+        existing_record: Optional[mod_record_schema.Record] = None,
+        args_transform: Optional[Callable] = None,
+        ret_transform: Optional[Callable] = None
     ):
         """
         Called by instrumented methods if they are root calls (first instrumned
@@ -331,7 +333,7 @@ class Instrument(object):
 
     def tracked_method_wrapper(
         self, query: Lens, func: Callable, method_name: str, cls: type,
-        obj: object
+        obj: object, **tracked_method_kwargs
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
@@ -578,7 +580,8 @@ class Instrument(object):
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,
-                            existing_record=records.get(ctx)
+                            existing_record=records.get(ctx),
+                            **tracked_method_kwargs
                         )
 
                 if error is not None:
