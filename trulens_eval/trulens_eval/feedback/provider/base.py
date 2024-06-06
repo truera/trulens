@@ -1202,12 +1202,8 @@ class LLMProvider(Provider):
 
         hypotheses = sent_tokenize(statement)
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
-<<<<<<< esp/quieter_eval
-        for i, hypothesis in enumerate(hypotheses):
-=======
-        
+
         def evaluate_hypothesis(index, hypothesis):
->>>>>>> main
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
             )
