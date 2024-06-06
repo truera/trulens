@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - trulens_eval/**/*
+      - .github/workflows/ci-eval-pr.yml
 
 jobs:
   PRBranchProtect:
@@ -30,12 +31,10 @@ jobs:
           clean: true
 
       - name: Setup Conda
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           activate-environment: myenv
-          use-only-tar-bz2: true
 
       - name: Install and run formatters
         if: ${{ matrix.python-version }} == '3.11'
@@ -49,20 +48,20 @@ jobs:
             git ls-files --others -m --exclude-standard ./trulens_eval
             git diff
           fi
-        shell: bash
+        shell: bash -el {0}
 
       - name: Install trulens
         run: |
           conda activate myenv
           cd ./trulens_eval
           pip install -e . --verbose
-        shell: bash
+        shell: bash -el {0}
 
       - name: Install testing packages
         run: |
           conda activate myenv
           pip install pytest==7.0.1 pytest-subtests pytest-azurepipelines --verbose
-        shell: bash
+        shell: bash -el {0}
 
       - name: Describe python env
         run: |
@@ -70,22 +69,22 @@ jobs:
           python --version
           pip --version
           pip list --verbose
-        shell: bash
+        shell: bash -el {0}
 
       - name: Unit tests with required packages
         run: |
           conda activate myenv
           cd ./trulens_eval
           python -m pytest --test-run-title="Required ${{ matrix.python-version }} unit tests" ${{ matrix.tests-folder }}
-        shell: bash
+        shell: bash -el {0}
 
     #   - name: Install optional packages and run tests
     #     run: |
-    #       source activate ${{ matrix.python-version }}
+    #       conda activate myenv
     #       cd ./trulens_eval
     #       pip install --verbose -r trulens_eval/requirements.optional.txt
     #       python -m pytest --test-run-title="Optional ${{ matrix.python-version }} unit tests" ${{ matrix.tests-folder }}
-    #     shell: bash
+    #     shell: bash -el {0}
     #     env:
     #       TEST_OPTIONAL: true
     #       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
