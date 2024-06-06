@@ -163,7 +163,7 @@ class SQLAlchemyDB(DB):
         else:
             print(
                 f"{text.UNICODE_STOP} Secret keys may be written to the database. "
-                "See the `database_redact_keys` option of Tru` to prevent this."
+                "See the `database_redact_keys` option of `Tru` to prevent this."
             )
 
         return new_db
