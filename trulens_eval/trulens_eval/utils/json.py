@@ -181,7 +181,7 @@ def jsonify(
         logger.debug(
             "Max depth reached for jsonify of object type '%s'.",
             type(obj)
-        )
+        ) # careful about str(obj) in case it is recursive infinitely.
 
         return noserio(obj)
 
