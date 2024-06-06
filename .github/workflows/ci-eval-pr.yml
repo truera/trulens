@@ -29,17 +29,18 @@ jobs:
           fetch-depth: 0
           clean: true
 
-      - name: Setup conda
-        run: |
-          echo "##vso[task.prependpath]$CONDA/bin"
-          set -e
-          conda create -y --quiet -n ${{ matrix.python-version }} python=${{ matrix.python-version }}
-          conda init bash
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: myenv
+          use-only-tar-bz2: true
 
       - name: Install and run formatters
         if: ${{ matrix.python-version }} == '3.11'
         run: |
-          source activate ${{ matrix.python-version }}
+          conda activate myenv
           pip install yapf==0.32.0 isort==5.10.1 --verbose
           ./format.sh --eval
           num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
@@ -52,20 +53,20 @@ jobs:
 
       - name: Install trulens
         run: |
-          source activate ${{ matrix.python-version }}
+          conda activate myenv
           cd ./trulens_eval
           pip install -e . --verbose
         shell: bash
 
       - name: Install testing packages
         run: |
-          source activate ${{ matrix.python-version }}
+          conda activate myenv
           pip install pytest==7.0.1 pytest-subtests pytest-azurepipelines --verbose
         shell: bash
 
       - name: Describe python env
         run: |
-          source activate ${{ matrix.python-version }}
+          conda activate myenv
           python --version
           pip --version
           pip list --verbose
@@ -73,7 +74,7 @@ jobs:
 
       - name: Unit tests with required packages
         run: |
-          source activate ${{ matrix.python-version }}
+          conda activate myenv
           cd ./trulens_eval
           python -m pytest --test-run-title="Required ${{ matrix.python-version }} unit tests" ${{ matrix.tests-folder }}
         shell: bash
