@@ -39,7 +39,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -116,7 +116,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -221,7 +221,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -262,7 +262,13 @@
           "type": "null"
         }
       },
-      "required": ["name", "context", "attributes_metadata", "tags", "span_type"],
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type"
+      ],
       "title": "Span",
       "type": "object"
     },
@@ -305,7 +311,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -382,7 +388,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -487,7 +493,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -621,7 +627,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -698,7 +704,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -803,7 +809,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -913,7 +919,13 @@
     },
     "SpanKind": {
       "description": "Specifies additional details on how this span relates to its parent span.\n\nNote that this enumeration is experimental and likely to change. See\nhttps://github.com/open-telemetry/opentelemetry-specification/pull/226.",
-      "enum": [0, 1, 2, 3, 4],
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
       "title": "SpanKind",
       "type": "integer"
     },
@@ -956,7 +968,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -1033,7 +1045,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -1138,7 +1150,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -1313,7 +1325,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -1390,7 +1402,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -1495,7 +1507,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -1634,7 +1646,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -1711,7 +1723,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -1816,7 +1828,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -1945,7 +1957,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -2022,7 +2034,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -2127,7 +2139,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -2256,7 +2268,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -2333,7 +2345,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -2438,7 +2450,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -2613,7 +2625,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -2690,7 +2702,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -2795,7 +2807,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -2974,7 +2986,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -3051,7 +3063,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -3156,7 +3168,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -3201,7 +3213,14 @@
           "type": "string"
         }
       },
-      "required": ["name", "context", "attributes_metadata", "tags", "span_type", "record_id"],
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id"
+      ],
       "title": "SpanRoot",
       "type": "object"
     },
@@ -3244,7 +3263,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -3321,7 +3340,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -3426,7 +3445,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -3555,7 +3574,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -3632,7 +3651,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -3737,7 +3756,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -3871,7 +3890,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -3948,7 +3967,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -4053,7 +4072,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -4094,13 +4113,23 @@
           "type": "null"
         }
       },
-      "required": ["name", "context", "attributes_metadata", "tags", "span_type"],
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type"
+      ],
       "title": "SpanUntyped",
       "type": "object"
     },
     "StatusCode": {
       "description": "Represents the canonical set of status codes of a finished Span.",
-      "enum": [0, 1, 2],
+      "enum": [
+        0,
+        1,
+        2
+      ],
       "title": "StatusCode",
       "type": "integer"
     },
@@ -4213,7 +4242,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -4290,7 +4319,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -4395,7 +4424,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",
@@ -4440,7 +4469,14 @@
           "type": "string"
         }
       },
-      "required": ["name", "context", "attributes_metadata", "tags", "span_type", "record_id"],
+      "required": [
+        "name",
+        "context",
+        "attributes_metadata",
+        "tags",
+        "span_type",
+        "record_id"
+      ],
       "title": "TransSpanRecord",
       "type": "object"
     },
@@ -4483,7 +4519,7 @@
                 },
                 {
                   "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                  "type": "integer"
+                  "type": "array"
                 },
                 {
                   "description": "True if the span context is valid.",
@@ -4560,7 +4596,7 @@
             },
             {
               "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-              "type": "integer"
+              "type": "array"
             },
             {
               "description": "True if the span context is valid.",
@@ -4665,7 +4701,7 @@
                   },
                   {
                     "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
+                    "type": "array"
                   },
                   {
                     "description": "True if the span context is valid.",

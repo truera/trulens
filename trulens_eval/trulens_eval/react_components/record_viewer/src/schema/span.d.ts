@@ -18,7 +18,7 @@ export type SpanKind = 0 | 1 | 2 | 3 | 4;
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext = [number, number, boolean, number, number, boolean];
+export type SpanContext = [number, number, boolean, number, unknown[], boolean];
 /**
  * Represents the canonical set of status codes of a finished Span.
  */
@@ -38,7 +38,7 @@ export type TLensedAttributeValue =
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext1 = [number, number, boolean, number, number, boolean];
+export type SpanContext1 = [number, number, boolean, number, unknown[], boolean];
 export type TJSONLike =
   | TJSONBase
   | TJSONLike[]
@@ -52,91 +52,91 @@ export type TJSONBase = string | number | null;
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext2 = [number, number, boolean, number, number, boolean];
+export type SpanContext2 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext3 = [number, number, boolean, number, number, boolean];
+export type SpanContext3 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext4 = [number, number, boolean, number, number, boolean];
+export type SpanContext4 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext5 = [number, number, boolean, number, number, boolean];
+export type SpanContext5 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext6 = [number, number, boolean, number, number, boolean];
+export type SpanContext6 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext7 = [number, number, boolean, number, number, boolean];
+export type SpanContext7 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext8 = [number, number, boolean, number, number, boolean];
+export type SpanContext8 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext9 = [number, number, boolean, number, number, boolean];
+export type SpanContext9 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext10 = [number, number, boolean, number, number, boolean];
+export type SpanContext10 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext11 = [number, number, boolean, number, number, boolean];
+export type SpanContext11 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext12 = [number, number, boolean, number, number, boolean];
+export type SpanContext12 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext13 = [number, number, boolean, number, number, boolean];
+export type SpanContext13 = [number, number, boolean, number, unknown[], boolean];
 /**
  * SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.
  *
  * @minItems 6
  * @maxItems 6
  */
-export type SpanContext14 = [number, number, boolean, number, number, boolean];
+export type SpanContext14 = [number, number, boolean, number, unknown[], boolean];
 
 export interface _Master_ {
   Span: Span;
@@ -200,7 +200,7 @@ export interface Span {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -272,7 +272,7 @@ export interface SpanAgent {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -351,7 +351,7 @@ export interface SpanEmbedding {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -432,7 +432,7 @@ export interface SpanLLM {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -522,7 +522,7 @@ export interface SpanMemory {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -605,7 +605,7 @@ export interface SpanMethodCall {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -683,7 +683,7 @@ export interface SpanOther {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -761,7 +761,7 @@ export interface SpanReranker {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -845,7 +845,7 @@ export interface SpanRetriever {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -932,7 +932,7 @@ export interface SpanRoot {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -1005,7 +1005,7 @@ export interface SpanTask {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -1083,7 +1083,7 @@ export interface SpanTool {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -1170,7 +1170,7 @@ export interface TransSpanRecordAppCall {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -1251,7 +1251,7 @@ export interface SpanUntyped {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
@@ -1325,7 +1325,7 @@ export interface TransSpanRecord {
    * @minItems 6
    * @maxItems 6
    */
-  context: [number, number, boolean, number, number, boolean];
+  context: [number, number, boolean, number, unknown[], boolean];
   /**
    * Events recorded in the span.
    *
