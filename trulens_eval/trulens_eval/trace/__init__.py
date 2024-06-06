@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from logging import getLogger
 import time
-from typing import (ClassVar, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, TypeVar,
-                    Union)
+from typing import (Any, ClassVar, Dict, Iterable, List, Mapping, Optional,
+                    Sequence, Tuple, TypeVar, Union)
 
 from opentelemetry.sdk import trace as otsdk_trace
 from opentelemetry.trace import status as trace_status
@@ -19,9 +19,13 @@ import opentelemetry.trace as ot_trace
 import opentelemetry.trace.span as ot_span
 from opentelemetry.util import types as ot_types
 import pydantic
+from pydantic import GetCoreSchemaHandler
 from pydantic import PlainSerializer
+from pydantic import TypeAdapter
 from pydantic.functional_validators import PlainValidator
 from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
+from pydantic_core import CoreSchema
 from typing_extensions import Annotated
 from typing_extensions import TypeAliasType
 
@@ -158,6 +162,8 @@ def flatten_lensed_attributes(
 
 T = TypeVar("T")
 
+span_context_schema = TypeAdapter(ot_span.SpanContext, config={'arbitrary_types_allowed':True}).core_schema
+
 class WithHashableSpanContext(): # must be mixed into SpanContext
     """Mixin into SpanContext that adds hashing.
 
@@ -170,6 +176,13 @@ class WithHashableSpanContext(): # must be mixed into SpanContext
 
     def __eq__(self: ot_span.SpanContext, other: ot_span.SpanContext):
         return self.trace_id == other.trace_id and self.span_id == other.span_id
+
+    
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: GetCoreSchemaHandler
+    ) -> CoreSchema:
+        return span_context_schema
     
     @classmethod
     def __get_pydantic_json_schema__(cls, _core_schema, _handler) -> JsonSchemaValue:
@@ -183,7 +196,9 @@ class WithHashableSpanContext(): # must be mixed into SpanContext
                     {"type": "integer", "description": "This span's ID." },
                     {"type": "boolean", "description": "True if propagated from a remote parent." },
                     {"type": "integer", "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details." },
+                    # TODO: make an enum above
                     {"type": "integer", "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values." },
+                    # TODO: fix type of the above
                     {"type": "boolean", "description": "True if the span context is valid." },
                 ]
             },
@@ -216,8 +231,8 @@ def serialize_contextmapping(
 
 ContextMapping = Annotated[
     Dict[ot_span.SpanContext, T],
+    PlainValidator(validate_contextmapping),
     PlainSerializer(serialize_contextmapping),
-    PlainValidator(validate_contextmapping)
 ]
 """Type annotation for pydantic fields that store dictionaries whose keys are
 (Hashable) SpanContext.

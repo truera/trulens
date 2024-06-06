@@ -16,6 +16,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -88,7 +132,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -154,46 +198,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -240,6 +294,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -312,7 +410,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -378,46 +476,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -455,24 +563,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -525,6 +616,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -597,7 +732,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -663,46 +798,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -740,24 +885,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -835,6 +963,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -907,7 +1079,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -973,46 +1145,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -1050,24 +1232,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -1092,9 +1257,9 @@
           "readOnly": true,
           "type": "string"
         },
-        "temperature": {
+        "input_token_count": {
           "readOnly": true,
-          "type": "number"
+          "type": "integer"
         },
         "input_messages": {
           "items": {
@@ -1103,7 +1268,7 @@
           "readOnly": true,
           "type": "array"
         },
-        "input_token_count": {
+        "output_token_count": {
           "readOnly": true,
           "type": "integer"
         },
@@ -1114,9 +1279,9 @@
           "readOnly": true,
           "type": "array"
         },
-        "output_token_count": {
+        "temperature": {
           "readOnly": true,
-          "type": "integer"
+          "type": "number"
         },
         "cost": {
           "readOnly": true,
@@ -1135,11 +1300,11 @@
         "error",
         "model_name",
         "model_type",
-        "temperature",
-        "input_messages",
         "input_token_count",
-        "output_messages",
+        "input_messages",
         "output_token_count",
+        "output_messages",
+        "temperature",
         "cost"
       ],
       "title": "SpanLLM",
@@ -1160,6 +1325,50 @@
           ],
           "default": 0,
           "description": "Kind of span."
+        },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
         },
         "status": {
           "allOf": [
@@ -1233,7 +1442,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -1299,46 +1508,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -1376,24 +1595,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -1436,7 +1638,7 @@
       "type": "object"
     },
     "SpanMethodCall": {
-      "description": "Span which corresponds to a method call.\n\nSee also temporary development attributes in\n[TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordCall].",
+      "description": "Span which corresponds to a method call.\n\nSee also temporary development attributes in\n[TransSpanRecordAppCall][trulens_eval.trace.span.TransSpanRecordAppCall].",
       "properties": {
         "name": {
           "description": "Name of span.",
@@ -1450,6 +1652,50 @@
           ],
           "default": 0,
           "description": "Kind of span."
+        },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
         },
         "status": {
           "allOf": [
@@ -1523,7 +1769,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -1589,46 +1835,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -1666,24 +1922,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -1731,6 +1970,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -1803,7 +2086,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -1869,46 +2152,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -1946,24 +2239,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -2011,6 +2287,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -2083,7 +2403,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -2149,46 +2469,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -2226,24 +2556,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -2337,6 +2650,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -2409,7 +2766,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -2475,46 +2832,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -2522,10 +2889,6 @@
         "attributes_metadata": {
           "description": "View into a dict with keys prefixed by some `namespace` string.",
           "type": "object"
-        },
-        "query_text": {
-          "description": "Input text whose related contexts are being retrieved.",
-          "type": "string"
         },
         "tags": {
           "items": {
@@ -2556,24 +2919,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -2589,6 +2935,10 @@
             }
           ],
           "readOnly": true
+        },
+        "query_text": {
+          "readOnly": true,
+          "type": "string"
         },
         "query_embedding": {
           "items": {
@@ -2634,13 +2984,13 @@
         "name",
         "context",
         "attributes_metadata",
-        "query_text",
         "tags",
         "span_type",
         "record_id",
         "inputs",
         "output",
         "error",
+        "query_text",
         "query_embedding",
         "distance_type",
         "num_contexts",
@@ -2666,6 +3016,50 @@
           ],
           "default": 0,
           "description": "Kind of span."
+        },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
         },
         "status": {
           "allOf": [
@@ -2739,7 +3133,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -2805,46 +3199,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -2896,6 +3300,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -2968,7 +3416,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -3034,46 +3482,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -3111,24 +3569,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -3176,6 +3617,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -3248,7 +3733,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -3314,46 +3799,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -3391,24 +3886,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
@@ -3461,6 +3939,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -3533,7 +4055,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -3599,46 +4121,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -3679,8 +4211,78 @@
       "title": "StatusCode",
       "type": "integer"
     },
+    "TJSONBase": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "format": "binary",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "TJSONLike": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TJSONBase"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/TJSONLike"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/TJSONLike"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "TLensedAttributeValue": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/TLensedAttributeValue"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/TLensedAttributeValue"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "TransSpanRecord": {
-      "description": "A span whose activity was recorded in a record.\n\nFeatures references to the record.\n\n!!! note\n    This is a transitional type for the traces work.",
+      "description": "A span whose activity was recorded in a record.\n\nFeatures references to the record.",
       "properties": {
         "name": {
           "description": "Name of span.",
@@ -3694,6 +4296,50 @@
           ],
           "default": 0,
           "description": "Kind of span."
+        },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
         },
         "status": {
           "allOf": [
@@ -3767,7 +4413,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -3833,46 +4479,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -3924,6 +4580,50 @@
           "default": 0,
           "description": "Kind of span."
         },
+        "parent_context": {
+          "anyOf": [
+            {
+              "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+              "items": {
+                "maxItems": 6,
+                "minItems": 6,
+                "prefixItems": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "SpanContext",
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Parent span context.\n\nNone if no parent."
+        },
         "status": {
           "allOf": [
             {
@@ -3996,7 +4696,7 @@
           "type": "array"
         },
         "events": {
-          "description": "Events recorded in the span.",
+          "description": "Events recorded in the span.\n\n!!! Warning\n\n    Events in OpenTelemetry seem to be synonymous to logs. Do not store\n    anything we want to query or process in events.",
           "items": {
             "maxItems": 3,
             "minItems": 3,
@@ -4062,46 +4762,56 @@
           },
           "type": "array"
         },
+        "links": {
+          "description": "Relationships to other spans with attributes on each link.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
+                "items": {
+                  "maxItems": 6,
+                  "minItems": 6,
+                  "prefixItems": [
+                    {
+                      "description": "The ID of the trace that this span belongs to.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "This span's ID.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if propagated from a remote parent.",
+                      "type": "boolean"
+                    },
+                    {
+                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                      "type": "integer"
+                    },
+                    {
+                      "description": "True if the span context is valid.",
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "title": "SpanContext",
+                "type": "array"
+              },
+              {}
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
         "attributes": {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "boolean"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "items": {
-                  "type": "number"
-                },
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/TLensedAttributeValue"
           },
           "description": "Attributes of span.",
           "type": "object"
@@ -4139,24 +4849,7 @@
         "output": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "format": "binary",
-              "type": "string"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "object"
+              "$ref": "#/$defs/TJSONLike"
             },
             {
               "type": "null"
