@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - trulens_eval/**/*
+
+jobs:
+  PRBranchProtect:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python-version: 3.12
+            tests-folder: tests/unit
+          - python-version: 3.9
+            tests-folder: tests/unit/static
+          - python-version: 3.10
+            tests-folder: tests/unit/static
+          - python-version: 3.11
+            tests-folder: tests/unit/static
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          clean: true
+
+      - name: Setup conda
+        run: |
+          echo "##vso[task.prependpath]$CONDA/bin"
+          set -e
+          conda create -y --quiet -n ${{ matrix.python-version }} python=${{ matrix.python-version }}
+          conda init bash
+
+      - name: Install and run formatters
+        if: ${{ matrix.python-version }} == '3.11'
+        run: |
+          source activate ${{ matrix.python-version }}
+          pip install yapf==0.32.0 isort==5.10.1 --verbose
+          ./format.sh --eval
+          num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
+          if [ $num_changed_files -ne 0 ]; then
+            echo "The following files have changed after running format.sh. Please format your code and update the PR."
+            git ls-files --others -m --exclude-standard ./trulens_eval
+            git diff
+          fi
+        shell: bash
+
+      - name: Install trulens
+        run: |
+          source activate ${{ matrix.python-version }}
+          cd ./trulens_eval
+          pip install -e . --verbose
+        shell: bash
+
+      - name: Install testing packages
+        run: |
+          source activate ${{ matrix.python-version }}
+          pip install pytest==7.0.1 pytest-subtests pytest-azurepipelines --verbose
+        shell: bash
+
+      - name: Describe python env
+        run: |
+          source activate ${{ matrix.python-version }}
+          python --version
+          pip --version
+          pip list --verbose
+        shell: bash
+
+      - name: Unit tests with required packages
+        run: |
+          source activate ${{ matrix.python-version }}
+          cd ./trulens_eval
+          python -m pytest --test-run-title="Required ${{ matrix.python-version }} unit tests" ${{ matrix.tests-folder }}
+        shell: bash
+
+    #   - name: Install optional packages and run tests
+    #     run: |
+    #       source activate ${{ matrix.python-version }}
+    #       cd ./trulens_eval
+    #       pip install --verbose -r trulens_eval/requirements.optional.txt
+    #       python -m pytest --test-run-title="Optional ${{ matrix.python-version }} unit tests" ${{ matrix.tests-folder }}
+    #     shell: bash
+    #     env:
+    #       TEST_OPTIONAL: true
+    #       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    #       HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+    #       PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+    #       PINECONE_ENV: ${{ secrets.PINECONE_ENV }}
+    #       HUGGINGFACEHUB_API_TOKEN: ${{ secrets.HUGGINGFACEHUB_API_TOKEN }}
