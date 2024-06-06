@@ -8,6 +8,7 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
@@ -43,7 +44,7 @@ class HuggingfaceEndpoint(Endpoint):
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments,
         response: requests.Response, callback: Optional[EndpointCallback]
-    ) -> None:
+    ) -> Optional[mod_base_schema.Cost]:
         # Call here can only be requests.post .
 
         if "url" not in bindings.arguments:
@@ -61,6 +62,8 @@ class HuggingfaceEndpoint(Endpoint):
 
         if callback is not None:
             callback.handle_classification(response=response)
+
+        return self.cost
 
     def __init__(self, *args, **kwargs):
         if safe_hasattr(self, "name"):

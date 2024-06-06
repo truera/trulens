@@ -601,7 +601,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
-    ) -> None:
+    ) -> Optional[mod_base_schema.Cost]:
         """
         This gets called with the results of every instrumented method. This
         should be implemented by each subclass.
@@ -668,7 +668,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             # Get the result of the wrapped function:
 
-            with mod_trace.get_tracer().method() as span:
+            with mod_trace.get_tracer().cost() as span:
                 response = func(*args, **kwargs)
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
@@ -708,12 +708,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
                     for endpoint, callback in endpoints[callback_class]:
                         logger.debug("Handling endpoint %s.", endpoint.name)
-                        endpoint.handle_wrapped_call(
+                        cost = endpoint.handle_wrapped_call(
                             func=func,
                             bindings=bindings,
                             response=response,
                             callback=callback
                         )
+                        span.cost = cost
+                        span.endpoint = endpoint
 
             if isinstance(response, Awaitable):
                 return wrap_awaitable(response, on_done=response_callback)

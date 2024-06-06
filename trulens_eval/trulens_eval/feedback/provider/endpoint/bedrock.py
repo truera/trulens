@@ -8,6 +8,7 @@ import pydantic
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.python import safe_hasattr
@@ -214,17 +215,21 @@ class BedrockEndpoint(Endpoint):
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
-    ) -> None:
+    ) -> Optional[mod_base_schema.Cost]:
+
+        cost = None
 
         if func.__name__ == "invoke_model":
             self.global_callback.handle_generation(response=response)
             if callback is not None:
                 callback.handle_generation(response=response)
+                cost = callback.cost
 
         elif func.__name__ == "invoke_model_with_response_stream":
             self.global_callback.handle_generation(response=response)
             if callback is not None:
                 callback.handle_generation(response=response)
+                cost = callback.cost
 
             body = response.get("body")
             if body is not None and isinstance(body, Iterable):
@@ -232,6 +237,7 @@ class BedrockEndpoint(Endpoint):
                     self.global_callback.handle_generation_chunk(response=chunk)
                     if callback is not None:
                         callback.handle_generation_chunk(response=chunk)
+                        cost = callback.cost
 
             else:
                 logger.warning(
@@ -240,4 +246,6 @@ class BedrockEndpoint(Endpoint):
 
         else:
 
-            logger.warning(f"Unhandled wrapped call to %s.", func.__name__)
+            logger.warning("Unhandled wrapped call to %s.", func.__name__)
+
+        return cost

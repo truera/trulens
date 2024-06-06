@@ -7,6 +7,7 @@ import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 
@@ -101,9 +102,11 @@ class LiteLLMEndpoint(Endpoint):
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
-    ) -> None:
+    ) -> Optional[mod_base_schema.Cost]:
 
         counted_something = False
+
+        cost = None
 
         if hasattr(response, 'usage'):
             counted_something = True
@@ -112,9 +115,13 @@ class LiteLLMEndpoint(Endpoint):
 
             if callback is not None:
                 callback.handle_generation(response=response)
+                cost = callback.cost
 
         if not counted_something:
             logger.warning(
                 "Unrecognized litellm response format. It did not have usage information:\n%s",
                 pp.pformat(response)
             )
+
+        return cost
+        
