@@ -179,8 +179,8 @@ def jsonify(
 
     if depth > max_depth:
         logger.debug(
-            "Max depth reached for jsonify of object '%s' of type '%s'.",
-            str(obj)[0:32], type(obj)
+            "Max depth reached for jsonify of object type '%s'.",
+            type(obj)
         )
 
         return noserio(obj)
