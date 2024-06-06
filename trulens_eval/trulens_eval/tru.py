@@ -738,7 +738,9 @@ class Tru(python.SingletonPerName):
 
     def start_evaluator(self,
                         restart: bool = False,
-                        fork: bool = False) -> Union[Process, Thread]:
+                        fork: bool = False,
+                        disable_tqdm: bool = False
+                       ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread or process.
 
