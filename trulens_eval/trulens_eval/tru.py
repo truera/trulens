@@ -738,7 +738,9 @@ class Tru(python.SingletonPerName):
 
     def start_evaluator(self,
                         restart: bool = False,
-                        fork: bool = False) -> Union[Process, Thread]:
+                        fork: bool = False,
+                        disable_tqdm: bool = False
+                       ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread or process.
 
@@ -748,6 +750,8 @@ class Tru(python.SingletonPerName):
             
             fork: If set, will start the evaluator in a new process instead of a
                 thread. NOT CURRENTLY SUPPORTED.
+
+            disable_tqdm: If set, will disable progress bar logging from the evaluator.
 
         Returns:
             The started process or thread that is executing the deferred feedback
@@ -816,14 +820,15 @@ class Tru(python.SingletonPerName):
                 total=queue_total,
                 postfix={
                     status.name: count for status, count in queue_stats.items()
-                }
+                },
+                disable=disable_tqdm
             )
 
             # Show the status of the results so far.
-            tqdm_total = tqdm(desc="Done Runs", initial=0, unit="runs")
+            tqdm_total = tqdm(desc="Done Runs", initial=0, unit="runs", disable=disable_tqdm)
 
             # Show what is being waited for right now.
-            tqdm_waiting = tqdm(desc="Waiting for Runs", initial=0, unit="runs")
+            tqdm_waiting = tqdm(desc="Waiting for Runs", initial=0, unit="runs", disable=disable_tqdm)
 
             runs_stats = defaultdict(int)
 
