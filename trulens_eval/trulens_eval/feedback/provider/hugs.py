@@ -218,7 +218,7 @@ class Huggingface(Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.
         """
-        nltk.download('punkt')
+        nltk.download('punkt', quiet=True)
         groundedness_scores = {}
 
         reasons_str = ""
