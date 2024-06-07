@@ -5,7 +5,6 @@ llama-index-embeddings-huggingface
 python-dotenv
 pydantic
 pinecone-client
-trulens-eval
 replicate
 pinecone
 llama-index==0.10.39
@@ -14,6 +13,7 @@ llama-index-vector-stores-pinecone==0.1.7
 llama-index-embeddings-huggingface==0.2.0
 llama-index-legacy==0.9.48
 litellm==1.38.12
-trulens_eval
-# update to streamlit 1.35 after release
 streamlit==1.35
+snowflake-connector-python
+snowflake-ml-python
+# snowflake-sqlalchemy

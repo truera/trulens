@@ -44,5 +44,10 @@ credentials.toml
 **/*.sqlite
 
 # Virtual environments
-.venv
-.conda
+**/.venv
+**/venv
+**/.conda
+**/.python-version
+
+# IDE
+**/.vscode
