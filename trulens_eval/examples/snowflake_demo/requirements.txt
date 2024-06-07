@@ -1,0 +1,19 @@
+litellm>=1.25.2
+llama-index
+llama-index-vector-stores-pinecone
+llama-index-embeddings-huggingface
+python-dotenv
+pydantic
+pinecone-client
+trulens-eval
+replicate
+pinecone
+llama-index==0.10.39
+llama-index-core==0.10.39.post1
+llama-index-vector-stores-pinecone==0.1.7
+llama-index-embeddings-huggingface==0.2.0
+llama-index-legacy==0.9.48
+litellm==1.38.12
+trulens_eval
+# update to streamlit 1.35 after release
+streamlit==1.35
