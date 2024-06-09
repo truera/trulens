@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 import warnings
@@ -5,7 +6,6 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
-from tqdm.auto import tqdm
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
@@ -1168,9 +1168,7 @@ class LLMProvider(Provider):
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
-    def groundedness_measure_with_cot_reasons(
-        self, source: str, statement: str
-    ) -> Tuple[float, dict]:
+    def groundedness_measure_with_cot_reasons(self, source: str, statement: str) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
@@ -1196,27 +1194,37 @@ class LLMProvider(Provider):
             statement: The statement to check groundedness.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.
+            Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download('punkt')
+        nltk.download('punkt', quiet=True)
         groundedness_scores = {}
         reasons_str = ""
 
         hypotheses = sent_tokenize(statement)
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
-        for i, hypothesis in enumerate(tqdm(
-                hypotheses, desc="Groundedness per statement in source")):
+
+        def evaluate_hypothesis(index, hypothesis):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
             )
-            score, reason = self.generate_score_and_reasons(
-                system_prompt, user_prompt
-            )
+            score, reason = self.generate_score_and_reasons(system_prompt, user_prompt)
+            return index, score, reason
+
+        results = []
+
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(evaluate_hypothesis, i, hypothesis) for i, hypothesis in enumerate(hypotheses)]
+            
+            for future in as_completed(futures):
+                results.append(future.result())
+
+        results.sort(key=lambda x: x[0])  # Sort results by index
+
+        for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
             reasons_str += f"STATEMENT {i}:\n{reason['reason']}\n"
 
         # Calculate the average groundedness score from the scores dictionary
-        average_groundedness_score = float(
-            np.mean(list(groundedness_scores.values()))
-        )
+        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
+        
         return average_groundedness_score, {"reasons": reasons_str}

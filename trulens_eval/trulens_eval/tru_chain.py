@@ -96,7 +96,7 @@ class LangChainInstrument(Instrument):
                 ("run", "arun", "_call", "__call__", "_acall", "acall"):
                     Chain,
                 (
-                    "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
+                    "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents", "invoke", "ainvoke"
                 ):
                     RunnableSerializable,
 
@@ -264,9 +264,10 @@ class TruChain(mod_app.App):
                     retrievers)))
                 )
 
-        return (
-            Select.RecordCalls + retrievers[0][0]
-        ).get_relevant_documents.rets
+        retriever = (Select.RecordCalls + retrievers[0][0])
+        if hasattr(retriever, "invoke"):
+            return retriever.invoke.rets
+        return retriever.get_relevant_documents.rets
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
