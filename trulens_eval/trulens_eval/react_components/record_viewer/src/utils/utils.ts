@@ -1,5 +1,5 @@
 import { StackTreeNode } from '@/utils/StackTreeNode';
-import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw } from '@/utils/types';
+import { CallJSONRaw, RecordJSONRaw, StackJSONRaw } from '@/utils/types';
 
 /**
  * Gets the name of the calling class in the stack cell.
@@ -49,21 +49,6 @@ export const getPathName = (stackCell: StackJSONRaw) => {
     .join('');
 };
 
-/**
- * Gets the start and end times based on the performance
- * data provided.
- *
- * @param perf - PerfJSONRaw The performance data to be analyzed
- * @returns an object containing the start and end times based on the performance
- * data provided as numbers or undefined
- */
-export const getStartAndEndTimes = (perf: PerfJSONRaw) => {
-  return {
-    startTime: perf?.start_time ? new Date(perf.start_time).getTime() : 0,
-    endTime: perf?.end_time ? new Date(perf.end_time).getTime() : 0,
-  };
-};
-
 const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONRaw[], index: number) => {
   const stackCell = stack[index];
   const name = getClassNameFromCell(stackCell);
@@ -72,19 +57,18 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
   let matchingNode = tree.children.find(
     (node) =>
       node.name === name &&
-      node.startTime <= new Date(call.perf.start_time).getTime() &&
-      (!node.endTime || node.endTime >= new Date(call.perf.end_time).getTime())
+      // Using string comparisons because Javascript Date doesn't compare microseconds.
+      (!node.startTime || node.startTime <= getMicroseconds(call.perf?.start_time)) &&
+      (!node.endTime || node.endTime >= getMicroseconds(call.perf?.end_time))
   );
 
   // if we are currently at the top most cell of the stack...
   if (index === stack.length - 1) {
-    const { startTime, endTime } = getStartAndEndTimes(call.perf);
-
     // ...and there is a matching node, then this call must be for this node. Update
     // the start/end time, and raw call correspondingly.
     if (matchingNode) {
-      matchingNode.startTime = startTime;
-      matchingNode.endTime = endTime;
+      matchingNode.startTime = getMicroseconds(call.perf?.start_time);
+      matchingNode.endTime = getMicroseconds(call.perf?.end_time);
       matchingNode.raw = call;
 
       return;
@@ -148,4 +132,53 @@ export const createNodeMap = (node: StackTreeNode) => {
   }
 
   return result;
+};
+
+/**
+ * Formatting timestamp to display
+ *
+ * @param timestampInMicroSeconds - timestamp in microseconds
+ * @returns Human-readable formatted timestamp string
+ */
+export const formatTime = (timestampInMicroSeconds: number) => {
+  if (!timestampInMicroSeconds) return '';
+
+  const jsDate = new Date(timestampInMicroSeconds / 1000);
+
+  return `${jsDate.toLocaleDateString()} ${jsDate.toLocaleTimeString('en-US', {
+    hour12: false,
+  })}.${timestampInMicroSeconds % 1_000_000}`;
+};
+
+/**
+ * Formatting duration to display.
+ *
+ * @param durationInMicroSeconds - duration in microseconds
+ * @returns Human-readable formatted timestamp duration string
+ */
+export const formatDuration = (durationInMicroSeconds: number) => {
+  if (Number.isNaN(durationInMicroSeconds)) return '';
+
+  if (durationInMicroSeconds < 1000) return `${durationInMicroSeconds} µs`;
+  if (durationInMicroSeconds < 1_000_000) return `${Math.round(durationInMicroSeconds / 1000)} ms`;
+
+  return `${Math.round(durationInMicroSeconds / 1_000_000_000)} s`;
+};
+
+export const getMicroseconds = (timestamp: string) => {
+  if (!timestamp) return 0;
+
+  const jsTimestampInMs = new Date(timestamp).valueOf();
+  let jsTimestampInMicroS = jsTimestampInMs * 1000;
+
+  const splitTimestamp = timestamp.split('.');
+  if (splitTimestamp.length === 2 && splitTimestamp[1].length === 6) {
+    const microseconds = Number(splitTimestamp[1].substring(3));
+
+    if (!Number.isNaN(microseconds)) {
+      jsTimestampInMicroS += microseconds;
+    }
+  }
+
+  return jsTimestampInMicroS;
 };
