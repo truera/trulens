@@ -3,7 +3,17 @@ from trulens_eval import Feedback, Select
 from trulens_eval.feedback.provider.litellm import LiteLLM
 import numpy as np
 
-tru = Tru()
+db_url = 'snowflake://{user}:{password}@{account}/{dbname}/{schema}?warehouse={warehouse}&role={role}'.format(
+    user='<user>',
+    account='<account>',
+    password='<password>',
+    dbname='<db>',
+    schema='<schema>',
+    warehouse='<wh>',
+    role="<role>"
+)
+
+tru = Tru(database_url=db_url)
 
 provider = LiteLLM(model_engine="replicate/snowflake/snowflake-arctic-instruct")
 
