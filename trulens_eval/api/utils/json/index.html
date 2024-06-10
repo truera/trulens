@@ -3950,180 +3950,44 @@ name if definition stays the same.</p>
 
 
 <a href="#trulens_eval.utils.json.jsonify" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">jsonify</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="n">dicted</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../serial/#trulens_eval.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">instrument</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="s1">&#39;Instrument&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">skip_specials</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">redact_keys</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">include_excluded</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../serial/#trulens_eval.utils.serial.JSON">JSON</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">jsonify</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span> <span class="n">dicted</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../serial/#trulens_eval.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">instrument</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="s1">&#39;Instrument&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">skip_specials</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">redact_keys</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">include_excluded</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">depth</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">256</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../serial/#trulens_eval.utils.serial.JSON">JSON</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
       <p>Convert the given object into types that can be serialized in json.</p>
+<pre><code>Args:
+    obj: the object to jsonify.
 
+    dicted: the mapping from addresses of already jsonifed objects (via id)
+        to their json.
 
-<table>
-      <thead>
-        <tr>
-          <th><span class="doc-section-title">PARAMETER</span></th>
-          <th><span>DESCRIPTION</span></th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code>obj</code></td>
-            <td class="doc-param-details">
-              <div class="doc-md-description">
-                <p>the object to jsonify.</p>
-              </div>
-              <p>
-                  <span class="doc-param-annotation">
-                    <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
-                  </span>
-              </p>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>dicted</code></td>
-            <td class="doc-param-details">
-              <div class="doc-md-description">
-                <p>the mapping from addresses of already jsonifed objects (via id)
-to their json.</p>
-              </div>
-              <p>
-                  <span class="doc-param-annotation">
-                    <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>, <a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../serial/#trulens_eval.utils.serial.JSON">JSON</a>]]</code>
-                  </span>
-                  <span class="doc-param-default">
-                    <b>DEFAULT:</b>
-                      <code>None</code>
-                  </span>
-              </p>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>instrument</code></td>
-            <td class="doc-param-details">
-              <div class="doc-md-description">
-                <p>instrumentation functions for checking whether to recur into
-components of <code>obj</code>.</p>
-              </div>
-              <p>
-                  <span class="doc-param-annotation">
-                    <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[&#39;Instrument&#39;]</code>
-                  </span>
-                  <span class="doc-param-default">
-                    <b>DEFAULT:</b>
-                      <code>None</code>
-                  </span>
-              </p>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>skip_specials</code></td>
-            <td class="doc-param-details">
-              <div class="doc-md-description">
-                <p>remove specially keyed structures from the json. These
-have keys that start with "__tru_".</p>
-              </div>
-              <p>
-                  <span class="doc-param-annotation">
-                    <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-                  </span>
-                  <span class="doc-param-default">
-                    <b>DEFAULT:</b>
-                      <code>False</code>
-                  </span>
-              </p>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>redact_keys</code></td>
-            <td class="doc-param-details">
-              <div class="doc-md-description">
-                <p>redact secrets from the output. Secrets are detremined by
-<code>keys.py:redact_value</code> .</p>
-              </div>
-              <p>
-                  <span class="doc-param-annotation">
-                    <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-                  </span>
-                  <span class="doc-param-default">
-                    <b>DEFAULT:</b>
-                      <code>False</code>
-                  </span>
-              </p>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>include_excluded</code></td>
-            <td class="doc-param-details">
-              <div class="doc-md-description">
-                <p>include fields that are annotated to be excluded by pydantic.</p>
-              </div>
-              <p>
-                  <span class="doc-param-annotation">
-                    <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-                  </span>
-                  <span class="doc-param-default">
-                    <b>DEFAULT:</b>
-                      <code>True</code>
-                  </span>
-              </p>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+    instrument: instrumentation functions for checking whether to recur into
+        components of `obj`.
 
+    skip_specials: remove specially keyed structures from the json. These
+        have keys that start with "__tru_".
 
-<table>
-      <thead>
-        <tr>
-          <th><span class="doc-section-title">RETURNS</span></th>
-          <th><span>DESCRIPTION</span></th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <span class="doc-returns-annotation">
-                    <code><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../serial/#trulens_eval.utils.serial.JSON">JSON</a></code>
-                </span>
-            </td>
-            <td class="doc-returns-details">
-              <div class="doc-md-description">
-                <p>The jsonified version of the given object. Jsonified means that the the</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <span class="doc-returns-annotation">
-                    <code><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../serial/#trulens_eval.utils.serial.JSON">JSON</a></code>
-                </span>
-            </td>
-            <td class="doc-returns-details">
-              <div class="doc-md-description">
-                <p>object is either a JSON base type, a list, or a dict with the containing</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <span class="doc-returns-annotation">
-                    <code><a class="autorefs autorefs-internal" title="trulens_eval.utils.serial.JSON" href="../serial/#trulens_eval.utils.serial.JSON">JSON</a></code>
-                </span>
-            </td>
-            <td class="doc-returns-details">
-              <div class="doc-md-description">
-                <p>elements of the same.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+    redact_keys: redact secrets from the output. Secrets are detremined by
+        `keys.py:redact_value` .
+
+    include_excluded: include fields that are annotated to be excluded by
+        pydantic.
+
+    depth: the depth of the serialization of the given object relative to
+        the serialization of its container.
+</code></pre>
+<p><code>max_depth: the maximum depth of the serialization of the given object.
+            Objects to be serialized beyond this will be serialized as
+            "non-serialized object" as per</code>noserio`. Note that this may happen
+            for some data layouts like linked lists. This value should be no
+            larger than half the value set by
+            <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/sys.html#sys.setrecursionlimit">sys.setrecursionlimit</a>.</p>
+<pre><code>Returns:
+    The jsonified version of the given object. Jsonified means that the the
+    object is either a JSON base type, a list, or a dict with the containing
+    elements of the same.
+</code></pre>
 
     </div>
 
