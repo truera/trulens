@@ -107,6 +107,8 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
             set_status_on_exception=set_status_on_exception
         )
 
+        print("new_span context=", type(context), context)
+
         if context is not None:
             span.add_link(context, {mod_span.Span.vendor_attr("relationship"): "parent"})
 

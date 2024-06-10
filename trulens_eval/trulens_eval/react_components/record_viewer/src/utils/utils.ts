@@ -1,3 +1,4 @@
+import { SpanKind, StatusCode } from '@/schema/spanAugment';
 import { Span, SpanRoot } from '@/utils/Span';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw } from '@/utils/types';
@@ -138,13 +139,16 @@ export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string, 
         name: appName,
         attributes: {},
         attributes_metadata: {},
-        status: 'UNSET',
+        status: StatusCode.UNSET,
         status_description: '',
-        kind: 'root',
+        kind: SpanKind.INTERNAL,
         events: [],
-        context: [-1, -1],
+        context: [-1, -1, false, -1, [], false],
         start_timestamp: new Date(recordJSON.perf.start_time).getDate(),
         end_timestamp: new Date(recordJSON.perf.end_time).getDate(),
+        record_id: recordJSON.record_id,
+        tags: recordJSON.tags?.split(',') ?? [],
+        span_type: null,
       }),
   });
 

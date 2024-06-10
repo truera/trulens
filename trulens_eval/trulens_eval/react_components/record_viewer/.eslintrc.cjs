@@ -57,7 +57,7 @@ module.exports = {
     'import/first': 'error',
     'import/newline-after-import': 'error',
     'import/no-duplicates': 'error',
-    'max-classes-per-file': 'off'
+    'max-classes-per-file': 'off',
   },
   settings: {
     'import/resolver': {
@@ -70,5 +70,5 @@ module.exports = {
       },
     },
   },
-  ignorePatterns: ['*.cjs', '*.config.ts']
+  ignorePatterns: ['*.cjs', '*.config.ts'],
 };
