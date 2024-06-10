@@ -6,7 +6,7 @@ various llama_index classes and example classes:
   nodes via a threshold on a specified feedback function.
 """
 
-from typing import List, Type
+from typing import Type
 
 from trulens_eval import app
 from trulens_eval.utils.imports import OptionalImports
@@ -15,7 +15,6 @@ from trulens_eval.utils.pyschema import Class
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     import llama_index
-
 OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
 
 
