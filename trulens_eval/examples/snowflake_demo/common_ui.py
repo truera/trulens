@@ -108,7 +108,7 @@ def login():
 
 def get_tru_app_id(model: str, temperature: float, top_p: float, max_new_tokens: int, use_rag: bool):
     # Args are hashed for cache lookup
-    return f"app-prod-{model}{"-rag" if use_rag else ""} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+    return f'app-prod-{model}{"-rag" if use_rag else ""} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})'
 
 def configure_model(*, container, model_config: ModelConfig, key: str, full_width: bool = True):
     MODEL_KEY = f"model_{key}"
