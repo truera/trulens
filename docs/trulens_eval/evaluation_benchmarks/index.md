@@ -20,14 +20,11 @@ Observing that many information retrieval (IR) benchmarks, such as [MS MARCO](ht
 
 Here, we leverage the 500 random sampled rows from [MS MARCO](https://arxiv.org/abs/1611.09268) dataset for benchmarking context relevance.
 
-| **Feedback Function Base Model** | **MS MARCO NDCG** | **MS MARCO nDCG** | **MS MARCO Recall@K** | **MS MARCO Precision@1** | **Latency** | **Cost/M Tokens** |
+| **Feedback Function Base Model** | **MS MARCO nDCG** | **MS MARCO ECE** | **MS MARCO Recall@5** | **MS MARCO Precision@1** |
 | --- | --- | --- | --- | --- | --- | --- |
-| GPT 3.5 Turbo | XX | XX | XX | XX | XX | XX |
-| GPT 4 Turbo | XX | XX | XX | XX | XX | XX |
-| GPT 4o | XX | XX | XX | XX | XX | XX |
-| Arctic Instruct | XX | XX | XX | XX | XX | XX |
-| Llama 3 8B | XX | XX | XX | XX | XX | XX |
-| Mistral 7B | XX | XX | XX | XX | XX | XX |
+| GPT 3.5 Turbo | 0.567230 | 0.5474 | 0.94 | 0.218365 |
+| GPT 4 Turbo | 0.66496 | 0.4430 | 0.94 | 0.312167 |
+| Claude 2 | 0.599110 | 0.6690 | 0.90 | 0.268214 |
 
 ### Ablations
 
@@ -96,9 +93,9 @@ as our **expected_score** and to match the output of feedback functions.
 
 ### Results
 
-| **Feedback Function Base Model** | **Meetingbank MAE** | **Latency** | **Cost / M Tokens** |
+| **Feedback Function Base Model** | **Meetingbank MAE** |
 | --- | --- | --- | --- |
-| GPT 3.5 Turbo | 0.170573 | XX | XX |
-| GPT 4 Turbo | 0.163199 | XX | XX |
-| GPT 4o | XX | 0.183592 | XX |
+| GPT 3.5 Turbo | 0.170573 |
+| GPT 4 Turbo | 0.163199 |
+| GPT 4o | 0.183592 |
 
