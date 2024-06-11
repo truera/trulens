@@ -29,6 +29,9 @@ markdown_extensions:
   # - pymdownx.mark
   # - pymdownx.smartsymbols
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
   # - pymdownx.tasklist:
   #    custom_checkbox: true
   #- pymdownx.tilde
@@ -162,6 +165,7 @@ theme:
     - toc.follow
     # - toc.integrate
     - content.code.copy
+    - content.tabs
 
 nav:
   - 🏠 Home: index.md
@@ -225,6 +229,8 @@ nav:
           # PLACEHOLDER: - trulens_eval/tracking/logging/index.md
           - Where to Log: trulens_eval/tracking/logging/where_to_log.md
           - 📓 Logging Methods: trulens_eval/tracking/logging/logging.ipynb
+
+  - 🛡️ Guardrails: trulens_eval/guardrails/index.md
   - 🔍 Guides:
       # PLACEHOLDER: - trulens_eval/guides/index.md
       - Any LLM App: trulens_eval/guides/use_cases_any.md
