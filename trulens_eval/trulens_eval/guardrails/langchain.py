@@ -9,8 +9,6 @@ from trulens_eval.utils.threading import ThreadPoolExecutor
 
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
-from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.serial import JSON
 
 
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
@@ -27,12 +25,11 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         """
         A VectorStoreRetriever that filters documents using a minimum threshold
         on a feedback function before returning them.
-
-        - feedback: Feedback - use this feedback function to score each
-          document.
         
-        - threshold: float - and keep documents only if their feedback value is
-          at least this threshold.
+        Args:
+            feedback (Feedback): use this feedback function to score each document.
+
+            threshold (float): and keep documents only if their feedback value is at least this threshold.
 
         !!! example "Using TruLens guardrail context filters with Langchain"
 
@@ -77,6 +74,21 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
     # langchain.schema.retriever.BaseRetriever._get_relevant_documents .
     def _get_relevant_documents(self, query: str, *,
                                 run_manager) -> List[Document]:
+        """
+        An internal method to accomplish three tasks:
+
+        1. Get relevant documents
+        2. Evaluate documents with a specified feedback function
+        3. Filter out documents that do not meet the minimum threshold
+
+        Args:
+            query: str - the query string to search for relevant documents.
+            
+            run_manager: RunManager - the run manager to handle document retrieval.
+
+        Returns:
+        - List[Document]: a list of filtered, relevant documents.
+        """
         # Get relevant docs using super class:
         docs = super()._get_relevant_documents(query, run_manager=run_manager)
 
@@ -107,4 +119,21 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
 
     @staticmethod
     def of_retriever(retriever: VectorStoreRetriever, **kwargs):
+        """
+        Create a new instance of WithFeedbackFilterDocuments based on an existing retriever.
+
+        The new instance will:
+
+        1. Get relevant documents (like before)
+        2. Evaluate documents with a specified feedback function
+        3. Filter out documents that do not meet the minimum threshold
+
+        Args:
+            retriever: VectorStoreRetriever - the base retriever to use.
+
+            **kwargs: additional keyword arguments.
+
+        Returns:
+        - WithFeedbackFilterDocuments: a new instance of WithFeedbackFilterDocuments.
+        """
         return WithFeedbackFilterDocuments(**kwargs, **(model_dump(retriever)))

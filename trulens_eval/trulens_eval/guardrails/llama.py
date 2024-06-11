@@ -27,11 +27,9 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         A BaseQueryEngine that filters documents using a minimum threshold
         on a feedback function before returning them.
 
-        - feedback: Feedback - use this feedback function to score each
-        document.
-        
-        - threshold: float - and keep documents only if their feedback value is
-        at least this threshold.
+        Args:
+            feedback (Feedback): use this feedback function to score each document.
+            threshold (float): and keep documents only if their feedback value is at least this threshold.
         
         !!! example "Using TruLens guardrail context filters with Llama-Index"
             ```python
@@ -60,6 +58,22 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         self.threshold = threshold
 
     def query(self, query: QueryBundle, **kwargs) -> List[NodeWithScore]:
+        """
+        An extended query method that will:
+
+        1. Query the engine with the given query bundle (like before)
+        2. Evaluate nodes with a specified feedback function
+        3. Filter out nodes that do not meet the minimum threshold
+        4. Synthesize with only the filtered nodes.
+
+        Parameters:
+            query: QueryBundle - the query bundle to search for relevant nodes.
+
+            **kwargs: additional keyword arguments.
+
+        Returns:
+            List[NodeWithScore]: a list of filtered, relevant nodes.
+        """
         # Get relevant docs using super class:
         nodes = self.query_engine.retrieve(query_bundle=query)
         ex = ThreadPoolExecutor(max_workers=max(1, len(nodes)))
