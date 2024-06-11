@@ -6,8 +6,6 @@ TruLens relies on feedback functions to score the performance of LLM apps, which
 
 Consequently, these feedback functions face typical large language model (LLM) challenges in rigorous production environments, including prompt sensitivity and non-determinism, especially when incorporating Mixture-of-Experts and model-as-a-service solutions like those from _OpenAI_, _Mistral_, and others. Drawing inspiration from works on [Judging LLM-as-a-Judge](https://arxiv.org/pdf/2306.05685), we outline findings from our analysis of feedback function performance against task-aligned benchmark data. To accomplish this, we first need to align feedback function tasks to relevant benchmarks in order to gain access to large scale ground truth data for the feedback functions. We then are able to easily compute metrics across a variety of implementations and models.
 
-Here, we'll outline the primary findings from these analyses on critical feedback functions across a variety of implementations. We will continue to expand this benchmarking over time.
-
 ## Context Relevance
 
 ### Methods
@@ -21,7 +19,7 @@ Observing that many information retrieval (IR) benchmarks, such as [MS MARCO](ht
 Here, we leverage the 500 random sampled rows from [MS MARCO](https://arxiv.org/abs/1611.09268) dataset for benchmarking context relevance.
 
 | **Feedback Function Base Model** | **MS MARCO nDCG** | **MS MARCO ECE** | **MS MARCO Recall@5** | **MS MARCO Precision@1** |
-| --- | --- | --- | --- | --- | --- | --- |
+| :---: | :---: | :---: | :---: | :---: |
 | GPT 3.5 Turbo | 0.567230 | 0.5474 | 0.94 | 0.218365 |
 | GPT 4 Turbo | 0.66496 | 0.4430 | 0.94 | 0.312167 |
 | Claude 2 | 0.599110 | 0.6690 | 0.90 | 0.268214 |
@@ -31,7 +29,7 @@ Here, we leverage the 500 random sampled rows from [MS MARCO](https://arxiv.org/
 Calibrations are crucial steps in the evaluation process of feedback functions. They help fine-tune the models and ensure their performance aligns with the desired benchmarks. In this context, we test ablations of LLMs with varying temperatures to understand the relationship between the temperature parameter and evaluation reliability.
 
 | **Temperature** | **Feedback Function Base Model**       | **ECE**      |
-| --- | --- | --- |
+| :---: | :---: | :---: |
 | 0.0         | GPT-3.5-Turbo | 0.492735 |
 | 0.3         | GPT-3.5-Turbo | 0.477844 |
 | 0.7         | GPT-3.5-Turbo | 0.467127 |
@@ -39,7 +37,7 @@ Calibrations are crucial steps in the evaluation process of feedback functions. 
 
 
 | **Temperature** | **Feedback Function Base Model**       | **ECE**      |
-| --- | --- | --- |
+| :---: | :---: | :---: |
 | 0.0         | GPT-4-Turbo | 0.741519 |
 | 0.3         | GPT-4-Turbo | 0.742373 |
 | 0.7         | GPT-4-Turbo | 0.737771 |
@@ -53,7 +51,7 @@ Calibrations are crucial steps in the evaluation process of feedback functions. 
 
 Observing that many summarization benchmarks, such as those found at [SummEval](https://arxiv.org/abs/2007.12626), use human annotation of numerical scores, we propose to frame the problem of evaluating groundedness tasks as evaluating a summarization system. In particular, we generate test cases from [SummEval](https://arxiv.org/abs/2007.12626).
 
-SummEval is one of the datasets dedicated to automated evaluations on summarization tasks, which are closely related to the groundedness evaluation in RAG with the retrieved context (i.e. the source) and response (i.e. the summary). It contains human annotation of numerical score (**1** to **5**) comprised of scoring from 3 human expert annotators and 5 croweded-sourced annotators. There are 16 models being used for generation in total for 100 paragraphs in the test set, so there are a total of 16,000 machine-generated summaries. Each paragraph also has several human-written summaries for comparative analysis. 
+SummEval is one of the datasets dedicated to automated evaluations on summarization tasks, which are closely related to the groundedness evaluation in RAG with the retrieved context (i.e. the source) and response (i.e. the summary). It contains human annotation of numerical score (**1** to **5**) comprised of scoring from 3 human expert annotators and 5 crowd-sourced annotators. There are 16 models being used for generation in total for 100 paragraphs in the test set, so there are a total of 16,000 machine-generated summaries. Each paragraph also has several human-written summaries for comparative analysis. 
 
 For evaluating groundedness feedback functions, we compute the annotated "consistency" scores, a measure of whether the summarized response is factually consisntent with the source texts and hence can be used as a proxy to evaluate groundedness in our RAG triad, and normalized to **0** to **1** score as our **expected_score** and to match the output of feedback functions.
 
@@ -61,8 +59,8 @@ For evaluating groundedness feedback functions, we compute the annotated "consis
 
 ### Results
 
-| **Feedback Function Base Model** | **SummEval MAE** | **Latency** | **Cost / M Tokens** |
-| --- | --- | --- | --- |
+| **Feedback Function Base Model** | **SummEval MAE** | **Latency** | **Total Cost** |
+| :---: | :---: | :---: | :---: |
 | Llama-3 70B Instruct | 0.054653 | 12.184049 | 0.000005 |
 | Arctic Instruct | 0.076393 | 6.446394 | 0.000003 |
 | GPT 4o | 0.057695 | 6.440239 | 0.012691 |
@@ -94,8 +92,7 @@ as our **expected_score** and to match the output of feedback functions.
 ### Results
 
 | **Feedback Function Base Model** | **Meetingbank MAE** |
-| --- | --- | --- | --- |
+| :---: | :---: |
 | GPT 3.5 Turbo | 0.170573 |
 | GPT 4 Turbo | 0.163199 |
 | GPT 4o | 0.183592 |
-
