@@ -20,7 +20,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
 _TruLens_ context filter guardrails are easy to add to your _Langchain_ or _Llama-Index_ app.
 
-!!! "Using context filter guardrails"
+!!! example "Using context filter guardrails"
 
     === "in _Langchain_"
 
