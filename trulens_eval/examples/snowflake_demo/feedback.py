@@ -1,16 +1,20 @@
+import os
+from dotenv import load_dotenv
 from trulens_eval import Tru
 from trulens_eval import Feedback, Select
 from trulens_eval.feedback.provider.litellm import LiteLLM
 import numpy as np
 
+load_dotenv()
+
 db_url = 'snowflake://{user}:{password}@{account}/{dbname}/{schema}?warehouse={warehouse}&role={role}'.format(
-    user='<user>',
-    account='<account>',
-    password='<password>',
-    dbname='<db>',
-    schema='<schema>',
-    warehouse='<wh>',
-    role="<role>"
+    user=os.environ['SF_USER'],
+    account=os.environ['SF_ACCOUNT'],
+    password=os.environ['SF_PASSWORD'],
+    dbname=os.environ['SF_DB_NAME'],
+    schema=os.environ['SF_SCHEMA'],
+    warehouse=os.environ['SF_WAREHOUSE'],
+    role=os.environ['SF_ROLE']
 )
 
 tru = Tru(database_url=db_url)
