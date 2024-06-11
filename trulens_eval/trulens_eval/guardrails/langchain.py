@@ -33,6 +33,40 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         
         - threshold: float - and keep documents only if their feedback value is
           at least this threshold.
+
+        !!! example "Using TruLens guardrail context filters with Langchain"
+
+            ```python
+            from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments
+
+            # note: feedback function used for guardrail must only return a score, not also reasons
+            f_context_relevance_score = (
+                Feedback(provider.context_relevance)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+            )
+
+            filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
+                    retriever=retriever,
+                    feedback=f_context_relevance_score,
+                    threshold=0.5
+                )
+
+            rag_chain = (
+                {"context": filtered_retriever | format_docs, "question": RunnablePassthrough()}
+                | prompt
+                | llm
+                | StrOutputParser()
+            )
+
+            tru_recorder = TruChain(rag_chain,
+                app_id='Chain1_ChatApplication_Filtered',
+                feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness])
+
+            with tru_recorder as recording:
+                llm_response = rag_chain.invoke("What is Task Decomposition?")
+            ```  
         """
 
         super().__init__(
