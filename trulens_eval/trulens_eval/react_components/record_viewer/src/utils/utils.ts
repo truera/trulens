@@ -52,14 +52,16 @@ export const getPathName = (stackCell: StackJSONRaw) => {
 const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONRaw[], index: number) => {
   const stackCell = stack[index];
   const name = getClassNameFromCell(stackCell);
+  const startTimeMicroseconds = getMicroseconds(call.perf?.start_time);
+  const endTimeMicroseconds = getMicroseconds(call.perf?.end_time);
 
   // Given a recorded call, see if its parent already exist as a child of the tree.
   let matchingNode = tree.children.find(
     (node) =>
       node.name === name &&
       // Using string comparisons because Javascript Date doesn't compare microseconds.
-      (!node.startTime || node.startTime <= getMicroseconds(call.perf?.start_time)) &&
-      (!node.endTime || node.endTime >= getMicroseconds(call.perf?.end_time))
+      (!node.startTime || node.startTime <= startTimeMicroseconds) &&
+      (!node.endTime || node.endTime >= endTimeMicroseconds)
   );
 
   // if we are currently at the top most cell of the stack...
@@ -67,8 +69,8 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
     // ...and there is a matching node, then this call must be for this node. Update
     // the start/end time, and raw call correspondingly.
     if (matchingNode) {
-      matchingNode.startTime = getMicroseconds(call.perf?.start_time);
-      matchingNode.endTime = getMicroseconds(call.perf?.end_time);
+      matchingNode.startTime = startTimeMicroseconds;
+      matchingNode.endTime = endTimeMicroseconds;
       matchingNode.raw = call;
 
       return;
@@ -147,7 +149,7 @@ export const formatTime = (timestampInMicroSeconds: number) => {
 
   return `${jsDate.toLocaleDateString()} ${jsDate.toLocaleTimeString('en-US', {
     hour12: false,
-  })}.${timestampInMicroSeconds % 1_000_000}`;
+  })}.${(timestampInMicroSeconds % 1_000_000).toString().padStart(6, '0')}`;
 };
 
 /**
@@ -157,14 +159,21 @@ export const formatTime = (timestampInMicroSeconds: number) => {
  * @returns Human-readable formatted timestamp duration string
  */
 export const formatDuration = (durationInMicroSeconds: number) => {
-  if (Number.isNaN(durationInMicroSeconds)) return '';
+  if (durationInMicroSeconds === null || durationInMicroSeconds === undefined) return '';
 
   if (durationInMicroSeconds < 1000) return `${durationInMicroSeconds} µs`;
   if (durationInMicroSeconds < 1_000_000) return `${Math.round(durationInMicroSeconds / 1000)} ms`;
 
-  return `${Math.round(durationInMicroSeconds / 1_000_000_000)} s`;
+  return `${Math.round(durationInMicroSeconds / 1_000_000)} s`;
 };
 
+/**
+ * Get the number of microseconds since January 1, 1970.
+ *
+ * @param timestamp - duration in microseconds.
+ * @pre timestamp must be a datetime string produced by python's datetime library.
+ * @returns Number of microseconds since January 1, 1970.
+ */
 export const getMicroseconds = (timestamp: string) => {
   if (!timestamp) return 0;
 
