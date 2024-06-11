@@ -9,7 +9,7 @@
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "prettier": "prettier --config .prettierrc . --write",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "LC_ALL=en-US.UTF-8 vitest"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

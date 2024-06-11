@@ -48,8 +48,6 @@ describe('formatDuration', () => {
 });
 
 describe('formatTime', () => {
-  // TODO: figure out how to mock locale
-
   test('formatTime gives empty string with a null timestamp', () => {
     expect(formatTime(null!)).toBe('');
   });
