@@ -70,4 +70,4 @@ _TruLens_ context filter guardrails are easy to add to your _Langchain_ or _Llam
 
     Feedback function used as a guardrail must only return a float score, and cannot also return reasons.
 
-TruLens has framework-specific tooling for implementing guardrails. Read more about the availble guardrails in [Langchain]() and [Llama-Index]().
+TruLens has framework-specific tooling for implementing guardrails. Read more about the availble guardrails in [Langchain](../api/guardrails/langchain) and [Llama-Index](../api/guardrails/llama).
