@@ -115,7 +115,9 @@ def jsonify(
     instrument: Optional['Instrument'] = None,
     skip_specials: bool = False,
     redact_keys: bool = False,
-    include_excluded: bool = True
+    include_excluded: bool = True,
+    depth: int = 0,
+    max_depth: int = 256
 ) -> JSON:
     """Convert the given object into types that can be serialized in json.
 
@@ -134,7 +136,18 @@ def jsonify(
         redact_keys: redact secrets from the output. Secrets are detremined by
             `keys.py:redact_value` .
 
-        include_excluded: include fields that are annotated to be excluded by pydantic.
+        include_excluded: include fields that are annotated to be excluded by
+            pydantic.
+
+        depth: the depth of the serialization of the given object relative to
+            the serialization of its container. 
+`
+        max_depth: the maximum depth of the serialization of the given object.
+            Objects to be serialized beyond this will be serialized as
+            "non-serialized object" as per `noserio`. Note that this may happen
+            for some data layouts like linked lists. This value should be no
+            larger than half the value set by
+            [sys.setrecursionlimit][sys.setrecursionlimit].
 
     Returns:
         The jsonified version of the given object. Jsonified means that the the
@@ -163,6 +176,14 @@ def jsonify(
     if inspect.isgeneratorfunction(obj):
         raise ValueError("Cannot jsonify a generator function.")
     """
+
+    if depth > max_depth:
+        logger.debug(
+            "Max depth reached for jsonify of object type '%s'.",
+            type(obj)
+        ) # careful about str(obj) in case it is recursive infinitely.
+
+        return noserio(obj)
 
     skip_excluded = not include_excluded
     # Hack so that our models do not get exludes dumped which causes many
@@ -219,7 +240,9 @@ def jsonify(
             instrument=instrument,
             skip_specials=skip_specials,
             redact_keys=redact_keys,
-            include_excluded=include_excluded
+            include_excluded=include_excluded,
+            depth=depth + 1,
+            max_depth=max_depth
         )
 
     content = None
@@ -228,32 +251,32 @@ def jsonify(
         content = obj.name
 
     elif isinstance(obj, Dict):
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
+        forward_value = {}
+        new_dicted[id(obj)] = forward_value
+        forward_value.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
-            for k, v in temp.items():
-                temp[k] = redact_value(v=v, k=k)
+            for k, v in forward_value.items():
+                forward_value[k] = redact_value(v=v, k=k)
 
-        content = temp
+        content = forward_value
 
     elif isinstance(obj, Sequence):
-        temp = []
-        new_dicted[id(obj)] = temp
+        forward_value = []
+        new_dicted[id(obj)] = forward_value
         for x in (recur(v) for v in obj):
-            temp.append(x)
+            forward_value.append(x)
 
-        content = temp
+        content = forward_value
 
     elif isinstance(obj, Set):
-        temp = []
-        new_dicted[id(obj)] = temp
+        forward_value = []
+        new_dicted[id(obj)] = forward_value
         for x in (recur(v) for v in obj):
-            temp.append(x)
+            forward_value.append(x)
 
-        content = temp
+        content = forward_value
 
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
@@ -261,9 +284,9 @@ def jsonify(
         if isinstance(obj, Lens):  # special handling of paths
             return obj.model_dump()
 
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update(
+        forward_value = {}
+        new_dicted[id(obj)] = forward_value
+        forward_value.update(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.model_fields.items()
@@ -273,19 +296,19 @@ def jsonify(
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
-            for k, v in temp.items():
-                temp[k] = redact_value(v=v, k=k)
+            for k, v in forward_value.items():
+                forward_value[k] = redact_value(v=v, k=k)
 
-        content = temp
+        content = forward_value
 
     elif isinstance(obj, pydantic.v1.BaseModel):
         # TODO: DEDUP with pydantic.BaseModel case
 
         # Not even trying to use pydantic.dict here.
 
-        temp = {}
-        new_dicted[id(obj)] = temp
-        temp.update(
+        forward_value = {}
+        new_dicted[id(obj)] = forward_value
+        forward_value.update(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
@@ -296,19 +319,19 @@ def jsonify(
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
-            for k, v in temp.items():
-                temp[k] = redact_value(v=v, k=k)
+            for k, v in forward_value.items():
+                forward_value[k] = redact_value(v=v, k=k)
 
-        content = temp
+        content = forward_value
 
     elif dataclasses.is_dataclass(type(obj)):
         # NOTE: cannot use dataclasses.asdict as that may fail due to its use of
         # copy.deepcopy.
 
-        temp = {}
-        new_dicted[id(obj)] = temp
+        forward_value = {}
+        new_dicted[id(obj)] = forward_value
 
-        temp.update(
+        forward_value.update(
             {
                 f.name: recur(safe_getattr(obj, f.name))
                 for f in dataclasses.fields(obj)
@@ -318,20 +341,20 @@ def jsonify(
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
-            for k, v in temp.items():
-                temp[k] = redact_value(v=v, k=k)
+            for k, v in forward_value.items():
+                forward_value[k] = redact_value(v=v, k=k)
 
-        content = temp
+        content = forward_value
 
     elif instrument.to_instrument_object(obj):
 
-        temp = {}
-        new_dicted[id(obj)] = temp
+        forward_value = {}
+        new_dicted[id(obj)] = forward_value
 
         kvs = clean_attributes(obj, include_props=True)
 
         # TODO(piotrm): object walks redo
-        temp.update(
+        forward_value.update(
             {
                 k: recur(v) for k, v in kvs.items() if recur_key(k) and (
                     isinstance(v, JSON_BASES) or isinstance(v, Dict) or
@@ -341,13 +364,13 @@ def jsonify(
             }
         )
 
-        content = temp
+        content = forward_value
 
     else:
         logger.debug(
-            "Do not know how to jsonify an object '%s' of type '%s'.",
-            str(obj)[0:32], type(obj)
-        )
+            "Do not know how to jsonify an object of type '%s'.",
+            type(obj)
+        ) # careful about str(obj) in case it is recursive infinitely.
 
         content = noserio(obj)
 
