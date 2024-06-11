@@ -14,7 +14,7 @@ db_url = 'snowflake://{user}:{password}@{account}/{dbname}/{schema}?warehouse={w
     dbname=os.environ['SF_DB_NAME'],
     schema=os.environ['SF_SCHEMA'],
     warehouse=os.environ['SF_WAREHOUSE'],
-    role=os.environ['SF_ROLE']
+    role=os.environ['SF_ROLE'],
 )
 
 tru = Tru(database_url=db_url)
