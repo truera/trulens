@@ -9,4 +9,4 @@ RUN rm -f ./default.sqlite
 
 RUN pip install -r requirements.txt
 
-CMD ["streamlit", "run", "app.py"]
+CMD ["./run.sh"]
