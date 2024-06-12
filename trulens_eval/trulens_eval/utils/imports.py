@@ -357,6 +357,10 @@ REQUIREMENT_OPENAI = format_import_errors(
     ['openai', 'langchain_community'], purpose="using OpenAI models"
 )
 
+REQUIREMENT_CORTEX = format_import_errors(
+    ['snowflake-snowpark-python'], purpose="using Snowflake Cortex serverless LLM functions"
+)
+
 REQUIREMENT_GROUNDEDNESS = format_import_errors(
     'nltk', purpose="using some groundedness feedback functions"
 )
