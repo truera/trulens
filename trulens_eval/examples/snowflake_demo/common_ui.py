@@ -19,8 +19,10 @@ from schema import (
 
 # feedback functions
 from feedback import feedbacks_no_rag, feedbacks_rag
-from trulens_eval import TruCustomApp
+from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.ux.styles import CATEGORY
+from trulens_eval.schema.feedback import FeedbackDefinition, FeedbackResult, FeedbackCall
+from trulens_eval.schema.record import Record
 
 generator = StreamGenerator()
 
@@ -235,57 +237,64 @@ def chat_response(
             chat = container.chat_message("assistant")
         else:
             chat = st.chat_message("assistant")
-        with recorder:
+        with recorder as context:
             user_message, prompt = generator.prepare_prompt(conversation)
             if conversation.model_config.use_rag:
                 text_response: str = generator.retrieve_and_generate_response(user_message, prompt, conversation, chat)
             else:
                 text_response: str = generator.generate_response(user_message, prompt, conversation, chat)
 
+        record: Record = context.get()
+
         message = conversation.messages[-1]
         message.content = str(text_response).strip()
 
         if config.use_rag and recorder is not None:
-            recorder.wait_for_feedback_results()
-            df_results, feedback_cols = recorder.db.get_records_and_feedback([recorder.app_id])
+            feedback_results: dict[FeedbackDefinition, FeedbackResult] = record.wait_for_feedback_results()
 
-            # Get results for most recent row
-            row = df_results.iloc[-1]
+            feedback_defs = list(feedback_results.keys())
+
             feedback_with_valid_results = sorted(
-                list(filter(lambda fcol: row[fcol] != None, feedback_cols))
+                list(filter(lambda fdef: feedback_results[fdef].result != None, feedback_defs)),
+                key=lambda fdef: fdef.name
             )
 
             feedback_directions = {
-                (
-                    row.feedback_json.get("supplied_name", "") or
-                    row.feedback_json["implementation"]["name"]
-                ): (
-                    "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
+                (fdef.name): (
+                    "HIGHER_IS_BETTER" if fdef.higher_is_better or fdef.higher_is_better == None
                     else "LOWER_IS_BETTER"
-                ) for _, row in recorder.db.get_feedback_defs().iterrows()
+                ) for fdef in feedback_with_valid_results
             }
             default_direction="HIGHER_IS_BETTER"
 
-            def get_icon(feedback_name):
+            def get_icon(fdef: FeedbackDefinition):
+                fcol = fdef.name
                 cat = CATEGORY.of_score(
-                    row[feedback_name],
+                    feedback_results[fdef].result or 0,
                     higher_is_better=feedback_directions.get(
-                        feedback_name, default_direction
+                        fcol, default_direction
                     ) == default_direction
                 )
                 return cat.icon
 
-            for fcol in feedback_with_valid_results:
-                message.feedbacks[fcol] = FeedbackDisplay(score=row[fcol], calls = row[f"{fcol}_calls"], icon=get_icon(feedback_name=fcol))
+            for fdef in feedback_with_valid_results:
+                fcol = fdef.name
+                calls = feedback_results[fdef].calls
 
-            # Hacky - hardcodes the call sources
-            if 'Groundedness_calls' in row:
-                for call in row['Groundedness_calls']:
-                    message.sources.add(call['args']['source'])
-            
-            if 'Context Relevance_calls' in row:
-                for call in row['Context Relevance_calls']:
-                    message.sources.add(call['args']['context'])
+                message.feedbacks[fcol] = FeedbackDisplay(
+                    score=feedback_results[fdef].result or 0, 
+                    calls=calls, 
+                    icon=get_icon(fdef)
+                )
+
+                # Hacky - hardcodes behavior based on feedback name
+                if fcol == "Groundedness":
+                    for call in calls:
+                        message.sources.add(call.args['source'])
+
+                if fcol == "Context Relevance":
+                    for call in calls:
+                        message.sources.add(call.args['context'])
 
 
     except Exception as e:

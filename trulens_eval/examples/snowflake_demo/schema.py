@@ -7,6 +7,7 @@ from trulens_eval import TruCustomApp
 from streamlit_pills import pills
 import pandas as pd
 from datetime import datetime
+from trulens_eval.schema.feedback import FeedbackCall
 
 class ModelConfig(BaseModel):
     model: str = "Snowflake Arctic"
@@ -20,7 +21,7 @@ class ModelConfig(BaseModel):
 
 class FeedbackDisplay(BaseModel):
     score: float = 0
-    calls: list[dict]
+    calls: list[FeedbackCall]
     icon: str
 
 class Message(BaseModel):
@@ -82,7 +83,9 @@ class Conversation:
                 )
 
                 if selected_fcol != None:
-                    st.dataframe(pd.DataFrame.from_records(message.feedbacks[selected_fcol].calls), use_container_width=True, hide_index=True)
+                    calls: list[FeedbackCall] = message.feedbacks[selected_fcol].calls
+                    calls_dict = list(map(lambda fcall: fcall.model_dump(), calls))
+                    st.dataframe(pd.DataFrame.from_records(calls_dict), use_container_width=True, hide_index=True)
             
             if len(message.sources) > 0:
                 with st.expander(f'**{len(message.sources)} sources used**'):
