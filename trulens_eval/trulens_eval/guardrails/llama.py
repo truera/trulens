@@ -61,9 +61,9 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         """
         An extended query method that will:
 
-        1. Query the engine with the given query bundle (like before)
-        2. Evaluate nodes with a specified feedback function
-        3. Filter out nodes that do not meet the minimum threshold
+        1. Query the engine with the given query bundle (like before).
+        2. Evaluate nodes with a specified feedback function.
+        3. Filter out nodes that do not meet the minimum threshold.
         4. Synthesize with only the filtered nodes.
 
         Parameters:

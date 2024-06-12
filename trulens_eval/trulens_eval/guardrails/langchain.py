@@ -77,9 +77,9 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         """
         An internal method to accomplish three tasks:
 
-        1. Get relevant documents
-        2. Evaluate documents with a specified feedback function
-        3. Filter out documents that do not meet the minimum threshold
+        1. Get relevant documents.
+        2. Evaluate documents with a specified feedback function.
+        3. Filter out documents that do not meet the minimum threshold.
 
         Args:
             query: str - the query string to search for relevant documents.
@@ -124,9 +124,9 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
 
         The new instance will:
 
-        1. Get relevant documents (like before)
-        2. Evaluate documents with a specified feedback function
-        3. Filter out documents that do not meet the minimum threshold
+        1. Get relevant documents (like the existing retriever its based on).
+        2. Evaluate documents with a specified feedback function.
+        3. Filter out documents that do not meet the minimum threshold.
 
         Args:
             retriever: VectorStoreRetriever - the base retriever to use.
