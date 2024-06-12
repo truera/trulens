@@ -6,7 +6,7 @@ CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; 
 
 # Create the conda env for building website, docs, formatting, etc.
 .conda/docs:
-	conda create python=3.11 --yes --prefix=.conda/docs
+	conda create python=3.12 --yes --prefix=.conda/docs
 	$(CONDA) .conda/docs; \
 	pip install -r trulens_eval/trulens_eval/requirements.txt; \
 	pip install -r trulens_eval/trulens_eval/requirements.optional.txt; \
@@ -21,12 +21,12 @@ lab:
 	$(CONDA) .conda/docs; jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 # Serve the documentation website.
-serve:
+serve: .conda/docs
 	$(CONDA) .conda/docs; mkdocs serve -a 127.0.0.1:8000
 
 # The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
 # break references.
-serve-dirty:
+serve-dirty: .conda/docs
 	$(CONDA) .conda/docs; mkdocs serve --dirty -a 127.0.0.1:8000
 
 # Build the documentation website.

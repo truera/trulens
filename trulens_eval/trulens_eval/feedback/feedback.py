@@ -64,7 +64,7 @@ class SkipEval(Exception):
 
         feedback: The Feedback instance this run corresponds to.
 
-        args: The arguments to this run.
+        ins: The arguments to this run.
     """
 
     def __init__(
