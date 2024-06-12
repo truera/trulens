@@ -26,4 +26,5 @@ __all__ = [
     "BedrockEndpoint",
     "OpenAIClient",
     "LangchainEndpoint",
+    "CortexEndpoint"
 ]

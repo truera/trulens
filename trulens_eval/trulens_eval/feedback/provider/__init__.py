@@ -24,4 +24,5 @@ __all__ = [
     "LiteLLM",
     "Bedrock",
     "Langchain",
+    "Cortex"
 ]

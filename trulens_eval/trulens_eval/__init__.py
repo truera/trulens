@@ -95,6 +95,7 @@ __all__ = [
     "LiteLLM",
     "Bedrock",
     "Huggingface",
+    "Cortex",
 
     # misc utility
     "TP",
