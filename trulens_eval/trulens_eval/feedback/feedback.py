@@ -70,15 +70,15 @@ class SkipEval(Exception):
     def __init__(
         self,
         reason: Optional[str] = None,
-        feedback: Optional[Feedback] = None, 
-        args: Optional[Dict[str, Any]] = None,
+        feedback: Optional[Feedback] = None,
+        ins: Optional[Dict[str, Any]] = None,
     ):
         self.reason = reason
         self.feedback = feedback
-        self.args = args
+        self.ins = ins
 
     def __str__(self):
-        return "Feedback evaluation skipped" + ((" because " + self.reason) if self.reason else "").
+        return "Feedback evaluation skipped" + ((" because " + self.reason) if self.reason else "")
 
     def __repr__(self):
         return f"SkipEval(reason={self.reason})"
@@ -902,7 +902,7 @@ Feedback function signature:
 
                 except SkipEval as e:
                     e.feedback = self
-                    e.args = ins
+                    e.ins = ins
                     skipped_exceptions.append(e)
                     continue # go to next input_combination
 
