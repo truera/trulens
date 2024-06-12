@@ -4,7 +4,9 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel
 import streamlit as st
 from trulens_eval import TruCustomApp
-
+from streamlit_pills import pills
+import pandas as pd
+from datetime import datetime
 
 class ModelConfig(BaseModel):
     model: str = "Snowflake Arctic"
@@ -16,9 +18,16 @@ class ModelConfig(BaseModel):
     trulens_recorder: Optional[TruCustomApp] = None
 
 
+class FeedbackDisplay(BaseModel):
+    score: float = 0
+    calls: list[dict]
+    icon: str
+
 class Message(BaseModel):
     role: Literal["user", "assistant", "system"]
     content: str
+    feedbacks: dict[str, FeedbackDisplay] = {}
+    sources: set[str] = set()
 
 
 class ConversationFeedback(BaseModel):
@@ -44,20 +53,42 @@ class Conversation:
     def add_message(self, message: Message, container=None, render=True):
         self.messages.append(message)
         if render:
-            self.render_message(message, container)
+            self.render_message(message, container, key=str(len(self.messages)))
 
     def reset_messages(self):
         self.messages: List[Message] = []
 
     def render_all(self, container=None):
-        for message in self.messages:
-            self.render_message(message, container)
+        for idx, message in enumerate(self.messages):
+            self.render_message(message, container, key=str(idx))
 
-    def render_message(self, message: Message, container=None):
-        if container is not None:
-            container.chat_message(message.role).write(message.content)
-        else:
-            st.chat_message(message.role).write(message.content)
+    def render_message(self, message: Message, container=st, key=str(datetime.now())):
+        with container.chat_message(message.role): 
+            st.write(message.content)
+
+            if len(message.feedbacks) > 0:
+                feedback_cols = list(message.feedbacks.keys())
+                icons = list(map(lambda fcol: message.feedbacks[fcol].icon,feedback_cols))
+
+                st.write('**Feedback functions**')
+                selected_fcol = pills(
+                    "Feedback functions",
+                    feedback_cols,
+                    index=None,
+                    format_func=lambda fcol: f"{fcol} {message.feedbacks[fcol].score:.4f}",
+                    label_visibility="collapsed", # Hiding because we can't format the label here.
+                    icons=icons,
+                    key=key
+                )
+
+                if selected_fcol != None:
+                    st.dataframe(pd.DataFrame.from_records(message.feedbacks[selected_fcol].calls), use_container_width=True, hide_index=True)
+            
+            if len(message.sources) > 0:
+                with st.expander(f'**{len(message.sources)} sources used**'):
+                    st.dataframe(pd.DataFrame(list(message.sources), columns=['Source text']), use_container_width=True, hide_index=True )
+
+
 
     def messages_to_text(self, truncate=True):
         msgs = []

@@ -6,11 +6,13 @@ from typing import Dict
 import streamlit as st
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
+from streamlit_pills import pills
 
 from conversation_manager import ConversationManager
 from llm import StreamGenerator, AVAILABLE_MODELS
 from schema import (
     Conversation,
+    FeedbackDisplay,
     Message,
     ModelConfig,
 )
@@ -18,6 +20,7 @@ from schema import (
 # feedback functions
 from feedback import feedbacks_no_rag, feedbacks_rag
 from trulens_eval import TruCustomApp
+from trulens_eval.ux.styles import CATEGORY
 
 generator = StreamGenerator()
 
@@ -225,18 +228,66 @@ def chat_response(
         render=False,
     )
     try:
+        config = conversation.model_config
+        recorder = config.trulens_recorder
+
         if container:
             chat = container.chat_message("assistant")
         else:
             chat = st.chat_message("assistant")
-        with conversation.model_config.trulens_recorder:
+        with recorder:
             user_message, prompt = generator.prepare_prompt(conversation)
             if conversation.model_config.use_rag:
                 text_response: str = generator.retrieve_and_generate_response(user_message, prompt, conversation, chat)
             else:
                 text_response: str = generator.generate_response(user_message, prompt, conversation, chat)
 
-        conversation.messages[-1].content = str(text_response).strip()
+        message = conversation.messages[-1]
+        message.content = str(text_response).strip()
+
+        if config.use_rag and recorder is not None:
+            recorder.wait_for_feedback_results()
+            df_results, feedback_cols = recorder.db.get_records_and_feedback([recorder.app_id])
+
+            # Get results for most recent row
+            row = df_results.iloc[-1]
+            feedback_with_valid_results = sorted(
+                list(filter(lambda fcol: row[fcol] != None, feedback_cols))
+            )
+
+            feedback_directions = {
+                (
+                    row.feedback_json.get("supplied_name", "") or
+                    row.feedback_json["implementation"]["name"]
+                ): (
+                    "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
+                    else "LOWER_IS_BETTER"
+                ) for _, row in recorder.db.get_feedback_defs().iterrows()
+            }
+            default_direction="HIGHER_IS_BETTER"
+
+            def get_icon(feedback_name):
+                cat = CATEGORY.of_score(
+                    row[feedback_name],
+                    higher_is_better=feedback_directions.get(
+                        feedback_name, default_direction
+                    ) == default_direction
+                )
+                return cat.icon
+
+            for fcol in feedback_with_valid_results:
+                message.feedbacks[fcol] = FeedbackDisplay(score=row[fcol], calls = row[f"{fcol}_calls"], icon=get_icon(feedback_name=fcol))
+
+            # Hacky - hardcodes the call sources
+            if 'Groundedness_calls' in row:
+                for call in row['Groundedness_calls']:
+                    message.sources.add(call['args']['source'])
+            
+            if 'Context Relevance_calls' in row:
+                for call in row['Context Relevance_calls']:
+                    message.sources.add(call['args']['context'])
+
+
     except Exception as e:
         conversation.has_error = True
         print("Error while generating chat response: " + str(e))
