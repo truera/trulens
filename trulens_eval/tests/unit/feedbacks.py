@@ -8,17 +8,17 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 # functions.
 
 
-def skip_if_odd(val: int):
+def skip_if_odd(val: float):
     """Feedback function that returns its argument as long as it is even and
     raises SkipEval if it is odd.
     
     This is used to test the SkipEval functionality.
     """
 
-    if val % 2 == 1:
+    if int(val) % 2 == 1:
         raise SkipEval(reason=f"Because input value {val} was odd.")
 
-    return val
+    return float(val)
 
 
 def custom_feedback_function(t1: str) -> float:

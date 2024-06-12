@@ -904,6 +904,7 @@ Feedback function signature:
                     e.feedback = self
                     e.ins = ins
                     skipped_exceptions.append(e)
+                    warnings.warn(str(e), UserWarning, stacklevel=1)
                     continue # go to next input_combination
 
                 except Exception as e:
@@ -960,12 +961,10 @@ Feedback function signature:
                 # why no results were collected.
                 if len(skipped_exceptions) > 0:
                     warnings.warn(
-                        "One or more evaluations were skipped because they raised SkipEval:",
+                        "One or more evaluations were skipped because they raised SkipEval (see earlier warnings).",
                         UserWarning,
                         stacklevel=1
                     )
-                    for e in skipped_exceptions:
-                        warnings.warn(str(e), UserWarning, stacklevel=1)
 
                 result = np.nan
 
