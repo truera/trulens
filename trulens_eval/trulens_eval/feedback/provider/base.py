@@ -1202,7 +1202,7 @@ class LLMProvider(Provider):
 
         hypotheses = sent_tokenize(statement)
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
-
+        
         def evaluate_hypothesis(index, hypothesis):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
