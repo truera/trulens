@@ -904,6 +904,7 @@ Feedback function signature:
                     e.feedback = self
                     e.args = ins
                     skipped_exceptions.append(e)
+                    continue # go to next input_combination
 
                 except Exception as e:
                     raise RuntimeError(
