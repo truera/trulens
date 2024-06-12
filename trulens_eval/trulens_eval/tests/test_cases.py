@@ -236,7 +236,9 @@ def generate_summeval_groundedness_golden_set(file_path):
                             row["consistency"][i] / 5,  # normalize to [0, 1]
                         ],
                         [1.0]
-                    )
+                    ),
+                "human_score":
+                    row["consistency"][i]
             }
 
 

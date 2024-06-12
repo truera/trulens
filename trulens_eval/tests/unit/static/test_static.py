@@ -5,6 +5,7 @@ issues that occur from merely importing trulens.
 
 from pathlib import Path
 import pkgutil
+import sys
 from unittest import main
 from unittest import TestCase
 
@@ -44,8 +45,15 @@ optional_mods = dict(
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
     ],
-    nemoguardrails=["trulens_eval.tru_rails"]
+    nemoguardrails=["trulens_eval.tru_rails"],
 )
+
+# snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
+if sys.version_info < (3, 12):
+    optional_mods["snowflake"] = [
+        "trulens_eval.feedback.provider.cortex",
+        "trulens_eval.feedback.provider.endpoint.cortex"
+    ]
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 
