@@ -1,4 +1,5 @@
 import os
+import json
 from dotenv import load_dotenv
 from snowflake.snowpark import Session
 from snowflake.cortex import Summarize, Complete, ExtractAnswer, Sentiment, Translate
@@ -31,6 +32,23 @@ def complete(user_text):
     )
     return completion
 
+def complete_sql(user_text):
+    res = snowflake_session.sql(f"""SELECT SNOWFLAKE.CORTEX.COMPLETE(
+            'snowflake-arctic',
+            [
+
+            {{'role': 'user', 'content': '{user_text}'}}
+            ], {{
+                'temperature': 0
+            }}
+            )""").collect()
+    print('SQL completion function full response: ')
+    print(res)
+    
+    completion = json.loads(res[0][0])["choices"][0]["messages"]
+    print("full response: ")
+    print(res)
+    return completion
 
 # def extract_answer(user_text):
 #     answer = ExtractAnswer(
@@ -71,10 +89,14 @@ def main():
         #     f"Summarize() Snowflake Cortex LLM function result:\n{summary_result.strip()}\n"
         # )
 
-        completion_result = complete(user_text)
-        print(
-            f"Complete() Snowflake Cortex LLM function result:\n{completion_result.strip()}\n"
-        )
+        # completion_result = complete(user_text)
+        # print(
+        #     f"Complete() Snowflake Cortex LLM function (Python API) result:\n{completion_result.strip()}\n"
+        # )
+        
+        completion_result_with_sql = complete_sql(user_text)
+        print(f"Complete() Snowflake Cortex LLM function (SQL) result:\n{completion_result_with_sql}\n")
+
 
         # answer_result = extract_answer(user_text)
         # print(
