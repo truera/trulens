@@ -55,6 +55,35 @@ AggCallable = Callable[[Iterable[float]], float]
 """Signature of aggregation functions."""
 
 
+class SkipEval(Exception):
+    """Raised when evaluating a feedback function implementation to skip it so
+    it is not aggregated with other non-skipped results.
+    
+    Args:
+        reason: Optional reason for why this evaluation was skipped.
+
+        feedback: The Feedback instance this run corresponds to.
+
+        args: The arguments to this run.
+    """
+
+    def __init__(
+        self,
+        reason: Optional[str] = None,
+        feedback: Optional[Feedback] = None, 
+        args: Optional[Dict[str, Any]] = None,
+    ):
+        self.reason = reason
+        self.feedback = feedback
+        self.args = args
+
+    def __str__(self):
+        return "Feedback evaluation skipped" + ((" because " + self.reason) if self.reason else "").
+
+    def __repr__(self):
+        return f"SkipEval(reason={self.reason})"
+
+
 class InvalidSelector(Exception):
     """Raised when a selector names something that is missing in a record/app."""
 
@@ -860,6 +889,9 @@ Feedback function signature:
             cost = mod_base_schema.Cost()
             multi_result = None
 
+            # Keep track of evaluations that were skipped due to raising SkipEval.
+            skipped_exceptions = []
+
             for ins in input_combinations:
                 try:
                     result_and_meta, part_cost = mod_base_endpoint.Endpoint.track_all_costs_tally(
@@ -867,6 +899,12 @@ Feedback function signature:
                     )
 
                     cost += part_cost
+
+                except SkipEval as e:
+                    e.feedback = self
+                    e.args = ins
+                    skipped_exceptions.append(e)
+
                 except Exception as e:
                     raise RuntimeError(
                         f"Evaluation of {self.name} failed on inputs: \n{pformat(ins)[0:128]}."
@@ -917,6 +955,17 @@ Feedback function signature:
                     UserWarning,
                     stacklevel=1
                 )
+                # Log any SkipCombination exceptions in case that was the reason
+                # why no results were collected.
+                if len(skipped_exceptions) > 0:
+                    warnings.warn(
+                        "One or more evaluations were skipped because they raised SkipEval:",
+                        UserWarning,
+                        stacklevel=1
+                    )
+                    for e in skipped_exceptions:
+                        warnings.warn(str(e), UserWarning, stacklevel=1)
+
                 result = np.nan
 
             else:
