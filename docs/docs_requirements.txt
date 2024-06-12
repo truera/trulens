@@ -16,3 +16,5 @@ markdown-include     >= 0.8.1
 
 jupyter_contrib_nbextensions >= 0.7.0
 notebook <7
+
+black >= 24.4.2
