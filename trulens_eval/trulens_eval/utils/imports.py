@@ -49,7 +49,7 @@ if sys.version_info >= (3, 9):
 
 def static_resource(filepath: Union[Path, str]) -> Path:
     """Get the path to a static resource file in the trulens_eval package.
-    
+
     By static here we mean something that exists in the filesystem already and
     not in some temporary folder. We use the `importlib.resources` context
     managers to get this but if the resource is temporary, the result might not
@@ -71,6 +71,7 @@ def static_resource(filepath: Union[Path, str]) -> Path:
             for part in parts[1:]:
                 _path = _path / part
             return _path
+
 
 required_packages: Dict[str, requirements.Requirement] = \
     requirements_of_file(static_resource("requirements.txt"))
@@ -98,7 +99,7 @@ def parse_version(version_string: str) -> version.Version:
 
 def get_package_version(name: str) -> Optional[version.Version]:
     """Get the version of a package by its name.
-    
+
     Returns None if given package is not installed.
     """
 
@@ -110,12 +111,12 @@ def get_package_version(name: str) -> Optional[version.Version]:
 
 
 MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND = \
-"""Optional package %s is not installed. Related optional functionality will not
+    """Optional package %s is not installed. Related optional functionality will not
 be available.
 """
 
 MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND = \
-"""Required package {req.name} is not installed. Please install it with pip:
+    """Required package {req.name} is not installed. Please install it with pip:
 
     ```bash
     pip install '{req}'
@@ -131,24 +132,24 @@ reinstall trulens_eval so that all of the dependencies get installed:
 """
 
 MESSAGE_FRAGMENT_VERSION_MISMATCH = \
-"""Package {req.name} is installed but has a version conflict:
+    """Package {req.name} is installed but has a version conflict:
     Requirement: {req}
     Installed: {dist.version}
 """
 
 MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL = \
-"""This package is optional for trulens_eval so this may not be a problem but if
+    """This package is optional for trulens_eval so this may not be a problem but if
 you need to use the related optional features and find there are errors, you
 will need to resolve the conflict:
 """
 
 MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED = \
-"""This package is required for trulens_eval. Please resolve the conflict by
+    """This package is required for trulens_eval. Please resolve the conflict by
 installing a compatible version with:
 """
 
 MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP = \
-"""
+    """
     ```bash
     pip install '{req}'
     ```
@@ -190,7 +191,8 @@ def check_imports(ignore_version_mismatch: bool = False):
 
         except metadata.PackageNotFoundError as e:
             if is_optional:
-                logger.debug(MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
+                logger.debug(
+                    MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
 
             else:
                 raise ModuleNotFoundError(
@@ -254,7 +256,7 @@ def format_import_errors(
 ) -> ImportErrorMessages:
     """Format two messages for missing optional package or bad import from an
     optional package.
-    
+
     Throws an `ImportError` with the formatted message if `throw` flag is set.
     If `throw` is already an exception, throws that instead after printing the
     message.
@@ -358,7 +360,7 @@ REQUIREMENT_OPENAI = format_import_errors(
 )
 
 REQUIREMENT_CORTEX = format_import_errors(
-    ['snowflake-snowpark-python', 'json'], purpose="using Snowflake Cortex serverless LLM functions"
+    ['snowflake-snowpark-python'], purpose="using Snowflake Cortex serverless LLM functions"
 )
 
 REQUIREMENT_GROUNDEDNESS = format_import_errors(
@@ -381,7 +383,7 @@ REQUIREMENT_NOTEBOOK = format_import_errors(
 # Try to pretend to be a type as well as an instance.
 class Dummy(type, object):
     """Class to pretend to be a module or some other imported object.
-    
+
     Will raise an error if accessed in some dynamic way. Accesses that are
     "static-ish" will try not to raise the exception so things like defining
     subclasses of a missing class should not raise exception. Dynamic uses are
@@ -452,7 +454,7 @@ class Dummy(type, object):
 
     def __instancecheck__(self, __instance: Any) -> bool:
         """Nothing is an instance of this dummy.
-        
+
         Warning:
             This is to make sure that if something optional gets imported as a
             dummy and is a class to be instrumented, it will not automatically make
@@ -522,7 +524,7 @@ class Dummy(type, object):
 class OptionalImports(object):
     """Helper context manager for doing multiple imports from an optional
     modules
-    
+
     Example:
         ```python
             messages = ImportErrorMessages(
@@ -626,7 +628,7 @@ class OptionalImports(object):
 
     def __enter__(self):
         """Handle entering the WithOptionalImports context block.
-        
+
         We override the builtins.__import__ function to catch any import errors.
         """
 
@@ -645,7 +647,7 @@ class OptionalImports(object):
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         """Handle exiting from the WithOptionalImports context block.
-        
+
         We should not get any exceptions here if dummies were produced by the
         overwritten __import__ but if an import of a module that exists failed
         becomes some component of that module did not, we will not be able to
