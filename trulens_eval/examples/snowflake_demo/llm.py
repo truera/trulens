@@ -108,7 +108,7 @@ class StreamGenerator:
         return full_text_response
     
     @instrument
-    def generate_response(self, last_user_message: str, prompt_str: str, conversation: Conversation, st_container: Optional[DeltaGenerator] = None) -> str:
+    def generate_response(self, last_user_message: str, prompt_str: str, conversation: Conversation, st_container: Optional[DeltaGenerator] = None, should_write=True) -> str:
         model_config = conversation.model_config
         full_model_name = FRIENDLY_MAPPING[model_config.model]
 
@@ -122,7 +122,11 @@ class StreamGenerator:
         final_response = ""
         stream_iter = self._generate_stream_with_replicate(full_model_name, model_input)
         
-        final_response = self._write_stream_to_st(stream_iter, st_container) 
+        if should_write:
+            final_response = self._write_stream_to_st(stream_iter, st_container) 
+        else:
+            for chunk in stream_iter:
+                final_response += chunk
 
         return _reencode_outputs(final_response)
  

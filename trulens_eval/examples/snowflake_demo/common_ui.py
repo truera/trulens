@@ -258,15 +258,18 @@ def chat_response(
         message.content = str(text_response).strip()
 
         if config.use_rag and recorder is not None:
-            feedback_results: dict[FeedbackDefinition, FeedbackResult] = record.wait_for_feedback_results()
+            if record.feedback_and_future_results is None:
+                return
 
-            def update_result(feedback_def: FeedbackDefinition, result: FeedbackResult):
+            def update_result(feedback_def: FeedbackDefinition, future_result: Future[FeedbackResult]):
+                result = future_result.result()
                 calls = result.calls
+                score = result.result or 0
                 
                 message.feedbacks[feedback_def.name] = FeedbackDisplay(
-                    score=result.result or 0, 
+                    score=score, 
                     calls=calls, 
-                    icon=get_icon(feedback_def, result.result)
+                    icon=get_icon(feedback_def, score)
                 )
 
                 # Hacky - hardcodes behavior based on feedback name
@@ -277,9 +280,11 @@ def chat_response(
                 if feedback_def.name == "Context Relevance":
                     for call in calls:
                         message.sources.add(call.args['context'])
+
+                st.rerun()
             
-            for feedback_def, result in feedback_results.items():
-                update_result(feedback_def, result)
+            for feedback_def, future_result in record.feedback_and_future_results:
+                st_thread(target=update_result, args=(feedback_def, future_result))
                 
     except Exception as e:
         conversation.has_error = True
@@ -320,8 +325,7 @@ def generate_title(
     title_json = ""
     try:
         last_user_message, prompt = generator.prepare_prompt(conversation)
-        title_json: str = generator.generate_response(last_user_message, prompt, conversation)
-        
+        title_json: str = generator.generate_response(last_user_message, prompt, conversation, should_write=False)
         result = json.loads(title_json)
         response_dict["output"] = result["summary"]
 
