@@ -5,33 +5,80 @@ Tests for Feedback class.
 from unittest import main
 from unittest import TestCase
 
+import numpy as np
 # Get the "globally importable" feedback implementations.
 from tests.unit.feedbacks import custom_feedback_function
 from tests.unit.feedbacks import CustomClassNoArgs
 from tests.unit.feedbacks import CustomClassWithArgs
 from tests.unit.feedbacks import CustomProvider
 from tests.unit.feedbacks import make_nonglobal_feedbacks
+from tests.unit.feedbacks import skip_if_odd
 
 from trulens_eval import Feedback
-from trulens_eval import Tru
-from trulens_eval import TruCustomApp
-from trulens_eval.keys import check_keys
 from trulens_eval.schema.feedback import FeedbackMode
+from trulens_eval.schema.feedback import FeedbackResultStatus
+from trulens_eval.schema.feedback import Select
 from trulens_eval.tru_basic_app import TruBasicApp
-from trulens_eval.tru_custom_app import TruCustomApp
-from trulens_eval.utils.json import jsonify
 
+
+class TestFeedbackEval(TestCase):
+    """Tests for feedback function evaluation."""
+
+    def test_skipeval(self):
+        """Test the SkipEval capability."""
+
+        f = Feedback(imp=skip_if_odd).on(val=Select.RecordCalls.somemethod.args.num[:])
+
+        # Create source data that looks like real source data for a record
+        # collected from a real app. Store some integers in a place that
+        # corresponds to app call to `somemethod`, keyword argument `num`.
+        source_data = {
+            '__record__': {'app' : {'somemethod': {'args': {'num': [1,2,3,4,5,6]}}}}
+        }
+
+        res = f.run(source_data = source_data)
+
+        self.assertNotAlmostEqual((1+2+3+4+5+6)/6, (2+4+6)/3)
+        # Make sure that the wrong behaviour is not accidentally equal to the
+        # correct one.
+
+        self.assertIsInstance(res.result, float)
+
+        self.assertAlmostEqual(res.result, (2+4+6)/3)
+        # Odds should have been skipped.
+
+        self.assertEqual(res.status, FeedbackResultStatus.DONE)
+        # Status should be DONE.
+
+    def test_skipeval_all(self):
+        """Test the SkipEval capability for when all evals are skipped"""
+
+        f = Feedback(imp=skip_if_odd).on(val=Select.RecordCalls.somemethod.args.num[:])
+
+        # Create source data that looks like real source data for a record
+        # collected from a real app. Store some integers in a place that
+        # corresponds to app call to `somemethod`, keyword argument `num`.
+        source_data = {
+            '__record__': {'app' : {'somemethod': {'args': {'num': [1,3,5]}}}}
+        }
+
+        res = f.run(source_data = source_data)
+
+        self.assertIsInstance(res.result, float)
+
+        self.assertIs(res.result, np.nan) # NOTE: cannot use assertEqual for nans.
+        # Result should be nan if all evals were skipped.
+
+        self.assertEqual(res.status, FeedbackResultStatus.DONE)
+        # But status should be DONE (as opposed to SKIPPED or ERROR)
 
 class TestFeedbackConstructors(TestCase):
+    """Test for feedback function serialization/deserialization."""
 
     def setUp(self):
-        check_keys(
-            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
-            "PINECONE_ENV"
-        )
-
         self.app = TruBasicApp(text_to_text=lambda t: f"returning {t}")
         _, self.record = self.app.with_record(self.app.app, t="hello")
+
 
     def test_global_feedback_functions(self):
         # NOTE: currently static methods and class methods are not supported
