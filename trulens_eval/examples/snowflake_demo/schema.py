@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import List, Literal, Optional
 from pydantic import BaseModel
 import streamlit as st
-from trulens_eval import TruCustomApp
+from trulens_eval.tru_custom_app import TruCustomApp
 from streamlit_pills import pills
 import pandas as pd
 from datetime import datetime

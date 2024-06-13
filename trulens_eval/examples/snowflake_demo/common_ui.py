@@ -23,6 +23,7 @@ from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.ux.styles import CATEGORY
 from trulens_eval.schema.feedback import FeedbackDefinition, FeedbackResult, FeedbackCall
 from trulens_eval.schema.record import Record
+from trulens_eval.utils.python import Future
 
 generator = StreamGenerator()
 
@@ -221,6 +222,13 @@ def configure_model(*, container, model_config: ModelConfig, key: str, full_widt
     model_config.trulens_recorder = app
     return model_config
 
+def get_icon(fdef: FeedbackDefinition, result: float):
+    cat = CATEGORY.of_score(
+        result or 0,
+        higher_is_better=fdef.higher_is_better if fdef.higher_is_better is not None else True
+    )
+    return cat.icon
+
 def chat_response(
     conversation: Conversation,
     container=None,
@@ -252,51 +260,27 @@ def chat_response(
         if config.use_rag and recorder is not None:
             feedback_results: dict[FeedbackDefinition, FeedbackResult] = record.wait_for_feedback_results()
 
-            feedback_defs = list(feedback_results.keys())
-
-            feedback_with_valid_results = sorted(
-                list(filter(lambda fdef: feedback_results[fdef].result != None, feedback_defs)),
-                key=lambda fdef: fdef.name
-            )
-
-            feedback_directions = {
-                (fdef.name): (
-                    "HIGHER_IS_BETTER" if fdef.higher_is_better or fdef.higher_is_better == None
-                    else "LOWER_IS_BETTER"
-                ) for fdef in feedback_with_valid_results
-            }
-            default_direction="HIGHER_IS_BETTER"
-
-            def get_icon(fdef: FeedbackDefinition):
-                fcol = fdef.name
-                cat = CATEGORY.of_score(
-                    feedback_results[fdef].result or 0,
-                    higher_is_better=feedback_directions.get(
-                        fcol, default_direction
-                    ) == default_direction
-                )
-                return cat.icon
-
-            for fdef in feedback_with_valid_results:
-                fcol = fdef.name
-                calls = feedback_results[fdef].calls
-
-                message.feedbacks[fcol] = FeedbackDisplay(
-                    score=feedback_results[fdef].result or 0, 
+            def update_result(feedback_def: FeedbackDefinition, result: FeedbackResult):
+                calls = result.calls
+                
+                message.feedbacks[feedback_def.name] = FeedbackDisplay(
+                    score=result.result or 0, 
                     calls=calls, 
-                    icon=get_icon(fdef)
+                    icon=get_icon(feedback_def, result.result)
                 )
 
                 # Hacky - hardcodes behavior based on feedback name
-                if fcol == "Groundedness":
+                if feedback_def.name == "Groundedness":
                     for call in calls:
                         message.sources.add(call.args['source'])
 
-                if fcol == "Context Relevance":
+                if feedback_def.name == "Context Relevance":
                     for call in calls:
                         message.sources.add(call.args['context'])
-
-
+            
+            for feedback_def, result in feedback_results.items():
+                update_result(feedback_def, result)
+                
     except Exception as e:
         conversation.has_error = True
         print("Error while generating chat response: " + str(e))
