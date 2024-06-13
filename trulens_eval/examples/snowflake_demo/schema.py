@@ -83,9 +83,26 @@ class Conversation:
             key=f"{key}_{len(feedbacks)}" # Important! Otherwise streamlit sometimes lazily skips update even with st.exprimental_fragment
         )
 
+        # Extract the arguments + meta from the feedback call into a dict
+        def extract_call(fcall: FeedbackCall):
+            ret = {}
+            fcall_dump = fcall.model_dump()
+
+            if 'args' in fcall_dump:
+                for arg in fcall_dump['args'].keys():
+                    ret[arg] = fcall_dump['args'][arg]
+
+            ret['result'] = fcall_dump['ret']
+
+            if 'meta' in fcall_dump:
+                for met in fcall_dump['meta'].keys():
+                    ret[met] = fcall_dump['meta'][met]
+
+            return ret
+
         if selected_fcol != None:
             calls: list[FeedbackCall] = feedbacks[selected_fcol].calls
-            calls_dict = list(map(lambda fcall: fcall.model_dump(), calls))
+            calls_dict = list(map(lambda fcall: extract_call(fcall), calls))
             st.dataframe(pd.DataFrame.from_records(calls_dict), use_container_width=True, hide_index=True)
 
         if len(message.sources) > 0:
