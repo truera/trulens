@@ -18,4 +18,8 @@ adds non-serializable instantiations.
 
 ::: trulens_eval.feedback.feedback.AggCallable
 
+::: trulens_eval.feedback.feedback.SkipEval
+
+::: trulens_eval.feedback.feedback.InvalidSelector
+
 ::: trulens_eval.schema.feedback
