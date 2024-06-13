@@ -265,12 +265,11 @@ class TruChain(mod_app.App):
                 )
 
         retriever = (Select.RecordCalls + retrievers[0][0])
+        if hasattr(retriever, "invoke"):
+            return retriever.invoke.rets[:].page_content
         if hasattr(retriever, "_get_relevant_documents"):
             return retriever._get_relevant_documents.rets[:].page_content
-        if hasattr(retriever, "invoke"):
-            return retriever.invoke.rets
-        return retriever.get_relevant_documents.rets[:].page_content
-
+        
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:  # might have to relax to JSON output
