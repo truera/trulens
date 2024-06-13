@@ -28,7 +28,7 @@ _TruLens_ context filter guardrails are easy to add to your _Langchain_ or _Llam
         from trulens_eval.guardrails.base import context_filter
 
         feedback = (
-            Feedback(provider.context_relevance, name = "Context Relevance")
+            Feedback(provider.context_relevance)
             .on_input()
             .on(Select.RecordCalls.retrieve.rets)
         )
