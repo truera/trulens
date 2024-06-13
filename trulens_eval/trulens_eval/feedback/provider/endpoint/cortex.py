@@ -2,6 +2,7 @@ import inspect
 import logging
 import pprint
 from typing import Any, Callable, ClassVar, Optional
+import json
 
 import pydantic
 
@@ -9,6 +10,7 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_CORTEX
+from snowflake.snowpark import DataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -17,26 +19,23 @@ pp = pprint.PrettyPrinter()
 with OptionalImports(messages=REQUIREMENT_CORTEX):
     from snowflake.snowpark import Session
 
+
 class CortexCallback(EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    def handle_classification(self, response: pydantic.BaseModel) -> None:
-        super().handle_classification(response)
+    # TODO: confirm if we really don't need to implement handle_classification
 
-    def handle_generation(self, response: pydantic.BaseModel) -> None:
+    def handle_generation(self, response: dict) -> None:
         """Get the usage information from Cortex LLM function response's usage field."""
-
-        response = response.model_dump()
-
         usage = response['usage']
-            
+
         # Incremente number of requests.
         super().handle_generation(response)
 
         # Assume a response that had usage field was successful. Note at the time of writing 06/12/2024, the usage
-        # information from Cortex LLM functions is only available when called via snow SQL. It's not fully supported in 
+        # information from Cortex LLM functions is only available when called via snow SQL. It's not fully supported in
         # Python API such as `from snowflake.cortex import Summarize, Complete, ExtractAnswer, Sentiment, Translate` not yet.
-        
+
         self.cost.n_successful_requests += 1
 
         for cost_field, cortex_field in [
@@ -47,10 +46,8 @@ class CortexCallback(EndpointCallback):
             setattr(self.cost, cost_field, usage.get(cortex_field, 0))
 
 
-
 class CortexEndpoint(Endpoint):
     """Snowflake Cortex endpoint."""
-
 
     def __init__(self, *args, **kwargs):
         if hasattr(self, "name"):
@@ -65,15 +62,11 @@ class CortexEndpoint(Endpoint):
 
         kwargs['name'] = "cortex"
         kwargs['callback_class'] = CortexCallback
-        
 
         super().__init__(*args, **kwargs)
-        from snowflake import snowpark
-        # TODO: figure out if there are other methods or class we want to instrument with _instrument_module_members / _instrument_module
-        self._instrument_module_members(snowpark, "Session.sql")
+        self._instrument_class(Session, "sql")
 
-
-    def __new__(cls, *args, **kwargs):     
+    def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="cortex")
 
     def handle_wrapped_call(
@@ -83,17 +76,19 @@ class CortexEndpoint(Endpoint):
 
         counted_something = False
 
-        
-        if hasattr(response, 'usage'):
-            counted_something = True
+        if isinstance(response, DataFrame):  # response is a snowflake dataframe instance
+            response: dict = json.loads(response.collect()[0][0])
 
-            self.global_callback.handle_generation(response=response)
+            if 'usage' in response:
+                counted_something = True
 
-            if callback is not None:
-                callback.handle_generation(response=response)
+                self.global_callback.handle_generation(response=response)
 
-        if not counted_something:
-            logger.warning(
-                "Unrecognized Cortex response format. It did not have usage information:\n%s",
-                pp.pformat(response)
-            )
+                if callback is not None:
+                    callback.handle_generation(response=response)
+
+            if not counted_something:
+                logger.warning(
+                    "Unrecognized Cortex response format. It did not have usage information:\n%s",
+                    pp.pformat(response)
+                )
