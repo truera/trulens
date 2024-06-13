@@ -2,7 +2,7 @@
 # How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
 
 SHELL := /bin/bash
-CONDA_ENV := py311_trulens
+CONDA_ENV := py312
 CONDA_ACTIVATE := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 CONDA := $(CONDA_ACTIVATE) $(CONDA_ENV)
 
@@ -145,7 +145,7 @@ clean:
 # Step: Packages trulens into .whl file 
 build:
 	python setup.py bdist_wheel
-	
+
 # Step: Uploads .whl file to PyPI, run make with:
 # https://portal.azure.com/#@truera.com/asset/Microsoft_Azure_KeyVault/Secret/https://trulenspypi.vault.azure.net/secrets/trulens-pypi-api-token/abe0d9a3a5aa470e84c12335c9c04c72
 
