@@ -41,7 +41,7 @@ class context_filter:
                         (
                             lambda context: self.feedback(
                                 args[1], context
-                            ) > self.threshold
+                            )
                         ),
                         context
                     )
@@ -49,9 +49,10 @@ class context_filter:
             )
             wait([future for (_, future) in futures])
             results = list((context, future.result()) for (context, future) in futures)
-            filtered = map(first, filter(second, results))
-            wrapper.__name__ = func.__name__
-            wrapper.__doc__ = func.__doc__
+            for context, result in results:
+                if not isinstance(result, float):
+                    raise ValueError("Guardrails can only be used with feedback functions that return a float.")
+            filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
             return list(filtered)
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
