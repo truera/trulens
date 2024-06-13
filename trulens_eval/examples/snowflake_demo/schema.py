@@ -51,7 +51,7 @@ class Conversation:
         self.model_config: ModelConfig = ModelConfig()
         self.feedback: ConversationFeedback = None
 
-    def add_message(self, message: Message, container=None, render=True):
+    def add_message(self, message: Message, container=st, render=True):
         self.messages.append(message)
         if render:
             self.render_message(message, container, key=str(len(self.messages)))
@@ -59,37 +59,46 @@ class Conversation:
     def reset_messages(self):
         self.messages: List[Message] = []
 
-    def render_all(self, container=None):
+    def render_all(self, container=st):
         for idx, message in enumerate(self.messages):
             self.render_message(message, container, key=str(idx))
+
+    @st.experimental_fragment(run_every=2)
+    def render_feedbacks(self, message: Message, key: str):      
+        feedbacks: dict[str, FeedbackDisplay] = message.feedbacks
+        if len(feedbacks) == 0:
+            return
+
+        feedback_cols = list(feedbacks.keys())
+        icons = list(map(lambda fcol: feedbacks[fcol].icon,feedback_cols))
+        
+        st.write('**Feedback functions**')
+        selected_fcol = pills(
+            "Feedback functions",
+            feedback_cols,
+            index=None,
+            format_func=lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}",
+            label_visibility="collapsed", # Hiding because we can't format the label here.
+            icons=icons,
+            key=f"{key}_{len(feedbacks)}" # Important! Otherwise streamlit sometimes lazily skips update even with st.exprimental_fragment
+        )
+
+        if selected_fcol != None:
+            calls: list[FeedbackCall] = feedbacks[selected_fcol].calls
+            calls_dict = list(map(lambda fcall: fcall.model_dump(), calls))
+            st.dataframe(pd.DataFrame.from_records(calls_dict), use_container_width=True, hide_index=True)
+
+        if len(message.sources) > 0:
+                with st.expander(f'**{len(message.sources)} sources used**'):
+                    st.dataframe(pd.DataFrame(list(message.sources), columns=['Source text']), use_container_width=True, hide_index=True )
 
     def render_message(self, message: Message, container=st, key=str(datetime.now())):
         with container.chat_message(message.role): 
             st.write(message.content)
 
-            if len(message.feedbacks) > 0:
-                feedback_cols = list(message.feedbacks.keys())
-                icons = list(map(lambda fcol: message.feedbacks[fcol].icon,feedback_cols))
-
-                st.write('**Feedback functions**')
-                selected_fcol = pills(
-                    "Feedback functions",
-                    feedback_cols,
-                    index=None,
-                    format_func=lambda fcol: f"{fcol} {message.feedbacks[fcol].score:.4f}",
-                    label_visibility="collapsed", # Hiding because we can't format the label here.
-                    icons=icons,
-                    key=key
-                )
-
-                if selected_fcol != None:
-                    calls: list[FeedbackCall] = message.feedbacks[selected_fcol].calls
-                    calls_dict = list(map(lambda fcall: fcall.model_dump(), calls))
-                    st.dataframe(pd.DataFrame.from_records(calls_dict), use_container_width=True, hide_index=True)
+            self.render_feedbacks(message, key)
+                
             
-            if len(message.sources) > 0:
-                with st.expander(f'**{len(message.sources)} sources used**'):
-                    st.dataframe(pd.DataFrame(list(message.sources), columns=['Source text']), use_container_width=True, hide_index=True )
 
 
 

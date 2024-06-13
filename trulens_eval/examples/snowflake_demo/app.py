@@ -106,19 +106,21 @@ if any([c.has_error for c in conversations]):
             c.messages[-1].content = "Something went wrong while generating a response."
         c.has_error = None
 
-# Render the chat
-for idx, msg in enumerate(conversations[0].messages):
-    if msg.role == "user":
-        conversations[0].render_message(msg,key=str(idx))
-    else:
-        msg_cols = st.columns(len(conversations))
-        # ?(garett): Why are we performing an enumeration here
-        for i, conversation in enumerate(conversations):
-            conversation.render_message(
-                conversation.messages[idx],
-                container=msg_cols[i],
-                key=f"conversation_{i}_idx_{idx}"
-            )
+def render_msgs():
+    # Render the chat
+    for idx, msg in enumerate(conversations[0].messages):
+        if msg.role == "user":
+            conversations[0].render_message(msg,key=str(idx))
+        else:
+            msg_cols = st.columns(len(conversations))
+            for i, conversation in enumerate(conversations):
+                conversation.render_message(
+                    conversation.messages[idx],
+                    container=msg_cols[i],
+                    key=f"conversation_{i}_idx_{idx}"
+                )
+
+render_msgs()
 
 user_msg = st.empty()
 response = st.empty()

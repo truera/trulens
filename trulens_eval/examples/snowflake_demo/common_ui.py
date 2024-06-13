@@ -6,7 +6,6 @@ from typing import Dict
 import streamlit as st
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
-from streamlit_pills import pills
 
 from conversation_manager import ConversationManager
 from llm import StreamGenerator, AVAILABLE_MODELS
@@ -24,6 +23,7 @@ from trulens_eval.ux.styles import CATEGORY
 from trulens_eval.schema.feedback import FeedbackDefinition, FeedbackResult, FeedbackCall
 from trulens_eval.schema.record import Record
 from trulens_eval.utils.python import Future
+
 
 generator = StreamGenerator()
 
@@ -257,34 +257,40 @@ def chat_response(
         message = conversation.messages[-1]
         message.content = str(text_response).strip()
 
-        if config.use_rag and recorder is not None:
-            if record.feedback_and_future_results is None:
-                return
+        # Check if we have to return feedback function results for the RAG triad.
+        if not config.use_rag or recorder is None:
+            return
+        
+        # If no feedback functions are returning we can skip it.
+        if record.feedback_and_future_results is None:
+            return
 
-            def update_result(feedback_def: FeedbackDefinition, future_result: Future[FeedbackResult]):
-                result = future_result.result()
-                calls = result.calls
-                score = result.result or 0
-                
-                message.feedbacks[feedback_def.name] = FeedbackDisplay(
-                    score=score, 
-                    calls=calls, 
-                    icon=get_icon(feedback_def, score)
-                )
-
-                # Hacky - hardcodes behavior based on feedback name
-                if feedback_def.name == "Groundedness":
-                    for call in calls:
-                        message.sources.add(call.args['source'])
-
-                if feedback_def.name == "Context Relevance":
-                    for call in calls:
-                        message.sources.add(call.args['context'])
-
-                st.rerun()
+        # Let this be updated async and streamlit pick i tup later
+        def update_result(fdef: FeedbackDefinition, fres: Future[FeedbackResult]):
+            result = fres.result()
+            calls = result.calls
+            score = result.result or 0
             
-            for feedback_def, future_result in record.feedback_and_future_results:
-                st_thread(target=update_result, args=(feedback_def, future_result))
+            message.feedbacks[fdef.name] = FeedbackDisplay(
+                score=score, 
+                calls=calls, 
+                icon=get_icon(fdef, score)
+            )
+
+            # Hacky - hardcodes behavior based on feedback name
+            if fdef.name == "Groundedness":
+                for call in calls:
+                    message.sources.add(call.args['source'])
+
+            if fdef.name == "Context Relevance":
+                for call in calls:
+                    message.sources.add(call.args['context'])
+
+
+        for feedback_def, future_result in record.feedback_and_future_results:
+            t = st_thread(target=update_result, args=(feedback_def, future_result))
+            t.start()
+
                 
     except Exception as e:
         conversation.has_error = True
