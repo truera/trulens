@@ -90,4 +90,4 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
 
     Feedback function used as a guardrail must only return a float score, and cannot also return reasons.
 
-TruLens has native python and framework-specific tooling for implementing guardrails. Read more about the availble guardrails in [native python](../api/guardrails/base), [Langchain](../api/guardrails/langchain) and [Llama-Index](../api/guardrails/llama).
+TruLens has native python and framework-specific tooling for implementing guardrails. Read more about the availble guardrails in [native python](../api/guardrails/index), [Langchain](../api/guardrails/langchain) and [Llama-Index](../api/guardrails/llama).
