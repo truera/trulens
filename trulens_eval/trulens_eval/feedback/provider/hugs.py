@@ -579,7 +579,8 @@ class Huggingface(Provider):
 
         Args:
             model_output (str): This is what an LLM returns based on the text chunks retrieved during RAG
-            retrieved_text_chunk (str): These are the text chunks you have retrieved during RAG
+
+            retrieved_text_chunks (str): These are the text chunks you have retrieved during RAG
 
         Returns:
             float: Hallucination score
