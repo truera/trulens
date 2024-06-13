@@ -41,7 +41,7 @@ optional_mods = dict(
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
     ],
-    cortex=[
+    snowflake_snowpark_python=[
         "trulens_eval.feedback.provider.cortex",
         "trulens_eval.feedback.provider.endpoint.cortex"
     ],
