@@ -32,6 +32,7 @@ module.exports = {
         extensions: ['.tsx', '.jsx'],
       },
     ],
+   "import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/*.test.ts"]}],
     'import/extensions': [
       'error',
       {

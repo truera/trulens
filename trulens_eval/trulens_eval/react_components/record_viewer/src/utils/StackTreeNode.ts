@@ -1,5 +1,5 @@
 import { CallJSONRaw, PerfJSONRaw, StackJSONRaw } from '@/utils/types';
-import { getMethodNameFromCell, getPathName } from '@/utils/utils';
+import { getMethodNameFromCell, getMicroseconds, getPathName } from '@/utils/utils';
 
 export const ROOT_NODE_ID = 'root-root-root';
 
@@ -36,8 +36,8 @@ export class StackTreeNode {
     perf?: PerfJSONRaw;
   }) {
     if (perf) {
-      const startTime = new Date(perf.start_time).getTime();
-      const endTime = new Date(perf.end_time).getTime();
+      const startTime = getMicroseconds(perf.start_time);
+      const endTime = getMicroseconds(perf.end_time);
       this.startTime = startTime;
       this.endTime = endTime;
     }

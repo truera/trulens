@@ -8,6 +8,7 @@ import { summarySx } from '@/RecordTree/Details/styles';
 import TracePanel from '@/RecordTree/Details/TracePanel';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 import { RecordJSONRaw } from '@/utils/types';
+import { formatDuration } from '@/utils/utils';
 
 type DetailsProps = {
   selectedNode: StackTreeNode;
@@ -29,7 +30,7 @@ export default function NodeDetails({ selectedNode, recordJSON }: DetailsProps) 
   return (
     <>
       <Stack direction="row" sx={summarySx}>
-        <LabelAndValue label="Time taken" value={<Typography>{nodeTime} ms</Typography>} />
+        <LabelAndValue label="Time taken" value={<Typography>{formatDuration(nodeTime)}</Typography>} />
       </Stack>
 
       <Grid container gap={1}>
