@@ -19,12 +19,13 @@ class Cortex(LLMProvider):
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
        Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
     """
-
+    
     endpoint: CortexEndpoint
     snowflake_session: Session
     
     def __init__(
         self,
+        
         model_engine: Optional[str] = None,
         snowflake_connection_params: Optional[Dict] = None,
         *args,
@@ -77,14 +78,12 @@ class Cortex(LLMProvider):
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
         **kwargs
-    ) -> str:
-
-        
+    ) -> str:        
         if 'model' not in kwargs:
             kwargs['model'] = self.model_engine
         if 'temperature' not in kwargs:
             kwargs['temperature'] = 0.0
-
+            
         if messages is not None:
             kwargs['messages'] = messages
 
