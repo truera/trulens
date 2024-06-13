@@ -68,8 +68,9 @@ class CortexEndpoint(Endpoint):
         
 
         super().__init__(*args, **kwargs)
-        
-        # TODO: figure out if there are methods or class we want to instrument with _instrument_me
+        from snowflake import snowpark
+        # TODO: figure out if there are other methods or class we want to instrument with _instrument_module_members / _instrument_module
+        self._instrument_module_members(snowpark, "Session.sql")
 
 
     def __new__(cls, *args, **kwargs):     
@@ -82,6 +83,7 @@ class CortexEndpoint(Endpoint):
 
         counted_something = False
 
+        
         if hasattr(response, 'usage'):
             counted_something = True
 

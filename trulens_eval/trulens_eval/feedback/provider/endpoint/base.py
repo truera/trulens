@@ -120,6 +120,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             arg_flag="with_bedrock",
             module_name="trulens_eval.feedback.provider.endpoint.bedrock",
             class_name="BedrockEndpoint"
+        ),
+        EndpointSetup(
+            arg_flag="with_cortex",
+            module_name="trulens_eval.feedback.provider.endpoint.cortex",
+            class_name="CortexEndpoint"
         )
     ]
 
@@ -439,6 +444,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        with_cortex: bool = True,
         **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -486,6 +492,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        with_cortex: bool = True,
         **kwargs
     ) -> Tuple[T, mod_base_schema.Cost]:
         """
@@ -500,6 +507,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             with_hugs=with_hugs,
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
+            with_cortex=with_cortex,
             **kwargs
         )
 
@@ -518,11 +526,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_endpoints: Optional[List[Endpoint]] = None,
         **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
+        
         """
         Root of all cost tracking methods. Runs the given `thunk`, tracking
         costs using each of the provided endpoints' callbacks.
         """
-
         # Check to see if this call is within another _track_costs call:
         endpoints: Dict[Type[EndpointCallback], List[Tuple[Endpoint, EndpointCallback]]] = \
             get_first_local_in_call_stack(
@@ -586,7 +594,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         Returns the thunk's result alongside the EndpointCallback object that
         includes the usage information.
         """
-
+    
         result, callbacks = Endpoint._track_costs(
             __func, *args, with_endpoints=[self], **kwargs
         )
