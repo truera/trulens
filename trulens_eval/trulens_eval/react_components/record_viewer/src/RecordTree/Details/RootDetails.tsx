@@ -4,6 +4,7 @@ import LabelAndValue from '@/LabelAndValue';
 import TracePanel from '@/RecordTree/Details/TracePanel';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 import { RecordJSONRaw } from '@/utils/types';
+import { formatDuration } from '@/utils/utils';
 
 type RootDetailsProps = {
   root: StackTreeNode;
@@ -16,7 +17,7 @@ export default function RootDetails({ root, recordJSON }: RootDetailsProps) {
   return (
     <>
       <Stack direction="row" sx={rootDetailsContainerSx}>
-        <LabelAndValue label="Latency" value={<Typography>{nodeTime} ms</Typography>} />
+        <LabelAndValue label="Latency" value={<Typography>{formatDuration(nodeTime)}</Typography>} />
       </Stack>
 
       <TracePanel recordJSON={recordJSON} />
