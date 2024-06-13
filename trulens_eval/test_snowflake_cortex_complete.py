@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from snowflake.snowpark import Session
 from snowflake.cortex import Summarize, Complete, ExtractAnswer, Sentiment, Translate
 
+from trulens_eval import Feedback, Select
+
 # Load environment variables from .env
 load_dotenv()
 
@@ -94,10 +96,31 @@ def main():
         #     f"Complete() Snowflake Cortex LLM function (Python API) result:\n{completion_result.strip()}\n"
         # )
         
-        completion_result_with_sql = complete_sql(user_text)
-        print(f"Complete() Snowflake Cortex LLM function (SQL) result:\n{completion_result_with_sql}\n")
+        # completion_result_with_sql = complete_sql(user_text)
+        # print(f"Complete() Snowflake Cortex LLM function (SQL) result:\n{completion_result_with_sql}\n")
 
 
+        from trulens_eval import Cortex
+        import numpy as np
+        provider = Cortex(model_engine="snowflake-arctic")
+        f_answer_relevance = (
+            Feedback(provider.relevance_with_cot_reasons, name = "Answer Relevance")
+            .on(Select.RecordCalls.retrieve.args.query)
+            .on_output()
+        )
+        
+        f_context_relevance = (
+            Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+            .on(Select.RecordCalls.retrieve.args.query)
+            .on(Select.RecordCalls.retrieve.rets.collect())
+            .aggregate(np.mean)
+        )
+
+        
+        
+        print(f_answer_relevance('Is apple edible?', "yes apple is a very common fruit"))
+        
+        print(f_context_relevance('what is Apple', ['Apple is one of the largest companies in the world', 'Apples are red']))
         # answer_result = extract_answer(user_text)
         # print(
         #     f"ExtractAnswer() Snowflake Cortex LLM function result:\n{answer_result}\n"

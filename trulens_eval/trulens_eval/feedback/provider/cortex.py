@@ -21,7 +21,8 @@ class Cortex(LLMProvider):
     """
 
     endpoint: CortexEndpoint
-
+    snowflake_session: Session
+    
     def __init__(
         self,
         model_engine: Optional[str] = None,
@@ -47,24 +48,29 @@ class Cortex(LLMProvider):
         
         super().__init__(**self_kwargs)
         
-
-    def _exec_snowsql_complete_command(self, model: str, temperature: float, messages: Optional[Sequence[Dict]] = None,
-    ):
+    def escape_string_for_sql(self, input_string: str) -> str:
+        escaped_string = input_string.replace('\\', '\\\\')
+        escaped_string = escaped_string.replace("'", "''")
+        return escaped_string
+    
+    def _exec_snowsql_complete_command(self, model: str, temperature: float, messages: Optional[Sequence[Dict]] = None):
+        # Ensure messages are formatted as a JSON array string
+        if messages is None:
+            messages = []
+        messages_json_str = json.dumps(messages)
+        
+        options = {'temperature': temperature}
+        options_json_str = json.dumps(options)
+        
         completion_input_str = f"""SELECT SNOWFLAKE.CORTEX.COMPLETE(
             '{model}',
-            {messages}
-            , {{
-                'temperature': {temperature}
-            }}
-            )"""
-        def escape_string_for_sql(input_string): # TODO: move to a better place or refactor to sth nicer
-            # Replace backslashes first to avoid double escaping
-            escaped_string = input_string.replace('\\', '\\\\')
-            # Replace single quotes with double single quotes
-            escaped_string = escaped_string.replace("'", "''")
-            return escaped_string
+            parse_json('{self.escape_string_for_sql(messages_json_str)}'),
+            parse_json('{self.escape_string_for_sql(options_json_str)}')
+        )"""
         
-        return self.snowflake_session.sql(escape_string_for_sql(completion_input_str)).collect()
+        # Executing Snow SQL command requires an active snow session
+        return self.snowflake_session.sql(completion_input_str).collect()
+    
     
     def _create_chat_completion(
         self,
@@ -95,7 +101,7 @@ class Cortex(LLMProvider):
         res = self._exec_snowsql_complete_command(**kwargs)
 
         completion = json.loads(res[0][0])["choices"][0]["messages"]
-        
+       
         return completion
         
         

@@ -7,4 +7,6 @@
 
 4. Key redaction for snowflake credentials
 
+5. session close?
+
 
