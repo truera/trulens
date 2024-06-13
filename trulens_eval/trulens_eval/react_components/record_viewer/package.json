@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "prettier": "prettier --config .prettierrc . --write",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "LC_ALL=en-US.UTF-8 vitest"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -42,9 +43,9 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.1",
     "eslint-plugin-simple-import-sort": "^10.0.0",
-    "jest": "^29.7.0",
     "prettier": "^3.0.0",
     "typescript": "^5.0.2",
-    "vite": "^4.5.2"
+    "vite": "^4.5.2",
+    "vitest": "^1.6.0"
   }
 }
