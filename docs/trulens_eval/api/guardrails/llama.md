@@ -1,3 +1,3 @@
-# Llama-Index Guardrails
+# Guardrails with Llama-Index
 
 ::: trulens_eval.guardrails.llama

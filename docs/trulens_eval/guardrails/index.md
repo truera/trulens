@@ -22,21 +22,42 @@ _TruLens_ context filter guardrails are easy to add to your _Langchain_ or _Llam
 
 !!! example "Using context filter guardrails"
 
-    === "in _Langchain_"
+    === "python"
+
+        ```python
+        from trulens_eval.guardrails.base import context_filter
+
+        feedback = (
+            Feedback(provider.context_relevance, name = "Context Relevance")
+            .on_input()
+            .on(Select.RecordCalls.retrieve.rets)
+        )
+
+        class RAG_from_scratch:
+        @context_filter(feedback, 0.5)
+        def retrieve(query: str) -> list:
+            results = vector_store.query(
+            query_texts=query,
+            n_results=3
+        )
+        return [doc for sublist in results['documents'] for doc in sublist]
+        ...
+        ```  
+
+    === "with _Langchain_"
 
         ```python
         from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments
 
-        f_context_relevance = (
-            Feedback(provider.context_relevance)
+        feedback = (
+            Feedback(provider.context_relevance, name = "Context Relevance")
             .on_input()
-            .on(context)
-            .aggregate(np.mean)
+            .on(Select.RecordCalls.retrieve.rets)
         )
 
         filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever,
-            feedback=f_context_relevance,
+            feedback=feedback
             threshold=0.5
         )
 
@@ -49,20 +70,19 @@ _TruLens_ context filter guardrails are easy to add to your _Langchain_ or _Llam
         )
         ```  
 
-    === "in _Llama-Index_"
+    === "with _Llama-Index_"
 
         ```python
         from trulens_eval.guardrails.llama import WithFeedbackFilterNodes
 
-        f_context_relevance = (
-            Feedback(provider.context_relevance)
+        feedback = (
+            Feedback(provider.context_relevance, name = "Context Relevance")
             .on_input()
-            .on(context)
-            .aggregate(np.mean)
+            .on(Select.RecordCalls.retrieve.rets)
         )
 
         filtered_query_engine = WithFeedbackFilterNodes(query_engine,
-            feedback=f_context_relevance,
+            feedback=feedback,
             threshold=0.5)
         ```
 
@@ -70,4 +90,4 @@ _TruLens_ context filter guardrails are easy to add to your _Langchain_ or _Llam
 
     Feedback function used as a guardrail must only return a float score, and cannot also return reasons.
 
-TruLens has framework-specific tooling for implementing guardrails. Read more about the availble guardrails in [Langchain](../api/guardrails/langchain) and [Llama-Index](../api/guardrails/llama).
+TruLens has native python and framework-specific tooling for implementing guardrails. Read more about the availble guardrails in [native python](../api/guardrails/base), [Langchain](../api/guardrails/langchain) and [Llama-Index](../api/guardrails/llama).
