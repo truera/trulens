@@ -951,20 +951,25 @@ Feedback function signature:
                 result_vals.append(result_val)
                 feedback_calls.append(feedback_call)
 
+            # Warn that there were some skipped evals.
+            if len(skipped_exceptions) > 0:
+                num_skipped = len(skipped_exceptions)
+                num_evaled = len(result_vals)
+                num_total = num_skipped + num_evaled
+                warnings.warn(
+                    (f"{num_skipped}/{num_total}={100.0*num_skipped/num_total:0.1f}"
+                     "% evaluation(s) were skipped because they raised SkipEval "
+                     "(see earlier warnings for listing)."),
+                    UserWarning,
+                    stacklevel=1
+                )
+
             if len(result_vals) == 0:
                 warnings.warn(
                     f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs.",
                     UserWarning,
                     stacklevel=1
                 )
-                # Log any SkipCombination exceptions in case that was the reason
-                # why no results were collected.
-                if len(skipped_exceptions) > 0:
-                    warnings.warn(
-                        "One or more evaluations were skipped because they raised SkipEval (see earlier warnings).",
-                        UserWarning,
-                        stacklevel=1
-                    )
 
                 result = np.nan
 
