@@ -6,7 +6,6 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
-from tqdm.auto import tqdm
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
@@ -1197,13 +1196,13 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download('punkt')
+        nltk.download('punkt', quiet=True)
         groundedness_scores = {}
         reasons_str = ""
 
         hypotheses = sent_tokenize(statement)
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
-        
+
         def evaluate_hypothesis(index, hypothesis):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
@@ -1223,7 +1222,8 @@ class LLMProvider(Provider):
 
         for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
-            reasons_str += f"STATEMENT {i}:\n{reason['reason']}\n"
+            reason_str = reason['reason'] if 'reason' in reason else "reason not generated"
+            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
 
         # Calculate the average groundedness score from the scores dictionary
         average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
