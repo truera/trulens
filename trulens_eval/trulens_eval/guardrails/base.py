@@ -39,7 +39,7 @@ class context_filter:
                     context,
                     ex.submit(
                         (
-                            lambda context=context: self.feedback(args[1], context)
+                            lambda context: self.feedback(args[1], context)
                                 args[1], context
                             )
                         ),
