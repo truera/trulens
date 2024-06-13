@@ -206,13 +206,14 @@ nav:
           - Running on existing data: trulens_eval/evaluation/running_feedback_functions/existing_data.md
       - Generating Test Cases:
           - trulens_eval/evaluation/generate_test_cases/index.md
-      - Feedback Evaluations:
-          # PLACEHOLDER: - trulens_eval/evaluation/feedback_evaluations/index.md
-          - Answer Relevance Benchmark (small): trulens_eval/evaluation/feedback_evaluations/answer_relevance_benchmark_small.ipynb
-          - Comprehensiveness Benchmark: trulens_eval/evaluation/feedback_evaluations/comprehensiveness_benchmark.ipynb
-          - Context Relevance Benchmark (small): trulens_eval/evaluation/feedback_evaluations/context_relevance_benchmark_small.ipynb
-          - Context Relevance Benchmark (large): trulens_eval/evaluation/feedback_evaluations/context_relevance_benchmark.ipynb
-          - Groundedness Benchmark: trulens_eval/evaluation/feedback_evaluations/groundedness_benchmark.ipynb
+  - 📊 Evaluation Benchmarks:
+      - trulens_eval/evaluation_benchmarks/index.md
+      - Evaluation Benchmark Code:
+          - Answer Relevance Benchmark (small): trulens_eval/evaluation_benchmarks/answer_relevance_benchmark_small.ipynb
+          - Comprehensiveness Benchmark: trulens_eval/evaluation_benchmarks/comprehensiveness_benchmark.ipynb
+          - Context Relevance Benchmark (small): trulens_eval/evaluation_benchmarks/context_relevance_benchmark_small.ipynb
+          - Context Relevance Benchmark (large): trulens_eval/evaluation_benchmarks/context_relevance_benchmark.ipynb
+          - Groundedness Benchmark: trulens_eval/evaluation_benchmarks/groundedness_benchmark.ipynb
   - 🎺 Tracking:
       # PLACEHOLDER: - trulens_eval/tracking/index.md
       - Instrumentation Overview:
@@ -305,3 +306,5 @@ extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - javascript/tex-mml-chtml-3.0.0.js
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+  - https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js
+  - javascript/tablesort.js
