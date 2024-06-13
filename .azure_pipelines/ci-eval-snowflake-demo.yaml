@@ -1,0 +1,19 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - snowflake_demo
+
+jobs:
+  - job: 
+    pool:
+      vmImage: "ubuntu-latest"
+    timeoutInMinutes: 30
+
+    steps:
+      - checkout: self
+        clean: true
+      - bash: TODO
+        displayName: Create docker image and push to Snowflake repository.
+      - bash: TODO
+        displayName: Update service in Snowflake.
