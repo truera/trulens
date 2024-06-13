@@ -265,7 +265,7 @@ def chat_response(
         if record.feedback_and_future_results is None:
             return
 
-        # Let this be updated async and streamlit pick i tup later
+        # Let this be updated async and streamlit pick it up later
         def update_result(fdef: FeedbackDefinition, fres: Future[FeedbackResult]):
             result = fres.result()
             calls = result.calls
