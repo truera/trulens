@@ -43,7 +43,7 @@ Calibrations are crucial steps in the evaluation process of feedback functions. 
 | 0.7         | GPT-4-Turbo | 0.737771 |
 | 1.0         | GPT-4-Turbo | 0.732807 |
 
-[See the code.](context_relevance_calibration.ipynb)
+[See the code.](context_relevance_benchmark_calibration.ipynb)
 
 ## Groundedness
 

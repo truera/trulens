@@ -24,6 +24,10 @@ lab:
 serve: .conda/docs
 	$(CONDA) .conda/docs; mkdocs serve -a 127.0.0.1:8000
 
+# Serve the documentation website.
+serve-debug: .conda/docs
+	$(CONDA) .conda/docs; mkdocs serve -a 127.0.0.1:8000 --verbose
+
 # The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
 # break references.
 serve-dirty: .conda/docs
