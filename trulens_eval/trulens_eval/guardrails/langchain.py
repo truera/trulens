@@ -99,20 +99,19 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
             (
                 doc,
                 ex.submit(
-                    (
-                        lambda doc, query: self.
-                        feedback(query, doc.page_content) > self.threshold
-                    ),
-                    query=query,
-                    doc=doc
+                    lambda doc, query: self.feedback(query, doc.page_content),
+                    doc,
+                    query
                 )
             ) for doc in docs
         )
-
         wait([future for (_, future) in futures])
 
         results = list((doc, future.result()) for (doc, future) in futures)
-        filtered = map(first, filter(second, results))
+        for doc, result in results:
+            if not isinstance(result, float):
+                raise ValueError("Guardrails can only be used with feedback functions that return a float.")
+        filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
 
         # Return only the filtered ones.
         return list(filtered)
