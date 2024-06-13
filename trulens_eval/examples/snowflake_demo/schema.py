@@ -3,8 +3,11 @@ from copy import deepcopy
 from typing import List, Literal, Optional
 from pydantic import BaseModel
 import streamlit as st
-from trulens_eval import TruCustomApp
-
+from trulens_eval.tru_custom_app import TruCustomApp
+from streamlit_pills import pills
+import pandas as pd
+from datetime import datetime
+from trulens_eval.schema.feedback import FeedbackCall
 
 class ModelConfig(BaseModel):
     model: str = "Snowflake Arctic"
@@ -16,9 +19,16 @@ class ModelConfig(BaseModel):
     trulens_recorder: Optional[TruCustomApp] = None
 
 
+class FeedbackDisplay(BaseModel):
+    score: float = 0
+    calls: list[FeedbackCall]
+    icon: str
+
 class Message(BaseModel):
     role: Literal["user", "assistant", "system"]
     content: str
+    feedbacks: dict[str, FeedbackDisplay] = {}
+    sources: set[str] = set()
 
 
 class ConversationFeedback(BaseModel):
@@ -41,23 +51,73 @@ class Conversation:
         self.model_config: ModelConfig = ModelConfig()
         self.feedback: ConversationFeedback = None
 
-    def add_message(self, message: Message, container=None, render=True):
+    def add_message(self, message: Message, container=st, render=True):
         self.messages.append(message)
         if render:
-            self.render_message(message, container)
+            self.render_message(message, container, key=str(len(self.messages)))
 
     def reset_messages(self):
         self.messages: List[Message] = []
 
-    def render_all(self, container=None):
-        for message in self.messages:
-            self.render_message(message, container)
+    def render_all(self, container=st):
+        for idx, message in enumerate(self.messages):
+            self.render_message(message, container, key=str(idx))
 
-    def render_message(self, message: Message, container=None):
-        if container is not None:
-            container.chat_message(message.role).write(message.content)
-        else:
-            st.chat_message(message.role).write(message.content)
+    @st.experimental_fragment(run_every=2)
+    def render_feedbacks(self, message: Message, key: str):      
+        feedbacks: dict[str, FeedbackDisplay] = message.feedbacks
+        if len(feedbacks) == 0:
+            return
+
+        feedback_cols = list(feedbacks.keys())
+        icons = list(map(lambda fcol: feedbacks[fcol].icon,feedback_cols))
+        
+        st.write('**Feedback functions**')
+        selected_fcol = pills(
+            "Feedback functions",
+            feedback_cols,
+            index=None,
+            format_func=lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}",
+            label_visibility="collapsed", # Hiding because we can't format the label here.
+            icons=icons,
+            key=f"{key}_{len(feedbacks)}" # Important! Otherwise streamlit sometimes lazily skips update even with st.exprimental_fragment
+        )
+
+        # Extract the arguments + meta from the feedback call into a dict
+        def extract_call(fcall: FeedbackCall):
+            ret = {}
+            fcall_dump = fcall.model_dump()
+
+            if 'args' in fcall_dump:
+                for arg in fcall_dump['args'].keys():
+                    ret[arg] = fcall_dump['args'][arg]
+
+            ret['result'] = fcall_dump['ret']
+
+            if 'meta' in fcall_dump:
+                for met in fcall_dump['meta'].keys():
+                    ret[met] = fcall_dump['meta'][met]
+
+            return ret
+
+        if selected_fcol != None:
+            calls: list[FeedbackCall] = feedbacks[selected_fcol].calls
+            calls_dict = list(map(lambda fcall: extract_call(fcall), calls))
+            st.dataframe(pd.DataFrame.from_records(calls_dict), use_container_width=True, hide_index=True)
+
+        if len(message.sources) > 0:
+                with st.expander(f'**{len(message.sources)} sources used**'):
+                    st.dataframe(pd.DataFrame(list(message.sources), columns=['Source text']), use_container_width=True, hide_index=True )
+
+    def render_message(self, message: Message, container=st, key=str(datetime.now())):
+        with container.chat_message(message.role): 
+            st.write(message.content)
+
+            self.render_feedbacks(message, key)
+                
+            
+
+
 
     def messages_to_text(self, truncate=True):
         msgs = []

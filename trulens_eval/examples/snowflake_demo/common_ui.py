@@ -11,13 +11,19 @@ from conversation_manager import ConversationManager
 from llm import StreamGenerator, AVAILABLE_MODELS
 from schema import (
     Conversation,
+    FeedbackDisplay,
     Message,
     ModelConfig,
 )
 
 # feedback functions
 from feedback import feedbacks_no_rag, feedbacks_rag
-from trulens_eval import TruCustomApp
+from trulens_eval.tru_custom_app import TruCustomApp
+from trulens_eval.ux.styles import CATEGORY
+from trulens_eval.schema.feedback import FeedbackDefinition, FeedbackResult, FeedbackCall
+from trulens_eval.schema.record import Record
+from trulens_eval.utils.python import Future
+
 
 generator = StreamGenerator()
 
@@ -216,6 +222,13 @@ def configure_model(*, container, model_config: ModelConfig, key: str, full_widt
     model_config.trulens_recorder = app
     return model_config
 
+def get_icon(fdef: FeedbackDefinition, result: float):
+    cat = CATEGORY.of_score(
+        result or 0,
+        higher_is_better=fdef.higher_is_better if fdef.higher_is_better is not None else True
+    )
+    return cat.icon
+
 def chat_response(
     conversation: Conversation,
     container=None,
@@ -225,18 +238,60 @@ def chat_response(
         render=False,
     )
     try:
+        config = conversation.model_config
+        recorder = config.trulens_recorder
+
         if container:
             chat = container.chat_message("assistant")
         else:
             chat = st.chat_message("assistant")
-        with conversation.model_config.trulens_recorder:
+        with recorder as context:
             user_message, prompt = generator.prepare_prompt(conversation)
             if conversation.model_config.use_rag:
                 text_response: str = generator.retrieve_and_generate_response(user_message, prompt, conversation, chat)
             else:
                 text_response: str = generator.generate_response(user_message, prompt, conversation, chat)
 
-        conversation.messages[-1].content = str(text_response).strip()
+        record: Record = context.get()
+
+        message = conversation.messages[-1]
+        message.content = str(text_response).strip()
+
+        # Check if we have to return feedback function results for the RAG triad.
+        if not config.use_rag or recorder is None:
+            return
+        
+        # If no feedback functions are returning we can skip it.
+        if record.feedback_and_future_results is None:
+            return
+
+        # Let this be updated async and streamlit pick it up later
+        def update_result(fdef: FeedbackDefinition, fres: Future[FeedbackResult]):
+            result = fres.result()
+            calls = result.calls
+            score = result.result or 0
+            
+            message.feedbacks[fdef.name] = FeedbackDisplay(
+                score=score, 
+                calls=calls, 
+                icon=get_icon(fdef, score)
+            )
+
+            # Hacky - hardcodes behavior based on feedback name
+            if fdef.name == "Groundedness":
+                for call in calls:
+                    message.sources.add(call.args['source'])
+
+            if fdef.name == "Context Relevance":
+                for call in calls:
+                    message.sources.add(call.args['context'])
+
+
+        for feedback_def, future_result in record.feedback_and_future_results:
+            t = st_thread(target=update_result, args=(feedback_def, future_result))
+            t.start()
+
+                
     except Exception as e:
         conversation.has_error = True
         print("Error while generating chat response: " + str(e))
@@ -276,8 +331,7 @@ def generate_title(
     title_json = ""
     try:
         last_user_message, prompt = generator.prepare_prompt(conversation)
-        title_json: str = generator.generate_response(last_user_message, prompt, conversation)
-        
+        title_json: str = generator.generate_response(last_user_message, prompt, conversation, should_write=False)
         result = json.loads(title_json)
         response_dict["output"] = result["summary"]
 

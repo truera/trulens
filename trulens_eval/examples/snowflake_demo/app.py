@@ -106,17 +106,21 @@ if any([c.has_error for c in conversations]):
             c.messages[-1].content = "Something went wrong while generating a response."
         c.has_error = None
 
-# Render the chat
-for idx, msg in enumerate(conversations[0].messages):
-    if msg.role == "user":
-        conversations[0].render_message(msg)
-    else:
-        msg_cols = st.columns(len(conversations))
-        for i, conversation in enumerate(conversations):
-            conversation.render_message(
-                conversation.messages[idx],
-                container=msg_cols[i],
-            )
+def render_msgs():
+    # Render the chat
+    for idx, msg in enumerate(conversations[0].messages):
+        if msg.role == "user":
+            conversations[0].render_message(msg,key=str(idx))
+        else:
+            msg_cols = st.columns(len(conversations))
+            for i, conversation in enumerate(conversations):
+                conversation.render_message(
+                    conversation.messages[idx],
+                    container=msg_cols[i],
+                    key=f"conversation_{i}_idx_{idx}"
+                )
+
+render_msgs()
 
 user_msg = st.empty()
 response = st.empty()
@@ -127,7 +131,7 @@ if user_input:
     new_msg = Message(role="user", content=user_input)
     for c in conversations:
         c.add_message(new_msg, render=False)
-    conversations[0].render_message(new_msg, container=user_msg)
+    conversations[0].render_message(new_msg, container=user_msg, key=str(len(conversations[0].messages)))
 
     msg_cols = response.columns(len(conversations))
     threads = []
