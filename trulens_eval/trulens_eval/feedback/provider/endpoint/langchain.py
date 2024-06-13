@@ -7,6 +7,7 @@ from langchain.llms.base import BaseLLM
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.schema import base as mod_base_schema
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +42,18 @@ class LangchainEndpoint(Endpoint):
         bindings: inspect.BoundArguments,
         response: Any,
         callback: Optional[EndpointCallback],
-    ) -> None:
+    ) -> Optional[mod_base_schema.Cost]:
+        
         # TODO: Implement this and wrapped
+
+        cost = None
+
         self.global_callback.handle_generation(response=None)
         if callback is not None:
             callback.handle_generation(response=None)
+            cost = callback.cost
+
+        return cost
 
     def __init__(self, chain: Union[BaseLLM, BaseChatModel], *args, **kwargs):
         if chain is None:

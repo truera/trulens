@@ -31,6 +31,7 @@ import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pace import Pace
@@ -289,7 +290,7 @@ class OpenAIEndpoint(Endpoint):
         bindings: inspect.BoundArguments,
         response: Any,
         callback: Optional[EndpointCallback],
-    ) -> None:
+    ) -> Optional[mod_base_schema.Cost]:
         # TODO: cleanup/refactor. This method inspects the results of an
         # instrumented call made by an openai client. As there are multiple
         # types of calls being handled here, we need to make various checks to
@@ -316,6 +317,8 @@ class OpenAIEndpoint(Endpoint):
         if "results" in response:
             results = response['results']
 
+        cost = None
+
         counted_something = False
         if hasattr(response, 'usage'):
 
@@ -341,6 +344,8 @@ class OpenAIEndpoint(Endpoint):
 
             if callback is not None:
                 callback.handle_generation(response=llm_res)
+                cost = callback.cost
+
 
         if "choices" in response and 'delta' in response.choices[0]:
             # Streaming data.
@@ -348,8 +353,10 @@ class OpenAIEndpoint(Endpoint):
 
             gen = Generation(text=content or '', generation_info=response)
             self.global_callback.handle_generation_chunk(gen)
+
             if callback is not None:
                 callback.handle_generation_chunk(gen)
+                cost = callback.cost
 
             counted_something = True
 
@@ -361,9 +368,12 @@ class OpenAIEndpoint(Endpoint):
 
                     if callback is not None:
                         callback.handle_classification(response=res)
+                        cost = callback.cost
 
         if not counted_something:
             logger.warning(
                 "Could not find usage information in openai response:\n%s",
                 pp.pformat(response)
             )
+
+        return cost

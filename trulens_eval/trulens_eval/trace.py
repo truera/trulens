@@ -11,11 +11,12 @@ import contextlib
 import contextvars
 import logging
 import random
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 import uuid
 
 import pydantic
 
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class Context(pydantic.BaseModel):
     span_id: int = pydantic.Field(default_factory=lambda: random.getrandbits(64))
 
     def __str__(self):
-        return f"{self.trace_id.int % 0xff:02x}/{self.span_id % 0xff:02x})"
+        return f"{self.trace_id.int % 0xff:02x}/{self.span_id % 0xff:02x}"
 
     def __repr__(self):
         return str(self)
@@ -39,6 +40,7 @@ class Context(pydantic.BaseModel):
 class Span(pydantic.BaseModel):
     context: Context
     parent: Optional[Context] = None
+    error: Optional[str] = None
 
 class SpanRecord(Span):
     record: Optional[mod_record_schema.Record] = None
@@ -46,40 +48,46 @@ class SpanRecord(Span):
 class SpanMethodCall(Span):
     call: Optional[mod_record_schema.RecordAppCall] = None
 
+class SpanCost(Span):
+    cost: Optional[mod_base_schema.Cost] = None
+    endpoint: Optional[Any] = None
+
 class Tracer():
     def __init__(self, context: Optional[Context] = None):
         self.context: contextvars.ContextVar[Optional[Context]] = \
             contextvars.ContextVar("context", default=context)
         self.trace_id = uuid.uuid4()
-        self.spans: Dict[Context, Span] = {}
+        self._spans: Dict[Context, Span] = {}
 
     @contextlib.contextmanager
+    def _span(self, cls):
+        print("tracer", cls.__name__)
+        context = Context(trace_id=self.trace_id)
+        span = cls(context=context, tracer=self, parent=self.context.get())
+        self._spans[context] = span
+
+        token = self.context.set(context)
+
+        try:
+            yield span
+        except BaseException as e:
+            span.error = str(e)
+        finally:
+            self.context.reset(token)
+            return
+
     def record(self):
-        context = Context(trace_id=self.trace_id)
-        span = SpanRecord(context=context, tracer=self, parent=self.context.get())
-        self.spans[context] = span
-
-        token = self.context.set(context)
-
-        yield span
-
-        self.context.reset(token)
-
-        return
-
-    @contextlib.contextmanager
+        return self._span(SpanRecord)
+    
     def method(self):
-        context = Context(trace_id=self.trace_id)
-        span = SpanMethodCall(context=context, tracer=self, parent=self.context.get())
-        self.spans[context] = span
+        return self._span(SpanMethodCall)
+    
+    def cost(self):
+        return self._span(SpanCost)
 
-        token = self.context.set(context)
-
-        yield span
-
-        self.context.reset(token)
-
-        return
+    @property
+    def spans(self):
+        return self._spans
 
 class NullTracer(Tracer):
     """Tracer that does not save the spans it makes."""
@@ -90,28 +98,24 @@ class NullTracer(Tracer):
         self.trace_id = uuid.uuid4()
 
     @contextlib.contextmanager
-    def record(self):
+    def _span(self, cls):
+        print("null", cls.__name__)
         context = Context(trace_id=self.trace_id)
-        span = SpanRecord(context=context, tracer=self, parent=self.context.get())
+        span = cls(context=context, tracer=self, parent=self.context.get())
         token = self.context.set(context)
 
-        yield span
-
-        self.context.reset(token)
-
-        return
-
-    @contextlib.contextmanager
-    def method(self):
-        context = Context(trace_id=self.trace_id)
-        span = SpanMethodCall(context=context, tracer=self, parent=self.context.get())
-        token = self.context.set(context)
-
-        yield span
-
-        self.context.reset(token)
-
-        return
+        try:
+            yield span
+        except BaseException as e:
+            # ignore exception since spans are also ignored/not recorded
+            pass
+        finally:
+            self.context.reset(token)
+            return
+    
+    @property
+    def spans(self):
+        return []
 
 class TracerProvider():
     def __init__(self):

@@ -18,6 +18,7 @@ from typing import (
 from pydantic import Field
 import requests
 
+from trulens_eval import trace as mod_trace
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.utils import asynchro as mod_asynchro_utils
 from trulens_eval.utils import pace as mod_pace
@@ -607,7 +608,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
-    ) -> None:
+    ) -> Optional[mod_base_schema.Cost]:
         """
         This gets called with the results of every instrumented method. This
         should be implemented by each subclass.
@@ -674,7 +675,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             # Get the result of the wrapped function:
 
-            response = func(*args, **kwargs)
+            with mod_trace.get_tracer().cost() as span:
+                response = func(*args, **kwargs)
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
@@ -713,12 +715,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
                     for endpoint, callback in endpoints[callback_class]:
                         logger.debug("Handling endpoint %s.", endpoint.name)
-                        endpoint.handle_wrapped_call(
+                        cost = endpoint.handle_wrapped_call(
                             func=func,
                             bindings=bindings,
                             response=response,
                             callback=callback
                         )
+                        span.cost = cost
+                        span.endpoint = endpoint
 
             if isinstance(response, Awaitable):
                 return wrap_awaitable(response, on_done=response_callback)

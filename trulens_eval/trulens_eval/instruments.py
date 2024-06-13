@@ -19,14 +19,13 @@ import os
 from pprint import pformat
 import threading as th
 import traceback
-from typing import (
-    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
-    Type, Union
-)
+from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
+                    Sequence, Set, Tuple, Type, Union)
 import weakref
 
 import pydantic
 
+from trulens_eval import trace as mod_trace
 from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import endpoint as mod_endpoint
 from trulens_eval.schema import base as mod_base_schema
@@ -508,9 +507,11 @@ class Instrument(object):
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                rets, cost = mod_endpoint.Endpoint.track_all_costs_tally(
-                    func, *args, **kwargs
-                )
+                with mod_trace.get_tracer().method() as span:
+
+                    rets, cost = mod_endpoint.Endpoint.track_all_costs_tally(
+                        func, *args, **kwargs
+                    )
 
             except BaseException as e:
                 error = e

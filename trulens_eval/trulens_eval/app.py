@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
 import contextvars
 import datetime
 import inspect
@@ -9,7 +7,6 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-import random
 import threading
 from threading import Lock
 from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
@@ -822,9 +819,10 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
     # For use as a context manager.
     def __enter__(self):
-        tracer = mod_trace.tracer_provider.trace().__enter__()
+        tracer = mod_trace.tracer_provider.trace()
+        tracer_context = tracer.__enter__()
 
-        ctx = RecordingContext(app=self, tracer=tracer)
+        ctx = RecordingContext(app=self, tracer=(tracer, tracer_context))
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -839,7 +837,11 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         assert ctx.tracer is not None, "Not in a tracing context."
         
         self.recording_contexts.reset(ctx.token)
-        ctx.tracer.__end__()
+        ctx.tracer[0].__exit__(exc_type, exc_value, exc_tb)
+
+        print("finished recording, have:")
+        for context, span in ctx.tracer[1].spans.items():
+            print(context, span.__class__.__name__)
 
         if exc_type is not None:
             raise exc_value
