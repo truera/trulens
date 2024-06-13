@@ -92,7 +92,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     @dataclass
     class EndpointSetup():
         """Class for storing supported endpoint information.
-        
+
         See [track_all_costs][trulens_eval.feedback.provider.endpoint.base.Endpoint.track_all_costs]
         for usage.
         """
@@ -208,9 +208,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # Some old databases do not have this serialized so lets set it to
             # the parent of callbacks and hope it never gets used.
             callback_class = EndpointCallback
-            #raise ValueError(
+            # raise ValueError(
             #    "Endpoint has to be extended by class that can set `callback_class`."
-            #)
+            # )
 
         if rpm is None:
             rpm = DEFAULT_RPM
@@ -226,7 +226,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         super().__init__(*args, **kwargs)
 
-        logger.debug("Creating new endpoint singleton with name %s.", self.name)
+        logger.debug(
+            "Creating new endpoint singleton with name %s.", self.name)
 
         # Extending class should call _instrument_module on the appropriate
         # modules and methods names.
@@ -455,18 +456,16 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         endpoints = []
 
         for endpoint in Endpoint.ENDPOINT_SETUPS:
-            
             if locals().get(endpoint.arg_flag):
                 try:
                     mod = __import__(
                         endpoint.module_name, fromlist=[endpoint.class_name]
                     )
                     cls = safe_getattr(mod, endpoint.class_name)
-                except Exception as e:
+                except Exception:
                     # If endpoint uses optional packages, will get either module
                     # not found error, or we will have a dummy which will fail
                     # at getattr. Skip either way.
-                    logger.error(f"Exception here {e}")
                     continue
 
                 try:
@@ -528,7 +527,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_endpoints: Optional[List[Endpoint]] = None,
         **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
-        
         """
         Root of all cost tracking methods. Runs the given `thunk`, tracking
         costs using each of the provided endpoints' callbacks.
@@ -539,7 +537,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 key="endpoints",
                 func=Endpoint.__find_tracker,
                 offset=1
-            )
+        )
 
         if endpoints is None:
             # If not, lets start a new collection of endpoints here along with
@@ -596,7 +594,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         Returns the thunk's result alongside the EndpointCallback object that
         includes the usage information.
         """
-    
+
         result, callbacks = Endpoint._track_costs(
             __func, *args, with_endpoints=[self], **kwargs
         )
@@ -694,7 +692,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     key="endpoints",
                     func=self.__find_tracker,
                     offset=0
-                )
+            )
 
             # If wrapped method was not called from within _track_costs, we
             # will get None here and do nothing but return wrapped
@@ -705,7 +703,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             def response_callback(response):
                 for callback_class in registered_callback_classes:
-                    logger.debug("Handling callback_class: %s.", callback_class)
+                    logger.debug("Handling callback_class: %s.",
+                                 callback_class)
                     if callback_class not in endpoints:
                         logger.warning(
                             "Callback class %s is registered for handling %s"
@@ -741,7 +740,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
 class DummyEndpoint(Endpoint):
     """Endpoint for testing purposes.
-    
+
     Does not make any network calls and just pretends to.
     """
 
@@ -787,7 +786,8 @@ class DummyEndpoint(Endpoint):
             # Already created with SingletonPerName mechanism
             return
 
-        assert error_prob + freeze_prob + overloaded_prob + loading_prob <= 1.0, "Probabilites should not exceed 1.0 ."
+        assert error_prob + freeze_prob + overloaded_prob + \
+            loading_prob <= 1.0, "Probabilites should not exceed 1.0 ."
         assert rpm > 0
         assert alloc >= 0
         assert delay >= 0.0
@@ -814,7 +814,7 @@ class DummyEndpoint(Endpoint):
         self, url: str, payload: JSON, timeout: Optional[float] = None
     ) -> Any:
         """Pretend to make a classification request similar to huggingface API.
-        
+
         Simulates overloaded, model loading, frozen, error as configured:
 
         ```python
