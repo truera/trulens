@@ -25,7 +25,6 @@ class Cortex(LLMProvider):
     
     def __init__(
         self,
-        
         model_engine: Optional[str] = None,
         snowflake_connection_params: Optional[Dict] = None,
         *args,
