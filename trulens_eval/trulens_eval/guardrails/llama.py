@@ -86,7 +86,7 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
                     (
                         lambda node: self.feedback(
                             query, node.node.get_text()
-                        ) > self.threshold
+                        )
                     ),
                     node=node
                 )
@@ -96,7 +96,10 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         wait([future for (_, future) in futures])
 
         results = list((node, future.result()) for (node, future) in futures)
-        filtered = map(first, filter(second, results))
+        for node, result in results:
+            if not isinstance(result, float):
+                raise ValueError("Guardrails can only be used with feedback functions that return a float.")
+        filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
 
         filtered_nodes = list(filtered)
         return self.query_engine.synthesize(query_bundle=query, nodes=filtered_nodes, **kwargs)
