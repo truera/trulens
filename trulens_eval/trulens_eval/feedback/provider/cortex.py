@@ -48,7 +48,7 @@ class Cortex(LLMProvider):
         
         super().__init__(**self_kwargs)
         
-    def escape_string_for_sql(self, input_string: str) -> str:
+    def _escape_string_for_sql(self, input_string: str) -> str:
         escaped_string = input_string.replace('\\', '\\\\')
         escaped_string = escaped_string.replace("'", "''")
         return escaped_string
@@ -64,8 +64,8 @@ class Cortex(LLMProvider):
         
         completion_input_str = f"""SELECT SNOWFLAKE.CORTEX.COMPLETE(
             '{model}',
-            parse_json('{self.escape_string_for_sql(messages_json_str)}'),
-            parse_json('{self.escape_string_for_sql(options_json_str)}')
+            parse_json('{self._escape_string_for_sql(messages_json_str)}'),
+            parse_json('{self._escape_string_for_sql(options_json_str)}')
         )"""
         
         # Executing Snow SQL command requires an active snow session
