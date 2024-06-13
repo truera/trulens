@@ -71,7 +71,6 @@ Feedback = mod_feedback.Feedback
 Provider = mod_provider.Provider
 Huggingface = mod_hugs_provider.Huggingface
 Langchain = mod_langchain_provider.Langchain
-Cortex = mod_cortex_provider.Cortex
 FeedbackMode = mod_feedback_schema.FeedbackMode
 Select = mod_feedback_schema.Select
 
