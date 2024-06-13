@@ -38,12 +38,9 @@ class context_filter:
                 (
                     context,
                     ex.submit(
-                        (
-                            lambda context: self.feedback(args[1], context)
-                                args[1], context
-                            )
-                        ),
-                        context
+                        lambda context=context: self.feedback(
+                            args[1], context
+                        )
                     )
                 ) for context in contexts
             )
