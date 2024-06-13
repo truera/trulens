@@ -1104,8 +1104,19 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             assert len(calls) > 0, "No information recorded in call."
 
-            main_in = self.main_input(func, sig, bindings, args_transform=args_transform)
-            main_out = self.main_output(func, sig, bindings, ret, ret_transform=ret_transform)
+            main_in = self.main_input(
+                func,
+                sig,
+                bindings,
+                args_transform
+            )
+            main_out = self.main_output(
+                func,
+                sig,
+                bindings,
+                ret,
+                ret_transform
+            )
 
             updates = dict(
                 main_input=jsonify(main_in),
