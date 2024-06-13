@@ -2,6 +2,7 @@
 from typing import ClassVar, Dict, Optional, Sequence
 
 import os
+import json
 import pydantic
 from trulens_eval.feedback.provider.base import LLMProvider
 from snowflake.snowpark import Session
@@ -46,14 +47,24 @@ class Cortex(LLMProvider):
         
         super().__init__(**self_kwargs)
         
-    def _create_chat_completion(
-        self,
-        prompt: Optional[str] = None,
-        messages: Optional[Sequence[Dict]] = None,
-        **kwargs
-    ) -> str:
-        if 'model' not in kwargs:
-            kwargs['model'] = self.model_engine
+
+    def _exec_snowsql_complete_command(self, model: str, temperature: float, messages: Optional[Sequence[Dict]] = None,
+    ):
+        completion_input_str = f"""SELECT SNOWFLAKE.CORTEX.COMPLETE(
+            '{model}',
+            {messages}
+            , {{
+                'temperature': {temperature}
+            }}
+            )"""
+        def escape_string_for_sql(input_string): # TODO: move to a better place or refactor to sth nicer
+            # Replace backslashes first to avoid double escaping
+            escaped_string = input_string.replace('\\', '\\\\')
+            # Replace single quotes with double single quotes
+            escaped_string = escaped_string.replace("'", "''")
+            return escaped_string
+        
+        return self.snowflake_session.sql(escape_string_for_sql(completion_input_str)).collect()
     
     def _create_chat_completion(
         self,
@@ -62,31 +73,30 @@ class Cortex(LLMProvider):
         **kwargs
     ) -> str:
 
-        completion_args = kwargs
+        
         if 'model' not in kwargs:
             kwargs['model'] = self.model_engine
-
-        completion_args.update(self.completion_args)
+        if 'temperature' not in kwargs:
+            kwargs['temperature'] = 0.0
 
         if messages is not None:
-            completion_args['messages'] = messages
+            kwargs['messages'] = messages
 
         elif prompt is not None:
-            completion_args['messages'] = [
+            kwargs['messages'] = [
                 {
                     "role": "system",
                     "content": prompt
                 }
             ]
-
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        comp = completion(**completion_args)
+        res = self._exec_snowsql_complete_command(**kwargs)
 
-        assert isinstance(comp, object)
-
-        return comp["choices"][0]["message"]["content"]
+        completion = json.loads(res[0][0])["choices"][0]["messages"]
+        
+        return completion
         
         
         
