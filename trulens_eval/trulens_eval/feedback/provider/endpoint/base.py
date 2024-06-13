@@ -455,16 +455,18 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         endpoints = []
 
         for endpoint in Endpoint.ENDPOINT_SETUPS:
+            
             if locals().get(endpoint.arg_flag):
                 try:
                     mod = __import__(
                         endpoint.module_name, fromlist=[endpoint.class_name]
                     )
                     cls = safe_getattr(mod, endpoint.class_name)
-                except Exception:
+                except Exception as e:
                     # If endpoint uses optional packages, will get either module
                     # not found error, or we will have a dummy which will fail
                     # at getattr. Skip either way.
+                    logger.error(f"Exception here {e}")
                     continue
 
                 try:
