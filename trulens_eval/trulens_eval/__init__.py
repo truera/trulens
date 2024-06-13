@@ -4,6 +4,21 @@
 This top-level import includes everything to get started.
 """
 
+from trulens_eval.utils import threading as mod_threading_utils
+from trulens_eval.utils import imports as mod_imports_utils
+from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import app as mod_app_schema
+from trulens_eval.feedback.provider import cortex as mod_cortex_provider
+from trulens_eval.feedback.provider import langchain as mod_langchain_provider
+from trulens_eval.feedback.provider import hugs as mod_hugs_provider
+from trulens_eval.feedback.provider import base as mod_provider
+from trulens_eval.feedback import feedback as mod_feedback
+from trulens_eval import tru_virtual as mod_tru_virtual
+from trulens_eval import tru_custom_app as mod_tru_custom_app
+from trulens_eval import tru_chain as mod_tru_chain
+from trulens_eval import tru_basic_app as mod_tru_basic_app
+from trulens_eval import tru as mod_tru
+from trulens_eval.utils.imports import check_imports
 __version_info__ = (0, 31, 0)
 """Version number components for major, minor, patch."""
 
@@ -13,24 +28,9 @@ __version__ = '.'.join(map(str, __version_info__))
 # This check is intentionally done ahead of the other imports as we want to
 # print out a nice warning/error before an import error happens further down
 # this sequence.
-from trulens_eval.utils.imports import check_imports
 
 check_imports()
 
-from trulens_eval import tru as mod_tru
-from trulens_eval import tru_basic_app as mod_tru_basic_app
-from trulens_eval import tru_chain as mod_tru_chain
-from trulens_eval import tru_custom_app as mod_tru_custom_app
-from trulens_eval import tru_virtual as mod_tru_virtual
-from trulens_eval.feedback import feedback as mod_feedback
-from trulens_eval.feedback.provider import base as mod_provider
-from trulens_eval.feedback.provider import hugs as mod_hugs_provider
-from trulens_eval.feedback.provider import langchain as mod_langchain_provider
-from trulens_eval.feedback.provider import cortex as mod_cortex_provider
-from trulens_eval.schema import app as mod_app_schema
-from trulens_eval.schema import feedback as mod_feedback_schema
-from trulens_eval.utils import imports as mod_imports_utils
-from trulens_eval.utils import threading as mod_threading_utils
 
 # Optional provider types.
 
@@ -46,6 +46,10 @@ with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import AzureOpenAI
     from trulens_eval.feedback.provider.openai import OpenAI
+
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_CORTEX):
+    from trulens_eval.feedback.provider.cortex import Cortex
 
 # Optional app types.
 
