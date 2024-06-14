@@ -736,11 +736,12 @@ class Tru(python.SingletonPerName):
 
         return leaderboard
 
-    def start_evaluator(self,
-                        restart: bool = False,
-                        fork: bool = False,
-                        disable_tqdm: bool = False
-                       ) -> Union[Process, Thread]:
+    def start_evaluator(
+        self,
+        restart: bool = False,
+        fork: bool = False,
+        disable_tqdm: bool = False
+    ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread or process.
 
@@ -825,10 +826,17 @@ class Tru(python.SingletonPerName):
             )
 
             # Show the status of the results so far.
-            tqdm_total = tqdm(desc="Done Runs", initial=0, unit="runs", disable=disable_tqdm)
+            tqdm_total = tqdm(
+                desc="Done Runs", initial=0, unit="runs", disable=disable_tqdm
+            )
 
             # Show what is being waited for right now.
-            tqdm_waiting = tqdm(desc="Waiting for Runs", initial=0, unit="runs", disable=disable_tqdm)
+            tqdm_waiting = tqdm(
+                desc="Waiting for Runs",
+                initial=0,
+                unit="runs",
+                disable=disable_tqdm
+            )
 
             runs_stats = defaultdict(int)
 
