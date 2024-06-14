@@ -12,10 +12,10 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 from pydantic import Field
 
 from trulens_eval import app as mod_app
+from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema.feedback import Select
-from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
@@ -269,7 +269,7 @@ class TruChain(mod_app.App):
             return retriever.invoke.rets[:].page_content
         if hasattr(retriever, "_get_relevant_documents"):
             return retriever._get_relevant_documents.rets[:].page_content
-        
+
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:  # might have to relax to JSON output
