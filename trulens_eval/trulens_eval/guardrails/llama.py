@@ -97,7 +97,10 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         for node, result in results:
             if not isinstance(result, float):
                 raise ValueError("Guardrails can only be used with feedback functions that return a float.")
-        filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
+        if self.feedback.higher_is_better:
+            filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
+        else:
+            filtered = map(first, filter(lambda x: second(x) < self.threshold, results))
 
         filtered_nodes = list(filtered)
         return self.query_engine.synthesize(query_bundle=query, nodes=filtered_nodes, **kwargs)

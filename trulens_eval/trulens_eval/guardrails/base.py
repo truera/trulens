@@ -49,7 +49,10 @@ class context_filter:
             for context, result in results:
                 if not isinstance(result, float):
                     raise ValueError("Guardrails can only be used with feedback functions that return a float.")
-            filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
+            if self.feedback.higher_is_better:
+                filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
+            else:
+                filtered = map(first, filter(lambda x: second(x) < self.threshold, results))
             return list(filtered)
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
