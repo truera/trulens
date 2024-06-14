@@ -1,27 +1,24 @@
-from concurrent.futures import wait, as_completed
+from concurrent.futures import as_completed
+from concurrent.futures import wait
 from typing import List
 
 from trulens_eval.feedback import Feedback
-from trulens_eval.utils.containers import first
-from trulens_eval.utils.containers import second
-from trulens_eval.utils.threading import ThreadPoolExecutor
-from trulens_eval.utils.serial import model_dump
-
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
+from trulens_eval.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     import llama_index
+    from llama_index.core.indices.vector_store.base import VectorStoreIndex
     from llama_index.core.query_engine.retriever_query_engine import \
         RetrieverQueryEngine
-    from llama_index.core.indices.vector_store.base import VectorStoreIndex
     from llama_index.indices.query.schema import QueryBundle
     from llama_index.schema import NodeWithScore
+
 
 class WithFeedbackFilterNodes(RetrieverQueryEngine):
     feedback: Feedback
     threshold: float
-
     """
     A BaseQueryEngine that filters documents using a minimum threshold
     on a feedback function before returning them.
@@ -50,7 +47,11 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
             llm_response = filtered_query_engine.query("What did the author do growing up?")
         ```
     """
-    def __init__(self, query_engine: RetrieverQueryEngine, feedback: Feedback, threshold: float, *args, **kwargs):
+
+    def __init__(
+        self, query_engine: RetrieverQueryEngine, feedback: Feedback,
+        threshold: float, *args, **kwargs
+    ):
         self.query_engine = query_engine
         self.feedback = feedback
         self.threshold = threshold
@@ -77,18 +78,26 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
 
         with ThreadPoolExecutor(max_workers=max(1, len(nodes))) as ex:
             future_to_node = {
-                ex.submit(lambda node=node: self.feedback(query, node.node.get_text())): node
-                for node in nodes
+                ex.submit(
+                    lambda node=node: self.feedback(
+                        query, node.node.get_text()
+                    )
+                ):
+                    node for node in nodes
             }
             filtered = []
             for future in as_completed(future_to_node):
                 node = future_to_node[future]
                 result = future.result()
                 if not isinstance(result, float):
-                    raise ValueError("Guardrails can only be used with feedback functions that return a float.")
+                    raise ValueError(
+                        "Guardrails can only be used with feedback functions that return a float."
+                    )
                 if (self.feedback.higher_is_better and result > self.threshold) or \
                    (not self.feedback.higher_is_better and result < self.threshold):
                     filtered.append(node)
-                    
+
         filtered_nodes = list(filtered)
-        return self.query_engine.synthesize(query_bundle=query, nodes=filtered_nodes, **kwargs)
+        return self.query_engine.synthesize(
+            query_bundle=query, nodes=filtered_nodes, **kwargs
+        )

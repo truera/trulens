@@ -1,8 +1,8 @@
 from concurrent.futures import as_completed
+
 from trulens_eval.feedback import Feedback
-from trulens_eval.utils.containers import first
-from trulens_eval.utils.containers import second
 from trulens_eval.utils.threading import ThreadPoolExecutor
+
 
 class context_filter:
     """
@@ -25,29 +25,36 @@ class context_filter:
         return [doc for sublist in results['documents'] for doc in sublist]
         ```
     """
+
     def __init__(self, feedback: Feedback, threshold: float):
         self.feedback = feedback
         self.threshold = threshold
 
     def __call__(self, func):
+
         def wrapper(*args, **kwargs):
             contexts = func(*args, **kwargs)
             with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
                 future_to_context = {
-                    ex.submit(lambda context=context: self.feedback(args[1], context)): context
-                    for context in contexts
+                    ex.submit(
+                        lambda context=context: self.feedback(args[1], context)
+                    ):
+                        context for context in contexts
                 }
                 filtered = []
                 for future in as_completed(future_to_context):
                     context = future_to_context[future]
                     result = future.result()
                     if not isinstance(result, float):
-                        raise ValueError("Guardrails can only be used with feedback functions that return a float.")
+                        raise ValueError(
+                            "Guardrails can only be used with feedback functions that return a float."
+                        )
                     if (self.feedback.higher_is_better and result > self.threshold) or \
                        (not self.feedback.higher_is_better and result < self.threshold):
                         filtered.append(context)
                 return filtered
+
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
-        wrapper.__dict__= func.__dict__
+        wrapper.__dict__ = func.__dict__
         return wrapper

@@ -1,15 +1,11 @@
-from concurrent.futures import wait, as_completed
+from concurrent.futures import as_completed
 from typing import List
 
 from trulens_eval.feedback import Feedback
-from trulens_eval.utils.containers import first
-from trulens_eval.utils.containers import second
-from trulens_eval.utils.serial import model_dump
-from trulens_eval.utils.threading import ThreadPoolExecutor
-
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
-
+from trulens_eval.utils.serial import model_dump
+from trulens_eval.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     import langchain
@@ -83,15 +79,19 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         # Evaluate the filter on each, in parallel.
         with ThreadPoolExecutor(max_workers=max(1, len(docs))) as ex:
             future_to_doc = {
-                ex.submit(lambda doc=doc: self.feedback(query, doc.page_content)): doc
-                for doc in docs
+                ex.submit(
+                    lambda doc=doc: self.feedback(query, doc.page_content)
+                ):
+                    doc for doc in docs
             }
             filtered = []
             for future in as_completed(future_to_doc):
                 doc = future_to_doc[future]
                 result = future.result()
                 if not isinstance(result, float):
-                    raise ValueError("Guardrails can only be used with feedback functions that return a float.")
+                    raise ValueError(
+                        "Guardrails can only be used with feedback functions that return a float."
+                    )
                 if (self.feedback.higher_is_better and result > self.threshold) or \
                    (not self.feedback.higher_is_better and result < self.threshold):
                     filtered.append(doc)
