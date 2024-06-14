@@ -4,7 +4,6 @@ os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationSummaryBufferMemory
-
 import numpy as np
 import streamlit as st
 
@@ -18,11 +17,11 @@ from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_PINECONE
 
 with OptionalImports(messages=REQUIREMENT_PINECONE):
-    import pinecone
+    from langchain.embeddings.openai import OpenAIEmbeddings
     import langchain_community
     from langchain_community.callbacks import get_openai_callback
     from langchain_community.llms import OpenAI
-    from langchain.embeddings.openai import OpenAIEmbeddings
+    import pinecone
 
 OptionalImports(messages=REQUIREMENT_PINECONE).assert_installed(
     mods=[pinecone, langchain_community, OpenAIEmbeddings]
