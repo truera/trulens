@@ -3,7 +3,6 @@ from trulens_eval.feedback import Feedback
 from trulens_eval.utils.containers import first
 from trulens_eval.utils.containers import second
 from trulens_eval.utils.threading import ThreadPoolExecutor
-from functools import wraps
 
 class context_filter:
     """
@@ -56,4 +55,5 @@ class context_filter:
             return list(filtered)
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
+        wrapper.__dict__= func.__dict__
         return wrapper
