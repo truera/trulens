@@ -1,4 +1,4 @@
-from concurrent.futures import wait
+from concurrent.futures import as_completed
 from trulens_eval.feedback import Feedback
 from trulens_eval.utils.containers import first
 from trulens_eval.utils.containers import second
@@ -32,27 +32,21 @@ class context_filter:
     def __call__(self, func):
         def wrapper(*args, **kwargs):
             contexts = func(*args, **kwargs)
-            ex = ThreadPoolExecutor(max_workers=max(1, len(contexts)))
-            futures = list(
-                (
-                    context,
-                    ex.submit(
-                        lambda context=context: self.feedback(
-                            args[1], context
-                        )
-                    )
-                ) for context in contexts
-            )
-            wait([future for (_, future) in futures])
-            results = list((context, future.result()) for (context, future) in futures)
-            for context, result in results:
-                if not isinstance(result, float):
-                    raise ValueError("Guardrails can only be used with feedback functions that return a float.")
-            if self.feedback.higher_is_better:
-                filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
-            else:
-                filtered = map(first, filter(lambda x: second(x) < self.threshold, results))
-            return list(filtered)
+            with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
+                future_to_context = {
+                    ex.submit(lambda context=context: self.feedback(args[1], context)): context
+                    for context in contexts
+                }
+                filtered = []
+                for future in as_completed(future_to_context):
+                    context = future_to_context[future]
+                    result = future.result()
+                    if not isinstance(result, float):
+                        raise ValueError("Guardrails can only be used with feedback functions that return a float.")
+                    if (self.feedback.higher_is_better and result > self.threshold) or \
+                       (not self.feedback.higher_is_better and result < self.threshold):
+                        filtered.append(context)
+                return filtered
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
         wrapper.__dict__= func.__dict__

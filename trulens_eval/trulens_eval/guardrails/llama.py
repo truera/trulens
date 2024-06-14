@@ -1,4 +1,4 @@
-from concurrent.futures import wait
+from concurrent.futures import wait, as_completed
 from typing import List
 
 from trulens_eval.feedback import Feedback
@@ -74,33 +74,21 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         """
         # Get relevant docs using super class:
         nodes = self.query_engine.retrieve(query_bundle=query)
-        ex = ThreadPoolExecutor(max_workers=max(1, len(nodes)))
 
-        # Evaluate the filter on each, in parallel.
-        futures = list(
-            (
-                node,
-                ex.submit(
-                    (
-                        lambda node: self.feedback(
-                            query, node.node.get_text()
-                        )
-                    ),
-                    node=node
-                )
-            ) for node in nodes
-        )
-
-        wait([future for (_, future) in futures])
-
-        results = list((node, future.result()) for (node, future) in futures)
-        for node, result in results:
-            if not isinstance(result, float):
-                raise ValueError("Guardrails can only be used with feedback functions that return a float.")
-        if self.feedback.higher_is_better:
-            filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
-        else:
-            filtered = map(first, filter(lambda x: second(x) < self.threshold, results))
-
+        with ThreadPoolExecutor(max_workers=max(1, len(nodes))) as ex:
+            future_to_node = {
+                ex.submit(lambda node=node: self.feedback(query, node.node.get_text())): node
+                for node in nodes
+            }
+            filtered = []
+            for future in as_completed(future_to_node):
+                node = future_to_node[future]
+                result = future.result()
+                if not isinstance(result, float):
+                    raise ValueError("Guardrails can only be used with feedback functions that return a float.")
+                if (self.feedback.higher_is_better and result > self.threshold) or \
+                   (not self.feedback.higher_is_better and result < self.threshold):
+                    filtered.append(node)
+                    
         filtered_nodes = list(filtered)
         return self.query_engine.synthesize(query_bundle=query, nodes=filtered_nodes, **kwargs)

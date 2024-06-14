@@ -1,4 +1,4 @@
-from concurrent.futures import wait
+from concurrent.futures import wait, as_completed
 from typing import List
 
 from trulens_eval.feedback import Feedback
@@ -81,31 +81,23 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         docs = super()._get_relevant_documents(query, run_manager=run_manager)
 
         # Evaluate the filter on each, in parallel.
-        ex = ThreadPoolExecutor(max_workers=max(1, len(docs)))
-
-        futures = list(
-            (
-                doc,
-                ex.submit(
-                    lambda doc, query: self.feedback(query, doc.page_content),
-                    doc,
-                    query
-                )
-            ) for doc in docs
-        )
-        wait([future for (_, future) in futures])
-
-        results = list((doc, future.result()) for (doc, future) in futures)
-        for doc, result in results:
-            if not isinstance(result, float):
-                raise ValueError("Guardrails can only be used with feedback functions that return a float.")
-        if self.feedback.higher_is_better:
-            filtered = map(first, filter(lambda x: second(x) > self.threshold, results))
-        else:
-            filtered = map(first, filter(lambda x: second(x) < self.threshold, results))
+        with ThreadPoolExecutor(max_workers=max(1, len(docs))) as ex:
+            future_to_doc = {
+                ex.submit(lambda doc=doc: self.feedback(query, doc.page_content)): doc
+                for doc in docs
+            }
+            filtered = []
+            for future in as_completed(future_to_doc):
+                doc = future_to_doc[future]
+                result = future.result()
+                if not isinstance(result, float):
+                    raise ValueError("Guardrails can only be used with feedback functions that return a float.")
+                if (self.feedback.higher_is_better and result > self.threshold) or \
+                   (not self.feedback.higher_is_better and result < self.threshold):
+                    filtered.append(doc)
 
         # Return only the filtered ones.
-        return list(filtered)
+        return filtered
 
     @staticmethod
     def of_retriever(retriever: VectorStoreRetriever, **kwargs):
