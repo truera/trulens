@@ -19,7 +19,7 @@ tru.start_dashboard() # 4
 they can open the dashboard and inspect the recording of their app's invocation
 including performance and cost statistics. This means trulens must do quite a
 bit of haggling under the hood to get that data. This is outlined primarily in
-the [Instrumentation](#Instrumentation) section below.
+the [Instrumentation](#instrumentation) section below.
 
 ## Instrumentation
 
