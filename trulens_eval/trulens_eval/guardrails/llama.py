@@ -79,11 +79,9 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         with ThreadPoolExecutor(max_workers=max(1, len(nodes))) as ex:
             future_to_node = {
                 ex.submit(
-                    lambda node=node: self.feedback(
-                        query, node.node.get_text()
-                    )
-                ):
-                    node for node in nodes
+                    lambda node=node: self.
+                    feedback(query, node.node.get_text())
+                ): node for node in nodes
             }
             filtered = []
             for future in as_completed(future_to_node):

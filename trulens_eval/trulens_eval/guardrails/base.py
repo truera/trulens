@@ -38,8 +38,7 @@ class context_filter:
                 future_to_context = {
                     ex.submit(
                         lambda context=context: self.feedback(args[1], context)
-                    ):
-                        context for context in contexts
+                    ): context for context in contexts
                 }
                 filtered = []
                 for future in as_completed(future_to_context):

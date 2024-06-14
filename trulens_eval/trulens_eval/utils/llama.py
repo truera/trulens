@@ -15,6 +15,7 @@ from trulens_eval.utils.pyschema import Class
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     import llama_index
+
 OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
 
 
