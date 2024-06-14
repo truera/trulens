@@ -78,7 +78,9 @@ class SkipEval(Exception):
         self.ins = ins
 
     def __str__(self):
-        return "Feedback evaluation skipped" + ((" because " + self.reason) if self.reason else "")
+        return "Feedback evaluation skipped" + (
+            (" because " + self.reason) if self.reason else ""
+        )
 
     def __repr__(self):
         return f"SkipEval(reason={self.reason})"
@@ -905,7 +907,7 @@ Feedback function signature:
                     e.ins = ins
                     skipped_exceptions.append(e)
                     warnings.warn(str(e), UserWarning, stacklevel=1)
-                    continue # go to next input_combination
+                    continue  # go to next input_combination
 
                 except Exception as e:
                     raise RuntimeError(
@@ -957,9 +959,11 @@ Feedback function signature:
                 num_evaled = len(result_vals)
                 num_total = num_skipped + num_evaled
                 warnings.warn(
-                    (f"{num_skipped}/{num_total}={100.0*num_skipped/num_total:0.1f}"
-                     "% evaluation(s) were skipped because they raised SkipEval "
-                     "(see earlier warnings for listing)."),
+                    (
+                        f"{num_skipped}/{num_total}={100.0*num_skipped/num_total:0.1f}"
+                        "% evaluation(s) were skipped because they raised SkipEval "
+                        "(see earlier warnings for listing)."
+                    ),
                     UserWarning,
                     stacklevel=1
                 )
