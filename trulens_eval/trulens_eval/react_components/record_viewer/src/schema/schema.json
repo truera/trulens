@@ -20,36 +20,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -99,36 +97,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -206,36 +202,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -298,36 +292,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -377,36 +369,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -484,36 +474,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -620,36 +608,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -699,36 +685,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -806,36 +790,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -967,36 +949,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -1046,36 +1026,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -1153,36 +1131,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -1330,36 +1306,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -1409,36 +1383,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -1516,36 +1488,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -1657,36 +1627,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -1736,36 +1704,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -1843,36 +1809,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -1974,36 +1938,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -2053,36 +2015,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -2160,36 +2120,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -2291,36 +2249,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -2370,36 +2326,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -2477,36 +2431,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -2654,36 +2606,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -2733,36 +2683,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -2840,36 +2788,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -3021,36 +2967,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -3100,36 +3044,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -3207,36 +3149,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -3304,36 +3244,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -3383,36 +3321,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -3490,36 +3426,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -3621,36 +3555,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -3700,36 +3632,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -3807,36 +3737,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -3943,36 +3871,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -4022,36 +3948,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -4129,36 +4053,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -4301,36 +4223,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -4380,36 +4300,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -4487,36 +4405,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },
@@ -4584,36 +4500,34 @@
           "anyOf": [
             {
               "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-              "items": {
-                "maxItems": 6,
-                "minItems": 6,
-                "prefixItems": [
-                  {
-                    "description": "The ID of the trace that this span belongs to.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "This span's ID.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if propagated from a remote parent.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "True if the span context is valid.",
-                    "type": "boolean"
-                  }
-                ]
-              },
+              "items": [
+                {
+                  "description": "The ID of the trace that this span belongs to.",
+                  "type": "integer"
+                },
+                {
+                  "description": "This span's ID.",
+                  "type": "integer"
+                },
+                {
+                  "description": "True if propagated from a remote parent.",
+                  "type": "boolean"
+                },
+                {
+                  "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                  "type": "integer"
+                },
+                {
+                  "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                  "type": "array"
+                },
+                {
+                  "description": "True if the span context is valid.",
+                  "type": "boolean"
+                }
+              ],
+              "maxItems": 6,
+              "minItems": 6,
               "title": "SpanContext",
               "type": "array"
             },
@@ -4663,36 +4577,34 @@
         },
         "context": {
           "description": "Unique immutable identifier for the span.",
-          "items": {
-            "maxItems": 6,
-            "minItems": 6,
-            "prefixItems": [
-              {
-                "description": "The ID of the trace that this span belongs to.",
-                "type": "integer"
-              },
-              {
-                "description": "This span's ID.",
-                "type": "integer"
-              },
-              {
-                "description": "True if propagated from a remote parent.",
-                "type": "boolean"
-              },
-              {
-                "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                "type": "integer"
-              },
-              {
-                "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                "type": "integer"
-              },
-              {
-                "description": "True if the span context is valid.",
-                "type": "boolean"
-              }
-            ]
-          },
+          "items": [
+            {
+              "description": "The ID of the trace that this span belongs to.",
+              "type": "integer"
+            },
+            {
+              "description": "This span's ID.",
+              "type": "integer"
+            },
+            {
+              "description": "True if propagated from a remote parent.",
+              "type": "boolean"
+            },
+            {
+              "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+              "type": "integer"
+            },
+            {
+              "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+              "type": "array"
+            },
+            {
+              "description": "True if the span context is valid.",
+              "type": "boolean"
+            }
+          ],
+          "maxItems": 6,
+          "minItems": 6,
           "type": "array"
         },
         "events": {
@@ -4770,36 +4682,34 @@
             "prefixItems": [
               {
                 "description": "SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.",
-                "items": {
-                  "maxItems": 6,
-                  "minItems": 6,
-                  "prefixItems": [
-                    {
-                      "description": "The ID of the trace that this span belongs to.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "This span's ID.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if propagated from a remote parent.",
-                      "type": "boolean"
-                    },
-                    {
-                      "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
-                      "type": "integer"
-                    },
-                    {
-                      "description": "True if the span context is valid.",
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "items": [
+                  {
+                    "description": "The ID of the trace that this span belongs to.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "This span's ID.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "True if propagated from a remote parent.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details.",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values.",
+                    "type": "array"
+                  },
+                  {
+                    "description": "True if the span context is valid.",
+                    "type": "boolean"
+                  }
+                ],
+                "maxItems": 6,
+                "minItems": 6,
                 "title": "SpanContext",
                 "type": "array"
               },

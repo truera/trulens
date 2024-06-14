@@ -1,3 +1,5 @@
+import type { Span as SpanRaw } from '@/schema/span';
+
 export interface AppJSONRaw {
   app_id: string;
   feedback_definitions: [];
@@ -130,19 +132,6 @@ export interface RecordJSONRaw {
   calls: CallJSONRaw[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [others: string]: any;
-}
-
-export interface SpanRaw {
-  name: string;
-  start_timestamp: number;
-  end_timestamp: number | null;
-  attributes: Record<string, string | number>;
-  attributes_metadata: Record<string, string>;
-  status: 'UNSET' | 'OK' | 'Error';
-  status_description: string | null;
-  kind: string;
-  events: [];
-  context: [number, number];
 }
 
 export interface DataRaw {

@@ -188,20 +188,20 @@ class WithHashableSpanContext(): # must be mixed into SpanContext
     def __get_pydantic_json_schema__(cls, _core_schema, _handler) -> JsonSchemaValue:
         return { 
             'description': 'SpanContext that can be hashed.  Does not change data layout or behaviour. Changing SpanContext `__class__` with this should be safe.',
-            'items': {
-                'maxItems': 6,
-                'minItems': 6,
-                'prefixItems': [
-                    {"type": "integer", "description": "The ID of the trace that this span belongs to." },
-                    {"type": "integer", "description": "This span's ID." },
-                    {"type": "boolean", "description": "True if propagated from a remote parent." },
-                    {"type": "integer", "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details." },
-                    # TODO: make an enum above
-                    {"type": "integer", "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values." },
-                    # TODO: fix type of the above
-                    {"type": "boolean", "description": "True if the span context is valid." },
-                ]
-            },
+            'maxItems': 6,
+            'minItems': 6,
+            # json-schema-to-typescript not supporting prefixItems per 2020-12 schema: https://github.com/bcherny/json-schema-to-typescript/issues/543
+            # Using the older way of defining items for now. 
+            'items': [
+                {"type": "integer", "description": "The ID of the trace that this span belongs to." },
+                {"type": "integer", "description": "This span's ID." },
+                {"type": "boolean", "description": "True if propagated from a remote parent." },
+                {"type": "integer", "description": "Trace options to propagate. See the `W3C Trace Context - Traceparent`_ spec for details." },
+                # TODO: make an enum above
+                {"type": "array", "description": "A list of key-value pairs representing vendor-specific trace info. Keys and values are strings of up to 256 printable US-ASCII characters. Implementations should conform to the `W3C Trace Context - Tracestate` spec, which describes additional restrictions on valid field values." },
+                # TODO: fix type of the above
+                {"type": "boolean", "description": "True if the span context is valid." },
+            ],
             'title': 'SpanContext',
             'type': 'array'
         }
