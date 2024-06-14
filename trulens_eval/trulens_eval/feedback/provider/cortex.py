@@ -1,18 +1,18 @@
-
 from typing import ClassVar, Dict, Optional, Sequence
 
 import os
 import json
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.cortex import CortexEndpoint
-from trulens_eval.utils.imports import REQUIREMENT_CORTEX, OptionalImports
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_CORTEX
 
 with OptionalImports(messages=REQUIREMENT_CORTEX):
     from snowflake.snowpark import Session
 
 
 class Cortex(LLMProvider):
-    # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
+    # require `pip install snowflake-snowpark-python` and an active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"

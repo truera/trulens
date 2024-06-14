@@ -39,7 +39,7 @@ class LiteLLMCallback(EndpointCallback):
             # We are already tracking costs from the openai or bedrock endpoint so we
             # should not double count here.
 
-            # Incremente number of requests.
+            # Increment number of requests.
             super().handle_generation(response)
 
             # Assume a response that had usage field was successful. Otherwise

@@ -27,12 +27,12 @@ class CortexCallback(EndpointCallback):
         """Get the usage information from Cortex LLM function response's usage field."""
         usage = response['usage']
 
-        # Incremente number of requests.
+        # Increment number of requests.
         super().handle_generation(response)
 
         # Assume a response that had usage field was successful. Note at the time of writing 06/12/2024, the usage
         # information from Cortex LLM functions is only available when called via snow SQL. It's not fully supported in
-        # Python API such as `from snowflake.cortex import Summarize, Complete, ExtractAnswer, Sentiment, Translate` not yet.
+        # Python API such as `from snowflake.cortex import Summarize, Complete, ExtractAnswer, Sentiment, Translate` yet.
 
         self.cost.n_successful_requests += 1
 
