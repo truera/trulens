@@ -1,4 +1,5 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
+from concurrent.futures import ThreadPoolExecutor
 import logging
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 import warnings
@@ -1174,7 +1175,9 @@ class LLMProvider(Provider):
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
-    def groundedness_measure_with_cot_reasons(self, source: str, statement: str) -> Tuple[float, dict]:
+    def groundedness_measure_with_cot_reasons(
+        self, source: str, statement: str
+    ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
@@ -1213,14 +1216,19 @@ class LLMProvider(Provider):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
             )
-            score, reason = self.generate_score_and_reasons(system_prompt, user_prompt)
+            score, reason = self.generate_score_and_reasons(
+                system_prompt, user_prompt
+            )
             return index, score, reason
 
         results = []
 
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(evaluate_hypothesis, i, hypothesis) for i, hypothesis in enumerate(hypotheses)]
-            
+            futures = [
+                executor.submit(evaluate_hypothesis, i, hypothesis)
+                for i, hypothesis in enumerate(hypotheses)
+            ]
+
             for future in as_completed(futures):
                 results.append(future.result())
 
@@ -1228,10 +1236,13 @@ class LLMProvider(Provider):
 
         for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
-            reason_str = reason['reason'] if 'reason' in reason else "reason not generated"
+            reason_str = reason[
+                'reason'] if 'reason' in reason else "reason not generated"
             reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
 
         # Calculate the average groundedness score from the scores dictionary
-        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
-        
+        average_groundedness_score = float(
+            np.mean(list(groundedness_scores.values()))
+        )
+
         return average_groundedness_score, {"reasons": reasons_str}
