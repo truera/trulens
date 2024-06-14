@@ -10,14 +10,13 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_CORTEX
-from snowflake.snowpark import DataFrame
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
 with OptionalImports(messages=REQUIREMENT_CORTEX):
-    from snowflake.snowpark import Session
+    from snowflake.snowpark import Session, DataFrame
 
 
 class CortexCallback(EndpointCallback):
