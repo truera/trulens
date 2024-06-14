@@ -6,45 +6,6 @@ TruLens relies on feedback functions to score the performance of LLM apps, which
 
 Consequently, these feedback functions face typical large language model (LLM) challenges in rigorous production environments, including prompt sensitivity and non-determinism, especially when incorporating Mixture-of-Experts and model-as-a-service solutions like those from _OpenAI_, _Mistral_, and others. Drawing inspiration from works on [Judging LLM-as-a-Judge](https://arxiv.org/pdf/2306.05685), we outline findings from our analysis of feedback function performance against task-aligned benchmark data. To accomplish this, we first need to align feedback function tasks to relevant benchmarks in order to gain access to large scale ground truth data for the feedback functions. We then are able to easily compute metrics across a variety of implementations and models.
 
-## Context Relevance
-
-### Methods
-
-Observing that many information retrieval (IR) benchmarks, such as [MS MARCO](https://huggingface.co/datasets/ms_marco/viewer/v2.1), use binary labels, we propose to frame the problem of evaluating context relevance tasks as evaluating a recommender system. In essence, we argue that the relative importance or ranking based on the score assignments is all you need to achieve meta-evaluation against human golden sets. The intuition is that it is a sufficient proxy to trustworthiness if feedback functions demonstrate discriminative capabilities that reliably and consistently assign items, be they context chunks or generated responses, with weights and ordering closely mirroring human preferences.
-
-[See the code.](context_relevance_benchmark.ipynb)
-
-### Results
-
-Here, we leverage the 500 random sampled rows from [MS MARCO](https://arxiv.org/abs/1611.09268) dataset for benchmarking context relevance.
-
-| **Feedback Function Base Model** | **MS MARCO nDCG** | **MS MARCO ECE** | **MS MARCO Recall@5** | **MS MARCO Precision@1** |
-| :---: | :---: | :---: | :---: | :---: |
-| GPT 3.5 Turbo | 0.567230 | 0.5474 | 0.94 | 0.218365 |
-| GPT 4 Turbo | 0.66496 | 0.4430 | 0.94 | 0.312167 |
-| Claude 2 | 0.599110 | 0.6690 | 0.90 | 0.268214 |
-
-### Ablations
-
-Calibrations are crucial steps in the evaluation process of feedback functions. They help fine-tune the models and ensure their performance aligns with the desired benchmarks. In this context, we test ablations of LLMs with varying temperatures to understand the relationship between the temperature parameter and evaluation reliability.
-
-| **Temperature** | **Feedback Function Base Model**       | **ECE**      |
-| :---: | :---: | :---: |
-| 0.0         | GPT-3.5-Turbo | 0.492735 |
-| 0.3         | GPT-3.5-Turbo | 0.477844 |
-| 0.7         | GPT-3.5-Turbo | 0.467127 |
-| 1.0         | GPT-3.5-Turbo | 0.465417 |
-
-
-| **Temperature** | **Feedback Function Base Model**       | **ECE**      |
-| :---: | :---: | :---: |
-| 0.0         | GPT-4-Turbo | 0.741519 |
-| 0.3         | GPT-4-Turbo | 0.742373 |
-| 0.7         | GPT-4-Turbo | 0.737771 |
-| 1.0         | GPT-4-Turbo | 0.732807 |
-
-[See the code.](context_relevance_calibration.ipynb)
-
 ## Groundedness
 
 ### Methods

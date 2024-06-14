@@ -1,10 +1,16 @@
 # Feedback Providers
 
-TruLens constructs feedback functions by combining more general models, known as the [**_feedback provider_**][trulens_eval.feedback.provider.base.Provider], and [**_feedback implementation_**](../feedback_implementations/index.md) made up of carefully constructed prompts and custom logic tailored to perform a particular evaluation task.
+TruLens constructs feedback functions by combining more general models, known as
+the [**_feedback provider_**][trulens_eval.feedback.provider.base.Provider], and
+[**_feedback implementation_**](../feedback_implementations/index.md) made up of
+carefully constructed prompts and custom logic tailored to perform a particular
+evaluation task.
 
 This page documents the feedback providers available in _TruLens_.
 
-There are three categories of such providers as well as combination providers that make use of one or more of these providers to offer additional feedback functions based capabilities of the constituent providers.
+There are three categories of such providers as well as combination providers
+that make use of one or more of these providers to offer additional feedback
+functions based capabilities of the constituent providers.
 
 ## Classification-based Providers
 
@@ -34,6 +40,8 @@ Feedback functions in common across these providers are in their abstract class
 
 ## Provider Combinations
 
-- [Groundedness][trulens_eval.feedback.groundedness.Groundedness]
+- Groundedness has been moved to the [LLMProvider
+  class][trulens_eval.feedback.provider.base.LLMProvider] as the method
+  [groundedness_measure_with_cot_reasons][trulens_eval.feedback.provider.base.LLMProvider.groundedness_measure_with_cot_reasons].
 
 - [Groundtruth][trulens_eval.feedback.groundtruth.GroundTruthAgreement]
