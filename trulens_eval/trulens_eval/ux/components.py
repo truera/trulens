@@ -6,8 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from trulens_eval.app import ComponentView
-from trulens_eval.keys import REDACTED_VALUE
-from trulens_eval.keys import should_redact_key
+from trulens_eval.keys import REDACTED_VALUE, should_redact_key
 from trulens_eval.schema.feedback import Select
 from trulens_eval.schema.record import Record
 from trulens_eval.schema.record import RecordAppCall
@@ -95,8 +94,7 @@ def draw_call(call: RecordAppCall) -> None:
         )
     )
 
-    with st.expander(label=f"Call " + render_call_frame(top, path=path) + " " +
-                     render_selector_markdown(path)):
+    with st.expander(label=f"Call " + render_call_frame(top, path=path) + " " + render_selector_markdown(path)):
 
         args = call.args
         rets = call.rets
