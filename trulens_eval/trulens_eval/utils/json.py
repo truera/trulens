@@ -179,9 +179,8 @@ def jsonify(
 
     if depth > max_depth:
         logger.debug(
-            "Max depth reached for jsonify of object type '%s'.",
-            type(obj)
-        ) # careful about str(obj) in case it is recursive infinitely.
+            "Max depth reached for jsonify of object type '%s'.", type(obj)
+        )  # careful about str(obj) in case it is recursive infinitely.
 
         return noserio(obj)
 
@@ -253,7 +252,9 @@ def jsonify(
     elif isinstance(obj, Dict):
         forward_value = {}
         new_dicted[id(obj)] = forward_value
-        forward_value.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
+        forward_value.update(
+            {k: recur(v) for k, v in obj.items() if recur_key(k)}
+        )
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -368,9 +369,8 @@ def jsonify(
 
     else:
         logger.debug(
-            "Do not know how to jsonify an object of type '%s'.",
-            type(obj)
-        ) # careful about str(obj) in case it is recursive infinitely.
+            "Do not know how to jsonify an object of type '%s'.", type(obj)
+        )  # careful about str(obj) in case it is recursive infinitely.
 
         content = noserio(obj)
 
