@@ -6,11 +6,8 @@ from trulens_eval.utils.threading import ThreadPoolExecutor
 from functools import wraps
 
 class context_filter:
-    def __init__(self, feedback: Feedback, threshold: float):
-        self.feedback = feedback
-        self.threshold = threshold
     """
-    ContextFilter is a class that filters contexts based on a given feedback and threshold.
+    Provides a decorator to filter contexts based on a given feedback and threshold.
 
     Parameters:
     feedback (Feedback): The feedback object to use for filtering.
@@ -29,6 +26,9 @@ class context_filter:
         return [doc for sublist in results['documents'] for doc in sublist]
         ```
     """
+    def __init__(self, feedback: Feedback, threshold: float):
+        self.feedback = feedback
+        self.threshold = threshold
 
     def __call__(self, func):
         def wrapper(*args, **kwargs):

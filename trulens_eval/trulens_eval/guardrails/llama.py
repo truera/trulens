@@ -22,37 +22,35 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
     feedback: Feedback
     threshold: float
 
+    """
+    A BaseQueryEngine that filters documents using a minimum threshold
+    on a feedback function before returning them.
+
+    Args:
+        feedback (Feedback): use this feedback function to score each document.
+        threshold (float): and keep documents only if their feedback value is at least this threshold.
+    
+    !!! example "Using TruLens guardrail context filters with Llama-Index"
+        ```python
+        from trulens_eval.guardrails.llama import WithFeedbackFilterNodes
+
+        # note: feedback function used for guardrail must only return a score, not also reasons
+        feedback = (
+            Feedback(provider.context_relevance)
+            .on_input()
+            .on(context)
+        )
+
+        filtered_query_engine = WithFeedbackFilterNodes(query_engine, feedback=feedback, threshold=0.5)
+
+        tru_recorder = TruLlama(filtered_query_engine,
+            app_id='LlamaIndex_App1_Filtered')
+
+        with tru_recorder as recording:
+            llm_response = filtered_query_engine.query("What did the author do growing up?")
+        ```
+    """
     def __init__(self, query_engine: RetrieverQueryEngine, feedback: Feedback, threshold: float, *args, **kwargs):
-        """
-        A BaseQueryEngine that filters documents using a minimum threshold
-        on a feedback function before returning them.
-
-        Args:
-            feedback (Feedback): use this feedback function to score each document.
-            threshold (float): and keep documents only if their feedback value is at least this threshold.
-        
-        !!! example "Using TruLens guardrail context filters with Llama-Index"
-            ```python
-            from trulens_eval.guardrails.llama import WithFeedbackFilterNodes
-
-            # note: feedback function used for guardrail must only return a score, not also reasons
-            f_context_relevance_score = (
-                Feedback(provider.context_relevance)
-                .on_input()
-                .on(context)
-                .aggregate(np.mean)
-            )
-
-            filtered_query_engine = WithFeedbackFilterNodes(query_engine, feedback=f_context_relevance_score, threshold=0.5)
-
-            tru_recorder = TruLlama(filtered_query_engine,
-                app_id='LlamaIndex_App1_Filtered',
-                feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness])
-
-            with tru_recorder as recording:
-                llm_response = filtered_query_engine.query("What did the author do growing up?")
-            ```
-        """
         self.query_engine = query_engine
         self.feedback = feedback
         self.threshold = threshold
