@@ -4,7 +4,6 @@ import pprint
 from typing import Any, Callable, ClassVar, Optional
 import json
 
-import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
