@@ -3,11 +3,9 @@ from typing import Dict, Optional, Sequence, Union
 
 from langchain.chat_models.base import BaseChatModel
 from langchain.llms.base import BaseLLM
-from langchain_core.messages import (
-    AIMessage,
-    HumanMessage,
-    BaseMessage
-)
+from langchain_core.messages import AIMessage
+from langchain_core.messages import BaseMessage
+from langchain_core.messages import HumanMessage
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import LangchainEndpoint
@@ -69,7 +67,9 @@ class Langchain(LLMProvider):
 
         elif messages is not None:
             messages = [_convert_message(message) for message in messages]
-            predict = self.endpoint.chain.predict_messages(messages, **kwargs).content
+            predict = self.endpoint.chain.predict_messages(
+                messages, **kwargs
+            ).content
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
