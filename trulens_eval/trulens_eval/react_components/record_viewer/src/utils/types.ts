@@ -1,3 +1,5 @@
+import type { Span as SpanRaw } from '@/schema/span';
+
 export interface AppJSONRaw {
   app_id: string;
   feedback_definitions: [];
@@ -135,4 +137,5 @@ export interface RecordJSONRaw {
 export interface DataRaw {
   app_json: AppJSONRaw;
   record_json: RecordJSONRaw;
+  raw_spans: SpanRaw[];
 }

@@ -1,10 +1,16 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 import warnings
+
+import nltk
+from nltk.tokenize import sent_tokenize
+import numpy as np
+from tqdm.auto import tqdm
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
 from trulens_eval.utils import generated as mod_generated_utils
+from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
@@ -122,66 +128,6 @@ class LLMProvider(Provider):
         """
         # text
         raise NotImplementedError()
-
-
-    def _find_relevant_string(self, full_source: str, hypothesis: str) -> str:
-        assert self.endpoint is not None, "Endpoint is not set."
-
-        return self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            prompt=str.format(
-                prompts.SYSTEM_FIND_SUPPORTING,
-                prompt=full_source,
-            ) + "\n" +
-            str.format(prompts.USER_FIND_SUPPORTING, response=hypothesis)
-        )
-
-    def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
-        """
-        A groundedness measure best used for summarized premise against simple
-        hypothesis. This LLM implementation uses information overlap prompts.
-
-        Args:
-            premise (str): Summarized source sentences.
-            hypothesis (str): Single statement setnece.
-
-        Returns:
-            float: Information Overlap
-        """
-        return self.generate_score(
-            system_prompt=prompts.LLM_GROUNDEDNESS_SYSTEM,
-            user_prompt=str.format(
-                prompts.LLM_GROUNDEDNESS_USER,
-                premise=premise,
-                hypothesis=hypothesis
-            )
-        )
-
-    def _groundedness_doc_in_out(self, premise: str, hypothesis: str) -> str:
-        """
-        An LLM prompt using the entire document for premise and entire statement
-        document for hypothesis.
-
-        Args:
-            premise: A source document
-
-            hypothesis: A statement to check
-
-        Returns:
-            An LLM response using a scorecard template
-        """
-        assert self.endpoint is not None, "Endpoint is not set."
-
-        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
-        llm_messages = [{"role": "system", "content": system_prompt}]
-        user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-            premise="""{}""".format(premise),
-            hypothesis="""{}""".format(hypothesis)
-        ) + prompts.GROUNDEDNESS_REASON_TEMPLATE
-        llm_messages.append({"role": "user", "content": user_prompt})
-        return self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
-        )
 
     def generate_score(
         self,
@@ -309,7 +255,9 @@ class LLMProvider(Provider):
             )
             return score, {}
 
-    def context_relevance(self, question: str, context: str, temperature: float = 0.0) -> float:
+    def context_relevance(
+        self, question: str, context: str, temperature: float = 0.0
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the relevance of the context to the question.
@@ -326,9 +274,6 @@ class LLMProvider(Provider):
                 .aggregate(np.mean)
                 )
             ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             question (str): A question being asked.
@@ -361,8 +306,12 @@ class LLMProvider(Provider):
 
         return self.context_relevance(question, context)
 
-    def context_relevance_with_cot_reasons(self, question: str,
-                                           context: str, temperature: float = 0.0) -> Tuple[float, Dict]:
+    def context_relevance_with_cot_reasons(
+        self,
+        question: str,
+        context: str,
+        temperature: float = 0.0
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the context to the question.
@@ -380,7 +329,6 @@ class LLMProvider(Provider):
                 .aggregate(np.mean)
                 )
             ```
-            The `on(...)` selector can be changed. See [Feedback Function Guide : Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             question (str): A question being asked.
@@ -398,7 +346,11 @@ class LLMProvider(Provider):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
 
-        return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, temperature=temperature)
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            temperature=temperature
+        )
 
     def qs_relevance_with_cot_reasons(self, question: str,
                                       context: str) -> Tuple[float, Dict]:
@@ -424,9 +376,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.relevance).on_input_output()
             ```
-            
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Usage on RAG Contexts:
             ```python
@@ -434,9 +383,6 @@ class LLMProvider(Provider):
                 TruLlama.select_source_nodes().node.text # See note below
             ).aggregate(np.mean) 
             ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Parameters:
             prompt (str): A text prompt to an agent.
@@ -464,26 +410,14 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            feedback = Feedback(provider.relevance_with_cot_reasons).on_input_output()
+            feedback = (
+                Feedback(provider.relevance_with_cot_reasons)
+                .on_input()
+                .on_output()
             ```
-
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
-        Usage on RAG Contexts:
-            ```python
-
-            feedback = Feedback(provider.relevance_with_cot_reasons).on_input().on(
-                TruLlama.select_source_nodes().node.text # See note below
-            ).aggregate(np.mean) 
-            ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
             prompt (str): A text prompt to an agent. 
-
             response (str): The agent's response to the prompt.
 
         Returns:
@@ -511,9 +445,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.sentiment).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: The text to evaluate sentiment of.
 
@@ -536,9 +467,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.sentiment_with_cot_reasons).on_output() 
             ```
-            
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): Text to evaluate.
@@ -562,9 +490,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.model_agreement).on_input_output() 
             ```
-
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent.
@@ -622,8 +547,7 @@ class LLMProvider(Provider):
             criteria (str): The specific criteria for evaluation.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified
-                evaluation, and a string containing the reasons for the evaluation.
+            Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified evaluation, and a string containing the reasons for the evaluation.
         """
 
         system_prompt = str.format(
@@ -646,9 +570,6 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.conciseness).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: The text to evaluate the conciseness of.
 
@@ -670,17 +591,11 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.conciseness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text: The text to evaluate the conciseness of.
 
         Returns:
-            A value between 0.0 (not concise) and 1.0 (concise)
-            
-            A dictionary containing the reasons for the evaluation.
+            Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
@@ -696,9 +611,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.correctness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text: A prompt to an agent.
@@ -722,14 +634,11 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not correct) and 1.0 (correct).
+            Tuple[float, str]: A tuple containing a value between 0 (not correct) and 1.0 (correct) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
@@ -745,9 +654,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.coherence).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -771,14 +677,11 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not coherent) and 1.0 (coherent).
+            Tuple[float, str]: A tuple containing a value between 0 (not coherent) and 1.0 (coherent) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
@@ -794,9 +697,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.harmfulness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
             
         Args:
             text (str): The text to evaluate.
@@ -824,7 +724,7 @@ class LLMProvider(Provider):
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not harmful) and 1.0 (harmful).
+            Tuple[float, str]: A tuple containing a value between 0 (not harmful) and 1.0 (harmful) and a string containing the reasons for the evaluation.
         """
 
         return self._langchain_evaluate_with_cot_reasons(
@@ -841,9 +741,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.maliciousness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -868,14 +765,11 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not malicious) and 1.0 (malicious).
+            Tuple[float, str]: A tuple containing a value between 0 (not malicious) and 1.0 (malicious) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
@@ -891,9 +785,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.helpfulness).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -917,14 +808,11 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not helpful) and 1.0 (helpful).
+            Tuple[float, str]: A tuple containing a value between 0 (not helpful) and 1.0 (helpful) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
@@ -941,9 +829,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.controversiality).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -969,15 +854,12 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
             
         Args:
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not controversial) and 1.0 (controversial).
+            Tuple[float, str]: A tuple containing a value between 0 (not controversial) and 1.0 (controversial) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -994,9 +876,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.misogyny).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1019,15 +898,12 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
+            
         Args:
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
+            Tuple[float, str]: A tuple containing a value between 0.0 (not misogynistic) and 1.0 (misogynistic) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
@@ -1043,9 +919,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.criminality).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1070,14 +943,11 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not criminal) and 1.0 (criminal).
+            Tuple[float, str]: A tuple containing a value between 0.0 (not criminal) and 1.0 (criminal) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
@@ -1093,9 +963,6 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.insensitivity).on_output()
             ```
-
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
             text (str): The text to evaluate.
@@ -1119,14 +986,11 @@ class LLMProvider(Provider):
             feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
             ```
 
-            The `on_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
-
         Args:
             text (str): The text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
+            Tuple[float, str]: A tuple containing a value between 0.0 (not insensitive) and 1.0 (insensitive) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
             text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
@@ -1141,9 +1005,7 @@ class LLMProvider(Provider):
 
         Args:
             text (str): A prompt to an agent.
-
             response (str): The agent's response to the prompt.
-
             check_response(str): The response to check against.
 
         Returns:
@@ -1157,6 +1019,53 @@ class LLMProvider(Provider):
             prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response)) +
             response
         )
+
+    def _generate_key_points(self, source: str):
+        """
+        Uses chat completion model. A function that tries to distill main points
+        to be used by the comprehensiveness feedback function.
+
+         Args:
+            source (str): Text corresponding to source material. 
+
+        Returns:
+            (str) key points of the source text.
+        """
+
+        return self._create_chat_completion(
+            prompt=prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT +
+            str.format(prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source)
+        )
+
+    def _assess_key_point_inclusion(
+        self, key_points: str, summary: str
+    ) -> List:
+        """
+        Splits key points by newlines and assesses if each one is included in the summary.
+
+        Args:
+            key_points (str): Key points separated by newlines.
+            summary (str): The summary text to check for inclusion of key points.
+
+        Returns:
+            List[str]: A list of strings indicating whether each key point is included in the summary.
+        """
+        key_points_list = key_points.split('\n')
+
+        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
+        inclusion_assessments = []
+        for key_point in key_points_list:
+            user_prompt = str.format(
+                prompts.COMPOREHENSIVENESS_USER_PROMPT,
+                key_point=key_point,
+                summary=summary
+            )
+            inclusion_assessment = self._create_chat_completion(
+                prompt=system_prompt + user_prompt
+            )
+            inclusion_assessments.append(inclusion_assessment)
+
+        return inclusion_assessments
 
     def comprehensiveness_with_cot_reasons(self, source: str,
                                            summary: str) -> Tuple[float, Dict]:
@@ -1174,31 +1083,36 @@ class LLMProvider(Provider):
 
         Args:
             source (str): Text corresponding to source material. 
-
             summary (str): Text corresponding to a summary.
 
         Returns:
-            A value between 0.0 (main points missed) and 1.0 (no main
-                points missed).
+            Tuple[float, str]: A tuple containing a value between 0.0 (not comprehensive) and 1.0 (comprehensive) and a string containing the reasons for the evaluation.
         """
 
-        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
-        user_prompt = str.format(
-            prompts.COMPOREHENSIVENESS_USER_PROMPT,
-            source=source,
-            summary=summary
+        key_points = self._generate_key_points(source)
+        key_point_inclusion_assessments = self._assess_key_point_inclusion(
+            key_points, summary
         )
-        return self.generate_score_and_reasons(system_prompt, user_prompt)
+        scores = []
+        reasons = ""
+        for assessment in key_point_inclusion_assessments:
+            reasons += assessment + "\n\n"
+            if assessment:
+                first_line = assessment.split('\n')[0]
+                score = re_0_10_rating(first_line) / 10
+                scores.append(score)
+
+        score = sum(scores) / len(scores) if scores else 0
+        return score, {"reasons": reasons}
 
     def summarization_with_cot_reasons(self, source: str,
                                        summary: str) -> Tuple[float, Dict]:
         """
-        Summarization is deprecated in place of comprehensiveness. Defaulting to comprehensiveness_with_cot_reasons.
+        Summarization is deprecated in place of comprehensiveness. This function is no longer implemented.
         """
-        logger.warning(
-            "summarization_with_cot_reasons is deprecated, please use comprehensiveness_with_cot_reasons instead."
+        raise NotImplementedError(
+            "summarization_with_cot_reasons is deprecated and not implemented. Please use comprehensiveness_with_cot_reasons instead."
         )
-        return self.comprehensiveness_with_cot_reasons(source, summary)
 
     def stereotypes(self, prompt: str, response: str) -> float:
         """
@@ -1218,8 +1132,7 @@ class LLMProvider(Provider):
             response (str): The agent's response to the prompt.
 
         Returns:
-            A value between 0.0 (no stereotypes assumed) and 1.0
-                (stereotypes assumed).
+            A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
         """
         system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT
         user_prompt = str.format(
@@ -1235,8 +1148,9 @@ class LLMProvider(Provider):
         prompt.
 
         !!! example
+
             ```python
-            feedback = Feedback(provider.stereotypes).on_input_output()
+            feedback = Feedback(provider.stereotypes_with_cot_reasons).on_input_output()
             ```
 
         Args:
@@ -1245,8 +1159,7 @@ class LLMProvider(Provider):
             response (str): The agent's response to the prompt.
 
         Returns:
-            A value between 0.0 (no stereotypes assumed) and 1.0
-                (stereotypes assumed).
+            Tuple[float, str]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a string containing the reasons for the evaluation.
         """
         system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT + prompts.COT_REASONS_TEMPLATE
         user_prompt = str.format(
@@ -1254,3 +1167,56 @@ class LLMProvider(Provider):
         )
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
+
+    def groundedness_measure_with_cot_reasons(
+        self, source: str, statement: str
+    ) -> Tuple[float, dict]:
+        """A measure to track if the source material supports each sentence in
+        the statement using an LLM provider.
+
+        The LLM will process the entire statement at once, using chain of
+        thought methodology to emit the reasons. 
+
+        !!! example
+
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_groundedness = (
+                Feedback(provider.groundedness_measure_with_cot_reasons)
+                .on(context.collect()
+                .on_output()
+                )
+            ```
+        Args:
+            source: The source that should support the statement.
+            statement: The statement to check groundedness.
+
+        Returns:
+            Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.
+        """
+        nltk.download('punkt')
+        groundedness_scores = {}
+        reasons_str = ""
+
+        hypotheses = sent_tokenize(statement)
+        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+        for i, hypothesis in enumerate(tqdm(
+                hypotheses, desc="Groundedness per statement in source")):
+            user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+                premise=f"{source}", hypothesis=f"{hypothesis}"
+            )
+            score, reason = self.generate_score_and_reasons(
+                system_prompt, user_prompt
+            )
+            groundedness_scores[f"statement_{i}"] = score
+            reasons_str += f"STATEMENT {i}:\n{reason['reason']}\n"
+
+        # Calculate the average groundedness score from the scores dictionary
+        average_groundedness_score = float(
+            np.mean(list(groundedness_scores.values()))
+        )
+        return average_groundedness_score, {"reasons": reasons_str}

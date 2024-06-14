@@ -221,7 +221,7 @@ from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import Module
 from trulens_eval.utils.pyschema import Obj
 from trulens_eval.utils.serial import GetItemOrAttribute
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 
 logger = logging.getLogger(__name__)
 
@@ -328,8 +328,8 @@ class VirtualRecord(mod_record_schema.Record):
     | PARAMETER | TYPE |DEFAULT |
     | --- | ---| --- |
     | `stack` | [List][typing.List][[RecordAppCallMethod][trulens_eval.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. | 
-    | `args` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
-    | `rets` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
+    | `args` | [TJSONLike][trulens_eval.utils.json.TJSONLike] | `[]` |
+    | `rets` | [TJSONLike][trulens_eval.utils.json.TJSONLike] | `[]` |
     | `perf` | [Perf][trulens_eval.schema.base.Perf] | Time spanning the processing of this virtual call. |
     | `pid` | [int][] | `0` |
     | `tid` | [int][] | `0` |
@@ -369,7 +369,9 @@ class VirtualRecord(mod_record_schema.Record):
 
                     call['stack'] = [
                         root_call,
-                        mod_record_schema.RecordAppCallMethod(path=path, method=method)
+                        mod_record_schema.RecordAppCallMethod(
+                            path=path, method=method
+                        )
                     ]
 
                 if "args" not in call:
@@ -408,7 +410,9 @@ class VirtualRecord(mod_record_schema.Record):
         if "cost" not in kwargs:
             kwargs['cost'] = mod_base_schema.Cost()
         if "perf" not in kwargs:
-            kwargs['perf'] = mod_base_schema.Perf(start_time=start_time, end_time=end_time)
+            kwargs['perf'] = mod_base_schema.Perf(
+                start_time=start_time, end_time=end_time
+            )
 
         if "main_input" not in kwargs:
             kwargs['main_input'] = "No main_input provided."
@@ -502,7 +506,7 @@ class TruVirtual(mod_app.App):
     """
 
     def __init__(
-        self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: dict
+        self, app: Optional[Union[VirtualApp, TJSONLike]] = None, **kwargs: dict
     ):
         """Virtual app for logging existing app results. """
 

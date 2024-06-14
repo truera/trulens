@@ -15,8 +15,8 @@ import sys
 from types import ModuleType
 import typing
 from typing import (
-    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator, List,
-    Optional, Sequence, Type, TypeVar, Union
+    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator,
+    List, Optional, Sequence, Set, Type, TypeVar, Union
 )
 
 T = TypeVar("T")
@@ -120,6 +120,48 @@ def module_name(obj: Union[ModuleType, Type, Any]) -> str:
 
     return "unknown module"
 
+
+def callable_info(c: Callable, ids: Optional[Set[int]]=None) -> str:
+    """Get a string representation of the given callable.
+    
+    Includes name, id, and the same for any wrapped callables.
+    """
+
+    if ids is None:
+        ids = set()
+
+    
+    if not isinstance(c, Callable):
+        raise ValueError(
+            f"Expected a callable. Got {class_name(type(c))} instead."
+        )
+
+    if safe_hasattr(c, "__name__"):
+        name = c.__name__
+    else:
+        name = "?"
+
+    ret = f"{name}:{type(c).__name__}@0x{id(c):x}"
+
+    if id(c) in ids:
+        return ret + " recurs"
+
+    ids.add(id(c))
+
+    #if safe_hasattr(c, "__call__"):
+    #    return ret + callable_info(c.__call__, typ="__call__", ids=ids)
+
+    if hasattr(c, "__self__"):
+        ret += f" with __self__:{type(c.__self__).__name__}@0x{id(c.__self__):x}"
+
+    if safe_hasattr(c, "__func__"):
+        return ret + " __func__=" + callable_info(c.__func__, ids=ids)
+
+    if safe_hasattr(c, "__wrapped__"):
+        return ret + " __wrapped__=" + callable_info(c.__wrapped__, ids=ids)
+
+
+    return ret
 
 def callable_name(c: Callable):
     """Get the name of the given callable."""
@@ -249,7 +291,7 @@ def code_line(func, show_source: bool = False) -> Optional[str]:
                 ret += "\t" + line
 
         return ret
-    
+
     if inspect.isframe(func):
         code = func.f_code
         ret = f"{func.f_code.co_filename}:{func.f_code.co_firstlineno}"
@@ -306,6 +348,7 @@ def for_all_methods(decorator, _except: Optional[List[str]] = None):
 
     return decorate
 
+
 def run_before(callback: Callable):
     """
     Create decorator to run the callback before the function.
@@ -320,6 +363,7 @@ def run_before(callback: Callable):
         return wrapper
 
     return decorator
+
 
 # Python call stack utilities
 
@@ -339,7 +383,7 @@ def caller_frame(offset=0) -> 'frame':
 def caller_frameinfo(
     offset: int = 0,
     skip_module: Optional[str] = "trulens_eval"
-) ->  Optional[inspect.FrameInfo]:
+) -> Optional[inspect.FrameInfo]:
     """
     Get the caller's (of this function) frameinfo. See
     https://docs.python.org/3/reference/datamodel.html#frame-objects .
@@ -472,6 +516,37 @@ def _future_target_wrapper(stack, context, func, *args, **kwargs):
 
     return func(*args, **kwargs)
 
+def superstack(
+) -> Iterator['frame']:
+    """Get the current stack (not including this function) with frames reaching
+    across Tasks and threads.
+    """
+
+    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    # NOTE: skipping offset frames is done below since the full stack may need
+    # to be reconstructed there.
+
+    # Using queue for frames as additional frames may be added due to handling threads.
+    q = queue.Queue()
+    for f in frames:
+        q.put(f)
+
+    while not q.empty():
+        f = q.get()
+        yield f
+
+        if id(f.f_code) == id(_future_target_wrapper.__code__):
+            locs = f.f_locals
+
+            assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
+            for fi in locs['pre_start_stack']:
+                q.put(fi.frame)
+
+            continue
+
+    return
+
+
 
 def get_all_local_in_call_stack(
     key: str,
@@ -535,9 +610,9 @@ def get_all_local_in_call_stack(
             continue
 
         if func(f.f_code):
-            logger.debug(f"Looking via {func.__name__}; found {f}")
+            logger.debug("Looking via %s; found %s", func.__name__, f)
             if skip is not None and f == skip:
-                logger.debug(f"Skipping.")
+                logger.debug("Skipping.")
                 continue
 
             locs = f.f_locals
@@ -580,7 +655,10 @@ def get_first_local_in_call_stack(
         )
     except StopIteration:
         logger.debug("no frames found")
-        return None
+    except KeyError:
+        logger.debug("%s not found in frame.", key)
+    
+    return None
 
 
 # Wrapping utilities
@@ -731,16 +809,16 @@ class SingletonInfo(Generic[T]):
 
         logger.warning(
             (
-            "Singleton instance of type %s already created at:\n%s\n"
-            "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
-            f"""  ```python
+                "Singleton instance of type %s already created at:\n%s\n"
+                "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
+                f"""  ```python
   from trulens_eval.utils.python import SingletonPerName
   SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
   ```
             """
-            ),
-            self.cls.__name__, code_line(self.frameinfo, show_source=True)
+            ), self.cls.__name__, code_line(self.frameinfo, show_source=True)
         )
+
 
 class SingletonPerName(Generic[T]):
     """

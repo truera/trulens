@@ -27,7 +27,7 @@ const tagMainContainerStyles: SxProps<Theme> = {
   display: 'flex',
   flexDirection: 'row',
   padding: (theme) => theme.spacing(1 / 2, 1),
-  borderRadius: '4px',
+  borderRadius: ({ spacing }) => spacing(0.5),
   width: 'fit-content',
   height: 'fit-content',
 };

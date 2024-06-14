@@ -107,18 +107,32 @@ export const BLACK: Color = '#212121';
  */
 
 // Data Vizualization Colors
-export const CO01: DVColorScale = ['#54A08E', '#A4CBC1', '#366567', '#7BADA4', '#1C383E'];
-export const CO02: DVColorScale = ['#F8D06D', '#F0EC89', '#AD743E', '#F4E07B', '#5C291A'];
-export const CO03: DVColorScale = ['#5690C5', '#8DA6BF', '#274F69', '#6D90B1', '#0B1D26'];
-export const CO04: DVColorScale = ['#E77956', '#FFDBA3', '#A8402D', '#FBAD78', '#571610'];
-export const CO05: DVColorScale = ['#959CFA', '#D5D1FF', '#5F74B3', '#B2B1FF', '#314A66'];
-export const CO06: DVColorScale = ['#957A89', '#D2C0C4', '#664F5E', '#B59CA6', '#352731'];
-export const CO07: DVColorScale = ['#78AE79', '#C7DFC3', '#5D8955', '#9FC79D', '#436036'];
-export const CO08: DVColorScale = ['#FF8DA1', '#FFC9F1', '#C15F84', '#FFA9D0', '#823966'];
-export const CO09: DVColorScale = ['#74B3C0', '#99D4D2', '#537F88', '#BFE6DD', '#314B50'];
-export const CO10: DVColorScale = ['#A484BD', '#CBC7E4', '#745E86', '#B5A5D1', '#45384F'];
 
-const DVColors: DVColorScale[] = [CO01, CO02, CO03, CO04, CO05, CO06, CO07, CO08, CO09, CO10];
+// Data Vizualization Colors
+export const DV_BLUE: DVColorScale = ['#5690C5', '#AAC8E6', '#274F69', '#6D90B1', '#0B1D26'];
+export const DV_YELLOW: DVColorScale = ['#F8D06D', '#F0EC89', '#AD743E', '#F4E07B', '#5C291A'];
+export const DV_RED: DVColorScale = ['#E77956', '#FFDBA3', '#A8402D', '#FBAD78', '#571610'];
+export const DV_GREEN: DVColorScale = ['#54A08E', '#A4CBC1', '#366567', '#7BADA4', '#1C383E'];
+export const DV_PURPLE: DVColorScale = ['#959CFA', '#D5D1FF', '#5F74B3', '#B2B1FF', '#314A66'];
+export const DV_PLUM: DVColorScale = ['#957A89', '#D2C0C4', '#664F5E', '#B59CA6', '#352731'];
+export const DV_GRASS: DVColorScale = ['#78AE79', '#C7DFC3', '#5D8955', '#9FC79D', '#436036'];
+export const DV_PINK: DVColorScale = ['#FF8DA1', '#FFC9F1', '#C15F84', '#FFA9D0', '#823966'];
+export const DV_MINT: DVColorScale = ['#74B3C0', '#99D4D2', '#537F88', '#BFE6DD', '#314B50'];
+export const DV_LAVENDER: DVColorScale = ['#A484BD', '#CBC7E4', '#745E86', '#B5A5D1', '#45384F'];
+
+const DVColors: DVColorScale[] = [
+  DV_BLUE,
+  DV_YELLOW,
+  DV_RED,
+  DV_GREEN,
+  DV_PURPLE,
+  DV_PLUM,
+  DV_GRASS,
+  DV_PINK,
+  DV_MINT,
+  DV_LAVENDER,
+];
+
 // List of primary Datavizualization Colors
 export const COLORS: Color[] = DVColors.map((c) => c[DVColor.PRIMARY]);
 // Returns an Object that maps color primary dataviz colors to the selected color hue

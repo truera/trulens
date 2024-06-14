@@ -1,3 +1,5 @@
+import { SpanKind, StatusCode } from '@/schema/spanAugment';
+import { Span, SpanRoot } from '@/utils/Span';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 import { CallJSONRaw, PerfJSONRaw, RecordJSONRaw, StackJSONRaw } from '@/utils/types';
 
@@ -64,7 +66,13 @@ export const getStartAndEndTimes = (perf: PerfJSONRaw) => {
   };
 };
 
-const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONRaw[], index: number) => {
+const addCallToTree = (
+  tree: StackTreeNode,
+  call: CallJSONRaw,
+  stack: StackJSONRaw[],
+  index: number,
+  span: Span | undefined = undefined
+) => {
   const stackCell = stack[index];
   const name = getClassNameFromCell(stackCell);
 
@@ -86,6 +94,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
       matchingNode.startTime = startTime;
       matchingNode.endTime = endTime;
       matchingNode.raw = call;
+      matchingNode.span = span;
 
       return;
     }
@@ -98,6 +107,7 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
         parentNodes: [...tree.parentNodes, tree],
         perf: call.perf,
         stackCell,
+        span,
       })
     );
 
@@ -116,17 +126,34 @@ const addCallToTree = (tree: StackTreeNode, call: CallJSONRaw, stack: StackJSONR
     matchingNode = newNode;
   }
 
-  addCallToTree(matchingNode, call, stack, index + 1);
+  addCallToTree(matchingNode, call, stack, index + 1, span);
 };
 
-export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string) => {
+export const createTreeFromCalls = (recordJSON: RecordJSONRaw, appName: string, spans: Span[] = []) => {
   const tree = new StackTreeNode({
     name: appName,
     perf: recordJSON.perf,
+    span:
+      spans[0] ??
+      new SpanRoot({
+        name: appName,
+        attributes: {},
+        attributes_metadata: {},
+        status: StatusCode.UNSET,
+        status_description: '',
+        kind: SpanKind.INTERNAL,
+        events: [],
+        context: [-1, -1, false, -1, [], false],
+        start_timestamp: new Date(recordJSON.perf.start_time).getDate(),
+        end_timestamp: new Date(recordJSON.perf.end_time).getDate(),
+        record_id: recordJSON.record_id,
+        tags: recordJSON.tags?.split(',') ?? [],
+        span_type: null,
+      }),
   });
 
-  recordJSON.calls.forEach((call) => {
-    addCallToTree(tree, call, call.stack, 0);
+  recordJSON.calls.forEach((call, index) => {
+    addCallToTree(tree, call, call.stack, 0, spans[index + 1]);
   });
 
   return tree;

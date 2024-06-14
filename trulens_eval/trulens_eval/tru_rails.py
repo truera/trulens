@@ -14,7 +14,7 @@ from pydantic import Field
 
 from trulens_eval import app as mod_app
 from trulens_eval.feedback import feedback
-from trulens_eval.instruments import ClassFilter
+from trulens_eval.instruments import TClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.tru_chain import LangChainInstrument
@@ -25,7 +25,7 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import retab
 
@@ -279,10 +279,8 @@ class FeedbackActions():
 
         selectors = {
             argname:
-                (
-                    Lens.of_string(arglens)
-                    if isinstance(arglens, str) else arglens
-                ) for argname, arglens in selectors.items()
+            (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
+            for argname, arglens in selectors.items()
         }
 
         feedback_function = feedback_function.on(**selectors)
@@ -343,7 +341,7 @@ class RailsInstrument(Instrument):
         }.union(LangChainInstrument.Default.CLASSES())
         """Instrument only these classes."""
 
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
+        METHODS: Dict[str, TClassFilter] = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS),  # copy
             {
                 ("execute_action"):
@@ -401,7 +399,7 @@ class TruRails(mod_app.App):
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> JSON:
+    ) -> TJSONLike:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -416,7 +414,7 @@ class TruRails(mod_app.App):
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> JSON:
+    ) -> TJSONLike:
         """
         Determine the main input string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -437,19 +435,18 @@ class TruRails(mod_app.App):
         """
         Get the path to the context in the query output.
         """
-        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:].body
+        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:
+                                                                                    ].body
 
-    def __getattr__(self, __name: str) -> Any:
-        # A message for cases where a user calls something that the wrapped
-        # app has but we do not wrap yet.
-
-        if safe_hasattr(self.app, __name):
-            return RuntimeError(
-                f"TruRails has no attribute {__name} but the wrapped app ({type(self.app)}) does. ",
-                f"If you are calling a {type(self.app)} method, retrieve it from that app instead of from `TruRails`. "
-            )
+    def __getattr__(self, name):
+        if name == "__name__":
+            return self.__class__.__name__  # Return the class name of TruRails
+        elif safe_hasattr(self.app, name):
+            return getattr(
+                self.app, name
+            )  # Delegate to the wrapped app if it has the attribute
         else:
-            raise RuntimeError(f"TruRails has no attribute named {__name}.")
+            raise AttributeError(f"TruRails has no attribute named {name}")
 
 
 import trulens_eval  # for App class annotations

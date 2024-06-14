@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import dataclasses
 from enum import Enum
+import inspect
 import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
+import typing
 from typing import Any, Dict, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
@@ -26,7 +28,7 @@ from trulens_eval.utils.pyschema import noserio
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.serial import SerialBytes
@@ -109,12 +111,12 @@ def jsonify_for_ui(*args, **kwargs):
 
 def jsonify(
     obj: Any,
-    dicted: Optional[Dict[int, JSON]] = None,
+    dicted: Optional[Dict[int, TJSONLike]] = None,
     instrument: Optional['Instrument'] = None,
     skip_specials: bool = False,
     redact_keys: bool = False,
     include_excluded: bool = True
-) -> JSON:
+) -> TJSONLike:
     """Convert the given object into types that can be serialized in json.
 
     Args:
@@ -139,6 +141,29 @@ def jsonify(
         object is either a JSON base type, a list, or a dict with the containing
         elements of the same.
     """
+
+    # NOTE(piotrm): We might need to do something special for the below types as
+    # they are stateful if iterated. That is, they might be iteratable only once
+    # and iterating will break their user's interfaces.
+    """
+    if isinstance(obj, typing.Iterator):
+        raise ValueError("Cannot jsonify an iterator object.")
+    if inspect.isawaitable(obj):
+        raise ValueError("Cannot jsonify an awaitable object.")
+    if inspect.isgenerator(obj):
+        raise ValueError("Cannot jsonify a generator object.")
+    if inspect.iscoroutine(obj):
+        raise ValueError("Cannot jsonify a coroutine object.")
+    if inspect.isasyncgen(obj):
+        raise ValueError("Cannot jsonify an async generator object.")
+    if inspect.isasyncgenfunction(obj):
+        raise ValueError("Cannot jsonify an async generator function.")
+    if inspect.iscoroutinefunction(obj):
+        raise ValueError("Cannot jsonify a coroutine function.")
+    if inspect.isgeneratorfunction(obj):
+        raise ValueError("Cannot jsonify a generator function.")
+    """
+
     skip_excluded = not include_excluded
     # Hack so that our models do not get exludes dumped which causes many
     # problems. Another variable set here so we can recurse with the original

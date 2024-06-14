@@ -68,7 +68,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         Experimental work in progress.
     """
 
-    app_extra_json: serial.JSON
+    app_extra_json: serial.TJSONLike
     """Info to store about the app and to display in dashboard. 
     
     This can be used even if app itself cannot be serialized. `app_extra_json`,
@@ -81,8 +81,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_id: Optional[mod_types_schema.AppID] = None,
         tags: Optional[mod_types_schema.Tags] = None,
         metadata: Optional[mod_types_schema.Metadata] = None,
-        feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
-        app_extra_json: serial.JSON = None,
+        feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.
+        FeedbackMode.WITH_APP_THREAD,
+        app_extra_json: serial.TJSONLike = None,
         **kwargs
     ):
 
@@ -148,7 +149,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def continue_session(
-        app_definition_json: serial.JSON, app: Any
+        app_definition_json: serial.TJSONLike, app: Any
     ) -> AppDefinition:
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
         """Instantiate the given `app` with the given state
@@ -175,7 +176,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def new_session(
-        app_definition_json: serial.JSON,
+        app_definition_json: serial.TJSONLike,
         initial_app_loader: Optional[Callable] = None
     ) -> AppDefinition:
         """Create an app instance at the start of a session.
@@ -189,7 +190,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         """
 
         serial_bytes_json: Optional[
-            serial.JSON] = app_definition_json['initial_app_loader_dump']
+            serial.TJSONLike] = app_definition_json['initial_app_loader_dump']
 
         if initial_app_loader is None:
             assert serial_bytes_json is not None, "Cannot create new session without `initial_app_loader`."
@@ -207,7 +208,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_definition_json['app'] = app
         app_definition_json['initial_app_loader_dump'] = serial_bytes_json
 
-        cls: Type[mod_app.App] = pyschema.WithClassInfo.get_class(app_definition_json)
+        cls: Type[mod_app.App
+                 ] = pyschema.WithClassInfo.get_class(app_definition_json)
 
         return cls.model_validate_json(app_definition_json)
 
@@ -270,6 +272,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             mod_feedback_schema.Select.RecordCalls,
             cls.root_callable.default_factory().name
         ).rets
+
 
 # HACK013: Need these if using __future__.annotations .
 AppDefinition.model_rebuild()

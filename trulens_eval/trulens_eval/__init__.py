@@ -2,9 +2,11 @@
 # Trulens-eval LLM Evaluation Library
 
 This top-level import includes everything to get started.
+
+TODO: Make most of the imports here lazy. See https://peps.python.org/pep-0562/ .
 """
 
-__version_info__ = (0, 28, 1)
+__version_info__ = (0, 30, 1)
 """Version number components for major, minor, patch."""
 
 __version__ = '.'.join(map(str, __version_info__))
@@ -26,29 +28,33 @@ from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import base as mod_provider
 from trulens_eval.feedback.provider import hugs as mod_hugs_provider
 from trulens_eval.feedback.provider import langchain as mod_langchain_provider
-from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.utils import imports as mod_imports_utils
 from trulens_eval.utils import threading as mod_threading_utils
 
 # Optional provider types.
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_LITELLM):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_LITELLM):
     from trulens_eval.feedback.provider.litellm import LiteLLM
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_BEDROCK):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_BEDROCK):
     from trulens_eval.feedback.provider.bedrock import Bedrock
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_OPENAI):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.openai import AzureOpenAI
     from trulens_eval.feedback.provider.openai import OpenAI
 
 # Optional app types.
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_LLAMA):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_LLAMA):
     from trulens_eval.tru_llama import TruLlama
 
-with mod_imports_utils.OptionalImports(messages=mod_imports_utils.REQUIREMENT_RAILS):
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_RAILS):
     from trulens_eval.tru_rails import TruRails
 
 Tru = mod_tru.Tru

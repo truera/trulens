@@ -11,9 +11,10 @@ import logging
 from pprint import PrettyPrinter
 import threading
 from threading import Lock
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
-                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
-                    TypeVar, Union)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
+    Optional, Sequence, Set, Tuple, Type, TypeVar, Union
+)
 
 import pydantic
 
@@ -24,6 +25,7 @@ from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import pyschema
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.asynchro import desync
@@ -43,9 +45,9 @@ from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import T
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import JSON_BASES
-from trulens_eval.utils.serial import JSON_BASES_T
+from trulens_eval.utils.serial import TJSONBase
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
@@ -86,12 +88,12 @@ class ComponentView(ABC):
 
     # TODO: replacing with trace.category.Categorizer
 
-    def __init__(self, json: JSON):
+    def __init__(self, json: TJSONLike):
         self.json = json
         self.cls = Class.of_class_info(json)
 
     @staticmethod
-    def of_json(json: JSON) -> 'ComponentView':
+    def of_json(json: TJSONLike) -> 'ComponentView':
         """
         Sort the given json into the appropriate component view type.
         """
@@ -120,7 +122,7 @@ class ComponentView(ABC):
         """
         pass
 
-    def unsorted_parameters(self, skip: Set[str]) -> Dict[str, JSON_BASES_T]:
+    def unsorted_parameters(self, skip: Set[str]) -> Dict[str, TJSONBase]:
         """
         All basic parameters not organized by other accessors.
         """
@@ -170,7 +172,7 @@ class LangChainComponent(ComponentView):
         return False
 
     @staticmethod
-    def of_json(json: JSON) -> 'LangChainComponent':
+    def of_json(json: TJSONLike) -> 'LangChainComponent':
         from trulens_eval.utils.langchain import component_of_json
         return component_of_json(json)
 
@@ -185,7 +187,7 @@ class LlamaIndexComponent(ComponentView):
         return False
 
     @staticmethod
-    def of_json(json: JSON) -> 'LlamaIndexComponent':
+    def of_json(json: TJSONLike) -> 'LlamaIndexComponent':
         from trulens_eval.utils.llama import component_of_json
         return component_of_json(json)
 
@@ -206,7 +208,7 @@ class TrulensComponent(ComponentView):
         return False
 
     @staticmethod
-    def of_json(json: JSON) -> 'TrulensComponent':
+    def of_json(json: TJSONLike) -> 'TrulensComponent':
         from trulens_eval.utils.trulens import component_of_json
         return component_of_json(json)
 
@@ -283,7 +285,7 @@ class CustomComponent(ComponentView):
         raise TypeError(f"Unknown custom component type with class {cls}")
 
     @staticmethod
-    def component_of_json(json: JSON) -> 'CustomComponent':
+    def component_of_json(json: TJSONLike) -> 'CustomComponent':
         cls = Class.of_class_info(json)
 
         view = CustomComponent.constructor_of_class(cls)
@@ -296,7 +298,7 @@ class CustomComponent(ComponentView):
         return True
 
     @staticmethod
-    def of_json(json: JSON) -> 'CustomComponent':
+    def of_json(json: TJSONLike) -> 'CustomComponent':
         return CustomComponent.component_of_json(json)
 
 
@@ -348,9 +350,16 @@ class RecordingContext():
     - Combinations of the above.
     """
 
-    def __init__(self, app: mod_app.App, record_metadata: JSON = None):
-        self.calls: List[mod_record_schema.RecordAppCall] = []
-        """A record (in terms of its RecordAppCall) in process of being created."""
+    def __init__(self, app: mod_app.App, record_metadata: TJSONLike = None):
+        self.calls: Dict[mod_types_schema.CallID,
+                         mod_record_schema.RecordAppCall] = {}
+        """A record (in terms of its RecordAppCall) in process of being created.
+        
+        Storing as a map as we want to override calls with the same id which may
+        happen due to methods producing awaitables or generators. These result
+        in calls before the awaitables are awaited and then get updated after
+        the result is ready.
+        """
 
         self.records: List[mod_record_schema.Record] = []
         """Completed records."""
@@ -405,11 +414,16 @@ class RecordingContext():
         Add the given call to the currently tracked call list.
         """
         with self.lock:
-            self.calls.append(call)
+            # NOTE: This might override existing call record which happens when
+            # processing calls with awaitable or generator results.
+            self.calls[call.call_id] = call
 
     def finish_record(
         self,
-        calls_to_record: Callable[[List[mod_record_schema.RecordAppCall], JSON], mod_record_schema.Record],
+        calls_to_record: Callable[[
+            List[mod_record_schema.RecordAppCall], mod_types_schema.
+            Metadata, Optional[mod_record_schema.Record]
+        ], mod_record_schema.Record],
         existing_record: Optional[mod_record_schema.Record] = None
     ):
         """
@@ -419,11 +433,9 @@ class RecordingContext():
 
         with self.lock:
             record = calls_to_record(
-                self.calls,
-                self.record_metadata,
-                existing_record=existing_record
+                list(self.calls.values()), self.record_metadata, existing_record
             )
-            self.calls = []
+            self.calls = {}
 
             if existing_record is None:
                 # If existing record was given, we assume it was already
@@ -433,7 +445,8 @@ class RecordingContext():
         return record
 
 
-class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks, Hashable):
+class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
+          Hashable):
     """Base app recorder type.
 
     Non-serialized fields here while the serialized ones are defined in
@@ -484,7 +497,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""
 
-    instrument: Optional[mod_instruments.Instrument] = pydantic.Field(None, exclude=True)
+    instrument: Optional[mod_instruments.Instrument] = pydantic.Field(
+        None, exclude=True
+    )
     """Instrumentation class.
     
     This is needed for serialization as it tells us which objects we want to be
@@ -554,7 +569,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         if self.instrument is not None:
             self.instrument.instrument_object(
-                obj=self.app, query=mod_feedback_schema.Select.Query().app
+                obj=self.app,
+                query=mod_feedback_schema.Select.Query().app
             )
         else:
             pass
@@ -735,7 +751,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         raise NotImplementedError()
 
-    def _extract_content(self, value):
+    def _extract_content(self, value, content_keys=['content']):
         """
         Extracts the 'content' from various data types commonly used by libraries
         like OpenAI, Canopy, LiteLLM, etc. This method navigates nested data
@@ -757,46 +773,46 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             content = getattr(value, 'content', None)
             if content is not None:
                 return content
-            else:
-                # If 'content' is not found, check for 'choices' attribute which indicates a ChatResponse
-                choices = getattr(value, 'choices', None)
-                if choices is not None:
-                    # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
-                    return [
-                        self._extract_content(choice.message)
-                        for choice in choices
-                    ]
-                else:
-                    # Recursively extract content from nested pydantic models
-                    return {
-                        k:
-                            self._extract_content(v) if
-                            isinstance(v,
-                                       (pydantic.BaseModel, dict, list)) else v
-                        for k, v in value.dict().items()
-                    }
+
+            # If 'content' is not found, check for 'choices' attribute which indicates a ChatResponse
+            choices = getattr(value, 'choices', None)
+            if choices is not None:
+                # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
+                return [
+                    self._extract_content(choice.message) for choice in choices
+                ]
+
+            # Recursively extract content from nested pydantic models
+            return {
+                k: self._extract_content(v)
+                if isinstance(v, (pydantic.BaseModel, dict, list)) else v
+                for k, v in value.dict().items()
+            }
+
         elif isinstance(value, dict):
             # Check for 'content' key in the dictionary
-            content = value.get('content')
-            if content is not None:
-                return content
-            else:
-                # Recursively extract content from nested dictionaries
-                return {
-                    k:
-                        self._extract_content(v) if isinstance(v, (dict,
-                                                                   list)) else v
-                    for k, v in value.items()
-                }
+            for key in content_keys:
+                content = value.get(key)
+                if content is not None:
+                    return content
+
+            # Recursively extract content from nested dictionaries
+            return {
+                k: self._extract_content(v) if isinstance(v,
+                                                          (dict, list)) else v
+                for k, v in value.items()
+            }
+
         elif isinstance(value, list):
             # Handle lists by extracting content from each item
             return [self._extract_content(item) for item in value]
+
         else:
             return value
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> JSON:
+    ) -> TJSONLike:
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
@@ -814,7 +830,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         while not isinstance(focus, JSON_BASES) and len(focus) == 1:
             focus = focus[0]
-            focus = self._extract_content(focus)
+            focus = self._extract_content(
+                focus, content_keys=['content', 'input']
+            )
 
             if not isinstance(focus, Sequence):
                 logger.warning("Focus %s is not a sequence.", focus)
@@ -851,7 +869,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> JSON:
+    ) -> TJSONLike:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -859,7 +877,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         """
 
         # Use _extract_content to get the content out of the return value
-        content = self._extract_content(ret)
+        content = self._extract_content(ret, content_keys=['content', 'output'])
 
         if isinstance(content, str):
             return content
@@ -1065,7 +1083,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         def build_record(
             calls: Iterable[mod_record_schema.RecordAppCall],
-            record_metadata: JSON,
+            record_metadata: TJSONLike,
             existing_record: Optional[mod_record_schema.Record] = None
         ) -> mod_record_schema.Record:
             calls = list(calls)
@@ -1199,7 +1217,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         func: Callable[[A], T],
         *args,
-        record_metadata: JSON = None,
+        record_metadata: TJSONLike = None,
         **kwargs
     ) -> Tuple[T, mod_record_schema.Record]:
         """
@@ -1224,7 +1242,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         func: Callable[[A], Awaitable[T]],
         *args,
-        record_metadata: JSON = None,
+        record_metadata: TJSONLike = None,
         **kwargs
     ) -> Tuple[T, mod_record_schema.Record]:
         """
@@ -1282,7 +1300,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         )
 
     def _add_future_feedback(
-        self, future_or_result: Union[mod_feedback_schema.FeedbackResult, Future[mod_feedback_schema.FeedbackResult]]
+        self,
+        future_or_result: Union[mod_feedback_schema.FeedbackResult,
+                                Future[mod_feedback_schema.FeedbackResult]]
     ) -> None:
         """
         Callback used to add feedback results to the database once they are
@@ -1290,7 +1310,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         
         See [_handle_record][trulens_eval.app.App._handle_record].
         """
-        
+
         if isinstance(future_or_result, Future):
             res = future_or_result.result()
         else:
@@ -1302,7 +1322,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         record: mod_record_schema.Record,
         feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None
-    ) -> Optional[List[Tuple[mod_feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]]]:
+    ) -> Optional[List[Tuple[mod_feedback.Feedback,
+                             Future[mod_feedback_schema.FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback
         functions to be evaluated. If feedback_mode is provided, will use that
@@ -1338,7 +1359,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return None
 
         elif feedback_mode in [mod_feedback_schema.FeedbackMode.WITH_APP,
-                               mod_feedback_schema.FeedbackMode.WITH_APP_THREAD]:
+                               mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+                              ]:
 
             return self.tru._submit_feedback_functions(
                 record=record,
@@ -1466,9 +1488,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Build a string containing a listing of instrumented methods."""
 
         return "\n".join(
-            f"Object at 0x{obj:x}:\n\t" + "\n\t".
-            join(f"{m} with path {mod_feedback_schema.Select.App + path}"
-                 for m, path in p.items())
+            f"Object at 0x{obj:x}:\n\t" + "\n\t".join(
+                f"{m} with path {mod_feedback_schema.Select.App + path}"
+                for m, path in p.items()
+            )
             for obj, p in self.instrumented_methods.items()
         )
 

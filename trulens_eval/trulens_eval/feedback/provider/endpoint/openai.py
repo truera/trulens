@@ -25,7 +25,6 @@ import logging
 import pprint
 from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
 
-from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
@@ -44,8 +43,13 @@ from trulens_eval.utils.serial import SerialModel
 with OptionalImports(messages=REQUIREMENT_OPENAI):
     import openai as oai
 
-# check that oai is not a dummy:
-OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(oai)
+    # This is also required for running openai endpoints in trulens_eval:
+    from langchain.callbacks.openai_info import OpenAICallbackHandler
+
+# check that oai is not a dummy, also the langchain component required for handling openai endpoint
+OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(
+    mods=[oai, OpenAICallbackHandler]
+)
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +235,8 @@ class OpenAIEndpoint(Endpoint):
                     "OpenAIClient singleton already made, ignoring arguments %s",
                     kwargs
                 )
-                self.warning() # issue info about where the singleton was originally created
+                self.warning(
+                )  # issue info about where the singleton was originally created
             return
 
         self_kwargs = {
@@ -293,14 +298,21 @@ class OpenAIEndpoint(Endpoint):
         # see what sort of data to process based on the call made.
 
         logger.debug(
-            f"Handling openai instrumented call to func: {func},\n"
-            f"\tbindings: {bindings},\n"
-            f"\tresponse: {response}"
+            "Handling openai instrumented call to func: %s,\n"
+            "\tbindings: %s,\n"
+            "\tresponse: %s", func, bindings, response
         )
 
         model_name = ""
         if 'model' in bindings.kwargs:
             model_name = bindings.kwargs["model"]
+
+        if isinstance(response, oai.Stream):
+            # NOTE(piotrm): Merely checking membership in these will exhaust internal
+            # genertors or iterators which will break users' code. While we work
+            # out something, I'm disabling any cost-tracking for these streams.
+            logger.warning("Cannot track costs from a OpenAI Stream.")
+            return
 
         results = None
         if "results" in response:
@@ -354,6 +366,6 @@ class OpenAIEndpoint(Endpoint):
 
         if not counted_something:
             logger.warning(
-                f"Could not find usage information in openai response:\n" +
+                "Could not find usage information in openai response:\n%s",
                 pp.pformat(response)
             )

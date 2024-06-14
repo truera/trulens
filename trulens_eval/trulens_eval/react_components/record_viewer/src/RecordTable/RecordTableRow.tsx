@@ -3,6 +3,7 @@ import { Box, IconButton, SxProps, TableCell, TableRow, Theme, Typography } from
 import { useEffect, useState } from 'react';
 import { Streamlit } from 'streamlit-component-lib';
 
+import SpanIconDisplay from '@/RecordTable/SpanIconDisplay';
 import { SpanTooltip } from '@/SpanTooltip';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 
@@ -27,7 +28,7 @@ export default function RecordTableRowRecursive({
 
   const [expanded, setExpanded] = useState<boolean>(true);
 
-  const { nodeId, startTime, timeTaken, selector, label } = node;
+  const { nodeId, startTime, timeTaken, selector, label, span } = node;
 
   const isNodeSelected = selectedNodeId === nodeId;
 
@@ -47,11 +48,11 @@ export default function RecordTableRowRecursive({
                 {expanded ? <ArrowDropDown /> : <ArrowRight />}
               </IconButton>
             )}
-            <Box sx={{ display: 'flex', alignItems: 'center', ml: node.children.length === 0 ? 5 : 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', ml: node.children.length === 0 ? 5 : 0, gap: 1 }}>
+              <SpanIconDisplay spanType={span?.type} />
+
               <Typography fontWeight="bold">{label}</Typography>
-              <Typography variant="code" sx={{ ml: 1, px: 1 }}>
-                {selector}
-              </Typography>
+              <Typography variant="code">{selector}</Typography>
             </Box>
           </Box>
         </TableCell>
@@ -90,7 +91,7 @@ export default function RecordTableRowRecursive({
 const recordBarSx: SxProps<Theme> = {
   position: 'relative',
   height: 20,
-  borderRadius: 0.5,
+  borderRadius: ({ spacing }) => spacing(0.5),
 };
 
 const recordRowSx: SxProps<Theme> = {

@@ -16,7 +16,7 @@ from trulens_eval.utils.containers import second
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import model_dump
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
@@ -78,7 +78,7 @@ def constructor_of_class(cls: Class) -> Type[app.LangChainComponent]:
     raise TypeError(f"Unknown llama_index component type with class {cls}")
 
 
-def component_of_json(json: JSON) -> app.LangChainComponent:
+def component_of_json(json: TJSONLike) -> app.LangChainComponent:
     cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)

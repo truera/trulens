@@ -1,56 +1,38 @@
-import { Grid, Stack, Typography } from '@mui/material';
-
-import JSONViewer from '@/JSONViewer';
-import LabelAndValue from '@/LabelAndValue';
-import Panel from '@/Panel';
-import Section from '@/RecordTree/Details/Section';
-import { summarySx } from '@/RecordTree/Details/styles';
-import TracePanel from '@/RecordTree/Details/TracePanel';
+import AgentDetails from '@/RecordTree/Details/NodeSpecificDetails/AgentDetails';
+import EmbeddingDetails from '@/RecordTree/Details/NodeSpecificDetails/EmbeddingDetails';
+import LLMDetails from '@/RecordTree/Details/NodeSpecificDetails/LLMDetails';
+import MemoryDetails from '@/RecordTree/Details/NodeSpecificDetails/MemoryDetails';
+import NodeDetailsContainer from '@/RecordTree/Details/NodeSpecificDetails/NodeDetailsContainer';
+import RerankerDetails from '@/RecordTree/Details/NodeSpecificDetails/RerankerDetails';
+import RetrieverDetails from '@/RecordTree/Details/NodeSpecificDetails/RetrieverDetails';
+import ToolDetails from '@/RecordTree/Details/NodeSpecificDetails/ToolDetails';
+import { CommonDetailsProps } from '@/RecordTree/Details/NodeSpecificDetails/types';
+import { SpanAgent, SpanEmbedding, SpanLLM, SpanMemory, SpanReranker, SpanRetriever, SpanTool } from '@/utils/Span';
 import { StackTreeNode } from '@/utils/StackTreeNode';
-import { RecordJSONRaw } from '@/utils/types';
 
-type DetailsProps = {
-  selectedNode: StackTreeNode;
-  recordJSON: RecordJSONRaw;
-};
+export default function NodeDetails({ selectedNode, recordJSON }: CommonDetailsProps) {
+  const { span } = selectedNode;
 
-export default function NodeDetails({ selectedNode, recordJSON }: DetailsProps) {
-  const { timeTaken: nodeTime, raw, selector } = selectedNode;
+  if (span instanceof SpanAgent)
+    return <AgentDetails selectedNode={selectedNode as StackTreeNode<SpanAgent>} recordJSON={recordJSON} />;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { args, rets } = raw ?? {};
+  if (span instanceof SpanEmbedding)
+    return <EmbeddingDetails selectedNode={selectedNode as StackTreeNode<SpanEmbedding>} recordJSON={recordJSON} />;
 
-  let returnValueDisplay = <Typography>No return values recorded</Typography>;
-  if (rets) {
-    if (typeof rets === 'string') returnValueDisplay = <Typography>{rets}</Typography>;
-    if (typeof rets === 'object') returnValueDisplay = <JSONViewer src={rets as object} />;
-  }
+  if (span instanceof SpanLLM)
+    return <LLMDetails selectedNode={selectedNode as StackTreeNode<SpanLLM>} recordJSON={recordJSON} />;
 
-  return (
-    <>
-      <Stack direction="row" sx={summarySx}>
-        <LabelAndValue label="Time taken" value={<Typography>{nodeTime} ms</Typography>} />
-      </Stack>
+  if (span instanceof SpanMemory)
+    return <MemoryDetails selectedNode={selectedNode as StackTreeNode<SpanMemory>} recordJSON={recordJSON} />;
 
-      <Grid container gap={1}>
-        <Grid item xs={12}>
-          <Panel header="Span I/O">
-            <Stack gap={2}>
-              <Section title="Arguments" subtitle={selector ? `${selector}.args` : undefined}>
-                {args ? <JSONViewer src={args} /> : 'No arguments recorded.'}
-              </Section>
+  if (span instanceof SpanReranker)
+    return <RerankerDetails selectedNode={selectedNode as StackTreeNode<SpanReranker>} recordJSON={recordJSON} />;
 
-              <Section title="Return values" subtitle={selector ? `${selector}.rets` : undefined}>
-                {returnValueDisplay}
-              </Section>
-            </Stack>
-          </Panel>
-        </Grid>
+  if (span instanceof SpanRetriever)
+    return <RetrieverDetails selectedNode={selectedNode as StackTreeNode<SpanRetriever>} recordJSON={recordJSON} />;
 
-        <Grid item xs={12}>
-          <TracePanel recordJSON={recordJSON} />
-        </Grid>
-      </Grid>
-    </>
-  );
+  if (span instanceof SpanTool)
+    return <ToolDetails selectedNode={selectedNode as StackTreeNode<SpanTool>} recordJSON={recordJSON} />;
+
+  return <NodeDetailsContainer selectedNode={selectedNode} recordJSON={recordJSON} />;
 }

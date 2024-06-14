@@ -1,9 +1,10 @@
+import { Span } from '@/utils/Span';
 import { CallJSONRaw, PerfJSONRaw, StackJSONRaw } from '@/utils/types';
 import { getMethodNameFromCell, getPathName } from '@/utils/utils';
 
 export const ROOT_NODE_ID = 'root-root-root';
 
-export class StackTreeNode {
+export class StackTreeNode<SpanType extends Span = Span> {
   children: StackTreeNode[];
 
   name: string;
@@ -18,6 +19,8 @@ export class StackTreeNode {
 
   raw?: CallJSONRaw;
 
+  span?: SpanType;
+
   parentNodes: StackTreeNode[] = [];
 
   constructor({
@@ -27,6 +30,7 @@ export class StackTreeNode {
     perf,
     raw,
     parentNodes = [],
+    span,
   }: {
     children?: StackTreeNode[];
     name: string;
@@ -34,6 +38,7 @@ export class StackTreeNode {
     raw?: CallJSONRaw;
     parentNodes?: StackTreeNode[];
     perf?: PerfJSONRaw;
+    span?: SpanType;
   }) {
     if (perf) {
       const startTime = new Date(perf.start_time).getTime();
@@ -46,6 +51,7 @@ export class StackTreeNode {
     this.name = name;
     this.raw = raw;
     this.parentNodes = parentNodes;
+    this.span = span;
 
     if (stackCell) {
       this.path = getPathName(stackCell);

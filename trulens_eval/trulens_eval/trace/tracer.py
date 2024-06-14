@@ -44,7 +44,7 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
     }
     """Pydantic configuration."""
 
-    stack: contextvars.ContextVar[mod_trace.HashableSpanContext] = pydantic.Field(
+    stack: contextvars.ContextVar[ot_span.SpanContext] = pydantic.Field(
         default_factory=lambda: contextvars.ContextVar("stack", default=None),
         exclude=True
     )
@@ -89,7 +89,7 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
     ) -> mod_trace.Span:
         """See [new_span][opentelemetry.trace.Tracer.new_span]."""
 
-        span_context = mod_trace.HashableSpanContext(
+        span_context = ot_span.SpanContext(
             trace_id=self.trace_id,
             span_id=random.getrandbits(mod_trace.NUM_SPANID_BITS),
             is_remote=False,
@@ -107,8 +107,9 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
             set_status_on_exception=set_status_on_exception
         )
 
+        print("new_span context=", type(context), context)
+
         if context is not None:
-            context = mod_trace.make_hashable(context)
             span.add_link(context, {mod_span.Span.vendor_attr("relationship"): "parent"})
 
         self.spans[span_context] = span
@@ -132,12 +133,12 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
             parent_context = self.stack.get()
 
         else:
-            parent_context = mod_trace.make_hashable(context)
+            parent_context = context
 
             if parent_context.trace_id != self.trace_id:
                 logger.warning("Parent context is not being traced by this tracer.")
 
-        span_context = mod_trace.HashableSpanContext(
+        span_context = ot_span.SpanContext(
             trace_id=self.trace_id,
             span_id=random.getrandbits(mod_trace.NUM_SPANID_BITS),
             is_remote=False,
@@ -176,9 +177,6 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
         end_on_exit: bool = True,
     ) -> Iterator[mod_span.Span]:
         """See [start_as_current_span][opentelemetry.trace.Tracer.start_as_current_span]."""
-
-        if context is not None:
-            context = mod_trace.make_hashable(context)
 
         span = self.start_span(
             name,

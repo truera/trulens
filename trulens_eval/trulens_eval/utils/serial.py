@@ -1,5 +1,4 @@
-"""
-Serialization utilities.
+"""Serialization utilities.
 
 TODO: Lens class: can we store just the python AST instead of building up our
 own "Step" classes to hold the same data? We are already using AST for parsing.
@@ -12,11 +11,11 @@ from ast import dump
 from ast import parse
 from contextvars import ContextVar
 from copy import copy
+import dataclasses
 import logging
-from typing import (
-    Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable, List, Optional,
-    Sequence, Set, Sized, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable,
+                    List, Optional, Sequence, Set, Sized, Tuple, TypeVar,
+                    Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -25,51 +24,57 @@ from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 from pydantic_core import CoreSchema
 import rich
+from typing_extensions import TypeAliasType
 
 from trulens_eval.utils.containers import iterable_peek
 from trulens_eval.utils.python import class_name
+from trulens_eval.utils.python import NoneType
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
-JSON_BASES: Tuple[type, ...] = (str, int, float, bytes, type(None))
-"""
-Tuple of JSON-able base types.
+JSON_BASES: Tuple[type, ...] = (str, int, float, bytes, NoneType)
+"""Tuple of JSON-able base types.
 
 Can be used in `isinstance` checks.
 """
 
-JSON_BASES_T = Union[\
-    str, int, float, bytes, None
-                    ]
+TJSONBase = TypeAliasType(
+    "TJSONBase", 
+    Union[
+        str, int, float, bytes, NoneType
+    ])
 """
 Alias for JSON-able base types.
+
+These are types that the json module can (de)serialize without specifying any
+additional (en|de)coders.
 """
 
-JSON = Union[\
-    JSON_BASES_T,
-    Sequence[Any],
-    Dict[str, Any]
-            ]
-"""Alias for (non-strict) JSON-able data (`Any` = `JSON`).
-
-If used with type argument, that argument indicates what the JSON represents and
-can be desererialized into.
+TJSONLike = TypeAliasType(
+    "TJSONLike", Union[
+        TJSONBase,
+        List["TJSONLike"],
+        Dict[str, "TJSONLike"]
+    ])
+"""Alias for (non-strict) JSON-able data.
 
 Formal JSON must be a `dict` at the root but non-strict here means that the root
 can be a basic type or a sequence as well.
 """
 
-JSON_STRICT = Dict[str, JSON]
+TJSON = TypeAliasType("TJSON", Dict[str, TJSONLike])
 """
 Alias for (strictly) JSON-able data.
 
-Python object that is directly mappable to JSON.
+This represents python objects that are directly mappable to JSON without
+additional encoders. See also [TJSONLike][trulens_eval.utils.serial.TJSONLike]
+for data that is not strictly json as it allows non-dict root items.
 """
 
 
-class JSONized(dict, Generic[T]):  # really JSON_STRICT
+class JSONized(dict, Generic[T]):  # really TJSON
     """JSON-encoded data the can be deserialized into a given type `T`.
     
     This class is meant only for type annotations. Any
@@ -86,6 +91,7 @@ class JSONized(dict, Generic[T]):  # really JSON_STRICT
 
 
 mj = MerkleJson()
+"""JSONLike hasher."""
 
 
 def model_dump(obj: Union[pydantic.BaseModel, pydantic.v1.BaseModel]) -> dict:
@@ -394,11 +400,13 @@ class GetItem(StepItemOrAttribute):
 
 
 class GetItemOrAttribute(StepItemOrAttribute):
-    # For item/attribute agnostic addressing.
+    """A step in a path lens that selects an item or an attribute.
 
-    # NOTE: We also allow to lookup elements within sequences if the subelements
-    # have the item or attribute. We issue warning if this is ambiguous (looking
-    # up in a sequence of more than 1 element).
+    !!! note:
+        _TruLens-Eval_ allows lookuping elements within sequences if the subelements
+        have the item or attribute. We issue warning if this is ambiguous (looking
+        up in a sequence of more than 1 element).
+    """
 
     item_or_attribute: str  # distinct from "item" for deserialization
 
@@ -413,7 +421,8 @@ class GetItemOrAttribute(StepItemOrAttribute):
     # Step requirement
     def get(self, obj: Dict[str, T]) -> Iterable[T]:
         # Special handling of sequences. See NOTE above.
-        if isinstance(obj, Sequence):
+
+        if isinstance(obj, Sequence) and not isinstance(obj, str):
             if len(obj) == 1:
                 for r in self.get(obj=obj[0]):
                     yield r
@@ -423,12 +432,17 @@ class GetItemOrAttribute(StepItemOrAttribute):
                 )
             else:  # len(obj) > 1
                 logger.warning(
-                    f"Object (of type {type(obj).__name__}) is a sequence containing more than one dictionary. "
-                    f"Lookup by item or attribute `{self.item_or_attribute}` is ambiguous. "
-                    f"Use a lookup by index(es) or slice first to disambiguate."
+                    "Object (of type %s is a sequence containing more than one dictionary. "
+                    "Lookup by item or attribute `%s` is ambiguous. "
+                    "Use a lookup by index(es) or slice first to disambiguate.",
+                    type(obj).__name__, self.item_or_attribute
                 )
-                for r in self.get(obj=obj[0]):
-                    yield r
+                for sub_obj in obj:
+                    try:
+                        for r in self.get(obj=sub_obj):
+                            yield r
+                    except Exception:
+                        pass
 
         # Otherwise handle a dict or object with the named attribute.
         elif isinstance(obj, Dict):
@@ -443,7 +457,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
                 yield getattr(obj, self.item_or_attribute)
             else:
                 raise ValueError(
-                    f"Object {obj} does not have item or attribute {self.item_or_attribute}."
+                    f"Object {repr(obj)} of type {type(obj)} does not have item or attribute {repr(self.item_or_attribute)}."
                 )
 
     # Step requirement
@@ -1072,11 +1086,31 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
 Lens.model_rebuild()
 
-# TODO: Deprecate old name.
-JSONPath = Lens
+@dataclasses.dataclass
+class Deprecated:
+    replacement: Optional[str] = None
+    warned: bool = False
+
+__deprecated = {'JSONPath': Deprecated(replacement='Lens')}
+_JSONPath = Lens
+
+def __getattr__(name: str) -> Any:
+    # TODO: generalize this and put somewhere else. See https://peps.python.org/pep-0562/
+    if name in __deprecated:
+        dep = __deprecated[name]
+        if not dep.warned:
+            msg = f"`{__name__}.{name}` is deprecated"
+            if dep.replacement:
+                msg += f", use `{__name__}.{dep.replacement}` instead."
+            logger.warning(msg)
+            dep.warned = True
+
+        return globals()["_" + name]
+    else:
+        raise AttributeError(name)
 
 
-def leaf_queries(obj_json: JSON, query: Lens = None) -> Iterable[Lens]:
+def leaf_queries(obj_json: TJSONLike, query: Optional[Lens] = None) -> Iterable[Lens]:
     """
     Get all queries for the given object that select all of its leaf values.
     """

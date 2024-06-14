@@ -9,21 +9,25 @@ to refer to parts of an LLM stack trace and use those when defining evaluations.
 For example, the following lens refers to the input to the retrieve step of the
 app called query.
 
-```python
-Select.RecordCalls.retrieve.args.query
-```
+!!! example
+
+    ```python
+    Select.RecordCalls.retrieve.args.query
+    ```
 
 Such lenses can then be used to define evaluations as so:
 
-```python
-# Context relevance between question and each context chunk.
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
-    .on(Select.RecordCalls.retrieve.args.query)
-    .on(Select.RecordCalls.retrieve.rets)
-    .aggregate(np.mean)
-)
-```
+!!! example
+
+    ```python
+    # Context relevance between question and each context chunk.
+    f_context_relevance = (
+        Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+        .on(Select.RecordCalls.retrieve.args.query)
+        .on(Select.RecordCalls.retrieve.rets)
+        .aggregate(np.mean)
+    )
+    ```
 
 In most cases, the Select object produces only a single item but can also
 address multiple items.
@@ -35,18 +39,15 @@ the documents returned by the `retrieve` method. These items can be evaluated se
 as shown above, or can be collected into an array for evaluation with `.collect()`.
 This is most commonly used for groundedness evaluations.
 
-Example:
+!!! example
 
-```python
-grounded = Groundedness(groundedness_provider=provider)
-
-f_groundedness = (
-    Feedback(grounded.groundedness_measure_with_cot_reasons, name = "Groundedness")
-    .on(Select.RecordCalls.retrieve.rets.collect())
-    .on_output()
-    .aggregate(grounded.grounded_statements_aggregator)
-)
-```
+    ```python
+    f_groundedness = (
+        Feedback(provider.groundedness_measure_with_cot_reasons, name = "Groundedness")
+        .on(Select.RecordCalls.retrieve.rets.collect())
+        .on_output()
+    )
+    ```
 
 Selectors can also access multiple calls to the same component. In agentic applications,
 this is an increasingly common practice. For example, an agent could complete multiple

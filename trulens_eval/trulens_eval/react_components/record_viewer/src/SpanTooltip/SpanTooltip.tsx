@@ -2,6 +2,7 @@ import { Box } from '@mui/material';
 import { ReactElement } from 'react';
 
 import StyledTooltip from '@/StyledTooltip';
+import { toHumanSpanType } from '@/utils/Span';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 
 type SpanTooltipProps = {
@@ -10,12 +11,17 @@ type SpanTooltipProps = {
 };
 
 export default function SpanTooltip({ node, children }: SpanTooltipProps) {
-  const { startTime, endTime, selector } = node;
+  const { startTime, endTime, selector, span } = node;
 
   return (
     <StyledTooltip
       title={
         <Box sx={{ lineHeight: 1.5 }}>
+          <span>
+            <b>Span type: </b>
+            {toHumanSpanType(span?.type)}
+          </span>
+          <br />
           <span>
             <b>Selector: </b>
             {selector}

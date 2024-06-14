@@ -10,8 +10,10 @@ import random
 import sys
 from time import sleep
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
-                    Sequence, Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
+    Type, TypeVar
+)
 
 from pydantic import Field
 import requests
@@ -31,7 +33,7 @@ from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
 from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.python import wrap_awaitable
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
@@ -151,8 +153,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     """Optional post headers for post requests if done by this class."""
 
     pace: mod_pace.Pace = Field(
-        default_factory=lambda:
-        mod_pace.Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
+        default_factory=lambda: mod_pace.
+        Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
         exclude=True
     )
     """Pacing instance to maintain a desired rpm."""
@@ -236,7 +238,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def post(
         self,
         url: str,
-        payload: JSON,
+        payload: TJSONLike,
         timeout: float = DEFAULT_NETWORK_TIMEOUT
     ) -> Any:
         self.pace_me()
@@ -355,8 +357,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(
-                wrapped_thing if wrapped_thing !=
-                object else "unknown dynamically generated class(es)"
+                wrapped_thing if wrapped_thing != object else
+                "unknown dynamically generated class(es)"
             )
             for original, _, endpoint in wrappers:
                 print(
@@ -575,8 +577,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # return others.
         return result, callbacks
 
-    def track_cost(self, __func: mod_asynchro_utils.CallableMaybeAwaitable[T], *args,
-                   **kwargs) -> Tuple[T, EndpointCallback]:
+    def track_cost(
+        self, __func: mod_asynchro_utils.CallableMaybeAwaitable[T], *args,
+        **kwargs
+    ) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.
         Returns the thunk's result alongside the EndpointCallback object that
@@ -797,7 +801,7 @@ class DummyEndpoint(Endpoint):
         """Dummy handler does nothing."""
 
     def post(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self, url: str, payload: TJSONLike, timeout: Optional[float] = None
     ) -> Any:
         """Pretend to make a classification request similar to huggingface API.
         
@@ -824,7 +828,7 @@ class DummyEndpoint(Endpoint):
             sleep(max(0.0, np_random.normal(self.delay, self.delay / 2)))
 
         r = random.random()
-        j: Optional[JSON] = None
+        j: Optional[TJSONLike] = None
 
         if r < self.freeze_prob:
             # Simulated freeze outcome.

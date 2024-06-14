@@ -8,6 +8,7 @@ typical use cases.
 
 from __future__ import annotations
 
+from collections import defaultdict
 import dataclasses
 from datetime import datetime
 import functools
@@ -20,22 +21,25 @@ from pprint import pformat
 import threading as th
 import traceback
 from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
-                    Sequence, Set, Tuple, Type, Union)
+                    Sequence, Set, Tuple, Type, TypeVar, Union)
 import weakref
 
 import pydantic
+from typing_extensions import TypeAliasType
 
+from trulens_eval import app as mod_app
 from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.provider import endpoint as mod_endpoint
-from trulens_eval.schema import base as mod_base_schema 
+from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.trace import span as mod_span
+from trulens_eval.utils import pyschema
+from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.imports import Dummy
 from trulens_eval.utils.json import jsonify
-from trulens_eval.utils import pyschema
-from trulens_eval.utils.python import callable_name
+from trulens_eval.utils.python import callable_info
 from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import get_first_local_in_call_stack
@@ -48,6 +52,45 @@ from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import retab
 
 logger = logging.getLogger(__name__)
+
+
+T = TypeVar("T")
+
+TId = int
+"""Integer id of an object.
+
+Make this an alias to make sure we treat such data with the care they need.
+"""
+
+TClassFilter = TypeAliasType("TClassFilter", Union[Type, Tuple[Type, ...]])
+
+TSpanner = TypeAliasType("TSpanner", Union[
+    Callable[[Any, mod_span.Span, mod_record_schema.RecordAppCall], None],
+    # method, "self" is first arg
+    Callable[[mod_span.Span, mod_record_schema.RecordAppCall], None]
+    # function
+])
+"""Call to Span converter methor or function."""
+
+@dataclasses.dataclass
+class SpanInfo():
+    """Span type and method that create spans of said type from
+    [RecordAppCall][trulens_eval.schema.record.RecordAppCall] objects.
+
+    The first argument to callable is the instance of the spec specified, second is
+    an instance if this is for a method call, and the third is the
+    [RecordAppCall][trulens_eval.schema.record.RecordAppCall] instance to fill in
+    the span info from. If the second argument is None, the span is for a function
+    without `self`, i.e. a staticmethod or just a function outside of a class.
+    """
+
+    span_type: mod_span.SpanType
+
+    spanner: TSpanner
+
+#TSpanInfo = TypeAliasType("TSpanInfo", Tuple[
+#    mod_span.SpanType, Any, TSpanner
+#])
 
 
 class WithInstrumentCallbacks:
@@ -121,7 +164,7 @@ class WithInstrumentCallbacks:
     # Called during invocation.
     def on_add_record(
         self,
-        ctx: 'RecordingContext',
+        ctx: mod_app.RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
@@ -160,10 +203,7 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
 
-ClassFilter = Union[Type, Tuple[Type, ...]]
-
-
-def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
+def class_filter_disjunction(f1: TClassFilter, f2: TClassFilter) -> TClassFilter:
     """Create a disjunction of two class filters.
     
     Args:
@@ -181,7 +221,7 @@ def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
     return f1 + f2
 
 
-def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
+def class_filter_matches(f: TClassFilter, obj: Union[Type, object]) -> bool:
     """Check whether given object matches a class-based filter.
     
     A class-based filter here means either a type to match against object
@@ -241,14 +281,21 @@ class Instrument(object):
         CLASSES = set([mod_feedback.Feedback])
         """Classes to instrument."""
 
-        SPANINFOS: Dict[pyschema.Function, TSpanInfo] = {}
+        SPANINFOS: Dict[
+            pyschema.Function,
+            weakref.WeakKeyDictionary[Union[Any, Type], SpanInfo]
+        ] = defaultdict(weakref.WeakKeyDictionary)
         """EXPERIMENTAL: Map of method to a function that
         create a span from a
         [RecordAppCall][trulens_eval.schema.record.RecordAppCall] made by the named
         method of that class.
+        
+        `Any` in type refers to an app instance. If key is a type instead of
+        instance, the span handler in the value is expected to be static (as in,
+        not having `self` as first argument).
         """
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": mod_feedback.Feedback}
+        METHODS: Dict[str, TClassFilter] = {"__call__": mod_feedback.Feedback}
         """Methods to instrument.
         
         Methods matching name have to pass the filter to be instrumented.
@@ -287,9 +334,13 @@ class Instrument(object):
                         pyfunc = pyschema.Function.of_function(f, cls=cls)
 
                         if pyfunc in self.Default.SPANINFOS:
-                            span_type, spanner = self.Default.SPANINFOS[pyfunc]
-                            print(f"{t*3}Span type: {span_type}")
-
+                            for instance_or_class, si in self.Default.SPANINFOS[pyfunc].items():
+                                print(f"{t*3}Span type: {si.span_type} ", end="")
+                                if isinstance(instance_or_class, type):
+                                    print("(static)", end='')
+                                else:
+                                    print(f"@0x{id(instance_or_class):x}", end='')
+                                print(f", spanner: {callable_info(si.spanner)}")
 
             print()
 
@@ -328,7 +379,7 @@ class Instrument(object):
         self,
         include_modules: Optional[Iterable[str]] = None,
         include_classes: Optional[Iterable[type]] = None,
-        include_methods: Optional[Dict[str, ClassFilter]] = None,
+        include_methods: Optional[Dict[str, TClassFilter]] = None,
         app: Optional[WithInstrumentCallbacks] = None
     ):
         if include_modules is None:
@@ -360,6 +411,9 @@ class Instrument(object):
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
+        # TODEBUG
+        print(f"{query}: instrumenting {method_name}={callable_info(func)}")
+
         if self.app is None:
             raise ValueError("Instrumentation requires an app but is None.")
 
@@ -367,7 +421,7 @@ class Instrument(object):
             raise ValueError("Function expected but method received.")
 
         if safe_hasattr(func, Instrument.INSTRUMENT):
-            logger.debug("\t\t\t%s: %s is already instrumented", query, func)
+            logger.debug("\t\t\t%s: %s is already instrumented", query, callable_info(func))
 
             # Notify the app instrumenting this method where it is located. Note
             # we store the method being instrumented in the attribute
@@ -381,6 +435,9 @@ class Instrument(object):
             # calls.
             existing_apps = getattr(func, Instrument.APPS)
             existing_apps.add(self.app)  # weakref set
+
+            # TODEBUG
+            print(f"adding app {self.app.app_id} to apps for {query}")
 
             return func
 
@@ -403,12 +460,16 @@ class Instrument(object):
             logger.debug(
                 "%s: calling instrumented sync method %s of type %s, "
                 "iscoroutinefunction=%s, "
-                "isasyncgeneratorfunction=%s", query, func, type(func),
+                "isasyncgeneratorfunction=%s", query, callable_info(func), type(func),
                 is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func)
             )
 
+            # apps = getattr(tru_wrapper.__wrapped__, Instrument.APPS)
             apps = getattr(tru_wrapper, Instrument.APPS)
+
+            # TODEBUG
+            print(f"got {len(apps)} apps for {query}.{method_name}")
 
             # If not within a root method, call the wrapped function without
             # any recording.
@@ -431,7 +492,10 @@ class Instrument(object):
             # call stack hence this might be the first time they are seeing an
             # instrumented method being called.
             for app in apps:
+                # TODEBUG
+                print(f"consider app {app.app_id} for {query}.{method_name}")
                 for ctx in app.on_new_record(func):
+                    # print("  adding ctx", ctx)
                     contexts.add(ctx)
 
             if len(contexts) == 0:
@@ -464,6 +528,7 @@ class Instrument(object):
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
+            # stacks = dict(ctx_stacks.items())
             stacks = {k: v for k, v in ctx_stacks.items()}
 
             start_time = None
@@ -496,17 +561,25 @@ class Instrument(object):
                         "App of type %s no longer knows about object %s method %s. "
                         "Something might be going wrong.",
                         class_name(type(app)), id_str(args[0]),
-                        callable_name(func)
+                        callable_info(func)
                     )
+                    #raise RuntimeError(
+                    #    ("App of type %s no longer knows about object %s method %s. "
+                    #    "Something might be going wrong.") % (
+                    #    class_name(type(app)), id_str(args[0]),
+                    #    callable_name(func))
+                    #)
                     continue
 
-                if ctx not in ctx_stacks:
-                    # If we are the first instrumented method in the chain
-                    # stack, make a new stack tuple for subsequent deeper calls
-                    # (if any) to look up.
-                    stack = ()
-                else:
-                    stack = ctx_stacks[ctx]
+                stack = ctx_stacks.get(ctx, ())
+                # If we are the first instrumented method in the chain
+                # stack, make a new stack tuple for subsequent deeper calls
+                # (if any) to look up.
+
+                # if ctx not in ctx_stacks:
+                #     stack = ()
+                # else:
+                #     stack = ctx_stacks[ctx]
 
                 frame_ident = mod_record_schema.RecordAppCallMethod(
                     path=path, method=pyschema.Method.of_method(func, obj=obj, cls=cls)
@@ -520,6 +593,11 @@ class Instrument(object):
 
             # Start of run wrapped block.
             start_time = datetime.now()
+
+            # Create a unique call_id for this method call. This will be the
+            # same across everyone Record or RecordAppCall that refers to this
+            # method invocation.
+            call_id = mod_types_schema.new_call_id()
 
             error_str = None
 
@@ -537,11 +615,9 @@ class Instrument(object):
                 error_str = str(e)
 
                 logger.error(
-                    "Error calling wrapped function %s.", callable_name(func)
+                    "Error calling wrapped function %s.", callable_info(func)
                 )
                 logger.error(traceback.format_exc())
-
-            end_time = datetime.now()
 
             # Done running the wrapped function. Lets collect the results.
             # Create common information across all records.
@@ -557,9 +633,16 @@ class Instrument(object):
             records = {}
 
             def handle_done(rets):
+                # (re) renerate end_time here because cases where the initial end_time was
+                # just to produce an awaitable before being awaited.
+                end_time = datetime.now()
+
                 record_app_args = dict(
+                    call_id=call_id,
                     args=nonself,
-                    perf=mod_base_schema.Perf(start_time=start_time, end_time=end_time),
+                    perf=mod_base_schema.Perf(
+                        start_time=start_time, end_time=end_time
+                    ),
                     pid=os.getpid(),
                     tid=th.get_native_id(),
                     rets=jsonify(rets),
@@ -569,6 +652,7 @@ class Instrument(object):
 
                 # Now record calls to each context.
                 for ctx in contexts:
+                    # stack = stacks.get(ctx, ())
                     stack = stacks[ctx]
 
                     # Note that only the stack differs between each of the records in this loop.
@@ -589,7 +673,9 @@ class Instrument(object):
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=mod_base_schema.Perf(start_time=start_time, end_time=end_time),
+                            perf=mod_base_schema.Perf(
+                                start_time=start_time, end_time=end_time
+                            ),
                             cost=cost,
                             existing_record=records.get(ctx)
                         )
@@ -612,13 +698,14 @@ NOTE from trulens_eval:
 This app produced an asynchronous response of type `{class_name(type(rets))}`. This record will be updated once
 the response is available. If this message persists, check that you are
 using the correct version of the app method and `await` any asynchronous
-results. Additional information about this call: 
-    
-```
-{pformat(locals())}
-```
+results.
     """
                     ),
+                )
+    
+                logger.info(
+                    f"""This app produced an asynchronous response of type `{class_name(type(rets))}`. 
+                            This record will be updated once the response is available"""
                 )
 
                 # TODO(piotrm): need to track costs of awaiting the ret in the
@@ -639,6 +726,9 @@ results. Additional information about this call:
         setattr(tru_wrapper, Instrument.INSTRUMENT, func)
         setattr(tru_wrapper, Instrument.APPS, apps)
 
+        # setattr(func, Instrument.INSTRUMENT, func)
+        # setattr(func, Instrument.APPS, apps)
+
         return tru_wrapper
 
     def instrument_method(self, method_name: str, obj: Any, query: Lens):
@@ -658,6 +748,7 @@ results. Additional information about this call:
                     "\t\t%s: instrumenting %s.%s", query, class_name(base),
                     method_name
                 )
+
                 setattr(
                     base, method_name,
                     self.tracked_method_wrapper(
@@ -727,8 +818,8 @@ results. Additional information about this call:
 
         done.add(id(obj))
 
-        # NOTE: We cannot instrument chain directly and have to instead
-        # instrument its class. The pydantic.BaseModel does not allow instance
+        # NOTE: We cannot instrument app instances directly and have to instead
+        # instrument their classes. pydantic.BaseModel does not allow instance
         # attributes that are not fields:
         # https://github.com/pydantic/pydantic/blob/11079e7e9c458c610860a5776dc398a4764d538d/pydantic/main.py#LL370C13-L370C13
         # .
@@ -736,10 +827,8 @@ results. Additional information about this call:
         # Recursively instrument inner components
         if hasattr(obj, '__dict__'):
             for attr_name, attr_value in obj.__dict__.items():
-                if any(isinstance(attr_value, cls)
-                       for cls in self.include_classes):
-                    inner_query = query[attr_name]
-                    self.instrument_object(attr_value, inner_query, done)
+                if self.to_instrument_object(attr_value):
+                    self.instrument_object(attr_value, query[attr_name], done)
 
         for base in mro:
             # Some top part of mro() may need instrumentation here if some
@@ -777,7 +866,9 @@ results. Additional information about this call:
                     # version of the inner method which we may fail to
                     # instrument.
                     if hasattr(original_fun, "__wrapped__"):
-                        original_fun = original_fun.__wrapped__
+                         original_fun = original_fun.__wrapped__
+                    # TODO(piotrm): had to disable to re-enable nested contexts.
+                    # TODEBUG
 
                     # Sometimes the base class may be in some module but when a
                     # method is looked up from it, it actually comes from some
@@ -851,53 +942,7 @@ results. Additional information about this call:
                 elif isinstance(v, Dict):
                     for k2, sv in v.items():
                         subquery = query[k][k2]
-                        # WORK IN PROGRESS: BUG: some methods in rails are bound with a class that we cannot instrument
-                        """
-                        if isinstance(sv, Callable):
-                            if safe_hasattr(sv, "__self__"):
-                                # Is a method with bound self.
-                                sv_self = getattr(sv, "__self__")
-                                
-                                if not self.to_instrument_class(type(sv_self)):
-                                    # print(f"{subquery}: Don't need to instrument class {type(sv_self)}")
-                                    continue
 
-                                if not safe_hasattr(sv, self.INSTRUMENT):
-                                    print(f"{subquery}: Trying to instrument bound methods in {sv_self}")
-
-                                if safe_hasattr(sv, "__func__"):
-                                    func = getattr(sv, "__func__")
-                                    if not safe_hasattr(func, self.INSTRUMENT):
-                                        print(f"{subquery}: Bound method {sv}, unbound {func} is not instrumented. Trying to instrument.")
-
-                                        subobj = sv.__self__
-
-                                        try:
-                                            unbound = self.tracked_method_wrapper(
-                                                query=query,
-                                                func=func,
-                                                method_name=func.__name__,
-                                                cls=type(subobj),
-                                                obj=subobj
-                                            )
-                                            if inspect.iscoroutinefunction(func):
-                                                @functools.wraps(unbound)
-                                                async def bound(*args, **kwargs):
-                                                    return await unbound(subobj, *args, **kwargs)
-                                            else:
-                                                def bound(*args, **kwargs):
-                                                    return unbound(subobj, *args, **kwargs)
-                                                
-                                            v[k2] = bound
-                                            
-                                            #setattr(
-                                            #    sv.__func__, "__code__", unbound.__code__
-                                            #)
-                                        except Exception as e:
-                                            print(f"\t\t\t{subquery}: cound not instrument because {e}")
-                                                    #self.instrument_bound_methods(sv_self, query=subquery)
-                                        
-                        """
                         if self.to_instrument_class(type(sv)):
                             self.instrument_object(
                                 obj=sv, query=subquery, done=done
@@ -917,72 +962,6 @@ results. Additional information about this call:
 
         # Check whether bound methods are instrumented properly.
 
-    def instrument_bound_methods(self, obj: object, query: Lens):
-        """Instrument functions that may be bound methods.
-
-        Some apps include either anonymous functions or manipulates methods that
-        have self bound already. Our other instrumentation cannot handle those cases.
-    
-        Warning:
-            Experimental work in progress.
-        """
-
-        for method_name, _ in self.include_methods.items():
-            if not safe_hasattr(obj, method_name):
-                pass
-            else:
-                method = pyschema.safe_getattr(obj, method_name)
-                print(f"\t{query}Looking at {method}")
-
-                if safe_hasattr(method, "__func__"):
-                    func = pyschema.safe_getattr(method, "__func__")
-                    print(
-                        f"\t\t{query}: Looking at bound method {method_name} with func {func}"
-                    )
-
-                    if safe_hasattr(func, Instrument.INSTRUMENT):
-                        print(
-                            f"\t\t\t{query} Bound method {func} is instrumented."
-                        )
-
-                    else:
-                        print(
-                            f"\t\t\t{query} Bound method {func} is not instrumented. Trying to instrument it"
-                        )
-
-                        try:
-                            unbound = self.tracked_method_wrapper(
-                                query=query,
-                                func=func,
-                                method_name=method_name,
-                                cls=type(obj),
-                                obj=obj
-                            )
-                            if inspect.iscoroutinefunction(func):
-
-                                async def bound(*args, **kwargs):
-                                    return await unbound(obj, *args, **kwargs)
-                            else:
-
-                                def bound(*args, **kwargs):
-                                    return unbound(obj, *args, **kwargs)
-
-                            setattr(obj, method_name, bound)
-                        except Exception as e:
-                            logger.debug(
-                                f"\t\t\t{query}: cound not instrument because {e}"
-                            )
-
-                else:
-                    if safe_hasattr(method, Instrument.INSTRUMENT):
-                        print(
-                            f"\t\t{query} Bound method {method} is instrumented."
-                        )
-                    else:
-                        print(
-                            f"\t\t{query} Bound method {method} is NOT instrumented."
-                        )
-
 
 class AddInstruments():
     """Utilities for adding more things to default instrumentation filters."""
@@ -990,8 +969,9 @@ class AddInstruments():
     @classmethod
     def method(
         cls,
-        of_cls: type,
+        of_cls: Type[T],
         name: str,
+        instance: Optional[T] = None,
         span_type: Optional[mod_span.SpanType] = None,
         spanner: Optional[Callable] = None
     ) -> None:
@@ -1001,6 +981,9 @@ class AddInstruments():
             of_cls: The class that contains the method.
             
             name: The name of the method.
+
+            instance: The instance of the class that contains the method. If
+                None, the method is assumed to be a static method.
             
             span_type: The type of span to create when converting a record call
                 to a span.
@@ -1014,8 +997,23 @@ class AddInstruments():
 
         if span_type is not None and spanner is not None:
             pyfunc = pyschema.Function.of_function(getattr(of_cls, name), cls=of_cls)
-            
-            Instrument.Default.SPANINFOS[pyfunc] = (span_type, spanner)
+
+            # TODO: check if spanner is static or not and decide whether we want
+            # to add it to SPANINFOS with or without instance. If it is static,
+            # we should add it without instance. If it is not, we might need to
+            # wait until an instance is known before we add it to spaners.
+
+            # TODO: issue warning if it is static and instance is given or vice
+            # versa.
+
+            Instrument.Default.SPANINFOS[
+                pyfunc
+            ][
+                of_cls if instance is None else instance
+            ] = SpanInfo(span_type=span_type, spanner=spanner)
+            # `of_cls` here indicates that the spanner is static without
+            # Methods/nonstatic functions are added to this structure when we
+            # instrument app instances (as opposed to the classes here).
 
         else:
             if span_type is not None or spanner is not None:
@@ -1023,7 +1021,7 @@ class AddInstruments():
                     "Both `span_type` and `spanner` must be provided if either is."
                 )
 
-        check_o: ClassFilter = Instrument.Default.METHODS.get(name, ())
+        check_o: TClassFilter = Instrument.Default.METHODS.get(name, ())
         Instrument.Default.METHODS[name] = class_filter_disjunction(
             check_o, of_cls
         )
@@ -1047,6 +1045,11 @@ class instrument(AddInstruments):
         self,
         func: Optional[Callable] = None,
     ):
+        if func is None:
+            raise ValueError("Instrument decorator requires a function to decorate.")
+
+        print(f"instrument init: {callable_info(func)}")
+        # TODEBUG
 
         self.func = func
         self.cls = None
@@ -1065,12 +1068,45 @@ class instrument(AddInstruments):
         def set_spanner(spanner: Callable):
             self.spanner = spanner
 
+            return spanner
+
         return set_spanner
 
+    def __instrument_init(outer_self):
+        """Instrument the __init__ method of the class in which we decorated a
+        method so that whenever a new object of that class is created, we keep
+        track of it."""
+
+        if outer_self.cls is None:
+            raise ValueError("Instrumenting __init__ requires a class to be set.")
+
+        original_init = outer_self.cls.__init__
+
+        @functools.wraps(original_init)
+        def wrapped_init(self, *args, **kwargs):
+            original_init(self, *args, **kwargs)
+            outer_self.__handle_init(self, *args, **kwargs)
+
+        outer_self.cls.__init__ = wrapped_init
+
+    def __handle_init(self, wrapped_self, *args, **kwargs):
+        """Decorated class __init__ handler for use in a wrapper."""
+
+        if self.name is None or self.cls is None or self.span_type is None or self.spanner is None:
+            # We don't need to handle init as user did not instrument is_span.
+            return
+
+        # Add the method with the instance id to the SPANINFOs.
+        self.method(
+            of_cls=self.cls,
+            name=self.name,
+            instance=wrapped_self,
+            span_type=self.span_type,
+            spanner=self.spanner
+        )
+
     def __set_name__(self, cls: type, name: str):
-        """
-        For use as method decorator.
-        """
+        """For use as method decorator."""
 
         # Important: do this first:
         setattr(cls, name, self.func)
@@ -1083,6 +1119,11 @@ class instrument(AddInstruments):
 
         # Note that this does not actually change the method, just adds it to
         # list of filters.
+
+        # Wraps the __init__ method to handle cases where is_span is a method
+        # that expects self. The wrapper also records the instance to use for self.
+
+        self.__instrument_init()
 
         self.method(
             of_cls=cls,

@@ -5,8 +5,9 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Type, Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+)
 import warnings
 
 import numpy as np
@@ -40,7 +41,7 @@ from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import text
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.python import locals_except
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import JSONized
 from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.text import UNICODE_CLOCK
@@ -152,7 +153,8 @@ class SQLAlchemyDB(DB):
         new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
-            "%s Tru initialized with db url %s ." % (text.UNICODE_SQUID, new_db.engine.url)
+            "%s Tru initialized with db url %s ." %
+            (text.UNICODE_SQUID, new_db.engine.url)
         )
         if database_redact_keys:
             print(
@@ -301,7 +303,9 @@ class SQLAlchemyDB(DB):
 
         self.migrate_database()
 
-    def insert_record(self, record: mod_record_schema.Record) -> mod_types_schema.RecordID:
+    def insert_record(
+        self, record: mod_record_schema.Record
+    ) -> mod_types_schema.RecordID:
         """See [DB.insert_record][trulens_eval.database.base.DB.insert_record]."""
         # TODO: thread safety
 
@@ -317,7 +321,9 @@ class SQLAlchemyDB(DB):
 
             return _rec.record_id
 
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized[mod_app.App]]:
+    def get_app(
+        self, app_id: mod_types_schema.AppID
+    ) -> Optional[JSONized[mod_app.App]]:
         """See [DB.get_app][trulens_eval.database.base.DB.get_app]."""
 
         with self.session.begin() as session:
@@ -325,14 +331,16 @@ class SQLAlchemyDB(DB):
                                     ).filter_by(app_id=app_id).first():
                 return json.loads(_app.app_json)
 
-    def get_apps(self) -> Iterable[JSON]:
+    def get_apps(self) -> Iterable[TJSONLike]:
         """See [DB.get_apps][trulens_eval.database.base.DB.get_apps]."""
 
         with self.session.begin() as session:
             for _app in session.query(self.orm.AppDefinition):
                 yield json.loads(_app.app_json)
 
-    def insert_app(self, app: mod_app_schema.AppDefinition) -> mod_types_schema.AppID:
+    def insert_app(
+        self, app: mod_app_schema.AppDefinition
+    ) -> mod_types_schema.AppID:
         """See [DB.insert_app][trulens_eval.database.base.DB.insert_app]."""
 
         # TODO: thread safety
@@ -351,7 +359,7 @@ class SQLAlchemyDB(DB):
             logger.info("%s added app %s", UNICODE_CHECK, _app.app_id)
 
             return _app.app_id
-    
+
     def delete_app(self, app_id: mod_types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
@@ -360,7 +368,8 @@ class SQLAlchemyDB(DB):
             app_id (schema.AppID): The unique identifier of the app to be deleted.
         """
         with self.Session.begin() as session:
-            _app = session.query(orm.AppDefinition).filter_by(app_id=app_id).first()
+            _app = session.query(orm.AppDefinition).filter_by(app_id=app_id
+                                                             ).first()
             if _app:
                 session.delete(_app)
                 logger.info(f"{UNICODE_CHECK} deleted app {app_id}")
@@ -393,7 +402,9 @@ class SQLAlchemyDB(DB):
             return _fb_def.feedback_definition_id
 
     def get_feedback_defs(
-        self, feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None
+        self,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+                                        ] = None
     ) -> pd.DataFrame:
         """See [DB.get_feedback_defs][trulens_eval.database.base.DB.get_feedback_defs]."""
 
@@ -429,7 +440,9 @@ class SQLAlchemyDB(DB):
                     _feedback_result
                 )  # insert new result # .add was not thread safe
 
-            status = mod_feedback_schema.FeedbackResultStatus(_feedback_result.status)
+            status = mod_feedback_schema.FeedbackResultStatus(
+                _feedback_result.status
+            )
 
             if status == mod_feedback_schema.FeedbackResultStatus.DONE:
                 icon = UNICODE_CHECK
@@ -455,9 +468,11 @@ class SQLAlchemyDB(DB):
         shuffle: bool = False,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
-        status: Optional[Union[mod_feedback_schema.FeedbackResultStatus,
-                               Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+                                        ] = None,
+        status: Optional[
+            Union[mod_feedback_schema.FeedbackResultStatus,
+                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None
@@ -502,9 +517,11 @@ class SQLAlchemyDB(DB):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
-        status: Optional[Union[mod_feedback_schema.FeedbackResultStatus,
-                               Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+                                        ] = None,
+        status: Optional[
+            Union[mod_feedback_schema.FeedbackResultStatus,
+                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -520,15 +537,20 @@ class SQLAlchemyDB(DB):
             results = session.query(self.orm.FeedbackResult.status,
                                     q).group_by(self.orm.FeedbackResult.status)
 
-            return {mod_feedback_schema.FeedbackResultStatus(row[0]): row[1] for row in results}
+            return {
+                mod_feedback_schema.FeedbackResultStatus(row[0]): row[1]
+                for row in results
+            }
 
     def get_feedback(
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
-        status: Optional[Union[mod_feedback_schema.FeedbackResultStatus,
-                               Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+                                        ] = None,
+        status: Optional[
+            Union[mod_feedback_schema.FeedbackResultStatus,
+                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -739,12 +761,8 @@ class AppsExtractor:
                         self.feedback_columns.add(_res.name)
 
                 row = {
-                    **{
-                        k: np.mean(v) for k, v in values.items()
-                    },
-                    **{
-                        k + "_calls": flatten(v) for k, v in calls.items()
-                    },
+                    **{k: np.mean(v) for k, v in values.items()},
+                    **{k + "_calls": flatten(v) for k, v in calls.items()},
                 }
 
                 for col in self.rec_cols:

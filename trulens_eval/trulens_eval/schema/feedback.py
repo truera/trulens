@@ -6,8 +6,9 @@ import datetime
 from enum import Enum
 import logging
 from pprint import pformat
-from typing import (Any, ClassVar, Dict, Hashable, List, Optional, Tuple,
-                    TypeVar, Union)
+from typing import (
+    Any, ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar, Union
+)
 
 import pydantic
 
@@ -241,7 +242,7 @@ class FeedbackCall(serial.SerialModel):
     Note that a single `Feedback` instance might require more than one call.
     """
 
-    args: Dict[str, Optional[serial.JSON]]
+    args: Dict[str, Optional[serial.TJSONLike]]
     """Arguments to the feedback function."""
 
     ret: float
@@ -306,7 +307,8 @@ class FeedbackResult(serial.SerialModel):
 
     # The `Feedback` / `FeedbackDefinition` which was evaluated to get this
     # result.
-    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None
+    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+                                    ] = None
 
     # Last timestamp involved in the evaluation.
     last_ts: datetime.datetime = pydantic.Field(
@@ -316,7 +318,9 @@ class FeedbackResult(serial.SerialModel):
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
     """For deferred feedback evaluation, the status of the evaluation."""
 
-    cost: mod_base_schema.Cost = pydantic.Field(default_factory=mod_base_schema.Cost)
+    cost: mod_base_schema.Cost = pydantic.Field(
+        default_factory=mod_base_schema.Cost
+    )
 
     # Given name of the feedback.
     name: str
@@ -334,7 +338,9 @@ class FeedbackResult(serial.SerialModel):
     multi_result: Optional[str] = None
 
     def __init__(
-        self, feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None, **kwargs
+        self,
+        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        **kwargs
     ):
         super().__init__(feedback_result_id="temporary", **kwargs)
 
@@ -455,7 +461,8 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
     def __init__(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+                                        ] = None,
         implementation: Optional[Union[pyschema.Function,
                                        pyschema.Method]] = None,
         aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,

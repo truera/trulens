@@ -5,7 +5,7 @@ from typing import ClassVar, Optional
 import pydantic
 
 from trulens_eval import app as mod_app
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 
 
 class ChatRecord(pydantic.BaseModel):
@@ -20,10 +20,10 @@ class ChatRecord(pydantic.BaseModel):
 
     # Jsonified record. Available only after the app is run on human input and
     # produced a computer output.
-    record_json: Optional[JSON] = None
+    record_json: Optional[TJSONLike] = None
 
     # The final app state for continuing the session.
     app: mod_app.App
 
     # The state of the app as was when this record was produced.
-    app_json: JSON
+    app_json: TJSONLike

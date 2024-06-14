@@ -14,7 +14,7 @@ from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils.json import json_str_of_obj
-from trulens_eval.utils.serial import JSON
+from trulens_eval.utils.serial import TJSONLike
 from trulens_eval.utils.serial import JSONized
 from trulens_eval.utils.serial import SerialModel
 
@@ -106,7 +106,9 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_app(self, app: mod_app_schema.AppDefinition) -> mod_types_schema.AppID:
+    def insert_app(
+        self, app: mod_app_schema.AppDefinition
+    ) -> mod_types_schema.AppID:
         """
         Upsert an `app` into the database.
 
@@ -143,7 +145,8 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_feedback_defs(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+                                        ] = None
     ) -> pd.DataFrame:
         """Retrieve feedback definitions from the database.
         
@@ -179,9 +182,11 @@ class DB(SerialModel, abc.ABC):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
-        status: Optional[Union[mod_feedback_schema.FeedbackResultStatus,
-                               Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+                                        ] = None,
+        status: Optional[
+            Union[mod_feedback_schema.FeedbackResultStatus,
+                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -219,9 +224,11 @@ class DB(SerialModel, abc.ABC):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
-        status: Optional[Union[mod_feedback_schema.FeedbackResultStatus,
-                               Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+                                        ] = None,
+        status: Optional[
+            Union[mod_feedback_schema.FeedbackResultStatus,
+                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -241,7 +248,9 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized[mod_app.App]]:
+    def get_app(
+        self, app_id: mod_types_schema.AppID
+    ) -> Optional[JSONized[mod_app.App]]:
         """Get the app with the given id from the database.
         
         Returns:
@@ -253,7 +262,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_apps(self) -> Iterable[JSON]:
+    def get_apps(self) -> Iterable[TJSONLike]:
         """Get all apps."""
 
         raise NotImplementedError()
