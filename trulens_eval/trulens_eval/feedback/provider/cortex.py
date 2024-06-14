@@ -30,7 +30,7 @@ class Cortex(LLMProvider):
         model_engine: Optional[str] = None,
         snowflake_connection_params: Optional[Dict] = None,
         *args,
-        **kwargs: dict
+        **kwargs: Dict
     ):
         self_kwargs = dict(kwargs)
 
@@ -58,8 +58,6 @@ class Cortex(LLMProvider):
 
     def _exec_snowsql_complete_command(self, model: str, temperature: float, messages: Optional[Sequence[Dict]] = None):
         # Ensure messages are formatted as a JSON array string
-        if messages is None:
-            messages = []
         messages_json_str = json.dumps(messages)
 
         options = {'temperature': temperature}
