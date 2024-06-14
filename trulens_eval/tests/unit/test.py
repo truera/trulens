@@ -42,8 +42,6 @@ def requiredonly_test(testmethodorclass):
 
 
 def module_installed(module: str) -> bool:
-    # Replace underscores with dashes for the actual package name to deal with modules such as llama-index and snowflake-snowpark-python 
-    module = module.replace("_", "-")
     try:
         __import__(module)
         return True
