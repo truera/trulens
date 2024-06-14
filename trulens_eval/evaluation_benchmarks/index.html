@@ -3673,13 +3673,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#context-relevance" class="md-nav__link">
+  <a href="#groundedness" class="md-nav__link">
     <span class="md-ellipsis">
-      Context Relevance
+      Groundedness
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Context Relevance">
+    <nav class="md-nav" aria-label="Groundedness">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3693,48 +3693,6 @@
         
           <li class="md-nav__item">
   <a href="#results" class="md-nav__link">
-    <span class="md-ellipsis">
-      Results
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ablations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Ablations
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#groundedness" class="md-nav__link">
-    <span class="md-ellipsis">
-      Groundedness
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Groundedness">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#methods_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      Methods
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#results_1" class="md-nav__link">
     <span class="md-ellipsis">
       Results
     </span>
@@ -3758,7 +3716,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#methods_2" class="md-nav__link">
+  <a href="#methods_1" class="md-nav__link">
     <span class="md-ellipsis">
       Methods
     </span>
@@ -3767,7 +3725,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#results_2" class="md-nav__link">
+  <a href="#results_1" class="md-nav__link">
     <span class="md-ellipsis">
       Results
     </span>
@@ -3802,118 +3760,13 @@
 <h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
 <p>TruLens relies on feedback functions to score the performance of LLM apps, which are implemented across a variety of LLMs and smaller models. The numerical scoring scheme adopted by <em>TruLens</em>' feedback functions is intuitive for generating aggregated results from eval runs that are easy to interpret and visualize across different applications of interest. However, it begs the question how trustworthy these scores actually are, given they are at their core next-token-prediction-style generation from meticulously designed prompts.</p>
 <p>Consequently, these feedback functions face typical large language model (LLM) challenges in rigorous production environments, including prompt sensitivity and non-determinism, especially when incorporating Mixture-of-Experts and model-as-a-service solutions like those from <em>OpenAI</em>, <em>Mistral</em>, and others. Drawing inspiration from works on <a href="https://arxiv.org/pdf/2306.05685">Judging LLM-as-a-Judge</a>, we outline findings from our analysis of feedback function performance against task-aligned benchmark data. To accomplish this, we first need to align feedback function tasks to relevant benchmarks in order to gain access to large scale ground truth data for the feedback functions. We then are able to easily compute metrics across a variety of implementations and models.</p>
-<h2 id="context-relevance">Context Relevance<a class="headerlink" href="#context-relevance" title="Permanent link">&para;</a></h2>
-<h3 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h3>
-<p>Observing that many information retrieval (IR) benchmarks, such as <a href="https://huggingface.co/datasets/ms_marco/viewer/v2.1">MS MARCO</a>, use binary labels, we propose to frame the problem of evaluating context relevance tasks as evaluating a recommender system. In essence, we argue that the relative importance or ranking based on the score assignments is all you need to achieve meta-evaluation against human golden sets. The intuition is that it is a sufficient proxy to trustworthiness if feedback functions demonstrate discriminative capabilities that reliably and consistently assign items, be they context chunks or generated responses, with weights and ordering closely mirroring human preferences.</p>
-<p><a href="context_relevance_benchmark/">See the code.</a></p>
-<h3 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h3>
-<p>Here, we leverage the 500 random sampled rows from <a href="https://arxiv.org/abs/1611.09268">MS MARCO</a> dataset for benchmarking context relevance.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;"><strong>Feedback Function Base Model</strong></th>
-<th style="text-align: center;"><strong>MS MARCO nDCG</strong></th>
-<th style="text-align: center;"><strong>MS MARCO ECE</strong></th>
-<th style="text-align: center;"><strong>MS MARCO Recall@5</strong></th>
-<th style="text-align: center;"><strong>MS MARCO Precision@1</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">GPT 3.5 Turbo</td>
-<td style="text-align: center;">0.567230</td>
-<td style="text-align: center;">0.5474</td>
-<td style="text-align: center;">0.94</td>
-<td style="text-align: center;">0.218365</td>
-</tr>
-<tr>
-<td style="text-align: center;">GPT 4 Turbo</td>
-<td style="text-align: center;">0.66496</td>
-<td style="text-align: center;">0.4430</td>
-<td style="text-align: center;">0.94</td>
-<td style="text-align: center;">0.312167</td>
-</tr>
-<tr>
-<td style="text-align: center;">Claude 2</td>
-<td style="text-align: center;">0.599110</td>
-<td style="text-align: center;">0.6690</td>
-<td style="text-align: center;">0.90</td>
-<td style="text-align: center;">0.268214</td>
-</tr>
-</tbody>
-</table>
-<h3 id="ablations">Ablations<a class="headerlink" href="#ablations" title="Permanent link">&para;</a></h3>
-<p>Calibrations are crucial steps in the evaluation process of feedback functions. They help fine-tune the models and ensure their performance aligns with the desired benchmarks. In this context, we test ablations of LLMs with varying temperatures to understand the relationship between the temperature parameter and evaluation reliability.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;"><strong>Temperature</strong></th>
-<th style="text-align: center;"><strong>Feedback Function Base Model</strong></th>
-<th style="text-align: center;"><strong>ECE</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">0.0</td>
-<td style="text-align: center;">GPT-3.5-Turbo</td>
-<td style="text-align: center;">0.492735</td>
-</tr>
-<tr>
-<td style="text-align: center;">0.3</td>
-<td style="text-align: center;">GPT-3.5-Turbo</td>
-<td style="text-align: center;">0.477844</td>
-</tr>
-<tr>
-<td style="text-align: center;">0.7</td>
-<td style="text-align: center;">GPT-3.5-Turbo</td>
-<td style="text-align: center;">0.467127</td>
-</tr>
-<tr>
-<td style="text-align: center;">1.0</td>
-<td style="text-align: center;">GPT-3.5-Turbo</td>
-<td style="text-align: center;">0.465417</td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;"><strong>Temperature</strong></th>
-<th style="text-align: center;"><strong>Feedback Function Base Model</strong></th>
-<th style="text-align: center;"><strong>ECE</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">0.0</td>
-<td style="text-align: center;">GPT-4-Turbo</td>
-<td style="text-align: center;">0.741519</td>
-</tr>
-<tr>
-<td style="text-align: center;">0.3</td>
-<td style="text-align: center;">GPT-4-Turbo</td>
-<td style="text-align: center;">0.742373</td>
-</tr>
-<tr>
-<td style="text-align: center;">0.7</td>
-<td style="text-align: center;">GPT-4-Turbo</td>
-<td style="text-align: center;">0.737771</td>
-</tr>
-<tr>
-<td style="text-align: center;">1.0</td>
-<td style="text-align: center;">GPT-4-Turbo</td>
-<td style="text-align: center;">0.732807</td>
-</tr>
-</tbody>
-</table>
-<p><a href="context_relevance_calibration.ipynb">See the code.</a></p>
 <h2 id="groundedness">Groundedness<a class="headerlink" href="#groundedness" title="Permanent link">&para;</a></h2>
-<h3 id="methods_1">Methods<a class="headerlink" href="#methods_1" title="Permanent link">&para;</a></h3>
+<h3 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h3>
 <p>Observing that many summarization benchmarks, such as those found at <a href="https://arxiv.org/abs/2007.12626">SummEval</a>, use human annotation of numerical scores, we propose to frame the problem of evaluating groundedness tasks as evaluating a summarization system. In particular, we generate test cases from <a href="https://arxiv.org/abs/2007.12626">SummEval</a>.</p>
 <p>SummEval is one of the datasets dedicated to automated evaluations on summarization tasks, which are closely related to the groundedness evaluation in RAG with the retrieved context (i.e. the source) and response (i.e. the summary). It contains human annotation of numerical score (<strong>1</strong> to <strong>5</strong>) comprised of scoring from 3 human expert annotators and 5 crowd-sourced annotators. There are 16 models being used for generation in total for 100 paragraphs in the test set, so there are a total of 16,000 machine-generated summaries. Each paragraph also has several human-written summaries for comparative analysis. </p>
 <p>For evaluating groundedness feedback functions, we compute the annotated "consistency" scores, a measure of whether the summarized response is factually consisntent with the source texts and hence can be used as a proxy to evaluate groundedness in our RAG triad, and normalized to <strong>0</strong> to <strong>1</strong> score as our <strong>expected_score</strong> and to match the output of feedback functions.</p>
 <p><a href="groundedness_benchmark/">See the code.</a></p>
-<h3 id="results_1">Results<a class="headerlink" href="#results_1" title="Permanent link">&para;</a></h3>
+<h3 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -3951,7 +3804,7 @@
 </tbody>
 </table>
 <h2 id="comprehensiveness">Comprehensiveness<a class="headerlink" href="#comprehensiveness" title="Permanent link">&para;</a></h2>
-<h3 id="methods_2">Methods<a class="headerlink" href="#methods_2" title="Permanent link">&para;</a></h3>
+<h3 id="methods_1">Methods<a class="headerlink" href="#methods_1" title="Permanent link">&para;</a></h3>
 <p>This notebook follows an evaluation of a set of test cases generated from human
 annotated datasets. In particular, we generate test cases from 
 <a href="https://arxiv.org/abs/2305.17529">MeetingBank</a> to evaluate our
@@ -3967,7 +3820,7 @@ main points of the meeting segment. A good summary should contain all and only
 the important information of the source., and normalized to <strong>0</strong> to <strong>1</strong> score
 as our <strong>expected_score</strong> and to match the output of feedback functions.</p>
 <p><a href="comprehensiveness_benchmark/">See the code.</a></p>
-<h3 id="results_2">Results<a class="headerlink" href="#results_2" title="Permanent link">&para;</a></h3>
+<h3 id="results_1">Results<a class="headerlink" href="#results_1" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>

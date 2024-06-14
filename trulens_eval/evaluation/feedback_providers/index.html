@@ -3704,9 +3704,15 @@
 
 
 <h1 id="feedback-providers">Feedback Providers<a class="headerlink" href="#feedback-providers" title="Permanent link">&para;</a></h1>
-<p>TruLens constructs feedback functions by combining more general models, known as the <a class="autorefs autorefs-internal" href="../../api/provider/#trulens_eval.feedback.provider.base.Provider"><strong><em>feedback provider</em></strong></a>, and <a href="../feedback_implementations/"><strong><em>feedback implementation</em></strong></a> made up of carefully constructed prompts and custom logic tailored to perform a particular evaluation task.</p>
+<p>TruLens constructs feedback functions by combining more general models, known as
+the <a class="autorefs autorefs-internal" href="../../api/provider/#trulens_eval.feedback.provider.base.Provider"><strong><em>feedback provider</em></strong></a>, and
+<a href="../feedback_implementations/"><strong><em>feedback implementation</em></strong></a> made up of
+carefully constructed prompts and custom logic tailored to perform a particular
+evaluation task.</p>
 <p>This page documents the feedback providers available in <em>TruLens</em>.</p>
-<p>There are three categories of such providers as well as combination providers that make use of one or more of these providers to offer additional feedback functions based capabilities of the constituent providers.</p>
+<p>There are three categories of such providers as well as combination providers
+that make use of one or more of these providers to offer additional feedback
+functions based capabilities of the constituent providers.</p>
 <h2 id="classification-based-providers">Classification-based Providers<a class="headerlink" href="#classification-based-providers" title="Permanent link">&para;</a></h2>
 <p>Some feedback functions rely on classification typically tailor made for task, unlike LLM models.</p>
 <ul>
@@ -3733,7 +3739,9 @@
 <h2 id="provider-combinations">Provider Combinations<a class="headerlink" href="#provider-combinations" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
-<p>[Groundedness][trulens_eval.feedback.groundedness.Groundedness]</p>
+<p>Groundedness has been moved to the <a class="autorefs autorefs-internal" href="../../api/provider/llmprovider/#trulens_eval.feedback.provider.base.LLMProvider">LLMProvider
+  class</a> as the method
+  <a class="autorefs autorefs-internal" href="../feedback_implementations/stock/#trulens_eval.feedback.provider.base.LLMProvider.groundedness_measure_with_cot_reasons">groundedness_measure_with_cot_reasons</a>.</p>
 </li>
 <li>
 <p><a class="autorefs autorefs-internal" href="../../api/providers/#trulens_eval.feedback.groundtruth.GroundTruthAgreement">Groundtruth</a></p>
