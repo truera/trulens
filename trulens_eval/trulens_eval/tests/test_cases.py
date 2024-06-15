@@ -233,7 +233,7 @@ def generate_summeval_groundedness_golden_set(file_path):
                 "expected_score":
                     calculate_expected_score(
                         [
-                            row["consistency"][i] / 5,  # normalize to [0, 1]
+                            (row["consistency"][i] - 1) / 4,  # normalize from [1, 5] to [0, 1]
                         ],
                         [1.0]
                     )
