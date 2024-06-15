@@ -2,17 +2,14 @@ from typing import ClassVar, Dict, Optional, Sequence
 
 import os
 import json
+import pydantic
 from trulens_eval.feedback.provider.base import LLMProvider
+from snowflake.snowpark import Session
 from trulens_eval.feedback.provider.endpoint.cortex import CortexEndpoint
-from trulens_eval.utils.imports import OptionalImports
-from trulens_eval.utils.imports import REQUIREMENT_CORTEX
-
-with OptionalImports(messages=REQUIREMENT_CORTEX):
-    from snowflake.snowpark import Session
 
 
 class Cortex(LLMProvider):
-    # require `pip install snowflake-snowpark-python` and an active Snowflake account with proper privileges
+    # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
@@ -30,24 +27,27 @@ class Cortex(LLMProvider):
         model_engine: Optional[str] = None,
         snowflake_connection_params: Optional[Dict] = None,
         *args,
-        **kwargs: Dict
+        **kwargs: dict
     ):
         self_kwargs = dict(kwargs)
 
-        self_kwargs['model_engine'] = self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
-        self_kwargs["endpoint"] = CortexEndpoint(
-            *args, **kwargs
-        )
+        self_kwargs[
+            'model_engine'
+        ] = self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
+        self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
         connection_params = {
             "account": os.environ["SNOWFLAKE_ACCOUNT"],
             "user": os.environ["SNOWFLAKE_USER"],
             "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "schema": os.environ["SNOWFLAKE_SCHEMA"]
         } if snowflake_connection_params is None else snowflake_connection_params
 
         # Create a Snowflake session
         self_kwargs['snowflake_session'] = Session.builder.configs(
-            connection_params).create()
+            connection_params
+        ).create()
 
         super().__init__(**self_kwargs)
 
@@ -56,8 +56,15 @@ class Cortex(LLMProvider):
         escaped_string = escaped_string.replace("'", "''")
         return escaped_string
 
-    def _exec_snowsql_complete_command(self, model: str, temperature: float, messages: Optional[Sequence[Dict]] = None):
+    def _exec_snowsql_complete_command(
+        self,
+        model: str,
+        temperature: float,
+        messages: Optional[Sequence[Dict]] = None
+    ):
         # Ensure messages are formatted as a JSON array string
+        if messages is None:
+            messages = []
         messages_json_str = json.dumps(messages)
 
         options = {'temperature': temperature}
@@ -87,12 +94,7 @@ class Cortex(LLMProvider):
             kwargs['messages'] = messages
 
         elif prompt is not None:
-            kwargs['messages'] = [
-                {
-                    "role": "system",
-                    "content": prompt
-                }
-            ]
+            kwargs['messages'] = [{"role": "system", "content": prompt}]
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
