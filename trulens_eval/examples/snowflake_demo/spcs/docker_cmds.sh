@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 set -e
 
@@ -14,6 +14,16 @@ USER="dkurokawa"
 
 # Convenience variables.
 REPOSITORY_URL="${ORG_NAME}-${ACCOUNT_NAME}.registry.snowflakecomputing.com/${DB_NAME}/${SCHEMA_NAME}/${IMAGE_REPOSITORY_NAME}"
+
+# Build the wheel.
+pushd ../../
+rm -rf build
+rm -rf dist
+make build
+popd
+
+# Copy the wheel.
+cp ../../dist/trulens_eval-*-py3-none-any.whl ./
 
 # Build the docker image.
 docker build --platform linux/amd64 -t ${REPOSITORY_URL}/${IMAGE_NAME}:${IMAGE_TAG} .
