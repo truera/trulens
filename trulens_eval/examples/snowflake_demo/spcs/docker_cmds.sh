@@ -29,7 +29,7 @@ cp ../../dist/trulens_eval-*-py3-none-any.whl ./
 docker build --platform linux/amd64 -t ${REPOSITORY_URL}/${IMAGE_NAME}:${IMAGE_TAG} .
 
 # Log in to SPCS (will require password).
-docker login ${ORG_NAME}-${ACCOUNT_NAME}.registry.snowflakecomputing.com -u ${USER}
+docker login ${ORG_NAME}-${ACCOUNT_NAME}.registry.snowflakecomputing.com -u ${USER} -p ${SF_PASSWORD}
 
 # Push image.
 docker push ${REPOSITORY_URL}/${IMAGE_NAME}:${IMAGE_TAG}
