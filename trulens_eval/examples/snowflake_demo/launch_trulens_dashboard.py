@@ -1,5 +1,7 @@
 import os
+
 from dotenv import load_dotenv
+
 from trulens_eval import Tru
 
 load_dotenv()

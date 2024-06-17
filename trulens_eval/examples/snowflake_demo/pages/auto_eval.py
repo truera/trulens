@@ -1,6 +1,5 @@
-import streamlit as st
-
 from common_ui import page_setup
+import streamlit as st
 
 page_setup("Automated Evaluation", visibility="admin")
 

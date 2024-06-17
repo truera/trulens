@@ -41,15 +41,13 @@ from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import SerialModel
 
 with OptionalImports(messages=REQUIREMENT_OPENAI):
-    import openai as oai
-
     # This is also required for running openai endpoints in trulens_eval:
     from langchain.callbacks.openai_info import OpenAICallbackHandler
+    import openai as oai
 
 # check that oai is not a dummy, also the langchain component required for handling openai endpoint
-OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(
-    mods=[oai, OpenAICallbackHandler]
-)
+OptionalImports(messages=REQUIREMENT_OPENAI
+               ).assert_installed(mods=[oai, OpenAICallbackHandler])
 
 logger = logging.getLogger(__name__)
 

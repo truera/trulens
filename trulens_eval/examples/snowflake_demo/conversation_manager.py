@@ -1,8 +1,9 @@
 from copy import deepcopy
-from typing import List, Set
 from pathlib import Path
-from schema import Conversation, ConversationRecord
+from typing import List, Set
 
+from schema import Conversation
+from schema import ConversationRecord
 
 CURRENT_DIR = Path(__file__).parent.resolve()
 CONVERSATION_HISTORY_FILE = CURRENT_DIR / "data" / "conversation_history.jsonl"
@@ -18,6 +19,7 @@ def load_chat_history() -> List[ConversationRecord]:
 
 
 class ConversationManager:
+
     def __init__(self):
         self._conversations = load_chat_history()
 

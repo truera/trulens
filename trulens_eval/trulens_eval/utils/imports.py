@@ -669,8 +669,6 @@ class OptionalImports(object):
                 # Don't add more to the message if it already includes our instructions.
                 raise exc_value
 
-            raise ImportError(
-                self.messages.import_error
-            ) from exc_value
+            raise ImportError(self.messages.import_error) from exc_value
 
         # Exception will be propagated unless we return True so we don't return it.
