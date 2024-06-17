@@ -3,38 +3,44 @@ import pathlib
 import threading
 from typing import Dict
 
+from conversation_manager import ConversationManager
+# feedback functions
+from feedback import feedbacks_no_rag
+from feedback import feedbacks_rag
+from llm import AVAILABLE_MODELS
+from llm import StreamGenerator
+from schema import Conversation
+from schema import FeedbackDisplay
+from schema import Message
+from schema import ModelConfig
 import streamlit as st
 from streamlit.runtime.scriptrunner import add_script_run_ctx
-from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
+from streamlit.runtime.scriptrunner.script_run_context import \
+    get_script_run_ctx
 
-from conversation_manager import ConversationManager
-from llm import StreamGenerator, AVAILABLE_MODELS
-from schema import (
-    Conversation,
-    FeedbackDisplay,
-    Message,
-    ModelConfig,
-)
-
-# feedback functions
-from feedback import feedbacks_no_rag, feedbacks_rag
-from trulens_eval.tru_custom_app import TruCustomApp
-from trulens_eval.ux.styles import CATEGORY
-from trulens_eval.schema.feedback import FeedbackDefinition, FeedbackResult, FeedbackCall
+from trulens_eval.schema.feedback import FeedbackCall
+from trulens_eval.schema.feedback import FeedbackDefinition
+from trulens_eval.schema.feedback import FeedbackResult
 from trulens_eval.schema.record import Record
+from trulens_eval.tru_custom_app import TruCustomApp
 from trulens_eval.utils.python import Future
-
+from trulens_eval.ux.styles import CATEGORY
 
 generator = StreamGenerator()
 
-def page_setup(title, wide_mode=False, collapse_sidebar=False, visibility="public"):
-    if st.get_option("client.showSidebarNavigation") and "already_ran" not in st.session_state:
+
+def page_setup(
+    title, wide_mode=False, collapse_sidebar=False, visibility="public"
+):
+    if st.get_option("client.showSidebarNavigation"
+                    ) and "already_ran" not in st.session_state:
         st.set_option("client.showSidebarNavigation", False)
         st.session_state.already_ran = True
         st.rerun()
 
     # Handle access control
-    if visibility in ("user", "admin") and not st.session_state.get("user_name"):
+    if visibility in ("user",
+                      "admin") and not st.session_state.get("user_name"):
         st.switch_page("app.py")
     if visibility == "admin" and not st.session_state.get("admin_mode"):
         st.switch_page("app.py")
@@ -70,12 +76,24 @@ def page_setup(title, wide_mode=False, collapse_sidebar=False, visibility="publi
         st.page_link("app.py", label="Chat", icon=":material/chat:")
 
         if st.session_state.get("user_name"):
-            st.page_link("pages/account.py", label="My Account", icon=":material/account_circle:")
+            st.page_link(
+                "pages/account.py",
+                label="My Account",
+                icon=":material/account_circle:"
+            )
 
         if st.session_state.get("admin_mode"):
             st.subheader("Admin view")
-            st.page_link("pages/analysis.py", label="Conversation Analysis", icon=":material/analytics:")
-            st.page_link("pages/users.py", label="User Management", icon=":material/group:")
+            st.page_link(
+                "pages/analysis.py",
+                label="Conversation Analysis",
+                icon=":material/analytics:"
+            )
+            st.page_link(
+                "pages/users.py",
+                label="User Management",
+                icon=":material/group:"
+            )
 
         st.write("")
 
@@ -112,11 +130,18 @@ def login():
         st.session_state.admin_mode = admin_mode
         st.rerun()
 
-def get_tru_app_id(model: str, temperature: float, top_p: float, max_new_tokens: int, use_rag: bool):
+
+def get_tru_app_id(
+    model: str, temperature: float, top_p: float, max_new_tokens: int,
+    use_rag: bool
+):
     # Args are hashed for cache lookup
     return f"app-prod-{model}{'-rag' if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
 
-def configure_model(*, container, model_config: ModelConfig, key: str, full_width: bool = True):
+
+def configure_model(
+    *, container, model_config: ModelConfig, key: str, full_width: bool = True
+):
     MODEL_KEY = f"model_{key}"
     TEMPERATURE_KEY = f"temperature_{key}"
     TOP_P_KEY = f"top_p_{key}"
@@ -126,11 +151,18 @@ def configure_model(*, container, model_config: ModelConfig, key: str, full_widt
 
     # initialize app metadata for tracking
     metadata = {
-        "model": st.session_state.get(MODEL_KEY, model_config.model),
-        "temperature": st.session_state.get(TEMPERATURE_KEY, model_config.temperature),
-        "top_p": st.session_state.get(TOP_P_KEY, model_config.top_p),
-        "max_new_tokens": st.session_state.get(MAX_NEW_TOKENS_KEY, model_config.max_new_tokens),
-        "use_rag": st.session_state.get(USE_RAG_KEY, model_config.use_rag),
+        "model":
+            st.session_state.get(MODEL_KEY, model_config.model),
+        "temperature":
+            st.session_state.get(TEMPERATURE_KEY, model_config.temperature),
+        "top_p":
+            st.session_state.get(TOP_P_KEY, model_config.top_p),
+        "max_new_tokens":
+            st.session_state.get(
+                MAX_NEW_TOKENS_KEY, model_config.max_new_tokens
+            ),
+        "use_rag":
+            st.session_state.get(USE_RAG_KEY, model_config.use_rag),
     }
 
     if MODEL_KEY not in st.session_state:
@@ -140,17 +172,16 @@ def configure_model(*, container, model_config: ModelConfig, key: str, full_widt
         st.session_state[MAX_NEW_TOKENS_KEY] = model_config.max_new_tokens
         st.session_state[USE_RAG_KEY] = model_config.use_rag
         metadata = {
-                        "model": st.session_state[MODEL_KEY],
-                        "temperature": st.session_state[TEMPERATURE_KEY],
-                        "top_p": st.session_state[TOP_P_KEY],
-                        "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
-                        "use_rag": st.session_state[USE_RAG_KEY],
-                    }
+            "model": st.session_state[MODEL_KEY],
+            "temperature": st.session_state[TEMPERATURE_KEY],
+            "top_p": st.session_state[TOP_P_KEY],
+            "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
+            "use_rag": st.session_state[USE_RAG_KEY],
+        }
 
     with container:
-        with st.popover(
-            f"Configure :blue[{st.session_state[MODEL_KEY]}]", use_container_width=full_width
-        ):
+        with st.popover(f"Configure :blue[{st.session_state[MODEL_KEY]}]",
+                        use_container_width=full_width):
             left1, right1 = st.columns(2)
             left2, right2 = st.columns(2)
             with left1:
@@ -173,8 +204,10 @@ def configure_model(*, container, model_config: ModelConfig, key: str, full_widt
                     key=SYSTEM_PROMPT_KEY,
                     help=SYSTEM_PROMPT_HELP,
                 )
-                if model_config.system_prompt != st.session_state[SYSTEM_PROMPT_KEY]:
-                    st.session_state[SYSTEM_PROMPT_KEY] = model_config.system_prompt
+                if model_config.system_prompt != st.session_state[
+                        SYSTEM_PROMPT_KEY]:
+                    st.session_state[SYSTEM_PROMPT_KEY
+                                    ] = model_config.system_prompt
 
             with right1:
                 model_config.temperature = st.slider(
@@ -205,9 +238,11 @@ def configure_model(*, container, model_config: ModelConfig, key: str, full_widt
                     label="Max new tokens:",
                     key=MAX_NEW_TOKENS_KEY,
                 )
-                if model_config.max_new_tokens != st.session_state[MAX_NEW_TOKENS_KEY]:
-                    st.session_state[MAX_NEW_TOKENS_KEY] = model_config.max_new_tokens
-                
+                if model_config.max_new_tokens != st.session_state[
+                        MAX_NEW_TOKENS_KEY]:
+                    st.session_state[MAX_NEW_TOKENS_KEY
+                                    ] = model_config.max_new_tokens
+
                 model_config.use_rag = st.toggle(
                     label="Access to Streamlit Docs",
                     value=True,
@@ -218,16 +253,21 @@ def configure_model(*, container, model_config: ModelConfig, key: str, full_widt
 
     app_id = get_tru_app_id(**metadata)
     feedbacks = feedbacks_rag if model_config.use_rag else feedbacks_no_rag
-    app = TruCustomApp(generator, app_id=app_id, metadata=metadata, feedbacks=feedbacks)
+    app = TruCustomApp(
+        generator, app_id=app_id, metadata=metadata, feedbacks=feedbacks
+    )
     model_config.trulens_recorder = app
     return model_config
+
 
 def get_icon(fdef: FeedbackDefinition, result: float):
     cat = CATEGORY.of_score(
         result or 0,
-        higher_is_better=fdef.higher_is_better if fdef.higher_is_better is not None else True
+        higher_is_better=fdef.higher_is_better
+        if fdef.higher_is_better is not None else True
     )
     return cat.icon
+
 
 def chat_response(
     conversation: Conversation,
@@ -248,9 +288,13 @@ def chat_response(
         with recorder as context:
             user_message, prompt = generator.prepare_prompt(conversation)
             if conversation.model_config.use_rag:
-                text_response: str = generator.retrieve_and_generate_response(user_message, prompt, conversation, chat)
+                text_response: str = generator.retrieve_and_generate_response(
+                    user_message, prompt, conversation, chat
+                )
             else:
-                text_response: str = generator.generate_response(user_message, prompt, conversation, chat)
+                text_response: str = generator.generate_response(
+                    user_message, prompt, conversation, chat
+                )
 
         record: Record = context.get()
 
@@ -260,21 +304,21 @@ def chat_response(
         # Check if we have to return feedback function results for the RAG triad.
         if not config.use_rag or recorder is None:
             return
-        
+
         # If no feedback functions are returning we can skip it.
         if record.feedback_and_future_results is None:
             return
 
         # Let this be updated async and streamlit pick it up later
-        def update_result(fdef: FeedbackDefinition, fres: Future[FeedbackResult]):
+        def update_result(
+            fdef: FeedbackDefinition, fres: Future[FeedbackResult]
+        ):
             result = fres.result()
             calls = result.calls
             score = result.result or 0
-            
+
             message.feedbacks[fdef.name] = FeedbackDisplay(
-                score=score, 
-                calls=calls, 
-                icon=get_icon(fdef, score)
+                score=score, calls=calls, icon=get_icon(fdef, score)
             )
 
             # Hacky - hardcodes behavior based on feedback name
@@ -286,12 +330,12 @@ def chat_response(
                 for call in calls:
                     message.sources.add(call.args['context'])
 
-
         for feedback_def, future_result in record.feedback_and_future_results:
-            t = st_thread(target=update_result, args=(feedback_def, future_result))
+            t = st_thread(
+                target=update_result, args=(feedback_def, future_result)
+            )
             t.start()
 
-                
     except Exception as e:
         conversation.has_error = True
         print("Error while generating chat response: " + str(e))
@@ -327,11 +371,15 @@ def generate_title(
     conversation = Conversation()
     conversation.model_config = ModelConfig(system_prompt=SYSTEM_PROMPT)
     input_msg = json.dumps({"input": user_input})
-    conversation.add_message(Message(role="user", content=input_msg), render=False)
+    conversation.add_message(
+        Message(role="user", content=input_msg), render=False
+    )
     title_json = ""
     try:
         last_user_message, prompt = generator.prepare_prompt(conversation)
-        title_json: str = generator.generate_response(last_user_message, prompt, conversation, should_write=False)
+        title_json: str = generator.generate_response(
+            last_user_message, prompt, conversation, should_write=False
+        )
         result = json.loads(title_json)
         response_dict["output"] = result["summary"]
 
@@ -347,4 +395,3 @@ def st_thread(target, args) -> threading.Thread:
     thread = threading.Thread(target=target, args=args)
     add_script_run_ctx(thread, get_script_run_ctx())
     return thread
-

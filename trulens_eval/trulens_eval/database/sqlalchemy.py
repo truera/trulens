@@ -10,10 +10,10 @@ from typing import (
 )
 import warnings
 
+from alembic.ddl.impl import DefaultImpl
 import numpy as np
 import pandas as pd
 from pydantic import Field
-from alembic.ddl.impl import DefaultImpl
 from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import func
@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 class SnowflakeImpl(DefaultImpl):
     __dialect__ = 'snowflake'
+
 
 class SQLAlchemyDB(DB):
     """Database implemented using sqlalchemy.

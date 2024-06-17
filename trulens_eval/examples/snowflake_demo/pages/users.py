@@ -1,7 +1,6 @@
-import streamlit as st
-
 from common_ui import page_setup
 from conversation_manager import ConversationManager
+import streamlit as st
 
 page_setup("User Management", visibility="admin")
 
@@ -16,4 +15,6 @@ for user in users:
 
     metric_cols = st.columns(2)
     metric_cols[0].metric("Total conversations x models", len(conversations))
-    metric_cols[1].metric("Total feedback", len([c for c in conversations if c.feedback]))
+    metric_cols[1].metric(
+        "Total feedback", len([c for c in conversations if c.feedback])
+    )
