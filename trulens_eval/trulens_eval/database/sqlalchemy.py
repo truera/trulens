@@ -5,15 +5,14 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
-)
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Type, Union)
 import warnings
 
+from alembic.ddl.impl import DefaultImpl
 import numpy as np
 import pandas as pd
 from pydantic import Field
-from alembic.ddl.impl import DefaultImpl
 from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import func
