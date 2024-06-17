@@ -17,12 +17,12 @@ from trulens_eval.ux.styles import CATEGORY
 
 st.runtime.legacy_caching.clear_cache()
 
+from common_ui import page_setup
+
 from trulens_eval import Tru
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.page_config import set_page_config
-
-from common_ui import page_setup
 
 if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
@@ -41,9 +41,7 @@ def leaderboard():
 
     # Set the title and subtitle of the app
     st.title("Automated Evaluation Leaderboard")
-    st.write(
-        "Powered by TruLens 🦑."
-    )
+    st.write("Powered by TruLens 🦑.")
     df, feedback_col_names = lms.get_records_and_feedback([])
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {

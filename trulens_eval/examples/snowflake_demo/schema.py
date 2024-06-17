@@ -1,13 +1,16 @@
-import json
 from copy import deepcopy
+from datetime import datetime
+import json
 from typing import List, Literal, Optional
+
+import pandas as pd
 from pydantic import BaseModel
 import streamlit as st
-from trulens_eval.tru_custom_app import TruCustomApp
 from streamlit_pills import pills
-import pandas as pd
-from datetime import datetime
+
 from trulens_eval.schema.feedback import FeedbackCall
+from trulens_eval.tru_custom_app import TruCustomApp
+
 
 class ModelConfig(BaseModel):
     model: str = "Snowflake Arctic"
@@ -23,6 +26,7 @@ class FeedbackDisplay(BaseModel):
     score: float = 0
     calls: list[FeedbackCall]
     icon: str
+
 
 class Message(BaseModel):
     role: Literal["user", "assistant", "system"]
@@ -64,23 +68,25 @@ class Conversation:
             self.render_message(message, container, key=str(idx))
 
     @st.experimental_fragment(run_every=2)
-    def render_feedbacks(self, message: Message, key: str):      
+    def render_feedbacks(self, message: Message, key: str):
         feedbacks: dict[str, FeedbackDisplay] = message.feedbacks
         if len(feedbacks) == 0:
             return
 
         feedback_cols = list(feedbacks.keys())
-        icons = list(map(lambda fcol: feedbacks[fcol].icon,feedback_cols))
-        
+        icons = list(map(lambda fcol: feedbacks[fcol].icon, feedback_cols))
+
         st.write('**Feedback functions**')
         selected_fcol = pills(
             "Feedback functions",
             feedback_cols,
             index=None,
             format_func=lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}",
-            label_visibility="collapsed", # Hiding because we can't format the label here.
+            label_visibility=
+            "collapsed",  # Hiding because we can't format the label here.
             icons=icons,
-            key=f"{key}_{len(feedbacks)}" # Important! Otherwise streamlit sometimes lazily skips update even with st.exprimental_fragment
+            key=
+            f"{key}_{len(feedbacks)}"  # Important! Otherwise streamlit sometimes lazily skips update even with st.exprimental_fragment
         )
 
         # Extract the arguments + meta from the feedback call into a dict
@@ -103,21 +109,29 @@ class Conversation:
         if selected_fcol != None:
             calls: list[FeedbackCall] = feedbacks[selected_fcol].calls
             calls_dict = list(map(lambda fcall: extract_call(fcall), calls))
-            st.dataframe(pd.DataFrame.from_records(calls_dict), use_container_width=True, hide_index=True)
+            st.dataframe(
+                pd.DataFrame.from_records(calls_dict),
+                use_container_width=True,
+                hide_index=True
+            )
 
         if len(message.sources) > 0:
-                with st.expander(f'**{len(message.sources)} sources used**'):
-                    st.dataframe(pd.DataFrame(list(message.sources), columns=['Source text']), use_container_width=True, hide_index=True )
+            with st.expander(f'**{len(message.sources)} sources used**'):
+                st.dataframe(
+                    pd.DataFrame(
+                        list(message.sources), columns=['Source text']
+                    ),
+                    use_container_width=True,
+                    hide_index=True
+                )
 
-    def render_message(self, message: Message, container=st, key=str(datetime.now())):
-        with container.chat_message(message.role): 
+    def render_message(
+        self, message: Message, container=st, key=str(datetime.now())
+    ):
+        with container.chat_message(message.role):
             st.write(message.content)
 
             self.render_feedbacks(message, key)
-                
-            
-
-
 
     def messages_to_text(self, truncate=True):
         msgs = []
@@ -174,8 +188,12 @@ class ConversationRecord:
         for c in d["conversations"]:
             conversation = Conversation()
             conversation.model_config = ModelConfig.parse_obj(c["model_config"])
-            conversation.messages = [Message.parse_obj(m) for m in c["messages"]]
+            conversation.messages = [
+                Message.parse_obj(m) for m in c["messages"]
+            ]
             if "feedback" in c:
-                conversation.feedback = ConversationFeedback.parse_obj(c["feedback"])
+                conversation.feedback = ConversationFeedback.parse_obj(
+                    c["feedback"]
+                )
             cr.conversations.append(conversation)
         return cr

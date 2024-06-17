@@ -1,5 +1,6 @@
 import os
 
+from custom_feedback.small_local_models import SmallLocalModels
 from dotenv import load_dotenv
 import numpy as np
 
@@ -7,7 +8,6 @@ from trulens_eval import Feedback
 from trulens_eval import Select
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.litellm import LiteLLM
-from custom_feedback.small_local_models import SmallLocalModels
 
 load_dotenv()
 
@@ -54,6 +54,20 @@ f_small_local_models_context_relevance = (
 f_answer_relevance = (
     Feedback(provider.relevance_with_cot_reasons,
              name="Answer Relevance").on_input().on_output().aggregate(np.mean)
+)
+f_criminality_input = (
+    Feedback(
+        provider.criminality_with_cot_reasons,
+        name="Criminality input",
+        higher_is_better=False
+    ).on(Select.RecordInput)
+)
+f_criminality_output = (
+    Feedback(
+        provider.criminality_with_cot_reasons,
+        name="Criminality output",
+        higher_is_better=False
+    ).on_output()
 )
 f_criminality_input = Feedback(
     provider.criminality_with_cot_reasons,

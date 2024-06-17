@@ -1,7 +1,7 @@
+from scipy.special import expit
 import torch
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
-from scipy.special import expit
 
 from trulens_eval import Provider
 
@@ -13,9 +13,8 @@ class SmallLocalModels(Provider):
             AutoTokenizer.from_pretrained(context_relevance_model_path)
         )
         self.model_config["context_relevance_model"] = (
-            AutoModelForSequenceClassification.from_pretrained(
-                context_relevance_model_path
-            )
+            AutoModelForSequenceClassification.
+            from_pretrained(context_relevance_model_path)
         )
 
     def context_relevance(
