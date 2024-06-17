@@ -5,8 +5,9 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Type, Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+)
 import warnings
 
 from alembic.ddl.impl import DefaultImpl
@@ -53,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 class SnowflakeImpl(DefaultImpl):
     __dialect__ = 'snowflake'
+
 
 class SQLAlchemyDB(DB):
     """Database implemented using sqlalchemy.
@@ -764,8 +766,12 @@ class AppsExtractor:
                         self.feedback_columns.add(_res.name)
 
                 row = {
-                    **{k: np.mean(v) for k, v in values.items()},
-                    **{k + "_calls": flatten(v) for k, v in calls.items()},
+                    **{
+                        k: np.mean(v) for k, v in values.items()
+                    },
+                    **{
+                        k + "_calls": flatten(v) for k, v in calls.items()
+                    },
                 }
 
                 for col in self.rec_cols:
