@@ -40,10 +40,4 @@ with st.form("my_form"):
         st.info(response)
 
 if submitted:
-    selected_feedback = st_feedback.select_feedback(record = record)
-    if selected_feedback is not None:
-        st.write(selected_feedback)
-        st_feedback.display_selected_feedback(record = record,
-                                        selected_feedback = selected_feedback)
-    else:
-        st.write("No feedback selected. Please select a pill.")
+    st_feedback.trulens_feedback(record = record)

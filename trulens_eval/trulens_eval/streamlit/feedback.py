@@ -19,7 +19,7 @@ class FeedbackDisplay(BaseModel):
     icon: str
 
 @st.experimental_fragment(run_every=2)
-def select_feedback(record):
+def trulens_feedback(record):
     feedback_cols = []
     feedbacks = {}
     icons = []
@@ -39,17 +39,14 @@ def select_feedback(record):
         "Feedback functions",
         feedback_cols,
         index=None,
-        #format_func=lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}",
-        #label_visibility="collapsed", # Hiding because we can't format the label here.
+        format_func=lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}",
+        label_visibility="collapsed", # Hiding because we can't format the label here.
         icons=icons,
         key=f"{call_data['feedback_name']}_{len(feedbacks)}" # Important! Otherwise streamlit sometimes lazily skips update even with st.exprimental_fragment
     )
-    return selected_feedback
 
-@st.experimental_fragment(run_every=2)
-def display_selected_feedback(record, selected_feedback):
-    st.write("test")
-    st.dataframe(display.get_feedback_result(record,
+    if selected_feedback is not None:
+        st.dataframe(display.get_feedback_result(record,
                                                  feedback_name = selected_feedback),
                                                  use_container_width=True,
                                                  hide_index=True
