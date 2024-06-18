@@ -1,5 +1,5 @@
 import threading
-
+from typing import List
 import pandas as pd
 from pydantic import BaseModel
 import streamlit as st
@@ -18,7 +18,7 @@ from trulens_eval.ux.styles import CATEGORY
 
 class FeedbackDisplay(BaseModel):
     score: float = 0
-    calls: list[FeedbackCall]
+    calls: List[FeedbackCall]
     icon: str
 
 
