@@ -6,8 +6,8 @@ import math
 asyncio.set_event_loop(asyncio.new_event_loop())
 
 from millify import millify
-from streamlit_extras.switch_page_button import switch_page
 import streamlit as st
+from streamlit_extras.switch_page_button import switch_page
 
 from trulens_eval.database import base as mod_db
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
@@ -21,6 +21,7 @@ from trulens_eval import Tru
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.page_config import set_page_config
+
 
 def trulens_leaderboard(app_ids=None):
     """Render the leaderboard page."""
@@ -124,5 +125,5 @@ def trulens_leaderboard(app_ids=None):
                         ) else "inverse"
                     ),
                 )
-        
+
         st.markdown("""---""")
