@@ -1,16 +1,12 @@
-import threading
+
 from typing import List
-import pandas as pd
 from pydantic import BaseModel
 import streamlit as st
-from streamlit.runtime.scriptrunner import add_script_run_ctx
-from streamlit.runtime.scriptrunner.script_run_context import \
-    get_script_run_ctx
 from streamlit_pills import pills
 
+from trulens_eval.schema.record import Record
 from trulens_eval.schema.feedback import FeedbackCall
 from trulens_eval.schema.feedback import FeedbackDefinition
-from trulens_eval.schema.feedback import FeedbackResult
 from trulens_eval.utils import display
 from trulens_eval.utils.python import Future
 from trulens_eval.ux.styles import CATEGORY
@@ -23,7 +19,7 @@ class FeedbackDisplay(BaseModel):
 
 
 @st.experimental_fragment(run_every=2)
-def trulens_feedback(record):
+def trulens_feedback(record: Record):
     feedback_cols = []
     feedbacks = {}
     icons = []
