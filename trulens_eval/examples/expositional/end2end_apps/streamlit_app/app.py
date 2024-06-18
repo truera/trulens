@@ -1,18 +1,22 @@
-import os
-
-from dotenv import load_dotenv
-from langchain_openai import OpenAI
 import streamlit as st
 
-from trulens_eval import Feedback
-from trulens_eval import Tru
+import streamlit as st
+from langchain_openai import OpenAI
+
 from trulens_eval import TruChain
+from trulens_eval import Tru
+from trulens_eval import Feedback
 from trulens_eval.feedback.provider import OpenAI as fOpenAI
 from trulens_eval.streamlit import feedback as st_feedback
+from trulens_eval.streamlit import trace as st_trace
+
+import os
+from dotenv import load_dotenv
 
 load_dotenv()
 
 tru = Tru()
+tru.reset_database()
 
 st.title("🦑 Using TruLens Components in Streamlit")
 
@@ -21,7 +25,6 @@ provider = fOpenAI()
 f_coherence = Feedback(provider.coherence_with_cot_reasons).on_output()
 
 feedbacks = [f_coherence]
-
 
 def generate_response(input_text):
     llm = OpenAI(temperature=0.7)
@@ -40,6 +43,7 @@ with st.form("my_form"):
     if submitted:
         record, response = generate_response(text)
         st.info(response)
-
 if submitted:
     st_feedback.trulens_feedback(record=record)
+    if st.button("Show Trace"):
+        st_trace.trulens_trace(record=record)
