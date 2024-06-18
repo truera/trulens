@@ -65,14 +65,16 @@ def re_0_10_rating(s: str) -> int:
         ParseError: If no integers between 0 and 10 are found in the string.
     """
 
-    matches = PATTERN_INTEGER.findall(s)
+    matches = PATTERN_NUMBER.findall(s)
     if not matches:
-        raise ParseError("int or float number", s, pattern=PATTERN_INTEGER)
+        raise ParseError("int or float number", s, pattern=PATTERN_NUMBER)
 
     vals = set()
     for match in matches:
         try:
-            vals.add(validate_rating(int(match)))
+            vals.add(
+                validate_rating(int(float(match)))
+            )  # Handle float numbers as well
         except ValueError:
             pass
 
