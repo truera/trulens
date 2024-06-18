@@ -20,6 +20,7 @@ CREATE SERVICE dkurokawa_trulens_demo_app
             SF_SCHEMA: "trulens_demo"
             SF_WAREHOUSE: "dkurokawa"
             SF_ROLE: "engineer"
+            SF_CORTEX_SEARCH_SERVICE: "dkurokawa_trulens_demo_search_service"
             RUN_APP: "1"
         secrets:
           - snowflakeSecret: dkurokawa.trulens_demo.login_credentials
@@ -56,6 +57,7 @@ CREATE SERVICE dkurokawa_trulens_demo_dashboard
             SF_SCHEMA: "trulens_demo"
             SF_WAREHOUSE: "dkurokawa"
             SF_ROLE: "engineer"
+            SF_CORTEX_SEARCH_SERVICE: "dkurokawa_trulens_demo_search_service"
             RUN_DASHBOARD: "1"
         secrets:
           - snowflakeSecret: dkurokawa.trulens_demo.login_credentials
