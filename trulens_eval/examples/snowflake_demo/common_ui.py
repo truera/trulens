@@ -9,6 +9,7 @@ from feedback import feedbacks_no_rag
 from feedback import feedbacks_rag
 from llm import AVAILABLE_MODELS
 from llm import StreamGenerator
+from retrieve import AVAILABLE_RETRIEVERS
 from schema import Conversation
 from schema import FeedbackDisplay
 from schema import Message
@@ -133,10 +134,10 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool
-):
+    use_rag: bool, retriever: str
+) -> str:
     # Args are hashed for cache lookup
-    return f"app-prod-{model}{'-rag' if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+    return f"app-prod-{model}{retriever if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
 
 
 def configure_model(
@@ -148,6 +149,7 @@ def configure_model(
     MAX_NEW_TOKENS_KEY = f"max_new_tokens_{key}"
     SYSTEM_PROMPT_KEY = f"system_prompt_{key}"
     USE_RAG_KEY = f"use_rag_{key}"
+    RETRIEVER_KEY = f"retriever_{key}"
 
     # initialize app metadata for tracking
     metadata = {
@@ -163,6 +165,8 @@ def configure_model(
             ),
         "use_rag":
             st.session_state.get(USE_RAG_KEY, model_config.use_rag),
+        "retriever":
+            st.session_state.get(RETRIEVER_KEY, model_config.retriever),
     }
 
     if MODEL_KEY not in st.session_state:
@@ -171,12 +175,14 @@ def configure_model(
         st.session_state[TOP_P_KEY] = model_config.top_p
         st.session_state[MAX_NEW_TOKENS_KEY] = model_config.max_new_tokens
         st.session_state[USE_RAG_KEY] = model_config.use_rag
+        st.session_state[RETRIEVER_KEY] = model_config.retriever
         metadata = {
             "model": st.session_state[MODEL_KEY],
             "temperature": st.session_state[TEMPERATURE_KEY],
             "top_p": st.session_state[TOP_P_KEY],
             "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
             "use_rag": st.session_state[USE_RAG_KEY],
+            "retriever": st.session_state[RETRIEVER_KEY],
         }
 
     with container:
@@ -250,6 +256,13 @@ def configure_model(
                 )
                 if model_config.use_rag != st.session_state[USE_RAG_KEY]:
                     st.session_state[USE_RAG_KEY] = model_config.use_rag
+            model_config.retriever = st.selectbox(
+                label="Select retriever:",
+                options=AVAILABLE_RETRIEVERS.keys(),
+                key=RETRIEVER_KEY,
+            )
+            if model_config.retriever != st.session_state[RETRIEVER_KEY]:
+                st.session_state[RETRIEVER_KEY] = model_config.retriever
 
     app_id = get_tru_app_id(**metadata)
     feedbacks = feedbacks_rag if model_config.use_rag else feedbacks_no_rag

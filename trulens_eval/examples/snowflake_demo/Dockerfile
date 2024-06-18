@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=python:3.12.3-slim-bullseye
+ARG BASE_IMAGE=python:3.11.9-slim-bullseye
 FROM $BASE_IMAGE
 
 COPY ./ /trulens_demo/
