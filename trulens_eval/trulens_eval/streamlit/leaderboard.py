@@ -22,7 +22,7 @@ from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.page_config import set_page_config
 
-def leaderboard(app_ids=None):
+def trulens_leaderboard(app_ids=None):
     """Render the leaderboard page."""
 
     tru = Tru(
