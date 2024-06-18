@@ -72,7 +72,9 @@ def re_0_10_rating(s: str) -> int:
     vals = set()
     for match in matches:
         try:
-            vals.add(validate_rating(int(match)))
+            vals.add(
+                validate_rating(int(float(match)))
+            )  # Handle float numbers as well
         except ValueError:
             pass
 
