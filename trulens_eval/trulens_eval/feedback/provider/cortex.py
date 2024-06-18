@@ -27,7 +27,7 @@ class Cortex(LLMProvider):
         model_engine: Optional[str] = None,
         snowflake_connection_params: Optional[Dict] = None,
         *args,
-        **kwargs: dict
+        **kwargs: Dict
     ):
         self_kwargs = dict(kwargs)
 
