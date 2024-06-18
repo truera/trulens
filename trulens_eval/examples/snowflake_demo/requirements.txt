@@ -14,6 +14,7 @@ llama-index-embeddings-huggingface==0.2.0
 llama-index-legacy==0.9.48
 litellm==1.38.12
 streamlit==1.35
+snowflake[ml]
 snowflake-connector-python
 ./snowflake_sqlalchemy-1.6.0-py3-none-any.whl # snowflake-sqlalchemy
 ./trulens_eval-0.30.1-py3-none-any.whl # trulens-eval
