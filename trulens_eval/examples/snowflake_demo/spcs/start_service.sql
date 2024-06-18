@@ -79,8 +79,12 @@ CREATE SERVICE dkurokawa_trulens_demo_dashboard
 
 SHOW SERVICES;
 SELECT SYSTEM$GET_SERVICE_STATUS('dkurokawa_trulens_demo_app');
+SELECT SYSTEM$GET_SERVICE_STATUS('dkurokawa_trulens_demo_dashboard');
 DESCRIBE SERVICE dkurokawa_trulens_demo_app;
-CALL SYSTEM$GET_SERVICE_LOGS('dkurokawa_trulens_demo_app', '0', 'dkurokawa-trulens-demo-app-container', 100);
-
+DESCRIBE SERVICE dkurokawa_trulens_demo_dashboard;
+CALL SYSTEM$GET_SERVICE_LOGS('dkurokawa_trulens_demo_app', '0', 'dkurokawa-trulens-demo-app-container');
+CALL SYSTEM$GET_SERVICE_LOGS('dkurokawa_trulens_demo_dashboard', '0', 'dkurokawa-trulens-demo-dashboard-container');
 SHOW ENDPOINTS IN SERVICE dkurokawa_trulens_demo_app;
 SHOW ENDPOINTS IN SERVICE dkurokawa_trulens_demo_dashboard;
+CALL SYSTEM$GET_SERVICE_STATUS('dkurokawa_trulens_demo_app')
+CALL SYSTEM$GET_SERVICE_STATUS('dkurokawa_trulens_demo_dashboard')
