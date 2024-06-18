@@ -38,7 +38,7 @@ def trulens_feedback(record):
         feedbacks[call_data['feedback_name']] = FeedbackDisplay(
             score=call_data['result'],
             calls=[],
-            icon=get_icon(fdef=feedback, result=feedback_result.result)
+            icon=_get_icon(fdef=feedback, result=feedback_result.result)
         )
         icons.append(feedbacks[call_data['feedback_name']].icon)
 
@@ -65,30 +65,10 @@ def trulens_feedback(record):
         )
 
 
-def get_icon(fdef: FeedbackDefinition, result: float):
+def _get_icon(fdef: FeedbackDefinition, result: float):
     cat = CATEGORY.of_score(
         result or 0,
         higher_is_better=fdef.higher_is_better
         if fdef.higher_is_better is not None else True
     )
     return cat.icon
-
-
-def update_result(fdef: FeedbackDefinition, fres: Future[FeedbackResult]):
-    result = fres.result()
-    calls = result.calls
-    score = result.result or 0
-
-    feedbacks = {}
-
-    feedbacks[fdef.name] = FeedbackDisplay(
-        score=score, calls=calls, icon=get_icon(fdef, score)
-    )
-
-
-def st_thread(target, args) -> threading.Thread:
-    """Return a function as a Streamlit-safe thread"""
-
-    thread = threading.Thread(target=target, args=args)
-    add_script_run_ctx(thread, get_script_run_ctx())
-    return thread
