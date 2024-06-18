@@ -24,12 +24,7 @@ db_url = "snowflake://{user}:{password}@{account}/{dbname}/{schema}?warehouse={w
 tru = Tru(database_url=db_url)
 
 provider = LiteLLM(model_engine="replicate/snowflake/snowflake-arctic-instruct")
-small_local_model_provider = SmallLocalModels(
-    os.getenv(
-        "SMALL_LOCAL_MODELS_CONTEXT_RELEVANCE_MODEL_PATH",
-        "/trulens_demo/small_local_models/context_relevance",
-    ),
-)
+small_local_model_provider = SmallLocalModels()
 
 f_groundedness = (
     Feedback(
