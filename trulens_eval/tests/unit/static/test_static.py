@@ -44,13 +44,12 @@ optional_mods = dict(
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
     ],
-    nemoguardrails=["trulens_eval.tru_rails"]
+    nemoguardrails=["trulens_eval.tru_rails"],
+    snowflake=[
+        "trulens_eval.feedback.provider.cortex",
+        "trulens_eval.feedback.provider.endpoint.cortex"
+    ]
 )
-
-optional_mods["snowflake-snowpark-python"] = [
-    "trulens_eval.feedback.provider.cortex",
-    "trulens_eval.feedback.provider.endpoint.cortex"
-]
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 
