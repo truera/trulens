@@ -4,7 +4,6 @@ import pprint
 from typing import Any, Callable, ClassVar, Optional
 import json
 
-
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.utils.imports import OptionalImports
@@ -15,13 +14,14 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter()
 
 with OptionalImports(messages=REQUIREMENT_CORTEX):
+    import snowflake
     from snowflake.snowpark import Session, DataFrame
+
+OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
 
 
 class CortexCallback(EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
-    # TODO: confirm if we really don't need to implement handle_classification
 
     def handle_generation(self, response: dict) -> None:
         """Get the usage information from Cortex LLM function response's usage field."""
@@ -74,7 +74,8 @@ class CortexEndpoint(Endpoint):
 
         counted_something = False
 
-        if isinstance(response, DataFrame):  # response is a snowflake dataframe instance
+        if isinstance(response,
+                      DataFrame):  # response is a snowflake dataframe instance
             response: dict = json.loads(response.collect()[0][0])
 
             if 'usage' in response:

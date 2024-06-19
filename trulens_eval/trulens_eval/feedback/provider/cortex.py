@@ -2,10 +2,16 @@ from typing import ClassVar, Dict, Optional, Sequence
 
 import os
 import json
-import pydantic
 from trulens_eval.feedback.provider.base import LLMProvider
-from snowflake.snowpark import Session
+
 from trulens_eval.feedback.provider.endpoint.cortex import CortexEndpoint
+from trulens_eval.utils.imports import REQUIREMENT_CORTEX, OptionalImports
+
+with OptionalImports(messages=REQUIREMENT_CORTEX):
+    import snowflake
+    from snowflake.snowpark import Session
+
+OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
 
 
 class Cortex(LLMProvider):

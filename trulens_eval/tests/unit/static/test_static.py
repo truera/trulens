@@ -45,8 +45,8 @@ optional_mods = dict(
 )
 
 optional_mods["snowflake-snowpark-python"] = [
-        "trulens_eval.feedback.provider.cortex",
-        # "trulens_eval.feedback.provider.endpoint.cortex"  # TODO: figure out why this is not needed
+    "trulens_eval.feedback.provider.cortex",
+    "trulens_eval.feedback.provider.endpoint.cortex"
 ]
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
@@ -174,7 +174,7 @@ class TestStatic(TestCase):
         package throws an import error. This test should happen only if optional
         packages have not been installed.
         """
-    
+
         for opt, mods in optional_mods.items():
             with self.subTest(optional=opt):
                 # First make sure the optional package is not installed.
