@@ -15,7 +15,8 @@ pp = pprint.PrettyPrinter()
 
 with OptionalImports(messages=REQUIREMENT_CORTEX):
     import snowflake
-    from snowflake.snowpark import Session, DataFrame
+    from snowflake.snowpark import DataFrame
+    from snowflake.snowpark import Session
 
 OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
 

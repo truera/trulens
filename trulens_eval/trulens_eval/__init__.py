@@ -55,11 +55,10 @@ with mod_imports_utils.OptionalImports(
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_RAILS):
     from trulens_eval.tru_rails import TruRails
-    
+
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_CORTEX):
     from trulens_eval.feedback.provider.cortex import Cortex
-
 
 Tru = mod_tru.Tru
 TruBasicApp = mod_tru_basic_app.TruBasicApp

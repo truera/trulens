@@ -226,8 +226,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         super().__init__(*args, **kwargs)
 
-        logger.debug(
-            "Creating new endpoint singleton with name %s.", self.name)
+        logger.debug("Creating new endpoint singleton with name %s.", self.name)
 
         # Extending class should call _instrument_module on the appropriate
         # modules and methods names.
@@ -703,8 +702,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             def response_callback(response):
                 for callback_class in registered_callback_classes:
-                    logger.debug("Handling callback_class: %s.",
-                                 callback_class)
+                    logger.debug("Handling callback_class: %s.", callback_class)
                     if callback_class not in endpoints:
                         logger.warning(
                             "Callback class %s is registered for handling %s"
