@@ -126,11 +126,11 @@ jobs:
           #  --display-name $(python-version)
 
           PYTHON_VERSION=$(python --version | awk '{print $2}')
-          if [ "$(echo $PYTHON_VERSION | cut -d. -f1,2)" \> "3.12" ]; then
-              grep -v 'snowflake-snowpark-python' trulens_eval/requirements.optional.txt > trulens_eval/requirements.no_snowflake.txt
-              pip install --verbose -r trulens_eval/requirements.no_snowflake.txt
+          if [[ $PYTHON_VERSION == 3.12* ]]; then
+            grep -v 'snowflake-snowpark-python' trulens_eval/requirements.optional.txt > trulens_eval/requirements.no_snowflake.txt
+            pip install --verbose -r trulens_eval/requirements.no_snowflake.txt
           else
-              pip install --verbose -r trulens_eval/requirements.optional.txt
+            pip install --verbose -r trulens_eval/requirements.optional.txt
           fi
 
           python --version
