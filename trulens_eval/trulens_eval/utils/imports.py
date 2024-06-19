@@ -191,8 +191,7 @@ def check_imports(ignore_version_mismatch: bool = False):
 
         except metadata.PackageNotFoundError as e:
             if is_optional:
-                logger.debug(
-                    MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
+                logger.debug(MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
 
             else:
                 raise ModuleNotFoundError(
@@ -360,7 +359,8 @@ REQUIREMENT_OPENAI = format_import_errors(
 )
 
 REQUIREMENT_CORTEX = format_import_errors(
-    ['snowflake-snowpark-python'], purpose="using Snowflake Cortex serverless LLM functions"
+    ['snowflake-snowpark-python'],
+    purpose="using Snowflake Cortex serverless LLM functions"
 )
 
 REQUIREMENT_GROUNDEDNESS = format_import_errors(
