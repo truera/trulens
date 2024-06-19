@@ -42,7 +42,10 @@ class CortexCallback(EndpointCallback):
             ("n_prompt_tokens", "prompt_tokens"),
             ("n_completion_tokens", "completion_tokens"),
         ]:
-            setattr(self.cost, cost_field, usage.get(cortex_field, 0))
+            setattr(
+                self.cost, cost_field,
+                getattr(self.cost, cost_field, 0) + usage.get(cortex_field, 0)
+            )
 
 
 class CortexEndpoint(Endpoint):
