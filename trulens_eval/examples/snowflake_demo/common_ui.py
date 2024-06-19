@@ -133,10 +133,10 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool
+    use_rag: bool, guardrail_retrieval: bool
 ):
     # Args are hashed for cache lookup
-    return f"app-prod-{model}{'-rag' if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+    return f"app-prod-{model}{'-rag' if use_rag else ''} {"-guardrailed" if guardrail_retrieval else ""} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
 
 
 def configure_model(
@@ -148,6 +148,7 @@ def configure_model(
     MAX_NEW_TOKENS_KEY = f"max_new_tokens_{key}"
     SYSTEM_PROMPT_KEY = f"system_prompt_{key}"
     USE_RAG_KEY = f"use_rag_{key}"
+    GUARDRAIL_RETRIEVAL_KEY = f"guardrail_retrieval_{key}"
 
     # initialize app metadata for tracking
     metadata = {
@@ -163,6 +164,8 @@ def configure_model(
             ),
         "use_rag":
             st.session_state.get(USE_RAG_KEY, model_config.use_rag),
+        "guardrail_retrieval":
+            st.session_state.get(GUARDRAIL_RETRIEVAL_KEY, model_config.guardrail_retrieval),
     }
 
     if MODEL_KEY not in st.session_state:
@@ -171,12 +174,14 @@ def configure_model(
         st.session_state[TOP_P_KEY] = model_config.top_p
         st.session_state[MAX_NEW_TOKENS_KEY] = model_config.max_new_tokens
         st.session_state[USE_RAG_KEY] = model_config.use_rag
+        st.session_state[GUARDRAIL_RETRIEVAL_KEY] = model_config.guardrail_retrieval
         metadata = {
             "model": st.session_state[MODEL_KEY],
             "temperature": st.session_state[TEMPERATURE_KEY],
             "top_p": st.session_state[TOP_P_KEY],
             "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
             "use_rag": st.session_state[USE_RAG_KEY],
+            "guardrail_retrieval": st.session_state[GUARDRAIL_RETRIEVAL_KEY],
         }
 
     with container:
@@ -250,6 +255,14 @@ def configure_model(
                 )
                 if model_config.use_rag != st.session_state[USE_RAG_KEY]:
                     st.session_state[USE_RAG_KEY] = model_config.use_rag
+
+                model_config.guardrail_retrieval = st.toggle(
+                    label="Enable RAG Guardrails",
+                    value=True,
+                    key=GUARDRAIL_RETRIEVAL_KEY
+                )
+                if model_config.guardrail_retrieval != st.session_state[GUARDRAIL_RETRIEVAL_KEY]:
+                    st.session_state[GUARDRAIL_RETRIEVAL_KEY] = model_config.guardrail_retrieval
 
     app_id = get_tru_app_id(**metadata)
     feedbacks = feedbacks_rag if model_config.use_rag else feedbacks_no_rag

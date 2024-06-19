@@ -1,5 +1,5 @@
 import os
-
+from dotenv import load_dotenv
 from scipy.special import expit
 import torch
 from transformers import AutoModelForSequenceClassification
@@ -8,6 +8,8 @@ from transformers import PreTrainedModel
 from transformers import PreTrainedTokenizerBase
 
 from trulens_eval import Provider
+
+load_dotenv()
 
 CONTEXT_RELEVANCE_MODEL_PATH = os.getenv(
     "SMALL_LOCAL_MODELS_CONTEXT_RELEVANCE_MODEL_PATH",

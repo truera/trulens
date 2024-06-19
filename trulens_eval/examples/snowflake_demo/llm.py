@@ -10,6 +10,7 @@ import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
 # replicate key for running model
+from feedback import small_local_model_provider
 from trulens_eval.tru_custom_app import instrument
 
 FRIENDLY_MAPPING = {
@@ -155,6 +156,15 @@ class StreamGenerator:
                 final_response += chunk
 
         return _reencode_outputs(final_response)
+    
+    @instrument
+    def filter_contexts(self, query: str, contexts: list[str], threshold: float = .5):
+        filtered_contexts = []
+        for context in contexts:
+            score = small_local_model_provider.context_relevance(question=query, context=context)
+            if score >= threshold:
+                filtered_contexts.append(context)
+        return filtered_contexts
 
     @instrument
     def retrieve_context(
@@ -162,6 +172,8 @@ class StreamGenerator:
         conversation: Conversation
     ):
         texts = self.retriever.retrieve(query=last_user_message)
+        if conversation.model_config.guardrail_retrieval:
+            texts = self.filter_contexts(query=last_user_message, contexts=texts)
         context_message = "\n\n".join(texts)
         return _reencode_outputs(context_message), texts
 
