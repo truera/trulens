@@ -6,8 +6,9 @@ from trulens_eval.feedback.groundtruth import GroundTruthAgreement
 # Providers of feedback functions evaluation:
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.langchain import Langchain
-from trulens_eval.utils.imports import REQUIREMENT_CORTEX, OptionalImports
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
+from trulens_eval.utils.imports import REQUIREMENT_CORTEX
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 
