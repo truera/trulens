@@ -51,11 +51,6 @@ optional_mods = dict(
     ]
 )
 
-optional_mods["snowflake-snowpark-python"] = [
-    "trulens_eval.feedback.provider.cortex",
-    "trulens_eval.feedback.provider.endpoint.cortex"
-]
-
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 
 # Every module not mentioned above should be importable without any optional
