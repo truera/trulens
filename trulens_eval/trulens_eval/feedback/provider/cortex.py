@@ -9,7 +9,8 @@ from trulens_eval.utils.imports import REQUIREMENT_CORTEX
 
 with OptionalImports(messages=REQUIREMENT_CORTEX):
     import snowflake
-    from snowflake.snowpark import Session
+    import snowflake.connector
+    from snowflake.connector import SnowflakeConnection
 
 OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
 
@@ -26,14 +27,10 @@ class Cortex(LLMProvider):
     """
 
     endpoint: CortexEndpoint
-    snowflake_session: Session
+    snowflake_conn: SnowflakeConnection
 
     def __init__(
-        self,
-        model_engine: Optional[str] = None,
-        snowflake_connection_params: Optional[Dict] = None,
-        *args,
-        **kwargs: Dict
+        self, model_engine: Optional[str] = None, *args, **kwargs: Dict
     ):
         self_kwargs = dict(kwargs)
 
@@ -42,25 +39,15 @@ class Cortex(LLMProvider):
         ] = self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
-        connection_params = {
-            "account": os.environ["SNOWFLAKE_ACCOUNT"],
-            "user": os.environ["SNOWFLAKE_USER"],
-            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
-            "database": os.environ["SNOWFLAKE_DATABASE"],
-            "schema": os.environ["SNOWFLAKE_SCHEMA"]
-        } if snowflake_connection_params is None else snowflake_connection_params
-
-        # Create a Snowflake session
-        self_kwargs['snowflake_session'] = Session.builder.configs(
-            connection_params
-        ).create()
-
+        # Create a Snowflake connector
+        self_kwargs['snowflake_conn'] = snowflake.connector.connect(
+            account=os.environ["SNOWFLAKE_ACCOUNT"],
+            user=os.environ["SNOWFLAKE_USER"],
+            password=os.environ["SNOWFLAKE_USER_PASSWORD"],
+            database=os.environ["SNOWFLAKE_DATABASE"],
+            schema=os.environ["SNOWFLAKE_SCHEMA"]
+        )
         super().__init__(**self_kwargs)
-
-    def _escape_string_for_sql(self, input_string: str) -> str:
-        escaped_string = input_string.replace('\\', '\\\\')
-        escaped_string = escaped_string.replace("'", "''")
-        return escaped_string
 
     def _exec_snowsql_complete_command(
         self,
@@ -76,14 +63,26 @@ class Cortex(LLMProvider):
         options = {'temperature': temperature}
         options_json_str = json.dumps(options)
 
-        completion_input_str = f"""SELECT SNOWFLAKE.CORTEX.COMPLETE(
-            '{model}',
-            parse_json('{self._escape_string_for_sql(messages_json_str)}'),
-            parse_json('{self._escape_string_for_sql(options_json_str)}')
-        )"""
+        completion_input_str = """
+            SELECT SNOWFLAKE.CORTEX.COMPLETE(
+                %s,
+                parse_json(%s),
+                parse_json(%s)
+            )
+        """
 
         # Executing Snow SQL command requires an active snow session
-        return self.snowflake_session.sql(completion_input_str).collect()
+        cursor = self.snowflake_conn.cursor()
+        try:
+            cursor.execute(
+                completion_input_str,
+                (model, messages_json_str, options_json_str)
+            )
+            result = cursor.fetchall()
+        finally:
+            cursor.close()
+
+        return result
 
     def _create_chat_completion(
         self,
