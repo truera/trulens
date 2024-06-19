@@ -1,11 +1,11 @@
+import json
+import os
 from typing import ClassVar, Dict, Optional, Sequence
 
-import os
-import json
 from trulens_eval.feedback.provider.base import LLMProvider
-
 from trulens_eval.feedback.provider.endpoint.cortex import CortexEndpoint
-from trulens_eval.utils.imports import REQUIREMENT_CORTEX, OptionalImports
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_CORTEX
 
 with OptionalImports(messages=REQUIREMENT_CORTEX):
     import snowflake
