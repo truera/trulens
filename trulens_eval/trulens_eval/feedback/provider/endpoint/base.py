@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import abc, defaultdict
 from dataclasses import dataclass
 import functools
 import inspect
@@ -14,6 +14,7 @@ from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
     Type, TypeVar
 )
+from abc import ABC, abstractmethod
 
 from pydantic import Field
 import requests
@@ -59,10 +60,85 @@ class EndpointCallback(SerialModel):
     """
 
     endpoint: Endpoint = Field(exclude=True)
-    """Thhe endpoint owning this callback."""
+    """The endpoint owning this callback."""
 
     cost: mod_base_schema.Cost = Field(default_factory=mod_base_schema.Cost)
     """Costs tracked by this callback."""
+
+    @abstractmethod
+    def on_call(self, func: Callable, args: Tuple[str], kwargs: Dict[str, Any]):
+        """Called when the wrapped function is about to be called. 
+        
+        Arguments are not yet bound to func's args.
+        """
+
+    @abstractmethod
+    def on_bind(self, func: Callable, bindings: inspect.BoundArguments):
+        """Called before the execution of the wrapped method assuming its
+        arguments can be bound.
+        
+        This and `on_bind_error` are mutually exclusive.
+        """
+        pass
+
+    @abstractmethod
+    def on_bind_error(self, func: Callable, error: Exception, args: Tuple[Any], kwargs: Dict[str, Any]):
+        """Called if the wrapped method's arguments cannot be bound.
+        
+        This and `on_bind` are mutually exclusive. Note that if this type of
+        error occurs, none of the wrapped code actually executes. Also if this
+        happens, the `on_exception` handler is expected to be called as well
+        after the wrapped func is called with the unbindable arguments. This is
+        done to replicate the behavior of an unwrapped invocation.
+        """
+        pass
+
+    @abstractmethod
+    def on_return(self, func: Callable, bindings: inspect.BoundArguments, ret: Any):
+        """Called after wrapped method returns without error."""
+        pass
+
+    @abstractmethod
+    def on_exception(self, func: Callable, bindings: Optional[inspect.BoundArguments], error: Exception):
+        """Called after wrapped method raises exception."""
+        pass
+
+    @abstractmethod
+    def on_iteration_start(self):
+        """Called after wrapped method returns an iterable but before iteration
+        starts."""
+        pass
+
+    @abstractmethod
+    def on_iteration(self):
+        """Called after wrapped method produced an iterable and an iteration
+        from it was produced."""
+        pass
+
+    @abstractmethod
+    def on_iteration_end(self):
+        """Called after wrapped method produced an iterable and it stopped
+        iterating."""
+        pass
+
+    @abstractmethod
+    def on_async_start(self, func: Callable, bindings: inspect.BoundArguments, awaitable: Awaitable[T]):
+        """Called after wrapped method produced an awaitable but has not yet
+        been awaited."""
+        pass
+
+    @abstractmethod
+    def on_async_result(self, func: Callable, bindings: inspect.BoundArguments, awaitable: Awaitable[T], result: T):
+        """Called after wrapped method produced an awaitable and its results are
+        ready."""
+        pass
+
+    @abstractmethod
+    def on_async_error(self, func: Callable, bindings: inspect.BoundArguments, awaitable: Awaitable[T], error: Exception):
+        """Called after wrapped method produced an awaitable and awaiting on it
+        resulted in an exception being raised."""
+        pass
+
 
     def handle(self, response: Any) -> None:
         """Called after each request."""
@@ -341,14 +417,24 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             Endpoint.instrumented_methods[mod].append((func, w, type(self)))
 
-    def _instrument_class(self, cls, method_name: str) -> None:
+    def _instrument_class(self, cls, method_name: str, on_result: Optional[Callable] = None) -> None:
+        """Instrument the named method in the given class for cost tracking.
+
+        Args:
+            cls: The class to which the named method belongs.
+
+            method_name: The method by name.
+
+            on_result: The callback to invoke when the named method returns.
+        """
+
         if safe_hasattr(cls, method_name):
             logger.debug(
                 "Instrumenting %s.%s for %s", class_name(cls), method_name,
                 self.name
             )
             func = getattr(cls, method_name)
-            w = self.wrap_function(func)
+            w = self.wrap_function(func, on_result=on_result)
 
             setattr(cls, method_name, w)
 
@@ -414,7 +500,25 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             setattr(cls, wrapper_method_name, metawrap)
 
-    def _instrument_module_members(self, mod: ModuleType, method_name: str):
+    def _instrument_module_members(
+        self,
+        mod: ModuleType,
+        method_name: str,
+        on_result: Optional[Callable] = None
+    ):
+        """Instrument all of the given named methods in all of the classes
+        belonging to the given module.
+
+        Args:
+            mod: The module whose members we want to instrument.
+
+            method_name: The method we want to instrument (for all members that
+            contain it).
+
+            on_result: The callback to cell whenever an instrumented method
+            returns.
+        """
+
         if not safe_hasattr(mod, INSTRUMENT):
             setattr(mod, INSTRUMENT, set())
 
@@ -433,7 +537,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             )
             if safe_hasattr(mod, m):
                 obj = safe_getattr(mod, m)
-                self._instrument_class(obj, method_name=method_name)
+                if inspect.isclass(obj):
+                    self._instrument_class(obj, method_name=method_name, on_result=on_result)
 
         already_instrumented.add(method_name)
 
@@ -628,39 +733,40 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             "Subclasses of Endpoint must implement handle_wrapped_call."
         )
 
-    def wrap_function(self, func):
-        """Create a wrapper of the given function to perform cost tracking."""
+    def wrap_function(self, func: Callable):
+        """Create a wrapper of the given function to perform cost tracking.
+        
+        Args:
+            func: The function to wrap.
+        """
 
         if safe_hasattr(func, INSTRUMENT):
-            # Store the types of callback classes that will handle calls to the
-            # wrapped function in the INSTRUMENT attribute. This will be used to
-            # invoke appropriate callbacks when the wrapped function gets
-            # called.
+            # Store the callback class that will handle calls to the wrapped
+            # function in the INSTRUMENT attribute. This will be used to invoke
+            # appropriate callbacks when the wrapped function gets called.
 
             # If INSTRUMENT is set, we don't need to instrument the method again
-            # but we may need to add the additional callback class to expected
-            # handlers stored at the attribute.
+            # but we require that only one endpoint's EndpointCallback class is
+            # registered to handle the wrapped call so we check any subsequent
+            # wrap attempts are with the same endpoint.
 
-            registered_callback_classes = getattr(func, INSTRUMENT)
+            callback_class = getattr(func, INSTRUMENT)
 
-            if self.callback_class in registered_callback_classes:
-                # If our callback class is already in the list, dont bother
-                # adding it again.
+            if not isinstance(callback_class, Type):
+                raise TypeError("Wrapped INSTRUMENT attribute is expected to be a callback class.")
 
-                logger.debug(
-                    "%s already instrumented for callbacks of type %s",
-                    func.__name__, self.callback_class.__name__
-                )
+            if self.callback_class is not callback_class:
+                raise ValueError(f"Attempting to set more than one EndpointCallback for function {func}.")
+            
+            # If our callback class is already in the list, dont bother
+            # adding it again.
 
-                return func
+            logger.warning(
+                "%s already instrumented for callbacks of type %s for endpoint %s",
+                func.__name__, self.callback_class.__name__, self.__class__.__name__
+            )
 
-            else:
-                # Otherwise add our callback class but don't instrument again.
-
-                registered_callback_classes += [self.callback_class]
-                setattr(func, INSTRUMENT, registered_callback_classes)
-
-                return func
+            return func
 
         # If INSTRUMENT is not set, create a wrapper method and return it.
         @functools.wraps(func)
@@ -673,62 +779,79 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 inspect.isasyncgenfunction(func)
             )
 
-            # Get the result of the wrapped function:
+            ret: Any = None # return of wrapped call if it did not raise an exception
+            error: Any = None # exception raised by wrapped call if any
+
+            callback_class = getattr(tru_wrapper, INSTRUMENT)
+            callback = callback_class(endpoint=self)
+
+            common_args = {'func':func, 'bindings': None}
+            callback.on_call(**common_args, args=args, kwargs=kwargs)
+
+            try:
+                common_args['bindings'] = inspect.signature(func).bind(*args, **kwargs)
+
+            except Exception as e:
+                callback.on_bind_error(**common_args, error=e, args=args, kwargs=kwargs)
+                # Continue to try to execute func which should fail and produce
+                # some exception with regards to not being able to bind.
 
             with mod_trace.get_tracer().cost() as span:
-                response = func(*args, **kwargs)
+                try:
+                    # Get the result of the wrapped function.
+                    ret = func(*args, **kwargs)
 
-            bindings = inspect.signature(func).bind(*args, **kwargs)
+                except Exception as e:
+                    # Or the exception it raised.
+                    error = e
 
-            # Get all of the callback classes suitable for handling this
-            # call. Note that we stored this in the INSTRUMENT attribute of
-            # the wrapper method.
-            registered_callback_classes = getattr(tru_wrapper, INSTRUMENT)
+            # The rest of the code invokes the appropriate callbacks and then
+            # populates the content of span created above.
 
-            # Look up the endpoints that are expecting to be notified and the
-            # callback tracking the tally. See Endpoint._track_costs for
-            # definition.
-            endpoints: Dict[Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]] = \
-                get_first_local_in_call_stack(
-                    key="endpoints",
-                    func=self.__find_tracker,
-                    offset=0
-            )
+            if error is None and common_args['bindings'] is None:
+                # If bindings is None, the `.bind()` line above should have failed.
+                # In that case we expect the `func(...)` line to also fail. We bail
+                # without the rest of the logic in that case while issuing a stern
+                # warning.
+                logger.warning("Wrapped function executed but we could not bind its arguments.")
+                return ret
 
-            # If wrapped method was not called from within _track_costs, we
-            # will get None here and do nothing but return wrapped
-            # function's response.
-            if endpoints is None:
-                logger.debug("No endpoints found.")
-                return response
+            span.endpoint = callback.endpoint
 
-            def response_callback(response):
-                for callback_class in registered_callback_classes:
-                    logger.debug("Handling callback_class: %s.", callback_class)
-                    if callback_class not in endpoints:
-                        logger.warning(
-                            "Callback class %s is registered for handling %s"
-                            " but there are no endpoints waiting to receive the result.",
-                            callback_class.__name__, func.__name__
-                        )
-                        continue
+            if error is not None:
+                callback.on_exception(**common_args, error=error)
+                # common_args['bindings'] may be None in case the `.bind()` line
+                # failed. The exception we caught when executing `func()` will
+                # be the normal exception raised by bad function arguments which
+                # is what we record in the cost span and reraise.
+                span.error = str(error)
+                raise error
 
-                    for endpoint, callback in endpoints[callback_class]:
-                        logger.debug("Handling endpoint %s.", endpoint.name)
-                        cost = endpoint.handle_wrapped_call(
-                            func=func,
-                            bindings=bindings,
-                            response=response,
-                            callback=callback
-                        )
-                        span.cost = cost
-                        span.endpoint = endpoint
+            if isinstance(ret, Awaitable):
+                common_args['awaitable'] = ret
 
-            if isinstance(response, Awaitable):
-                return wrap_awaitable(response, on_done=response_callback)
+                callback.on_async_start(**common_args)
 
-            response_callback(response)
-            return response
+                def response_callback(_, response):
+                    logger.debug("Handling endpoint %s.", callback.endpoint.name)
+
+                    callback.on_async_end(
+                        **common_args,
+                        result=response,
+                    )
+                    span.cost = callback.cost
+
+                return wrap_awaitable(
+                    ret, 
+                    on_await = ...,
+                    on_error = ...,
+                    on_result=response_callback
+                )
+
+            # else ret is not Awaitable
+
+            callback.on_return(**common_args, ret=ret)
+            return ret
 
         # Set our tracking attribute to tell whether something is already
         # instrumented onto both the sync and async version since either one

@@ -508,7 +508,7 @@ class Instrument(object):
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
                 with mod_trace.get_tracer().method() as span:
-
+                    
                     rets, cost = mod_endpoint.Endpoint.track_all_costs_tally(
                         func, *args, **kwargs
                     )
@@ -590,8 +590,9 @@ class Instrument(object):
             if isinstance(rets, Awaitable):
                 # If method produced an awaitable
                 logger.info(
-                    f"""This app produced an asynchronous response of type `{class_name(type(rets))}`. 
-                            This record will be updated once the response is available"""
+                    "This app produced an asynchronous response of type `%s`.  "
+                    "This record will be updated once the response is available",
+                    class_name(type(rets))
                 )
 
                 # TODO(piotrm): need to track costs of awaiting the ret in the

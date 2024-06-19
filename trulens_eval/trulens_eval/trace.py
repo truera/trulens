@@ -11,7 +11,7 @@ import contextlib
 import contextvars
 import logging
 import random
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import uuid
 
 import pydantic
@@ -50,7 +50,7 @@ class SpanMethodCall(Span):
 
 class SpanCost(Span):
     cost: Optional[mod_base_schema.Cost] = None
-    endpoint: Optional[Any] = None
+    endpoint: Optional[Any] = None # TODO: Type
 
 class Tracer():
     def __init__(self, context: Optional[Context] = None):
