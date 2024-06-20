@@ -1,17 +1,15 @@
-import streamlit as st
+import os
 
-import streamlit as st
+from dotenv import load_dotenv
 from langchain_openai import OpenAI
+import streamlit as st
 
-from trulens_eval import TruChain
-from trulens_eval import Tru
 from trulens_eval import Feedback
+from trulens_eval import Tru
+from trulens_eval import TruChain
 from trulens_eval.feedback.provider import OpenAI as fOpenAI
 from trulens_eval.streamlit import feedback as st_feedback
 from trulens_eval.streamlit import trace as st_trace
-
-import os
-from dotenv import load_dotenv
 
 load_dotenv()
 
