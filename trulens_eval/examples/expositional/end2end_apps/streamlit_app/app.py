@@ -8,12 +8,12 @@ from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval import TruChain
 from trulens_eval.feedback.provider import OpenAI as fOpenAI
+
 from trulens_eval import streamlit as trulens_st
 
 load_dotenv()
 
 tru = Tru()
-tru.reset_database()
 
 st.title("🦑 Using TruLens Components in Streamlit")
 
@@ -41,6 +41,7 @@ with st.form("my_form"):
     if submitted:
         record, response = generate_response(text)
         st.info(response)
+
 if submitted:
     trulens_st.trulens_feedback(record=record)
     trulens_st.trulens_trace(record=record)

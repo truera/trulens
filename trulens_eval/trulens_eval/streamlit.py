@@ -136,6 +136,7 @@ def trulens_leaderboard(app_ids: List = None):
 
         st.markdown("""---""")
 
+
 @st.experimental_fragment(run_every=2)
 def trulens_feedback(record: Record):
     feedback_cols = []
@@ -187,6 +188,7 @@ def _get_icon(fdef: FeedbackDefinition, result: float):
     )
     return cat.icon
 
+
 def trulens_trace(record: Record):
     app_json = tru.get_app(app_id=record.app_id)
     record_json = _get_record_json(record)
@@ -199,4 +201,3 @@ def _get_record_json(record):
     record_json = records.loc[records['record_id'] == record.record_id
                              ]['record_json'].values[0]
     return json.loads(record_json)
-
