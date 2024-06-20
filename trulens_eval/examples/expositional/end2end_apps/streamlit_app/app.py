@@ -44,7 +44,5 @@ with st.form("my_form"):
         st.info(response)
 if submitted:
     st_feedback.trulens_feedback(record=record)
-
-    show_trace = st.button("Show Trace")
-    if show_trace:
-        st_trace.trulens_trace(record=record)
+    st_trace.trulens_trace(record=record)
+        
