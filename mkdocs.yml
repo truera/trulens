@@ -275,6 +275,7 @@ nav:
       - 🧭 Design: trulens_eval/contributing/design.md
       - ✅ Standards: trulens_eval/contributing/standards.md
       - 💣 Tech Debt: trulens_eval/contributing/techdebt.md
+      - ⛅ Optional Pckages: trulens_eval/contributing/optional.md
       - ✨ Database Migration: trulens_eval/contributing/migration.md
   - ❓ Explain:
       # PLACEHOLDER: - trulens_explain/index.md

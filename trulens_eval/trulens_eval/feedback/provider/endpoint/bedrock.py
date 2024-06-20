@@ -12,12 +12,14 @@ from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.python import safe_hasattr
 
-with OptionalImports(messages=REQUIREMENT_BEDROCK):
+with OptionalImports(messages=REQUIREMENT_BEDROCK) as opt:
     import boto3
+    import botocore
+
     from botocore.client import ClientCreator
 
 # check that the optional imports are not dummies:
-OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(boto3)
+opt.assert_installed([boto3, botocore])
 
 logger = logging.getLogger(__name__)
 

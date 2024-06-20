@@ -17,14 +17,14 @@ from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
+with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
     import llama_index
     from llama_index.core.indices.vector_store.retrievers.retriever import \
         VectorIndexRetriever
     from llama_index.indices.query.schema import QueryBundle
     from llama_index.schema import NodeWithScore
 
-OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
+opt.assert_installed(llama_index)
 
 
 class Prompt(app.Prompt, app.LlamaIndexComponent):

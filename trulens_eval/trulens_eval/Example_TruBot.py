@@ -16,14 +16,15 @@ from trulens_eval.keys import check_keys
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_PINECONE
 
-with OptionalImports(messages=REQUIREMENT_PINECONE):
-    from langchain.embeddings.openai import OpenAIEmbeddings
+with OptionalImports(messages=REQUIREMENT_PINECONE) as opt:
+    import pinecone
     import langchain_community
+
+    from langchain.embeddings.openai import OpenAIEmbeddings
     from langchain_community.callbacks import get_openai_callback
     from langchain_community.llms import OpenAI
-    import pinecone
 
-OptionalImports(messages=REQUIREMENT_PINECONE).assert_installed(
+opt.assert_installed(
     mods=[pinecone, langchain_community, OpenAIEmbeddings]
 )
 
