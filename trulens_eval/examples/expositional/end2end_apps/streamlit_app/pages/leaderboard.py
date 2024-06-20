@@ -1,3 +1,3 @@
-from trulens_eval.streamlit import leaderboard as st_leaderboard
+from trulens_eval import streamlit as trulens_st
 
-st_leaderboard.trulens_leaderboard()
+trulens_st.trulens_leaderboard()
