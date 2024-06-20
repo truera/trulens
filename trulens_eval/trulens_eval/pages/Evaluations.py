@@ -1,7 +1,7 @@
 import asyncio
 import json
 import pprint as pp
-from typing import Dict, Iterable, Tuple
+import time
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -45,8 +45,6 @@ from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
 
-st.runtime.legacy_caching.clear_cache()
-
 set_page_config(page_title="Evaluations")
 st.title("Evaluations")
 
@@ -54,10 +52,18 @@ if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
     init_from_args()
 
-tru = Tru()
+tru: Tru = Tru()
 lms = tru.db
 
-df_results, feedback_cols = lms.get_records_and_feedback([])
+@st.cache_data(ttl=3600) # 1hr
+def get_records_and_feedback():
+    s = time.time()
+    results = tru.get_records_and_feedback()
+    st.success(f"Collected {len(results[0])} records in {time.time() - s:.2f}s")
+    return results
+
+df_results, feedback_cols = get_records_and_feedback()
+
 
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
