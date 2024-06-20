@@ -8,6 +8,7 @@ asyncio.set_event_loop(asyncio.new_event_loop())
 
 from millify import millify
 import streamlit as st
+
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.ux.styles import CATEGORY
 

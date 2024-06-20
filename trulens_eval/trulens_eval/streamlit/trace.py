@@ -1,9 +1,8 @@
-from trulens_eval.react_components.record_viewer import record_viewer
-from trulens_eval.schema.record import Record
+import json
 
 from trulens_eval import Tru
-
-import json
+from trulens_eval.react_components.record_viewer import record_viewer
+from trulens_eval.schema.record import Record
 
 tru = Tru()
 

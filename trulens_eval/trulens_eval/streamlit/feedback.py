@@ -1,11 +1,12 @@
 from typing import List
+
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
 
-from trulens_eval.schema.record import Record
 from trulens_eval.schema.feedback import FeedbackCall
 from trulens_eval.schema.feedback import FeedbackDefinition
+from trulens_eval.schema.record import Record
 from trulens_eval.utils import display
 from trulens_eval.utils.python import Future
 from trulens_eval.ux.styles import CATEGORY
