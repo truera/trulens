@@ -5,9 +5,8 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
-)
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Type, Union)
 import warnings
 
 from alembic.ddl.impl import DefaultImpl
@@ -18,6 +17,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import func
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
 
@@ -113,6 +113,7 @@ class SQLAlchemyDB(DB):
 
     def _reload_engine(self):
         self.engine = create_engine(**self.engine_params)
+        self.orm.metadata.create_all(self.engine)
         self.session = sessionmaker(self.engine, **self.session_params)
 
     @classmethod
@@ -576,12 +577,23 @@ class SQLAlchemyDB(DB):
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
 
+        # TODO: Add pagination to this method. Currently the joinedload in
+        # select below disables lazy loading of records which will be a problem
+        # for large databases without the use of pagination.
+
         with self.session.begin() as session:
-            stmt = select(self.orm.AppDefinition)
+            stmt = select(self.orm.AppDefinition).options(joinedload(self.orm.AppDefinition.records))
             if app_ids:
                 stmt = stmt.where(self.orm.AppDefinition.app_id.in_(app_ids))
-            apps = (row[0] for row in session.execute(stmt))
+
+            apps = (row[0] for row in session.execute(stmt).unique()) # unique needed for joinedload
+
+            for app in apps:
+                len(app.records)
+
             return AppsExtractor().get_df_and_cols(apps)
+        
+
 
 
 # Use this Perf for missing Perfs.
