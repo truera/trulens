@@ -25,7 +25,6 @@ from trulens_eval.ux.styles import CATEGORY
 
 tru = Tru()
 
-
 class FeedbackDisplay(BaseModel):
     score: float = 0
     calls: List[FeedbackCall]
@@ -33,10 +32,22 @@ class FeedbackDisplay(BaseModel):
 
 
 def trulens_leaderboard(app_ids: List = None):
-    """Render the leaderboard page."""
+    """
+    Render the leaderboard page.
 
-    tru = Tru(
-    )  # get singletone whether this file was imported or executed from command line.
+    Args:
+
+        app_ids : A list of application IDs (default is None)
+
+    !!! example
+
+        ```python
+        from trulens_eval import streamlit as trulens_st
+
+        trulens_st.trulens_leaderboard()
+        ```
+    """
+    tru = Tru()
 
     lms = tru.db
     df, feedback_col_names = lms.get_records_and_feedback([])
@@ -67,7 +78,6 @@ def trulens_leaderboard(app_ids: List = None):
         app_str = app_df["app_json"].iloc[0]
         app_json = json.loads(app_str)
         metadata = app_json.get("metadata")
-        # st.text('Metadata' + str(metadata))
         st.header(app, help=draw_metadata(metadata))
         app_feedback_col_names = [
             col_name for col_name in feedback_col_names
@@ -80,8 +90,6 @@ def trulens_leaderboard(app_ids: List = None):
             app_df["latency"].
             apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None).mean()
         )
-
-        # app_df_feedback = df.loc[df.app_id == app]
 
         col1.metric("Records", len(app_df))
         col2.metric(
@@ -140,6 +148,26 @@ def trulens_leaderboard(app_ids: List = None):
 
 @st.experimental_fragment(run_every=2)
 def trulens_feedback(record: Record):
+    """
+    Render clickable feedback pills for a given record.
+
+    Args:
+
+        record : A trulens record.
+
+    !!! example
+
+        ```python
+        from trulens_eval import streamlit as trulens_st
+
+        with tru_llm as recording:
+            response = llm.invoke(input_text)
+
+        record, response = recording.get()
+
+        trulens_st.trulens_leaderboard()
+        ```
+    """
     feedback_cols = []
     feedbacks = {}
     icons = []
@@ -182,6 +210,19 @@ def trulens_feedback(record: Record):
 
 
 def _get_icon(fdef: FeedbackDefinition, result: float):
+    """
+    Get the icon for a given feedback definition and result.
+
+    Args:
+
+    fdef : FeedbackDefinition
+        The feedback definition
+    result : float
+        The result of the feedback
+
+    Returns:
+        str: The icon for the feedback
+    """
     cat = CATEGORY.of_score(
         result or 0,
         higher_is_better=fdef.higher_is_better
@@ -191,13 +232,41 @@ def _get_icon(fdef: FeedbackDefinition, result: float):
 
 
 def trulens_trace(record: Record):
+    """
+    Display the trace view for a record.
+
+    Args:
+
+    record : A trulens record.
+
+    !!! example
+
+        ```python
+        from trulens_eval import streamlit as trulens_st
+
+        with tru_llm as recording:
+            response = llm.invoke(input_text)
+            
+        record, response = recording.get()
+
+        trulens_st.trulens_leaderboard()
+        ```
+    """
     app_json = tru.get_app(app_id=record.app_id)
     record_json = _get_record_json(record)
     record_viewer(record_json=record_json, app_json=app_json)
 
 
-# a bit hacky, probably a better way to do this
 def _get_record_json(record):
+    """
+    Get the JSON representation of a given record.
+
+    Args:
+        record: The record to get the JSON representation of
+
+    Returns:
+        dict: The JSON representation of the record
+    """
     records, feedback = tru.get_records_and_feedback()
     record_json = records.loc[records['record_id'] == record.record_id
                              ]['record_json'].values[0]
