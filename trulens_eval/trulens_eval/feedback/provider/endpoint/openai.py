@@ -198,7 +198,8 @@ class OpenAICallback(EndpointCallback):
         ]:
             setattr(
                 self.cost, cost_field,
-                getattr(self.langchain_handler, langchain_field)
+                getattr(self.cost, cost_field, 0) +
+                getattr(self.langchain_handler, langchain_field, 0)
             )
 
 
