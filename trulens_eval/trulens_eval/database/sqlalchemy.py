@@ -582,7 +582,11 @@ class SQLAlchemyDB(DB):
         # for large databases without the use of pagination.
 
         with self.session.begin() as session:
-            stmt = select(self.orm.AppDefinition).options(joinedload(self.orm.AppDefinition.records))
+            stmt = select(self.orm.AppDefinition).options(
+                joinedload(self.orm.AppDefinition.records)\
+                .joinedload(self.orm.Record.feedback_results)
+            )
+
             if app_ids:
                 stmt = stmt.where(self.orm.AppDefinition.app_id.in_(app_ids))
 
@@ -733,29 +737,34 @@ class AppsExtractor:
                             # deserialize AppDefinition here unless we fix prior DBs
                             # in migration. Because of this, loading just the
                             # `root_class` here.
+
                             df[col] = str(
                                 Class.model_validate(
                                     json.loads(_app.app_json).get('root_class')
                                 )
                             )
+
                         else:
                             df[col] = getattr(_app, col)
 
                     yield df
             except OperationalError as e:
                 print(
-                    "Error encountered while attempting to retrieve an app. This issue may stem from a corrupted database."
+                    "Error encountered while attempting to retrieve an app. "
+                    "This issue may stem from a corrupted database."
                 )
                 print(f"Error details: {e}")
 
     def extract_records(self,
                         records: Iterable[orm.Record]) -> Iterable[pd.Series]:
+
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
 
             try:
                 for _res in _rec.feedback_results:
+                    
                     calls[_res.name].append(
                         json.loads(_res.calls_json)["calls"]
                     )
@@ -787,10 +796,12 @@ class AppsExtractor:
                     ).isoformat() if col == "ts" else getattr(_rec, col)
 
                 yield row
+
             except Exception as e:
                 # Handling unexpected errors, possibly due to database issues.
                 print(
-                    "Error encountered while attempting to retrieve feedback results. This issue may stem from a corrupted database."
+                    "Error encountered while attempting to retrieve feedback results. "
+                    "This issue may stem from a corrupted database."
                 )
                 print(f"Error details: {e}")
 
