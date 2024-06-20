@@ -110,7 +110,7 @@ Parts of the code are nuanced in ways should be avoided by new contributors.
 Discussions of these points are welcome to help the project rid itself of these
 problematic designs. See [Tech debt index](techdebt.md).
 
-### Optional Packages
+### ⛅ Optional Packages
 
 Limit the packages installed by default when installing _TruLens-Eval_. For
 optional functionality, additional packages can be requested for the user to
