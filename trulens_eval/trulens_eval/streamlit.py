@@ -25,6 +25,7 @@ from trulens_eval.ux.styles import CATEGORY
 
 tru = Tru()
 
+
 class FeedbackDisplay(BaseModel):
     score: float = 0
     calls: List[FeedbackCall]
