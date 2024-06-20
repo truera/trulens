@@ -51,7 +51,11 @@ class LiteLLMCallback(EndpointCallback):
                 ("n_prompt_tokens", "prompt_tokens"),
                 ("n_completion_tokens", "completion_tokens"),
             ]:
-                setattr(self.cost, cost_field, usage.get(litellm_field, 0))
+                setattr(
+                    self.cost, cost_field,
+                    getattr(self.cost, cost_field, 0) +
+                    usage.get(litellm_field, 0)
+                )
 
         if self.endpoint.litellm_provider not in ["openai"]:
             # The total cost does not seem to be properly tracked except by
