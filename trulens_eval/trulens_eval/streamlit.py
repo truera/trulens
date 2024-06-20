@@ -7,20 +7,21 @@ from typing import List
 asyncio.set_event_loop(asyncio.new_event_loop())
 
 from millify import millify
-import streamlit as st
-
-from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens_eval.ux.styles import CATEGORY
-from trulens_eval import Tru
-from trulens_eval.ux import styles
-from trulens_eval.ux.components import draw_metadata
 from pydantic import BaseModel
+import streamlit as st
 from streamlit_pills import pills
-from trulens_eval.schema.feedback import FeedbackCall, FeedbackDefinition
+
+from trulens_eval import Tru
+from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens_eval.react_components.record_viewer import record_viewer
+from trulens_eval.schema.feedback import FeedbackCall
+from trulens_eval.schema.feedback import FeedbackDefinition
 from trulens_eval.schema.record import Record
 from trulens_eval.utils import display
 from trulens_eval.utils.python import Future
-from trulens_eval.react_components.record_viewer import record_viewer
+from trulens_eval.ux import styles
+from trulens_eval.ux.components import draw_metadata
+from trulens_eval.ux.styles import CATEGORY
 
 tru = Tru()
 
