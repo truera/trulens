@@ -27,9 +27,12 @@ if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
     init_from_args()
 
+tru: Tru = Tru()  # get singletone whether this file was imported or executed from command line.
+lms = tru.db
+
 
 @st.cache_data(ttl=3600)  # 1hr
-def get_records_and_feedback(tru: Tru):
+def get_records_and_feedback():
     s = time.time()
     results = tru.get_records_and_feedback()
     st.success(f"Collected {len(results[0])} records in {time.time() - s:.2f}s")
@@ -40,11 +43,6 @@ def leaderboard():
     """Render the leaderboard page."""
 
     set_page_config(page_title="Leaderboard")
-
-    tru = Tru(
-    )  # get singletone whether this file was imported or executed from command line.
-
-    lms = tru.db
 
     # Set the title and subtitle of the app
     st.title("App Leaderboard")
