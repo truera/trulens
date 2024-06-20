@@ -63,7 +63,7 @@ def get_records_and_feedback():
     return results
 
 
-df_results, feedback_cols = get_records_and_feedback(tru)
+df_results, feedback_cols = get_records_and_feedback()
 
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {

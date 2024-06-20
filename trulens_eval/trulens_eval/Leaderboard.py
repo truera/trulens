@@ -49,7 +49,7 @@ def leaderboard():
     st.write(
         "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
     )
-    df, feedback_col_names = get_records_and_feedback(tru)
+    df, feedback_col_names = get_records_and_feedback()
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
