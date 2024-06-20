@@ -586,15 +586,10 @@ class SQLAlchemyDB(DB):
             if app_ids:
                 stmt = stmt.where(self.orm.AppDefinition.app_id.in_(app_ids))
 
-            apps = (row[0] for row in session.execute(stmt).unique()) # unique needed for joinedload
-
-            for app in apps:
-                len(app.records)
+            ex = session.execute(stmt).unique() # unique needed for joinedload
+            apps = (row[0] for row in ex)
 
             return AppsExtractor().get_df_and_cols(apps)
-        
-
-
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
