@@ -26,6 +26,7 @@ f_coherence = Feedback(provider.coherence_with_cot_reasons).on_output()
 
 feedbacks = [f_coherence]
 
+
 def generate_response(input_text):
     llm = OpenAI(temperature=0.7)
     tru_llm = TruChain(llm, app_id="LLM v1", feedbacks=feedbacks)
@@ -45,5 +46,7 @@ with st.form("my_form"):
         st.info(response)
 if submitted:
     st_feedback.trulens_feedback(record=record)
-    if st.button("Show Trace"):
+
+    show_trace = st.button("Show Trace")
+    if show_trace:
         st_trace.trulens_trace(record=record)
