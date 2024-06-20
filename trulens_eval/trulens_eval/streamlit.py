@@ -237,7 +237,7 @@ def trulens_trace(record: Record):
 
     Args:
 
-    record : A trulens record.
+        record : A trulens record.
 
     !!! example
 
