@@ -133,10 +133,10 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool
+    use_rag: bool, retrieval_filter: float
 ):
     # Args are hashed for cache lookup
-    return f"app-prod-{model}{'-rag' if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+    return f"app-prod-{model}{'-rag' if use_rag else ''}-retrieval-filter-{retrieval_filter} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
 
 
 def configure_model(
@@ -148,6 +148,7 @@ def configure_model(
     MAX_NEW_TOKENS_KEY = f"max_new_tokens_{key}"
     SYSTEM_PROMPT_KEY = f"system_prompt_{key}"
     USE_RAG_KEY = f"use_rag_{key}"
+    RETRIEVAL_FILTER_KEY = f"retrieval_filter_{key}"
 
     # initialize app metadata for tracking
     metadata = {
@@ -163,6 +164,8 @@ def configure_model(
             ),
         "use_rag":
             st.session_state.get(USE_RAG_KEY, model_config.use_rag),
+        "retrieval_filter":
+            st.session_state.get(RETRIEVAL_FILTER_KEY, model_config.retrieval_filter)
     }
 
     if MODEL_KEY not in st.session_state:
@@ -250,6 +253,17 @@ def configure_model(
                 )
                 if model_config.use_rag != st.session_state[USE_RAG_KEY]:
                     st.session_state[USE_RAG_KEY] = model_config.use_rag
+
+                if model_config.retrieval_filter != st.session_state[RETRIEVAL_FILTER_KEY]:
+                    st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
+
+                model_config.retrieval_filter = st.slider(
+                    min_value=0,
+                    max_value=1,
+                    step=0.1,
+                    label="Context Relevance Filter for Retrieval",
+                    key=RETRIEVAL_FILTER_KEY
+                )
 
     app_id = get_tru_app_id(**metadata)
     feedbacks = feedbacks_rag if model_config.use_rag else feedbacks_no_rag

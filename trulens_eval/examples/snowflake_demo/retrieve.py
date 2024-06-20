@@ -6,13 +6,8 @@ from feedback import f_context_relevance
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores.pinecone import \
     Pinecone as PineconeVectorStore
-from pinecone import Pinecone
-from pinecone import ServerlessSpec
-
-from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 
 load_dotenv()
-
 
 class PineconeRetriever:
 
@@ -29,10 +24,7 @@ class PineconeRetriever:
             text_key="_node_content"
         )
         retriever = docsearch.as_retriever()
-        filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
-            retriever=retriever, feedback=f_context_relevance, threshold=0
-        )
-        nodes = filtered_retriever.invoke(query)
+        nodes = retriever.invoke(query)
         contents = [json.loads(t.page_content) for t in nodes]
         texts = [tc.get("text") for tc in contents]
         return texts
