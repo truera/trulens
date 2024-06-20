@@ -5,9 +5,8 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
-)
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Type, Union)
 import warnings
 
 import numpy as np
@@ -17,6 +16,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import func
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
 
@@ -572,7 +572,7 @@ class SQLAlchemyDB(DB):
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
 
         with self.session.begin() as session:
-            stmt = select(self.orm.AppDefinition)
+            stmt = select(self.orm.AppDefinition) # .options(joinedload(self.orm.AppDefinition.records))
             if app_ids:
                 stmt = stmt.where(self.orm.AppDefinition.app_id.in_(app_ids))
             apps = (row[0] for row in session.execute(stmt))
