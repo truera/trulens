@@ -117,7 +117,7 @@ optional functionality, additional packages can be requested for the user to
 install and their usage is aided by an optional imports scheme. See [Optional
 Packages](optional.md) for details.
 
-### Database Migration
+### ✨ Database Migration
 
 [Database migration](migration.md).
 
