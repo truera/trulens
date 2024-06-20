@@ -55,14 +55,14 @@ if __name__ == "__main__":
 tru: Tru = Tru()
 lms = tru.db
 
-@st.cache_data(ttl=3600) # 1hr
-def get_records_and_feedback():
+@st.cache_data(ttl=3600)  # 1hr
+def get_records_and_feedback(tru: Tru):
     s = time.time()
     results = tru.get_records_and_feedback()
     st.success(f"Collected {len(results[0])} records in {time.time() - s:.2f}s")
     return results
 
-df_results, feedback_cols = get_records_and_feedback()
+df_results, feedback_cols = get_records_and_feedback(tru)
 
 
 # TODO: remove code redundancy / redundant database calls

@@ -1,4 +1,5 @@
 import asyncio
+import time
 import json
 import math
 
@@ -27,6 +28,14 @@ if __name__ == "__main__":
     init_from_args()
 
 
+@st.cache_data(ttl=3600)  # 1hr
+def get_records_and_feedback(tru: Tru):
+    s = time.time()
+    results = tru.get_records_and_feedback()
+    st.success(f"Collected {len(results[0])} records in {time.time() - s:.2f}s")
+    return results
+
+
 def leaderboard():
     """Render the leaderboard page."""
 
@@ -42,7 +51,7 @@ def leaderboard():
     st.write(
         "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
     )
-    df, feedback_col_names = lms.get_records_and_feedback([])
+    df, feedback_col_names = get_records_and_feedback(tru)
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
