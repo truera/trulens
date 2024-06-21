@@ -5,19 +5,15 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
-)
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Type, Union)
 import warnings
 
 import numpy as np
 import pandas as pd
 from pydantic import Field
-from sqlalchemy import create_engine
-from sqlalchemy import Engine
-from sqlalchemy import func
-from sqlalchemy import select
-from sqlalchemy.orm import sessionmaker
+import sqlalchemy as sa
+from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.sql import text as sql_text
 
 from trulens_eval import app as mod_app
@@ -69,7 +65,7 @@ class SQLAlchemyDB(DB):
     session_params: dict = Field(default_factory=dict)
     """Sqlalchemy-related session."""
 
-    engine: Optional[Engine] = None
+    engine: Optional[sa.Engine] = None
     """Sqlalchemy engine."""
 
     session: Optional[sessionmaker] = None
@@ -107,7 +103,7 @@ class SQLAlchemyDB(DB):
             )
 
     def _reload_engine(self):
-        self.engine = create_engine(**self.engine_params)
+        self.engine = sa.create_engine(**self.engine_params)
         self.session = sessionmaker(self.engine, **self.session_params)
 
     @classmethod
@@ -409,7 +405,7 @@ class SQLAlchemyDB(DB):
         """See [DB.get_feedback_defs][trulens_eval.database.base.DB.get_feedback_defs]."""
 
         with self.session.begin() as session:
-            q = select(self.orm.FeedbackDefinition)
+            q = sa.select(self.orm.FeedbackDefinition)
             if feedback_definition_id:
                 q = q.filter_by(feedback_definition_id=feedback_definition_id)
             fb_defs = (row[0] for row in session.execute(q))
@@ -478,9 +474,9 @@ class SQLAlchemyDB(DB):
         limit: Optional[int] = None
     ):
         if count:
-            q = func.count(self.orm.FeedbackResult.feedback_result_id)
+            q = sa.func.count(self.orm.FeedbackResult.feedback_result_id)
         else:
-            q = select(self.orm.FeedbackResult)
+            q = sa.select(self.orm.FeedbackResult)
 
         if record_id:
             q = q.filter_by(record_id=record_id)
@@ -509,7 +505,7 @@ class SQLAlchemyDB(DB):
             q = q.limit(limit)
 
         if shuffle:
-            q = q.order_by(func.random())
+            q = q.order_by(sa.func.random())
 
         return q
 
@@ -567,16 +563,30 @@ class SQLAlchemyDB(DB):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[str]] = None
+        app_ids: Optional[List[str]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
 
         with self.session.begin() as session:
-            stmt = select(self.orm.AppDefinition)
+            stmt = sa.select(self.orm.Record).options(joinedload(self.orm.Record.feedback_results))
+            # NOTE: The joinedload here makes it so that the feedback_results
+            # get loaded eagerly instead if lazily when accessed later.
+
+            # NOTE: We are selecting records here because offset and limit need
+            # to be with respect to those rows instead of AppDefinition or
+            # FeedbackResult rows.
+
             if app_ids:
-                stmt = stmt.where(self.orm.AppDefinition.app_id.in_(app_ids))
-            apps = (row[0] for row in session.execute(stmt))
-            return AppsExtractor().get_df_and_cols(apps)
+                stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
+
+            stmt = stmt.limit(limit).offset(offset)
+
+            ex = session.execute(stmt).unique() # unique needed for joinedload above
+            records = [rec[0] for rec in ex]
+
+            return AppsExtractor().get_df_and_cols(records=records)
 
 
 # Use this Perf for missing Perfs.
@@ -682,6 +692,8 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
 
 
 class AppsExtractor:
+    """Utilities for creating dataframes from orm instances."""
+
     app_cols = ["app_id", "app_json", "type"]
     rec_cols = [
         "record_id", "input", "output", "tags", "record_json", "cost_json",
@@ -694,9 +706,34 @@ class AppsExtractor:
         self.feedback_columns = set()
 
     def get_df_and_cols(
-        self, apps: Iterable[orm.AppDefinition]
+        self,
+        apps: Optional[Iterable[orm.AppDefinition]] = None,
+        records: Optional[List[orm.Record]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        df = pd.concat(self.extract_apps(apps))
+        """Produces a records dataframe which joins in information from apps and
+        feedback results.
+
+        Args:
+            apps: If given, includes all records of all of the apps in this
+                iterable.
+
+            records: If given, includes only these records. Mutually exclusive
+                with `apps`. List type is intentional as this container is
+                traversed more than once, unlike apps.
+        """
+
+        assert apps is None or records is None, "`apps` and `records` are mutually exclusive"
+
+        if apps is not None:
+            df = pd.concat(self.extract_apps(apps))
+
+        elif records is not None:
+            apps = set(record.app for record in records)
+            df = pd.concat(self.extract_apps(apps=apps, records=records))
+
+        else:
+            raise ValueError("'apps` or `records` must be provided")
+
         df["latency"] = _extract_latency(df["perf_json"])
         df.reset_index(
             drop=True, inplace=True
@@ -705,14 +742,32 @@ class AppsExtractor:
         return df, list(self.feedback_columns)
 
     def extract_apps(
-        self, apps: Iterable[orm.AppDefinition]
+        self,
+        apps: Iterable[orm.AppDefinition],
+        records: Optional[List[orm.Record]] = None
     ) -> Iterable[pd.DataFrame]:
+        """
+        Creates record rows with app information.
+
+        TODO: The means for enumerating records in this method is not ideal as
+        it does a lot of filtering.
+        """
+
         yield pd.DataFrame(
             [], columns=self.app_cols + self.rec_cols
         )  # prevent empty iterator
         for _app in apps:
             try:
-                if _recs := _app.records:
+                if records is None:
+                    # If records not provided, get all of them for `_app`.
+                    _recs = _app.records
+                else:
+                    # Otherwise get only the ones in `records`. WARNING: Avoid
+                    # using _app.records here as doing so might get all of the
+                    # records even the ones not in `records`
+                    _recs = (record for record in records if record.app_id==_app.app_id)
+
+                if _recs:
                     df = pd.DataFrame(data=self.extract_records(_recs))
 
                     for col in self.app_cols:

@@ -13,6 +13,7 @@ from sqlalchemy import Text
 from sqlalchemy import VARCHAR
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref
+from sqlalchemy.orm import configure_mappers
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
@@ -221,6 +222,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 backref=backref('records', cascade="all,delete"),
                 primaryjoin='AppDefinition.app_id == Record.app_id',
                 foreign_keys=app_id,
+                order_by="Record.record_id"
             )
 
             @classmethod
@@ -281,6 +283,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 backref=backref('feedback_results', cascade="all,delete"),
                 primaryjoin='Record.record_id == FeedbackResult.record_id',
                 foreign_keys=record_id,
+                order_by="FeedbackResult.record_id"
             )
 
             feedback_definition = relationship(
@@ -289,6 +292,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 primaryjoin=
                 "FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
                 foreign_keys=feedback_definition_id,
+                order_by="FeedbackResult.record_id"
             )
 
             @classmethod
@@ -315,7 +319,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     multi_result=obj.multi_result
                 )
 
-    #configure_mappers()
+    configure_mappers() # important to make sure backref attributes in orm classes get filled in
     #base.registry.configure()
 
     return NewORM

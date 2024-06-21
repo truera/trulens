@@ -688,13 +688,19 @@ class Tru(python.SingletonPerName):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None
+        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
     ) -> Tuple[pandas.DataFrame, List[str]]:
         """Get records, their feeback results, and feedback names.
         
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps' records will be returned.
+
+            offset: Record row offset.
+
+            limit: Limit on the number of records to return.
 
         Returns:
             Dataframe of records with their feedback results.
@@ -705,7 +711,7 @@ class Tru(python.SingletonPerName):
         if app_ids is None:
             app_ids = []
 
-        df, feedback_columns = self.db.get_records_and_feedback(app_ids)
+        df, feedback_columns = self.db.get_records_and_feedback(app_ids, offset=offset, limit=limit)
 
         return df, feedback_columns
 
