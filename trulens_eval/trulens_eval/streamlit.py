@@ -28,7 +28,7 @@ class FeedbackDisplay(BaseModel):
     calls: List[FeedbackCall]
     icon: str
 
-def trulens_leaderboard(app_ids: List = None):
+def trulens_leaderboard(app_ids: List[str] = None):
     """
     Render the leaderboard page.
 
