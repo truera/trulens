@@ -254,9 +254,6 @@ def configure_model(
                 if model_config.use_rag != st.session_state[USE_RAG_KEY]:
                     st.session_state[USE_RAG_KEY] = model_config.use_rag
 
-                if model_config.retrieval_filter != st.session_state[RETRIEVAL_FILTER_KEY]:
-                    st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
-
                 model_config.retrieval_filter = st.slider(
                     min_value=0,
                     max_value=1,
@@ -264,6 +261,9 @@ def configure_model(
                     label="Context Relevance Filter for Retrieval",
                     key=RETRIEVAL_FILTER_KEY
                 )
+
+                if model_config.retrieval_filter != st.session_state[RETRIEVAL_FILTER_KEY]:
+                    st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
 
     app_id = get_tru_app_id(**metadata)
     feedbacks = feedbacks_rag if model_config.use_rag else feedbacks_no_rag
