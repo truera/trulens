@@ -3,7 +3,7 @@ import re
 from typing import AsyncIterator, List, Optional
 
 import replicate
-from retrieve import PineconeRetriever
+from retrieve import AVAILABLE_RETRIEVERS
 from schema import Conversation
 from schema import Message
 import streamlit as st
@@ -69,7 +69,6 @@ ENCODING_MAPPING = {
 
 
 class StreamGenerator:
-    retriever = PineconeRetriever()
 
     def get_last_user_message(self, prompt_str):
         # Regex to find the last 'user' message
@@ -79,9 +78,6 @@ class StreamGenerator:
         if match:
             return match[-1].strip()
         return ""
-
-    def set_retriever_api_key(self, api_key: str):
-        self.retriever.set_api_key(api_key)
 
     def prepare_prompt(self, conversation: Conversation):
         messages = conversation.messages
@@ -166,7 +162,8 @@ class StreamGenerator:
     ):
         @context_filter(f_small_local_models_context_relevance, conversation.model_config.retrieval_filter)
         def retrieve():
-            texts = self.retriever.retrieve(query=last_user_message)
+            retriever = AVAILABLE_RETRIEVERS[conversation.model_config.retriever]
+            texts = retriever.retrieve(query=last_user_message)
             context_message = "\n\n".join(texts)
             return _reencode_outputs(context_message), texts
 

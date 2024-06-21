@@ -19,6 +19,7 @@ class ModelConfig(BaseModel):
     max_new_tokens: int = 1024
     system_prompt: str = ""
     use_rag: bool = True
+    retriever: str = "Cortex Search"
     trulens_recorder: Optional[TruCustomApp] = None
 
 

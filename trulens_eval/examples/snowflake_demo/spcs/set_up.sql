@@ -2,6 +2,7 @@ USE DATABASE dkurokawa;
 USE SCHEMA trulens_demo;
 USE WAREHOUSE dkurokawa;
 
+--DROP COMPUTE POOL dkurokawa_trulens_demo_compute_pool;
 CREATE COMPUTE POOL dkurokawa_trulens_demo_compute_pool
     MIN_NODES = 1
     MAX_NODES = 1
@@ -30,8 +31,16 @@ CREATE OR REPLACE NETWORK RULE dkurokawa_trulens_demo_network_rule
         'api.replicate.com',
         'raw.githubusercontent.com',
         'streaming-api.svc.us.c.replicate.net',
-        'streamlit-docs-fvvbvd0.svc.aped-4627-b74a.pinecone.io'
+        'streamlit-docs-fvvbvd0.svc.aped-4627-b74a.pinecone.io',
+        -- More stuff
+        'ingress.aped-4627-b74a.pinecone.io',
+        'raw.githubusercontent.com',
+        'streaming-api.svc.rno2.c.replicate.net'
     );
+CREATE OR REPLACE NETWORK RULE dkurokawa_allow_all_network_rule
+    TYPE = 'HOST_PORT'
+    MODE = 'EGRESS'
+    VALUE_LIST = ('0.0.0.0:443','0.0.0.0:80');
 SHOW NETWORK RULES;
 
 CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION dkurokawa_trulens_demo_access_integration
