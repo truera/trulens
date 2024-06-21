@@ -12,6 +12,7 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     from langchain.schema import Document
     from langchain.vectorstores.base import VectorStoreRetriever
 
+OptionalImports(messages=REQUIREMENT_LANGCHAIN).assert_installed(langchain)
 
 class WithFeedbackFilterDocuments(VectorStoreRetriever):
     feedback: Feedback
