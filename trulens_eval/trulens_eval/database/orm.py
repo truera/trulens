@@ -13,6 +13,7 @@ from sqlalchemy import Text
 from sqlalchemy import VARCHAR
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref
+from sqlalchemy.orm import configure_mappers
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
@@ -315,8 +316,11 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     multi_result=obj.multi_result
                 )
 
-    #configure_mappers()
-    #base.registry.configure()
+    configure_mappers()  # IMPORTANT
+    # Without the above, orm class attributes which are defined using backref
+    # will not be visible, i.e. orm.AppDefinition.records.
+
+    # base.registry.configure()
 
     return NewORM
 

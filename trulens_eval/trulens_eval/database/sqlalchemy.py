@@ -10,6 +10,7 @@ from typing import (
 )
 import warnings
 
+from alembic.ddl.impl import DefaultImpl
 import numpy as np
 import pandas as pd
 from pydantic import Field
@@ -17,6 +18,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy import func
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
 
@@ -49,6 +51,10 @@ from trulens_eval.utils.text import UNICODE_HOURGLASS
 from trulens_eval.utils.text import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
+
+
+class SnowflakeImpl(DefaultImpl):
+    __dialect__ = 'snowflake'
 
 
 class SQLAlchemyDB(DB):
@@ -571,11 +577,22 @@ class SQLAlchemyDB(DB):
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
 
+        # TODO: Add pagination to this method. Currently the joinedload in
+        # select below disables lazy loading of records which will be a problem
+        # for large databases without the use of pagination.
+
         with self.session.begin() as session:
-            stmt = select(self.orm.AppDefinition)
+            stmt = select(self.orm.AppDefinition).options(
+                joinedload(self.orm.AppDefinition.records)\
+                .joinedload(self.orm.Record.feedback_results)
+            )
+
             if app_ids:
                 stmt = stmt.where(self.orm.AppDefinition.app_id.in_(app_ids))
-            apps = (row[0] for row in session.execute(stmt))
+
+            ex = session.execute(stmt).unique()  # unique needed for joinedload
+            apps = (row[0] for row in ex)
+
             return AppsExtractor().get_df_and_cols(apps)
 
 
@@ -721,29 +738,34 @@ class AppsExtractor:
                             # deserialize AppDefinition here unless we fix prior DBs
                             # in migration. Because of this, loading just the
                             # `root_class` here.
+
                             df[col] = str(
                                 Class.model_validate(
                                     json.loads(_app.app_json).get('root_class')
                                 )
                             )
+
                         else:
                             df[col] = getattr(_app, col)
 
                     yield df
             except OperationalError as e:
                 print(
-                    "Error encountered while attempting to retrieve an app. This issue may stem from a corrupted database."
+                    "Error encountered while attempting to retrieve an app. "
+                    "This issue may stem from a corrupted database."
                 )
                 print(f"Error details: {e}")
 
     def extract_records(self,
                         records: Iterable[orm.Record]) -> Iterable[pd.Series]:
+
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
 
             try:
                 for _res in _rec.feedback_results:
+
                     calls[_res.name].append(
                         json.loads(_res.calls_json)["calls"]
                     )
@@ -771,10 +793,12 @@ class AppsExtractor:
                     ).isoformat() if col == "ts" else getattr(_rec, col)
 
                 yield row
+
             except Exception as e:
                 # Handling unexpected errors, possibly due to database issues.
                 print(
-                    "Error encountered while attempting to retrieve feedback results. This issue may stem from a corrupted database."
+                    "Error encountered while attempting to retrieve feedback results. "
+                    "This issue may stem from a corrupted database."
                 )
                 print(f"Error details: {e}")
 
