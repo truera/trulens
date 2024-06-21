@@ -137,7 +137,7 @@ def get_tru_app_id(
     use_rag: bool, retriever: str
 ) -> str:
     # Args are hashed for cache'(' lookup
-    return f"app-prod-{model}{'-' + retriever) if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+    return f"app-prod-{model}{'-' + retriever if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
 
 
 def configure_model(
