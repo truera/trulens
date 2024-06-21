@@ -29,8 +29,9 @@ T = TypeVar("T")
 
 class DummyAPI(object):
     """A dummy model evaluation API used by DummyEndpoint.
-    
-    This is also used for testing cost tracking instrumentation.
+
+    This is meant to stand in for classes such as OpenAI.completion . Methods in
+    this class are instrumented for cost tracking testing.
     """
 
     loading_prob: float
@@ -48,7 +49,7 @@ class DummyAPI(object):
     """How often to freeze instead of producing a response."""
 
     overloaded_prob: float
-    """# How often to produce the overloaded message that huggingface sometimes produces."""
+    """How often to produce the overloaded message that huggingface sometimes produces."""
 
     alloc: int
     """How much data in bytes to allocate when making requests."""
@@ -146,7 +147,7 @@ class DummyAPI(object):
         j['status'] = 'success'
         return j
 
-    def completion(self, *args, model: str, text: str, **kwargs) -> Dict:
+    def completion(self, *args, model: str, text: str) -> Dict:
         """Fake text completion request."""
 
         # Fake http post request, might raise an exception or cause delays.
@@ -173,7 +174,7 @@ class DummyAPI(object):
 
         return result
 
-    def classify(self, *args, model: str = "fakeclassier", text: str, **kwargs) -> Dict:
+    def classify(self, *args, model: str = "fakeclassier", text: str) -> Dict:
         """Fake classification request."""
 
         # Fake http post request, might raise an exception or cause delays.
@@ -204,6 +205,7 @@ class DummyAPI(object):
         return result
 
 class DummyEndpointCallback(EndpointCallback):
+    """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
     def on_call(self, func: Callable, args: Tuple[str], kwargs: Dict[str, Any]):
         self.cost.n_requests += 1
@@ -218,9 +220,13 @@ class DummyEndpointCallback(EndpointCallback):
             self.cost.n_tokens += usage.get("n_tokens", 0)
             self.cost.n_prompt_tokens += usage.get("n_prompt_tokens", 0)
             self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
-        else:
+
+        elif "scores" in ret:
             # fake classification
             self.cost.n_classes += len(ret.get("scores", []))
+
+        else:
+            logger.warning("Could not determine cost from DummyAPI call.")
         
     def on_iteration(self):
         self.cost.n_stream_chunks += 1
@@ -258,5 +264,5 @@ class DummyEndpoint(Endpoint):
             locals_except('self', 'name', 'kwargs', '__class__')
         )
 
-
-DummyEndpoint.model_rebuild()
+        self._instrument_class(DummyAPI, "completion")
+        self._instrument_class(DummyAPI, "classify")
