@@ -3,6 +3,7 @@ import { ReactElement } from 'react';
 
 import StyledTooltip from '@/StyledTooltip';
 import { StackTreeNode } from '@/utils/StackTreeNode';
+import { formatTime } from '@/utils/utils';
 
 type SpanTooltipProps = {
   node: StackTreeNode;
@@ -23,12 +24,12 @@ export default function SpanTooltip({ node, children }: SpanTooltipProps) {
           <br />
           <span>
             <b>Start: </b>
-            {new Date(startTime).toLocaleDateString()} {new Date(startTime).toLocaleTimeString()}
+            {formatTime(startTime)}
           </span>
           <br />
           <span>
             <b>End: </b>
-            {new Date(endTime).toLocaleDateString()} {new Date(endTime).toLocaleTimeString()}
+            {formatTime(endTime)}
           </span>
         </Box>
       }

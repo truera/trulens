@@ -55,6 +55,37 @@ AggCallable = Callable[[Iterable[float]], float]
 """Signature of aggregation functions."""
 
 
+class SkipEval(Exception):
+    """Raised when evaluating a feedback function implementation to skip it so
+    it is not aggregated with other non-skipped results.
+    
+    Args:
+        reason: Optional reason for why this evaluation was skipped.
+
+        feedback: The Feedback instance this run corresponds to.
+
+        ins: The arguments to this run.
+    """
+
+    def __init__(
+        self,
+        reason: Optional[str] = None,
+        feedback: Optional[Feedback] = None,
+        ins: Optional[Dict[str, Any]] = None,
+    ):
+        self.reason = reason
+        self.feedback = feedback
+        self.ins = ins
+
+    def __str__(self):
+        return "Feedback evaluation skipped" + (
+            (" because " + self.reason) if self.reason else ""
+        )
+
+    def __repr__(self):
+        return f"SkipEval(reason={self.reason})"
+
+
 class InvalidSelector(Exception):
     """Raised when a selector names something that is missing in a record/app."""
 
@@ -860,6 +891,9 @@ Feedback function signature:
             cost = mod_base_schema.Cost()
             multi_result = None
 
+            # Keep track of evaluations that were skipped due to raising SkipEval.
+            skipped_exceptions = []
+
             for ins in input_combinations:
                 try:
                     result_and_meta, part_cost = mod_base_endpoint.Endpoint.track_all_costs_tally(
@@ -867,6 +901,14 @@ Feedback function signature:
                     )
 
                     cost += part_cost
+
+                except SkipEval as e:
+                    e.feedback = self
+                    e.ins = ins
+                    skipped_exceptions.append(e)
+                    warnings.warn(str(e), UserWarning, stacklevel=1)
+                    continue  # go to next input_combination
+
                 except Exception as e:
                     raise RuntimeError(
                         f"Evaluation of {self.name} failed on inputs: \n{pformat(ins)[0:128]}."
@@ -911,12 +953,28 @@ Feedback function signature:
                 result_vals.append(result_val)
                 feedback_calls.append(feedback_call)
 
+            # Warn that there were some skipped evals.
+            if len(skipped_exceptions) > 0:
+                num_skipped = len(skipped_exceptions)
+                num_evaled = len(result_vals)
+                num_total = num_skipped + num_evaled
+                warnings.warn(
+                    (
+                        f"{num_skipped}/{num_total}={100.0*num_skipped/num_total:0.1f}"
+                        "% evaluation(s) were skipped because they raised SkipEval "
+                        "(see earlier warnings for listing)."
+                    ),
+                    UserWarning,
+                    stacklevel=1
+                )
+
             if len(result_vals) == 0:
                 warnings.warn(
                     f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs.",
                     UserWarning,
                     stacklevel=1
                 )
+
                 result = np.nan
 
             else:

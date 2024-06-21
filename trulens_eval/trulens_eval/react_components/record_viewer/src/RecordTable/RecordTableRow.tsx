@@ -5,6 +5,7 @@ import { Streamlit } from 'streamlit-component-lib';
 
 import { SpanTooltip } from '@/SpanTooltip';
 import { StackTreeNode } from '@/utils/StackTreeNode';
+import { formatDuration } from '@/utils/utils';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;
@@ -55,7 +56,7 @@ export default function RecordTableRowRecursive({
             </Box>
           </Box>
         </TableCell>
-        <TableCell align="right">{timeTaken} ms</TableCell>
+        <TableCell align="right">{formatDuration(timeTaken)}</TableCell>
         <TableCell sx={{ minWidth: 500, padding: 0 }}>
           <SpanTooltip node={node}>
             <Box
