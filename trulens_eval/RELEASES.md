@@ -17,7 +17,6 @@ of breaking changes.
 * fix groundedness with no supporting evidence by @nicoloboschi in https://github.com/truera/trulens/pull/1193
 * Improve Microsecond support by @sfc-gh-gtokernliang in https://github.com/truera/trulens/pull/1195
 * SkipEval exception by @sfc-gh-pmardziel in https://github.com/truera/trulens/pull/1200
-* show how to add cost/latency/usage details in virtual records by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1197
 * Update pull_request_template.md by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1234
 
 ### Documentation
@@ -31,6 +30,7 @@ of breaking changes.
 * Context filtering guardrails added to quickstarts by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1192
 * Update Arctic model notebook to use new Cortex provider by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1202
 * New example showing cortex finetuning by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1202
+* show how to add cost/latency/usage details in virtual records by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1197
 
 ### Bug Fixes
 * Enable formatting during PR build. Also format code that wasn't formatted. by @sfc-gh-dkurokawa in https://github.com/truera/trulens/pull/1212
