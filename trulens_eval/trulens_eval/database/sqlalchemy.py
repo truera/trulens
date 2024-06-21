@@ -10,6 +10,7 @@ from typing import (
 )
 import warnings
 
+from alembic.ddl.impl import DefaultImpl
 import numpy as np
 import pandas as pd
 from pydantic import Field
@@ -47,6 +48,10 @@ from trulens_eval.utils.text import UNICODE_HOURGLASS
 from trulens_eval.utils.text import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
+
+
+class SnowflakeImpl(DefaultImpl):
+    __dialect__ = 'snowflake'
 
 
 class SQLAlchemyDB(DB):
@@ -571,6 +576,10 @@ class SQLAlchemyDB(DB):
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
 
+        # TODO: Add pagination to this method. Currently the joinedload in
+        # select below disables lazy loading of records which will be a problem
+        # for large databases without the use of pagination.
+
         with self.session.begin() as session:
             stmt = sa.select(self.orm.Record)
             # NOTE: We are selecting records here because offset and limit need
@@ -799,29 +808,34 @@ class AppsExtractor:
                             # deserialize AppDefinition here unless we fix prior DBs
                             # in migration. Because of this, loading just the
                             # `root_class` here.
+
                             df[col] = str(
                                 Class.model_validate(
                                     json.loads(_app.app_json).get('root_class')
                                 )
                             )
+
                         else:
                             df[col] = getattr(_app, col)
 
                     yield df
             except OperationalError as e:
                 print(
-                    "Error encountered while attempting to retrieve an app. This issue may stem from a corrupted database."
+                    "Error encountered while attempting to retrieve an app. "
+                    "This issue may stem from a corrupted database."
                 )
                 print(f"Error details: {e}")
 
     def extract_records(self,
                         records: Iterable[orm.Record]) -> Iterable[pd.Series]:
+
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
 
             try:
                 for _res in _rec.feedback_results:
+
                     calls[_res.name].append(
                         json.loads(_res.calls_json)["calls"]
                     )
@@ -849,10 +863,12 @@ class AppsExtractor:
                     ).isoformat() if col == "ts" else getattr(_rec, col)
 
                 yield row
+
             except Exception as e:
                 # Handling unexpected errors, possibly due to database issues.
                 print(
-                    "Error encountered while attempting to retrieve feedback results. This issue may stem from a corrupted database."
+                    "Error encountered while attempting to retrieve feedback results. "
+                    "This issue may stem from a corrupted database."
                 )
                 print(f"Error details: {e}")
 

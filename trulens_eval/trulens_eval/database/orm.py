@@ -22,7 +22,6 @@ from trulens_eval.database.base import DEFAULT_DATABASE_PREFIX
 from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import record as mod_record_schema
-from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils.json import json_str_of_obj
 
 TYPE_JSON = Text
@@ -319,9 +318,11 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     multi_result=obj.multi_result
                 )
 
-    configure_mappers(
-    )  # important to make sure backref attributes in orm classes get filled in
-    #base.registry.configure()
+    configure_mappers()  # IMPORTANT
+    # Without the above, orm class attributes which are defined using backref
+    # will not be visible, i.e. orm.AppDefinition.records.
+
+    # base.registry.configure()
 
     return NewORM
 
