@@ -20,7 +20,6 @@ of breaking changes.
 * show how to add cost/latency/usage details in virtual records by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1197
 * Update pull_request_template.md by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1234
 
-
 ### Documentation
 * Benchmarking Snowflake arctic-instruct feedback function of groundedness by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1185
 * Evaluation Benchmarks Page by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1190
@@ -28,10 +27,11 @@ of breaking changes.
 * Documentation for logging in snowflake database by @sfc-gh-chu in https://github.com/truera/trulens/pull/1216
 * Documentation for cortex provider by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1202
 
-* ### Examples
+### Examples
 * Context filtering guardrails added to quickstarts by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1192
 * Update Arctic model notebook to use new Cortex provider by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1202
 * New example showing cortex finetuning by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1202
+
 ### Bug Fixes
 * Enable formatting during PR build. Also format code that wasn't formatted. by @sfc-gh-dkurokawa in https://github.com/truera/trulens/pull/1212
 * Fix test cases generation - normalization step for SummEval score by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1217
