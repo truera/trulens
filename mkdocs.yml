@@ -29,6 +29,9 @@ markdown_extensions:
   # - pymdownx.mark
   # - pymdownx.smartsymbols
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
   # - pymdownx.tasklist:
   #    custom_checkbox: true
   #- pymdownx.tilde
@@ -162,6 +165,7 @@ theme:
     - toc.follow
     # - toc.integrate
     - content.code.copy
+    - content.tabs
 
 nav:
   - 🏠 Home: index.md
@@ -226,6 +230,8 @@ nav:
           - Where to Log: trulens_eval/tracking/logging/where_to_log/index.md
           - ❄️ Logging in Snowflake: trulens_eval/tracking/logging/where_to_log/log_in_snowflake.md
           - 📓 Logging Methods: trulens_eval/tracking/logging/logging.ipynb
+
+  - 🛡️ Guardrails: trulens_eval/guardrails/index.md
   - 🔍 Guides:
       # PLACEHOLDER: - trulens_eval/guides/index.md
       - Any LLM App: trulens_eval/guides/use_cases_any.md
@@ -259,6 +265,10 @@ nav:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
       - 𝄢 Instruments: trulens_eval/api/instruments.md
+      - 🛡️ Guardrails:
+        - trulens_eval/api_guardrails/index.md
+        - 🦜️🔗 Langchain Guardrails: trulens_eval/api/guardrails/langchain.md
+        - 🦙 Llama-Index Guardrails: trulens_eval/api/guardrails/llama.md
       - 🗄 Database:
         - trulens_eval/api/database/index.md
         - ✨ Migration: trulens_eval/api/database/migration.md
