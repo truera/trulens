@@ -57,6 +57,7 @@ jobs:
           set -e
           source activate $(python-version)
 
+          # versions of yapf and isort are important
           pip install yapf==0.32.0 --verbose
           pip install isort==5.10.1 --verbose
 

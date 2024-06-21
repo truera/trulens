@@ -13,10 +13,10 @@ from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.pyschema import Class
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
+with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
     import llama_index
 
-OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
+opt.assert_installed(llama_index)
 
 
 class Prompt(app.Prompt, app.LlamaIndexComponent):
