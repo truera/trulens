@@ -1,4 +1,4 @@
-# Optional Packages
+# ⛅ Optional Packages
 
 Most of the examples included within `trulens_eval` require additional packages
 not installed alongside `trulens_eval`. You may be prompted to install them
@@ -42,6 +42,27 @@ OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
 
 This checks that the optional import system did not return a replacement for
 `llama_index` (under a context manager earlier in the file).
+
+If used in conjunction, the optional imports context manager and
+`assert_installed` check can be simplified by storing a reference to to the
+`OptionalImports` instance which is returned by the context manager entrace:
+
+```python
+with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
+    import llama_index
+    ...
+
+opt.assert_installed(llama_index)
+```
+
+`assert_installed` also returns the `OptionalImports` instance on success so
+assertions can be chained:
+
+```python
+opt.assert_installed(package1).assert_installed(package2)
+# or
+opt.assert_installed[[package1, package2]]
+```
 
 ### When to Fail
 
