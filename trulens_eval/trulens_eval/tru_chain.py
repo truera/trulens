@@ -12,6 +12,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 from pydantic import Field
 
 from trulens_eval import app as mod_app
+from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.schema.feedback import Select
@@ -19,7 +20,6 @@ from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens_eval.utils.json import jsonify
-from trulens_eval.utils.langchain import WithFeedbackFilterDocuments
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import safe_hasattr
@@ -264,9 +264,11 @@ class TruChain(mod_app.App):
                     retrievers)))
                 )
 
-        return (
-            Select.RecordCalls + retrievers[0][0]
-        ).get_relevant_documents.rets
+        retriever = (Select.RecordCalls + retrievers[0][0])
+        if hasattr(retriever, "invoke"):
+            return retriever.invoke.rets[:].page_content
+        if hasattr(retriever, "_get_relevant_documents"):
+            return retriever._get_relevant_documents.rets[:].page_content
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
