@@ -38,7 +38,7 @@ you to identify failure modes & systematically iterate to improve your
 application.
 
 Read more about the core concepts behind TruLens including [Feedback
-Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/), 
+Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/
 [The RAG Triad](https://www.trulens.org/trulens_eval/getting_started/core_concepts/rag_triad/),
 and [Honest, Harmless and Helpful
 Evals](https://www.trulens.org/trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals/).
