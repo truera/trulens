@@ -224,7 +224,8 @@ nav:
           - trulens_eval/tracking/instrumentation/nemo.ipynb
       - Logging:
           # PLACEHOLDER: - trulens_eval/tracking/logging/index.md
-          - Where to Log: trulens_eval/tracking/logging/where_to_log.md
+          - Where to Log: trulens_eval/tracking/logging/where_to_log/index.md
+          - ❄️ Logging in Snowflake: trulens_eval/tracking/logging/where_to_log/log_in_snowflake.md
           - 📓 Logging Methods: trulens_eval/tracking/logging/logging.ipynb
   - 🔍 Guides:
       # PLACEHOLDER: - trulens_eval/guides/index.md
