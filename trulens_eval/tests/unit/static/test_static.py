@@ -54,6 +54,10 @@ if sys.version_info < (3, 12):
         "trulens_eval.feedback.provider.cortex",
         "trulens_eval.feedback.provider.endpoint.cortex"
     ]
+else:
+    assert not module_installed(
+        "snowflake"
+    ), "snowflake should not be installed in Python 3.12 until it is supported."
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 

@@ -97,14 +97,21 @@ class Cortex(LLMProvider):
 
         if messages is not None:
             kwargs['messages'] = messages
-
         elif prompt is not None:
             kwargs['messages'] = [{"role": "system", "content": prompt}]
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
         res = self._exec_snowsql_complete_command(**kwargs)
-
+        """
+        res example: 
+        [Row(SNOWFLAKE.CORTEX.COMPLETE(
+            'SNOWFLAKE-ARCTIC',
+            [
+            {'ROLE': 'USER', 'CONTENT': '
+         WE HAVE PROVIDED CONTEXT INFORMATION BELOW. 
+            [[''\\NTHE UNIVERSITY OF WASHINGTON, FOUNDED IN 1861 IN SEATTLE, IS A PUBL='{\n  "choices": [\n    {\n      "messages": " The University of Washington was founded in 1861."\n    }\n  ],\n  "created": 1718315813,\n  "model": "snowflake-arctic",\n  "usage": {\n    "completion_tokens": 14,\n    "prompt_tokens": 148,\n    "total_tokens": 162\n  }\n}')]
+        """
         completion = json.loads(res[0][0])["choices"][0]["messages"]
 
         return completion
