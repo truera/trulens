@@ -572,12 +572,7 @@ class SQLAlchemyDB(DB):
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
 
         with self.session.begin() as session:
-            stmt = sa.select(self.orm.Record).options(
-                joinedload(self.orm.Record.feedback_results)
-            )
-            # NOTE: The joinedload here makes it so that the feedback_results
-            # get loaded eagerly instead if lazily when accessed later.
-
+            stmt = sa.select(self.orm.Record)
             # NOTE: We are selecting records here because offset and limit need
             # to be with respect to those rows instead of AppDefinition or
             # FeedbackResult rows.
@@ -585,11 +580,23 @@ class SQLAlchemyDB(DB):
             if app_ids:
                 stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
 
+            stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
+            # NOTE(piotrm): The joinedload here makes it so that the
+            # feedback_results get loaded eagerly instead if lazily when
+            # accessed later.
+
+            # TODO(piotrm): The subsequent logic in helper methods end up reading all of the records and feedback_results in order to create a DataFrame so there is no reason to not eagerly get all of this data.
+            # Ideally, though, we would be making some sort of lazy DataFrame and then could
+            # use the lazy join feature of sqlalchemy.
+
             stmt = stmt.limit(limit).offset(offset)
 
-            ex = session.execute(stmt).unique(
-            )  # unique needed for joinedload above
+            ex = session.execute(stmt).unique()
+            # unique needed for joinedload above.
+
             records = [rec[0] for rec in ex]
+            # TODO: Make the iteration of records lazy in some way. See
+            # TODO(piotrm) above.
 
             return AppsExtractor().get_df_and_cols(records=records)
 
@@ -712,7 +719,7 @@ class AppsExtractor:
 
     def get_df_and_cols(
         self,
-        apps: Optional[Iterable[orm.AppDefinition]] = None,
+        apps: Optional[List[orm.AppDefinition]] = None,
         records: Optional[List[orm.Record]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Produces a records dataframe which joins in information from apps and
@@ -723,8 +730,7 @@ class AppsExtractor:
                 iterable.
 
             records: If given, includes only these records. Mutually exclusive
-                with `apps`. List type is intentional as this container is
-                traversed more than once, unlike apps.
+                with `apps`.
         """
 
         assert apps is None or records is None, "`apps` and `records` are mutually exclusive"
