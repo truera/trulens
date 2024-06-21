@@ -23,7 +23,8 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
 if sys.version_info < (3, 12):
     # the dependency snowflake-snowpark-python not yet supported in 3.12
     with OptionalImports(messages=REQUIREMENT_CORTEX):
-        from trulens_eval.feedback.provider.endpoint.cortex import CortexEndpoint
+        from trulens_eval.feedback.provider.endpoint.cortex import \
+            CortexEndpoint
 
 __all__ = [
     "Endpoint",
