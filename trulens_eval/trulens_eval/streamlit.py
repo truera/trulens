@@ -192,7 +192,7 @@ def trulens_feedback(record: Record):
         "collapsed",  # Hiding because we can't format the label here.
         icons=icons,
         key=
-        f"{call_data['feedback_name']}_{len(feedbacks)}"  # Important! Otherwise streamlit sometimes lazily skips update even with st.exprimental_fragment
+        f"{call_data['feedback_name']}_{len(feedbacks)}"  # Important! Otherwise streamlit sometimes lazily skips update even with st.experimental_fragment
     )
 
     if selected_feedback is not None:
