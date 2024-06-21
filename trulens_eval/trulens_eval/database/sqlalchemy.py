@@ -5,8 +5,9 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Type, Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+)
 import warnings
 
 from alembic.ddl.impl import DefaultImpl
@@ -590,10 +591,11 @@ class SQLAlchemyDB(DB):
             if app_ids:
                 stmt = stmt.where(self.orm.AppDefinition.app_id.in_(app_ids))
 
-            ex = session.execute(stmt).unique() # unique needed for joinedload
+            ex = session.execute(stmt).unique()  # unique needed for joinedload
             apps = (row[0] for row in ex)
 
             return AppsExtractor().get_df_and_cols(apps)
+
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
@@ -764,7 +766,7 @@ class AppsExtractor:
 
             try:
                 for _res in _rec.feedback_results:
-                    
+
                     calls[_res.name].append(
                         json.loads(_res.calls_json)["calls"]
                     )

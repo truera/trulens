@@ -316,7 +316,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     multi_result=obj.multi_result
                 )
 
-    configure_mappers() # IMPORTANT
+    configure_mappers()  # IMPORTANT
     # Without the above, orm class attributes which are defined using backref
     # will not be visible, i.e. orm.AppDefinition.records.
 
