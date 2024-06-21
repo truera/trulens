@@ -1108,11 +1108,14 @@ class LLMProvider(Provider):
 
     def summarization_with_cot_reasons(self, source: str,
                                        summary: str) -> Tuple[float, Dict]:
+        """Summarization is deprecated in place of comprehensiveness. 
+        
+        This function is no longer implemented.
         """
-        Summarization is deprecated in place of comprehensiveness. This function is no longer implemented.
-        """
+
         raise NotImplementedError(
-            "summarization_with_cot_reasons is deprecated and not implemented. Please use comprehensiveness_with_cot_reasons instead."
+            "summarization_with_cot_reasons is deprecated and not implemented. "
+            "Please use comprehensiveness_with_cot_reasons instead."
         )
 
     def stereotypes(self, prompt: str, response: str) -> float:
@@ -1123,9 +1126,8 @@ class LLMProvider(Provider):
 
         !!! example
         
-            ```python
-            feedback = Feedback(provider.stereotypes).on_input_output()
-            ```
+            ```python feedback =
+            Feedback(provider.stereotypes).on_input_output() ```
 
         Args:
             prompt (str): A text prompt to an agent.
@@ -1133,7 +1135,8 @@ class LLMProvider(Provider):
             response (str): The agent's response to the prompt.
 
         Returns:
-            A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
+            A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes
+                assumed).
         """
         system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT
         user_prompt = str.format(
@@ -1143,15 +1146,15 @@ class LLMProvider(Provider):
 
     def stereotypes_with_cot_reasons(self, prompt: str,
                                      response: str) -> Tuple[float, Dict]:
-        """
-        Uses chat completion model. A function that completes a template to
-        check adding assumed stereotypes in the response when not present in the
-        prompt.
+        """Uses chat completion model. 
+        
+        A function that completes a template to check adding assumed stereotypes
+        in the response when not present in the prompt.
 
         !!! example
 
-            ```python
-            feedback = Feedback(provider.stereotypes_with_cot_reasons).on_input_output()
+            ```python feedback =
+            Feedback(provider.stereotypes_with_cot_reasons).on_input_output()
             ```
 
         Args:
@@ -1160,7 +1163,9 @@ class LLMProvider(Provider):
             response (str): The agent's response to the prompt.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a string containing the reasons for the evaluation.
+            Tuple[float, str]: A tuple containing a value between 0.0 (no
+                stereotypes assumed) and 1.0 (stereotypes assumed) and a string
+                containing the reasons for the evaluation.
         """
         system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT + prompts.COT_REASONS_TEMPLATE
         user_prompt = str.format(
@@ -1180,24 +1185,23 @@ class LLMProvider(Provider):
 
         !!! example
 
-            ```python
-            from trulens_eval import Feedback
-            from trulens_eval.feedback.provider.openai import OpenAI
+            ```python from trulens_eval import Feedback from
+            trulens_eval.feedback.provider.openai import OpenAI
 
             provider = OpenAI()
 
             f_groundedness = (
                 Feedback(provider.groundedness_measure_with_cot_reasons)
-                .on(context.collect()
-                .on_output()
-                )
+                .on(context.collect() .on_output() )
             ```
         Args:
-            source: The source that should support the statement.
-            statement: The statement to check groundedness.
+            source: The source that should support the statement. statement: The
+            statement to check groundedness.
 
         Returns:
-            Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
+            Tuple[float, dict]: A tuple containing a value between 0.0 (not
+                grounded) and 1.0 (grounded) and a dictionary containing the reasons
+                for the evaluation.
         """
         nltk.download('punkt', quiet=True)
         groundedness_scores = {}

@@ -204,6 +204,7 @@ class DummyAPI(object):
 
         return result
 
+
 class DummyEndpointCallback(EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
@@ -231,11 +232,14 @@ class DummyEndpointCallback(EndpointCallback):
     def on_iteration(self):
         self.cost.n_stream_chunks += 1
 
+
 class DummyEndpoint(Endpoint):
     """Endpoint for testing purposes.
     
     Does not make any network calls and just pretends to.
     """
+
+    api: DummyAPI = Field(default_factory=DummyAPI)
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
@@ -254,6 +258,9 @@ class DummyEndpoint(Endpoint):
 
         kwargs['name'] = name
         kwargs['callback_class'] = DummyEndpointCallback
+
+        kwargs['api'] = DummyAPI(**kwargs)
+        # Will use fake api for fake feedback evals.
 
         super().__init__(
             **kwargs, **locals_except("self", "name", "kwargs", "__class__")
