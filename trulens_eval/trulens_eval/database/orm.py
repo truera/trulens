@@ -222,7 +222,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 backref=backref('records', cascade="all,delete"),
                 primaryjoin='AppDefinition.app_id == Record.app_id',
                 foreign_keys=app_id,
-                order_by="Record.record_id"
+                order_by="(Record.ts,Record.record_id)"
             )
 
             @classmethod
@@ -283,7 +283,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 backref=backref('feedback_results', cascade="all,delete"),
                 primaryjoin='Record.record_id == FeedbackResult.record_id',
                 foreign_keys=record_id,
-                order_by="FeedbackResult.record_id"
+                order_by="(FeedbackResult.last_ts,FeedbackResult.record_id)"
             )
 
             feedback_definition = relationship(
@@ -292,7 +292,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 primaryjoin=
                 "FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
                 foreign_keys=feedback_definition_id,
-                order_by="FeedbackResult.record_id"
+                order_by="(FeedbackResult.last_ts,FeedbackResult.record_id)"
             )
 
             @classmethod

@@ -585,9 +585,18 @@ class SQLAlchemyDB(DB):
             # feedback_results get loaded eagerly instead if lazily when
             # accessed later.
 
-            # TODO(piotrm): The subsequent logic in helper methods end up reading all of the records and feedback_results in order to create a DataFrame so there is no reason to not eagerly get all of this data.
-            # Ideally, though, we would be making some sort of lazy DataFrame and then could
-            # use the lazy join feature of sqlalchemy.
+            # TODO(piotrm): The subsequent logic in helper methods end up
+            # reading all of the records and feedback_results in order to create
+            # a DataFrame so there is no reason to not eagerly get all of this
+            # data. Ideally, though, we would be making some sort of lazy
+            # DataFrame and then could use the lazy join feature of sqlalchemy.
+
+            stmt = stmt.order_by(self.orm.Record.ts, self.orm.Record.record_id)
+            # NOTE: feedback_results order is govered by the order_by on the
+            # orm.FeedbackResult.record backref definition. We need to order
+            # Records though as we did not use an auto join here. If records are
+            # retrieved from AppDefinition.records, though, the orm backref
+            # ordering should take hold.
 
             stmt = stmt.limit(limit).offset(offset)
 
