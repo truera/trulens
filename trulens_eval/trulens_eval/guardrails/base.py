@@ -56,5 +56,4 @@ class context_filter:
         # note: the following information is manually written to the wrapper because @functools.wraps(func) causes breaking of the method.
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
-        wrapper.__signature__ = func.__signature__
         return wrapper
