@@ -12,11 +12,11 @@ from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import CLASS_INFO
 
-with OptionalImports(messages=REQUIREMENT_OPENAI):
+with OptionalImports(messages=REQUIREMENT_OPENAI) as opt:
     import openai as oai
 
 # check that the optional imports are not dummies:
-OptionalImports(messages=REQUIREMENT_OPENAI).assert_installed(oai)
+opt.assert_installed(oai)
 
 logger = logging.getLogger(__name__)
 
