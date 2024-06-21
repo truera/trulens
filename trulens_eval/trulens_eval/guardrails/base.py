@@ -55,5 +55,5 @@ class context_filter:
 
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
-        wrapper.__dict__ = func.__dict__
+        wrapper.__signature__ = func.__signature__
         return wrapper
