@@ -147,28 +147,28 @@ class DummyAPI(object):
         j['status'] = 'success'
         return j
 
-    def completion(self, *args, model: str, text: str) -> Dict:
+    def completion(self, *args, model: str, temperature: float = 0.0, prompt: str) -> Dict:
         """Fake text completion request."""
 
         # Fake http post request, might raise an exception or cause delays.
         postret = self.post(
             url="https://fakeservice.com/classify",
-            payload={'mode': 'completion', 'model': model, 'text': text}
+            payload={'mode': 'completion', 'model': model, 'prompt': prompt, 'temperature': temperature}
         )
 
         if postret.get('status', 'failure') != 'success':
             raise RuntimeError("Failed to generate text completion.")
 
-        generated_text: str = "my original response is " + text
+        generated_text: str = "my original response is " + prompt
 
         result = {
-            'generated_text': generated_text,
+            'completion': generated_text,
             'usage': {
                 # Fake usage information.
-                'n_tokens': len(generated_text.split()) + len(text.split()),
-                'n_prompt_tokens': len(text.split()),
+                'n_tokens': len(generated_text.split()) + len(prompt.split()),
+                'n_prompt_tokens': len(prompt.split()),
                 'n_completion_tokens': len(generated_text.split()),
-                'cost': len(generated_text) * 0.0002 + len(text.split()) * 0.0001
+                'cost': len(generated_text) * 0.0002 + len(prompt.split()) * 0.0001
             }
         }
 
