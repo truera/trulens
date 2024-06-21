@@ -20,6 +20,7 @@ CREATE SERVICE dkurokawa_trulens_demo_app
             SF_SCHEMA: "trulens_demo"
             SF_WAREHOUSE: "dkurokawa"
             SF_ROLE: "engineer"
+            SF_CORTEX_SEARCH_SERVICE: "dkurokawa_trulens_demo_search_service"
             RUN_APP: "1"
         secrets:
           - snowflakeSecret: dkurokawa.trulens_demo.login_credentials
@@ -56,6 +57,7 @@ CREATE SERVICE dkurokawa_trulens_demo_dashboard
             SF_SCHEMA: "trulens_demo"
             SF_WAREHOUSE: "dkurokawa"
             SF_ROLE: "engineer"
+            SF_CORTEX_SEARCH_SERVICE: "dkurokawa_trulens_demo_search_service"
             RUN_DASHBOARD: "1"
         secrets:
           - snowflakeSecret: dkurokawa.trulens_demo.login_credentials
@@ -79,8 +81,12 @@ CREATE SERVICE dkurokawa_trulens_demo_dashboard
 
 SHOW SERVICES;
 SELECT SYSTEM$GET_SERVICE_STATUS('dkurokawa_trulens_demo_app');
+SELECT SYSTEM$GET_SERVICE_STATUS('dkurokawa_trulens_demo_dashboard');
 DESCRIBE SERVICE dkurokawa_trulens_demo_app;
-CALL SYSTEM$GET_SERVICE_LOGS('dkurokawa_trulens_demo_app', '0', 'dkurokawa-trulens-demo-app-container', 100);
-
+DESCRIBE SERVICE dkurokawa_trulens_demo_dashboard;
+CALL SYSTEM$GET_SERVICE_LOGS('dkurokawa_trulens_demo_app', '0', 'dkurokawa-trulens-demo-app-container');
+CALL SYSTEM$GET_SERVICE_LOGS('dkurokawa_trulens_demo_dashboard', '0', 'dkurokawa-trulens-demo-dashboard-container');
 SHOW ENDPOINTS IN SERVICE dkurokawa_trulens_demo_app;
 SHOW ENDPOINTS IN SERVICE dkurokawa_trulens_demo_dashboard;
+CALL SYSTEM$GET_SERVICE_STATUS('dkurokawa_trulens_demo_app')
+CALL SYSTEM$GET_SERVICE_STATUS('dkurokawa_trulens_demo_dashboard')
