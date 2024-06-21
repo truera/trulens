@@ -113,7 +113,6 @@ class SQLAlchemyDB(DB):
 
     def _reload_engine(self):
         self.engine = create_engine(**self.engine_params)
-        self.orm.metadata.create_all(self.engine)
         self.session = sessionmaker(self.engine, **self.session_params)
 
     @classmethod
