@@ -279,10 +279,8 @@ class FeedbackActions():
 
         selectors = {
             argname:
-                (
-                    Lens.of_string(arglens)
-                    if isinstance(arglens, str) else arglens
-                ) for argname, arglens in selectors.items()
+            (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
+            for argname, arglens in selectors.items()
         }
 
         feedback_function = feedback_function.on(**selectors)
