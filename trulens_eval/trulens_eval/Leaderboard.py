@@ -9,16 +9,14 @@ from millify import millify
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
+from trulens_eval import Tru
 from trulens_eval.database import base as mod_db
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.utils.streamlit import init_from_args
-from trulens_eval.ux.page_config import set_page_config
-from trulens_eval.ux.styles import CATEGORY
-
-from trulens_eval import Tru
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.page_config import set_page_config
+from trulens_eval.ux.styles import CATEGORY
 
 if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
@@ -44,9 +42,9 @@ def leaderboard():
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
-            row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
-        ):
-            row.feedback_json.get("higher_is_better", True)
+            row.feedback_json.get("supplied_name", "") or
+            row.feedback_json["implementation"]["name"]
+        ): row.feedback_json.get("higher_is_better", True)
         for _, row in feedback_defs.iterrows()
     }
 
