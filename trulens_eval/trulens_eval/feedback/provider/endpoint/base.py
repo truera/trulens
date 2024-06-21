@@ -1,26 +1,22 @@
 from __future__ import annotations
 
-from collections import abc, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass
 import functools
 import inspect
 import logging
 from pprint import PrettyPrinter
-import random
-import sys
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
-    Type, TypeVar
-)
-from abc import ABC, abstractmethod
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
+                    Sequence, Tuple, Type, TypeVar)
 
 from pydantic import Field
 import requests
 
 from trulens_eval import trace as mod_trace
 from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.trace import SpanCost
 from trulens_eval.utils import asynchro as mod_asynchro_utils
 from trulens_eval.utils import pace as mod_pace
 from trulens_eval.utils.pyschema import safe_getattr
@@ -29,7 +25,6 @@ from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import is_really_coroutinefunction
-from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import module_name
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
@@ -54,8 +49,7 @@ DEFAULT_RPM = 60
 
 
 class EndpointCallback(SerialModel):
-    """
-    Callbacks to be invoked after various API requests and track various metrics
+    """Callbacks to be invoked after various API requests and track various metrics
     like token usage.
     """
 
@@ -65,23 +59,19 @@ class EndpointCallback(SerialModel):
     cost: mod_base_schema.Cost = Field(default_factory=mod_base_schema.Cost)
     """Costs tracked by this callback."""
 
-    @abstractmethod
     def on_call(self, func: Callable, args: Tuple[str], kwargs: Dict[str, Any]):
         """Called when the wrapped function is about to be called. 
         
         Arguments are not yet bound to func's args.
         """
 
-    @abstractmethod
     def on_bind(self, func: Callable, bindings: inspect.BoundArguments):
         """Called before the execution of the wrapped method assuming its
         arguments can be bound.
         
         This and `on_bind_error` are mutually exclusive.
         """
-        pass
 
-    @abstractmethod
     def on_bind_error(self, func: Callable, error: Exception, args: Tuple[Any], kwargs: Dict[str, Any]):
         """Called if the wrapped method's arguments cannot be bound.
         
@@ -91,54 +81,45 @@ class EndpointCallback(SerialModel):
         after the wrapped func is called with the unbindable arguments. This is
         done to replicate the behavior of an unwrapped invocation.
         """
-        pass
 
-    @abstractmethod
     def on_return(self, func: Callable, bindings: inspect.BoundArguments, ret: Any):
         """Called after wrapped method returns without error."""
-        pass
 
-    @abstractmethod
     def on_exception(self, func: Callable, bindings: Optional[inspect.BoundArguments], error: Exception):
         """Called after wrapped method raises exception."""
-        pass
 
-    @abstractmethod
     def on_iteration_start(self):
         """Called after wrapped method returns an iterable but before iteration
-        starts."""
-        pass
+        starts.
 
-    @abstractmethod
+        This applies to both synchronous and asynchronous iterations.        
+        """
+
     def on_iteration(self):
         """Called after wrapped method produced an iterable and an iteration
-        from it was produced."""
-        pass
+        from it was produced.
+        
+        This applies to both synchronous and asynchronous iterations.
+        """
 
-    @abstractmethod
     def on_iteration_end(self):
         """Called after wrapped method produced an iterable and it stopped
-        iterating."""
-        pass
+        iterating.
+        
+        This applies to both synchronous and asynchronous iterations.
+        """
 
-    @abstractmethod
     def on_async_start(self, func: Callable, bindings: inspect.BoundArguments, awaitable: Awaitable[T]):
         """Called after wrapped method produced an awaitable but has not yet
         been awaited."""
-        pass
 
-    @abstractmethod
     def on_async_result(self, func: Callable, bindings: inspect.BoundArguments, awaitable: Awaitable[T], result: T):
         """Called after wrapped method produced an awaitable and its results are
         ready."""
-        pass
 
-    @abstractmethod
     def on_async_error(self, func: Callable, bindings: inspect.BoundArguments, awaitable: Awaitable[T], error: Exception):
         """Called after wrapped method produced an awaitable and awaiting on it
         resulted in an exception being raised."""
-        pass
-
 
     def handle(self, response: Any) -> None:
         """Called after each request."""
@@ -863,188 +844,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         return tru_wrapper
 
 
-class DummyEndpoint(Endpoint):
-    """Endpoint for testing purposes.
-
-    Does not make any network calls and just pretends to.
-    """
-
-    loading_prob: float
-    """How often to produce the "model loading" response that huggingface api
-    sometimes produces."""
-
-    loading_time: Callable[[], float] = \
-        Field(exclude=True, default_factory=lambda: lambda: random.uniform(0.73, 3.7))
-    """How much time to indicate as needed to load the model in the above response."""
-
-    error_prob: float
-    """How often to produce an error response."""
-
-    freeze_prob: float
-    """How often to freeze instead of producing a response."""
-
-    overloaded_prob: float
-    """# How often to produce the overloaded message that huggingface sometimes produces."""
-
-    alloc: int
-    """How much data in bytes to allocate when making requests."""
-
-    delay: float = 0.0
-    """How long to delay each request."""
-
-    def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
-
-    def __init__(
-        self,
-        name: str = "dummyendpoint",
-        error_prob: float = 1 / 100,
-        freeze_prob: float = 1 / 100,
-        overloaded_prob: float = 1 / 100,
-        loading_prob: float = 1 / 100,
-        alloc: int = 1024 * 1024,
-        delay: float = 0.0,
-        rpm: float = DEFAULT_RPM * 10,
-        **kwargs
-    ):
-        if safe_hasattr(self, "callback_class"):
-            # Already created with SingletonPerName mechanism
-            return
-
-        assert error_prob + freeze_prob + overloaded_prob + \
-            loading_prob <= 1.0, "Probabilites should not exceed 1.0 ."
-        assert rpm > 0
-        assert alloc >= 0
-        assert delay >= 0.0
-
-        kwargs['name'] = name
-        kwargs['callback_class'] = EndpointCallback
-
-        super().__init__(
-            **kwargs, **locals_except("self", "name", "kwargs", "__class__")
-        )
-
-        logger.info(
-            "Using DummyEndpoint with %s",
-            locals_except('self', 'name', 'kwargs', '__class__')
-        )
-
-    def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
-        callback: Optional[EndpointCallback]
-    ) -> None:
-        """Dummy handler does nothing."""
-
-    def post(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
-    ) -> Any:
-        """Pretend to make a classification request similar to huggingface API.
-
-        Simulates overloaded, model loading, frozen, error as configured:
-
-        ```python
-        requests.post(
-            url, json=payload, timeout=timeout, headers=self.post_headers
-        )
-        ```
-
-        """
-        if timeout is None:
-            timeout = DEFAULT_NETWORK_TIMEOUT
-
-        self.pace_me()
-
-        # allocate some data to pretend we are doing hard work
-        temporary = [0x42] * self.alloc
-
-        from numpy import random as np_random
-
-        if self.delay > 0.0:
-            sleep(max(0.0, np_random.normal(self.delay, self.delay / 2)))
-
-        r = random.random()
-        j: Optional[JSON] = None
-
-        if r < self.freeze_prob:
-            # Simulated freeze outcome.
-
-            while True:
-                sleep(timeout)
-                raise TimeoutError()
-
-        r -= self.freeze_prob
-
-        if r < self.error_prob:
-            # Simulated error outcome.
-
-            raise RuntimeError("Simulated error happened.")
-        r -= self.error_prob
-
-        if r < self.loading_prob:
-            # Simulated loading model outcome.
-
-            j = {'estimated_time': self.loading_time()}
-        r -= self.loading_prob
-
-        if r < self.overloaded_prob:
-            # Simulated overloaded outcome.
-
-            j = {'error': "overloaded"}
-        r -= self.overloaded_prob
-
-        if j is None:
-            # Otherwise a simulated success outcome with some constant results plus some randomness.
-
-            j = [
-                [
-                    {
-                        'label': 'LABEL_1',
-                        'score': 0.6034979224205017 + random.random()
-                    }, {
-                        'label': 'LABEL_2',
-                        'score': 0.2648237645626068 + random.random()
-                    }, {
-                        'label': 'LABEL_0',
-                        'score': 0.13167837262153625 + random.random()
-                    }
-                ]
-            ]
-
-        # The rest is the same as in Endpoint:
-
-        # Huggingface public api sometimes tells us that a model is loading and
-        # how long to wait:
-        if "estimated_time" in j:
-            wait_time = j['estimated_time']
-            logger.warning(
-                "Waiting for %s (%s) second(s).",
-                j,
-                wait_time,
-            )
-            sleep(wait_time + 2)
-            return self.post(url, payload)
-
-        if isinstance(j, Dict) and "error" in j:
-            error = j['error']
-            if error == "overloaded":
-                logger.warning(
-                    "Waiting for overloaded API before trying again."
-                )
-                sleep(10)
-                return self.post(url, payload)
-
-            raise RuntimeError(error)
-
-        assert isinstance(
-            j, Sequence
-        ) and len(j) > 0, f"Post did not return a sequence: {j}"
-
-        # Use `temporary`` to make sure it doesn't get compiled away.
-        logger.debug("I have allocated %s bytes.", sys.getsizeof(temporary))
-
-        return j[0]
-
-
 EndpointCallback.model_rebuild()
 Endpoint.model_rebuild()
-DummyEndpoint.model_rebuild()
+
