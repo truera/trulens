@@ -29,18 +29,6 @@ For now, we need to use a working branch of snowflake-sqlalchemy that supports s
     pip install dist/*.whl
     ```
 
-## Install TruLens
-
-For now, we need to use a working branch of TruLens that supports snowflake databases.
-
-!!! example "Install TruLens"
-
-    ```bash
-    pip uninstall trulens_eval -y # remove existing PyPI version
-    pip install git+https://github.com/truera/trulens@garett/snowflake-test#subdirectory=trulens_eval
-
-    ```
-
 ## Connect TruLens to the Snowflake database
 
 !!! example "Connect TruLens to the Snowflake database"
