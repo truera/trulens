@@ -601,11 +601,11 @@ class SQLAlchemyDB(DB):
             # DataFrame and then could use the lazy join feature of sqlalchemy.
 
             stmt = stmt.order_by(self.orm.Record.ts, self.orm.Record.record_id)
-            # NOTE: feedback_results order is govered by the order_by on the
-            # orm.FeedbackResult.record backref definition. We need to order
-            # Records though as we did not use an auto join here. If records are
-            # retrieved from AppDefinition.records, though, the orm backref
-            # ordering should take hold.
+            # NOTE: feedback_results order is governed by the order_by on the
+            # orm.FeedbackResult.record backref definition. Here, we need to
+            # order Records as we did not use an auto join to retrieve them. If
+            # records were to be retrieved from AppDefinition.records via auto
+            # join, though, the orm backref ordering would be able to take hold.
 
             stmt = stmt.limit(limit).offset(offset)
 
