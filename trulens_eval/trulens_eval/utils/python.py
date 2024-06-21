@@ -137,6 +137,37 @@ def callable_name(c: Callable):
     return str(c)
 
 
+def superstack(
+) -> Iterator['frame']:
+    """Get the current stack (not including this function) with frames reaching
+    across Tasks and threads.
+    """
+
+    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    # NOTE: skipping offset frames is done below since the full stack may need
+    # to be reconstructed there.
+
+    # Using queue for frames as additional frames may be added due to handling threads.
+    q = queue.Queue()
+    for f in frames:
+        q.put(f)
+
+    while not q.empty():
+        f = q.get()
+        yield f
+
+        if id(f.f_code) == id(_future_target_wrapper.__code__):
+            locs = f.f_locals
+
+            assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
+            for fi in locs['pre_start_stack']:
+                q.put(fi.frame)
+
+            continue
+
+    return
+
+
 def id_str(obj: Any) -> str:
     """Get the id of the given object as a string in hex."""
 
