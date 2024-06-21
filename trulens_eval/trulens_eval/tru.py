@@ -711,7 +711,9 @@ class Tru(python.SingletonPerName):
         if app_ids is None:
             app_ids = []
 
-        df, feedback_columns = self.db.get_records_and_feedback(app_ids, offset=offset, limit=limit)
+        df, feedback_columns = self.db.get_records_and_feedback(
+            app_ids, offset=offset, limit=limit
+        )
 
         return df, feedback_columns
 
@@ -905,7 +907,9 @@ class Tru(python.SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {name: count for name, count in runs_stats.items()}
+                    {
+                        name: count for name, count in runs_stats.items()
+                    }
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()

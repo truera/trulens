@@ -5,15 +5,17 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Type, Union)
+from typing import (
+    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+)
 import warnings
 
 import numpy as np
 import pandas as pd
 from pydantic import Field
 import sqlalchemy as sa
-from sqlalchemy.orm import sessionmaker, joinedload
+from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
 
 from trulens_eval import app as mod_app
@@ -570,7 +572,9 @@ class SQLAlchemyDB(DB):
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
 
         with self.session.begin() as session:
-            stmt = sa.select(self.orm.Record).options(joinedload(self.orm.Record.feedback_results))
+            stmt = sa.select(self.orm.Record).options(
+                joinedload(self.orm.Record.feedback_results)
+            )
             # NOTE: The joinedload here makes it so that the feedback_results
             # get loaded eagerly instead if lazily when accessed later.
 
@@ -583,7 +587,8 @@ class SQLAlchemyDB(DB):
 
             stmt = stmt.limit(limit).offset(offset)
 
-            ex = session.execute(stmt).unique() # unique needed for joinedload above
+            ex = session.execute(stmt).unique(
+            )  # unique needed for joinedload above
             records = [rec[0] for rec in ex]
 
             return AppsExtractor().get_df_and_cols(records=records)
@@ -765,7 +770,10 @@ class AppsExtractor:
                     # Otherwise get only the ones in `records`. WARNING: Avoid
                     # using _app.records here as doing so might get all of the
                     # records even the ones not in `records`
-                    _recs = (record for record in records if record.app_id==_app.app_id)
+                    _recs = (
+                        record for record in records
+                        if record.app_id == _app.app_id
+                    )
 
                 if _recs:
                     df = pd.DataFrame(data=self.extract_records(_recs))
@@ -816,8 +824,12 @@ class AppsExtractor:
                         self.feedback_columns.add(_res.name)
 
                 row = {
-                    **{k: np.mean(v) for k, v in values.items()},
-                    **{k + "_calls": flatten(v) for k, v in calls.items()},
+                    **{
+                        k: np.mean(v) for k, v in values.items()
+                    },
+                    **{
+                        k + "_calls": flatten(v) for k, v in calls.items()
+                    },
                 }
 
                 for col in self.rec_cols:

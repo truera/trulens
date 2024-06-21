@@ -253,7 +253,9 @@ def jsonify(
         forward_value = {}
         new_dicted[id(obj)] = forward_value
         forward_value.update(
-            {k: recur(v) for k, v in obj.items() if recur_key(k)}
+            {
+                k: recur(v) for k, v in obj.items() if recur_key(k)
+            }
         )
 
         # Redact possible secrets based on key name and value.

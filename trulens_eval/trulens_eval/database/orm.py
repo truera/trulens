@@ -319,7 +319,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     multi_result=obj.multi_result
                 )
 
-    configure_mappers() # important to make sure backref attributes in orm classes get filled in
+    configure_mappers(
+    )  # important to make sure backref attributes in orm classes get filled in
     #base.registry.configure()
 
     return NewORM
