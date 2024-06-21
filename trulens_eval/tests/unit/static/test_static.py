@@ -28,7 +28,10 @@ from trulens_eval.utils.imports import Dummy
 optional_mods = dict(
     pinecone=["trulens_eval.Example_TruBot"],
     ipywidgets=["trulens_eval.appui"],
-    llama_index=["trulens_eval.tru_llama", "trulens_eval.utils.llama"],
+    llama_index=[
+        "trulens_eval.tru_llama", "trulens_eval.utils.llama",
+        "trulens_eval.guardrails.llama"
+    ],
     boto3=[
         "trulens_eval.feedback.provider.bedrock",
         "trulens_eval.feedback.provider.endpoint.bedrock"
