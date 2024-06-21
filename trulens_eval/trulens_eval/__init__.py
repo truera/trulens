@@ -103,8 +103,10 @@ __all__ = [
     "LiteLLM",
     "Bedrock",
     "Huggingface",
-    "Cortex",
 
     # misc utility
     "TP",
 ]
+
+if sys.version_info < (3, 12):
+    __all__.append("Cortex")
