@@ -14,6 +14,7 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
 
 OptionalImports(messages=REQUIREMENT_LANGCHAIN).assert_installed(langchain)
 
+
 class WithFeedbackFilterDocuments(VectorStoreRetriever):
     feedback: Feedback
     threshold: float

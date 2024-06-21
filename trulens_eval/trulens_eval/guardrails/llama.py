@@ -17,6 +17,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
 
 OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
 
+
 class WithFeedbackFilterNodes(RetrieverQueryEngine):
     feedback: Feedback
     threshold: float
