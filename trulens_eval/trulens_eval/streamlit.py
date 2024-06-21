@@ -169,7 +169,6 @@ def trulens_feedback(record: Record):
     feedbacks = {}
     icons = []
     for feedback, feedback_result in record.wait_for_feedback_results().items():
-        print(feedback.name, feedback_result.result)
         call_data = {
             'feedback_definition': feedback,
             'feedback_name': feedback.name,
