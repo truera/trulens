@@ -15,7 +15,6 @@ from trulens_eval.utils.python import safe_hasattr
 with OptionalImports(messages=REQUIREMENT_BEDROCK) as opt:
     import boto3
     import botocore
-
     from botocore.client import ClientCreator
 
 # check that the optional imports are not dummies:

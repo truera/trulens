@@ -899,7 +899,9 @@ class Tru(python.SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {name: count for name, count in runs_stats.items()}
+                    {
+                        name: count for name, count in runs_stats.items()
+                    }
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()
