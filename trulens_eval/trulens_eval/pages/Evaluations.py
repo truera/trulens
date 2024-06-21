@@ -45,8 +45,6 @@ from trulens_eval.ux.components import render_selector_markdown
 from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
 
-st.runtime.legacy_caching.clear_cache()
-
 set_page_config(page_title="Evaluations")
 st.title("Evaluations")
 
@@ -62,12 +60,13 @@ df_results, feedback_cols = lms.get_records_and_feedback([])
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
     (
-        row.feedback_json.get("supplied_name", "") or
-        row.feedback_json["implementation"]["name"]
-    ): (
-        "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
-        else "LOWER_IS_BETTER"
-    ) for _, row in lms.get_feedback_defs().iterrows()
+        row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
+    ):
+        (
+            "HIGHER_IS_BETTER"
+            if row.feedback_json.get("higher_is_better", True) else
+            "LOWER_IS_BETTER"
+        ) for _, row in lms.get_feedback_defs().iterrows()
 }
 default_direction = "HIGHER_IS_BETTER"
 

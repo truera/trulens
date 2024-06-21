@@ -15,8 +15,6 @@ from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.page_config import set_page_config
 from trulens_eval.ux.styles import CATEGORY
 
-st.runtime.legacy_caching.clear_cache()
-
 from trulens_eval import Tru
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
@@ -46,9 +44,9 @@ def leaderboard():
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
-            row.feedback_json.get("supplied_name", "") or
-            row.feedback_json["implementation"]["name"]
-        ): row.feedback_json.get("higher_is_better", True)
+            row.feedback_json.get("supplied_name", "") or row.feedback_json["implementation"]["name"]
+        ):
+            row.feedback_json.get("higher_is_better", True)
         for _, row in feedback_defs.iterrows()
     }
 
