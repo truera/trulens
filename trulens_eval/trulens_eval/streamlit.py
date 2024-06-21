@@ -23,14 +23,10 @@ from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.styles import CATEGORY
 
-tru = Tru()
-
-
 class FeedbackDisplay(BaseModel):
     score: float = 0
     calls: List[FeedbackCall]
     icon: str
-
 
 def trulens_leaderboard(app_ids: List = None):
     """
