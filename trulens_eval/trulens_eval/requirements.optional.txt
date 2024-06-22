@@ -32,9 +32,9 @@ botocore >= 1.33.6
 # Models API
 litellm     >= 1.25.2
 
-# Models: Snowflake Cortex; currently only supports Python 3.8, 3.9, 3.10, and 3.11.
-# https://docs.snowflake.com/en/developer-guide/snowpark/python/setup#prerequisites
-snowflake-snowpark-python >= 1.18.0
+# Cortex
+# snowflake-snowpark-python >= 1.18.0
+snowflake-connector-python >= 3.11.0
 
 # Local models
 transformers  >= 4.10.0

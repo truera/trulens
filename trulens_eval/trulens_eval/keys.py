@@ -124,6 +124,7 @@ RE_KEY_TO_REDACT: re.Pattern = re.compile(
             # Would cover bard unofficial api field "token" but this is a
             # bit too general of a key; TODO: need another solution to redact.
             r'.+_API_KEY',
+            r'.+_API_TOKEN',
             # Covers env vars ending in "_API_KEY", including openai, cohere, anthropic,
             # bard
             r'KAGGLE_KEY',

@@ -6,6 +6,7 @@ issues that occur from merely importing trulens.
 from pathlib import Path
 import pkgutil
 import sys
+import sys
 from unittest import main
 from unittest import TestCase
 
@@ -54,6 +55,10 @@ if sys.version_info < (3, 12):
         "trulens_eval.feedback.provider.cortex",
         "trulens_eval.feedback.provider.endpoint.cortex"
     ]
+else:
+    assert not module_installed(
+        "snowflake-snowpark-python"
+    ), "Snowflake should not be installed until it's available in Python 3.12."
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 
@@ -91,6 +96,14 @@ all_trulens_mods = get_all_modules(
 not_mods = [
     "trulens_eval.database.migrations.env"  # can only be executed by alembic
 ]
+
+if sys.version_info >= (3, 12):
+    not_mods.extend(
+        [
+            "snowflake", "trulens_eval.feedback.provider.cortex",
+            "trulens_eval.feedback.provider.endpoint.cortex"
+        ]
+    )
 
 # Importing any of these should be ok regardless of optional packages. These are
 # all modules not mentioned in optional modules above.
