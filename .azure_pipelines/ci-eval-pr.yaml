@@ -138,10 +138,10 @@ jobs:
         # https://docs.snowflake.com/en/developer-guide/snowpark/python/setup#prerequisites
       - bash: |
           set -e
-          PYTHON_VERSION=$(python --version | awk '{print $2}')
-          echo "Installing snowflake-snowpark-python for python ${PYTHON_VERSION}"
+          source activate $(python-version)
+          echo "Installing snowflake-snowpark-python for python $(python-version)"
 
-          if [[ "$(echo $PYTHON_VERSION | cut -d'.' -f1)" -eq "3" && "$(echo $PYTHON_VERSION | cut -d'.' -f2)" -lt "12" ]]; then
+          if [[ "$(echo $(python-version) | cut -d'.' -f1)" -eq "3" && "$(echo $(python-version) | cut -d'.' -f2)" -lt "12" ]]; then
               cd ./trulens_eval
               pip install --verbose "snowflake-snowpark-python>=1.18.0"
               pip list --verbose
