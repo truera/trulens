@@ -17,6 +17,8 @@ from trulens_eval.utils.imports import check_imports
 
 check_imports()
 
+import sys
+
 from trulens_eval import tru as mod_tru
 from trulens_eval import tru_basic_app as mod_tru_basic_app
 from trulens_eval import tru_chain as mod_tru_chain
@@ -55,6 +57,11 @@ with mod_imports_utils.OptionalImports(
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_RAILS):
     from trulens_eval.tru_rails import TruRails
+
+# the dependency snowflake-snowpark-python not yet supported in 3.12
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_CORTEX):
+    from trulens_eval.feedback.provider.cortex import Cortex
 
 Tru = mod_tru.Tru
 TruBasicApp = mod_tru_basic_app.TruBasicApp
@@ -95,6 +102,7 @@ __all__ = [
     "LiteLLM",
     "Bedrock",
     "Huggingface",
+    "Cortex",
 
     # misc utility
     "TP",
