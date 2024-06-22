@@ -10,12 +10,12 @@ from trulens_eval.utils.python import NoneType
 
 logger = logging.getLogger(__name__)
 
-with OptionalImports(messages=REQUIREMENT_BEDROCK):
+with OptionalImports(messages=REQUIREMENT_BEDROCK) as opt:
     # Here only to make sure we throw our message if bedrock optional packages
     # are not installed.
     import boto3
 
-OptionalImports(messages=REQUIREMENT_BEDROCK).assert_installed(boto3)
+opt.assert_installed(boto3)
 
 
 class Bedrock(LLMProvider):

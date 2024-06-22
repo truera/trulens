@@ -57,6 +57,7 @@ jobs:
           set -e
           source activate $(python-version)
 
+          # versions of yapf and isort are important
           pip install yapf==0.32.0 --verbose
           pip install isort==5.10.1 --verbose
 
@@ -132,6 +133,22 @@ jobs:
           pip list --verbose
 
         displayName: Install optional packages
+
+        # Models: Snowflake Cortex; currently only supports Python 3.8, 3.9, 3.10, and 3.11.
+        # https://docs.snowflake.com/en/developer-guide/snowpark/python/setup#prerequisites
+      - bash: |
+          set -e
+          source activate $(python-version)
+          echo "Installing snowflake-snowpark-python for python $(python-version)"
+
+          if [[ "$(echo $(python-version) | cut -d'.' -f1)" -eq "3" && "$(echo $(python-version) | cut -d'.' -f2)" -lt "12" ]]; then
+              cd ./trulens_eval
+              pip install --verbose "snowflake-snowpark-python>=1.18.0"
+              pip list --verbose
+          else
+              echo "Python version is 3.12 or higher. Skipping installation."
+          fi
+        displayName: Install snowflake-snowpark-python for python < 3.12
 
       - bash: |
           set -e
