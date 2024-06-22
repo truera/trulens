@@ -6,7 +6,6 @@ issues that occur from merely importing trulens.
 from pathlib import Path
 import pkgutil
 import sys
-import sys
 from unittest import main
 from unittest import TestCase
 
