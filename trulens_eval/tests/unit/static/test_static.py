@@ -50,7 +50,7 @@ optional_mods = dict(
 
 # snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
 if sys.version_info < (3, 12):
-    optional_mods["snowflake"] = [
+    optional_mods["snowflake-connector-python"] = [
         "trulens_eval.feedback.provider.cortex",
         "trulens_eval.feedback.provider.endpoint.cortex"
     ]
@@ -60,7 +60,7 @@ if sys.version_info < (3, 12):
     ]
 else:
     assert not module_installed(
-        "snowflake"
+        "snowflake-connector-python"
     ), "snowflake should not be installed in Python 3.12 until it is supported."
 
     assert not module_installed(
