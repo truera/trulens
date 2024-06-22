@@ -39,7 +39,12 @@ class TestEndpoints(TestCase):
             # for azure openai tests
             "AZURE_OPENAI_API_KEY",
             "AZURE_OPENAI_ENDPOINT",
-            "AZURE_OPENAI_DEPLOYMENT_NAME"
+            "AZURE_OPENAI_DEPLOYMENT_NAME",
+
+            # for snowflake cortex
+            "SNOWFLAKE_ACCOUNT",
+            "SNOWFLAKE_USER",
+            "SNOWFLAKE_USER_PASSWORD"
         )
 
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
@@ -204,6 +209,15 @@ class TestEndpoints(TestCase):
         provider = LiteLLM(f"bedrock/{Bedrock.DEFAULT_MODEL_ID}")
 
         # Litellm comes with cost tracking for bedrock though it may be inaccurate.
+        self._test_llm_provider_endpoint(provider)
+
+    @optional_test
+    def test_cortex(self):
+        """Check that cost (token) tracking works for Cortex LLM Functions"""
+        from trulens_eval.feedback.provider.cortex import Cortex
+
+        provider = Cortex(model_engine="snowflake-arctic")
+
         self._test_llm_provider_endpoint(provider)
 
 
