@@ -542,15 +542,18 @@ class OptionalImports(object):
     """
 
     def assert_installed(self, mods: Union[Any, Iterable[Any]]):
-        """
-        Check that the given modules `mods` are not dummies. If any is, show the
+        """Check that the given modules `mods` are not dummies. If any is, show the
         optional requirement message.
+
+        Returns self for chaining convenience.
         """
         if not isinstance(mods, Iterable):
             mods = [mods]
 
         if any(isinstance(mod, Dummy) for mod in mods):
             raise ModuleNotFoundError(self.messages.module_not_found)
+
+        return self
 
     def __init__(self, messages: ImportErrorMessages, fail: bool = False):
         """
@@ -643,6 +646,7 @@ class OptionalImports(object):
             builtins.__import__ = self.__import__
 
         self.importing = True
+
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
