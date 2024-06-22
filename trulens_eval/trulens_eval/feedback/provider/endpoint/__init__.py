@@ -20,22 +20,13 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     from trulens_eval.feedback.provider.endpoint.openai import OpenAIClient
     from trulens_eval.feedback.provider.endpoint.openai import OpenAIEndpoint
 
-if sys.version_info < (3, 12):
-    # the dependency snowflake-snowpark-python not yet supported in 3.12
-    with OptionalImports(messages=REQUIREMENT_CORTEX):
-        from trulens_eval.feedback.provider.endpoint.cortex import \
-            CortexEndpoint
+# the dependency snowflake-snowpark-python not yet supported in 3.12
+with OptionalImports(messages=REQUIREMENT_CORTEX):
+    from trulens_eval.feedback.provider.endpoint.cortex import \
+        CortexEndpoint
 
 __all__ = [
-    "Endpoint",
-    "DummyEndpoint",
-    "HuggingfaceEndpoint",
-    "OpenAIEndpoint",
-    "LiteLLMEndpoint",
-    "BedrockEndpoint",
-    "OpenAIClient",
-    "LangchainEndpoint",
+    "Endpoint", "DummyEndpoint", "HuggingfaceEndpoint", "OpenAIEndpoint",
+    "LiteLLMEndpoint", "BedrockEndpoint", "OpenAIClient", "LangchainEndpoint",
+    "CortexEndpoint"
 ]
-
-if sys.version_info < (3, 12):
-    __all__.append("CortexEndpoint")
