@@ -51,7 +51,7 @@ PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
 def re_0_10_rating(s: str) -> int:
     """Extract a 0-10 rating from a string.
     
-    If the string does not match an integer or matches an integer outside the
+    If the string does not match an integer/a float or matches an integer/a float outside the
     0-10 range, raises an error instead. If multiple numbers are found within
     the expected 0-10 range, the smallest is returned.
 
@@ -62,7 +62,7 @@ def re_0_10_rating(s: str) -> int:
         int: Extracted rating. 
     
     Raises:
-        ParseError: If no integers between 0 and 10 are found in the string.
+        ParseError: If no integers/floats between 0 and 10 are found in the string.
     """
 
     matches = PATTERN_NUMBER.findall(s)
@@ -73,7 +73,7 @@ def re_0_10_rating(s: str) -> int:
     for match in matches:
         try:
             vals.add(
-                validate_rating(int(float(match)))
+                validate_rating(round(float(match)))
             )  # Handle float numbers as well
         except ValueError:
             pass
