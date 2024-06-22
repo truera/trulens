@@ -26,7 +26,7 @@ class ParseError(Exception):
         self.pattern = pattern
 
 
-def validate_rating(rating) -> int:
+def validate_rating(rating) -> float:
     """Validate a rating is between 0 and 10."""
 
     if not 0 <= rating <= 10:
@@ -73,7 +73,7 @@ def re_0_10_rating(s: str) -> int:
     for match in matches:
         try:
             vals.add(
-                validate_rating(round(float(match)))
+                validate_rating(float(match))
             )  # Handle float numbers as well
         except ValueError:
             pass
