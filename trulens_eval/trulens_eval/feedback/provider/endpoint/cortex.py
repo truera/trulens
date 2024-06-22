@@ -2,6 +2,7 @@ import inspect
 import json
 import logging
 import pprint
+import sys
 from typing import Any, Callable, ClassVar, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
@@ -13,12 +14,13 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-with OptionalImports(messages=REQUIREMENT_CORTEX):
-    import snowflake
-    from snowflake.snowpark import DataFrame
-    from snowflake.snowpark import Session
+if sys.version_info < (3, 12):
+    with OptionalImports(messages=REQUIREMENT_CORTEX):
+        import snowflake
+        from snowflake.snowpark import DataFrame
+        from snowflake.snowpark import Session
 
-OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
+    OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
 
 
 class CortexCallback(EndpointCallback):

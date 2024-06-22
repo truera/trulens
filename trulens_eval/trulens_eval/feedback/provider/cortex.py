@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from typing import ClassVar, Dict, Optional, Sequence
 
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -7,12 +8,13 @@ from trulens_eval.feedback.provider.endpoint.cortex import CortexEndpoint
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_CORTEX
 
-with OptionalImports(messages=REQUIREMENT_CORTEX):
-    import snowflake
-    import snowflake.connector
-    from snowflake.connector import SnowflakeConnection
+if sys.version_info < (3, 12):
+    with OptionalImports(messages=REQUIREMENT_CORTEX):
+        import snowflake
+        import snowflake.connector
+        from snowflake.connector import SnowflakeConnection
 
-OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
+    OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
 
 
 class Cortex(LLMProvider):
