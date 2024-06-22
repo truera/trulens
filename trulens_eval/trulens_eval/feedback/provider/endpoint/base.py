@@ -92,7 +92,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     @dataclass
     class EndpointSetup():
         """Class for storing supported endpoint information.
-        
+
         See [track_all_costs][trulens_eval.feedback.provider.endpoint.base.Endpoint.track_all_costs]
         for usage.
         """
@@ -120,6 +120,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             arg_flag="with_bedrock",
             module_name="trulens_eval.feedback.provider.endpoint.bedrock",
             class_name="BedrockEndpoint"
+        ),
+        EndpointSetup(
+            arg_flag="with_cortex",
+            module_name="trulens_eval.feedback.provider.endpoint.cortex",
+            class_name="CortexEndpoint"
         )
     ]
 
@@ -203,9 +208,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # Some old databases do not have this serialized so lets set it to
             # the parent of callbacks and hope it never gets used.
             callback_class = EndpointCallback
-            #raise ValueError(
+            # raise ValueError(
             #    "Endpoint has to be extended by class that can set `callback_class`."
-            #)
+            # )
 
         if rpm is None:
             rpm = DEFAULT_RPM
@@ -439,6 +444,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        with_cortex: bool = True,
         **kwargs
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -486,6 +492,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_hugs: bool = True,
         with_litellm: bool = True,
         with_bedrock: bool = True,
+        with_cortex: bool = True,
         **kwargs
     ) -> Tuple[T, mod_base_schema.Cost]:
         """
@@ -500,6 +507,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             with_hugs=with_hugs,
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
+            with_cortex=with_cortex,
             **kwargs
         )
 
@@ -522,14 +530,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         Root of all cost tracking methods. Runs the given `thunk`, tracking
         costs using each of the provided endpoints' callbacks.
         """
-
         # Check to see if this call is within another _track_costs call:
         endpoints: Dict[Type[EndpointCallback], List[Tuple[Endpoint, EndpointCallback]]] = \
             get_first_local_in_call_stack(
                 key="endpoints",
                 func=Endpoint.__find_tracker,
                 offset=1
-            )
+        )
 
         if endpoints is None:
             # If not, lets start a new collection of endpoints here along with
@@ -684,7 +691,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     key="endpoints",
                     func=self.__find_tracker,
                     offset=0
-                )
+            )
 
             # If wrapped method was not called from within _track_costs, we
             # will get None here and do nothing but return wrapped
@@ -731,7 +738,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
 class DummyEndpoint(Endpoint):
     """Endpoint for testing purposes.
-    
+
     Does not make any network calls and just pretends to.
     """
 
@@ -777,7 +784,8 @@ class DummyEndpoint(Endpoint):
             # Already created with SingletonPerName mechanism
             return
 
-        assert error_prob + freeze_prob + overloaded_prob + loading_prob <= 1.0, "Probabilites should not exceed 1.0 ."
+        assert error_prob + freeze_prob + overloaded_prob + \
+            loading_prob <= 1.0, "Probabilites should not exceed 1.0 ."
         assert rpm > 0
         assert alloc >= 0
         assert delay >= 0.0
@@ -804,7 +812,7 @@ class DummyEndpoint(Endpoint):
         self, url: str, payload: JSON, timeout: Optional[float] = None
     ) -> Any:
         """Pretend to make a classification request similar to huggingface API.
-        
+
         Simulates overloaded, model loading, frozen, error as configured:
 
         ```python
