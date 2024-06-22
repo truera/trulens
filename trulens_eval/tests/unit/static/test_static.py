@@ -56,7 +56,7 @@ if sys.version_info < (3, 12):
     ]
 else:
     assert not module_installed(
-        "snowflake"
+        "snowflake-snowpark-python"
     ), "Snowflake should not be installed until it's available in Python 3.12."
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
