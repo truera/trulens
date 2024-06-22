@@ -65,6 +65,7 @@ TP = mod_threading_utils.TP
 Feedback = mod_feedback.Feedback
 Provider = mod_provider.Provider
 Huggingface = mod_hugs_provider.Huggingface
+HuggingfaceLocal = mod_hugs_provider.HuggingfaceLocal
 Langchain = mod_langchain_provider.Langchain
 FeedbackMode = mod_feedback_schema.FeedbackMode
 Select = mod_feedback_schema.Select
@@ -95,6 +96,7 @@ __all__ = [
     "LiteLLM",
     "Bedrock",
     "Huggingface",
+    "HuggingfaceLocal",
 
     # misc utility
     "TP",

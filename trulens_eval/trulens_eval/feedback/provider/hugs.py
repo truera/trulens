@@ -658,15 +658,8 @@ class HuggingfaceLocal(HuggingfaceBase):
     """
     Out of the box feedback functions calling Huggingface APIs.
     """
-
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        endpoint: Optional[Endpoint] = None,
-        **kwargs
-    ):
-        self._cached_tokenizers = {}
-        self._cached_models = {}
+    _cached_tokenizers: Dict[str, PreTrainedTokenizerBase] = {}
+    _cached_models: Dict[str, PreTrainedModel] = {}
 
     def _retrieve_tokenizer_and_model(
         self, key: str

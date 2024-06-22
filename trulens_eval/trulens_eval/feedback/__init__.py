@@ -5,6 +5,7 @@ from trulens_eval.feedback.embeddings import Embeddings
 from trulens_eval.feedback.groundtruth import GroundTruthAgreement
 # Providers of feedback functions evaluation:
 from trulens_eval.feedback.provider.hugs import Huggingface
+from trulens_eval.feedback.provider.hugs import HuggingfaceLocal
 from trulens_eval.feedback.provider.langchain import Langchain
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
@@ -30,6 +31,7 @@ __all__ = [
     "OpenAI",
     "AzureOpenAI",
     "Huggingface",
+    "HuggingfaceLocal",
     "LiteLLM",
     "Bedrock",
     "Langchain",

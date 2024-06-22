@@ -1,5 +1,6 @@
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.hugs import Huggingface
+from trulens_eval.feedback.provider.hugs import HuggingfaceLocal
 from trulens_eval.feedback.provider.langchain import Langchain
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
@@ -21,6 +22,7 @@ __all__ = [
     "OpenAI",
     "AzureOpenAI",
     "Huggingface",
+    "HuggingfaceLocal",
     "LiteLLM",
     "Bedrock",
     "Langchain",
