@@ -359,7 +359,7 @@ REQUIREMENT_OPENAI = format_import_errors(
 )
 
 REQUIREMENT_CORTEX = format_import_errors(
-    ['snowflake', 'snowflake-snowpark-python', 'snowflake-connector-python'],
+    ['snowflake-snowpark-python', 'snowflake-connector-python'],
     purpose="using Snowflake Cortex serverless LLM functions"
 )
 
