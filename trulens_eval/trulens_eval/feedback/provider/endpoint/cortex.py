@@ -19,7 +19,8 @@ with OptionalImports(messages=REQUIREMENT_CORTEX):
     from snowflake.snowpark import DataFrame
     from snowflake.snowpark import Session
 
-OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
+if sys.version_info < (3, 12):
+    OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
 
 
 class CortexCallback(EndpointCallback):

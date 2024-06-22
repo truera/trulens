@@ -125,18 +125,28 @@ jobs:
           #  --name $(python-version) \
           #  --display-name $(python-version)
 
-          if [[ $(python-version) == 3.12* ]]; then
-            grep -v 'snowflake-snowpark-python' trulens_eval/requirements.optional.txt > trulens_eval/requirements.no_snowflake.txt
-            pip install --verbose -r trulens_eval/requirements.no_snowflake.txt
-          else
-            pip install --verbose -r trulens_eval/requirements.optional.txt
-          fi
+          pip install --verbose -r trulens_eval/requirements.optional.txt
 
           python --version
           pip --version
           pip list --verbose
 
         displayName: Install optional packages
+
+        # Models: Snowflake Cortex; currently only supports Python 3.8, 3.9, 3.10, and 3.11.
+        # https://docs.snowflake.com/en/developer-guide/snowpark/python/setup#prerequisites
+      - bash: |
+          set -e
+          source activate $(python-version)
+          echo "Installing snowflake-snowpark-python for python $(python-version)"
+
+          cd ./trulens_eval
+          
+          pip install --verbose snowflake-snowpark-python >=1.18.0
+
+          pip list --verbose
+        condition: ne(variables['python-version'], 3.12)
+        displayName: Install snowflake-snowpark-python for python < 3.12
 
       - bash: |
           set -e

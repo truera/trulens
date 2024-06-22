@@ -45,27 +45,15 @@ optional_mods = dict(
         "trulens_eval.feedback.provider.openai",
         "trulens_eval.feedback.provider.endpoint.openai"
     ],
-    nemoguardrails=["trulens_eval.tru_rails"],
+    nemoguardrails=["trulens_eval.tru_rails"]
 )
 
 # snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
 if sys.version_info < (3, 12):
-    optional_mods["snowflake-connector-python"] = [
+    optional_mods["snowflake"] = [
         "trulens_eval.feedback.provider.cortex",
         "trulens_eval.feedback.provider.endpoint.cortex"
     ]
-    optional_mods["snowflake-snowpark-python"] = [
-        "trulens_eval.feedback.provider.cortex",
-        "trulens_eval.feedback.provider.endpoint.cortex"
-    ]
-else:
-    assert not module_installed(
-        "snowflake-connector-python"
-    ), "snowflake should not be installed in Python 3.12 until it is supported."
-
-    assert not module_installed(
-        "snowflake-snowpark-python"
-    ), "snowflake-snowpark-python should not be installed in Python 3.12 until it is supported."
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 
@@ -103,6 +91,14 @@ all_trulens_mods = get_all_modules(
 not_mods = [
     "trulens_eval.database.migrations.env"  # can only be executed by alembic
 ]
+
+if sys.version_info >= (3, 12):
+    not_mods.extend(
+        [
+            "snowflake", "trulens_eval.feedback.provider.cortex",
+            "trulens_eval.feedback.provider.endpoint.cortex"
+        ]
+    )
 
 # Importing any of these should be ok regardless of optional packages. These are
 # all modules not mentioned in optional modules above.
