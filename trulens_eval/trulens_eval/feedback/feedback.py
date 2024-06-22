@@ -896,11 +896,10 @@ Feedback function signature:
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost = mod_base_endpoint.Endpoint.track_all_costs_tally(
-                        self.imp, **ins
-                    )
+                    result_and_meta = self.imp(**ins)
 
-                    cost += part_cost
+                    #cost += part_cost
+                    # TODO: update cost tracking based on spans
 
                 except SkipEval as e:
                     e.feedback = self

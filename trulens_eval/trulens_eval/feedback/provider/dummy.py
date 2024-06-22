@@ -10,6 +10,8 @@ class DummyProvider(LLMProvider):
     
     Does not make any networked requests but pretends to.
     """
+    
+    model_engine: str = "dummymodel"
 
     def __init__(
         self,
@@ -40,9 +42,9 @@ class DummyProvider(LLMProvider):
         Fake chat completion.
 
         Returns:
-            str: Completion model response.
+            Completion model response.
         """
-        # text
+
         
         if prompt is None:
             prompt = json.dumps(messages)

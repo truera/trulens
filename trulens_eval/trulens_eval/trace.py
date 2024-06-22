@@ -11,6 +11,7 @@ import contextlib
 import contextvars
 import logging
 import random
+import traceback
 from typing import Any, Dict, List, Optional
 import uuid
 
@@ -22,8 +23,21 @@ from trulens_eval.schema import record as mod_record_schema
 logger = logging.getLogger(__name__)
 
 class Context(pydantic.BaseModel):
+    """Identifiers for a span."""
+
     trace_id: uuid.UUID = pydantic.Field(default_factory=uuid.uuid4)
+    """Unique identifier for the trace.
+    
+    Each root span has a unique trace id."""
+
     span_id: int = pydantic.Field(default_factory=lambda: random.getrandbits(64))
+    """Identifier for the span.
+    
+    Meant to be at least unique within the same trace_id.
+    """
+
+    tracer: Tracer = pydantic.Field(exclude=True)
+    """Reference to the tracer that created this span."""
 
     def __str__(self):
         return f"{self.trace_id.int % 0xff:02x}/{self.span_id % 0xff:02x}"
@@ -38,19 +52,41 @@ class Context(pydantic.BaseModel):
         return self.trace_id == other.trace_id and self.span_id == other.span_id
 
 class Span(pydantic.BaseModel):
+    """A span of observed time in the application."""
+
     context: Context
+    """Identifiers."""
+
     parent: Optional[Context] = None
+    """Optional parent identifier."""
+
     error: Optional[str] = None
+    """Optional error message if the observed computation raised an exception."""
 
 class SpanRecord(Span):
+    """Track an entire Record creation."""
+
     record: Optional[mod_record_schema.Record] = None
 
 class SpanMethodCall(Span):
+    """Track a method call."""
+
     call: Optional[mod_record_schema.RecordAppCall] = None
 
 class SpanCost(Span):
+    """Track costs of some computation."""
+
     cost: Optional[mod_base_schema.Cost] = None
     endpoint: Optional[Any] = None # TODO: Type
+
+    def tally(self):
+        for span in self.tracer.spans.values():
+            if span.context == self.context:
+                continue
+
+            if span.cost is not None:
+                self.cost += span.cost
+        
 
 class Tracer():
     def __init__(self, context: Optional[Context] = None):
@@ -71,7 +107,7 @@ class Tracer():
         try:
             yield span
         except BaseException as e:
-            span.error = str(e)
+            span.error = str(e) + "\n\n" + traceback.format_exc()
         finally:
             self.context.reset(token)
             return

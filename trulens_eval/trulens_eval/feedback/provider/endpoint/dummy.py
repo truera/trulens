@@ -9,11 +9,13 @@ from time import sleep
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TypeVar
 
 from numpy import random as np_random
+import pydantic
 from pydantic import Field
 
 from trulens_eval.feedback.provider.endpoint.base import DEFAULT_RPM
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
+from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSON
@@ -27,7 +29,7 @@ A = TypeVar("A")
 B = TypeVar("B")
 T = TypeVar("T")
 
-class DummyAPI(object):
+class DummyAPI(pydantic.BaseModel):
     """A dummy model evaluation API used by DummyEndpoint.
 
     This is meant to stand in for classes such as OpenAI.completion . Methods in
@@ -71,6 +73,8 @@ class DummyAPI(object):
         assert alloc >= 0
         assert delay >= 0.0
 
+        super().__init__(**locals_except("self", "kwargs"))
+
     def post(self, url: str, payload: JSON, timeout: Optional[float] = None) -> Dict:
         """Pretend to make an http post request to some model execution API."""
 
@@ -86,7 +90,7 @@ class DummyAPI(object):
             sleep(max(0.0, np_random.normal(self.delay, self.delay / 2)))
 
         r = random.random()
-        j: JSON = {}
+        j = {}
 
         if r < self.freeze_prob:
             # Simulated freeze outcome.
@@ -140,11 +144,8 @@ class DummyAPI(object):
 
             raise RuntimeError(error)
 
-        assert isinstance(
-            j, Sequence
-        ) and len(j) > 0, f"Post did not return a sequence: {j}"
-
         j['status'] = 'success'
+
         return j
 
     def completion(self, *args, model: str, temperature: float = 0.0, prompt: str) -> Dict:
@@ -205,6 +206,30 @@ class DummyAPI(object):
         return result
 
 
+class DummyAPICreator(object):
+    """Creator of DummyAPI methods.
+    
+    This is used for testing instrumentation of classes like
+    `boto3.ClientCreator`.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.api_args = args
+        self.api_kwargs = kwargs
+
+    def create_method(self, method_name: str) -> DummyAPI:
+        """Dynamically create a method that behaves like a DummyAPI method.
+        
+        This method should be instrumented by `DummyEndpoint` for testing method
+        creation like that of `boto3.ClientCreator._create_api_method`.
+        """
+
+        # Creates a new class just to make things harder for ourselves.
+        class DynamicDummyAPI(DummyAPI):
+            pass
+
+        return getattr(DynamicDummyAPI(*self.api_args, **self.api_kwargs), method_name)
+
 class DummyEndpointCallback(EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
@@ -228,7 +253,7 @@ class DummyEndpointCallback(EndpointCallback):
 
         else:
             logger.warning("Could not determine cost from DummyAPI call.")
-        
+    
     def on_iteration(self):
         self.cost.n_stream_chunks += 1
 
@@ -271,5 +296,19 @@ class DummyEndpoint(Endpoint):
             locals_except('self', 'name', 'kwargs', '__class__')
         )
 
+        # Instrument existing DummyAPI class. These are used by the custom_app
+        # example.
         self._instrument_class(DummyAPI, "completion")
         self._instrument_class(DummyAPI, "classify")
+
+        # Also instrument any dynamically created DummyAPI methods like we do
+        # for boto3.ClientCreator.
+        if not safe_hasattr(DummyAPICreator.create_method, INSTRUMENT):
+            self._instrument_class_wrapper(
+                DummyAPICreator,
+                wrapper_method_name="create_method",
+                wrapped_method_filter=lambda f: f.__name__ in ['completion', 'classify']
+            )
+
+    def post(self, url: str, payload: JSON, timeout: Optional[float] = None) -> Dict:
+        return self.api.post(url, payload, timeout=timeout)

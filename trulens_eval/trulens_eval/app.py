@@ -870,8 +870,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: Perf,
-        cost: Cost,
+        perf: Optional[mod_base_schema.Perf] = None,
+        cost: Optional[mod_base_schema.Cost] = None,
         existing_record: Optional[mod_record_schema.Record] = None
     ) -> mod_record_schema.Record:
         """Called by instrumented methods if they use _new_record to construct a record call list.

@@ -134,8 +134,7 @@ class BedrockCallback(EndpointCallback):
 
 
 class BedrockEndpoint(Endpoint):
-    """
-    Bedrock endpoint.
+    """Bedrock endpoint.
     
     Instruments `invoke_model` and `invoke_model_with_response_stream` methods
     created by `boto3.ClientCreator._create_api_method`.

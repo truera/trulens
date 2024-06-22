@@ -30,4 +30,8 @@ class CustomLLM(Dummy):
         if temperature is None:
             temperature = self.temperature
 
-        return self.api.completion(model=self.model, temperature=temperature, prompt=prompt)['completion']
+        return self.api.completion(
+            model=self.model,
+            temperature=temperature,
+            prompt=prompt
+        )['completion']

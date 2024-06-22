@@ -16,7 +16,6 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 import os
-from pprint import pformat
 import threading as th
 import traceback
 from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
@@ -441,10 +440,10 @@ class Instrument(object):
             stacks = {k: v for k, v in ctx_stacks.items()}
 
             start_time = None
-            end_time = None
+            # end_time = None
 
             bindings = None
-            cost = mod_base_schema.Cost()
+            # cost = mod_base_schema.Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -503,19 +502,19 @@ class Instrument(object):
             error_str = None
 
             try:
-                # Using sig bind here so we can produce a list of key-value
-                # pairs even if positional arguments were provided.
-                bindings: BoundArguments = sig.bind(*args, **kwargs)
-
                 with mod_trace.get_tracer().method() as span:
-                    
-                    rets, cost = mod_endpoint.Endpoint.track_all_costs_tally(
-                        func, *args, **kwargs
-                    )
+                    # Using sig bind here so we can produce a list of key-value
+                    # pairs even if positional arguments were provided.
+                    bindings: BoundArguments = sig.bind(*args, **kwargs)
+            
+                    rets = func(*args, **kwargs)
 
             except BaseException as e:
                 error = e
                 error_str = str(e)
+
+                span.error=error_str + "\n\n" + traceback.format_exc()
+                # Do this in context manager exit
 
                 logger.error(
                     "Error calling wrapped function %s.", callable_name(func)
@@ -562,6 +561,8 @@ class Instrument(object):
                     call = mod_record_schema.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
+                    span.call = call
+
                     # If stack has only 1 thing on it, we are looking at a "root
                     # call". Create a record of the result and notify the app:
 
@@ -578,7 +579,7 @@ class Instrument(object):
                             perf=mod_base_schema.Perf(
                                 start_time=start_time, end_time=end_time
                             ),
-                            cost=cost,
+                            # cost=cost,
                             existing_record=records.get(ctx)
                         )
 
