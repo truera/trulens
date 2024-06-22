@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 from typing import ClassVar, Dict, Optional, Sequence
 
 from trulens_eval.feedback.provider.base import LLMProvider
@@ -8,13 +7,12 @@ from trulens_eval.feedback.provider.endpoint.cortex import CortexEndpoint
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_CORTEX
 
-if sys.version_info < (3, 12):
-    with OptionalImports(messages=REQUIREMENT_CORTEX):
-        import snowflake
-        import snowflake.connector
-        from snowflake.connector import SnowflakeConnection
+with OptionalImports(messages=REQUIREMENT_CORTEX):
+    import snowflake
+    import snowflake.connector
+    from snowflake.connector import SnowflakeConnection
 
-    OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
+OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
 
 
 class Cortex(LLMProvider):
@@ -99,21 +97,14 @@ class Cortex(LLMProvider):
 
         if messages is not None:
             kwargs['messages'] = messages
+
         elif prompt is not None:
             kwargs['messages'] = [{"role": "system", "content": prompt}]
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
         res = self._exec_snowsql_complete_command(**kwargs)
-        """
-        res example: 
-        [Row(SNOWFLAKE.CORTEX.COMPLETE(
-            'SNOWFLAKE-ARCTIC',
-            [
-            {'ROLE': 'USER', 'CONTENT': '
-         WE HAVE PROVIDED CONTEXT INFORMATION BELOW. 
-            [[''\\NTHE UNIVERSITY OF WASHINGTON, FOUNDED IN 1861 IN SEATTLE, IS A PUBL='{\n  "choices": [\n    {\n      "messages": " The University of Washington was founded in 1861."\n    }\n  ],\n  "created": 1718315813,\n  "model": "snowflake-arctic",\n  "usage": {\n    "completion_tokens": 14,\n    "prompt_tokens": 148,\n    "total_tokens": 162\n  }\n}')]
-        """
+
         completion = json.loads(res[0][0])["choices"][0]["messages"]
 
         return completion
