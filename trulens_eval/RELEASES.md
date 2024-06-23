@@ -12,13 +12,14 @@ of breaking changes.
 ### What's Changed
 * Context filtering guardrails by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1192
 * Query optimizations for TruLens dashboard resulting in 4-32x benchmarked speedups by @sfc-gh-chu in https://github.com/truera/trulens/pull/1216
-* Logging in Snowflake database by @sfc-gh-chu in https://github.com/truera/trulens/pull/1216* Snowflake Cortex feedback provider by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1202
+* Logging in Snowflake database by @sfc-gh-chu in https://github.com/truera/trulens/pull/1216
+* Snowflake Cortex feedback provider by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1202
 * improve langchain prompting using native messages by @nicoloboschi in https://github.com/truera/trulens/pull/1194
 * fix groundedness with no supporting evidence by @nicoloboschi in https://github.com/truera/trulens/pull/1193
 * Improve Microsecond support by @sfc-gh-gtokernliang in https://github.com/truera/trulens/pull/1195
 * SkipEval exception by @sfc-gh-pmardziel in https://github.com/truera/trulens/pull/1200
 * Update pull_request_template.md by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1234
-
+* Use rounding instead of flooring in feedback score extraction by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1244
 
 ### Documentation
 * Benchmarking Snowflake arctic-instruct feedback function of groundedness by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1185
@@ -39,6 +40,7 @@ of breaking changes.
 * Enable regex to extract floats in score generation by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1223
 * Fix cost tracking in OpenAI and LiteLLM endpoints by @sfc-gh-dhuang in https://github.com/truera/trulens/pull/1228
 * remove deprecated legacy caching by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1233
+* Remove remaining streamlit legacy caching by @JushBJJ in https://github.com/truera/trulens/pull/1246
 
 ## 0.31.0
 
