@@ -265,13 +265,13 @@ nav:
               - OpenAI: trulens_eval/api/endpoint/openai.md
       - 𝄢 Instruments: trulens_eval/api/instruments.md
       - 🛡️ Guardrails:
-        - trulens_eval/api/guardrails/index.md
-        - 🦜️🔗 Langchain Guardrails: trulens_eval/api/guardrails/langchain.md
-        - 🦙 Llama-Index Guardrails: trulens_eval/api/guardrails/llama.md      
+          - trulens_eval/api/guardrails/index.md
+          - 🦜️🔗 Langchain Guardrails: trulens_eval/api/guardrails/langchain.md
+          - 🦙 Llama-Index Guardrails: trulens_eval/api/guardrails/llama.md      
       - 🗄 Database:
-        - trulens_eval/api/database/index.md
-        - ✨ Migration: trulens_eval/api/database/migration.md
-        - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
+          - trulens_eval/api/database/index.md
+          - ✨ Migration: trulens_eval/api/database/migration.md
+          - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
       - Utils:
           # - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
