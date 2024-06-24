@@ -1,11 +1,11 @@
-import json
 import re
-from typing import AsyncIterator, List, Optional
+from typing import AsyncIterator, List, Optional, Any
 
 import replicate
 from retrieve import AVAILABLE_RETRIEVERS
 from schema import Conversation
 from schema import Message
+from schema import ModelConfig
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
@@ -13,15 +13,20 @@ from streamlit.delta_generator import DeltaGenerator
 from trulens_eval.tru_custom_app import instrument
 from trulens_eval.guardrails.base import context_filter
 
-from feedback import f_small_local_models_context_relevance
+from feedback import f_small_local_models_context_relevance, get_provider
 
-FRIENDLY_MAPPING = {
-    "Snowflake Arctic": "snowflake/snowflake-arctic-instruct",
-    "LLaMa 3 8B": "meta/meta-llama-3-8b",
-    "Mistral 7B": "mistralai/mistral-7b-instruct-v0.2",
+PROVIDER_MODELS = {
+    "Replicate": {
+        "Snowflake Arctic": "snowflake/snowflake-arctic-instruct",
+        "LLaMa 3 8B": "meta/meta-llama-3-8b",
+        "Mistral 7B": "mistralai/mistral-7b-instruct-v0.2",
+    },
+    "Cortex": {
+        "Snowflake Arctic": "snowflake-arctic",
+        "LLaMa 3 8B": "llama3-8b",
+        "Mistral 7B": "mistral-7b",
+    }
 }
-AVAILABLE_MODELS = [k for k in FRIENDLY_MAPPING.keys()]
-
 
 def encode_arctic(messages: List[Message]):
     prompt = []
@@ -62,9 +67,9 @@ def _reencode_outputs(s: str):
 
 
 ENCODING_MAPPING = {
-    "snowflake/snowflake-arctic-instruct": encode_arctic,
-    "meta/meta-llama-3-8b": encode_llama3,
-    "mistralai/mistral-7b-instruct-v0.2": encode_generic,
+    "Snowflake Arctic": encode_arctic,
+    "LLaMa 3 8B": encode_llama3,
+    "Mistral 7B": encode_generic,
 }
 
 
@@ -82,7 +87,6 @@ class StreamGenerator:
     def prepare_prompt(self, conversation: Conversation):
         messages = conversation.messages
         model_config = conversation.model_config
-        full_model_name = FRIENDLY_MAPPING[model_config.model]
 
         if model_config.system_prompt:
             system_msg = Message(
@@ -90,7 +94,7 @@ class StreamGenerator:
             )
             messages = [system_msg] + messages
 
-        prompt_str = ENCODING_MAPPING[full_model_name](messages)
+        prompt_str = ENCODING_MAPPING[model_config.model](messages)
 
         # Extract the last user message from the prompt string
         message = None
@@ -103,11 +107,22 @@ class StreamGenerator:
     def _generate_stream_with_replicate(
         self, model_name: str, model_input: dict
     ):
+        raise ValueError("Disabling for debug")
         stream_iter: AsyncIterator = replicate.stream(
             model_name, input=model_input
         )
         for t in stream_iter:
             yield str(t)
+
+    def _generate_with_cortex(
+        self, model_name: str, model_input: dict
+    ):
+        response = get_provider("Cortex")._create_chat_completion(
+            prompt=model_input['prompt'], 
+            temperature=model_input['temperature'],
+            model=model_name
+        )
+        yield str(response)
 
     def _write_stream_to_st(
         self,
@@ -123,6 +138,26 @@ class StreamGenerator:
 
         return full_text_response
 
+    def _generate_response(
+        self, 
+        model_config: ModelConfig, 
+        model_input: dict[str, Any]
+    ):
+        print("generating with provider", model_config.provider)
+        full_model_name = PROVIDER_MODELS[model_config.provider][model_config.model]
+
+        if model_config.provider == "Replicate":
+            stream_iter = self._generate_stream_with_replicate(
+                full_model_name, model_input
+            )
+        elif model_config.provider == "Cortex":
+            stream_iter = self._generate_with_cortex(
+                full_model_name, model_input
+            )
+        else:
+            raise ValueError(f"Invalid Provider {model_config.provider}")
+        return stream_iter
+
     @instrument
     def generate_response(
         self,
@@ -133,8 +168,8 @@ class StreamGenerator:
         should_write=True
     ) -> str:
         model_config = conversation.model_config
-        full_model_name = FRIENDLY_MAPPING[model_config.model]
 
+        final_response = ""
         model_input = {
             "prompt": prompt_str,
             "prompt_template": r"{prompt}",
@@ -142,9 +177,9 @@ class StreamGenerator:
             "top_p": model_config.top_p,
         }
 
-        final_response = ""
-        stream_iter = self._generate_stream_with_replicate(
-            full_model_name, model_input
+        stream_iter = self._generate_response( 
+            model_config=model_config,
+            model_input=model_input
         )
 
         if should_write:
@@ -183,7 +218,6 @@ class StreamGenerator:
             conversation=conversation
         )  # Fixed by passing the conversation object instead of prompt_str
         model_config = conversation.model_config
-        full_model_name = FRIENDLY_MAPPING[model_config.model]
 
         full_prompt = (
             "We have provided context information below. \n"
@@ -202,9 +236,9 @@ class StreamGenerator:
         }
 
         final_response = ""
-        stream_iter = self._generate_stream_with_replicate(
-            full_model_name, model_input
+        stream_iter = self._generate_response(
+            model_config=model_config,
+            model_input=model_input
         )
-
         final_response = self._write_stream_to_st(stream_iter, st_container)
         return _reencode_outputs(final_response)

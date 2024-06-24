@@ -1,7 +1,7 @@
 import os
 
+import streamlit as st
 from custom_feedback.small_local_models import SmallLocalModels
-from dotenv import load_dotenv
 import numpy as np
 
 from trulens_eval import Feedback
@@ -10,7 +10,6 @@ from trulens_eval import Tru
 from trulens_eval.feedback.provider.cortex import Cortex
 from trulens_eval.feedback.provider.litellm import LiteLLM
 
-load_dotenv()
 
 db_url = "snowflake://{user}:{password}@{account}/{dbname}/{schema}?warehouse={warehouse}&role={role}".format(
     user=os.environ["SNOWFLAKE_USER"],
@@ -24,25 +23,12 @@ db_url = "snowflake://{user}:{password}@{account}/{dbname}/{schema}?warehouse={w
 
 tru = Tru(database_url=db_url)
 
-provider = LiteLLM(model_engine="replicate/snowflake/snowflake-arctic-instruct")
-
-# usage - cortex as feedback provider
-# provider = Cortex(model_engine="mixtral-8x7b")
+AVAILABLE_PROVIDERS = [
+    "Replicate",
+    "Cortex"
+]
 
 small_local_model_provider = SmallLocalModels()
-
-f_groundedness = (
-    Feedback(
-        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
-    ).on(Select.RecordCalls.retrieve_context.rets[1][:]).on_output()
-)
-f_context_relevance = (
-    Feedback(provider.context_relevance,
-             name="Context Relevance").on_input().on(
-                 Select.RecordCalls.retrieve_context.rets[1][:]
-             ).aggregate(np.mean
-                        )  # choose a different aggregation method if you wish
-)
 f_small_local_models_context_relevance = (
     Feedback(
         small_local_model_provider.context_relevance,
@@ -51,43 +37,73 @@ f_small_local_models_context_relevance = (
         np.mean
     )  # choose a different aggregation method if you wish
 )
-f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons,
-             name="Answer Relevance").on_input().on_output().aggregate(np.mean)
-)
-f_criminality_input = (
-    Feedback(
+
+@st.cache_resource
+def get_provider(provider_name: str):
+    if provider_name == "Replicate":
+        return LiteLLM(model_engine="replicate/snowflake/snowflake-arctic-instruct")
+    elif provider_name == "Cortex": 
+        return Cortex(model_engine="mixtral-8x7b")
+    elif provider_name in AVAILABLE_PROVIDERS:
+        raise NotImplementedError(f"Provider {provider_name} is not yet implemented.")
+    else:
+        raise ValueError("Invalid provider name", provider_name)
+
+@st.cache_resource
+def get_feedbacks(provider_name: str, use_rag: bool = True):
+    provider = get_provider(provider_name)
+    print("using provider", str(provider_name))
+    f_groundedness = (
+        Feedback(
+            provider.groundedness_measure_with_cot_reasons, name="Groundedness"
+        ).on(Select.RecordCalls.retrieve_context.rets[1][:]).on_output()
+    )
+    f_context_relevance = (
+        Feedback(provider.context_relevance,
+                name="Context Relevance").on_input().on(
+                    Select.RecordCalls.retrieve_context.rets[1][:]
+                ).aggregate(np.mean
+                            )  # choose a different aggregation method if you wish
+    )
+    f_answer_relevance = (
+        Feedback(provider.relevance_with_cot_reasons,
+                name="Answer Relevance").on_input().on_output().aggregate(np.mean)
+    )
+    f_criminality_input = (
+        Feedback(
+            provider.criminality_with_cot_reasons,
+            name="Criminality input",
+            higher_is_better=False
+        ).on(Select.RecordInput)
+    )
+    f_criminality_output = (
+        Feedback(
+            provider.criminality_with_cot_reasons,
+            name="Criminality output",
+            higher_is_better=False
+        ).on_output()
+    )
+    f_criminality_input = Feedback(
         provider.criminality_with_cot_reasons,
         name="Criminality input",
-        higher_is_better=False
+        higher_is_better=False,
     ).on(Select.RecordInput)
-)
-f_criminality_output = (
-    Feedback(
+    f_criminality_output = Feedback(
         provider.criminality_with_cot_reasons,
         name="Criminality output",
-        higher_is_better=False
+        higher_is_better=False,
     ).on_output()
-)
-f_criminality_input = Feedback(
-    provider.criminality_with_cot_reasons,
-    name="Criminality input",
-    higher_is_better=False,
-).on(Select.RecordInput)
-f_criminality_output = Feedback(
-    provider.criminality_with_cot_reasons,
-    name="Criminality output",
-    higher_is_better=False,
-).on_output()
 
-feedbacks_rag = [
-    f_context_relevance,
-    f_small_local_models_context_relevance,
-    f_answer_relevance,
-    f_groundedness,
-    f_criminality_input,
-    f_criminality_output,
-]
-feedbacks_no_rag = [
-    f_answer_relevance, f_criminality_input, f_criminality_output
-]
+    if use_rag:
+        return [
+            f_context_relevance,
+            f_small_local_models_context_relevance,
+            f_answer_relevance,
+            f_groundedness,
+            f_criminality_input,
+            f_criminality_output,
+        ]
+    else:
+        return [
+            f_answer_relevance, f_criminality_input, f_criminality_output
+        ]
