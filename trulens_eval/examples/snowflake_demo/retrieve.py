@@ -11,6 +11,7 @@ from snowflake.snowpark import Session
 
 load_dotenv()
 
+
 class PineconeRetriever:
 
     def __init__(self):
