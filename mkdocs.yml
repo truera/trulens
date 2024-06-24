@@ -230,6 +230,7 @@ nav:
           # PLACEHOLDER: - trulens_eval/tracking/logging/index.md
           - Where to Log: trulens_eval/tracking/logging/where_to_log.md
           - 📓 Logging Methods: trulens_eval/tracking/logging/logging.ipynb
+  - 🛡️ Guardrails: trulens_eval/guardrails/index.md
   - 🔍 Guides:
       # PLACEHOLDER: - trulens_eval/guides/index.md
       - Any LLM App: trulens_eval/guides/use_cases_any.md
@@ -264,10 +265,14 @@ nav:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
       - 𝄢 Instruments: trulens_eval/api/instruments.md
+      - 🛡️ Guardrails:
+          - trulens_eval/api/guardrails/index.md
+          - 🦜️🔗 Langchain Guardrails: trulens_eval/api/guardrails/langchain.md
+          - 🦙 Llama-Index Guardrails: trulens_eval/api/guardrails/llama.md
       - 🗄 Database:
-        - trulens_eval/api/database/index.md
-        - ✨ Migration: trulens_eval/api/database/migration.md
-        - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
+          - trulens_eval/api/database/index.md
+          - ✨ Migration: trulens_eval/api/database/migration.md
+          - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
       - Utils:
           # - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
