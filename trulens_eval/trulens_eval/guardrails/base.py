@@ -19,10 +19,10 @@ class context_filter:
         @context_filter(feedback, 0.5)
         def retrieve(query: str) -> list:
             results = vector_store.query(
-            query_texts=query,
-            n_results=3
-        )
-        return [doc for sublist in results['documents'] for doc in sublist]
+                query_texts=query,
+                n_results=3
+            )
+            return [doc for sublist in results['documents'] for doc in sublist]
         ```
     """
 
@@ -34,10 +34,17 @@ class context_filter:
 
         def wrapper(*args, **kwargs):
             contexts = func(*args, **kwargs)
+            
+            # TODO: this is a hack
+            main_input = None
+            for arg in args + tuple(kwargs.values()):
+                if isinstance(arg, str):
+                    main_input = arg
+                    break
             with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
                 future_to_context = {
                     ex.submit(
-                        lambda context=context: self.feedback(args[1], context)
+                        lambda context=context: self.feedback(main_input, context)
                     ): context for context in contexts
                 }
                 filtered = []

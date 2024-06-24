@@ -101,7 +101,7 @@ class Cortex(LLMProvider):
             kwargs['messages'] = messages
 
         elif prompt is not None:
-            kwargs['messages'] = [{"role": "system", "content": prompt}]
+            kwargs['messages'] = [{"role": "user", "content": prompt}]
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
