@@ -20,7 +20,7 @@ import threading as th
 import traceback
 from typing import (
     Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
-    Type, Union
+    Type, TypeVar, Union
 )
 import weakref
 
@@ -47,9 +47,13 @@ from trulens_eval.utils.python import id_str
 from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import safe_signature
-from trulens_eval.utils.python import wrap_awaitable
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import retab
+from trulens_eval.utils.wrap import CallableCallbacks
+from trulens_eval.utils.wrap import wrap_awaitable
+from trulens_eval.utils.wrap import wrap_callable
+
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
@@ -330,6 +334,56 @@ class Instrument(object):
         self.app = app
 
     def tracked_method_wrapper(
+        self, query: Lens, func: Callable, method_name: str, cls: type,
+        obj: object
+    ) -> Callable:
+
+        class InstrumentationCallbacks(CallableCallbacks):
+
+            def __init__(
+                self, func: Callable, wrapper: Callable, **kwargs: Dict[str,
+                                                                        Any]
+            ):
+                pass
+
+            def on_callable_bind(
+                self, func: Callable, wrapper: Callable, args: Tuple[str],
+                kwargs: Dict[str, Any]
+            ):
+                pass
+
+            def on_callable_call(
+                self, func: Callable, wrapper: Callable,
+                bindings: inspect.BoundArguments
+            ) -> inspect.BoundArguments:
+                pass
+                return bindings
+
+            def on_callable_bind_error(
+                self, func: Callable, wrapper: Callable, error: Exception,
+                args: Tuple[Any], kwargs: Dict[str, Any]
+            ):
+                pass
+
+            def on_callable_return(
+                self, func: Callable, wrapper: Callable,
+                bindings: inspect.BoundArguments, ret: T
+            ) -> T:
+                pass
+                return ret
+
+            def on_callable_exception(
+                self, func: Callable, wrapper: Callable,
+                bindings: Optional[inspect.BoundArguments], error: Exception
+            ):
+                """Called after wrapped method raises exception."""
+
+            def __del__(self):
+                pass
+
+        return wrap_callable(func=func, callback_class=InstrumentationCallbacks)
+
+    def _tracked_method_wrapper(
         self, query: Lens, func: Callable, method_name: str, cls: type,
         obj: object
     ):
