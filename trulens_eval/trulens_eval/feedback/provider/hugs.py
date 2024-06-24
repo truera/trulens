@@ -2,7 +2,7 @@ from abc import abstractmethod
 from concurrent.futures import wait
 import logging
 from typing import (
-    Any, Dict, get_args, get_origin, List, Optional, Tuple, TYPE_CHECKING, Union
+    Any, Dict, get_args, get_origin, List, Optional, Tuple, Union
 )
 
 import nltk
@@ -19,10 +19,6 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.threading import ThreadPoolExecutor
-
-if TYPE_CHECKING:
-    from transformers import PreTrainedModel
-    from transformers import PreTrainedTokenizerBase
 
 logger = logging.getLogger(__name__)
 
@@ -661,14 +657,14 @@ class HuggingfaceLocal(HuggingfaceBase):
     Out of the box feedback functions calling Huggingface APIs.
     """
 
-    _cached_tokenizers: Dict[str, PreTrainedTokenizerBase] = {}
-    _cached_models: Dict[str, PreTrainedModel] = {}
+    _cached_tokenizers: Dict[str, Any] = {}
+    _cached_models: Dict[str, Any] = {}
 
     def _retrieve_tokenizer_and_model(
         self,
         key: str,
         tokenizer_kwargs: Optional[Dict[str, Any]] = None
-    ) -> Tuple[PreTrainedTokenizerBase, PreTrainedModel]:
+    ) -> Tuple[Any, Any]:
         from transformers import AutoModelForSequenceClassification
         from transformers import AutoTokenizer
         if key not in self._cached_tokenizers:
