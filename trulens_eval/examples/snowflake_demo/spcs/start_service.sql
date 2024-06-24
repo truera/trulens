@@ -15,20 +15,20 @@ CREATE SERVICE dkurokawa_trulens_demo_app
       - name: dkurokawa-trulens-demo-app-container
         image: /dkurokawa/trulens_demo/dkurokawa_trulens_demo_image_repository/trulens_demo:latest
         env:
-            SF_ACCOUNT: "fab02971"
-            SF_DB_NAME: "dkurokawa"
-            SF_SCHEMA: "trulens_demo"
-            SF_WAREHOUSE: "dkurokawa"
-            SF_ROLE: "engineer"
-            SF_CORTEX_SEARCH_SERVICE: "dkurokawa_trulens_demo_search_service"
+            SNOWFLAKE_ACCOUNT: "fab02971"
+            SNOWFLAKE_DATABASE: "dkurokawa"
+            SNOWFLAKE_SCHEMA: "trulens_demo"
+            SNOWFLAKE_WAREHOUSE: "dkurokawa"
+            SNOWFLAKE_ROLE: "engineer"
+            SNOWFLAKE_CORTEX_SEARCH_SERVICE: "dkurokawa_trulens_demo_search_service"
             RUN_APP: "1"
         secrets:
           - snowflakeSecret: dkurokawa.trulens_demo.login_credentials
             secretKeyRef: username
-            envVarName: SF_USER
+            envVarName: SNOWFLAKE_USER
           - snowflakeSecret: dkurokawa.trulens_demo.login_credentials
             secretKeyRef: password
-            envVarName: SF_PASSWORD
+            envVarName: SNOWFLAKE_USER_PASSWORD
           - snowflakeSecret: dkurokawa.trulens_demo.replicate_api_token
             secretKeyRef: secret_string
             envVarName: REPLICATE_API_TOKEN
@@ -52,20 +52,20 @@ CREATE SERVICE dkurokawa_trulens_demo_dashboard
       - name: dkurokawa-trulens-demo-dashboard-container
         image: /dkurokawa/trulens_demo/dkurokawa_trulens_demo_image_repository/trulens_demo:latest
         env:
-            SF_ACCOUNT: "fab02971"
-            SF_DB_NAME: "dkurokawa"
-            SF_SCHEMA: "trulens_demo"
-            SF_WAREHOUSE: "dkurokawa"
-            SF_ROLE: "engineer"
-            SF_CORTEX_SEARCH_SERVICE: "dkurokawa_trulens_demo_search_service"
+            SNOWFLAKE_ACCOUNT: "fab02971"
+            SNOWFLAKE_DATABASE: "dkurokawa"
+            SNOWFLAKE_SCHEMA: "trulens_demo"
+            SNOWFLAKE_WAREHOUSE: "dkurokawa"
+            SNOWFLAKE_ROLE: "engineer"
+            SNOWFLAKE_CORTEX_SEARCH_SERVICE: "dkurokawa_trulens_demo_search_service"
             RUN_DASHBOARD: "1"
         secrets:
           - snowflakeSecret: dkurokawa.trulens_demo.login_credentials
             secretKeyRef: username
-            envVarName: SF_USER
+            envVarName: SNOWFLAKE_USER
           - snowflakeSecret: dkurokawa.trulens_demo.login_credentials
             secretKeyRef: password
-            envVarName: SF_PASSWORD
+            envVarName: SNOWFLAKE_USER_PASSWORD
           - snowflakeSecret: dkurokawa.trulens_demo.replicate_api_token
             secretKeyRef: secret_string
             envVarName: REPLICATE_API_TOKEN

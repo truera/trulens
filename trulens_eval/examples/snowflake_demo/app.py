@@ -1,5 +1,8 @@
-from typing import List
+from dotenv import load_dotenv
 
+load_dotenv()
+
+from typing import List
 from common_ui import chat_response
 from common_ui import configure_model
 from common_ui import generate_title
@@ -11,6 +14,7 @@ from schema import ConversationFeedback
 from schema import ConversationRecord
 from schema import Message
 import streamlit as st
+
 
 title = "Chat"
 if st.session_state.get("conversation_title"):

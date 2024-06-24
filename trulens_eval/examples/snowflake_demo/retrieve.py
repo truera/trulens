@@ -1,15 +1,12 @@
 import json
 import os
 
-from dotenv import load_dotenv
-from feedback import f_context_relevance
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores.pinecone import \
     Pinecone as PineconeVectorStore
 from snowflake.core import Root
 from snowflake.snowpark import Session
 
-load_dotenv()
 
 class PineconeRetriever:
 
@@ -37,18 +34,18 @@ class CortexSearchRetriever:
     def __init__(self, limit_to_retrieve: int = 4):
         self._limit_to_retrieve = limit_to_retrieve
         connection_parameters = {
-            "account": os.environ["SF_ACCOUNT"],
-            "user": os.environ["SF_USER"],
-            "password": os.environ["SF_PASSWORD"],
-            "role": os.environ["SF_ROLE"],
-            "warehouse": os.environ["SF_WAREHOUSE"],
+            "account": os.environ["SNOWFLAKE_ACCOUNT"],
+            "user": os.environ["SNOWFLAKE_USER"],
+            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+            "role": os.environ["SNOWFLAKE_ROLE"],
+            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         }
         session = Session.builder.configs(connection_parameters).create()
         root = Root(session)
         self._cortex_search_service = root.databases[
-            os.environ["SF_DB_NAME"]].schemas[
-                os.environ["SF_SCHEMA"]].cortex_search_services[
-                    os.environ["SF_CORTEX_SEARCH_SERVICE"]]
+            os.environ["SNOWFLAKE_DATABASE"]].schemas[
+                os.environ["SNOWFLAKE_SCHEMA"]].cortex_search_services[
+                    os.environ["SNOWFLAKE_CORTEX_SEARCH_SERVICE"]]
 
     def retrieve(self, query: str):
         resp = self._cortex_search_service.search(
