@@ -20,6 +20,7 @@ class ModelConfig(BaseModel):
     system_prompt: str = ""
     use_rag: bool = True
     retriever: str = "Cortex Search"
+    retrieval_filter: float = 0.5
     trulens_recorder: Optional[TruCustomApp] = None
 
 
