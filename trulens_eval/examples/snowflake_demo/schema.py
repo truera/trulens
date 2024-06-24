@@ -19,9 +19,9 @@ class ModelConfig(BaseModel):
     max_new_tokens: int = 1024
     system_prompt: str = ""
     use_rag: bool = True
-    retrieval_filter: float = .3
     retriever: str = "Cortex Search"
     provider: str = "Replicate"
+    retrieval_filter: float = 0.5
     trulens_recorder: Optional[TruCustomApp] = None
 
 

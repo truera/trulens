@@ -15,8 +15,6 @@ from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.page_config import set_page_config
 from trulens_eval.ux.styles import CATEGORY
 
-st.runtime.legacy_caching.clear_cache()
-
 from common_ui import page_setup
 
 from trulens_eval import Tru

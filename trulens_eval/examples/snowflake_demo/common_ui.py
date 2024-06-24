@@ -134,11 +134,10 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool, retriever: str, retrieval_filter: float, provider: str,
-    **kwargs
+    use_rag: bool, retriever: str, retrieval_filter: float
 ) -> str:
     # Args are hashed for cache'(' lookup
-    return f"app-prod-{model}{'-' + retriever if use_rag else ''}{f'-retrieval-filter-' + str(retrieval_filter) if use_rag else ''} (provider-{provider}temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+    return f"app-prod-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + str(retrieval_filter)) if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
 
 
 def configure_model(
@@ -168,6 +167,8 @@ def configure_model(
             ),
         "use_rag":
             st.session_state.get(USE_RAG_KEY, model_config.use_rag),
+        "retrieval_filter":
+            st.session_state.get(RETRIEVAL_FILTER_KEY, model_config.retrieval_filter),
         "retriever":
             st.session_state.get(RETRIEVER_KEY, model_config.retriever),
         "retrieval_filter":
@@ -185,6 +186,7 @@ def configure_model(
         st.session_state[MAX_NEW_TOKENS_KEY] = model_config.max_new_tokens
         st.session_state[USE_RAG_KEY] = model_config.use_rag
         st.session_state[RETRIEVER_KEY] = model_config.retriever
+        st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
         st.session_state[PROVIDER_KEY] = model_config.provider
         metadata = {
             "model": st.session_state[MODEL_KEY],
@@ -193,10 +195,10 @@ def configure_model(
             "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
             "use_rag": st.session_state[USE_RAG_KEY],
             "retriever": st.session_state[RETRIEVER_KEY],
-            "retrieval_filter": st.session_state.get(RETRIEVAL_FILTER_KEY),
+            "retrieval_filter": st.session_state[RETRIEVAL_FILTER_KEY],
             "provider": st.session_state[PROVIDER_KEY],
         }
-
+        
     with container:
         with st.popover(f"Configure :blue[{st.session_state[MODEL_KEY]}]",
                         use_container_width=full_width):
