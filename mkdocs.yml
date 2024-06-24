@@ -264,6 +264,13 @@ nav:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
       - 𝄢 Instruments: trulens_eval/api/instruments.md
+<<<<<<< HEAD
+=======
+      - 🛡️ Guardrails:
+        - trulens_eval/api/guardrails/index.md
+        - 🦜️🔗 Langchain Guardrails: trulens_eval/api/guardrails/langchain.md
+        - 🦙 Llama-Index Guardrails: trulens_eval/api/guardrails/llama.md
+>>>>>>> f5f298de (fix typo)
       - 🗄 Database:
         - trulens_eval/api/database/index.md
         - ✨ Migration: trulens_eval/api/database/migration.md
