@@ -1,6 +1,8 @@
 import re
-from typing import AsyncIterator, List, Optional, Any
+from typing import Any, AsyncIterator, List, Optional
 
+from feedback import f_small_local_models_context_relevance
+from feedback import get_provider
 import replicate
 from retrieve import AVAILABLE_RETRIEVERS
 from schema import Conversation
@@ -9,24 +11,25 @@ from schema import ModelConfig
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
+from trulens_eval.guardrails.base import context_filter
 # replicate key for running model
 from trulens_eval.tru_custom_app import instrument
-from trulens_eval.guardrails.base import context_filter
-
-from feedback import f_small_local_models_context_relevance, get_provider
 
 PROVIDER_MODELS = {
-    "Replicate": {
-        "Snowflake Arctic": "snowflake/snowflake-arctic-instruct",
-        "LLaMa 3 8B": "meta/meta-llama-3-8b",
-        "Mistral 7B": "mistralai/mistral-7b-instruct-v0.2",
-    },
-    "Cortex": {
-        "Snowflake Arctic": "snowflake-arctic",
-        "LLaMa 3 8B": "llama3-8b",
-        "Mistral 7B": "mistral-7b",
-    }
+    "Replicate":
+        {
+            "Snowflake Arctic": "snowflake/snowflake-arctic-instruct",
+            "LLaMa 3 8B": "meta/meta-llama-3-8b",
+            "Mistral 7B": "mistralai/mistral-7b-instruct-v0.2",
+        },
+    "Cortex":
+        {
+            "Snowflake Arctic": "snowflake-arctic",
+            "LLaMa 3 8B": "llama3-8b",
+            "Mistral 7B": "mistral-7b",
+        }
 }
+
 
 def encode_arctic(messages: List[Message]):
     prompt = []
@@ -107,18 +110,15 @@ class StreamGenerator:
     def _generate_stream_with_replicate(
         self, model_name: str, model_input: dict
     ):
-        raise ValueError("Disabling for debug")
         stream_iter: AsyncIterator = replicate.stream(
             model_name, input=model_input
         )
         for t in stream_iter:
             yield str(t)
 
-    def _generate_with_cortex(
-        self, model_name: str, model_input: dict
-    ):
+    def _generate_with_cortex(self, model_name: str, model_input: dict):
         response = get_provider("Cortex")._create_chat_completion(
-            prompt=model_input['prompt'], 
+            prompt=model_input['prompt'],
             temperature=model_input['temperature'],
             model=model_name
         )
@@ -139,12 +139,10 @@ class StreamGenerator:
         return full_text_response
 
     def _generate_response(
-        self, 
-        model_config: ModelConfig, 
-        model_input: dict[str, Any]
+        self, model_config: ModelConfig, model_input: dict[str, Any]
     ):
-        print("generating with provider", model_config.provider)
-        full_model_name = PROVIDER_MODELS[model_config.provider][model_config.model]
+        full_model_name = PROVIDER_MODELS[model_config.provider][
+            model_config.model]
 
         if model_config.provider == "Replicate":
             stream_iter = self._generate_stream_with_replicate(
@@ -177,9 +175,8 @@ class StreamGenerator:
             "top_p": model_config.top_p,
         }
 
-        stream_iter = self._generate_response( 
-            model_config=model_config,
-            model_input=model_input
+        stream_iter = self._generate_response(
+            model_config=model_config, model_input=model_input
         )
 
         if should_write:
@@ -195,9 +192,14 @@ class StreamGenerator:
         self, last_user_message: str, prompt_str: str,
         conversation: Conversation
     ):
-        @context_filter(f_small_local_models_context_relevance, conversation.model_config.retrieval_filter)
+
+        @context_filter(
+            f_small_local_models_context_relevance,
+            conversation.model_config.retrieval_filter
+        )
         def retrieve():
-            retriever = AVAILABLE_RETRIEVERS[conversation.model_config.retriever]
+            retriever = AVAILABLE_RETRIEVERS[conversation.model_config.retriever
+                                            ]
             texts = retriever.retrieve(query=last_user_message)
             context_message = "\n\n".join(texts)
             return _reencode_outputs(context_message), texts
@@ -237,8 +239,7 @@ class StreamGenerator:
 
         final_response = ""
         stream_iter = self._generate_response(
-            model_config=model_config,
-            model_input=model_input
+            model_config=model_config, model_input=model_input
         )
         final_response = self._write_stream_to_st(stream_iter, st_container)
         return _reencode_outputs(final_response)

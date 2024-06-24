@@ -1,15 +1,14 @@
 import os
 
-import streamlit as st
 from custom_feedback.small_local_models import SmallLocalModels
 import numpy as np
+import streamlit as st
 
 from trulens_eval import Feedback
 from trulens_eval import Select
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.cortex import Cortex
 from trulens_eval.feedback.provider.litellm import LiteLLM
-
 
 db_url = "snowflake://{user}:{password}@{account}/{dbname}/{schema}?warehouse={warehouse}&role={role}".format(
     user=os.environ["SNOWFLAKE_USER"],
@@ -23,10 +22,7 @@ db_url = "snowflake://{user}:{password}@{account}/{dbname}/{schema}?warehouse={w
 
 tru = Tru(database_url=db_url)
 
-AVAILABLE_PROVIDERS = [
-    "Replicate",
-    "Cortex"
-]
+AVAILABLE_PROVIDERS = ["Replicate", "Cortex"]
 
 small_local_model_provider = SmallLocalModels()
 f_small_local_models_context_relevance = (
@@ -38,21 +34,26 @@ f_small_local_models_context_relevance = (
     )  # choose a different aggregation method if you wish
 )
 
+
 @st.cache_resource
 def get_provider(provider_name: str):
     if provider_name == "Replicate":
-        return LiteLLM(model_engine="replicate/snowflake/snowflake-arctic-instruct")
-    elif provider_name == "Cortex": 
+        return LiteLLM(
+            model_engine="replicate/snowflake/snowflake-arctic-instruct"
+        )
+    elif provider_name == "Cortex":
         return Cortex(model_engine="mixtral-8x7b")
     elif provider_name in AVAILABLE_PROVIDERS:
-        raise NotImplementedError(f"Provider {provider_name} is not yet implemented.")
+        raise NotImplementedError(
+            f"Provider {provider_name} is not yet implemented."
+        )
     else:
         raise ValueError("Invalid provider name", provider_name)
+
 
 @st.cache_resource
 def get_feedbacks(provider_name: str, use_rag: bool = True):
     provider = get_provider(provider_name)
-    print("using provider", str(provider_name))
     f_groundedness = (
         Feedback(
             provider.groundedness_measure_with_cot_reasons, name="Groundedness"
@@ -60,14 +61,17 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
     )
     f_context_relevance = (
         Feedback(provider.context_relevance,
-                name="Context Relevance").on_input().on(
-                    Select.RecordCalls.retrieve_context.rets[1][:]
-                ).aggregate(np.mean
-                            )  # choose a different aggregation method if you wish
+                 name="Context Relevance").on_input().on(
+                     Select.RecordCalls.retrieve_context.rets[1][:]
+                 ).aggregate(
+                     np.mean
+                 )  # choose a different aggregation method if you wish
     )
     f_answer_relevance = (
         Feedback(provider.relevance_with_cot_reasons,
-                name="Answer Relevance").on_input().on_output().aggregate(np.mean)
+                 name="Answer Relevance").on_input().on_output().aggregate(
+                     np.mean
+                 )
     )
     f_criminality_input = (
         Feedback(
@@ -104,6 +108,4 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
             f_criminality_output,
         ]
     else:
-        return [
-            f_answer_relevance, f_criminality_input, f_criminality_output
-        ]
+        return [f_answer_relevance, f_criminality_input, f_criminality_output]

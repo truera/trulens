@@ -5,11 +5,11 @@ from typing import Dict
 
 from conversation_manager import ConversationManager
 # feedback functions
+from feedback import AVAILABLE_PROVIDERS
 from feedback import get_feedbacks
 from llm import PROVIDER_MODELS
 from llm import StreamGenerator
 from retrieve import AVAILABLE_RETRIEVERS
-from feedback import AVAILABLE_PROVIDERS
 from schema import Conversation
 from schema import FeedbackDisplay
 from schema import Message
@@ -134,7 +134,8 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool, retriever: str, retrieval_filter: float, provider: str, **kwargs
+    use_rag: bool, retriever: str, retrieval_filter: float, provider: str,
+    **kwargs
 ) -> str:
     # Args are hashed for cache'(' lookup
     return f"app-prod-{model}{'-' + retriever if use_rag else ''}{f'-retrieval-filter-' + str(retrieval_filter) if use_rag else ''} (provider-{provider}temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
@@ -170,7 +171,9 @@ def configure_model(
         "retriever":
             st.session_state.get(RETRIEVER_KEY, model_config.retriever),
         "retrieval_filter":
-            st.session_state.get(RETRIEVAL_FILTER_KEY, model_config.retrieval_filter),
+            st.session_state.get(
+                RETRIEVAL_FILTER_KEY, model_config.retrieval_filter
+            ),
         "provider":
             st.session_state.get(PROVIDER_KEY, model_config.provider),
     }
@@ -240,7 +243,8 @@ def configure_model(
                     label="Temperature:",
                     key=TEMPERATURE_KEY,
                 )
-                if model_config.temperature != st.session_state[TEMPERATURE_KEY]:
+                if model_config.temperature != st.session_state[TEMPERATURE_KEY
+                                                               ]:
                     st.session_state[TEMPERATURE_KEY] = model_config.temperature
 
             with right2:
@@ -289,8 +293,10 @@ def configure_model(
                     key=RETRIEVAL_FILTER_KEY
                 )
 
-                if model_config.retrieval_filter != st.session_state[RETRIEVAL_FILTER_KEY]:
-                    st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
+                if model_config.retrieval_filter != st.session_state[
+                        RETRIEVAL_FILTER_KEY]:
+                    st.session_state[RETRIEVAL_FILTER_KEY
+                                    ] = model_config.retrieval_filter
 
     app_id = get_tru_app_id(**metadata)
     feedbacks = get_feedbacks(model_config.provider, model_config.use_rag)
@@ -383,9 +389,7 @@ def chat_response(
 
 
 def generate_title(
-    user_input: str,
-    response_dict: Dict,
-    model_config: ModelConfig
+    user_input: str, response_dict: Dict, model_config: ModelConfig
 ):
     SYSTEM_PROMPT = """
         You are a helpful assistant generating a brief summary title of a
@@ -412,8 +416,8 @@ def generate_title(
     """
     conversation = Conversation()
     conversation.model_config = ModelConfig(
-        system_prompt=SYSTEM_PROMPT, 
-        provider=model_config.provider, 
+        system_prompt=SYSTEM_PROMPT,
+        provider=model_config.provider,
         model=model_config.model
     )
     input_msg = json.dumps({"input": user_input})
