@@ -179,15 +179,18 @@ def configure_model(
         st.session_state[MAX_NEW_TOKENS_KEY] = model_config.max_new_tokens
         st.session_state[USE_RAG_KEY] = model_config.use_rag
         st.session_state[RETRIEVER_KEY] = model_config.retriever
-        metadata = {
-            "model": st.session_state[MODEL_KEY],
-            "temperature": st.session_state[TEMPERATURE_KEY],
-            "top_p": st.session_state[TOP_P_KEY],
-            "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
-            "use_rag": st.session_state[USE_RAG_KEY],
-            "retriever": st.session_state[RETRIEVER_KEY],
-        }
+        st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
 
+        metadata = {
+        "model": st.session_state[MODEL_KEY],
+        "temperature": st.session_state[TEMPERATURE_KEY],
+        "top_p": st.session_state[TOP_P_KEY],
+        "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
+        "use_rag": st.session_state[USE_RAG_KEY],
+        "retriever": st.session_state[RETRIEVER_KEY],
+        "retrieval_filter": st.session_state[RETRIEVAL_FILTER_KEY],
+    }
+        
     with container:
         with st.popover(f"Configure :blue[{st.session_state[MODEL_KEY]}]",
                         use_container_width=full_width):
