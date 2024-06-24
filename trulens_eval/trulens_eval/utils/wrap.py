@@ -76,31 +76,32 @@ class AwaitableCallbacks(Generic[T]):
         self, awaitable: Awaitable[T], wrapper: Awaitable[T],
         **kwargs: Dict[str, Any]
     ):
-        """Called/constructed immedietely before on_awaitable_await."""
+        """Called/constructed when wrapper awaitable is awaited but before the wrapped awaitable is awaited."""
 
-    def __finally__(
-        self, awaitable: Awaitable[T], wrapper: Awaitable[T],
-        result: Optional[T], error: Optional[Exception], **kwargs
-    ):
+        # Subclasses can use kwargs.
+
+        self.awaitable: Awaitable[T] = awaitable
+        self.wrapper: Awaitable[T] = wrapper
+
+        self.result: Optional[T] = None
+        self.error: Optional[Exception] = None
+
+    def on_awaitable_end(self):
         """Called after the last callback is called."""
 
-    def on_awaitable_await(self, awaitable: Awaitable[T], **kwargs):
-        """Called when wrapper awaitable is awaited but before the wrapped awaitable is awaited."""
-
-    def on_awaitable_result(
-        self, awaitable: Awaitable[T], result: T, **kwargs
-    ) -> T:
+    def on_awaitable_result(self, result: T) -> T:
         """Called with the result of the wrapped awaitable once it is ready.
         
         !!! Important
             This should return the result or some wrapper of the result.
         """
+        self.result = result
         return result
 
-    def on_awaitable_exception(
-        self, awaitable: Awaitable[T], error: Exception, **kwargs
-    ) -> None:
+    def on_awaitable_exception(self, error: Exception) -> Exception:
         """Called if awaiting for the wrapped awaitable raised an exception."""
+        self.error = error
+        return error
 
 
 def wrap_awaitable(
@@ -120,29 +121,30 @@ def wrap_awaitable(
         **kwargs: All other arguments are passed in as they are to all callbacks.
     """
 
-    args: Dict[str, Any] = {'awaitable': awaitable, **kwargs}
+    init_args: Dict[str, Any] = {'awaitable': awaitable, **kwargs}
 
     async def wrapper(awaitable):
-        cb: AwaitableCallbacks = callback_class(**args)
-        cb.on_awaitable_await(**args)
+        cb: AwaitableCallbacks = callback_class(**init_args)
 
         try:
             result = await awaitable
-            args['result'] = result
-            args['result'] = cb.on_awaitable_result(**args)
-            cb.__finally__(**args)
-            return args['result']
+            result = cb.on_awaitable_result(result=result)
+            cb.on_awaitable_end()
+            return result
 
         except Exception as e:
-            args['error'] = e
-            cb.on_awaitable_exception(**args)
-            cb.__finally__(**args)
-            raise e
+            e_wrapped = cb.on_awaitable_exception(error=e)
+            cb.on_awaitable_end()
+
+            if e == e_wrapped:
+                raise e
+
+            raise e_wrapped from e
 
     w = wrapper(awaitable)
 
-    args['wrapper'] = w
-    callback_class.on_awaitable_wrapped(**args)
+    init_args['wrapper'] = w
+    callback_class.on_awaitable_wrapped(**init_args)
 
     return w
 
@@ -162,43 +164,43 @@ class IterableCallbacks(Generic[T]):
     def __init__(
         self, itb: Iterable[T], wrapper: Iterable[T], **kwargs: Dict[str, Any]
     ):
-        """Called/constructed right before on_iterable_iter."""
+        """Called/constructed when the wrapped iterable is iterated (__iter__ is
+        called) but before the wrapped iterable is iterated (__iter__ is
+        called)."""
 
-    def __finally__(
-        self, itb: Iterable[T], wrapper: Iterable[T], it: Optional[Iterator[T]],
-        error: Optional[Exception], **kwargs: Dict[str, Any]
-    ):
+        # Subclasses can use kwargs.
+
+        self.itb: Iterable[T] = itb
+        self.wrapper: Iterable[T] = wrapper
+
+        self.it: Optional[Iterator[T]] = None
+        self.error: Optional[Exception] = None
+
+    def on_iterable_end(self):
         """Called after the last callback is called."""
 
-    def on_iteratable_iter(
-        self, itb: Iterable[T], wrapper: Iterable[T], **kwargs: Dict[str, Any]
-    ):
-        """Called when the wrapped iterable is iterated (__iter__ is called)."""
-
-    def on_iterable_iter_result(
-        self, itb: Iterable[T], wrapper: Iterable[T], it: Iterator[T],
-        **kwargs: Dict[str, Any]
+    def on_iterable_iter(
+        self,
+        it: Iterator[T],
     ) -> Iterator[T]:
-        """Called after the iterator is produced (but before any items are produced).
+        """Called after the wrapped iterator is produced (but before any items are produced).
         
         !!! Important
             Must produce the given iterator it or some wrapper.
         """
+        self.it = it
         return it
 
-    def on_iterable_iter_exception(
-        self, itb: Iterable[T], wrapper: Iterable[T], error: Exception
-    ):
+    def on_iterable_iter_exception(self, error: Exception) -> Exception:
         """Called if an error is raised during __iter__."""
 
-    def on_iterable_next(
-        self, itb: Iterable[T], wrapper: Iterable[T], it: Iterator[T]
-    ):
+        self.error = error
+        return error
+
+    def on_iterable_next(self):
         """Called when the next item from the iterator is requested (but before it is produced)."""
 
-    def on_iterable_next_result(
-        self, itb: Iterable[T], wrapper: Iterable[T], it: Iterator[T], val: T
-    ) -> T:
+    def on_iterable_next_result(self, val: T) -> T:
         """Called after the next item from the iterator is produced.
         
         !!! Important
@@ -206,15 +208,12 @@ class IterableCallbacks(Generic[T]):
         """
         return val
 
-    def on_iterable_next_exception(
-        self, itb: Iterable[T], wrapper: Iterable[T], it: Iterator[T],
-        error: Exception
-    ):
+    def on_iterable_next_exception(self, error: Exception):
         """Called if an error is raised during __next__."""
+        self.error = error
+        return error
 
-    def on_iteration_end(
-        self, itb: Iterable[T], wrapper: Iterable[T], it: Iterator[T]
-    ):
+    def on_iterable_stop(self):
         """Called after the iterator stops iterating (raises StopIteration)."""
 
 
@@ -233,43 +232,51 @@ def wrap_iterable(
         **kwargs: All other arguments are passed in as they are to all callbacks.
     """
 
-    args = {'itb': itb, **kwargs}
+    init_args = {'itb': itb, **kwargs}
 
     def wrapper(itb):
-        cb = callback_class(**args)
+        cb = callback_class(**init_args)
 
         try:
-            cb.on_iteratable_iter(**args)
-            it: Iterable[T] = iter(itb)
-            args['it'] = it
-            args['it'] = cb.on_iterable_iter_result(**args)
+            it: Iterator[T] = iter(itb)
+            it = cb.on_iterable_iter(it=it)
 
         except Exception as e:
-            args['error'] = e
-            cb.on_iterable_iter_exception(**args)
-            cb.__finally__(**args)
-            raise e
+            init_args['error'] = e
+            e_wrapped = cb.on_iterable_iter_exception(**init_args)
+            cb.on_iterable_end()
+
+            if e == e_wrapped:
+                raise e
+
+            raise e_wrapped from e
 
         while True:
-            cb.on_iterable_next(**args)
+            cb.on_iterable_next()
+
             try:
                 val = next(it)
-                val = cb.on_iterable_next_result(**args, val=val)
+                val = cb.on_iterable_next_result(val=val)
                 yield val
+
             except StopIteration:
-                cb.on_iteration_end(**args)
-                cb.__finally__(**args)
+                cb.on_iterable_stop()
+                cb.on_iterable_end()
                 return
+
             except Exception as e:
-                args['error'] = e
-                cb.on_iterable_next_exception(**args)
-                cb.__finally__(**args)
-                raise e
+                e_wrapped = cb.on_iterable_next_exception(error=e)
+                cb.on_iterable_end()
+
+                if e == e_wrapped:
+                    raise e
+
+                raise e_wrapped from e
 
     w = wrapper(itb)
 
-    args['wrapper'] = w
-    callback_class.on_iterable_wrapped(**args)
+    init_args['wrapper'] = w
+    callback_class.on_iterable_wrapped(**init_args)
 
     return w
 
@@ -287,29 +294,32 @@ class CallableCallbacks(Generic[T]):
         """Called immediately after the wrapper is produced."""
 
     def __init__(
-        self, func: Callable, wrapper: Callable, **kwargs: Dict[str, Any]
-    ):
-        """Called/constructed right before on_callable_bind."""
-
-    def __finally__(
         self, func: Callable, wrapper: Callable, call_args: Tuple[Any, ...],
-        call_kwargs: Dict[str, Any], ret: Optional[T],
-        error: Optional[Exception], **kwargs: Dict[str, Any]
-    ):
-        """Called after the last callback is called."""
-
-    def on_callable_bind(
-        self, func: Callable, wrapper: Callable, call_args: Tuple[str],
         call_kwargs: Dict[str, Any], **kwargs: Dict[str, Any]
     ):
-        """Called when the wrapper function is called but before the wrapped function is called.
-        
-        Arguments are not yet bound to func's args.
-        """
+        """Called/constructed when the wrapped function is called but before
+        arguments are bound to its signature."""
+
+        # Subclasses can use kwargs.
+
+        self.func: Callable = func
+        self.wrapper: Callable = wrapper
+        self.call_args: Optional[Tuple[Any, ...]] = call_args
+        self.call_kwargs: Optional[Dict[str, Any]] = call_kwargs
+
+        self.bindings: Optional[inspect.BoundArguments] = None
+        self.bind_error: Optional[Exception] = None
+
+        self.error: Optional[Exception] = None
+
+        self.ret: Optional[T] = None
+
+    def on_callable_end(self):
+        """Called after the last callback is called."""
 
     def on_callable_call(
-        self, func: Callable, wrapper: Callable,
-        bindings: inspect.BoundArguments, **kwargs
+        self,
+        bindings: inspect.BoundArguments,
     ) -> inspect.BoundArguments:
         """Called before the execution of the wrapped method assuming its
         arguments can be bound.
@@ -318,12 +328,13 @@ class CallableCallbacks(Generic[T]):
             This callback must return the bound arguments or wrappers of bound arguments.
         """
         # TODO: instrument lazy arguments
+        self.bindings = bindings
+
         return bindings
 
     def on_callable_bind_error(
-        self, func: Callable, wrapper: Callable, error: Exception,
-        call_args: Tuple[Any], call_kwargs: Dict[str, Any], kwargs: Dict[str,
-                                                                         Any]
+        self,
+        error: TypeError,
     ):
         """Called if the wrapped method's arguments cannot be bound.
         
@@ -333,11 +344,9 @@ class CallableCallbacks(Generic[T]):
         called with the unbindable arguments. This is done to replicate the
         behavior of an unwrapped invocation.
         """
+        self.bind_error = error
 
-    def on_callable_return(
-        self, func: Callable, wrapper: Callable,
-        bindings: inspect.BoundArguments, ret: T, **kwargs: Dict[str, Any]
-    ) -> T:
+    def on_callable_return(self, ret: T) -> T:
         """Called after wrapped method returns without error.
         
         !!! Important
@@ -353,14 +362,13 @@ class CallableCallbacks(Generic[T]):
                 return ret
             ```
         """
+        self.ret = ret
         return ret
 
-    def on_callable_exception(
-        self, func: Callable, wrapper: Callable,
-        bindings: Optional[inspect.BoundArguments], error: Exception,
-        **kwargs: Dict[str, Any]
-    ):
+    def on_callable_exception(self, error: Exception) -> Exception:
         """Called after wrapped method raises exception."""
+        self.error = error
+        return error
 
 
 CALLBACKS = "__tru_callbacks"
@@ -388,25 +396,14 @@ def wrap_callable(
             "Calling instrumented method %s of type %s.", func, type(func)
         )
 
-        ret: Any = None
-
-        call_cb_args: Dict[str, Any] = dict(
-            cb_args, all_args=args, call_kwargs=kwargs
-        )  # copy common args for this call
-
-        callback = callback_class(**call_cb_args)
-
-        callback.on_callable_bind(**call_cb_args)
-        call_cb_args['bindings'] = None
+        callback = callback_class(call_args=args, call_kwargs=kwargs, **cb_args)
 
         try:
-            call_cb_args['bindings'] = inspect.signature(func
-                                                        ).bind(*args, **kwargs)
-            callback.on_callable_call(**call_cb_args)
+            bindings = inspect.signature(func).bind(*args, **kwargs)
+            callback.on_callable_call(bindings=bindings)
 
-        except Exception as e:
-            call_cb_args['error'] = e
-            callback.on_callable_bind_error(**call_cb_args)
+        except TypeError as e:
+            callback.on_callable_bind_error(error=e)
             # raise e
 
             # NOTE: Not raising e here to make sure the exception raised by the
@@ -415,22 +412,26 @@ def wrap_callable(
 
         try:
             # Get the result of the wrapped function.
-            call_cb_args['ret'] = (ret := func(*args, **kwargs))
+            ret = func(*args, **kwargs)
 
-            call_cb_args['ret'] = (
-                ret := callback.on_callable_return(**call_cb_args)
-            )
+            ret = callback.on_callable_return(ret=ret)
             # Can override ret.
 
-            callback.__finally__(**call_cb_args)
+            callback.on_callable_end()
             return ret
 
         except Exception as e:
             # Or the exception it raised.
-            call_cb_args['error'] = e
-            callback.on_callable_exception(**call_cb_args)
-            callback.__finally__(**call_cb_args)
-            raise e
+
+            wrapped_e = callback.on_callable_exception(error=e)
+            # Can override exception.
+
+            callback.on_callable_end()
+
+            if e == wrapped_e:
+                raise e
+            else:
+                raise wrapped_e from e
 
         # The rest of the code invokes the appropriate callbacks and then
         # populates the content of span created above.
