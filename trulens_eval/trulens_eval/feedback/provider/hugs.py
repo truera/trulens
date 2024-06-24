@@ -2,19 +2,14 @@ from abc import abstractmethod
 from concurrent.futures import wait
 import logging
 from typing import (
-    Any, Dict, get_args, get_origin, List, Optional, Tuple, Union
+    Any, Dict, get_args, get_origin, List, Optional, Tuple, TYPE_CHECKING, Union
 )
 
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
 import requests
-import torch
 from tqdm.auto import tqdm
-from transformers import AutoModelForSequenceClassification
-from transformers import AutoTokenizer
-from transformers import PreTrainedModel
-from transformers import PreTrainedTokenizerBase
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
@@ -24,6 +19,10 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.threading import ThreadPoolExecutor
+
+if TYPE_CHECKING:
+    from transformers import PreTrainedModel
+    from transformers import PreTrainedTokenizerBase
 
 logger = logging.getLogger(__name__)
 
@@ -670,6 +669,8 @@ class HuggingfaceLocal(HuggingfaceBase):
         key: str,
         tokenizer_kwargs: Optional[Dict[str, Any]] = None
     ) -> Tuple[PreTrainedTokenizerBase, PreTrainedModel]:
+        from transformers import AutoModelForSequenceClassification
+        from transformers import AutoTokenizer
         if key not in self._cached_tokenizers:
             tokenizer_kwargs = tokenizer_kwargs if tokenizer_kwargs else {}
             self._cached_tokenizers[key] = AutoTokenizer.from_pretrained(
@@ -710,6 +711,8 @@ class HuggingfaceLocal(HuggingfaceBase):
     # TODEP
     @_tci
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
+        import torch
+
         tokenizer, model = self._retrieve_tokenizer_and_model(
             HUGS_DOCNLI_MODEL_PATH, tokenizer_kwargs={"use_fast": False}
         )
