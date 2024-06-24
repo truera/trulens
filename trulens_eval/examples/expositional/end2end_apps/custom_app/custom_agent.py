@@ -14,11 +14,7 @@ class CustomAgent(dummy.Dummy):
     """
 
     def __init__(
-        self,
-        *args,
-        app: Any,
-        description: Optional[str] = None,
-        **kwargs
+        self, *args, app: Any, description: Optional[str] = None, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
@@ -38,5 +34,5 @@ class CustomAgent(dummy.Dummy):
         #    self.app.respond_to_query(query=data)
 
         # return recorder.get().model_dump_json()
-    
+
         return "Record placeholder"

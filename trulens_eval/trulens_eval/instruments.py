@@ -18,8 +18,10 @@ import logging
 import os
 import threading as th
 import traceback
-from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
-                    Sequence, Set, Tuple, Type, Union)
+from typing import (
+    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
+    Type, Union
+)
 import weakref
 
 import pydantic
@@ -383,9 +385,6 @@ class Instrument(object):
 
             apps = getattr(tru_wrapper, Instrument.APPS)
 
-            # If not within a root method, call the wrapped function without
-            # any recording.
-
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
                 key="contexts",
@@ -506,14 +505,14 @@ class Instrument(object):
                     # Using sig bind here so we can produce a list of key-value
                     # pairs even if positional arguments were provided.
                     bindings: BoundArguments = sig.bind(*args, **kwargs)
-            
+
                     rets = func(*args, **kwargs)
 
             except BaseException as e:
                 error = e
                 error_str = str(e)
 
-                span.error=error_str + "\n\n" + traceback.format_exc()
+                span.error = error_str + "\n\n" + traceback.format_exc()
                 # Do this in context manager exit
 
                 logger.error(

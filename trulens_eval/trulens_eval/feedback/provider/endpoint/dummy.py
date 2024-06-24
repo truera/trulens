@@ -29,6 +29,7 @@ A = TypeVar("A")
 B = TypeVar("B")
 T = TypeVar("T")
 
+
 class DummyAPI(pydantic.BaseModel):
     """A dummy model evaluation API used by DummyEndpoint.
 
@@ -75,7 +76,9 @@ class DummyAPI(pydantic.BaseModel):
 
         super().__init__(**locals_except("self", "kwargs"))
 
-    def post(self, url: str, payload: JSON, timeout: Optional[float] = None) -> Dict:
+    def post(
+        self, url: str, payload: JSON, timeout: Optional[float] = None
+    ) -> Dict:
         """Pretend to make an http post request to some model execution API."""
 
         if timeout is None:
@@ -119,7 +122,7 @@ class DummyAPI(pydantic.BaseModel):
             j = {'error': "overloaded"}
         r -= self.overloaded_prob
 
-         # The rest is the same as in Endpoint:
+        # The rest is the same as in Endpoint:
 
         # Huggingface public api sometimes tells us that a model is loading and
         # how long to wait:
@@ -148,13 +151,20 @@ class DummyAPI(pydantic.BaseModel):
 
         return j
 
-    def completion(self, *args, model: str, temperature: float = 0.0, prompt: str) -> Dict:
+    def completion(
+        self, *args, model: str, temperature: float = 0.0, prompt: str
+    ) -> Dict:
         """Fake text completion request."""
 
         # Fake http post request, might raise an exception or cause delays.
         postret = self.post(
             url="https://fakeservice.com/classify",
-            payload={'mode': 'completion', 'model': model, 'prompt': prompt, 'temperature': temperature}
+            payload={
+                'mode': 'completion',
+                'model': model,
+                'prompt': prompt,
+                'temperature': temperature
+            }
         )
 
         if postret.get('status', 'failure') != 'success':
@@ -164,13 +174,19 @@ class DummyAPI(pydantic.BaseModel):
 
         result = {
             'completion': generated_text,
-            'usage': {
-                # Fake usage information.
-                'n_tokens': len(generated_text.split()) + len(prompt.split()),
-                'n_prompt_tokens': len(prompt.split()),
-                'n_completion_tokens': len(generated_text.split()),
-                'cost': len(generated_text) * 0.0002 + len(prompt.split()) * 0.0001
-            }
+            'usage':
+                {
+                    # Fake usage information.
+                    'n_tokens':
+                        len(generated_text.split()) + len(prompt.split()),
+                    'n_prompt_tokens':
+                        len(prompt.split()),
+                    'n_completion_tokens':
+                        len(generated_text.split()),
+                    'cost':
+                        len(generated_text) * 0.0002 +
+                        len(prompt.split()) * 0.0001
+                }
         }
 
         return result
@@ -181,7 +197,11 @@ class DummyAPI(pydantic.BaseModel):
         # Fake http post request, might raise an exception or cause delays.
         postret = self.post(
             url="https://fakeservice.com/classify",
-            payload={'mode': 'classification', 'model': model, 'text': text}
+            payload={
+                'mode': 'classification',
+                'model': model,
+                'text': text
+            }
         )
 
         if postret.get('status', 'failure') != 'success':
@@ -189,19 +209,22 @@ class DummyAPI(pydantic.BaseModel):
 
         # Simulated success outcome with some constant results plus some randomness.
         result = {
-            'status': 'success',
-            'scores': [
-            {
-                'label': 'LABEL_1',
-                'score': 0.6034979224205017 + random.random()
-            }, {
-                'label': 'LABEL_2',
-                'score': 0.2648237645626068 + random.random()
-            }, {
-                'label': 'LABEL_0',
-                'score': 0.13167837262153625 + random.random()
-            }
-        ]}
+            'status':
+                'success',
+            'scores':
+                [
+                    {
+                        'label': 'LABEL_1',
+                        'score': 0.6034979224205017 + random.random()
+                    }, {
+                        'label': 'LABEL_2',
+                        'score': 0.2648237645626068 + random.random()
+                    }, {
+                        'label': 'LABEL_0',
+                        'score': 0.13167837262153625 + random.random()
+                    }
+                ]
+        }
 
         return result
 
@@ -228,7 +251,10 @@ class DummyAPICreator(object):
         class DynamicDummyAPI(DummyAPI):
             pass
 
-        return getattr(DynamicDummyAPI(*self.api_args, **self.api_kwargs), method_name)
+        return getattr(
+            DynamicDummyAPI(*self.api_args, **self.api_kwargs), method_name
+        )
+
 
 class DummyEndpointCallback(EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
@@ -236,7 +262,10 @@ class DummyEndpointCallback(EndpointCallback):
     def on_call(self, func: Callable, args: Tuple[str], kwargs: Dict[str, Any]):
         self.cost.n_requests += 1
 
-    def on_return(self, func: Callable[..., Any], bindings: inspect.BoundArguments, ret: Any):
+    def on_return(
+        self, func: Callable[..., Any], bindings: inspect.BoundArguments,
+        ret: Any
+    ):
         self.cost.n_successful_requests += 1
 
         if "usage" in ret:
@@ -253,7 +282,7 @@ class DummyEndpointCallback(EndpointCallback):
 
         else:
             logger.warning("Could not determine cost from DummyAPI call.")
-    
+
     def on_iteration(self):
         self.cost.n_stream_chunks += 1
 
@@ -307,8 +336,11 @@ class DummyEndpoint(Endpoint):
             self._instrument_class_wrapper(
                 DummyAPICreator,
                 wrapper_method_name="create_method",
-                wrapped_method_filter=lambda f: f.__name__ in ['completion', 'classify']
+                wrapped_method_filter=lambda f: f.__name__ in
+                ['completion', 'classify']
             )
 
-    def post(self, url: str, payload: JSON, timeout: Optional[float] = None) -> Dict:
+    def post(
+        self, url: str, payload: JSON, timeout: Optional[float] = None
+    ) -> Dict:
         return self.api.post(url, payload, timeout=timeout)

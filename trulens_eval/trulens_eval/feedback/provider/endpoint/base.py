@@ -8,8 +8,10 @@ import logging
 from pprint import PrettyPrinter
 from time import sleep
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
-                    Sequence, Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
+    Type, TypeVar
+)
 
 from pydantic import Field
 import requests
@@ -58,68 +60,6 @@ class EndpointCallback(SerialModel):
 
     cost: mod_base_schema.Cost = Field(default_factory=mod_base_schema.Cost)
     """Costs tracked by this callback."""
-
-    def on_call(self, func: Callable, args: Tuple[str], kwargs: Dict[str, Any]):
-        """Called when the wrapped function is about to be called. 
-        
-        Arguments are not yet bound to func's args.
-        """
-
-    def on_bind(self, func: Callable, bindings: inspect.BoundArguments):
-        """Called before the execution of the wrapped method assuming its
-        arguments can be bound.
-        
-        This and `on_bind_error` are mutually exclusive.
-        """
-
-    def on_bind_error(self, func: Callable, error: Exception, args: Tuple[Any], kwargs: Dict[str, Any]):
-        """Called if the wrapped method's arguments cannot be bound.
-        
-        This and `on_bind` are mutually exclusive. Note that if this type of
-        error occurs, none of the wrapped code actually executes. Also if this
-        happens, the `on_exception` handler is expected to be called as well
-        after the wrapped func is called with the unbindable arguments. This is
-        done to replicate the behavior of an unwrapped invocation.
-        """
-
-    def on_return(self, func: Callable, bindings: inspect.BoundArguments, ret: Any):
-        """Called after wrapped method returns without error."""
-
-    def on_exception(self, func: Callable, bindings: Optional[inspect.BoundArguments], error: Exception):
-        """Called after wrapped method raises exception."""
-
-    def on_iteration_start(self):
-        """Called after wrapped method returns an iterable but before iteration
-        starts.
-
-        This applies to both synchronous and asynchronous iterations.        
-        """
-
-    def on_iteration(self):
-        """Called after wrapped method produced an iterable and an iteration
-        from it was produced.
-        
-        This applies to both synchronous and asynchronous iterations.
-        """
-
-    def on_iteration_end(self):
-        """Called after wrapped method produced an iterable and it stopped
-        iterating.
-        
-        This applies to both synchronous and asynchronous iterations.
-        """
-
-    def on_async_start(self, func: Callable, bindings: inspect.BoundArguments, awaitable: Awaitable[T]):
-        """Called after wrapped method produced an awaitable but has not yet
-        been awaited."""
-
-    def on_async_result(self, func: Callable, bindings: inspect.BoundArguments, awaitable: Awaitable[T], result: T):
-        """Called after wrapped method produced an awaitable and its results are
-        ready."""
-
-    def on_async_error(self, func: Callable, bindings: inspect.BoundArguments, awaitable: Awaitable[T], error: Exception):
-        """Called after wrapped method produced an awaitable and awaiting on it
-        resulted in an exception being raised."""
 
     def handle(self, response: Any) -> None:
         """Called after each request."""
@@ -464,11 +404,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             setattr(cls, wrapper_method_name, metawrap)
 
-    def _instrument_module_members(
-        self,
-        mod: ModuleType,
-        method_name: str
-    ):
+    def _instrument_module_members(self, mod: ModuleType, method_name: str):
         """Instrument all of the given named methods in all of the classes
         belonging to the given module.
 
@@ -522,17 +458,22 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             callback_class = getattr(func, INSTRUMENT)
 
             if not isinstance(callback_class, Type):
-                raise TypeError("Wrapped INSTRUMENT attribute is expected to be a callback class.")
+                raise TypeError(
+                    "Wrapped INSTRUMENT attribute is expected to be a callback class."
+                )
 
             if self.callback_class is not callback_class:
-                raise ValueError(f"Attempting to set more than one EndpointCallback for function {func}.")
-            
+                raise ValueError(
+                    f"Attempting to set more than one EndpointCallback for function {func}."
+                )
+
             # If our callback class is already in the list, dont bother
             # adding it again.
 
             logger.warning(
                 "%s already instrumented for callbacks of type %s for endpoint %s",
-                func.__name__, self.callback_class.__name__, self.__class__.__name__
+                func.__name__, self.callback_class.__name__,
+                self.__class__.__name__
             )
 
             return func
@@ -548,21 +489,25 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 inspect.isasyncgenfunction(func)
             )
 
-            ret: Any = None # return of wrapped call if it did not raise an exception
-            error: Any = None # exception raised by wrapped call if any
+            ret: Any = None  # return of wrapped call if it did not raise an exception
+            error: Any = None  # exception raised by wrapped call if any
 
             callback_class = getattr(tru_wrapper, INSTRUMENT)
             callback = callback_class(endpoint=self)
 
-            common_args = {'func':func}
+            common_args = {'func': func}
             callback.on_call(**common_args, args=args, kwargs=kwargs)
             common_args['bindings'] = None
 
             try:
-                common_args['bindings'] = inspect.signature(func).bind(*args, **kwargs)
+                common_args['bindings'] = inspect.signature(func).bind(
+                    *args, **kwargs
+                )
 
             except Exception as e:
-                callback.on_bind_error(**common_args, error=e, args=args, kwargs=kwargs)
+                callback.on_bind_error(
+                    **common_args, error=e, args=args, kwargs=kwargs
+                )
                 # Continue to try to execute func which should fail and produce
                 # some exception with regards to not being able to bind.
 
@@ -586,7 +531,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 # In that case we expect the `func(...)` line to also fail. We bail
                 # without the rest of the logic in that case while issuing a stern
                 # warning.
-                logger.warning("Wrapped function executed but we could not bind its arguments.")
+                logger.warning(
+                    "Wrapped function executed but we could not bind its arguments."
+                )
                 span.cost = callback.cost
                 return ret
 
@@ -599,6 +546,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 span.error = str(error)
                 span.cost = callback.cost
                 raise error
+            """
+            # disabling Awaitable and other lazy value handling for now
 
             if isinstance(ret, Awaitable):
                 common_args['awaitable'] = ret
@@ -618,10 +567,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     ret,
                     on_result=response_callback
                 )
+            """
 
             # else ret is not Awaitable
-
-
 
             callback.on_return(**common_args, ret=ret)
             return ret
@@ -638,4 +586,3 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
 EndpointCallback.model_rebuild()
 Endpoint.model_rebuild()
-

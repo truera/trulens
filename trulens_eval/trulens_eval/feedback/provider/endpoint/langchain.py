@@ -43,7 +43,7 @@ class LangchainEndpoint(Endpoint):
         response: Any,
         callback: Optional[EndpointCallback],
     ) -> Optional[mod_base_schema.Cost]:
-        
+
         # TODO: Implement this and wrapped
 
         cost = None

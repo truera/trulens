@@ -28,6 +28,7 @@ from trulens_eval.utils.threading import ThreadPoolExecutor
 
 instrument.method(CustomMemory, "remember")
 
+
 class CustomTemplate(Dummy):
     """Simple template class that fills in a question and answer."""
 
@@ -68,7 +69,7 @@ class CustomApp(Dummy):
 
     def __init__(self, num_agents: int = 2, **kwargs):
         super().__init__(**kwargs)
-        
+
         self.memory = CustomMemory(**kwargs)
 
         self.retriever = CustomRetriever(**kwargs)
@@ -79,10 +80,13 @@ class CustomApp(Dummy):
             "The answer to {question} is probably {answer} or something ..."
         )
 
-        self.tools = [CustomTool(**kwargs) for _ in range(3)] + [CustomStackTool(**kwargs)]
+        self.tools = [CustomTool(**kwargs) for _ in range(3)
+                     ] + [CustomStackTool(**kwargs)]
 
         self.agents = [
-            CustomAgent(app=CustomApp(num_agents=0), description=f"ensamble agent {i}") for i in range(num_agents)
+            CustomAgent(
+                app=CustomApp(num_agents=0), description=f"ensamble agent {i}"
+            ) for i in range(num_agents)
         ]
 
         self.reranker = CustomReranker(**kwargs)
@@ -93,8 +97,7 @@ class CustomApp(Dummy):
 
     @instrument
     def process_chunk_by_random_tool(
-        self,
-        chunk_and_score: Tuple[str, float]
+        self, chunk_and_score: Tuple[str, float]
     ) -> str:
         return self\
             .tools[random.randint(0, len(self.tools) - 1)]\
@@ -107,9 +110,7 @@ class CustomApp(Dummy):
         chunks = self.retriever.retrieve_chunks(input)
 
         chunks = self.reranker.rerank(
-            query_text=input,
-            chunks=chunks,
-            chunk_scores=None
+            query_text=input, chunks=chunks, chunk_scores=None
         ) if self.reranker else chunks
 
         # Creates a few threads to process chunks in parallel to test apps that

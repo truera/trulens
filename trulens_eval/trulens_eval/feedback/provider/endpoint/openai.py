@@ -228,7 +228,6 @@ class OpenAICallback(EndpointCallback):
 
             self.handle_generation(response=llm_res)
 
-
         if "choices" in ret and 'delta' in ret.choices[0]:
             # Streaming data.
             content = ret.choices[0].delta.content

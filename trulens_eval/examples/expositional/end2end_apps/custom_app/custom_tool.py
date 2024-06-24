@@ -53,6 +53,7 @@ class CustomTool(Dummy):
 
         return self.imp(data)
 
+
 class CustomStackTool(CustomTool):
     """A tool that returns a rendering of the call stack when it is invokved."""
 
@@ -63,7 +64,7 @@ class CustomStackTool(CustomTool):
     that processes the return from the tool in destructive ways."""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(imp = self.save_stack, *args, **kwargs)
+        super().__init__(imp=self.save_stack, *args, **kwargs)
 
     @instrument
     def save_stack(self, data: str) -> str:
@@ -77,7 +78,8 @@ class CustomStackTool(CustomTool):
             else:
                 fmod = fmod.__name__
             ffunc = frame.f_code.co_name
-            if not fmod.startswith("examples.") or fmod.startswith("trulens_eval"):
+            if not fmod.startswith("examples.") or fmod.startswith(
+                    "trulens_eval"):
                 continue
 
             bytecode = dis.Bytecode(frame.f_code)
@@ -88,7 +90,7 @@ class CustomStackTool(CustomTool):
                 <td><pre><code>{bytecode.dis()}</code></pre></td>
             </tr>
             """
-        
+
         ret += "</table>"
 
         return ret

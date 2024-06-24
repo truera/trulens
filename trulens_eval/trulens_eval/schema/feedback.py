@@ -15,9 +15,9 @@ import pydantic
 from trulens_eval import app as mod_app
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import types as mod_types_schema
+from trulens_eval.utils import json as mod_json
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
-from trulens_eval.utils import json as mod_json
 from trulens_eval.utils import text as mod_text
 
 T = TypeVar("T")

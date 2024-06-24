@@ -7,8 +7,8 @@ configured. See `setUp` below.
 import os
 from pprint import PrettyPrinter
 from unittest import main
-from unittest import TestCase
 from unittest import skip
+from unittest import TestCase
 
 from tests.unit.test import optional_test
 

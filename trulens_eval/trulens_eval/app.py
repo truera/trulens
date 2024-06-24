@@ -9,9 +9,10 @@ import logging
 from pprint import PrettyPrinter
 import threading
 from threading import Lock
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
-                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
-                    TypeVar, Union)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
+    Optional, Sequence, Set, Tuple, Type, TypeVar, Union
+)
 
 import pydantic
 
@@ -76,9 +77,8 @@ manager as in this example:
 ```
 """
 
-def instrumented_component_views(
-    obj: object
-) -> Iterable[Tuple[Lens, JSON]]:
+
+def instrumented_component_views(obj: object) -> Iterable[Tuple[Lens, JSON]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
     attribute/key. Returns tuples with the accessor/selector and the annotated
@@ -835,7 +835,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         assert ctx is not None, "Not in a tracing context."
         assert ctx.tracer is not None, "Not in a tracing context."
-        
+
         self.recording_contexts.reset(ctx.token)
         ctx.tracer[0].__exit__(exc_type, exc_value, exc_tb)
 

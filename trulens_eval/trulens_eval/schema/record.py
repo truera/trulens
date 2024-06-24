@@ -159,7 +159,9 @@ class Record(serial.SerialModel, Hashable):
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
-            record_id = mod_json_utils.obj_id_of_obj(mod_json_utils.jsonify(self), prefix="record")
+            record_id = mod_json_utils.obj_id_of_obj(
+                mod_json_utils.jsonify(self), prefix="record"
+            )
 
         self.record_id = record_id
 

@@ -10,11 +10,7 @@ class CustomLLM(Dummy):
     """Fake LLM."""
 
     def __init__(
-        self,
-        *args,
-        model: str = "derp",
-        temperature: float = 0.5,
-        **kwargs
+        self, *args, model: str = "derp", temperature: float = 0.5, **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.model = model
@@ -31,7 +27,5 @@ class CustomLLM(Dummy):
             temperature = self.temperature
 
         return self.api.completion(
-            model=self.model,
-            temperature=temperature,
-            prompt=prompt
+            model=self.model, temperature=temperature, prompt=prompt
         )['completion']

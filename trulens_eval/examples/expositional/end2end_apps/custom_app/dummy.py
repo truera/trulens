@@ -1,6 +1,7 @@
 import asyncio
 import time
 
+
 class Dummy():
     """Perform some operations to inject performance-related characteristics
     into the dummy app.
@@ -10,6 +11,7 @@ class Dummy():
 
         alloc: How much memory to allocate in the dummy allocate operations.
     """
+
     def __init__(self, delay: float = 0.0, alloc: int = 1024):
         self.delay = delay
         self.alloc = alloc

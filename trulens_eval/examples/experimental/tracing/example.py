@@ -1,14 +1,18 @@
-import functools
-from typing import Self, Type, Iterator, Generator, AsyncGenerator, Awaitable, AsyncIterator
 import asyncio
+import functools
 import time
-import requests
+from typing import (
+    AsyncGenerator, AsyncIterator, Awaitable, Generator, Iterator, Self, Type
+)
 
 from opentelemetry import trace
+import requests
 
 tracer = trace.get_tracer(__name__)
 
+
 def instrument(func):
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         with tracer.start_as_current_span(func.__name__) as span:
@@ -21,11 +25,13 @@ def instrument(func):
 
     return wrapper
 
+
 @tracer.start_as_current_span("useautoinstrumented")
 def useautoinstrumented():
 
     # Args to this method will be captured:
     requests.get("http://snowflake.com")
+
 
 @tracer.start_as_current_span("innerfunction")
 def innerfunction(a: int) -> int:
@@ -52,6 +58,7 @@ def outerfunction(a: int) -> int:
 
     return ret
 
+
 # @tracer.start_as_current_span("somefunction")
 @instrument
 def somefunction(a: int) -> int:
@@ -60,6 +67,7 @@ def somefunction(a: int) -> int:
     # current_span.set_attribute("input_a", a)
 
     return a + 1
+
 
 # @tracer.start_as_current_span("somegenfunction")
 @instrument
@@ -72,12 +80,13 @@ def somegenfunction(a: int) -> Iterator[int]:
     #with tracer.start_as_current_span("somegenfunction") as current_span:
     #    current_span.set_attribute("iteration_limit", a)
     for i in range(a):
-        with tracer.start_as_current_span("somegenfunction_iterations") as iter_span:
+        with tracer.start_as_current_span("somegenfunction_iterations"
+                                         ) as iter_span:
             iter_span = trace.get_current_span()
             iter_span.set_attribute("iteration", i)
             time.sleep(1)
             yield i
-    
+
 
 # @tracer.start_as_current_span("someasyncfunction")
 @instrument
@@ -88,6 +97,7 @@ async def someasyncfunction(a: int) -> int:
     await asyncio.sleep(1)
     return a + 1
 
+
 # @tracer.start_as_current_span("someasyncgenfunction")
 async def someasyncgenfunction(a: int) -> AsyncIterator[int]:
     # Same problem as somegenfunction .
@@ -95,11 +105,13 @@ async def someasyncgenfunction(a: int) -> AsyncIterator[int]:
     #with tracer.start_as_current_span("someasyncgenfunction") as current_span:
     #    current_span.set_attribute("input_a", a)
     for i in range(a):
-        with tracer.start_as_current_span("someasyncgenfunction_iterations") as iter_span:
+        with tracer.start_as_current_span("someasyncgenfunction_iterations"
+                                         ) as iter_span:
             iter_span = trace.get_current_span()
             iter_span.set_attribute("iteration", i)
             await asyncio.sleep(1)
             yield i
+
 
 class SomeClass(object):
     # @tracer.start_as_current_span("somemethod")
@@ -109,7 +121,7 @@ class SomeClass(object):
         # current_span.set_attribute("input_a", a)
 
         return a + 2
-    
+
     #@tracer.start_as_current_span("somestaticmethod")
     @instrument
     @staticmethod
@@ -119,7 +131,7 @@ class SomeClass(object):
         #current_span.set_attribute("input_a", a)
 
         return a + 3
-    
+
     # @tracer.start_as_current_span("someclassmethod")
     @instrument
     @classmethod
@@ -129,6 +141,7 @@ class SomeClass(object):
         current_span.set_attribute("input_a", a)
 
         return a + 4
+
 
 if False:
     somefunction(4)
@@ -148,7 +161,6 @@ if False:
     outerfunction(2)
     outerfunction(2)
 
-
 if False:
     with tracer.start_as_current_span("root") as span:
         # All of these will have the same trace_id, that of span.
@@ -165,7 +177,9 @@ if False:
 
         # tracer2 has no impact on the innerfunction as they were decorated with
         # tracer.
-        tracer2 = trace.get_tracer(__name__) # NOTE: arg is NOT tracer identifier
+        tracer2 = trace.get_tracer(
+            __name__
+        )  # NOTE: arg is NOT tracer identifier
 
         innerfunction(1)
 

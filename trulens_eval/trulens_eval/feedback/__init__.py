@@ -2,8 +2,8 @@
 
 # Specific feedback functions:
 # Main class holding and running feedback functions:
-from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback import embeddings as mod_embeddings
+from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback import groundtruth as mod_groundtruth
 # Providers of feedback functions evaluation:
 from trulens_eval.feedback.provider.hugs import Huggingface

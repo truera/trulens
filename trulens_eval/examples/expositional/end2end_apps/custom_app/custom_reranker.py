@@ -15,7 +15,12 @@ class CustomReranker(Dummy):
         self.model_name = "herpderp-v1-reranker"
 
     @instrument
-    def rerank(self, query_text: str, chunks: List[str], chunk_scores: Optional[List[float]] = None) -> List[Tuple[str, float]]:
+    def rerank(
+        self,
+        query_text: str,
+        chunks: List[str],
+        chunk_scores: Optional[List[float]] = None
+    ) -> List[Tuple[str, float]]:
         """Fake chunk reranker."""
 
         # Pretend to allocate some data.
@@ -24,6 +29,9 @@ class CustomReranker(Dummy):
         # Fake delay.
         self.dummy_wait()
 
-        chunks_and_scores = [(chunk, float(abs(len(chunk) - len(query_text)))) for chunk in chunks]
+        chunks_and_scores = [
+            (chunk, float(abs(len(chunk) - len(query_text))))
+            for chunk in chunks
+        ]
 
         return sorted(chunks_and_scores, key=lambda cs: cs[1])[:self.top_n]
