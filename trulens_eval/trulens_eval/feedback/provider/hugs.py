@@ -1,12 +1,15 @@
 from abc import abstractmethod
 from concurrent.futures import wait
 import logging
-from typing import Dict, get_args, get_origin, List, Optional, Tuple, Union
+from typing import (
+    Any, Dict, get_args, get_origin, List, Optional, Tuple, Union
+)
 
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
 import requests
+import torch
 from tqdm.auto import tqdm
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
@@ -658,14 +661,20 @@ class HuggingfaceLocal(HuggingfaceBase):
     """
     Out of the box feedback functions calling Huggingface APIs.
     """
+
     _cached_tokenizers: Dict[str, PreTrainedTokenizerBase] = {}
     _cached_models: Dict[str, PreTrainedModel] = {}
 
     def _retrieve_tokenizer_and_model(
-        self, key: str
+        self,
+        key: str,
+        tokenizer_kwargs: Optional[Dict[str, Any]] = None
     ) -> Tuple[PreTrainedTokenizerBase, PreTrainedModel]:
         if key not in self._cached_tokenizers:
-            self._cached_tokenizers[key] = AutoTokenizer.from_pretrained(key)
+            tokenizer_kwargs = tokenizer_kwargs if tokenizer_kwargs else {}
+            self._cached_tokenizers[key] = AutoTokenizer.from_pretrained(
+                key, **tokenizer_kwargs
+            )
         if key not in self._cached_models:
             self._cached_models[
                 key] = AutoModelForSequenceClassification.from_pretrained(key)
@@ -701,13 +710,12 @@ class HuggingfaceLocal(HuggingfaceBase):
     # TODEP
     @_tci
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
-        import torch
         tokenizer, model = self._retrieve_tokenizer_and_model(
-            HUGS_DOCNLI_MODEL_PATH
+            HUGS_DOCNLI_MODEL_PATH, tokenizer_kwargs={"use_fast": False}
         )
         with torch.no_grad():
             tokens = tokenizer(
-                premise, hypothesis, truncation=True, return_tensors="pt"
+                premise, hypothesis, truncation=False, return_tensors="pt"
             )
             output = model(tokens["input_ids"])
             prediction = torch.softmax(output["logits"][0], -1).tolist()
