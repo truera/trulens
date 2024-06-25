@@ -340,63 +340,24 @@ class Instrument(object):
 
         class InstrumentationCallbacks(CallableCallbacks):
 
-            def __init__(
-                self, func: Callable, wrapper: Callable, **kwargs: Dict[str,
-                                                                        Any]
-            ):
-                super().__init__(func=func, wrapper=wrapper, **kwargs)
+            def __init__(self, **kwargs: Dict[str, Any]):
+                super().__init__(**kwargs)
 
                 tracer = mod_trace.get_tracer()
                 self.span = tracer.method()
                 self.span.__enter__()
 
             def on_callable_end(
-                self, func: Callable, wrapper: Callable, call_args: Tuple[Any,
-                                                                          ...],
-                call_kwargs: Dict[str, Any], ret: Optional[T],
-                error: Optional[Exception], **kwargs: Dict[str, Any]
+                self
             ):
-                if error is not None:
+                if self.error is not None:
                     self.span.__exit__(
-                        exc_type=type(error),
-                        exc_val=error,
-                        exc_tb=error.__traceback__
+                        exc_type=type(self.error),
+                        exc_val=self.error,
+                        exc_tb=self.error.__traceback__
                     )
                 else:
                     self.span.__exit__(exc_type=None, exc_val=None, exc_tb=None)
-
-            def on_callable_bind(
-                self, func: Callable, wrapper: Callable, args: Tuple[str],
-                kwargs: Dict[str, Any]
-            ):
-                pass
-
-            def on_callable_call(
-                self, func: Callable, wrapper: Callable,
-                bindings: inspect.BoundArguments
-            ) -> inspect.BoundArguments:
-                pass
-                return bindings
-
-            def on_callable_bind_error(
-                self, func: Callable, wrapper: Callable, error: Exception,
-                args: Tuple[Any], kwargs: Dict[str, Any]
-            ) -> Optional[Exception]:
-                return None
-
-            def on_callable_return(
-                self, func: Callable, wrapper: Callable,
-                bindings: inspect.BoundArguments, ret: T
-            ) -> T:
-                pass
-                return ret
-
-            def on_callable_exception(
-                self, func: Callable, wrapper: Callable,
-                bindings: Optional[inspect.BoundArguments], error: Exception
-            ) -> Exception:
-                """Called after wrapped method raises exception."""
-                return error
 
         return wrap_callable(func=func, callback_class=InstrumentationCallbacks)
 
