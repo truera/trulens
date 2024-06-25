@@ -30,7 +30,9 @@ class context_filter:
         ```
     """
 
-    def __init__(self, feedback: Feedback, threshold: float, keyword_for_prompt: str):
+    def __init__(
+        self, feedback: Feedback, threshold: float, keyword_for_prompt: str
+    ):
         self.feedback = feedback
         self.threshold = threshold
         self.keyword_for_prompt = keyword_for_prompt
@@ -42,7 +44,8 @@ class context_filter:
             with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
                 future_to_context = {
                     ex.submit(
-                        lambda context=context: self.feedback(kwargs[self.keyword_for_prompt], context)
+                        lambda context=context: self.
+                        feedback(kwargs[self.keyword_for_prompt], context)
                     ): context for context in contexts
                 }
                 filtered = []
