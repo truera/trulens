@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 from concurrent import futures
 import dataclasses
+from datetime import datetime
 import functools
 import inspect
 import logging
@@ -19,6 +20,7 @@ from typing import (
     Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterable,
     Iterator, List, Optional, Protocol, Sequence, Tuple, Type, TypeVar, Union
 )
+import uuid
 
 from trulens_eval.utils.python import safe_hasattr
 
@@ -117,6 +119,8 @@ def wrap_awaitable(
 
     Args:
         awaitable: The awaitable to wrap.
+
+        callback_class: The class that provides callbacks.
 
         **kwargs: All other arguments are passed in as they are to all callbacks.
     """
@@ -294,14 +298,19 @@ class CallableCallbacks(Generic[T]):
         """Called immediately after the wrapper is produced."""
 
     def __init__(
-        self, func: Callable, wrapper: Callable, call_args: Tuple[Any, ...],
-        call_kwargs: Dict[str, Any], **kwargs: Dict[str, Any]
+        self, call_id: uuid.UUID, func: Callable, wrapper: Callable,
+        call_args: Tuple[Any, ...], call_kwargs: Dict[str, Any],
+        **kwargs: Dict[str, Any]
     ):
-        """Called/constructed when the wrapped function is called but before
-        arguments are bound to its signature."""
+        """Called/constructed when the wrapper function is called but before
+        arguments are bound to the wrapped function's signature."""
 
         # Subclasses can use kwargs.
 
+        self.start_time: Optional[datetime] = None
+        self.end_time: Optional[datetime] = None
+
+        self.call_id: uuid.UUID = call_id
         self.func: Callable = func
         self.wrapper: Callable = wrapper
         self.call_args: Optional[Tuple[Any, ...]] = call_args
@@ -319,6 +328,7 @@ class CallableCallbacks(Generic[T]):
 
     def on_callable_call(
         self,
+        start_time: datetime,
         bindings: inspect.BoundArguments,
     ) -> inspect.BoundArguments:
         """Called before the execution of the wrapped method assuming its
@@ -328,12 +338,14 @@ class CallableCallbacks(Generic[T]):
             This callback must return the bound arguments or wrappers of bound arguments.
         """
         # TODO: instrument lazy arguments
+        self.start_time = start_time
         self.bindings = bindings
 
         return bindings
 
     def on_callable_bind_error(
         self,
+        end_time: datetime,
         error: TypeError,
     ):
         """Called if the wrapped method's arguments cannot be bound.
@@ -344,9 +356,10 @@ class CallableCallbacks(Generic[T]):
         called with the unbindable arguments. This is done to replicate the
         behavior of an unwrapped invocation.
         """
+        self.end_time = end_time
         self.bind_error = error
 
-    def on_callable_return(self, ret: T) -> T:
+    def on_callable_return(self, end_time: datetime, ret: T) -> T:
         """Called after wrapped method returns without error.
         
         !!! Important
@@ -362,16 +375,21 @@ class CallableCallbacks(Generic[T]):
                 return ret
             ```
         """
+        self.end_time = end_time
         self.ret = ret
         return ret
 
-    def on_callable_exception(self, error: Exception) -> Exception:
+    def on_callable_exception(
+        self, end_time: datetime, error: Exception
+    ) -> Exception:
         """Called after wrapped method raises exception."""
+        self.end_time = end_time
         self.error = error
         return error
 
 
 CALLBACKS = "__tru_callbacks"
+
 
 def wrap_callable(
     func: Callable, callback_class: Type[CallableCallbacks], **kwargs: Dict[str,
@@ -394,7 +412,7 @@ def wrap_callable(
         # This is to prevent double wrapping.
 
         existing_callbacks = getattr(func, CALLBACKS)
-        existing_callbacks.push(callback_class, (callback_class, kwargs))
+        existing_callbacks.append(callback_class, (callback_class, kwargs))
 
         existing_wrapper = func.__wrapper__
         callback_class.on_callable_wrapped(**cb_args, wrapper=existing_wrapper)
@@ -409,18 +427,33 @@ def wrap_callable(
             "Calling instrumented method %s of type %s.", func, type(func)
         )
 
+        call_id: uuid.UUID = uuid.uuid4()
+
         callbacks = []
-        for callback_class, callback_init_kwargs in getattr(func, CALLBACKS):
-            callbacks.append(callback_class(call_args=args, call_kwargs=kwargs, **cb_args, **callback_init_kwargs))
+        for callback_class, callback_init_kwargs in getattr(func.__wrapper__, CALLBACKS):
+            callbacks.append(
+                callback_class(
+                    call_id=call_id,
+                    call_args=args,
+                    call_kwargs=kwargs,
+                    **cb_args,
+                    **callback_init_kwargs
+                )
+            )
 
         try:
             bindings = inspect.signature(func).bind(*args, **kwargs)
+            start_time: datetime = datetime.now()
+
             for callback in callbacks:
-                callback.on_callable_call(bindings=bindings)
+                callback.on_callable_call(
+                    bindings=bindings, start_time=start_time
+                )
 
         except TypeError as e:
+            end_time: datetime = datetime.now()
             for callback in callbacks:
-                callback.on_callable_bind_error(error=e)
+                callback.on_callable_bind_error(error=e, end_time=end_time)
 
             # NOTE: Not raising e here to make sure the exception raised by the
             # wrapper is identical to the one produced by calling the wrapped
@@ -430,8 +463,10 @@ def wrap_callable(
             # Get the result of the wrapped function.
             ret = func(*args, **kwargs)
 
+            end_time: datetime = datetime.now()
+
             for callback in callbacks:
-                ret = callback.on_callable_return(ret=ret)
+                ret = callback.on_callable_return(ret=ret, end_time=end_time)
             # Can override ret.
 
             for callback in callbacks:
@@ -442,10 +477,14 @@ def wrap_callable(
         except Exception as e:
             # Or the exception it raised.
 
+            end_time: datetime = datetime.now()
+
             wrapped_e = e
 
             for callback in callbacks:
-                wrapped_e = callback.on_callable_exception(error=wrapped_e)
+                wrapped_e = callback.on_callable_exception(
+                    error=wrapped_e, end_time=end_time
+                )
             # Can override exception.
 
             for callback in callbacks:
@@ -505,9 +544,12 @@ def wrap_callable(
     # Set our tracking attribute to tell whether something is already
     # instrumented onto both the sync and async version since either one
     # could be returned from this method.
-    setattr(wrapper, CALLBACKS, [callback_class])
+
+    cb_args['wrapper'] = wrapper
+
+    setattr(wrapper, CALLBACKS, [(callback_class, kwargs)])
     func.__wrapper__ = wrapper
 
-    callback_class.on_callable_wrapped(**cb_args, wrapper=wrapper)
+    callback_class.on_callable_wrapped(**cb_args)
 
     return wrapper

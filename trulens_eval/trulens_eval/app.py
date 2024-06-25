@@ -820,9 +820,10 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     # For use as a context manager.
     def __enter__(self):
         tracer = mod_trace.tracer_provider.trace()
-        tracer_context = tracer.__enter__()
+        recording = tracer.__enter__()
 
-        ctx = RecordingContext(app=self, tracer=(tracer, tracer_context))
+        ctx = RecordingContext(app=self, tracer=(tracer, recording))
+        recording.ctx = ctx
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -839,9 +840,12 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         self.recording_contexts.reset(ctx.token)
         ctx.tracer[0].__exit__(exc_type, exc_value, exc_tb)
 
-        print("finished recording, have:")
-        for context, span in ctx.tracer[1].spans.items():
-            print(context, span.__class__.__name__)
+        for record in ctx.tracer[1].context.tracer.records_of_recording(ctx.tracer[1]):
+            ctx.records.append(record)
+
+        #print("finished recording, have:")
+        #for context, span in ctx.tracer[1].context.tracer.spans.items():
+        #    print(context, span.__class__.__name__)
 
         if exc_type is not None:
             raise exc_value
@@ -860,6 +864,14 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         while ctx is not contextvars.Token.MISSING:
             yield ctx
             ctx = ctx.token.old_value
+
+    # WithInstrumentCallbacks requirement
+    def on_add_root_span(
+        self,
+        ctx: RecordingContext,
+        span: mod_trace.Span,
+    ) -> None:
+        print("got root span", ctx, span)
 
     # WithInstrumentCallbacks requirement
     def on_add_record(

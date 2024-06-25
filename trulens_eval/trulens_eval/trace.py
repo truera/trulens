@@ -52,6 +52,8 @@ class Context(pydantic.BaseModel):
         return hash(self.trace_id) + hash(self.span_id)
 
     def __eq__(self, other):
+        if other is None:
+            return False
         return self.trace_id == other.trace_id and self.span_id == other.span_id
 
 
@@ -67,8 +69,13 @@ class Span(pydantic.BaseModel):
     error: Optional[str] = None
     """Optional error message if the observed computation raised an exception."""
 
+    @property
+    def tracer(self):
+        return self.context.tracer
+
     def iter_children(self, transitive: bool = True) -> Iterable[Span]:
         """Iterate over all spans that are children of this span."""
+
         # TODO: runtime
         for span in self.tracer.spans.values():
             if span.parent == self.context:
@@ -77,14 +84,39 @@ class Span(pydantic.BaseModel):
                     yield from span.iter_children(transitive=transitive)
 
     def iter_family(self) -> Iterable[Span]:
+        """Iterate itself and all children transitively."""
+
         yield self
         yield from self.iter_children()
 
+    def is_root(self) -> bool:
+        """Check if this span is a "root" span here meaning that it is either a
+        SpanRecord or its parent is a SpanRecord."""
 
-class SpanRecord(Span):
-    """Track an entire Record creation."""
+        if self.parent is None:
+            return True
+        
+        parent = self.context.tracer.spans.get(self.parent)
+        return parent.is_root()
 
-    record: Optional[mod_record_schema.Record] = None
+    def cost_tally(self) -> mod_base_schema.Cost:
+        total = mod_base_schema.Cost()
+
+        for span in self.iter_family():
+            if isinstance(span, SpanCost) and span.cost is not None:
+                total += span.cost
+
+        return total
+
+
+class SpanAppRecordingContext(Span):
+    """Tracks the context of an app used as a context manager."""
+
+    # record: Optional[mod_record_schema.Record] = None
+    ctx: Optional[Any] = None  # TODO: Type
+
+    def is_root(self) -> bool:
+        return True
 
 
 class SpanMethodCall(Span):
@@ -98,15 +130,6 @@ class SpanCost(Span):
 
     cost: Optional[mod_base_schema.Cost] = None
     endpoint: Optional[Any] = None  # TODO: Type
-
-    def tally(self) -> mod_base_schema.Cost:
-        total = mod_base_schema.Cost()
-
-        for span in self.iter_family():
-            if span.cost is not None:
-                cost += span.cost
-
-        return total
 
 
 class Tracer(pydantic.BaseModel):
@@ -129,6 +152,48 @@ class Tracer(pydantic.BaseModel):
             spans_={}
         )
 
+    @staticmethod
+    def _fill_stacks(
+        span: SpanMethodCall,
+        stack: List[mod_record_schema.RecordAppCallMethod] = []
+    ):
+        stack = stack + [span.call.top()]
+        span.call.stack = stack
+            
+        for subspan in span.iter_children(transitive=False):
+            if not isinstance(subspan, SpanMethodCall):
+                continue
+
+            Tracer._fill_stacks(subspan, stack=stack)
+
+    def records_of_recording(self, recording: SpanAppRecordingContext) -> Iterable[mod_record_schema.Record]:
+        """Convert a recording based on spans to a list of records."""
+
+        for root_span in recording.iter_children(transitive=False):
+            assert isinstance(root_span, SpanMethodCall)
+            self._fill_stacks(root_span)
+
+            root_perf = root_span.call.perf
+            root_cost = root_span.cost_tally()
+
+            calls = [root_span.call]
+            for span in root_span.iter_children():
+                if not isinstance(span, SpanMethodCall):
+                    continue
+                calls.append(span.call)
+
+            record = mod_record_schema.Record(
+                record_id=str(uuid.uuid4()),
+                app_id=str(uuid.uuid4()),
+                main_input="placeholder",
+                main_output="placeholder",
+                main_error=None,
+                calls=calls,
+                perf=root_perf,
+                cost=root_cost
+            )
+            yield record
+
     @contextlib.contextmanager
     def _span(self, cls):
         print("tracer", cls.__name__)
@@ -146,8 +211,8 @@ class Tracer(pydantic.BaseModel):
             self.context.reset(token)
             return
 
-    def record(self):
-        return self._span(SpanRecord)
+    def recording(self):
+        return self._span(SpanAppRecordingContext)
 
     def method(self):
         return self._span(SpanMethodCall)
@@ -197,9 +262,9 @@ class TracerProvider():
         prior_tracer = self.tracer
 
         self.tracer = Tracer(context=self.context.get())
-        with self.tracer.record() as root:
+        with self.tracer.recording() as root:
             tok = self.context.set(root.context)
-            yield self.tracer
+            yield root
 
         self.context.reset(tok)
 
