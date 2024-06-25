@@ -373,7 +373,6 @@ class CallableCallbacks(Generic[T]):
 
 CALLBACKS = "__tru_callbacks"
 
-
 def wrap_callable(
     func: Callable, callback_class: Type[CallableCallbacks], **kwargs: Dict[str,
                                                                             Any]
@@ -384,10 +383,24 @@ def wrap_callable(
     Args:
         func: The function to wrap.
 
-        **kwargs: All other arguments are passed in as they are to all callbacks.
+        **kwargs: All other arguments are passed in as they are to the
+            callback_class constructor upon the call to the wrapped func..
     """
 
-    cb_args: Dict[str, Any] = {'func': func, **kwargs}
+    cb_args: Dict[str, Any] = {'func': func}
+
+    if safe_hasattr(func, CALLBACKS):
+        # If CALLBACKS is set, return the wrapped function.
+        # This is to prevent double wrapping.
+
+        existing_callbacks = getattr(func, CALLBACKS)
+        existing_callbacks.push(callback_class, (callback_class, kwargs))
+
+        existing_wrapper = func.__wrapper__
+        callback_class.on_callable_wrapped(**cb_args, wrapper=existing_wrapper)
+
+        # Return the existing wrapper made by a prior wrap_callable call.
+        return existing_wrapper
 
     # If CALLBACKS is not set, create a wrapper and return it.
     @functools.wraps(func)
@@ -396,15 +409,18 @@ def wrap_callable(
             "Calling instrumented method %s of type %s.", func, type(func)
         )
 
-        callback = callback_class(call_args=args, call_kwargs=kwargs, **cb_args)
+        callbacks = []
+        for callback_class, callback_init_kwargs in getattr(func, CALLBACKS):
+            callbacks.append(callback_class(call_args=args, call_kwargs=kwargs, **cb_args, **callback_init_kwargs))
 
         try:
             bindings = inspect.signature(func).bind(*args, **kwargs)
-            callback.on_callable_call(bindings=bindings)
+            for callback in callbacks:
+                callback.on_callable_call(bindings=bindings)
 
         except TypeError as e:
-            callback.on_callable_bind_error(error=e)
-            # raise e
+            for callback in callbacks:
+                callback.on_callable_bind_error(error=e)
 
             # NOTE: Not raising e here to make sure the exception raised by the
             # wrapper is identical to the one produced by calling the wrapped
@@ -414,24 +430,28 @@ def wrap_callable(
             # Get the result of the wrapped function.
             ret = func(*args, **kwargs)
 
-            ret = callback.on_callable_return(ret=ret)
+            for callback in callbacks:
+                ret = callback.on_callable_return(ret=ret)
             # Can override ret.
 
-            callback.on_callable_end()
+            for callback in callbacks:
+                callback.on_callable_end()
+
             return ret
 
         except Exception as e:
             # Or the exception it raised.
 
-            wrapped_e = callback.on_callable_exception(error=e)
+            wrapped_e = e
+
+            for callback in callbacks:
+                wrapped_e = callback.on_callable_exception(error=wrapped_e)
             # Can override exception.
 
-            callback.on_callable_end()
+            for callback in callbacks:
+                callback.on_callable_end()
 
-            if e == wrapped_e:
-                raise e
-            else:
-                raise wrapped_e from e
+            raise wrapped_e from e
 
         # The rest of the code invokes the appropriate callbacks and then
         # populates the content of span created above.
@@ -485,9 +505,9 @@ def wrap_callable(
     # Set our tracking attribute to tell whether something is already
     # instrumented onto both the sync and async version since either one
     # could be returned from this method.
-    setattr(wrapper, CALLBACKS, callback_class)
+    setattr(wrapper, CALLBACKS, [callback_class])
+    func.__wrapper__ = wrapper
 
-    cb_args['wrapper'] = wrapper
-    callback_class.on_callable_wrapped(**cb_args)
+    callback_class.on_callable_wrapped(**cb_args, wrapper=wrapper)
 
     return wrapper

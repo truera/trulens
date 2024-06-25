@@ -334,37 +334,13 @@ class Instrument(object):
         self.app = app
 
     def tracked_method_wrapper(
-        self, query: Lens, func: Callable, method_name: str, cls: type,
+        self,
+        query: Lens,
+        func: Callable,
+        method_name: str,
+        cls: type,
         obj: object
     ) -> Callable:
-
-        class InstrumentationCallbacks(CallableCallbacks):
-
-            def __init__(self, **kwargs: Dict[str, Any]):
-                super().__init__(**kwargs)
-
-                tracer = mod_trace.get_tracer()
-                self.span = tracer.method()
-                self.span.__enter__()
-
-            def on_callable_end(
-                self
-            ):
-                if self.error is not None:
-                    self.span.__exit__(
-                        exc_type=type(self.error),
-                        exc_val=self.error,
-                        exc_tb=self.error.__traceback__
-                    )
-                else:
-                    self.span.__exit__(exc_type=None, exc_val=None, exc_tb=None)
-
-        return wrap_callable(func=func, callback_class=InstrumentationCallbacks)
-
-    def _tracked_method_wrapper(
-        self, query: Lens, func: Callable, method_name: str, cls: type,
-        obj: object
-    ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
         if self.app is None:
@@ -376,34 +352,50 @@ class Instrument(object):
         if safe_hasattr(func, Instrument.INSTRUMENT):
             logger.debug("\t\t\t%s: %s is already instrumented", query, func)
 
-            # Notify the app instrumenting this method where it is located. Note
-            # we store the method being instrumented in the attribute
-            # Instrument.INSTRUMENT of the wrapped variant.
-            original_func = getattr(func, Instrument.INSTRUMENT)
-
-            self.app.on_method_instrumented(obj, original_func, path=query)
-
-            # Add self.app, the app requesting this method to be
-            # instrumented, to the list of apps expecting to be notified of
-            # calls.
-            existing_apps = getattr(func, Instrument.APPS)
-            existing_apps.add(self.app)  # weakref set
-
-            return func
-
         # Notify the app instrumenting this method where it is located:
         self.app.on_method_instrumented(obj, func, path=query)
 
         logger.debug("\t\t\t%s: instrumenting %s=%s", query, method_name, func)
 
-        sig = safe_signature(func)
+        class InstrumentationCallbacks(CallableCallbacks):
 
-        def find_instrumented(f):
-            # Used for finding the wrappers methods in the call stack. Note that
-            # the sync version uses the async one internally and all of the
-            # relevant locals are in the async version. We thus don't look for
-            # sync tru_wrapper calls in the stack.
-            return id(f) == id(tru_wrapper.__code__)
+            def __init__(self, app: Any, query: Lens, method_name: str, cls: type, obj: object, sig: inspect.Signature, **kwargs: Dict[str, Any]):
+                super().__init__(**kwargs)
+
+                self.app = app
+                self.query = query
+                self.method_name = method_name
+                self.cls = cls
+                self.obj = obj
+                self.sig = sig
+
+                tracer = mod_trace.get_tracer()
+                self.span = tracer.method()
+                self.span.__enter__()
+
+                self.contexts = app.on_new_record(func)
+
+            def on_callable_end(self):
+                if self.error is not None:
+                    self.span.__exit__(
+                        exc_type=type(self.error),
+                        exc_val=self.error,
+                        exc_tb=self.error.__traceback__
+                    )
+                else:
+                    self.span.__exit__(exc_type=None, exc_val=None, exc_tb=None)
+
+        return wrap_callable(
+            func=func,
+            callback_class=InstrumentationCallbacks,
+            app=self.app, query=query, method_name=method_name, cls=cls, obj=obj, sig=safe_signature(func)
+        )
+
+    def _tracked_method_wrapper(
+        self, query: Lens, func: Callable, method_name: str, cls: type,
+        obj: object
+    ):
+
 
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
