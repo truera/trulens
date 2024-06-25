@@ -64,7 +64,7 @@ class TestDummy(TestCase):
 
         rec = recorder.get()
 
-        print(rec.model_dumpy())
+        print(rec.model_dump())
 
 if __name__ == '__main__':
     main()

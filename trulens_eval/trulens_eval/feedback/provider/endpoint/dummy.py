@@ -127,7 +127,7 @@ class DummyAPI(pydantic.BaseModel):
         # Huggingface public api sometimes tells us that a model is loading and
         # how long to wait:
         if "estimated_time" in j:
-            wait_time = j['estimated_time']
+            wait_time = float(j['estimated_time'])
             logger.warning(
                 "Waiting for %s (%s) second(s).",
                 j,
