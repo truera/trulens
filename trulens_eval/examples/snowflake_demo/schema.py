@@ -13,13 +13,14 @@ from trulens_eval.tru_custom_app import TruCustomApp
 
 
 class ModelConfig(BaseModel):
-    model: str = "Snowflake Arctic"
+    model: str = "Snowflake Arctic Instruct"
     temperature: float = 0.7
     top_p: float = 1.0
     max_new_tokens: int = 1024
     system_prompt: str = ""
     use_rag: bool = True
     retriever: str = "Cortex Search"
+    provider: str = "Replicate"
     retrieval_filter: float = 0.5
     trulens_recorder: Optional[TruCustomApp] = None
 

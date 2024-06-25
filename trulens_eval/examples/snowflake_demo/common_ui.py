@@ -5,9 +5,9 @@ from typing import Dict
 
 from conversation_manager import ConversationManager
 # feedback functions
-from feedback import feedbacks_no_rag
-from feedback import feedbacks_rag
-from llm import AVAILABLE_MODELS
+from feedback import AVAILABLE_PROVIDERS
+from feedback import get_feedbacks
+from llm import PROVIDER_MODELS
 from llm import StreamGenerator
 from retrieve import AVAILABLE_RETRIEVERS
 from schema import Conversation
@@ -134,10 +134,10 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool, retriever: str, retrieval_filter: float
+    use_rag: bool, retriever: str, retrieval_filter: float, provider: str
 ) -> str:
     # Args are hashed for cache'(' lookup
-    return f"app-prod-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + str(retrieval_filter)) if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+    return f"app-prod-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + str(retrieval_filter)) if use_rag else ''} (provider-{provider}-temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
 
 
 def configure_model(
@@ -151,6 +151,7 @@ def configure_model(
     USE_RAG_KEY = f"use_rag_{key}"
     RETRIEVAL_FILTER_KEY = f"retrieval_filter_{key}"
     RETRIEVER_KEY = f"retriever_{key}"
+    PROVIDER_KEY = f"provider_{key}"
 
     # initialize app metadata for tracking
     metadata = {
@@ -170,6 +171,12 @@ def configure_model(
             st.session_state.get(RETRIEVAL_FILTER_KEY, model_config.retrieval_filter),
         "retriever":
             st.session_state.get(RETRIEVER_KEY, model_config.retriever),
+        "retrieval_filter":
+            st.session_state.get(
+                RETRIEVAL_FILTER_KEY, model_config.retrieval_filter
+            ),
+        "provider":
+            st.session_state.get(PROVIDER_KEY, model_config.provider),
     }
 
     if MODEL_KEY not in st.session_state:
@@ -180,16 +187,17 @@ def configure_model(
         st.session_state[USE_RAG_KEY] = model_config.use_rag
         st.session_state[RETRIEVER_KEY] = model_config.retriever
         st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
-
+        st.session_state[PROVIDER_KEY] = model_config.provider
         metadata = {
-        "model": st.session_state[MODEL_KEY],
-        "temperature": st.session_state[TEMPERATURE_KEY],
-        "top_p": st.session_state[TOP_P_KEY],
-        "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
-        "use_rag": st.session_state[USE_RAG_KEY],
-        "retriever": st.session_state[RETRIEVER_KEY],
-        "retrieval_filter": st.session_state[RETRIEVAL_FILTER_KEY],
-    }
+            "model": st.session_state[MODEL_KEY],
+            "temperature": st.session_state[TEMPERATURE_KEY],
+            "top_p": st.session_state[TOP_P_KEY],
+            "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
+            "use_rag": st.session_state[USE_RAG_KEY],
+            "retriever": st.session_state[RETRIEVER_KEY],
+            "retrieval_filter": st.session_state[RETRIEVAL_FILTER_KEY],
+            "provider": st.session_state[PROVIDER_KEY],
+        }
         
     with container:
         with st.popover(f"Configure :blue[{st.session_state[MODEL_KEY]}]",
@@ -197,9 +205,17 @@ def configure_model(
             left1, right1 = st.columns(2)
             left2, right2 = st.columns(2)
             with left1:
+                model_config.provider = st.selectbox(
+                    label="Select provider:",
+                    options=AVAILABLE_PROVIDERS,
+                    key=PROVIDER_KEY,
+                )
+                if model_config.provider != st.session_state[PROVIDER_KEY]:
+                    st.session_state[PROVIDER_KEY] = model_config.provider
+
                 model_config.model = st.selectbox(
                     label="Select model:",
-                    options=AVAILABLE_MODELS,
+                    options=PROVIDER_MODELS[model_config.provider].keys(),
                     key=MODEL_KEY,
                 )
                 if model_config.model != st.session_state[MODEL_KEY]:
@@ -229,7 +245,8 @@ def configure_model(
                     label="Temperature:",
                     key=TEMPERATURE_KEY,
                 )
-                if model_config.temperature != st.session_state[TEMPERATURE_KEY]:
+                if model_config.temperature != st.session_state[TEMPERATURE_KEY
+                                                               ]:
                     st.session_state[TEMPERATURE_KEY] = model_config.temperature
 
             with right2:
@@ -264,7 +281,7 @@ def configure_model(
                     st.session_state[USE_RAG_KEY] = model_config.use_rag
             model_config.retriever = st.selectbox(
                 label="Select retriever:",
-                options=AVAILABLE_RETRIEVERS.keys(),
+                options=AVAILABLE_RETRIEVERS,
                 key=RETRIEVER_KEY,
             )
             if model_config.retriever != st.session_state[RETRIEVER_KEY]:
@@ -278,11 +295,13 @@ def configure_model(
                     key=RETRIEVAL_FILTER_KEY
                 )
 
-                if model_config.retrieval_filter != st.session_state[RETRIEVAL_FILTER_KEY]:
-                    st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
+                if model_config.retrieval_filter != st.session_state[
+                        RETRIEVAL_FILTER_KEY]:
+                    st.session_state[RETRIEVAL_FILTER_KEY
+                                    ] = model_config.retrieval_filter
 
     app_id = get_tru_app_id(**metadata)
-    feedbacks = feedbacks_rag if model_config.use_rag else feedbacks_no_rag
+    feedbacks = get_feedbacks(model_config.provider, model_config.use_rag)
     app = TruCustomApp(
         generator, app_id=app_id, metadata=metadata, feedbacks=feedbacks
     )
@@ -372,8 +391,7 @@ def chat_response(
 
 
 def generate_title(
-    user_input: str,
-    response_dict: Dict,
+    user_input: str, response_dict: Dict, model_config: ModelConfig
 ):
     SYSTEM_PROMPT = """
         You are a helpful assistant generating a brief summary title of a
@@ -399,7 +417,11 @@ def generate_title(
         ------------------------------------------
     """
     conversation = Conversation()
-    conversation.model_config = ModelConfig(system_prompt=SYSTEM_PROMPT)
+    conversation.model_config = ModelConfig(
+        system_prompt=SYSTEM_PROMPT,
+        provider=model_config.provider,
+        model=model_config.model
+    )
     input_msg = json.dumps({"input": user_input})
     conversation.add_message(
         Message(role="user", content=input_msg), render=False
