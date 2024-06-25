@@ -134,10 +134,10 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool, retriever: str, retrieval_filter: float
+    use_rag: bool, retriever: str, retrieval_filter: float, provider: str
 ) -> str:
     # Args are hashed for cache'(' lookup
-    return f"app-prod-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + str(retrieval_filter)) if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+    return f"app-prod-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + str(retrieval_filter)) if use_rag else ''} (provider-{provider}-temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
 
 
 def configure_model(
@@ -281,7 +281,7 @@ def configure_model(
                     st.session_state[USE_RAG_KEY] = model_config.use_rag
             model_config.retriever = st.selectbox(
                 label="Select retriever:",
-                options=AVAILABLE_RETRIEVERS.keys(),
+                options=AVAILABLE_RETRIEVERS,
                 key=RETRIEVER_KEY,
             )
             if model_config.retriever != st.session_state[RETRIEVER_KEY]:

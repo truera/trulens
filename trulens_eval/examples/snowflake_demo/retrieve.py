@@ -1,6 +1,6 @@
 import json
 import os
-
+import streamlit as st
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores.pinecone import \
     Pinecone as PineconeVectorStore
@@ -46,6 +46,7 @@ class CortexSearchRetriever:
             os.environ["SNOWFLAKE_DATABASE"]].schemas[
                 os.environ["SNOWFLAKE_SCHEMA"]].cortex_search_services[
                     os.environ["SNOWFLAKE_CORTEX_SEARCH_SERVICE"]]
+        print(os.environ["SNOWFLAKE_DATABASE"], os.environ["SNOWFLAKE_SCHEMA"], os.environ["SNOWFLAKE_CORTEX_SEARCH_SERVICE"])
 
     def retrieve(self, query: str):
         resp = self._cortex_search_service.search(
@@ -58,7 +59,18 @@ class CortexSearchRetriever:
         return []
 
 
-AVAILABLE_RETRIEVERS = {
-    "Cortex Search": CortexSearchRetriever(),
-    "Pinecone": PineconeRetriever(),
-}
+AVAILABLE_RETRIEVERS = [
+    "Cortex Search",
+    "Pinecone",
+]
+
+
+@st.cache_resource
+def get_retriever(retriever_name: str):
+    if retriever_name not in AVAILABLE_RETRIEVERS:
+        raise ValueError(f"Retriever {retriever_name} not available.")
+    elif retriever_name == "Cortex Search":
+        return CortexSearchRetriever()
+    elif retriever_name == "Pinecone":
+        return PineconeRetriever()
+    

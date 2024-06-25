@@ -4,7 +4,7 @@ from typing import Any, AsyncIterator, List, Optional
 from feedback import f_small_local_models_context_relevance
 from feedback import get_provider
 import replicate
-from retrieve import AVAILABLE_RETRIEVERS
+from retrieve import get_retriever
 from schema import Conversation
 from schema import Message
 from schema import ModelConfig
@@ -70,9 +70,11 @@ def _reencode_outputs(s: str):
 
 
 ENCODING_MAPPING = {
+    "Snowflake Arctic Instruct": encode_arctic,
     "Snowflake Arctic": encode_arctic,
     "LLaMa 3 8B": encode_llama3,
     "Mistral 7B": encode_generic,
+    "Mistral 7B Instruct (v0.2)": encode_generic,
 }
 
 
@@ -198,8 +200,7 @@ class StreamGenerator:
             conversation.model_config.retrieval_filter, "query"
         )
         def retrieve(*, query: str):
-            retriever = AVAILABLE_RETRIEVERS[conversation.model_config.retriever
-                                            ]
+            retriever = get_retriever(conversation.model_config.retriever)
             return retriever.retrieve(query=last_user_message)
 
         return retrieve(query=last_user_message)
