@@ -11,24 +11,31 @@ class context_filter:
     Parameters:
     feedback (Feedback): The feedback object to use for filtering.
     threshold (float): The minimum feedback value required for a context to be included.
+    keyword_for_prompt (str): Keyword argument to decorator to use for prompt.
 
     !!! example
 
         ```python
-        feedback = Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
-        @context_filter(feedback, 0.5)
-        def retrieve(query: str) -> list:
-            results = vector_store.query(
-            query_texts=query,
-            n_results=3
-        )
-        return [doc for sublist in results['documents'] for doc in sublist]
+        feedback = Feedback(provider.context_relevance, name="Context Relevance")
+        class RAG_from_scratch:
+            ...
+            @context_filter(feedback, 0.5, "query")
+            def retrieve(self, *, query: str) -> list:
+                results = vector_store.query(
+                    query_texts=query,
+                    n_results=3
+                )
+                return [doc for sublist in results['documents'] for doc in sublist]
+            ...
         ```
     """
 
-    def __init__(self, feedback: Feedback, threshold: float):
+    def __init__(
+        self, feedback: Feedback, threshold: float, keyword_for_prompt: str
+    ):
         self.feedback = feedback
         self.threshold = threshold
+        self.keyword_for_prompt = keyword_for_prompt
 
     def __call__(self, func):
 
@@ -37,7 +44,8 @@ class context_filter:
             with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
                 future_to_context = {
                     ex.submit(
-                        lambda context=context: self.feedback(args[1], context)
+                        lambda context=context: self.
+                        feedback(kwargs[self.keyword_for_prompt], context)
                     ): context for context in contexts
                 }
                 filtered = []
