@@ -1,7 +1,7 @@
 import sys
 
-from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.feedback.provider.endpoint.dummy import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.hugs import HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.langchain import LangchainEndpoint
 from trulens_eval.utils.imports import OptionalImports

@@ -28,4 +28,4 @@ class CustomLLM(Dummy):
 
         return self.api.completion(
             model=self.model, temperature=temperature, prompt=prompt
-        )['completion']
+        )['results']['completion']
