@@ -1,23 +1,29 @@
 import sys
-import time
+
+from examples.expositional.end2end_apps.custom_app.dummy import Dummy
 
 from trulens_eval.tru_custom_app import instrument
 
 
-class CustomMemory:
+class CustomMemory(Dummy):
+    """Dummy memory implementation."""
 
-    def __init__(self, delay: float = 0.0, alloc: int = 1024 * 1024):
-        self.alloc = alloc
-        self.delay = delay
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        # keep a chunk of data allocated permentantly:
-        self.temporary = [0x42] * self.alloc
+        self.memory_type = "dummy-memory"
+
+        # Fake memory allocation:
+        self.temporary = self.dummy_allocate()
 
         self.messages = []
 
+    @instrument
     def remember(self, data: str):
-        if self.delay > 0.0:
-            time.sleep(self.delay)
+        """Add a piece of data to memory."""
+
+        # Fake delay.
+        self.dummy_wait()
 
         self.messages.append(
             data +

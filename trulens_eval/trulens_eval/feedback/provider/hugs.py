@@ -739,6 +739,8 @@ class HuggingfaceLocal(HuggingfaceBase):
 
 
 class Dummy(Huggingface):
+    """A version of a Huggingface provider that uses a dummy endpoint and thus
+    produces fake results without making any networked calls to huggingface."""
 
     def __init__(
         self,

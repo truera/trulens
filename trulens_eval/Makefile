@@ -64,6 +64,10 @@ test-static:
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
+# Dummy e2e tests do not involve any costly requests.
+test-dummy:
+	$(CONDA); python -m unittest tests.e2e.test_dummy
+
 test-e2e:
 	$(CONDA); python -m unittest discover tests.e2e
 

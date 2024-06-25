@@ -1,27 +1,31 @@
-import sys
-import time
+from typing import Optional
 
+from examples.expositional.end2end_apps.custom_app.dummy import Dummy
+
+from trulens_eval.feedback.provider.endpoint.dummy import DummyAPI
 from trulens_eval.tru_custom_app import instrument
 
 
-class CustomLLM:
+class CustomLLM(Dummy):
+    """Fake LLM."""
 
     def __init__(
-        self,
-        model: str = "derp",
-        delay: float = 0.01,
-        alloc: int = 1024 * 1024
+        self, *args, model: str = "derp", temperature: float = 0.5, **kwargs
     ):
+        super().__init__(*args, **kwargs)
         self.model = model
-        self.delay = delay
-        self.alloc = alloc
+        self.model_type = "HerpDerp"
+        self.temperature = temperature
+
+        self.api = DummyAPI(*args, **kwargs)
 
     @instrument
-    def generate(self, prompt: str):
-        if self.delay > 0.0:
-            time.sleep(self.delay)
+    def generate(self, prompt: str, temperature: Optional[float] = None) -> str:
+        """Fake LLM generation."""
 
-        temporary = [0x42] * self.alloc
+        if temperature is None:
+            temperature = self.temperature
 
-        return "herp " + prompt[::-1
-                               ] + f" derp and {sys.getsizeof(temporary)} bytes"
+        return self.api.completion(
+            model=self.model, temperature=temperature, prompt=prompt
+        )['completion']
