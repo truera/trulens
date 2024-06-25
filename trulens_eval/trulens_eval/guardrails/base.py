@@ -41,6 +41,13 @@ class context_filter:
 
         def wrapper(*args, **kwargs):
             contexts = func(*args, **kwargs)
+            
+            # TODO: this is a hack
+            main_input = None
+            for arg in args + tuple(kwargs.values()):
+                if isinstance(arg, str):
+                    main_input = arg
+                    break
             with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
                 future_to_context = {
                     ex.submit(

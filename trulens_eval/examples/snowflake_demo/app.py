@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from typing import List
 
 from common_ui import chat_response
@@ -155,7 +159,10 @@ if user_input:
 
     if "conversation_title" not in st.session_state:
         title_dict = dict()
-        t = st_thread(target=generate_title, args=(user_input, title_dict))
+        t = st_thread(
+            target=generate_title,
+            args=(user_input, title_dict, conversation.model_config)
+        )
         t.start()
         t.join()
         if "output" in title_dict:

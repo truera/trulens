@@ -32,13 +32,9 @@ class SmallLocalModels(Provider):
         model = self.context_relevance_model
         with torch.no_grad():
             logit = model.forward(
-                torch.tensor(
-                    tokenizer.convert_tokens_to_ids(
-                        tokenizer.tokenize(f"{question} [SEP] {context}")
-                    )
-                ).reshape(1, -1)
-            ).logits.numpy()
-            if logit.size != 1:
-                raise ValueError("Unexpected number of results from model!")
-            logit = float(logit[0, 0])
+                **tokenizer(
+                    f"premise: {question}[SEP] hypothesis: {context}", 
+                    return_tensors="pt"
+                )
+            ).logits.item()
             return expit(logit)
