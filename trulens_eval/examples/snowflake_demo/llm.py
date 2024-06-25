@@ -18,9 +18,9 @@ from trulens_eval.tru_custom_app import instrument
 PROVIDER_MODELS = {
     "Replicate":
         {
-            "Snowflake Arctic": "snowflake/snowflake-arctic-instruct",
+            "Snowflake Arctic Instruct": "snowflake/snowflake-arctic-instruct",
             "LLaMa 3 8B": "meta/meta-llama-3-8b",
-            "Mistral 7B": "mistralai/mistral-7b-instruct-v0.2",
+            "Mistral 7B Instruct (v0.2)": "mistralai/mistral-7b-instruct-v0.2",
         },
     "Cortex":
         {
