@@ -1,6 +1,9 @@
+from abc import abstractmethod
 from concurrent.futures import wait
 import logging
-from typing import Dict, get_args, get_origin, Optional, Tuple, Union
+from typing import (
+    Any, Dict, get_args, get_origin, List, Optional, Tuple, Union
+)
 
 import nltk
 from nltk.tokenize import sent_tokenize
@@ -23,10 +26,10 @@ logger = logging.getLogger(__name__)
 
 HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
 HUGS_TOXIC_API_URL = "https://api-inference.huggingface.co/models/martin-ha/toxic-comment-model"
-HUGS_CHAT_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-3B"
 HUGS_LANGUAGE_API_URL = "https://api-inference.huggingface.co/models/papluca/xlm-roberta-base-language-detection"
 HUGS_NLI_API_URL = "https://api-inference.huggingface.co/models/ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
 HUGS_DOCNLI_API_URL = "https://api-inference.huggingface.co/models/MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
+HUGS_DOCNLI_MODEL_PATH = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c"
 HUGS_PII_DETECTION_API_URL = "https://api-inference.huggingface.co/models/bigcode/starpii"
 HUGS_CONTEXT_RELEVANCE_API_URL = "https://api-inference.huggingface.co/models/truera/context_relevance"
 HUGS_HALLUCINATION_API_URL = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
@@ -83,51 +86,50 @@ def _tci(func):  # "typecheck inputs"
     return wrapper
 
 
-class Huggingface(Provider):
+class HuggingfaceBase(Provider):
     """
-    Out of the box feedback functions calling Huggingface APIs.
+    Out of the box feedback functions calling Huggingface.
     """
 
-    endpoint: Endpoint
+    @abstractmethod
+    def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
+        ...
 
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        endpoint: Optional[Endpoint] = None,
-        **kwargs
-    ):
-        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
-        # constructor if we don't include it explicitly, even though we set it
-        # down below. Adding it as None here as a temporary hack.
-        """
-        Create a Huggingface Provider with out of the box feedback functions.
+    # TODEP
+    @_tci
+    @abstractmethod
+    def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
+        ...
 
-        !!! example
-    
-            ```python
-            from trulens_eval.feedback.provider.hugs import Huggingface
-            huggingface_provider = Huggingface()
-            ```
-        """
+    @abstractmethod
+    def _context_relevance_endpoint(self, input: str) -> float:
+        ...
 
-        kwargs['name'] = name
+    @abstractmethod
+    def _positive_sentiment_endpoint(self, input: str) -> float:
+        ...
 
-        self_kwargs = dict()
+    @abstractmethod
+    def _toxic_endpoint(self, input: str) -> float:
+        ...
 
-        # TODO: figure out why all of this logic is necessary:
-        if endpoint is None:
-            self_kwargs['endpoint'] = HuggingfaceEndpoint(**kwargs)
-        else:
-            if isinstance(endpoint, Endpoint):
-                self_kwargs['endpoint'] = endpoint
-            else:
-                self_kwargs['endpoint'] = HuggingfaceEndpoint(**endpoint)
+    @abstractmethod
+    def _summarized_groundedness_endpoint(self, input: str) -> float:
+        ...
 
-        self_kwargs['name'] = name or "huggingface"
+    @abstractmethod
+    def _pii_detection_endpoint(self, input: str) -> List[float]:
+        ...
 
-        super().__init__(
-            **self_kwargs
-        )  # need to include pydantic.BaseModel.__init__
+    @abstractmethod
+    def _pii_detection_with_cot_reasons_endpoint(
+        self, input: str
+    ) -> Tuple[List[float], Dict[str, str]]:
+        ...
+
+    @abstractmethod
+    def _hallucination_evaluator_endpoint(self, input: str) -> float:
+        ...
 
     # TODEP
     @_tci
@@ -159,21 +161,13 @@ class Huggingface(Provider):
         Returns:
             float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
         """
-
-        def get_scores(text):
-            payload = {"inputs": text}
-            hf_response = self.endpoint.post(
-                url=HUGS_LANGUAGE_API_URL, payload=payload, timeout=30
-            )
-            return {r['label']: r['score'] for r in hf_response}
-
         with ThreadPoolExecutor(max_workers=2) as tpool:
             max_length = 500
             f_scores1: Future[Dict] = tpool.submit(
-                get_scores, text=text1[:max_length]
+                self._language_scores_endpoint, text=text1[:max_length]
             )
             f_scores2: Future[Dict] = tpool.submit(
-                get_scores, text=text2[:max_length]
+                self._language_scores_endpoint, text=text2[:max_length]
             )
 
         wait([f_scores1, f_scores2])
@@ -274,19 +268,8 @@ class Huggingface(Provider):
 
         if prompt[len(prompt) - 1] != '.':
             prompt += '.'
-        ctx_relevnace_string = prompt + '<eos>' + context
-        payload = {"inputs": ctx_relevnace_string}
-        hf_response = self.endpoint.post(
-            url=HUGS_CONTEXT_RELEVANCE_API_URL, payload=payload
-        )
-
-        for label in hf_response:
-            if label['label'] == 'context_relevance':
-                return label['score']
-
-        raise RuntimeError(
-            "'context_relevance' not found in huggingface api response."
-        )
+        ctx_relevance_string = prompt + '<eos>' + context
+        return self._context_relevance_endpoint(ctx_relevance_string)
 
     # TODEP
     @_tci
@@ -311,20 +294,9 @@ class Huggingface(Provider):
         Returns:
             float: A value between 0 (negative sentiment) and 1 (positive sentiment).
         """
-
         max_length = 500
         truncated_text = text[:max_length]
-        payload = {"inputs": truncated_text}
-
-        hf_response = self.endpoint.post(
-            url=HUGS_SENTIMENT_API_URL, payload=payload
-        )
-
-        for label in hf_response:
-            if label['label'] == 'LABEL_2':
-                return float(label['score'])
-
-        raise RuntimeError("LABEL_2 not found in huggingface api response.")
+        return self._positive_sentiment_endpoint(truncated_text)
 
     # TODEP
     @_tci
@@ -349,21 +321,11 @@ class Huggingface(Provider):
         Returns:
             float: A value between 0 (not toxic) and 1 (toxic).
         """
-
         assert len(text) > 0, "Input cannot be blank."
 
         max_length = 500
         truncated_text = text[:max_length]
-        payload = {"inputs": truncated_text}
-        hf_response = self.endpoint.post(
-            url=HUGS_TOXIC_API_URL, payload=payload
-        )
-
-        for label in hf_response:
-            if label['label'] == 'toxic':
-                return label['score']
-
-        raise RuntimeError("LABEL_2 not found in huggingface api response.")
+        return self._toxic_endpoint(truncated_text)
 
     # TODEP
     @_tci
@@ -382,39 +344,7 @@ class Huggingface(Provider):
         if not '.' == premise[len(premise) - 1]:
             premise = premise + '.'
         nli_string = premise + ' ' + hypothesis
-        payload = {"inputs": nli_string}
-        hf_response = self.endpoint.post(url=HUGS_NLI_API_URL, payload=payload)
-
-        for label in hf_response:
-            if label['label'] == 'entailment':
-                return label['score']
-
-        raise RuntimeError("LABEL_2 not found in huggingface api response.")
-
-    # TODEP
-    @_tci
-    def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
-        """
-        A groundedness measure for full document premise against hypothesis.
-        This Huggingface implementation uses DocNLI. The Hypoethsis still only
-        works on single small hypothesis.
-
-        Args:
-            premise (str): NLI Premise
-            hypothesis (str): NLI Hypothesis
-
-        Returns:
-            float: NLI Entailment
-        """
-        nli_string = premise + ' [SEP] ' + hypothesis
-        payload = {"inputs": nli_string}
-        hf_response = self.endpoint.post(
-            url=HUGS_DOCNLI_API_URL, payload=payload
-        )
-
-        for label in hf_response:
-            if label['label'] == 'entailment':
-                return label['score']
+        return self._summarized_groundedness_endpoint(nli_string)
 
     def pii_detection(self, text: str) -> float:
         """
@@ -438,28 +368,8 @@ class Huggingface(Provider):
         Returns:
             float: The likelihood that a PII is contained in the input text.
         """
-
         # Initialize a list to store scores for "NAME" entities
-        likelihood_scores = []
-
-        payload = {"inputs": text}
-
-        hf_response = self.endpoint.post(
-            url=HUGS_PII_DETECTION_API_URL, payload=payload
-        )
-
-        # If the response is a dictionary, convert it to a list. This is for when only one name is identified.
-        if isinstance(hf_response, dict):
-            hf_response = [hf_response]
-
-        if not isinstance(hf_response, list):
-            raise ValueError(
-                f"Unexpected response from Huggingface API: {hf_response}"
-            )
-
-        # Iterate through the entities and extract scores for "NAME" entities
-        for entity in hf_response:
-            likelihood_scores.append(entity["score"])
+        likelihood_scores = self._pii_detection_endpoint(text)
 
         # Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)
         sum_individual_probabilities = sum(likelihood_scores)
@@ -500,48 +410,9 @@ class Huggingface(Provider):
             Returns:
                 Tuple[float, str]: A tuple containing a the likelihood that a PII is contained in the input text and a string containing what PII is detected (if any).
         """
-
-        # Initialize a dictionary to store reasons
-        reasons = {}
-
-        # Initialize a list to store scores for "NAME" entities
-        likelihood_scores = []
-
-        payload = {"inputs": text}
-
-        try:
-            hf_response = self.endpoint.post(
-                url=HUGS_PII_DETECTION_API_URL, payload=payload
-            )
-
-        # TODO: Make error handling more granular so it's not swallowed.
-        except Exception as e:
-            logger.debug("No PII was found")
-            hf_response = [
-                {
-                    "entity_group": "NONE",
-                    "score": 0.0,
-                    "word": np.nan,
-                    "start": np.nan,
-                    "end": np.nan
-                }
-            ]
-
-        # Convert the response to a list if it's not already a list
-        if not isinstance(hf_response, list):
-            hf_response = [hf_response]
-
-        # Check if the response is a list
-        if not isinstance(hf_response, list):
-            raise ValueError(
-                "Unexpected response from Huggingface API: response should be a list or a dictionary"
-            )
-
-        # Iterate through the entities and extract "word" and "score" for "NAME" entities
-        for i, entity in enumerate(hf_response):
-            reasons[f"{entity.get('entity_group')} detected: {entity['word']}"
-                   ] = f"PII Likelihood: {entity['score']}"
-            likelihood_scores.append(entity["score"])
+        likelihood_scores, reasons = self._pii_detection_with_cot_reasons_endpoint(
+            text
+        )
 
         # Calculate the sum of all individual likelihood scores (P(A) + P(B) + ...)
         sum_individual_probabilities = sum(likelihood_scores)
@@ -586,8 +457,174 @@ class Huggingface(Provider):
             float: Hallucination score
         """
         combined_input = f"{model_output} [SEP] {retrieved_text_chunks}"
-        payload = {"inputs": combined_input}
+        return self._hallucination_evaluator_endpoint(combined_input)
 
+
+class Huggingface(HuggingfaceBase):
+    """
+    Out of the box feedback functions calling Huggingface APIs.
+    """
+
+    endpoint: Endpoint
+
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        endpoint: Optional[Endpoint] = None,
+        **kwargs
+    ):
+        # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
+        # constructor if we don't include it explicitly, even though we set it
+        # down below. Adding it as None here as a temporary hack.
+        """
+        Create a Huggingface Provider with out of the box feedback functions.
+
+        !!! example
+    
+            ```python
+            from trulens_eval.feedback.provider.hugs import Huggingface
+            huggingface_provider = Huggingface()
+            ```
+        """
+
+        kwargs['name'] = name
+
+        self_kwargs = dict()
+
+        # TODO: figure out why all of this logic is necessary:
+        if endpoint is None:
+            self_kwargs['endpoint'] = HuggingfaceEndpoint(**kwargs)
+        else:
+            if isinstance(endpoint, Endpoint):
+                self_kwargs['endpoint'] = endpoint
+            else:
+                self_kwargs['endpoint'] = HuggingfaceEndpoint(**endpoint)
+
+        self_kwargs['name'] = name or "huggingface"
+
+        super().__init__(
+            **self_kwargs
+        )  # need to include pydantic.BaseModel.__init__
+
+    def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
+        payload = {"inputs": text}
+        hf_response = self.endpoint.post(
+            url=HUGS_LANGUAGE_API_URL, payload=payload, timeout=30
+        )
+        return {r['label']: r['score'] for r in hf_response}
+
+    def _context_relevance_endpoint(self, input: str) -> float:
+        payload = {"inputs": input}
+        hf_response = self.endpoint.post(
+            url=HUGS_CONTEXT_RELEVANCE_API_URL, payload=payload
+        )
+        for label in hf_response:
+            if label['label'] == 'context_relevance':
+                return label['score']
+        raise RuntimeError(
+            "'context_relevance' not found in huggingface api response."
+        )
+
+    def _positive_sentiment_endpoint(self, input: str) -> float:
+        payload = {"inputs": input}
+        hf_response = self.endpoint.post(
+            url=HUGS_SENTIMENT_API_URL, payload=payload
+        )
+        for label in hf_response:
+            if label['label'] == 'LABEL_2':
+                return float(label['score'])
+        raise RuntimeError("LABEL_2 not found in huggingface api response.")
+
+    def _toxic_endpoint(self, input: str) -> float:
+        payload = {"inputs": input}
+        hf_response = self.endpoint.post(
+            url=HUGS_TOXIC_API_URL, payload=payload
+        )
+        for label in hf_response:
+            if label['label'] == 'toxic':
+                return label['score']
+        raise RuntimeError("toxic not found in huggingface api response.")
+
+    def _summarized_groundedness_endpoint(self, input: str) -> float:
+        payload = {"inputs": input}
+        hf_response = self.endpoint.post(url=HUGS_NLI_API_URL, payload=payload)
+        for label in hf_response:
+            if label['label'] == 'entailment':
+                return label['score']
+        raise RuntimeError("entailment not found in huggingface api response.")
+
+    # TODEP
+    @_tci
+    def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
+        nli_string = premise + ' [SEP] ' + hypothesis
+        payload = {"inputs": nli_string}
+        hf_response = self.endpoint.post(
+            url=HUGS_DOCNLI_API_URL, payload=payload
+        )
+        for label in hf_response:
+            if label['label'] == 'entailment':
+                return label['score']
+        raise ValueError(f"Unrecognized output from {HUGS_DOCNLI_API_URL}!")
+
+    def _pii_detection_endpoint(self, input: str) -> List[float]:
+        likelihood_scores = []
+        payload = {"inputs": input}
+        hf_response = self.endpoint.post(
+            url=HUGS_PII_DETECTION_API_URL, payload=payload
+        )
+        # If the response is a dictionary, convert it to a list. This is for when only one name is identified.
+        if isinstance(hf_response, dict):
+            hf_response = [hf_response]
+        if not isinstance(hf_response, list):
+            raise ValueError(
+                f"Unexpected response from Huggingface API: {hf_response}"
+            )
+        # Iterate through the entities and extract scores for "NAME" entities
+        for entity in hf_response:
+            likelihood_scores.append(entity["score"])
+        return likelihood_scores
+
+    def _pii_detection_with_cot_reasons_endpoint(
+        self, input: str
+    ) -> Tuple[List[float], Dict[str, str]]:
+        # Initialize a dictionary to store reasons
+        reasons = {}
+        # Initialize a list to store scores for "NAME" entities
+        likelihood_scores = []
+        payload = {"inputs": input}
+        try:
+            hf_response = self.endpoint.post(
+                url=HUGS_PII_DETECTION_API_URL, payload=payload
+            )
+        # TODO: Make error handling more granular so it's not swallowed.
+        except Exception as e:
+            logger.debug("No PII was found")
+            hf_response = [
+                {
+                    "entity_group": "NONE",
+                    "score": 0.0,
+                    "word": np.nan,
+                    "start": np.nan,
+                    "end": np.nan
+                }
+            ]
+        # Convert the response to a list if it's not already a list
+        if not isinstance(hf_response, list):
+            hf_response = [hf_response]
+        # Check if the response is a list
+        if not isinstance(hf_response, list):
+            raise ValueError(
+                "Unexpected response from Huggingface API: response should be a list or a dictionary"
+            )
+        # Iterate through the entities and extract "word" and "score" for "NAME" entities
+        for _, entity in enumerate(hf_response):
+            reasons[f"{entity.get('entity_group')} detected: {entity['word']}"
+                   ] = f"PII Likelihood: {entity['score']}"
+            likelihood_scores.append(entity["score"])
+        return likelihood_scores, reasons
+
+    def _hallucination_evaluator_endpoint(self, input: str) -> float:
+        payload = {"inputs": input}
         response = self.endpoint.post(
             url=HUGS_HALLUCINATION_API_URL, payload=payload
         )
@@ -612,8 +649,93 @@ class Huggingface(Provider):
             raise RuntimeError(
                 "Unexpected response type. Please check the API endpoint."
             )
-
         return score
+
+
+class HuggingfaceLocal(HuggingfaceBase):
+    """
+    Out of the box feedback functions calling Huggingface APIs.
+    """
+
+    _cached_tokenizers: Dict[str, Any] = {}
+    _cached_models: Dict[str, Any] = {}
+
+    def _retrieve_tokenizer_and_model(
+        self,
+        key: str,
+        tokenizer_kwargs: Optional[Dict[str, Any]] = None
+    ) -> Tuple[Any, Any]:
+        from transformers import AutoModelForSequenceClassification
+        from transformers import AutoTokenizer
+        if key not in self._cached_tokenizers:
+            tokenizer_kwargs = tokenizer_kwargs if tokenizer_kwargs else {}
+            self._cached_tokenizers[key] = AutoTokenizer.from_pretrained(
+                key, **tokenizer_kwargs
+            )
+        if key not in self._cached_models:
+            self._cached_models[
+                key] = AutoModelForSequenceClassification.from_pretrained(key)
+        tokenizer = self._cached_tokenizers[key]
+        model = self._cached_models[key]
+        return tokenizer, model
+
+    def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _context_relevance_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _positive_sentiment_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _toxic_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _summarized_groundedness_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    # TODEP
+    @_tci
+    def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
+        import torch
+
+        tokenizer, model = self._retrieve_tokenizer_and_model(
+            HUGS_DOCNLI_MODEL_PATH, tokenizer_kwargs={"use_fast": False}
+        )
+        with torch.no_grad():
+            tokens = tokenizer(
+                premise, hypothesis, truncation=False, return_tensors="pt"
+            )
+            output = model(tokens["input_ids"])
+            prediction = torch.softmax(output["logits"][0], -1).tolist()
+        return prediction[0]
+
+    def _pii_detection_endpoint(self, input: str) -> List[float]:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _pii_detection_with_cot_reasons_endpoint(
+        self, input: str
+    ) -> Tuple[List[float], Dict[str, str]]:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _hallucination_evaluator_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
 
 
 class Dummy(Huggingface):
