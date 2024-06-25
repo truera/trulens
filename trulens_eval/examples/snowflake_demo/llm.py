@@ -2,6 +2,7 @@ import json
 import re
 from typing import AsyncIterator, List, Optional
 
+from feedback import f_small_local_models_context_relevance
 import replicate
 from retrieve import AVAILABLE_RETRIEVERS
 from schema import Conversation
@@ -9,11 +10,9 @@ from schema import Message
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
+from trulens_eval.guardrails.base import context_filter
 # replicate key for running model
 from trulens_eval.tru_custom_app import instrument
-from trulens_eval.guardrails.base import context_filter
-
-from feedback import f_small_local_models_context_relevance
 
 FRIENDLY_MAPPING = {
     "Snowflake Arctic": "snowflake/snowflake-arctic-instruct",
@@ -160,14 +159,17 @@ class StreamGenerator:
         self, last_user_message: str, prompt_str: str,
         conversation: Conversation
     ):
-        @context_filter(f_small_local_models_context_relevance, conversation.model_config.retrieval_filter)
-        def retrieve():
-            retriever = AVAILABLE_RETRIEVERS[conversation.model_config.retriever]
-            texts = retriever.retrieve(query=last_user_message)
-            context_message = "\n\n".join(texts)
-            return _reencode_outputs(context_message), texts
 
-        return retrieve()
+        @context_filter(
+            f_small_local_models_context_relevance,
+            conversation.model_config.retrieval_filter, "query"
+        )
+        def retrieve(*, query: str):
+            retriever = AVAILABLE_RETRIEVERS[conversation.model_config.retriever
+                                            ]
+            return retriever.retrieve(query=last_user_message)
+
+        return retrieve(query=last_user_message)
 
     @instrument
     def retrieve_and_generate_response(
@@ -177,11 +179,12 @@ class StreamGenerator:
         conversation: Conversation,
         st_container: Optional[DeltaGenerator] = None
     ) -> str:
-        context_message, nodes = self.retrieve_context(
+        contexts = self.retrieve_context(
             last_user_message=last_user_message,
             prompt_str=prompt_str,
             conversation=conversation
         )  # Fixed by passing the conversation object instead of prompt_str
+        context_message = _reencode_outputs("\n\n".join(contexts))
         model_config = conversation.model_config
         full_model_name = FRIENDLY_MAPPING[model_config.model]
 
