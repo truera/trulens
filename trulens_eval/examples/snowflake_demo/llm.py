@@ -2,7 +2,7 @@ import json
 import re
 from typing import AsyncIterator, List, Optional
 
-from feedback import f_small_local_models_context_relevance
+from feedback import f_small_local_models_context_relevance, f_context_relevance
 import replicate
 from retrieve import AVAILABLE_RETRIEVERS
 from schema import Conversation
@@ -21,6 +21,10 @@ FRIENDLY_MAPPING = {
 }
 AVAILABLE_MODELS = [k for k in FRIENDLY_MAPPING.keys()]
 
+AVAILABLE_FEEDBACK_FUNCTION_FILTERS = {
+    "Context Relevance (LLM-as-Judge)": f_context_relevance,
+    "Context Relevance (small)": f_small_local_models_context_relevance,
+}
 
 def encode_arctic(messages: List[Message]):
     prompt = []
@@ -161,7 +165,7 @@ class StreamGenerator:
     ):
 
         @context_filter(
-            f_small_local_models_context_relevance,
+            AVAILABLE_FEEDBACK_FUNCTION_FILTERS[conversation.model_config.filter_feedback_function],
             conversation.model_config.retrieval_filter, "query"
         )
         def retrieve(*, query: str):

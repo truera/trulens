@@ -8,6 +8,7 @@ from conversation_manager import ConversationManager
 from feedback import feedbacks_no_rag
 from feedback import feedbacks_rag
 from llm import AVAILABLE_MODELS
+from llm import AVAILABLE_FEEDBACK_FUNCTION_FILTERS
 from llm import StreamGenerator
 from retrieve import AVAILABLE_RETRIEVERS
 from schema import Conversation
@@ -134,12 +135,9 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool, retriever: str, retrieval_filter: float
-) -> str:
+    use_rag: bool, retriever: str, retrieval_filter: float, filter_feedback_function: str) -> str:
     # Args are hashed for cache'(' lookup
-    return f"app-prod-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + str(retrieval_filter)) if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
-
-
+    return f"app-dev-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + filter_feedback_function + '-' + str(retrieval_filter)) if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
 def configure_model(
     *, container, model_config: ModelConfig, key: str, full_width: bool = True
 ):
@@ -150,6 +148,7 @@ def configure_model(
     SYSTEM_PROMPT_KEY = f"system_prompt_{key}"
     USE_RAG_KEY = f"use_rag_{key}"
     RETRIEVAL_FILTER_KEY = f"retrieval_filter_{key}"
+    FILTER_FEEDBACK_FUNCTION_KEY = f"filter_feedback_function_{key}"
     RETRIEVER_KEY = f"retriever_{key}"
 
     # initialize app metadata for tracking
@@ -168,6 +167,8 @@ def configure_model(
             st.session_state.get(USE_RAG_KEY, model_config.use_rag),
         "retrieval_filter":
             st.session_state.get(RETRIEVAL_FILTER_KEY, model_config.retrieval_filter),
+        "filter_feedback_function":
+            st.session_state.get(FILTER_FEEDBACK_FUNCTION_KEY, model_config.filter_feedback_function),
         "retriever":
             st.session_state.get(RETRIEVER_KEY, model_config.retriever),
     }
@@ -180,6 +181,7 @@ def configure_model(
         st.session_state[USE_RAG_KEY] = model_config.use_rag
         st.session_state[RETRIEVER_KEY] = model_config.retriever
         st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
+        st.session_state[FILTER_FEEDBACK_FUNCTION_KEY] = model_config.filter_feedback_function
 
         metadata = {
         "model": st.session_state[MODEL_KEY],
@@ -262,24 +264,35 @@ def configure_model(
                 )
                 if model_config.use_rag != st.session_state[USE_RAG_KEY]:
                     st.session_state[USE_RAG_KEY] = model_config.use_rag
-            model_config.retriever = st.selectbox(
-                label="Select retriever:",
-                options=AVAILABLE_RETRIEVERS.keys(),
-                key=RETRIEVER_KEY,
-            )
-            if model_config.retriever != st.session_state[RETRIEVER_KEY]:
-                st.session_state[RETRIEVER_KEY] = model_config.retriever
 
-                model_config.retrieval_filter = st.slider(
-                    min_value=0,
-                    max_value=1,
-                    step=0.1,
-                    label="Context Relevance Filter for Retrieval",
-                    key=RETRIEVAL_FILTER_KEY
-                )
+                if model_config.use_rag:
+                    model_config.retriever = st.selectbox(
+                        label="Select retriever:",
+                        options=AVAILABLE_RETRIEVERS.keys(),
+                        key=RETRIEVER_KEY,
+                        )
+                    if model_config.retriever != st.session_state[RETRIEVER_KEY]:
+                        st.session_state[RETRIEVER_KEY] = model_config.retriever
 
-                if model_config.retrieval_filter != st.session_state[RETRIEVAL_FILTER_KEY]:
-                    st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
+                    model_config.retrieval_filter = st.slider(
+                            min_value=0.0,
+                            max_value=1.0,
+                            step=0.1,
+                            label="Context Relevance Filter for Retrieval",
+                            key=RETRIEVAL_FILTER_KEY
+                        )
+
+                    if model_config.retrieval_filter != st.session_state[RETRIEVAL_FILTER_KEY]:
+                        st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
+
+                    model_config.filter_feedback_function = st.selectbox(
+                    label="Select Feedback Function for Filter:",
+                    options=AVAILABLE_FEEDBACK_FUNCTION_FILTERS.keys(),
+                    key=FILTER_FEEDBACK_FUNCTION_KEY,
+                    )
+
+                    if model_config.filter_feedback_function != st.session_state[FILTER_FEEDBACK_FUNCTION_KEY]:
+                        st.session_state[FILTER_FEEDBACK_FUNCTION_KEY] = model_config.filter_feedback_function
 
     app_id = get_tru_app_id(**metadata)
     feedbacks = feedbacks_rag if model_config.use_rag else feedbacks_no_rag

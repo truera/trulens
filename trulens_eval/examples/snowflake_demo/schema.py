@@ -19,8 +19,9 @@ class ModelConfig(BaseModel):
     max_new_tokens: int = 1024
     system_prompt: str = ""
     use_rag: bool = True
-    retriever: str = "Cortex Search"
-    retrieval_filter: float = 0.5
+    retriever: Optional[str] = "Cortex Search"
+    retrieval_filter: Optional[float] = 0.5
+    filter_feedback_function: Optional[str] = "Context Relevance (LLM-as-Judge)"
     trulens_recorder: Optional[TruCustomApp] = None
 
 
