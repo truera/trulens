@@ -82,12 +82,14 @@ f_criminality_output = Feedback(
 
 feedbacks_rag = [
     f_context_relevance,
-    f_small_local_models_context_relevance,
+    #f_small_local_models_context_relevance,
     f_answer_relevance,
     f_groundedness,
-    f_criminality_input,
-    f_criminality_output,
+    #f_criminality_input,
+    #f_criminality_output,
 ]
 feedbacks_no_rag = [
-    f_answer_relevance, f_criminality_input, f_criminality_output
+    f_answer_relevance,
+      #f_criminality_input,
+      #f_criminality_output
 ]
