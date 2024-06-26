@@ -302,6 +302,7 @@ class DummyEndpoint(Endpoint):
     """
 
     api: DummyAPI = Field(default_factory=DummyAPI)
+    """Fake API to use for making fake requests."""
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="dummyendpoint")

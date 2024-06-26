@@ -44,6 +44,8 @@ markdown_extensions:
 watch:
   - trulens_explain/trulens
   - trulens_eval/trulens_eval
+  - trulens_eval/tests
+  - trulens_eval/examples
 
 plugins:
   - include-markdown:
@@ -261,9 +263,11 @@ nav:
           - 🦜️🔗 LangChain: trulens_eval/api/provider/langchain.md
           - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
           - Cortex: trulens_eval/api/provider/cortex.md
+          - Dummy: trulens_eval/api/provider/dummy.md
           - Endpoint:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
+              - Dummy: trulens_eval/api/endpoint/dummy.md
       - 𝄢 Instruments: trulens_eval/api/instruments.md
       - 🛡️ Guardrails:
           - trulens_eval/api/guardrails/index.md
@@ -280,6 +284,9 @@ nav:
           - trulens_eval/api/utils/json.md
           - trulens_eval/api/utils/frameworks.md
           - trulens_eval/api/utils/utils.md
+      - Testing:
+          - trulens_eval/api/testing/custom_app.md
+#          - trulens_eval/api/testing/test.md
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
       - 🧭 Design: trulens_eval/contributing/design.md

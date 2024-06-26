@@ -9,7 +9,8 @@ from trulens_eval.utils.python import locals_except
 class DummyProvider(LLMProvider):
     """Fake LLM provider.
     
-    Does not make any networked requests but pretends to.
+    Does not make any networked requests but pretends to. Uses
+    [DummyEndpoint][trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint].
     """
 
     model_engine: str = "dummymodel"
