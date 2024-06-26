@@ -6,7 +6,7 @@ from pprint import PrettyPrinter
 import random
 import sys
 from time import sleep
-from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TypeVar
 
 from numpy import random as np_random
 import pydantic
@@ -41,8 +41,8 @@ class DummyAPI(pydantic.BaseModel):
     """How often to produce the "model loading" response that huggingface api
     sometimes produces."""
 
-    loading_time: Callable[[], float] = \
-        Field(exclude=True, default_factory=lambda: lambda: random.uniform(0.73, 3.7))
+    loading_time: Callable[[DummyAPI],
+                           float] = lambda s: s.random.uniform(0.73, 3.7)
     """How much time to indicate as needed to load the model."""
 
     error_prob: float
@@ -60,25 +60,39 @@ class DummyAPI(pydantic.BaseModel):
     delay: float = 0.0
     """How long to delay each request."""
 
+    seed: int = 0xdeadbeef
+    """Control randomness."""
+
+    random: Any = Field(exclude=True)
+    """Random number generator."""
+
+    np_random: Any = Field(exclude=True)
+    """Numpy Random number generator."""
+
     def __init__(
         self,
-        error_prob: float = 1 / 100,
-        freeze_prob: float = 1 / 100,
+        error_prob: float = 0 / 100,
+        freeze_prob: float = 0 / 100,
         overloaded_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
         alloc: int = 1024 * 1024,
         delay: float = 0.0,
+        seed: int = 0xdeadbeef,
         **kwargs
     ):
         assert error_prob + freeze_prob + overloaded_prob + loading_prob <= 1.0, "Probabilites should not exceed 1.0 ."
         assert alloc >= 0
         assert delay >= 0.0
 
-        super().__init__(**locals_except("self", "kwargs"))
+        super().__init__(
+            **locals_except("self", "kwargs"),
+            random=random.Random(seed),
+            np_random=np_random.RandomState(seed)
+        )
 
     def post(
         self, url: str, payload: JSON, timeout: Optional[float] = None
-    ) -> Dict:
+    ) -> Any:
         """Pretend to make an http post request to some model execution API."""
 
         if timeout is None:
@@ -90,7 +104,7 @@ class DummyAPI(pydantic.BaseModel):
         logger.debug("I have allocated %s bytes.", sys.getsizeof(temporary))
 
         if self.delay > 0.0:
-            sleep(max(0.0, np_random.normal(self.delay, self.delay / 2)))
+            sleep(max(0.0, self.np_random.normal(self.delay, self.delay / 2)))
 
         r = random.random()
         j = {}
@@ -113,7 +127,7 @@ class DummyAPI(pydantic.BaseModel):
         if r < self.loading_prob:
             # Simulated loading model outcome.
 
-            j = {'estimated_time': self.loading_time()}
+            j = {'estimated_time': self.loading_time(self)}
         r -= self.loading_prob
 
         if r < self.overloaded_prob:
@@ -147,29 +161,18 @@ class DummyAPI(pydantic.BaseModel):
 
             raise RuntimeError(error)
 
-        j['status'] = 'success'
+        if "api-inference.huggingface.co" in url:
+            # pretend to produce huggingface api classification results
+            return self._fake_classification()
+        else:
+            return self._fake_completion(
+                model=payload['model'],
+                prompt=payload['prompt'],
+                temperature=payload['temperature']
+            )
 
-        return j
-
-    def completion(
-        self, *args, model: str, temperature: float = 0.0, prompt: str
-    ) -> Dict:
-        """Fake text completion request."""
-
-        # Fake http post request, might raise an exception or cause delays.
-        postret = self.post(
-            url="https://fakeservice.com/classify",
-            payload={
-                'mode': 'completion',
-                'model': model,
-                'prompt': prompt,
-                'temperature': temperature
-            }
-        )
-
-        if postret.get('status', 'failure') != 'success':
-            raise RuntimeError("Failed to generate text completion.")
-
+    @staticmethod
+    def _fake_completion(model: str, prompt: str, temperature: float) -> Dict:
         generated_text: str = "my original response is " + prompt
 
         result = {
@@ -190,43 +193,57 @@ class DummyAPI(pydantic.BaseModel):
                 }
         }
 
-        return {'results': result}
+        return result
 
-    def classify(self, *args, model: str = "fakeclassier", text: str) -> Dict:
-        """Fake classification request."""
+    def completion(
+        self, *args, model: str, temperature: float = 0.0, prompt: str
+    ) -> Dict:
+        """Fake text completion request."""
 
         # Fake http post request, might raise an exception or cause delays.
-        postret = self.post(
+        return self.post(
             url="https://fakeservice.com/classify",
             payload={
-                'mode': 'classification',
+                'mode': 'completion',
                 'model': model,
-                'text': text
+                'prompt': prompt,
+                'temperature': temperature
             }
         )
 
-        if postret.get('status', 'failure') != 'success':
-            raise RuntimeError("Failed to generate text completion.")
-
+    @staticmethod
+    def _fake_classification():
         # Simulated success outcome with some constant results plus some randomness.
-        result = {
-            'status': 'success',
-            'scores':
-                [
-                    {
-                        'label': 'LABEL_1',
-                        'score': 0.6034979224205017 + random.random()
-                    }, {
-                        'label': 'LABEL_2',
-                        'score': 0.2648237645626068 + random.random()
-                    }, {
-                        'label': 'LABEL_0',
-                        'score': 0.13167837262153625 + random.random()
-                    }
-                ]
-        }
+        result = [
+            {
+                'label': 'LABEL_1',
+                'score': 0.6034979224205017 + random.random()
+            }, {
+                'label': 'LABEL_2',
+                'score': 0.2648237645626068 + random.random()
+            }, {
+                'label': 'LABEL_0',
+                'score': 0.13167837262153625 + random.random()
+            }
+        ]
 
-        return {'results': result}
+        return result
+
+    def classification(
+        self, *args, model: str = "fakeclassier", text: str
+    ) -> Dict:
+        """Fake classification request."""
+
+        # Fake http post request, might raise an exception or cause delays.
+        return self.post(
+            url=
+            "https://api-inference.huggingface.co/classify",  # url makes the fake post produce fake classification scores
+            payload={
+                'mode': 'classification',
+                'model': model,
+                'inputs': text
+            }
+        )
 
 
 class DummyAPICreator():
@@ -259,12 +276,12 @@ class DummyAPICreator():
 class DummyEndpointCallback(EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
-    def handle_classification(self, response: Any) -> None:
+    def handle_classification(self, response: Sequence) -> None:
         super().handle_classification(response)
-    
+
         if "scores" in response:
             # fake classification
-            self.cost.n_classes += len(response.get("scores", []))
+            self.cost.n_classes += len(response)
 
     def handle_generation(self, response: Dict) -> None:
         super().handle_generation(response=response)
@@ -349,15 +366,6 @@ class DummyEndpoint(Endpoint):
             "\tresponse: %s", func, bindings, response
         )
 
-        if "results" not in response:
-            logger.warning(
-                "Could not find results in DummyAPI response:\n%s",
-                pp.pformat(response)
-            )
-            return
-
-        response = response['results']
-
         if "usage" in response:
             counted_something = True
             self.global_callback.handle_generation(response=response)
@@ -365,7 +373,7 @@ class DummyEndpoint(Endpoint):
             if callback is not None:
                 callback.handle_generation(response=response)
 
-        elif "scores" in response:
+        elif isinstance(response, Sequence):
             counted_something = True
             self.global_callback.handle_classification(response=response)
 

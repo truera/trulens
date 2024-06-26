@@ -1,7 +1,9 @@
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
+import json
 import os
+from pathlib import Path
 from typing import Dict, Sequence
 import unittest
 from unittest import TestCase
@@ -9,6 +11,7 @@ from unittest import TestCase
 import pydantic
 from pydantic import BaseModel
 
+from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
 
@@ -50,6 +53,35 @@ def module_installed(module: str) -> bool:
 
 
 class JSONTestCase(TestCase):
+
+    def assertGoldenJSONEqual(
+        self,
+        actual,
+        golden_filename: str,
+        skips=None,
+        numeric_places: int = 7,
+    ):
+        write_golden: bool = bool(os.environ.get("WRITE_GOLDEN", ""))
+
+        caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
+        golden_path = (caller_path / "golden" / golden_filename).resolve()
+
+        if write_golden:
+            with golden_path.open("w") as f:
+                json.dump(actual, f)
+
+            self.fail("Golden file written.")
+
+        else:
+            if not golden_path.exists():
+                raise FileNotFoundError(f"Golden file {golden_path} not found.")
+
+            with golden_path.open("r") as f:
+                expected = json.load(f)
+
+            self.assertJSONEqual(
+                actual, expected, skips=skips, numeric_places=numeric_places
+            )
 
     def assertJSONEqual(
         self,

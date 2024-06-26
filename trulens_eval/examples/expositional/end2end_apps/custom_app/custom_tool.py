@@ -1,6 +1,5 @@
 import dis
 import inspect
-import random
 from typing import Callable, Optional
 
 from examples.expositional.end2end_apps.custom_app.dummy import Dummy
@@ -37,7 +36,7 @@ class CustomTool(Dummy):
         super().__init__(*args, **kwargs)
 
         if description is None:
-            imp = random.choice(str_maps)
+            imp = self.random.choice(str_maps)
             description = imp.__doc__
 
         self.description = description

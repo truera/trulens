@@ -1,4 +1,5 @@
 import asyncio
+import random
 import time
 
 
@@ -10,13 +11,20 @@ class Dummy():
         delay: How long to wait in the dummy wait operations.
 
         alloc: How much memory to allocate in the dummy allocate operations.
+
+        seed: Random seed for the dummy random number generator.
     """
 
-    def __init__(self, delay: float = 0.0, alloc: int = 1024):
+    def __init__(
+        self, delay: float = 0.0, alloc: int = 1024, seed: int = 0xdeadbeef
+    ):
         self.delay = delay
         self.alloc = alloc
 
         self.dummy_allocated_data = None
+
+        self.seed = seed
+        self.random = random.Random(seed)
 
     def dummy_wait(self):
         """Wait for a while."""

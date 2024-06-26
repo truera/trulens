@@ -735,6 +735,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         return tru_wrapper
 
+
 EndpointCallback.model_rebuild()
 Endpoint.model_rebuild()
-

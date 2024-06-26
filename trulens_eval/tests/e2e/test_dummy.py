@@ -13,6 +13,7 @@ from unittest import main
 from unittest import TestCase
 
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
+from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.dummy import DummyProvider
@@ -21,7 +22,7 @@ from trulens_eval.tru_custom_app import TruCustomApp
 pp = PrettyPrinter()
 
 
-class TestDummy(TestCase):
+class TestDummy(JSONTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
@@ -34,16 +35,14 @@ class TestDummy(TestCase):
         """Check that recording of example custom app using dummy endpoint works
         and produces a consistent record."""
 
-        
-
         d = DummyProvider(
             loading_prob=0.0,
             freeze_prob=0.0,
             error_prob=0.0,
             overloaded_prob=0.0,
             rpm=1000,
-            alloc = 0,
-            delay = 0.0
+            alloc=0,
+            delay=0.0
         )
 
         # Create custom app:
@@ -60,25 +59,16 @@ class TestDummy(TestCase):
 
         rec = recorder.get()
 
-        actual = rec.model_dump()
-
-        golden_path = (Path(__file__).parent / "golden" / "dummy.json").resolve()
-
-        if self.write_golden:
-            with golden_path.open("w") as f:
-                json.dump(actual, f)
-
-            self.fail("Golden file written.")
-
-        else:
-            if not golden_path.exists():
-                raise FileNotFoundError(f"Golden file {golden_path} not found.")
-           
-            with golden_path.open("r") as f:
-                expected = json.load(f)
-
-            # NEED JSON DIFF HERE
-            self.assertEqual(actual, expected)
+        self.assertGoldenJSONEqual(
+            actual=rec.model_dump(),
+            golden_filename="dummy.json",
+            skips=set(
+                [
+                    "record_id", 'start_time', 'end_time', 'ts', 'pid', 'tid',
+                    'call_id', 'id'
+                ]
+            )
+        )
 
 
 if __name__ == '__main__':
