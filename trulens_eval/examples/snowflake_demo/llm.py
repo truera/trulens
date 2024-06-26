@@ -28,6 +28,7 @@ PROVIDER_MODELS = {
             "Snowflake Arctic": "snowflake-arctic",
             "LLaMa 3 8B": "llama3-8b",
             "Mistral 7B": "mistral-7b",
+            "Mistral Large": "mistral-large"
         }
 }
 
@@ -35,6 +36,7 @@ AVAILABLE_FEEDBACK_FUNCTION_FILTERS = {
     "Context Relevance (LLM-as-Judge)": f_context_relevance,
     "Context Relevance (small)": f_small_local_models_context_relevance,
 }
+
 
 def encode_arctic(messages: List[Message]):
     prompt = []
@@ -80,6 +82,7 @@ ENCODING_MAPPING = {
     "LLaMa 3 8B": encode_llama3,
     "Mistral 7B": encode_generic,
     "Mistral 7B Instruct (v0.2)": encode_generic,
+    "Mistral Large": encode_generic
 }
 
 
@@ -201,7 +204,8 @@ class StreamGenerator:
     ):
 
         @context_filter(
-            AVAILABLE_FEEDBACK_FUNCTION_FILTERS[conversation.model_config.filter_feedback_function],
+            AVAILABLE_FEEDBACK_FUNCTION_FILTERS[
+                conversation.model_config.filter_feedback_function],
             conversation.model_config.retrieval_filter, "query"
         )
         def retrieve(*, query: str):
