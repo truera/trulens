@@ -1,7 +1,7 @@
 import json
 import pathlib
 import threading
-from typing import Dict
+from typing import Dict, Any
 
 from conversation_manager import ConversationManager
 from feedback import feedbacks_no_rag
@@ -134,9 +134,17 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool, retriever: str, retrieval_filter: float, filter_feedback_function: str) -> str:
+    use_rag: bool, retriever: str, retrieval_filter: float, filter_feedback_function: str, provider: str) -> str:
     # Args are hashed for cache'(' lookup
-    return f"app-dev-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + filter_feedback_function + '-' + str(retrieval_filter)) if use_rag else ''} (temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+    return f"app-dev-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + filter_feedback_function + '-' + str(retrieval_filter)) if use_rag else ''} (provider-{provider}-temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+
+@st.cache_resource
+def get_trulens_app(app_id: str, metadata: dict[str, Any]):
+    feedbacks = get_feedbacks(metadata['provider'], metadata['use_rag'])
+    return TruCustomApp(
+        generator, app_id=app_id, metadata=metadata, feedbacks=feedbacks
+    )
+
 def configure_model(
     *, container, model_config: ModelConfig, key: str, full_width: bool = True
 ):
@@ -310,10 +318,7 @@ def configure_model(
                         st.session_state[FILTER_FEEDBACK_FUNCTION_KEY] = model_config.filter_feedback_function
 
     app_id = get_tru_app_id(**metadata)
-    feedbacks = get_feedbacks(model_config.provider, model_config.use_rag)
-    app = TruCustomApp(
-        generator, app_id=app_id, metadata=metadata, feedbacks=feedbacks
-    )
+    app = get_trulens_app(app_id, metadata)
     model_config.trulens_recorder = app
     return model_config
 
