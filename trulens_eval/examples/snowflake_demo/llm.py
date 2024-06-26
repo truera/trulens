@@ -1,7 +1,7 @@
 import re
 from typing import Any, AsyncIterator, List, Optional
 
-# from feedback import f_small_local_models_context_relevance
+from feedback import f_small_local_models_context_relevance
 from feedback import f_context_relevance
 from feedback import get_provider
 import replicate
@@ -35,7 +35,7 @@ PROVIDER_MODELS = {
 
 AVAILABLE_FEEDBACK_FUNCTION_FILTERS = {
     "Context Relevance (LLM-as-Judge)": f_context_relevance,
-    # "Context Relevance (small)": f_small_local_models_context_relevance,
+    "Context Relevance (small)": f_small_local_models_context_relevance,
 }
 
 
