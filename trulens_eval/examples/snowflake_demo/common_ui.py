@@ -1,7 +1,7 @@
 import json
 import pathlib
 import threading
-from typing import Dict
+from typing import Dict, Any
 
 from conversation_manager import ConversationManager
 # feedback functions
@@ -138,6 +138,14 @@ def get_tru_app_id(
 ) -> str:
     # Args are hashed for cache'(' lookup
     return f"app-prod-{model}{'-' + retriever if use_rag else ''}{('-retrieval-filter-' + str(retrieval_filter)) if use_rag else ''} (provider-{provider}-temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens})"
+
+
+@st.cache_resource
+def get_trulens_app(app_id: str, metadata: dict[str, Any]):
+    feedbacks = get_feedbacks(metadata['provider'], metadata['use_rag'])
+    return TruCustomApp(
+        generator, app_id=app_id, metadata=metadata, feedbacks=feedbacks
+    )
 
 
 def configure_model(
@@ -301,10 +309,7 @@ def configure_model(
                                     ] = model_config.retrieval_filter
 
     app_id = get_tru_app_id(**metadata)
-    feedbacks = get_feedbacks(model_config.provider, model_config.use_rag)
-    app = TruCustomApp(
-        generator, app_id=app_id, metadata=metadata, feedbacks=feedbacks
-    )
+    app = get_trulens_app(app_id, metadata)
     model_config.trulens_recorder = app
     return model_config
 
