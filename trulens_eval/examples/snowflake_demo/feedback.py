@@ -34,16 +34,6 @@ f_small_local_models_context_relevance = (
     )  # choose a different aggregation method if you wish
 )
 
-provider = Cortex(model_engine="snowflake-arctic")
-
-f_context_relevance = (
-        Feedback(provider.context_relevance,
-                name="Context Relevance").on_input().on(
-                    Select.RecordCalls.retrieve_context.rets[:]
-                ).aggregate(np.mean
-                            )  # choose a different aggregation method if you wish
-    )
-
 @st.cache_resource
 def get_provider(provider_name: str):
     if provider_name == "Replicate":
@@ -100,7 +90,7 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
         name="Criminality input",
         higher_is_better=False,
     ).on(Select.RecordInput)
-    f_criminality_output = Feedback(
+    f_criminality_output = Feedback(ƒ
         provider.criminality_with_cot_reasons,
         name="Criminality output",
         higher_is_better=False,
@@ -121,3 +111,13 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
             #f_criminality_input,
             #f_criminality_output
       ]
+    
+provider = get_provider("cortex")
+
+f_context_relevance = (
+        Feedback(provider.context_relevance,
+                name="Context Relevance").on_input().on(
+                    Select.RecordCalls.retrieve_context.rets[:]
+                ).aggregate(np.mean
+                            )  # choose a different aggregation method if you wish
+    )
