@@ -34,6 +34,15 @@ f_small_local_models_context_relevance = (
     )  # choose a different aggregation method if you wish
 )
 
+provider = Cortex(model_engine="snowflake-arctic")
+
+f_context_relevance = (
+        Feedback(provider.context_relevance,
+                name="Context Relevance").on_input().on(
+                    Select.RecordCalls.retrieve_context.rets[:]
+                ).aggregate(np.mean
+                            )  # choose a different aggregation method if you wish
+    )
 
 @st.cache_resource
 def get_provider(provider_name: str):
@@ -42,7 +51,7 @@ def get_provider(provider_name: str):
             model_engine="replicate/snowflake/snowflake-arctic-instruct"
         )
     elif provider_name == "Cortex":
-        return Cortex(model_engine="mixtral-8x7b")
+        return Cortex(model_engine="snowflake-arctic")
     elif provider_name in AVAILABLE_PROVIDERS:
         raise NotImplementedError(
             f"Provider {provider_name} is not yet implemented."
