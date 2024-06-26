@@ -210,6 +210,7 @@ def configure_model(
             "use_rag": st.session_state[USE_RAG_KEY],
             "retriever": st.session_state[RETRIEVER_KEY],
             "retrieval_filter": st.session_state[RETRIEVAL_FILTER_KEY],
+            "filter_feedback_function": st.session_state[FILTER_FEEDBACK_FUNCTION_KEY],
             "provider": st.session_state[PROVIDER_KEY],
         }
         

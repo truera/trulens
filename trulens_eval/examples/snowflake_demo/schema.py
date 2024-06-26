@@ -19,7 +19,7 @@ class ModelConfig(BaseModel):
     max_new_tokens: int = 1024
     system_prompt: str = ""
     use_rag: bool = True
-    retriever: Optional[str] = "Cortex Search"
+    retriever: str = "Cortex Search"
     provider: str = "Replicate"
     retrieval_filter: Optional[float] = 0.5
     filter_feedback_function: Optional[str] = "Context Relevance (LLM-as-Judge)"
