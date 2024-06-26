@@ -80,7 +80,7 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
         name="Criminality input",
         higher_is_better=False,
     ).on(Select.RecordInput)
-    f_criminality_output = Feedback(ƒ
+    f_criminality_output = Feedback(
         provider.criminality_with_cot_reasons,
         name="Criminality output",
         higher_is_better=False,
