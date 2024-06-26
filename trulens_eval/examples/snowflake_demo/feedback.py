@@ -24,17 +24,6 @@ tru = Tru(database_url=db_url)
 
 AVAILABLE_PROVIDERS = ["Replicate", "Cortex"]
 
-small_local_model_provider = SmallLocalModels()
-f_small_local_models_context_relevance = (
-    Feedback(
-        small_local_model_provider.context_relevance,
-        name="[Small Local Model] Context Relevance",
-    ).on_input().on(Select.RecordCalls.retrieve_context.rets[:]).aggregate(
-        np.mean
-    )  # choose a different aggregation method if you wish
-)
-
-
 @st.cache_resource
 def get_provider(provider_name: str):
     if provider_name == "Replicate":
@@ -42,7 +31,7 @@ def get_provider(provider_name: str):
             model_engine="replicate/snowflake/snowflake-arctic-instruct"
         )
     elif provider_name == "Cortex":
-        return Cortex(model_engine="mixtral-8x7b")
+        return Cortex(model_engine="snowflake-arctic")
     elif provider_name in AVAILABLE_PROVIDERS:
         raise NotImplementedError(
             f"Provider {provider_name} is not yet implemented."
@@ -99,12 +88,36 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
 
     if use_rag:
         return [
-            f_context_relevance,
-            f_small_local_models_context_relevance,
-            f_answer_relevance,
-            f_groundedness,
-            f_criminality_input,
-            f_criminality_output,
-        ]
+          f_context_relevance,
+          #f_small_local_models_context_relevance,
+          f_answer_relevance,
+          f_groundedness,
+          #f_criminality_input,
+          #f_criminality_output,
+          ]
     else:
-        return [f_answer_relevance, f_criminality_input, f_criminality_output]
+        return [
+          f_answer_relevance,
+            #f_criminality_input,
+            #f_criminality_output
+      ]
+    
+provider = get_provider("Cortex")
+
+f_context_relevance = (
+        Feedback(provider.context_relevance,
+                name="Context Relevance").on_input().on(
+                    Select.RecordCalls.retrieve_context.rets[:]
+                ).aggregate(np.mean
+                            )  # choose a different aggregation method if you wish
+    )
+
+small_local_model_provider = SmallLocalModels()
+f_small_local_models_context_relevance = (
+    Feedback(
+        small_local_model_provider.context_relevance,
+        name="[Small Local Model] Context Relevance",
+    ).on_input().on(Select.RecordCalls.retrieve_context.rets[:]).aggregate(
+        np.mean
+    )  # choose a different aggregation method if you wish
+)

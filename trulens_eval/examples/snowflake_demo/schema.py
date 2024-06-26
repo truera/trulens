@@ -21,7 +21,8 @@ class ModelConfig(BaseModel):
     use_rag: bool = True
     retriever: str = "Cortex Search"
     provider: str = "Replicate"
-    retrieval_filter: float = 0.5
+    retrieval_filter: Optional[float] = 0.5
+    filter_feedback_function: Optional[str] = "Context Relevance (LLM-as-Judge)"
     trulens_recorder: Optional[TruCustomApp] = None
 
 
