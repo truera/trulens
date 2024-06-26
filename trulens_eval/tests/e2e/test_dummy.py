@@ -5,26 +5,18 @@ These tests make use of potentially non-free apis and require
 various secrets configured. See `setUp` below.
 """
 
-from concurrent.futures import as_completed
+import json
 import os
+from pathlib import Path
 from pprint import PrettyPrinter
-from time import sleep
 from unittest import main
 from unittest import TestCase
 
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
-from tests.unit.test import optional_test
-from tqdm.auto import tqdm
 
-from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.dummy import DummyProvider
-from trulens_eval.feedback.provider.endpoint import Endpoint
-from trulens_eval.keys import check_keys
-from trulens_eval.schema.feedback import FeedbackMode
 from trulens_eval.tru_custom_app import TruCustomApp
-from trulens_eval.utils.asynchro import sync
-from trulens_eval.utils.threading import TP
 
 pp = PrettyPrinter()
 
@@ -36,9 +28,13 @@ class TestDummy(TestCase):
         self.tru = Tru()
         self.tru.reset_database()
 
+        self.write_golden: bool = bool(os.environ.get("WRITE_GOLDEN", ""))
+
     def test_dummy(self):
         """Check that recording of example custom app using dummy endpoint works
         and produces a consistent record."""
+
+        
 
         d = DummyProvider(
             loading_prob=0.0,
@@ -64,7 +60,26 @@ class TestDummy(TestCase):
 
         rec = recorder.get()
 
-        print(rec.model_dump())
+        actual = rec.model_dump()
+
+        golden_path = (Path(__file__).parent / "golden" / "dummy.json").resolve()
+
+        if self.write_golden:
+            with golden_path.open("w") as f:
+                json.dump(actual, f)
+
+            self.fail("Golden file written.")
+
+        else:
+            if not golden_path.exists():
+                raise FileNotFoundError(f"Golden file {golden_path} not found.")
+           
+            with golden_path.open("r") as f:
+                expected = json.load(f)
+
+            # NEED JSON DIFF HERE
+            self.assertEqual(actual, expected)
+
 
 if __name__ == '__main__':
     main()
