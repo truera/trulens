@@ -28,11 +28,11 @@ class TestTruCustomApp(JSONTestCase):
         question = "What is the capital of Indonesia?"
 
         # Normal usage:
-        response_normal = self.ca.respond_to_query(question)
+        response_normal = self.ca.respond_to_query(query=question)
 
         # Instrumented usage:
         response_wrapped, record = self.ta_recorder.with_record(
-            self.ca.respond_to_query, input=question, record_metadata="meta1"
+            self.ca.respond_to_query, query=question, record_metadata="meta1"
         )
 
         self.assertEqual(response_normal, response_wrapped)
@@ -45,11 +45,11 @@ class TestTruCustomApp(JSONTestCase):
         question = "What is the capital of Indonesia?"
 
         # Normal usage:
-        response_normal = self.ca.respond_to_query(question)
+        response_normal = self.ca.respond_to_query(query=question)
 
         # Instrumented usage:
         with self.ta_recorder as recording:
-            response_wrapped = self.ca.respond_to_query(input=question)
+            response_wrapped = self.ca.respond_to_query(query=question)
 
         self.assertEqual(response_normal, response_wrapped)
 
@@ -60,16 +60,16 @@ class TestTruCustomApp(JSONTestCase):
         question2 = "What is the capital of Poland?"
 
         # Normal usage:
-        response_normal1 = self.ca.respond_to_query(question1)
-        response_normal2 = self.ca.respond_to_query(question2)
+        response_normal1 = self.ca.respond_to_query(query=question1)
+        response_normal2 = self.ca.respond_to_query(query=question2)
 
         # Instrumented usage:
         with self.ta_recorder as recording1:
             recording1.record_metadata = "meta1"
-            response_wrapped1 = self.ca.respond_to_query(input=question1)
+            response_wrapped1 = self.ca.respond_to_query(query=question1)
             with self.ta_recorder as recording2:
                 recording2.record_metadata = "meta2"
-                response_wrapped2 = self.ca.respond_to_query(input=question2)
+                response_wrapped2 = self.ca.respond_to_query(query=question2)
 
         self.assertEqual(response_normal1, response_wrapped1)
         self.assertEqual(response_normal2, response_wrapped2)
