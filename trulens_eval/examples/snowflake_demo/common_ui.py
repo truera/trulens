@@ -291,7 +291,7 @@ def configure_model(
                 if model_config.use_rag:
                     model_config.retriever = st.selectbox(
                         label="Select retriever:",
-                        options=AVAILABLE_RETRIEVERS.keys(),
+                        options=AVAILABLE_RETRIEVERS,
                         key=RETRIEVER_KEY,
                         )
                     if model_config.retriever != st.session_state[RETRIEVER_KEY]:
