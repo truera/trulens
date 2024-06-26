@@ -64,9 +64,15 @@ test-static:
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
-# Dummy e2e tests do not involve any costly requests.
-test-dummy:
+# Dummy and serial e2e tests do not involve any costly requests.
+test-dummy: # has golden file
 	$(CONDA); python -m unittest tests.e2e.test_dummy
+test-serial: # has golden file
+	$(CONDA); python -m unittest tests.e2e.test_serial
+test-golden: test-dummy test-serial
+test-write-golden: test-write-golden-dummy test-write-golden-serial
+test-write-golden-%:
+	$(CONDA); WRITE_GOLDEN=1 python -m unittest tests.e2e.test_$* || true
 
 test-e2e:
 	$(CONDA); python -m unittest discover tests.e2e

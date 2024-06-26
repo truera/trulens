@@ -1,8 +1,9 @@
 from abc import abstractmethod
 from concurrent.futures import wait
 import logging
-from typing import (Any, Dict, get_args, get_origin, List, Optional, Tuple,
-                    Union)
+from typing import (
+    Any, Dict, get_args, get_origin, List, Optional, Tuple, Union
+)
 
 import nltk
 from nltk.tokenize import sent_tokenize

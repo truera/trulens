@@ -1,5 +1,6 @@
 import json
 from typing import Dict, Optional, Sequence
+
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import DummyEndpoint
 from trulens_eval.utils.python import locals_except
@@ -10,7 +11,7 @@ class DummyProvider(LLMProvider):
     
     Does not make any networked requests but pretends to.
     """
-    
+
     model_engine: str = "dummymodel"
 
     def __init__(
@@ -23,6 +24,7 @@ class DummyProvider(LLMProvider):
         alloc: int = 1024 * 1024,
         rpm: float = 600,
         delay: float = 1.0,
+        seed: int = 0xdeadbeef,
         **kwargs
     ):
         kwargs['name'] = name or "dummyhugs"
@@ -45,9 +47,9 @@ class DummyProvider(LLMProvider):
             Completion model response.
         """
 
-        
         if prompt is None:
             prompt = json.dumps(messages)
 
-        return self.endpoint.api.completion(prompt=prompt, **kwargs)
-        
+        return self.endpoint.api.completion(
+            model=self.model_engine, prompt=prompt, **kwargs
+        )['completion']

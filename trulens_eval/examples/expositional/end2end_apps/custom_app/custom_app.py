@@ -5,7 +5,6 @@ delays and allocs to mimic the effects of such things.
 """
 
 from concurrent.futures import wait
-import random
 from typing import Tuple
 
 from examples.expositional.end2end_apps.custom_app.custom_agent import \
@@ -100,7 +99,7 @@ class CustomApp(Dummy):
         self, chunk_and_score: Tuple[str, float]
     ) -> str:
         return self\
-            .tools[random.randint(0, len(self.tools) - 1)]\
+            .tools[self.random.randint(0, len(self.tools) - 1)]\
             .invoke(chunk_and_score[0])
 
     @instrument
