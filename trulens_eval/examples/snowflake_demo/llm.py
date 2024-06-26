@@ -15,7 +15,6 @@ from streamlit.delta_generator import DeltaGenerator
 from trulens_eval.guardrails.base import context_filter
 # replicate key for running model
 from trulens_eval.tru_custom_app import instrument
-import httpx
 
 PROVIDER_MODELS = {
     "Replicate":
