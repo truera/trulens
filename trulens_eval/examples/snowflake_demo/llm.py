@@ -1,7 +1,7 @@
 import re
 from typing import Any, AsyncIterator, List, Optional
 
-from feedback import f_small_local_models_context_relevance
+# from feedback import f_small_local_models_context_relevance
 from feedback import f_context_relevance
 from feedback import get_provider
 import replicate
@@ -15,6 +15,7 @@ from streamlit.delta_generator import DeltaGenerator
 from trulens_eval.guardrails.base import context_filter
 # replicate key for running model
 from trulens_eval.tru_custom_app import instrument
+import httpx
 
 PROVIDER_MODELS = {
     "Replicate":
@@ -28,13 +29,15 @@ PROVIDER_MODELS = {
             "Snowflake Arctic": "snowflake-arctic",
             "LLaMa 3 8B": "llama3-8b",
             "Mistral 7B": "mistral-7b",
+            "Mistral Large": "mistral-large"
         }
 }
 
 AVAILABLE_FEEDBACK_FUNCTION_FILTERS = {
     "Context Relevance (LLM-as-Judge)": f_context_relevance,
-    "Context Relevance (small)": f_small_local_models_context_relevance,
+    # "Context Relevance (small)": f_small_local_models_context_relevance,
 }
+
 
 def encode_arctic(messages: List[Message]):
     prompt = []
@@ -80,6 +83,7 @@ ENCODING_MAPPING = {
     "LLaMa 3 8B": encode_llama3,
     "Mistral 7B": encode_generic,
     "Mistral 7B Instruct (v0.2)": encode_generic,
+    "Mistral Large": encode_generic
 }
 
 
@@ -122,6 +126,30 @@ class StreamGenerator:
         )
         for t in stream_iter:
             yield str(t)
+
+    def corvo_complete(self, model_name: str, model_input: dict):
+        """
+        Sends a request to the Corvo text completion endpoint and handles streaming responses.
+
+        :return: The final response.
+        """
+        url = "https://corvo.preprodc1.us-west-2.aws-dev.app.snowflake.com:443/v1/textcompletion"
+        request_data = {
+            "modelDetails": {
+                "name": model_name
+            },
+            "streaming": True,
+            "prompts": [f"<s> [INST] {model_input['prompt']} [/INST]"],
+            "maxOutputTokens": 2000
+        }
+        headers = {"Content-Type": "application/json"}
+
+        with httpx.Client() as client:
+            with client.stream("POST", url, json=request_data,
+                               headers=headers) as response:
+                response.raise_for_status()
+                for chunk in response.iter_text():
+                    yield chunk
 
     def _generate_with_cortex(self, model_name: str, model_input: dict):
         response = get_provider("Cortex")._create_chat_completion(
@@ -201,7 +229,8 @@ class StreamGenerator:
     ):
 
         @context_filter(
-            AVAILABLE_FEEDBACK_FUNCTION_FILTERS[conversation.model_config.filter_feedback_function],
+            AVAILABLE_FEEDBACK_FUNCTION_FILTERS[
+                conversation.model_config.filter_feedback_function],
             conversation.model_config.retrieval_filter, "query"
         )
         def retrieve(*, query: str):
