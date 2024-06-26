@@ -344,4 +344,3 @@ except Exception as e:
 
     st.error(tb)
     st.exception(e)
-    st.stop()
