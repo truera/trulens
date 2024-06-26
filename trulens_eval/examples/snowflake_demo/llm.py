@@ -127,30 +127,6 @@ class StreamGenerator:
         for t in stream_iter:
             yield str(t)
 
-    def corvo_complete(self, model_name: str, model_input: dict):
-        """
-        Sends a request to the Corvo text completion endpoint and handles streaming responses.
-
-        :return: The final response.
-        """
-        url = "https://corvo.preprodc1.us-west-2.aws-dev.app.snowflake.com:443/v1/textcompletion"
-        request_data = {
-            "modelDetails": {
-                "name": model_name
-            },
-            "streaming": True,
-            "prompts": [f"<s> [INST] {model_input['prompt']} [/INST]"],
-            "maxOutputTokens": 2000
-        }
-        headers = {"Content-Type": "application/json"}
-
-        with httpx.Client() as client:
-            with client.stream("POST", url, json=request_data,
-                               headers=headers) as response:
-                response.raise_for_status()
-                for chunk in response.iter_text():
-                    yield chunk
-
     def _generate_with_cortex(self, model_name: str, model_input: dict):
         response = get_provider("Cortex")._create_chat_completion(
             prompt=model_input['prompt'],
