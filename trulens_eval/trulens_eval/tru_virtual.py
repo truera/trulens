@@ -407,7 +407,6 @@ class VirtualRecord(mod_record_schema.Record):
         if (end_time - start_time).total_seconds() == 0.0:
             end_time += datetime.timedelta(microseconds=1)
 
-
         kwargs['cost'] = cost or mod_base_schema.Cost()
         kwargs['perf'] = perf or mod_base_schema.Perf(
             start_time=start_time, end_time=end_time
