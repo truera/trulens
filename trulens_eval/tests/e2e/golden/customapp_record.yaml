@@ -1,0 +1,616 @@
+app_id: customapp
+calls:
+- args:
+    data: hello
+  call_id: 63134c33-fd8f-4bc5-864e-ebe2cabed85a
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.208127'
+    start_time: '2024-06-26T17:39:43.203678'
+  pid: 45240
+  rets: Record placeholder
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: invoke
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_agent
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomAgent
+        id: 5692874896
+        init_bindings: null
+    path: app.agents[0]
+  tid: 5742674
+- args:
+    data: hello
+  call_id: 7369316a-d4d7-4c6a-a8c8-91788e18f55a
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.226919'
+    start_time: '2024-06-26T17:39:43.222627'
+  pid: 45240
+  rets: Record placeholder
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: invoke
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_agent
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomAgent
+        id: 5692874896
+        init_bindings: null
+    path: app.agents[1]
+  tid: 5742674
+- args:
+    data: hello
+  call_id: cb40c5c7-ba45-4f16-9785-e28858ba1388
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.265195'
+    start_time: '2024-06-26T17:39:43.260363'
+  pid: 45240
+  rets:
+  - 'Relevant chunk: HELLO'
+  - 'Relevant chunk: olleholleholleh'
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: get_context
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: retrieve_chunks
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_retriever
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomRetriever
+        id: 5692879792
+        init_bindings: null
+    path: app.retriever
+  tid: 5742674
+- args:
+    chunk_scores: null
+    chunks:
+    - 'Relevant chunk: HELLO'
+    - 'Relevant chunk: olleholleholleh'
+    query_text: hello
+  call_id: ae2aad9d-4bf9-4a35-8a89-0e6d7f51d900
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.284635'
+    start_time: '2024-06-26T17:39:43.280137'
+  pid: 45240
+  rets:
+  - - 'Relevant chunk: HELLO'
+    - 16.0
+  - - 'Relevant chunk: olleholleholleh'
+    - 26.0
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: get_context
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: rerank
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_reranker
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomReranker
+        id: 5692874992
+        init_bindings: null
+    path: app.reranker
+  tid: 5742674
+- args:
+    data: 'Relevant chunk: HELLO'
+  call_id: 96041fb5-7381-4636-a5ef-15d23a34be62
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.304749'
+    start_time: '2024-06-26T17:39:43.302984'
+  pid: 45240
+  rets: '''Relevant chunk: HELLO'''
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: get_context
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: process_chunk_by_random_tool
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: invoke
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTool
+        id: 5692879264
+        init_bindings: null
+    path: app.tools[0]
+  tid: 5742728
+- args:
+    chunk_and_score:
+    - 'Relevant chunk: HELLO'
+    - 16.0
+  call_id: ee546156-40e1-463a-8841-126c2e5b9de0
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.304774'
+    start_time: '2024-06-26T17:39:43.297679'
+  pid: 45240
+  rets: '''Relevant chunk: HELLO'''
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: get_context
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: process_chunk_by_random_tool
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  tid: 5742728
+- args:
+    data: 'Relevant chunk: olleholleholleh'
+  call_id: 43961103-ee63-43dd-ae09-b5a9ff81da5e
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.306976'
+    start_time: '2024-06-26T17:39:43.306008'
+  pid: 45240
+  rets: '''Relevant chunk: olleholleholleh'''
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: get_context
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: process_chunk_by_random_tool
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: invoke
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomStackTool
+        id: 5692879264
+        init_bindings: null
+    path: app.tools[3]
+  tid: 5742729
+- args:
+    chunk_and_score:
+    - 'Relevant chunk: olleholleholleh'
+    - 26.0
+  call_id: 85145dc2-b825-4cac-94ce-2f35b3ba0841
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.306995'
+    start_time: '2024-06-26T17:39:43.303675'
+  pid: 45240
+  rets: '''Relevant chunk: olleholleholleh'''
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: get_context
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: process_chunk_by_random_tool
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  tid: 5742729
+- args:
+    input: hello
+  call_id: 91478baa-9f3b-4bcc-be87-6506b094e42f
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.307043'
+    start_time: '2024-06-26T17:39:43.241295'
+  pid: 45240
+  rets:
+  - '''Relevant chunk: HELLO'''
+  - '''Relevant chunk: olleholleholleh'''
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: get_context
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  tid: 5742674
+- args:
+    data: hello
+  call_id: e2cc8358-83d9-4529-b7b5-4bb787ef0934
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.327074'
+    start_time: '2024-06-26T17:39:43.322379'
+  pid: 45240
+  rets: null
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: remember
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_memory
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomMemory
+        id: 5692879648
+        init_bindings: null
+    path: app.memory
+  tid: 5742674
+- args:
+    prompt: '''Relevant chunk: HELLO'',''Relevant chunk: olleholleholleh'''
+  call_id: 6b012aa5-1172-4f87-b43b-f38b7aad1cb8
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.350175'
+    start_time: '2024-06-26T17:39:43.341631'
+  pid: 45240
+  rets: 'my original response is ''Relevant chunk: HELLO'',''Relevant chunk: olleholleholleh'''
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: generate
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_llm
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomLLM
+        id: 5692879840
+        init_bindings: null
+    path: app.llm
+  tid: 5742674
+- args:
+    answer: 'my original response is ''Relevant chunk: HELLO'',''Relevant chunk: olleholleholleh'''
+    question: hello
+  call_id: da8e8594-8142-49b8-81aa-ffdf8bedd628
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.368490'
+    start_time: '2024-06-26T17:39:43.364319'
+  pid: 45240
+  rets: 'The answer to hello is probably my original response is ''Relevant chunk:
+    HELLO'',''Relevant chunk: olleholleholleh'' or something ...'
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: fill
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTemplate
+        id: 5692875472
+        init_bindings: null
+    path: app.template
+  tid: 5742674
+- args:
+    data: 'The answer to hello is probably my original response is ''Relevant chunk:
+      HELLO'',''Relevant chunk: olleholleholleh'' or something ...'
+  call_id: fed23d73-52c3-40d8-aef5-a1a56a16a769
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.386927'
+    start_time: '2024-06-26T17:39:43.382659'
+  pid: 45240
+  rets: null
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  - method:
+      name: remember
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_memory
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomMemory
+        id: 5692879648
+        init_bindings: null
+    path: app.memory
+  tid: 5742674
+- args:
+    query: hello
+  call_id: ab0d5d1a-a655-4b69-862e-ef4b42dbbcaa
+  error: null
+  perf:
+    end_time: '2024-06-26T17:39:43.386946'
+    start_time: '2024-06-26T17:39:43.177073'
+  pid: 45240
+  rets: 'The answer to hello is probably my original response is ''Relevant chunk:
+    HELLO'',''Relevant chunk: olleholleholleh'' or something ...'
+  stack:
+  - method:
+      name: respond_to_query
+      obj:
+        cls:
+          bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        id: 5692879600
+        init_bindings: null
+    path: app
+  tid: 5742674
+cost:
+  cost: 0.0
+  n_classes: 0
+  n_completion_tokens: 0
+  n_prompt_tokens: 0
+  n_requests: 0
+  n_stream_chunks: 0
+  n_successful_requests: 0
+  n_tokens: 0
+main_error: null
+main_input: hello
+main_output: 'The answer to hello is probably my original response is ''Relevant chunk:
+  HELLO'',''Relevant chunk: olleholleholleh'' or something ...'
+meta: null
+perf:
+  end_time: '2024-06-26T17:39:43.386946'
+  start_time: '2024-06-26T17:39:43.177073'
+record_id: record_hash_2d911063e22405e291db9880faefb478
+tags: '-'
+ts: '2024-06-26T17:39:43.386982'

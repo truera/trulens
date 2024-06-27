@@ -19,10 +19,8 @@ import os
 from pprint import pformat
 import threading as th
 import traceback
-from typing import (
-    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
-    Type, Union
-)
+from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
+                    Sequence, Set, Tuple, Type, Union)
 import weakref
 
 import pydantic
@@ -45,6 +43,7 @@ from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import id_str
 from trulens_eval.utils.python import is_really_coroutinefunction
+from trulens_eval.utils.python import OpaqueWrapper
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import safe_signature
 from trulens_eval.utils.python import wrap_awaitable
@@ -708,6 +707,8 @@ class Instrument(object):
         # Recursively instrument inner components
         if hasattr(obj, '__dict__'):
             for attr_name, attr_value in obj.__dict__.items():
+                if isinstance(attr_value, OpaqueWrapper): # never look past opaque wrapper
+                    continue
                 if any(isinstance(attr_value, cls)
                        for cls in self.include_classes):
                     inner_query = query[attr_name]

@@ -2,6 +2,7 @@ from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
 import json
+import yaml
 import os
 from pathlib import Path
 from typing import Dict, Sequence
@@ -82,7 +83,12 @@ class JSONTestCase(TestCase):
 
         if write_golden:
             with golden_path.open("w") as f:
-                json.dump(actual, f)
+                if golden_path.suffix == ".json":
+                    json.dump(actual, f)
+                elif golden_path.suffix == ".yaml":
+                    yaml.dump(actual, f)
+                else:
+                    raise ValueError(f"Unknown file extension {golden_path.suffix}.")
 
             self.fail("Golden file written.")
 
@@ -90,8 +96,14 @@ class JSONTestCase(TestCase):
             if not golden_path.exists():
                 raise FileNotFoundError(f"Golden file {golden_path} not found.")
 
-            with golden_path.open("r") as f:
-                expected = json.load(f)
+            if golden_path.suffix == ".json":
+                with golden_path.open("r") as f:
+                    expected = json.load(f)
+            elif golden_path.suffix == ".yaml":
+                with golden_path.open("r") as f:
+                    expected = yaml.load(f, Loader=yaml.FullLoader)
+            else:
+                raise ValueError(f"Unknown file extension {golden_path.suffix}.")
 
             self.assertJSONEqual(
                 actual, expected, skips=skips, numeric_places=numeric_places
