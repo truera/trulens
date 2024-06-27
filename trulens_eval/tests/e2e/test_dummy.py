@@ -61,7 +61,7 @@ class TestDummy(JSONTestCase):
 
         self.assertGoldenJSONEqual(
             actual=rec.model_dump(),
-            golden_filename="dummy.yaml",
+            golden_filename="dummy.json",
             skips=set(
                 [
                     "record_id", 'start_time', 'end_time', 'ts', 'pid', 'tid',

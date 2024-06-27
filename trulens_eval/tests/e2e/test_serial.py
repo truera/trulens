@@ -61,7 +61,7 @@ class TestSerial(JSONTestCase):
         with self.subTest("app serialization"):
             self.assertGoldenJSONEqual(
                 actual=ta.model_dump(),
-                golden_filename="customapp.yaml",
+                golden_filename="customapp.json",
                 skips=set([])
             )
 
@@ -71,7 +71,7 @@ class TestSerial(JSONTestCase):
         with self.subTest("app result serialization"):
             self.assertGoldenJSONEqual(
                 actual=res,
-                golden_filename="customapp_result.yaml",
+                golden_filename="customapp_result.json",
                 skips=set([])
             )
 
@@ -80,7 +80,7 @@ class TestSerial(JSONTestCase):
         with self.subTest("record serialization"):
             self.assertGoldenJSONEqual(
                 actual=record.model_dump(),
-                golden_filename="customapp_record.yaml",
+                golden_filename="customapp_record.json",
                 skips=set(
                     [
                         'end_time', 'start_time', 'record_id', 'pid', 'tid',
@@ -90,11 +90,18 @@ class TestSerial(JSONTestCase):
             )
 
         feedbacks = record.wait_for_feedback_results()
-        for feedback in feedbacks:
-            with self.subTest(f"feedback {feedback.name} serialization"):
+        for fdef, fres in feedbacks.items():
+            name = fdef.name
+            with self.subTest(f"feedback definition {name} serialization"):
                 self.assertGoldenJSONEqual(
-                    actual=feedback.model_dump(),
-                    golden_filename=f"customapp_{feedback.name}.yaml",
+                    actual=fdef.model_dump(),
+                    golden_filename=f"customapp_{name}.def.json",
+                    skips=set(['feedback_definition_id', 'id'])
+                )
+            with self.subTest(f"feedback result {name} serialization"):
+                self.assertGoldenJSONEqual(
+                    actual=fres.model_dump(),
+                    golden_filename=f"customapp_{name}.result.json",
                     skips=set(['feedback_definition_id', 'id'])
                 )
 
