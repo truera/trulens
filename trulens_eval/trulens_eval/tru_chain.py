@@ -96,7 +96,7 @@ class LangChainInstrument(Instrument):
                 ("run", "arun", "_call", "__call__", "_acall", "acall"):
                     Chain,
                 (
-                    "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents"
+                    "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents", "invoke", "ainvoke"
                 ):
                     RunnableSerializable,
 

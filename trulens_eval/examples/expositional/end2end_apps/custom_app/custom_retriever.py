@@ -1,23 +1,33 @@
+import random
 import sys
-import time
+
+from examples.expositional.end2end_apps.custom_app.dummy import Dummy
 
 from trulens_eval.tru_custom_app import instrument
 
 
-class CustomRetriever:
+class CustomRetriever(Dummy):
+    """Fake retriever."""
 
-    def __init__(self, delay: float = 0.015, alloc: int = 1024 * 1024):
-        self.delay = delay
-        self.alloc = alloc
+    def __init__(self, *args, num_contexts: int = 2, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    # @instrument
+        self.num_contexts = num_contexts
+
+    @instrument
     def retrieve_chunks(self, data):
-        temporary = [0x42] * self.alloc
+        """Fake chunk retrieval."""
 
-        if self.delay > 0.0:
-            time.sleep(self.delay)
+        # Fake delay.
+        self.dummy_wait()
 
-        return [
-            f"Relevant chunk: {data.upper()}", f"Relevant chunk: {data[::-1]}",
-            f"Relevant chunk: I allocated {sys.getsizeof(temporary)} bytes to pretend I'm doing something."
-        ]
+        # Fake memory usage.
+        temporary = self.dummy_allocate()
+
+        return (
+            [
+                f"Relevant chunk: {data.upper()}",
+                f"Relevant chunk: {data[::-1] * 3}",
+                f"Relevant chunk: I allocated {sys.getsizeof(temporary)} bytes to pretend I'm doing something."
+            ] * 3
+        )[:self.num_contexts]

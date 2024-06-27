@@ -7,6 +7,7 @@ import { forwardRef } from 'react';
 import { SpanTooltip } from '@/SpanTooltip';
 import Tag from '@/Tag';
 import { StackTreeNode } from '@/utils/StackTreeNode';
+import { formatDuration } from '@/utils/utils';
 
 type RecordTreeCellProps = TreeItemContentProps & {
   node: StackTreeNode;
@@ -74,7 +75,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
                 leftIcon={<AccessTimeRounded sx={{ fontSize: 12 }} />}
                 sx={tagSx}
                 severity="info"
-                title={`${timeTaken} ms`}
+                title={formatDuration(timeTaken)}
               />
             </Box>
           </Box>

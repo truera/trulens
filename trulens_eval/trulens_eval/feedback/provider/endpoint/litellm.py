@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-with OptionalImports(messages=REQUIREMENT_LITELLM):
+with OptionalImports(messages=REQUIREMENT_LITELLM) as opt:
     # Here only so we can throw the proper error if litellm is not installed.
     import litellm
 
-OptionalImports(messages=REQUIREMENT_LITELLM).assert_installed(litellm)
+opt.assert_installed(litellm)
 
 
 class LiteLLMCallback(EndpointCallback):
@@ -51,7 +51,11 @@ class LiteLLMCallback(EndpointCallback):
                 ("n_prompt_tokens", "prompt_tokens"),
                 ("n_completion_tokens", "completion_tokens"),
             ]:
-                setattr(self.cost, cost_field, usage.get(litellm_field, 0))
+                setattr(
+                    self.cost, cost_field,
+                    getattr(self.cost, cost_field, 0) +
+                    usage.get(litellm_field, 0)
+                )
 
         if self.endpoint.litellm_provider not in ["openai"]:
             # The total cost does not seem to be properly tracked except by

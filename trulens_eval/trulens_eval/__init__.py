@@ -4,7 +4,7 @@
 This top-level import includes everything to get started.
 """
 
-__version_info__ = (0, 30, 1)
+__version_info__ = (0, 32, 0)
 """Version number components for major, minor, patch."""
 
 __version__ = '.'.join(map(str, __version_info__))
@@ -72,6 +72,7 @@ TP = mod_threading_utils.TP
 Feedback = mod_feedback.Feedback
 Provider = mod_provider.Provider
 Huggingface = mod_hugs_provider.Huggingface
+HuggingfaceLocal = mod_hugs_provider.HuggingfaceLocal
 Langchain = mod_langchain_provider.Langchain
 FeedbackMode = mod_feedback_schema.FeedbackMode
 Select = mod_feedback_schema.Select
@@ -102,6 +103,7 @@ __all__ = [
     "LiteLLM",
     "Bedrock",
     "Huggingface",
+    "HuggingfaceLocal",
     "Cortex",
 
     # misc utility

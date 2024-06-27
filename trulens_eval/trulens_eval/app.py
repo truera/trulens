@@ -816,6 +816,11 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         `bindings`.
         """
 
+        if bindings is None:
+            raise RuntimeError(
+                f"Cannot determine main input of unbound call to {func}: {sig}."
+            )
+
         # ignore self
         all_args = list(v for k, v in bindings.arguments.items() if k != "self")
 
@@ -1087,8 +1092,12 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             assert len(calls) > 0, "No information recorded in call."
 
-            main_in = self.main_input(func, sig, bindings)
-            main_out = self.main_output(func, sig, bindings, ret)
+            if error is None:
+                main_in = self.main_input(func, sig, bindings)
+                main_out = self.main_output(func, sig, bindings, ret)
+            else:
+                main_in = None
+                main_out = None
 
             updates = dict(
                 main_input=jsonify(main_in),

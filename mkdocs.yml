@@ -44,6 +44,8 @@ markdown_extensions:
 watch:
   - trulens_explain/trulens
   - trulens_eval/trulens_eval
+  - trulens_eval/tests
+  - trulens_eval/examples
 
 plugins:
   - include-markdown:
@@ -210,13 +212,14 @@ nav:
           - Running on existing data: trulens_eval/evaluation/running_feedback_functions/existing_data.md
       - Generating Test Cases:
           - trulens_eval/evaluation/generate_test_cases/index.md
-      - Feedback Evaluations:
-          # PLACEHOLDER: - trulens_eval/evaluation/feedback_evaluations/index.md
-          - Answer Relevance Benchmark (small): trulens_eval/evaluation/feedback_evaluations/answer_relevance_benchmark_small.ipynb
-          - Comprehensiveness Benchmark: trulens_eval/evaluation/feedback_evaluations/comprehensiveness_benchmark.ipynb
-          - Context Relevance Benchmark (small): trulens_eval/evaluation/feedback_evaluations/context_relevance_benchmark_small.ipynb
-          - Context Relevance Benchmark (large): trulens_eval/evaluation/feedback_evaluations/context_relevance_benchmark.ipynb
-          - Groundedness Benchmark: trulens_eval/evaluation/feedback_evaluations/groundedness_benchmark.ipynb
+  - 📊 Evaluation Benchmarks:
+      - trulens_eval/evaluation_benchmarks/index.md
+      - Evaluation Benchmark Code:
+          - Answer Relevance Benchmark (small): trulens_eval/evaluation_benchmarks/answer_relevance_benchmark_small.ipynb
+          - Comprehensiveness Benchmark: trulens_eval/evaluation_benchmarks/comprehensiveness_benchmark.ipynb
+          - Context Relevance Benchmark (small): trulens_eval/evaluation_benchmarks/context_relevance_benchmark_small.ipynb
+          - Context Relevance Benchmark (large): trulens_eval/evaluation_benchmarks/context_relevance_benchmark.ipynb
+          - Groundedness Benchmark: trulens_eval/evaluation_benchmarks/groundedness_benchmark.ipynb
   - 🎺 Tracking:
       # PLACEHOLDER: - trulens_eval/tracking/index.md
       - Instrumentation Overview:
@@ -229,6 +232,7 @@ nav:
           # PLACEHOLDER: - trulens_eval/tracking/logging/index.md
           - Where to Log: trulens_eval/tracking/logging/where_to_log.md
           - 📓 Logging Methods: trulens_eval/tracking/logging/logging.ipynb
+  - 🛡️ Guardrails: trulens_eval/guardrails/index.md
   - 🔍 Guides:
       # PLACEHOLDER: - trulens_eval/guides/index.md
       - Any LLM App: trulens_eval/guides/use_cases_any.md
@@ -259,14 +263,20 @@ nav:
           - 🦜️🔗 LangChain: trulens_eval/api/provider/langchain.md
           - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
           - Cortex: trulens_eval/api/provider/cortex.md
+          - Dummy: trulens_eval/api/provider/dummy.md
           - Endpoint:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
+              - Dummy: trulens_eval/api/endpoint/dummy.md
       - 𝄢 Instruments: trulens_eval/api/instruments.md
+      - 🛡️ Guardrails:
+          - trulens_eval/api/guardrails/index.md
+          - 🦜️🔗 Langchain Guardrails: trulens_eval/api/guardrails/langchain.md
+          - 🦙 Llama-Index Guardrails: trulens_eval/api/guardrails/llama.md
       - 🗄 Database:
-        - trulens_eval/api/database/index.md
-        - ✨ Migration: trulens_eval/api/database/migration.md
-        - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
+          - trulens_eval/api/database/index.md
+          - ✨ Migration: trulens_eval/api/database/migration.md
+          - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
       - Utils:
           # - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
@@ -274,11 +284,15 @@ nav:
           - trulens_eval/api/utils/json.md
           - trulens_eval/api/utils/frameworks.md
           - trulens_eval/api/utils/utils.md
+      - Testing:
+          - trulens_eval/api/testing/custom_app.md
+#          - trulens_eval/api/testing/test.md
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
       - 🧭 Design: trulens_eval/contributing/design.md
       - ✅ Standards: trulens_eval/contributing/standards.md
       - 💣 Tech Debt: trulens_eval/contributing/techdebt.md
+      - ⛅ Optional Pckages: trulens_eval/contributing/optional.md
       - ✨ Database Migration: trulens_eval/contributing/migration.md
   - ❓ Explain:
       # PLACEHOLDER: - trulens_explain/index.md
@@ -310,3 +324,5 @@ extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - javascript/tex-mml-chtml-3.0.0.js
   - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+  - https://unpkg.com/tablesort@5.3.0/dist/tablesort.min.js
+  - javascript/tablesort.js
