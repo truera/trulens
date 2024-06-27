@@ -1092,11 +1092,15 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             assert len(calls) > 0, "No information recorded in call."
 
-            if error is None:
-                main_in = self.main_input(func, sig, bindings)
-                main_out = self.main_output(func, sig, bindings, ret)
+            if bindings is not None:
+                 main_in = self.main_input(func, sig, bindings)
             else:
                 main_in = None
+
+            if error is None:
+                assert bindings is not None, "No bindings despite no error."
+                main_out = self.main_output(func, sig, bindings, ret)
+            else:
                 main_out = None
 
             updates = dict(
