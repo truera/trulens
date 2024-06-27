@@ -2,6 +2,8 @@ import asyncio
 import random
 import time
 
+from trulens_eval.utils.python import OpaqueWrapper
+
 
 class Dummy():
     """Perform some operations to inject performance-related characteristics
@@ -21,7 +23,7 @@ class Dummy():
         self.delay = delay
         self.alloc = alloc
 
-        self.dummy_allocated_data = None
+        self._dummy_allocated_data = None
 
         self.seed = seed
         self.random = random.Random(seed)
@@ -41,6 +43,8 @@ class Dummy():
     def dummy_allocate(self):
         """Allocate some memory."""
 
-        self.dummy_allocated_data = [True] * self.alloc
+        self._dummy_allocated_data = OpaqueWrapper(obj=[True] * self.alloc, e=Exception())
+        # OpaqueWrapper will prevent instrumentation or serialization of the
+        # contents of this fake data.
 
-        return self.dummy_allocated_data
+        return self._dummy_allocated_data

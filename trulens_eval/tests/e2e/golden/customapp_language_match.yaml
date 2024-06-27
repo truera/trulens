@@ -1,0 +1,205 @@
+aggregator: null
+combinations: !!python/object/apply:trulens_eval.schema.feedback.FeedbackCombinations
+- product
+feedback_definition_id: feedback_definition_hash_7c99b032d102552d9fe4efdb6eb1248d
+higher_is_better: true
+if_exists: null
+if_missing: !!python/object/apply:trulens_eval.schema.feedback.FeedbackOnMissingParameters
+- error
+implementation:
+  name: language_match
+  obj:
+    cls:
+      bases: null
+      module:
+        module_name: trulens_eval.feedback.provider.hugs
+        package_name: trulens_eval.feedback.provider
+      name: Dummy
+    id: 5693056304
+    init_bindings:
+      args: []
+      kwargs:
+        endpoint:
+          api:
+            alloc: 0
+            delay: 0.0
+            error_prob: 0.0
+            freeze_prob: 0.0
+            loading_prob: 0.0
+            loading_time:
+              __tru_non_serialized_object:
+                cls:
+                  bases: null
+                  module:
+                    module_name: builtins
+                    package_name: ''
+                  name: function
+                id: 5443522528
+                init_bindings: null
+            np_random:
+              __tru_non_serialized_object:
+                cls:
+                  bases: null
+                  module:
+                    module_name: numpy.random.mtrand
+                    package_name: numpy.random
+                  name: RandomState
+                id: 5693459776
+                init_bindings: null
+            overloaded_prob: 0.0
+            random:
+              __tru_non_serialized_object:
+                cls:
+                  bases: null
+                  module:
+                    module_name: random
+                    package_name: ''
+                  name: Random
+                id: 5403988512
+                init_bindings: null
+            seed: 3735928559
+          name: dummyendpoint
+          retries: 3
+          rpm: 60.0
+          tru_class_info:
+            bases:
+            - bases: null
+              module:
+                module_name: trulens_eval.feedback.provider.endpoint.dummy
+                package_name: trulens_eval.feedback.provider.endpoint
+              name: DummyEndpoint
+            - bases: null
+              module:
+                module_name: trulens_eval.feedback.provider.endpoint.base
+                package_name: trulens_eval.feedback.provider.endpoint
+              name: Endpoint
+            - bases: null
+              module:
+                module_name: trulens_eval.utils.pyschema
+                package_name: trulens_eval.utils
+              name: WithClassInfo
+            - bases: null
+              module:
+                module_name: trulens_eval.utils.serial
+                package_name: trulens_eval.utils
+              name: SerialModel
+            - bases: null
+              module:
+                module_name: pydantic.main
+                package_name: pydantic
+              name: BaseModel
+            - bases: null
+              module:
+                module_name: trulens_eval.utils.python
+                package_name: trulens_eval.utils
+              name: SingletonPerName
+            - bases: null
+              module:
+                module_name: typing
+                package_name: ''
+              name: Generic
+            - bases: null
+              module:
+                module_name: builtins
+                package_name: ''
+              name: object
+            module:
+              module_name: trulens_eval.feedback.provider.endpoint.dummy
+              package_name: trulens_eval.feedback.provider.endpoint
+            name: DummyEndpoint
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: trulens_eval.feedback.provider.hugs
+              package_name: trulens_eval.feedback.provider
+            name: Dummy
+          - bases: null
+            module:
+              module_name: trulens_eval.feedback.provider.hugs
+              package_name: trulens_eval.feedback.provider
+            name: Huggingface
+          - bases: null
+            module:
+              module_name: trulens_eval.feedback.provider.hugs
+              package_name: trulens_eval.feedback.provider
+            name: HuggingfaceBase
+          - bases: null
+            module:
+              module_name: trulens_eval.feedback.provider.base
+              package_name: trulens_eval.feedback.provider
+            name: Provider
+          - bases: null
+            module:
+              module_name: trulens_eval.utils.pyschema
+              package_name: trulens_eval.utils
+            name: WithClassInfo
+          - bases: null
+            module:
+              module_name: trulens_eval.utils.serial
+              package_name: trulens_eval.utils
+            name: SerialModel
+          - bases: null
+            module:
+              module_name: pydantic.main
+              package_name: pydantic
+            name: BaseModel
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: trulens_eval.feedback.provider.hugs
+            package_name: trulens_eval.feedback.provider
+          name: Dummy
+selectors:
+  text1: __record__.main_input
+  text2: __record__.main_output
+supplied_name: null
+tru_class_info:
+  bases:
+  - bases: null
+    module:
+      module_name: trulens_eval.feedback.feedback
+      package_name: trulens_eval.feedback
+    name: Feedback
+  - bases: null
+    module:
+      module_name: trulens_eval.schema.feedback
+      package_name: trulens_eval.schema
+    name: FeedbackDefinition
+  - bases: null
+    module:
+      module_name: trulens_eval.utils.pyschema
+      package_name: trulens_eval.utils
+    name: WithClassInfo
+  - bases: null
+    module:
+      module_name: trulens_eval.utils.serial
+      package_name: trulens_eval.utils
+    name: SerialModel
+  - bases: null
+    module:
+      module_name: pydantic.main
+      package_name: pydantic
+    name: BaseModel
+  - bases: null
+    module:
+      module_name: collections.abc
+      package_name: collections
+    name: Hashable
+  - bases: null
+    module:
+      module_name: typing
+      package_name: ''
+    name: Generic
+  - bases: null
+    module:
+      module_name: builtins
+      package_name: ''
+    name: object
+  module:
+    module_name: trulens_eval.feedback.feedback
+    package_name: trulens_eval.feedback
+  name: Feedback

@@ -61,7 +61,7 @@ class TestSerial(JSONTestCase):
         with self.subTest("app serialization"):
             self.assertGoldenJSONEqual(
                 actual=ta.model_dump(),
-                golden_filename="customapp.json",
+                golden_filename="customapp.yaml",
                 skips=set([])
             )
 
@@ -71,7 +71,7 @@ class TestSerial(JSONTestCase):
         with self.subTest("app result serialization"):
             self.assertGoldenJSONEqual(
                 actual=res,
-                golden_filename="customapp_result.json",
+                golden_filename="customapp_result.yaml",
                 skips=set([])
             )
 
@@ -80,7 +80,7 @@ class TestSerial(JSONTestCase):
         with self.subTest("record serialization"):
             self.assertGoldenJSONEqual(
                 actual=record.model_dump(),
-                golden_filename="customapp_record.json",
+                golden_filename="customapp_record.yaml",
                 skips=set(
                     [
                         'end_time', 'start_time', 'record_id', 'pid', 'tid',
@@ -94,7 +94,7 @@ class TestSerial(JSONTestCase):
             with self.subTest(f"feedback {feedback.name} serialization"):
                 self.assertGoldenJSONEqual(
                     actual=feedback.model_dump(),
-                    golden_filename=f"customapp_{feedback.name}.json",
+                    golden_filename=f"customapp_{feedback.name}.yaml",
                     skips=set(['feedback_definition_id', 'id'])
                 )
 

@@ -1,0 +1,936 @@
+app:
+  agents:
+  - alloc: 1024
+    app:
+      agents: []
+      alloc: 1024
+      delay: 0.0
+      llm:
+        _dummy_allocated_data: null
+        alloc: 1024
+        delay: 0.0
+        model: derp
+        model_type: HerpDerp
+        seed: 3735928559
+        temperature: 0.5
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_llm
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomLLM
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_llm
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomLLM
+      memory:
+        alloc: 1024
+        delay: 0.0
+        memory_type: dummy-memory
+        messages: []
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_memory
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomMemory
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_memory
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomMemory
+      reranker:
+        _dummy_allocated_data: null
+        alloc: 1024
+        delay: 0.0
+        model_name: herpderp-v1-reranker
+        seed: 3735928559
+        top_n: 2
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_reranker
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomReranker
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_reranker
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomReranker
+      retriever:
+        _dummy_allocated_data: null
+        alloc: 1024
+        delay: 0.0
+        num_contexts: 2
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_retriever
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomRetriever
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_retriever
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomRetriever
+      seed: 3735928559
+      template:
+        _dummy_allocated_data: null
+        alloc: 1024
+        delay: 0.0
+        seed: 3735928559
+        template: The answer to {question} is probably {answer} or something ...
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_app
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTemplate
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTemplate
+      tools:
+      - alloc: 1024
+        delay: 0.0
+        description: Return repr(self).
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTool
+      - alloc: 1024
+        delay: 0.0
+        description: Return repr(self).
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTool
+      - alloc: 1024
+        delay: 0.0
+        description: Return repr(self).
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTool
+      - alloc: 1024
+        delay: 0.0
+        description: Return repr(self).
+        last_stack: null
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomStackTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomStackTool
+      tru_class_info:
+        bases:
+        - bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        - bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.dummy
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: Dummy
+        - bases: null
+          module:
+            module_name: builtins
+            package_name: ''
+          name: object
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_app
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomApp
+    delay: 0.0
+    description: ensamble agent 0
+    seed: 3735928559
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_agent
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomAgent
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_agent
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomAgent
+  - alloc: 1024
+    app:
+      agents: []
+      alloc: 1024
+      delay: 0.0
+      llm:
+        _dummy_allocated_data: null
+        alloc: 1024
+        delay: 0.0
+        model: derp
+        model_type: HerpDerp
+        seed: 3735928559
+        temperature: 0.5
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_llm
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomLLM
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_llm
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomLLM
+      memory:
+        alloc: 1024
+        delay: 0.0
+        memory_type: dummy-memory
+        messages: []
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_memory
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomMemory
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_memory
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomMemory
+      reranker:
+        _dummy_allocated_data: null
+        alloc: 1024
+        delay: 0.0
+        model_name: herpderp-v1-reranker
+        seed: 3735928559
+        top_n: 2
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_reranker
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomReranker
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_reranker
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomReranker
+      retriever:
+        _dummy_allocated_data: null
+        alloc: 1024
+        delay: 0.0
+        num_contexts: 2
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_retriever
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomRetriever
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_retriever
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomRetriever
+      seed: 3735928559
+      template:
+        _dummy_allocated_data: null
+        alloc: 1024
+        delay: 0.0
+        seed: 3735928559
+        template: The answer to {question} is probably {answer} or something ...
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_app
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTemplate
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTemplate
+      tools:
+      - alloc: 1024
+        delay: 0.0
+        description: Return repr(self).
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTool
+      - alloc: 1024
+        delay: 0.0
+        description: Return repr(self).
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTool
+      - alloc: 1024
+        delay: 0.0
+        description: Return repr(self).
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomTool
+      - alloc: 1024
+        delay: 0.0
+        description: Return repr(self).
+        last_stack: null
+        seed: 3735928559
+        tru_class_info:
+          bases:
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomStackTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: CustomTool
+          - bases: null
+            module:
+              module_name: examples.expositional.end2end_apps.custom_app.dummy
+              package_name: examples.expositional.end2end_apps.custom_app
+            name: Dummy
+          - bases: null
+            module:
+              module_name: builtins
+              package_name: ''
+            name: object
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomStackTool
+      tru_class_info:
+        bases:
+        - bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.custom_app
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: CustomApp
+        - bases: null
+          module:
+            module_name: examples.expositional.end2end_apps.custom_app.dummy
+            package_name: examples.expositional.end2end_apps.custom_app
+          name: Dummy
+        - bases: null
+          module:
+            module_name: builtins
+            package_name: ''
+          name: object
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_app
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomApp
+    delay: 0.0
+    description: ensamble agent 1
+    seed: 3735928559
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_agent
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomAgent
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_agent
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomAgent
+  alloc: 0
+  delay: 0.0
+  llm:
+    _dummy_allocated_data: null
+    alloc: 0
+    delay: 0.0
+    model: derp
+    model_type: HerpDerp
+    seed: 3735928559
+    temperature: 0.5
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_llm
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomLLM
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_llm
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomLLM
+  memory:
+    alloc: 0
+    delay: 0.0
+    memory_type: dummy-memory
+    messages: []
+    seed: 3735928559
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_memory
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomMemory
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_memory
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomMemory
+  reranker:
+    _dummy_allocated_data: null
+    alloc: 0
+    delay: 0.0
+    model_name: herpderp-v1-reranker
+    seed: 3735928559
+    top_n: 2
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_reranker
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomReranker
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_reranker
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomReranker
+  retriever:
+    _dummy_allocated_data: null
+    alloc: 0
+    delay: 0.0
+    num_contexts: 2
+    seed: 3735928559
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_retriever
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomRetriever
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_retriever
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomRetriever
+  seed: 3735928559
+  template:
+    _dummy_allocated_data: null
+    alloc: 1024
+    delay: 0.0
+    seed: 3735928559
+    template: The answer to {question} is probably {answer} or something ...
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_app
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomTemplate
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_app
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomTemplate
+  tools:
+  - alloc: 0
+    delay: 0.0
+    description: Return repr(self).
+    seed: 3735928559
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomTool
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomTool
+  - alloc: 0
+    delay: 0.0
+    description: Return repr(self).
+    seed: 3735928559
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomTool
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomTool
+  - alloc: 0
+    delay: 0.0
+    description: Return repr(self).
+    seed: 3735928559
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomTool
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomTool
+  - alloc: 0
+    delay: 0.0
+    description: Return repr(self).
+    last_stack: null
+    seed: 3735928559
+    tru_class_info:
+      bases:
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomStackTool
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: CustomTool
+      - bases: null
+        module:
+          module_name: examples.expositional.end2end_apps.custom_app.dummy
+          package_name: examples.expositional.end2end_apps.custom_app
+        name: Dummy
+      - bases: null
+        module:
+          module_name: builtins
+          package_name: ''
+        name: object
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_tool
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomStackTool
+  tru_class_info:
+    bases:
+    - bases: null
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.custom_app
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: CustomApp
+    - bases: null
+      module:
+        module_name: examples.expositional.end2end_apps.custom_app.dummy
+        package_name: examples.expositional.end2end_apps.custom_app
+      name: Dummy
+    - bases: null
+      module:
+        module_name: builtins
+        package_name: ''
+      name: object
+    module:
+      module_name: examples.expositional.end2end_apps.custom_app.custom_app
+      package_name: examples.expositional.end2end_apps.custom_app
+    name: CustomApp
+app_extra_json: {}
+app_id: customapp
+feedback_definitions: []
+feedback_mode: !!python/object/apply:trulens_eval.schema.feedback.FeedbackMode
+- with_app_thread
+initial_app_loader_dump: null
+main_method: null
+metadata: {}
+root_class:
+  bases: null
+  module:
+    module_name: examples.expositional.end2end_apps.custom_app.custom_app
+    package_name: examples.expositional.end2end_apps.custom_app
+  name: CustomApp
+selector_check_warning: false
+selector_nocheck: false
+tags: '-'
+tru_class_info:
+  bases:
+  - bases: null
+    module:
+      module_name: trulens_eval.tru_custom_app
+      package_name: trulens_eval
+    name: TruCustomApp
+  - bases: null
+    module:
+      module_name: trulens_eval.app
+      package_name: trulens_eval
+    name: App
+  - bases: null
+    module:
+      module_name: trulens_eval.schema.app
+      package_name: trulens_eval.schema
+    name: AppDefinition
+  - bases: null
+    module:
+      module_name: trulens_eval.utils.pyschema
+      package_name: trulens_eval.utils
+    name: WithClassInfo
+  - bases: null
+    module:
+      module_name: trulens_eval.utils.serial
+      package_name: trulens_eval.utils
+    name: SerialModel
+  - bases: null
+    module:
+      module_name: pydantic.main
+      package_name: pydantic
+    name: BaseModel
+  - bases: null
+    module:
+      module_name: trulens_eval.instruments
+      package_name: trulens_eval
+    name: WithInstrumentCallbacks
+  - bases: null
+    module:
+      module_name: collections.abc
+      package_name: collections
+    name: Hashable
+  - bases: null
+    module:
+      module_name: typing
+      package_name: ''
+    name: Generic
+  - bases: null
+    module:
+      module_name: builtins
+      package_name: ''
+    name: object
+  module:
+    module_name: trulens_eval.tru_custom_app
+    package_name: trulens_eval
+  name: TruCustomApp
