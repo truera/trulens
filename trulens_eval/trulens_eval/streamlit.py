@@ -66,10 +66,11 @@ def trulens_leaderboard(app_ids: List[str] = None):
     if df.empty:
         st.write("No records yet...")
 
-    apps = list(df.app_id.unique()) if app_ids is None else app_ids
+    if app_ids is None:
+    app_ids = list(df.app_id.unique())
 
-    for app in apps:
-        app_df = df.loc[df.app_id == app]
+    for app_id in app_ids:
+        app_df = df.loc[df.app_id == app_id]
         if app_df.empty:
             continue
         app_str = app_df["app_json"].iloc[0]
