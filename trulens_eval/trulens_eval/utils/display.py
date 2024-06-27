@@ -1,7 +1,7 @@
 import pandas as pd
+from trulens_eval.schema.record import Record
 
-
-def get_feedback_result(tru_record, feedback_name):
+def get_feedback_result(tru_record: Record, feedback_name: str) -> pd.DataFrame:
     feedback_calls = next(
         (
             future_result.result()
