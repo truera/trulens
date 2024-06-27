@@ -143,7 +143,6 @@ def trulens_leaderboard(app_ids: List[str] = None):
 
         st.markdown("""---""")
 
-
 @st.experimental_fragment(run_every=2)
 def trulens_feedback(record: Record):
     """
@@ -206,7 +205,7 @@ def trulens_feedback(record: Record):
         )
 
 
-def _get_icon(fdef: FeedbackDefinition, result: float):
+def _get_icon(fdef: FeedbackDefinition, result: float) -> str:
     """
     Get the icon for a given feedback definition and result.
 
@@ -226,7 +225,6 @@ def _get_icon(fdef: FeedbackDefinition, result: float):
         if fdef.higher_is_better is not None else True
     )
     return cat.icon
-
 
 def trulens_trace(record: Record):
     """
@@ -253,8 +251,7 @@ def trulens_trace(record: Record):
     record_json = _get_record_json(record)
     record_viewer(record_json=record_json, app_json=app_json)
 
-
-def _get_record_json(record):
+def _get_record_json(record: Record) -> dict:
     """
     Get the JSON representation of a given record.
 
