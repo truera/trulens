@@ -43,7 +43,9 @@ class Dummy():
     def dummy_allocate(self):
         """Allocate some memory."""
 
-        self._dummy_allocated_data = OpaqueWrapper(obj=[True] * self.alloc, e=Exception())
+        self._dummy_allocated_data = OpaqueWrapper(
+            obj=[True] * self.alloc, e=Exception()
+        )
         # OpaqueWrapper will prevent instrumentation or serialization of the
         # contents of this fake data.
 
