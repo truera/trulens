@@ -141,6 +141,7 @@ def render_record_metrics(
         delta_color="inverse",
     )
 
+
 def extract_metadata(row: pd.Series) -> str:
     """Extract metadata from the record_json and return the metadata as a string.
 
@@ -152,6 +153,7 @@ def extract_metadata(row: pd.Series) -> str:
     """
     record_data = json.loads(row['record_json'])
     return str(record_data["meta"])
+
 
 apps = list(app['app_id'] for app in lms.get_apps())
 
@@ -391,7 +393,7 @@ else:
 
                         st.dataframe(
                             df.style.apply(highlight, axis=1
-                                            ).format("{:.2f}", subset=["result"])
+                                          ).format("{:.2f}", subset=["result"])
                         )
 
                     else:
