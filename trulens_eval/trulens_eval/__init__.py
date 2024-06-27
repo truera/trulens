@@ -4,7 +4,7 @@
 This top-level import includes everything to get started.
 """
 
-__version_info__ = (0, 31, 0)
+__version_info__ = (0, 32, 0)
 """Version number components for major, minor, patch."""
 
 __version__ = '.'.join(map(str, __version_info__))
@@ -16,6 +16,8 @@ __version__ = '.'.join(map(str, __version_info__))
 from trulens_eval.utils.imports import check_imports
 
 check_imports()
+
+import sys
 
 from trulens_eval import tru as mod_tru
 from trulens_eval import tru_basic_app as mod_tru_basic_app
@@ -56,6 +58,11 @@ with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_RAILS):
     from trulens_eval.tru_rails import TruRails
 
+# the dependency snowflake-snowpark-python not yet supported in 3.12
+with mod_imports_utils.OptionalImports(
+        messages=mod_imports_utils.REQUIREMENT_CORTEX):
+    from trulens_eval.feedback.provider.cortex import Cortex
+
 Tru = mod_tru.Tru
 TruBasicApp = mod_tru_basic_app.TruBasicApp
 TruChain = mod_tru_chain.TruChain
@@ -65,6 +72,7 @@ TP = mod_threading_utils.TP
 Feedback = mod_feedback.Feedback
 Provider = mod_provider.Provider
 Huggingface = mod_hugs_provider.Huggingface
+HuggingfaceLocal = mod_hugs_provider.HuggingfaceLocal
 Langchain = mod_langchain_provider.Langchain
 FeedbackMode = mod_feedback_schema.FeedbackMode
 Select = mod_feedback_schema.Select
@@ -95,6 +103,8 @@ __all__ = [
     "LiteLLM",
     "Bedrock",
     "Huggingface",
+    "HuggingfaceLocal",
+    "Cortex",
 
     # misc utility
     "TP",

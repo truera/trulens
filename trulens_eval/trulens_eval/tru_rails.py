@@ -31,7 +31,7 @@ from trulens_eval.utils.text import retab
 
 logger = logging.getLogger(__name__)
 
-with OptionalImports(messages=REQUIREMENT_RAILS):
+with OptionalImports(messages=REQUIREMENT_RAILS) as opt:
     import nemoguardrails
     from nemoguardrails import LLMRails
     from nemoguardrails import RailsConfig
@@ -42,7 +42,7 @@ with OptionalImports(messages=REQUIREMENT_RAILS):
     from nemoguardrails.kb.kb import KnowledgeBase
     from nemoguardrails.rails.llm.llmrails import LLMRails
 
-OptionalImports(messages=REQUIREMENT_RAILS).assert_installed(nemoguardrails)
+opt.assert_installed(nemoguardrails)
 
 
 class RailsActionSelect(mod_feedback_schema.Select):

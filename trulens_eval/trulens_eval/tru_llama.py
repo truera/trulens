@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
+with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
     import llama_index
 
     version = get_package_version("llama_index")
@@ -131,7 +131,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA):
 
 # Fail outside of optional imports contexts so that anything that follows gets
 # to be a dummy which will cause failures if used.
-OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
+opt.assert_installed(llama_index)
 
 from trulens_eval.tru_chain import LangChainInstrument
 

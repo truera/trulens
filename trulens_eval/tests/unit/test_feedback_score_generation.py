@@ -21,9 +21,9 @@ test_data = [
     ("7", 7),
     ("This deserves a 6, I believe.", 6),
     ("Not relevant. Score: 0.", 0),
-    ("Some text here. Score: 10.0", 10),
-    ("Score: 4.5", 4),
-    ("Score is 8.333", 8)
+    ("Some text here. Score: 10.0", 10.0),
+    ("Score: 4.5", 4.5),
+    ("Score is 8.333", 8.333)
 ]
 
 

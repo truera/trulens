@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-with OptionalImports(messages=REQUIREMENT_LITELLM):
+with OptionalImports(messages=REQUIREMENT_LITELLM) as opt:
     # Here only so we can throw the proper error if litellm is not installed.
     import litellm
 
-OptionalImports(messages=REQUIREMENT_LITELLM).assert_installed(litellm)
+opt.assert_installed(litellm)
 
 
 class LiteLLMCallback(EndpointCallback):
@@ -39,7 +39,7 @@ class LiteLLMCallback(EndpointCallback):
             # We are already tracking costs from the openai or bedrock endpoint so we
             # should not double count here.
 
-            # Incremente number of requests.
+            # Increment number of requests.
             super().handle_generation(response)
 
             # Assume a response that had usage field was successful. Otherwise
