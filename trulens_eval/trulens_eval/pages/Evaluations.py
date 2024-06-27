@@ -55,8 +55,6 @@ if __name__ == "__main__":
 tru = Tru()
 lms = tru.db
 
-df_results, feedback_cols = lms.get_records_and_feedback([])
-
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
     (
@@ -143,7 +141,6 @@ def render_record_metrics(
         delta_color="inverse",
     )
 
-
 def extract_metadata(row: pd.Series) -> str:
     """Extract metadata from the record_json and return the metadata as a string.
 
@@ -156,34 +153,32 @@ def extract_metadata(row: pd.Series) -> str:
     record_data = json.loads(row['record_json'])
     return str(record_data["meta"])
 
+apps = list(app['app_id'] for app in lms.get_apps())
+
+if "app" in st.session_state:
+    app = st.session_state.app
+else:
+    app = apps
+
+st.query_params['app'] = app
+
+options = st.multiselect("Filter Applications", apps, default=app)
+
+df_results, feedback_cols = lms.get_records_and_feedback(app_ids=options)
+
+if len(options) == 0:
+    st.header("All Applications")
+
+elif len(options) == 1:
+    st.header(options[0])
+
+else:
+    st.header("Multiple Applications Selected")
 
 if df_results.empty:
     st.write("No records yet...")
-
 else:
-    apps = list(df_results.app_id.unique())
-    if "app" in st.session_state:
-        app = st.session_state.app
-    else:
-        app = apps
-
-    st.query_params['app'] = app
-
-    options = st.multiselect("Filter Applications", apps, default=app)
-
-    if len(options) == 0:
-        st.header("All Applications")
-        app_df = df_results
-
-    elif len(options) == 1:
-        st.header(options[0])
-
-        app_df = df_results[df_results.app_id.isin(options)]
-
-    else:
-        st.header("Multiple Applications Selected")
-
-        app_df = df_results[df_results.app_id.isin(options)]
+    app_df = df_results
 
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
@@ -396,7 +391,7 @@ else:
 
                         st.dataframe(
                             df.style.apply(highlight, axis=1
-                                          ).format("{:.2f}", subset=["result"])
+                                            ).format("{:.2f}", subset=["result"])
                         )
 
                     else:
