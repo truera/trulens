@@ -10,6 +10,8 @@ from trulens_eval import Tru
 from trulens_eval import TruChain
 from trulens_eval.feedback.provider import OpenAI as fOpenAI
 
+import json
+
 load_dotenv()
 
 tru = Tru()
@@ -21,7 +23,6 @@ provider = fOpenAI()
 f_coherence = Feedback(provider.coherence_with_cot_reasons).on_output()
 
 feedbacks = [f_coherence]
-
 
 def generate_response(input_text):
     llm = OpenAI(temperature=0.7)
@@ -43,4 +44,7 @@ with st.form("my_form"):
 
 if submitted:
     trulens_st.trulens_feedback(record=record)
-    trulens_st.trulens_trace(record=record)
+    app = tru.get_app(app_id=record.app_id)
+    records, feedback = tru.get_records_and_feedback()
+    record_json = json.loads(records.loc[records['record_id'] == record.record_id]['record_json'].values[0])
+    trulens_st.trulens_trace(record_json=record_json, app=app)

@@ -2,6 +2,7 @@ import asyncio
 import json
 import math
 from typing import List
+import pandas as pd
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -17,11 +18,14 @@ from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema.feedback import FeedbackCall
 from trulens_eval.schema.feedback import FeedbackDefinition
 from trulens_eval.schema.record import Record
+from trulens_eval.schema.app import AppDefinition
 from trulens_eval.utils import display
 from trulens_eval.utils.python import Future
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
 from trulens_eval.ux.styles import CATEGORY
+
+from trulens_eval import Tru
 
 class FeedbackDisplay(BaseModel):
     score: float = 0
@@ -226,13 +230,14 @@ def _get_icon(fdef: FeedbackDefinition, result: float) -> str:
     )
     return cat.icon
 
-def trulens_trace(record: Record):
+def trulens_trace(record_json: dict, app: AppDefinition):
     """
     Display the trace view for a record.
 
     Args:
 
-        record : A trulens record.
+        app: A trulens app.
+        record_json : json representation of a trulens record.
 
     !!! example
 
@@ -247,21 +252,4 @@ def trulens_trace(record: Record):
         trulens_st.trulens_leaderboard()
         ```
     """
-    app_json = tru.get_app(app_id=record.app_id)
-    record_json = _get_record_json(record)
-    record_viewer(record_json=record_json, app_json=app_json)
-
-def _get_record_json(record: Record) -> dict:
-    """
-    Get the JSON representation of a given record.
-
-    Args:
-        record: The record to get the JSON representation of
-
-    Returns:
-        dict: The JSON representation of the record
-    """
-    records, feedback = tru.get_records_and_feedback()
-    record_json = records.loc[records['record_id'] == record.record_id
-                             ]['record_json'].values[0]
-    return json.loads(record_json)
+    record_viewer(record_json=record_json, app_json=app)
