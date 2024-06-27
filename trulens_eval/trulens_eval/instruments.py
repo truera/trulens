@@ -19,8 +19,10 @@ import os
 from pprint import pformat
 import threading as th
 import traceback
-from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
-                    Sequence, Set, Tuple, Type, Union)
+from typing import (
+    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
+    Type, Union
+)
 import weakref
 
 import pydantic
@@ -707,7 +709,8 @@ class Instrument(object):
         # Recursively instrument inner components
         if hasattr(obj, '__dict__'):
             for attr_name, attr_value in obj.__dict__.items():
-                if isinstance(attr_value, OpaqueWrapper): # never look past opaque wrapper
+                if isinstance(attr_value,
+                              OpaqueWrapper):  # never look past opaque wrapper
                     continue
                 if any(isinstance(attr_value, cls)
                        for cls in self.include_classes):

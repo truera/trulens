@@ -2,7 +2,6 @@ from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
 import json
-import yaml
 import os
 from pathlib import Path
 from typing import Dict, Sequence
@@ -11,6 +10,7 @@ from unittest import TestCase
 
 import pydantic
 from pydantic import BaseModel
+import yaml
 
 from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.serial import JSON_BASES
@@ -88,7 +88,9 @@ class JSONTestCase(TestCase):
                 elif golden_path.suffix == ".yaml":
                     yaml.dump(actual, f)
                 else:
-                    raise ValueError(f"Unknown file extension {golden_path.suffix}.")
+                    raise ValueError(
+                        f"Unknown file extension {golden_path.suffix}."
+                    )
 
             self.fail("Golden file written.")
 
@@ -103,7 +105,9 @@ class JSONTestCase(TestCase):
                 with golden_path.open("r") as f:
                     expected = yaml.load(f, Loader=yaml.FullLoader)
             else:
-                raise ValueError(f"Unknown file extension {golden_path.suffix}.")
+                raise ValueError(
+                    f"Unknown file extension {golden_path.suffix}."
+                )
 
             self.assertJSONEqual(
                 actual, expected, skips=skips, numeric_places=numeric_places
