@@ -61,7 +61,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
         st.write("No records yet...")
         return
 
-    df = df.sort_values(by="app_id")
+    df = df.sort_values(by="app_id", inplace=True)
 
     if df.empty:
         st.write("No records yet...")
