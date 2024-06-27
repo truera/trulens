@@ -183,7 +183,7 @@ class FeedbackMode(str, Enum):
     `tru.start_deferred_feedback_evaluator`."""
 
 
-class FeedbackResultStatus(Enum):
+class FeedbackResultStatus(str, Enum):
     """For deferred feedback evaluation, these values indicate status of evaluation."""
 
     NONE = "none"
