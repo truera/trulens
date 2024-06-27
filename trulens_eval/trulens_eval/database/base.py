@@ -270,13 +270,19 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None
+        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Get records fom the database.
         
         Args:
             app_ids: If given, retrieve only the records for the given apps.
                 Otherwise all apps are retrieved.
+
+            offset: Database row offset.
+
+            limit: Limit on rows (records) returned.
         
         Returns:
             A dataframe with the records.
