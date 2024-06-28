@@ -30,6 +30,7 @@ from trulens_eval.utils import pyschema
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.asynchro import desync
 from trulens_eval.utils.asynchro import sync
+from trulens_eval.utils.containers import BlockingSet
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import Class
@@ -517,8 +518,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     """Mapping of instrumented methods (by id(.) of owner object and the
     function) to their path in this app."""
 
-    records_with_pending_feedback_results: Queue[mod_record_schema.Record] = \
-        pydantic.Field(exclude=True, default_factory=lambda: Queue(maxsize=1024))
+    records_with_pending_feedback_results: BlockingSet[mod_record_schema.Record] = \
+        pydantic.Field(exclude=True, default_factory=BlockingSet)
     """Records produced by this app which might have yet to finish
     feedback runs."""
 
@@ -586,9 +587,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         pending feedback results.
         
         This is meant to be run permentantly in a separate thread. It will
-        remove records from the queue `records_with_pending_feedback_results` as
-        their feedback results are computed and makes sure the queue does not
-        keep growing.
+        remove records from the set `records_with_pending_feedback_results` as
+        their feedback results are computed.
         """
 
         if self.manage_pending_feedback_results_thread is not None:
@@ -604,27 +604,44 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         """Manage the queue of records with pending feedback results.
 
         This is meant to be run permentantly in a separate thread. It will
-        remove records from the queue records_with_pending_feedback_results as
-        their feedback results are computed and makes sure the queue does not
-        keep growing.
+        remove records from the set records_with_pending_feedback_results as
+        their feedback results are computed.
         """
 
         while True:
-            record = self.records_with_pending_feedback_results.get()
+            record = self.records_with_pending_feedback_results.peek()
             record.wait_for_feedback_results()
+            self.records_with_pending_feedback_results.remove(record)
 
-    def wait_for_feedback_results(self) -> None:
+    def wait_for_feedback_results(
+        self,
+        feedback_timeout: Optional[float] = None
+    ) -> List[mod_record_schema.Record]:
         """Wait for all feedbacks functions to complete.
          
+        Args:
+            feedback_timeout: Timeout in seconds for waiting for feedback
+                results for each feedback function. Note that this is not the
+                total timeout for this entire blocking call.
+
+        Returns:
+            A list of records that have been waited on. Note a record will be
+                included even if a feedback computation for it failed or
+                timedout.
+
         This applies to all feedbacks on all records produced by this app. This
         call will block until finished and if new records are produced while
         this is running, it will include them.
         """
 
-        while not self.records_with_pending_feedback_results.empty():
-            record = self.records_with_pending_feedback_results.get()
+        records = []
 
-            record.wait_for_feedback_results()
+        while not self.records_with_pending_feedback_results.empty():
+            record = self.records_with_pending_feedback_results.pop()
+            record.wait_for_feedback_results(feedback_timeout=feedback_timeout)
+            records.append(record)
+
+        return records
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> Lens:
@@ -1133,7 +1150,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         if self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD:
             # Add the record to ones with pending feedback.
 
-            self.records_with_pending_feedback_results.put(record)
+            self.records_with_pending_feedback_results.add(record)
 
         elif self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP:
             # If in blocking mode ("WITH_APP"), wait for feedbacks to finished

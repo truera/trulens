@@ -33,7 +33,7 @@ botocore >= 1.33.6
 litellm     >= 1.25.2
 
 # Cortex
-# snowflake-snowpark-python >= 1.18.0
+snowflake-snowpark-python >= 1.18.0; python_version < 3.12 # not available for 3.12
 snowflake-connector-python >= 3.11.0
 
 # Local models
