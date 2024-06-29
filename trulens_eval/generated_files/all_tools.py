@@ -3,7 +3,11 @@
 
 # # 📓 _LangChain_ Quickstart
 #
-# In this quickstart you will create a simple LLM Chain and learn how to log it and get feedback on an LLM response.
+# In this quickstart you will create a simple LCEL Chain and learn how to log it and get feedback on an LLM response.
+#
+# For evaluation, we will leverage the RAG triad of groundedness, context relevance and answer relevance.
+#
+# You'll also learn how to use feedbacks for guardrails, via filtering retrieved context.
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/langchain_quickstart.ipynb)
 
@@ -11,11 +15,11 @@
 # ### Add API keys
 # For this quickstart you will need Open AI and Huggingface keys
 
-# In[ ]:
+# In[1]:
 
-# ! pip install trulens_eval openai langchain langchain-openai faiss-cpu bs4 tiktoken
+# ! pip install trulens_eval openai langchain langchain-openai langchain_community faiss-cpu bs4 tiktoken
 
-# In[ ]:
+# In[1]:
 
 import os
 
@@ -23,13 +27,14 @@ os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # ### Import from LangChain and TruLens
 
-# In[ ]:
+# In[2]:
 
 # Imports main tools:
 from trulens_eval import Tru
 from trulens_eval import TruChain
 
 tru = Tru()
+tru.reset_database()
 
 # Imports from LangChain to build app
 import bs4
@@ -41,7 +46,7 @@ from langchain_core.runnables import RunnablePassthrough
 
 # ### Load documents
 
-# In[ ]:
+# In[3]:
 
 loader = WebBaseLoader(
     web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
@@ -55,7 +60,7 @@ docs = loader.load()
 
 # ### Create Vector Store
 
-# In[ ]:
+# In[4]:
 
 from langchain_openai import OpenAIEmbeddings
 
@@ -70,7 +75,7 @@ vectorstore = FAISS.from_documents(documents, embeddings)
 
 # ### Create RAG
 
-# In[ ]:
+# In[5]:
 
 retriever = vectorstore.as_retriever()
 
@@ -91,13 +96,13 @@ rag_chain = (
 
 # ### Send your first request
 
-# In[ ]:
+# In[6]:
 
 rag_chain.invoke("What is Task Decomposition?")
 
 # ## Initialize Feedback Function(s)
 
-# In[ ]:
+# In[7]:
 
 import numpy as np
 
@@ -114,22 +119,27 @@ context = App.select_context(rag_chain)
 
 # Define a groundedness feedback function
 f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons
-            ).on(context.collect())  # collect context chunks into a list
+    Feedback(
+        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
+    ).on(context.collect())  # collect context chunks into a list
     .on_output()
 )
 
 # Question/answer relevance between overall question and answer.
-f_answer_relevance = (Feedback(provider.relevance).on_input_output())
-# Question/statement relevance between question and each context chunk.
+f_answer_relevance = (
+    Feedback(provider.relevance_with_cot_reasons,
+             name="Answer Relevance").on_input_output()
+)
+# Context relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons
-            ).on_input().on(context).aggregate(np.mean)
+    Feedback(
+        provider.context_relevance_with_cot_reasons, name="Context Relevance"
+    ).on_input().on(context).aggregate(np.mean)
 )
 
 # ## Instrument chain for logging with TruLens
 
-# In[ ]:
+# In[8]:
 
 tru_recorder = TruChain(
     rag_chain,
@@ -137,21 +147,146 @@ tru_recorder = TruChain(
     feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness]
 )
 
-# In[ ]:
+# In[9]:
 
-response, tru_record = tru_recorder.with_record(
-    rag_chain.invoke, "What is Task Decomposition?"
+with tru_recorder as recording:
+    llm_response = rag_chain.invoke("What is Task Decomposition?")
+
+display(llm_response)
+
+# Check results
+
+# In[11]:
+
+tru.get_leaderboard()
+
+# By looking closer at context relevance, we see that our retriever is returning irrelevant context.
+
+# In[12]:
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+
+get_feedback_result(last_record, 'Context Relevance')
+
+# ## Use guardrails
+#
+# In addition to making informed iteration, we can also directly use feedback results as guardrails at inference time. In particular, here we show how to use the context relevance score as a guardrail to filter out irrelevant context before it gets passed to the LLM. This both reduces hallucination and improves efficiency.
+#
+# Below, you can see the TruLens feedback display of each context relevance chunk retrieved by our RAG.
+
+# Wouldn't it be great if we could automatically filter out context chunks with relevance scores below 0.5?
+#
+# We can do so with the TruLens guardrail, *WithFeedbackFilterDocuments*. All we have to do is use the method `of_retriever` to create a new filtered retriever, passing in the original retriever along with the feedback function and threshold we want to use.
+
+# In[13]:
+
+from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments
+
+# note: feedback function used for guardrail must only return a score, not also reasons
+f_context_relevance_score = (
+    Feedback(provider.context_relevance).on_input().on(context)
 )
 
+filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
+    retriever=retriever, feedback=f_context_relevance_score, threshold=0.5
+)
+
+rag_chain = (
+    {
+        "context": filtered_retriever | format_docs,
+        "question": RunnablePassthrough()
+    } | prompt | llm | StrOutputParser()
+)
+
+# Then we can operate as normal
+
+# In[14]:
+
+tru_recorder = TruChain(
+    rag_chain,
+    app_id='Chain1_ChatApplication_Filtered',
+    feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness]
+)
+
+with tru_recorder as recording:
+    llm_response = rag_chain.invoke("What is Task Decomposition?")
+
+display(llm_response)
+
+# ## See the power of context filters!
+#
+# If we inspect the context relevance of our retreival now, you see only relevant context chunks!
+
+# In[15]:
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+
+get_feedback_result(last_record, 'Context Relevance')
+
+# In[16]:
+
+tru.run_dashboard(port=1236)
+
+# ## Retrieve records and feedback
+
+# In[16]:
+
+# The record of the app invocation can be retrieved from the `recording`:
+
+rec = recording.get()  # use .get if only one record
+# recs = recording.records # use .records if multiple
+
+display(rec)
+
+# In[17]:
+
+# The results of the feedback functions can be rertrieved from
+# `Record.feedback_results` or using the `wait_for_feedback_result` method. The
+# results if retrieved directly are `Future` instances (see
+# `concurrent.futures`). You can use `as_completed` to wait until they have
+# finished evaluating or use the utility method:
+
+for feedback, feedback_result in rec.wait_for_feedback_results().items():
+    print(feedback.name, feedback_result.result)
+
+# See more about wait_for_feedback_results:
+# help(rec.wait_for_feedback_results)
+
+# In[18]:
+
+records, feedback = tru.get_records_and_feedback(app_ids=[])
+
+records.head()
+
+# In[19]:
+
+tru.get_leaderboard(app_ids=[])
+
+# ## Explore in a Dashboard
+
 # In[ ]:
 
-json_like = tru_record.layout_calls_as_app()
+tru.run_dashboard()  # open a local streamlit app to explore
 
-# In[ ]:
+# tru.stop_dashboard() # stop if needed
+
+# Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
+
+# ## Learn more about the call stack
+
+# In[21]:
+
+json_like = last_record.layout_calls_as_app()
+
+# In[22]:
 
 json_like
 
-# In[ ]:
+# In[23]:
 
 from ipytree import Node
 from ipytree import Tree
@@ -195,71 +330,13 @@ def display_call_stack(data):
 tree = display_call_stack(json_like)
 tree
 
-# In[ ]:
-
-tree
-
-# In[ ]:
-
-with tru_recorder as recording:
-    llm_response = rag_chain.invoke("What is Task Decomposition?")
-
-display(llm_response)
-
-# ## Retrieve records and feedback
-
-# In[ ]:
-
-# The record of the app invocation can be retrieved from the `recording`:
-
-rec = recording.get()  # use .get if only one record
-# recs = recording.records # use .records if multiple
-
-display(rec)
-
-# In[ ]:
-
-# The results of the feedback functions can be rertireved from
-# `Record.feedback_results` or using the `wait_for_feedback_result` method. The
-# results if retrieved directly are `Future` instances (see
-# `concurrent.futures`). You can use `as_completed` to wait until they have
-# finished evaluating or use the utility method:
-
-for feedback, feedback_result in rec.wait_for_feedback_results().items():
-    print(feedback.name, feedback_result.result)
-
-# See more about wait_for_feedback_results:
-# help(rec.wait_for_feedback_results)
-
-# In[ ]:
-
-records, feedback = tru.get_records_and_feedback(
-    app_ids=["Chain1_ChatApplication"]
-)
-
-records.head()
-
-# In[ ]:
-
-tru.get_leaderboard(app_ids=["Chain1_ChatApplication"])
-
-# ## Explore in a Dashboard
-
-# In[ ]:
-
-tru.run_dashboard()  # open a local streamlit app to explore
-
-# tru.stop_dashboard() # stop if needed
-
-# Alternatively, you can run `trulens-eval` from a command line in the same folder to start the dashboard.
-
-# Note: Feedback functions evaluated in the deferred manner can be seen in the "Progress" page of the TruLens dashboard.
-
 # # 📓 LlamaIndex Quickstart
 #
 # In this quickstart you will create a simple Llama Index app and learn how to log it and get feedback on an LLM response.
 #
-# For evaluation, we will leverage the "hallucination triad" of groundedness, context relevance and answer relevance.
+# You'll also learn how to use feedbacks for guardrails, via filtering retrieved context.
+#
+# For evaluation, we will leverage the RAG triad of groundedness, context relevance and answer relevance.
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/llama_index_quickstart.ipynb)
 
@@ -268,14 +345,14 @@ tru.run_dashboard()  # open a local streamlit app to explore
 # ### Install dependencies
 # Let's install some of the dependencies for this notebook if we don't have them already
 
-# In[ ]:
+# In[20]:
 
 # pip install trulens_eval llama_index openai
 
 # ### Add API keys
-# For this quickstart, you will need Open AI and Huggingface keys. The OpenAI key is used for embeddings and GPT, and the Huggingface key is used for evaluation.
+# For this quickstart, you will need an Open AI key. The OpenAI key is used for embeddings, completion and evaluation.
 
-# In[ ]:
+# In[21]:
 
 import os
 
@@ -283,7 +360,7 @@ os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # ### Import from TruLens
 
-# In[ ]:
+# In[22]:
 
 from trulens_eval import Tru
 
@@ -295,36 +372,45 @@ tru = Tru()
 #
 # The easiest way to get it is to [download it via this link](https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt) and save it in a folder called data. You can do so with the following command:
 
-# In[ ]:
+# In[23]:
 
-get_ipython().system(
-    'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
-)
+import os
+
+if not os.path.exists('data/paul_graham_essay.txt'):
+    get_ipython().system(
+        'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
+    )
 
 # ### Create Simple LLM Application
 #
 # This example uses LlamaIndex which internally uses an OpenAI LLM.
 
-# In[ ]:
+# In[24]:
 
+from llama_index.core import Settings
 from llama_index.core import SimpleDirectoryReader
 from llama_index.core import VectorStoreIndex
+from llama_index.llms.openai import OpenAI
+
+Settings.chunk_size = 128
+Settings.chunk_overlap = 16
+Settings.llm = OpenAI()
 
 documents = SimpleDirectoryReader("data").load_data()
 index = VectorStoreIndex.from_documents(documents)
 
-query_engine = index.as_query_engine()
+query_engine = index.as_query_engine(similarity_top_k=3)
 
 # ### Send your first request
 
-# In[ ]:
+# In[25]:
 
 response = query_engine.query("What did the author do growing up?")
 print(response)
 
 # ## Initialize Feedback Function(s)
 
-# In[ ]:
+# In[26]:
 
 import numpy as np
 
@@ -356,7 +442,7 @@ f_context_relevance = (
 
 # ## Instrument app for logging with TruLens
 
-# In[ ]:
+# In[27]:
 
 from trulens_eval import TruLlama
 
@@ -366,15 +452,76 @@ tru_query_engine_recorder = TruLlama(
     feedbacks=[f_groundedness, f_answer_relevance, f_context_relevance]
 )
 
-# In[ ]:
+# In[28]:
 
 # or as context manager
 with tru_query_engine_recorder as recording:
     query_engine.query("What did the author do growing up?")
 
+# ## Use guardrails
+#
+# In addition to making informed iteration, we can also directly use feedback results as guardrails at inference time. In particular, here we show how to use the context relevance score as a guardrail to filter out irrelevant context before it gets passed to the LLM. This both reduces hallucination and improves efficiency.
+#
+# Below, you can see the TruLens feedback display of each context relevance chunk retrieved by our RAG.
+
+# In[29]:
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+
+get_feedback_result(last_record, 'context_relevance_with_cot_reasons')
+
+# Wouldn't it be great if we could automatically filter out context chunks with relevance scores below 0.5?
+#
+# We can do so with the TruLens guardrail, *WithFeedbackFilterNodes*. All we have to do is use the method `of_query_engine` to create a new filtered retriever, passing in the original retriever along with the feedback function and threshold we want to use.
+
+# In[30]:
+
+from trulens_eval.guardrails.llama import WithFeedbackFilterNodes
+
+# note: feedback function used for guardrail must only return a score, not also reasons
+f_context_relevance_score = (
+    Feedback(provider.context_relevance
+            ).on_input().on(context).aggregate(np.mean)
+)
+
+filtered_query_engine = WithFeedbackFilterNodes(
+    query_engine, feedback=f_context_relevance_score, threshold=0.5
+)
+
+# Then we can operate as normal
+
+# In[31]:
+
+tru_recorder = TruLlama(
+    filtered_query_engine,
+    app_id='LlamaIndex_App1_Filtered',
+    feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness]
+)
+
+with tru_recorder as recording:
+    llm_response = filtered_query_engine.query(
+        "What did the author do growing up?"
+    )
+
+display(llm_response)
+
+# ## See the power of context filters!
+#
+# If we inspect the context relevance of our retreival now, you see only relevant context chunks!
+
+# In[32]:
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+
+get_feedback_result(last_record, 'context_relevance_with_cot_reasons')
+
 # ## Retrieve records and feedback
 
-# In[ ]:
+# In[33]:
 
 # The record of the app invocation can be retrieved from the `recording`:
 
@@ -383,11 +530,11 @@ rec = recording.get()  # use .get if only one record
 
 display(rec)
 
-# In[ ]:
+# In[34]:
 
 tru.run_dashboard()
 
-# In[ ]:
+# In[35]:
 
 # The results of the feedback functions can be rertireved from
 # `Record.feedback_results` or using the `wait_for_feedback_result` method. The
@@ -401,19 +548,19 @@ for feedback, feedback_result in rec.wait_for_feedback_results().items():
 # See more about wait_for_feedback_results:
 # help(rec.wait_for_feedback_results)
 
-# In[ ]:
+# In[36]:
 
-records, feedback = tru.get_records_and_feedback(app_ids=["LlamaIndex_App1"])
+records, feedback = tru.get_records_and_feedback(app_ids=[])
 
 records.head()
 
-# In[ ]:
+# In[37]:
 
-tru.get_leaderboard(app_ids=["LlamaIndex_App1"])
+tru.get_leaderboard(app_ids=[])
 
 # ## Explore in a Dashboard
 
-# In[ ]:
+# In[38]:
 
 tru.run_dashboard()  # open a local streamlit app to explore
 
@@ -429,24 +576,23 @@ tru.run_dashboard()  # open a local streamlit app to explore
 #
 # [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
 
-# In[ ]:
+# In[1]:
 
 # ! pip install trulens_eval chromadb openai
 
-# In[ ]:
+# In[1]:
 
 import os
 
 os.environ["OPENAI_API_KEY"] = "sk-..."
-os.environ["HUGGINGFACE_API_KEY"] = "hf_..."
 
 # ## Get Data
 #
 # In this case, we'll just initialize some simple text in the notebook.
 
-# In[ ]:
+# In[2]:
 
-university_info = """
+uw_info = """
 The University of Washington, founded in 1861 in Seattle, is a public research university
 with over 45,000 students across three campuses in Seattle, Tacoma, and Bothell.
 As the flagship institution of the six public universities in Washington state,
@@ -454,11 +600,28 @@ UW encompasses over 500 buildings and 20 million square feet of space,
 including one of the largest library systems in the world.
 """
 
+wsu_info = """
+Washington State University, commonly known as WSU, founded in 1890, is a public research university in Pullman, Washington.
+With multiple campuses across the state, it is the state's second largest institution of higher education.
+WSU is known for its programs in veterinary medicine, agriculture, engineering, architecture, and pharmacy.
+"""
+
+seattle_info = """
+Seattle, a city on Puget Sound in the Pacific Northwest, is surrounded by water, mountains and evergreen forests, and contains thousands of acres of parkland.
+It's home to a large tech industry, with Microsoft and Amazon headquartered in its metropolitan area.
+The futuristic Space Needle, a legacy of the 1962 World's Fair, is its most iconic landmark.
+"""
+
+starbucks_info = """
+Starbucks Corporation is an American multinational chain of coffeehouses and roastery reserves headquartered in Seattle, Washington.
+As the world's largest coffeehouse chain, Starbucks is seen to be the main representation of the United States' second wave of coffee culture.
+"""
+
 # ## Create Vector Store
 #
 # Create a chromadb vector store in memory.
 
-# In[ ]:
+# In[3]:
 
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
@@ -470,27 +633,31 @@ embedding_function = OpenAIEmbeddingFunction(
 
 chroma_client = chromadb.Client()
 vector_store = chroma_client.get_or_create_collection(
-    name="Universities", embedding_function=embedding_function
+    name="Washington", embedding_function=embedding_function
 )
 
-# Add the university_info to the embedding database.
+# Populate the vector store.
 
-# In[ ]:
+# In[4]:
 
-vector_store.add("uni_info", documents=university_info)
+vector_store.add("uw_info", documents=uw_info)
+vector_store.add("wsu_info", documents=wsu_info)
+vector_store.add("seattle_info", documents=seattle_info)
+vector_store.add("starbucks_info", documents=starbucks_info)
 
 # ## Build RAG from scratch
 #
 # Build a custom RAG from scratch, and add TruLens custom instrumentation.
 
-# In[ ]:
+# In[5]:
 
 from trulens_eval import Tru
 from trulens_eval.tru_custom_app import instrument
 
 tru = Tru()
+tru.reset_database()
 
-# In[ ]:
+# In[6]:
 
 from openai import OpenAI
 
@@ -504,8 +671,9 @@ class RAG_from_scratch:
         """
         Retrieve relevant text from vector store.
         """
-        results = vector_store.query(query_texts=query, n_results=2)
-        return results['documents']
+        results = vector_store.query(query_texts=query, n_results=4)
+        # Flatten the list of lists into a single list
+        return [doc for sublist in results['documents'] for doc in sublist]
 
     @instrument
     def generate_completion(self, query: str, context_str: list) -> str:
@@ -542,7 +710,7 @@ rag = RAG_from_scratch()
 #
 # Here we'll use groundedness, answer relevance and context relevance to detect hallucination.
 
-# In[ ]:
+# In[7]:
 
 import numpy as np
 
@@ -560,24 +728,23 @@ f_groundedness = (
 )
 # Question/answer relevance between overall question and answer.
 f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance").on(
-        Select.RecordCalls.retrieve.args.query
-    ).on_output()
+    Feedback(provider.relevance_with_cot_reasons,
+             name="Answer Relevance").on_input().on_output()
 )
 
 # Context relevance between question and each context chunk.
 f_context_relevance = (
     Feedback(
         provider.context_relevance_with_cot_reasons, name="Context Relevance"
-    ).on(Select.RecordCalls.retrieve.args.query).on(
-        Select.RecordCalls.retrieve.rets
-    ).aggregate(np.mean)  # choose a different aggregation method if you wish
+    ).on_input().on(Select.RecordCalls.retrieve.rets[:]).aggregate(
+        np.mean
+    )  # choose a different aggregation method if you wish
 )
 
 # ## Construct the app
 # Wrap the custom RAG with TruCustomApp, add list of feedbacks for eval
 
-# In[ ]:
+# In[8]:
 
 from trulens_eval import TruCustomApp
 
@@ -590,16 +757,118 @@ tru_rag = TruCustomApp(
 # ## Run the app
 # Use `tru_rag` as a context manager for the custom RAG-from-scratch app.
 
-# In[ ]:
+# In[9]:
 
 with tru_rag as recording:
     rag.query("When was the University of Washington founded?")
 
-# In[ ]:
+# ## Check results
+#
+# We can view results in the leaderboard.
 
-tru.get_leaderboard(app_ids=["RAG v1"])
+# In[10]:
 
-# In[ ]:
+tru.get_leaderboard()
+
+# In[11]:
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+
+get_feedback_result(last_record, 'Context Relevance')
+
+# ## Use guardrails
+#
+# In addition to making informed iteration, we can also directly use feedback results as guardrails at inference time. In particular, here we show how to use the context relevance score as a guardrail to filter out irrelevant context before it gets passed to the LLM. This both reduces hallucination and improves efficiency.
+#
+# To do so, we'll rebuild our RAG using the @context-filter decorator on the method we want to filter, and pass in the feedback function and threshold to use for guardrailing.
+
+# In[12]:
+
+# note: feedback function used for guardrail must only return a score, not also reasons
+f_context_relevance_score = (
+    Feedback(provider.context_relevance,
+             name="Context Relevance").on_input().on(
+                 Select.RecordCalls.retrieve.rets
+             )
+)
+
+from trulens_eval.guardrails.base import context_filter
+
+
+class filtered_RAG_from_scratch:
+
+    @instrument
+    @context_filter(f_context_relevance_score, 0.5)
+    def retrieve(self, query: str) -> list:
+        """
+        Retrieve relevant text from vector store.
+        """
+        results = vector_store.query(query_texts=query, n_results=4)
+        return [doc for sublist in results['documents'] for doc in sublist]
+
+    @instrument
+    def generate_completion(self, query: str, context_str: list) -> str:
+        """
+        Generate answer from context.
+        """
+        completion = oai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            temperature=0,
+            messages=[
+                {
+                    "role": "user",
+                    "content":
+                        f"We have provided context information below. \n"
+                        f"---------------------\n"
+                        f"{context_str}"
+                        f"\n---------------------\n"
+                        f"Given this information, please answer the question: {query}"
+                }
+            ]
+        ).choices[0].message.content
+        return completion
+
+    @instrument
+    def query(self, query: str) -> str:
+        context_str = self.retrieve(query)
+        completion = self.generate_completion(query, context_str)
+        return completion
+
+
+filtered_rag = filtered_RAG_from_scratch()
+
+# ## Record and operate as normal
+
+# In[13]:
+
+from trulens_eval import TruCustomApp
+
+filtered_tru_rag = TruCustomApp(
+    filtered_rag,
+    app_id='RAG v2',
+    feedbacks=[f_groundedness, f_answer_relevance, f_context_relevance]
+)
+
+with filtered_tru_rag as recording:
+    filtered_rag.query("when was the university of washington founded?")
+
+# In[14]:
+
+tru.get_leaderboard(app_ids=[])
+
+# See the power of filtering!
+
+# In[15]:
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+
+get_feedback_result(last_record, 'Context Relevance')
+
+# In[16]:
 
 tru.run_dashboard()
 
