@@ -392,24 +392,24 @@ CALLBACKS = "__tru_callbacks"
 
 
 def wrap_callable(
-    func: Callable,
-    callback_class: Type[CallableCallbacks],
-    call_selfid: int,
-    **kwargs: Dict[str, Any]
+    func: Callable, callback_class: Type[CallableCallbacks], **kwargs: Dict[str,
+                                                                            Any]
 ) -> Callable:
     """Create a wrapper of the given function to emit various callbacks at
     different stages of its evaluation.
+
+    !!! Warning
+        Note that we only allow a single wrapper and a callback class to be used
+        at once. Managing multiple receivers of the data collected must be
+        managed outside of this wrapping utility.
     
     Args:
         func: The function to wrap.
 
         callback_class: The class that provides callbacks.
 
-        call_selfid: The id of the object "self" in the wrapped call to route to
-            the given callbacks.
-
         **kwargs: All other arguments are passed in as they are to the
-            callback_class constructor upon the call to the wrapped func..
+            callback_class constructor upon the call to the wrapped func.
     """
 
     if hasattr(func, "__wrapper__"):
@@ -421,26 +421,14 @@ def wrap_callable(
         # creating a new wrapper.
         func = func.__wrapper__
 
-    cb_args: Dict[str, Any] = {'func': func}
-
     if safe_hasattr(func, CALLBACKS):
         # If CALLBACKS is set, it was already a wrapper.
 
-        existing_callbacks: Dict[Optional[int], List[Tuple[
-            Type[CallableCallbacks], Dict[str,
-                                          Any]]]] = getattr(func, CALLBACKS)
-        if call_selfid not in existing_callbacks:
-            existing_callbacks[call_selfid] = [(callback_class, kwargs)]
-        else:
-            existing_callbacks[call_selfid].append((callback_class, kwargs))
+        logger.warning("Function %s is already wrapped.", func)
 
-        callback_class.on_callable_wrapped(
-            func=func.__func__,  # wrapped func is stored in __func__.
-            wrapper=func
-        )
-
-        # Return the existing wrapper made by a prior wrap_callable call.
         return func
+
+    cb_args: Dict[str, Any] = {'func': func}
 
     # If CALLBACKS is not set, create a wrapper and return it.
     @functools.wraps(func)
@@ -451,37 +439,24 @@ def wrap_callable(
 
         call_id: uuid.UUID = uuid.uuid4()
 
-        selfid = None
-        if len(args) > 0:
-            selfid = id(args[0])
-
-        callbacks = []
-        for callback_class, callback_init_kwargs in getattr(
-                wrapper, CALLBACKS).get(selfid, []):
-
-            callbacks.append(
-                callback_class(
-                    call_id=call_id,
-                    call_args=args,
-                    call_kwargs=kwargs,
-                    **cb_args,
-                    **callback_init_kwargs
-                )
-            )
+        callback_class, callback_init_kwargs = getattr(wrapper, CALLBACKS)
+        callback = callback_class(
+            call_id=call_id,
+            call_args=args,
+            call_kwargs=kwargs,
+            **cb_args,
+            **callback_init_kwargs
+        )
 
         try:
             bindings = inspect.signature(func).bind(*args, **kwargs)
             start_time: datetime = datetime.now()
 
-            for callback in callbacks:
-                callback.on_callable_call(
-                    bindings=bindings, start_time=start_time
-                )
+            callback.on_callable_call(bindings=bindings, start_time=start_time)
 
         except TypeError as e:
             end_time: datetime = datetime.now()
-            for callback in callbacks:
-                callback.on_callable_bind_error(error=e, end_time=end_time)
+            callback.on_callable_bind_error(error=e, end_time=end_time)
 
             # NOTE: Not raising e here to make sure the exception raised by the
             # wrapper is identical to the one produced by calling the wrapped
@@ -493,12 +468,10 @@ def wrap_callable(
 
             end_time: datetime = datetime.now()
 
-            for callback in callbacks:
-                ret = callback.on_callable_return(ret=ret, end_time=end_time)
+            ret = callback.on_callable_return(ret=ret, end_time=end_time)
             # Can override ret.
 
-            for callback in callbacks:
-                callback.on_callable_end()
+            callback.on_callable_end()
 
             return ret
 
@@ -507,16 +480,12 @@ def wrap_callable(
 
             end_time: datetime = datetime.now()
 
-            wrapped_e = e
-
-            for callback in callbacks:
-                wrapped_e = callback.on_callable_exception(
-                    error=wrapped_e, end_time=end_time
-                )
+            wrapped_e = callback.on_callable_exception(
+                error=e, end_time=end_time
+            )
             # Can override exception.
 
-            for callback in callbacks:
-                callback.on_callable_end()
+            callback.on_callable_end()
 
             raise wrapped_e from e
 
@@ -575,7 +544,7 @@ def wrap_callable(
 
     cb_args['wrapper'] = wrapper
 
-    setattr(wrapper, CALLBACKS, {call_selfid: [(callback_class, kwargs)]})
+    setattr(wrapper, CALLBACKS, (callback_class, kwargs))
     wrapper.__func__ = func
     func.__wrapper__ = wrapper
 

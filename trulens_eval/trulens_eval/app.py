@@ -11,42 +11,30 @@ import threading
 from threading import Lock
 from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
-    Optional, Sequence, Set, Tuple, Type, TypeVar, Union
+    Optional, Sequence, Tuple, TypeVar, Union
 )
 
 import pydantic
 
-from trulens_eval import app as mod_app
-from trulens_eval import feedback as mod_feedback
-from trulens_eval import instruments as mod_instruments
-from trulens_eval import trace as mod_trace
-from trulens_eval.schema import app as mod_app_schema
-from trulens_eval.schema import base as mod_base_schema
-from trulens_eval.schema import feedback as mod_feedback_schema
-from trulens_eval.schema import record as mod_record_schema
-from trulens_eval.schema import types as mod_types_schema
-from trulens_eval.utils import pyschema
+import trulens_eval.feedback as mod_feedback
+import trulens_eval.instruments as mod_instruments
+import trulens_eval.schema.app as mod_app_schema
+import trulens_eval.schema.base as mod_base_schema
+import trulens_eval.schema.feedback as mod_feedback_schema
+import trulens_eval.schema.record as mod_record_schema
+import trulens_eval.schema.types as mod_types_schema
+import trulens_eval.trace as mod_trace
 from trulens_eval.utils.asynchro import CallableMaybeAwaitable
 from trulens_eval.utils.asynchro import desync
 from trulens_eval.utils.asynchro import sync
 from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.json import jsonify
-from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.python import callable_name
-from trulens_eval.utils.python import class_name
-from trulens_eval.utils.python import \
-    Future  # can take type args with python < 3.9
-from trulens_eval.utils.python import id_str
-from trulens_eval.utils.python import \
-    Queue  # can take type args with python < 3.9
-from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.python import T
+import trulens_eval.utils.pyschema as pyschema
+import trulens_eval.utils.python as mod_python_utils
 from trulens_eval.utils.serial import all_objects
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
-from trulens_eval.utils.serial import JSON_BASES_T
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
@@ -57,6 +45,7 @@ pp = PrettyPrinter()
 COMPONENT = Any
 
 A = TypeVar("A")
+T = TypeVar("T")
 
 # Message produced when an attribute is looked up from our App but is actually
 # an attribute of the enclosed app.
@@ -86,10 +75,12 @@ def instrumented_component_views(obj: object) -> Iterable[Tuple[Lens, JSON]]:
     """
 
     for q, o in all_objects(obj):
-        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.model_fields:
+        if isinstance(
+                o,
+                pydantic.BaseModel) and pyschema.CLASS_INFO in o.model_fields:
             yield q, o.model_dump()
 
-        if isinstance(o, Dict) and CLASS_INFO in o:
+        if isinstance(o, Dict) and pyschema.CLASS_INFO in o:
             yield q, o
 
 
@@ -126,7 +117,7 @@ class RecordingContext():
 
     def __init__(
         self,
-        app: mod_app.App,
+        app: App,
         record_metadata: JSON = None,
         tracer: Optional[mod_trace.Tracer] = None
     ):
@@ -306,8 +297,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     """Mapping of instrumented methods (by id(.) of owner object and the
     function) to their path in this app."""
 
-    records_with_pending_feedback_results: Queue[mod_record_schema.Record] = \
-        pydantic.Field(exclude=True, default_factory=lambda: Queue(maxsize=1024))
+    records_with_pending_feedback_results: mod_python_utils.Queue[mod_record_schema.Record] = \
+        pydantic.Field(exclude=True, default_factory=lambda: mod_python_utils.Queue(maxsize=1024))
     """Records produced by this app which might have yet to finish
     feedback runs."""
 
@@ -630,7 +621,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         # Otherwise we are not sure.
         logger.warning(
             "Unsure what the main input string is for the call to %s with args %s.",
-            callable_name(func), all_args
+            mod_python_utils.callable_name(func), all_args
         )
 
         # After warning, just take the first item in each container until a
@@ -749,7 +740,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             logger.warning(
                 "A new object of type %s at %s is calling an instrumented method %s. "
                 "The path of this call may be incorrect.",
-                class_name(type(obj)), id_str(obj), callable_name(func)
+                mod_python_utils.class_name(type(obj)),
+                mod_python_utils.id_str(obj),
+                mod_python_utils.callable_name(func)
             )
             try:
                 _id, _, path = next(iter(self.get_methods_for_func(func)))
@@ -762,7 +755,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             logger.warning(
                 "Guessing path of new object is %s based on other object (%s) using this function.",
-                path, id_str(_id)
+                path, mod_python_utils.id_str(_id)
             )
 
             funcs = {func: path}
@@ -776,7 +769,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                 logger.warning(
                     "A new object of type %s at %s is calling an instrumented method %s. "
                     "The path of this call may be incorrect.",
-                    class_name(type(obj)), id_str(obj), callable_name(func)
+                    mod_python_utils.class_name(type(obj)),
+                    mod_python_utils.id_str(obj),
+                    mod_python_utils.callable_name(func)
                 )
 
                 try:
@@ -789,7 +784,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
                 logger.warning(
                     "Guessing path of new object is %s based on other object (%s) using this function.",
-                    path, id_str(_id)
+                    path, mod_python_utils.id_str(_id)
                 )
 
                 return path
@@ -966,7 +961,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         if not isinstance(func, Callable):
             raise TypeError(
-                f"Expected `func` to be a callable, but got {class_name(type(func))}."
+                f"Expected `func` to be a callable, but got {mod_python_utils.class_name(type(func))}."
             )
 
         # If func is actually an object that implements __call__, check __call__
@@ -974,7 +969,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         if not (inspect.isfunction(func) or inspect.ismethod(func)):
             func = func.__call__
 
-        if not safe_hasattr(func, mod_instruments.Instrument.INSTRUMENT):
+        if not mod_python_utils.safe_hasattr(
+                func, mod_instruments.Instrument.INSTRUMENT):
             if mod_instruments.Instrument.INSTRUMENT in dir(func):
                 # HACK009: Need to figure out the __call__ accesses by class
                 # name/object name with relation to this check for
@@ -989,7 +985,9 @@ that has been instrumented exactly once. Otherwise unexpected results may
 follow. You can use `AddInstruments.method` of `trulens_eval.instruments` before
 you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 `print_instrumented` may be used to see methods that have been instrumented.
-""", func, class_name(self), callable_name(func), class_name(self)
+""", func, mod_python_utils.class_name(self),
+                mod_python_utils.callable_name(func),
+                mod_python_utils.class_name(self)
             )
 
     async def awith_(
@@ -1007,7 +1005,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         if not isinstance(awaitable, Awaitable):
             raise TypeError(
-                f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
+                f"Expected `func` to be an async function or return an awaitable, but got {mod_python_utils.class_name(type(awaitable))}."
             )
 
         return await awaitable
@@ -1067,7 +1065,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         )
         if not isinstance(awaitable, Awaitable):
             raise TypeError(
-                f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
+                f"Expected `func` to be an async function or return an awaitable, but got {mod_python_utils.class_name(type(awaitable))}."
             )
 
         return await awaitable, record
@@ -1112,9 +1110,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         )
 
     def _add_future_feedback(
-        self,
-        future_or_result: Union[mod_feedback_schema.FeedbackResult,
-                                Future[mod_feedback_schema.FeedbackResult]]
+        self, future_or_result: Union[
+            mod_feedback_schema.FeedbackResult,
+            mod_python_utils.Future[mod_feedback_schema.FeedbackResult]]
     ) -> None:
         """
         Callback used to add feedback results to the database once they are
@@ -1123,7 +1121,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         See [_handle_record][trulens_eval.app.App._handle_record].
         """
 
-        if isinstance(future_or_result, Future):
+        if isinstance(future_or_result, mod_python_utils.Future):
             res = future_or_result.result()
         else:
             res = future_or_result
@@ -1134,7 +1132,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         record: mod_record_schema.Record,
         feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None
-    ) -> Optional[List[Tuple[mod_feedback.Feedback,
+    ) -> Optional[List[Tuple[mod_feedback.Feedback, mod_python_utils.
                              Future[mod_feedback_schema.FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback
@@ -1189,7 +1187,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         # A message for cases where a user calls something that the wrapped app
         # contains. We do not support this form of pass-through calls anymore.
 
-        if safe_hasattr(self.app, __name):
+        if mod_python_utils.safe_hasattr(self.app, __name):
             msg = ATTRIBUTE_ERROR_MESSAGE.format(
                 attribute_name=__name,
                 class_name=type(self).__name__,

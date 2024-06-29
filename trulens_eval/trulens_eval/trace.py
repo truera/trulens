@@ -12,13 +12,16 @@ import contextvars
 import logging
 import random
 import traceback
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type
 import uuid
 
 import pydantic
 
+# import trulens_eval.app as mod_app
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.utils import pyschema as mod_pyschema
+from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -119,10 +122,65 @@ class SpanAppRecordingContext(Span):
         return True
 
 
-class SpanMethodCall(Span):
-    """Track a method call."""
+class LiveSpanCall(Span):
+    """Track a function call.
+    
+    WARNING:
+        This span contains references to live objects. These may change after
+        this span is created but before it is dumped or exported.
+    """
 
-    call: Optional[mod_record_schema.RecordAppCall] = None
+    call_id: Optional[uuid.UUID] = None
+
+    stack: Optional[List[mod_record_schema.RecordAppCallMethod]] = None
+
+    # call: Optional[mod_record_schema.RecordAppCall] = None
+    obj: Optional[Any] = None
+    """Self object if method call.
+    
+    WARNING: This is a live object.
+    """
+
+    cls: Optional[Type] = None
+    """Class if method/static/class method call."""
+
+    func: Optional[Callable] = None
+    """Function object.
+    
+    WARNING: This is a live object.
+    """
+
+    func_name: Optional[str] = None
+    """Function name."""
+
+    args: Optional[Dict[str, Any]] = None
+    """Arguments to the function call.
+    
+    WARNING: Contains references to live objects.
+    """
+
+    ret: Optional[Any] = None
+    """Return value of the function call.
+    
+    Excluisve with `error`.
+
+    WARNING: This is a live object.
+    """
+
+    error: Optional[Any] = None
+    """Error raised by the function call.
+    
+    Exclusive with `ret`.
+    """
+
+    perf: Optional[mod_base_schema.Perf] = None
+    """Performance metrics."""
+
+    pid: Optional[int] = None
+    """Process id."""
+
+    tid: Optional[int] = None
+    """Thread id."""
 
 
 class SpanCost(Span):
@@ -154,36 +212,63 @@ class Tracer(pydantic.BaseModel):
 
     @staticmethod
     def _fill_stacks(
-        span: SpanMethodCall,
+        span: LiveSpanCall,
+        obj_to_path_map: Dict[int, Lens] = {},
         stack: List[mod_record_schema.RecordAppCallMethod] = []
     ):
-        assert span.call is not None
-        stack = stack + [span.call.top()]
-        span.call.stack = stack
+        # TODO: what if it is not a method call?
+
+        frame_ident = mod_record_schema.RecordAppCallMethod(
+            path=obj_to_path_map.get(id(span.self), None),
+            method=mod_pyschema.Method.of_method(
+                span.func, obj=span.obj, cls=span.cls
+            )
+        )
+
+        stack = stack + [frame_ident]
+        span.stack = stack
 
         for subspan in span.iter_children(transitive=False):
-            if not isinstance(subspan, SpanMethodCall):
+            if not isinstance(subspan, LiveSpanCall):
                 continue
 
             Tracer._fill_stacks(subspan, stack=stack)
+
+    def _call_of_spancall(
+        self, span: LiveSpanCall
+    ) -> mod_record_schema.RecordAppCall:
+        """Convert a SpanCall to a RecordAppCall."""
+
+        return mod_record_schema.RecordAppCall(
+            call_id=span.call_id,
+            stack=span.stack,
+            args=span.args,
+            rets=span.ret,
+            error=span.error,
+            perf=span.perf,
+            pid=span.pid,
+            tid=span.tid
+        )
 
     def records_of_recording(
         self, recording: SpanAppRecordingContext
     ) -> Iterable[mod_record_schema.Record]:
         """Convert a recording based on spans to a list of records."""
 
-        for root_span in recording.iter_children(transitive=False):
-            assert isinstance(root_span, SpanMethodCall)
-            self._fill_stacks(root_span)
+        obj_id_to_path_map = {}
 
-            root_perf = root_span.call.perf
+        for root_span in recording.iter_children(transitive=False):
+            assert isinstance(root_span, LiveSpanCall)
+            self._fill_stacks(root_span, obj_to_path_map=obj_id_to_path_map)
+
+            root_perf = root_span.perf
             root_cost = root_span.cost_tally()
 
-            calls = [root_span.call]
+            calls = [self._call_of_spancall(root_span)]
             for span in root_span.iter_children():
-                if not isinstance(span, SpanMethodCall):
+                if not isinstance(span, LiveSpanCall):
                     continue
-                calls.append(span.call)
+                calls.append(self._call_of_spancall(span))
 
             record = mod_record_schema.Record(
                 record_id=str(uuid.uuid4()),
@@ -218,7 +303,7 @@ class Tracer(pydantic.BaseModel):
         return self._span(SpanAppRecordingContext)
 
     def method(self):
-        return self._span(SpanMethodCall)
+        return self._span(LiveSpanCall)
 
     def cost(self):
         return self._span(SpanCost)

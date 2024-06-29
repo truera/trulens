@@ -9,48 +9,35 @@ typical use cases.
 from __future__ import annotations
 
 import dataclasses
-from datetime import datetime
-import functools
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
 import os
 import threading as th
-import traceback
 from typing import (
-    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
-    Type, TypeVar, Union
+    Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type,
+    TypeVar, Union
 )
-import weakref
 
 import pydantic
 
 from trulens_eval import trace as mod_trace
 from trulens_eval.feedback import feedback as mod_feedback
-from trulens_eval.feedback.provider import endpoint as mod_endpoint
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
-from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.imports import Dummy
-from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import clean_attributes
-from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import safe_getattr
-from trulens_eval.utils.python import callable_name
-from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import class_name
-from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import id_str
-from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import safe_signature
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import retab
 from trulens_eval.utils.wrap import CallableCallbacks
-from trulens_eval.utils.wrap import wrap_awaitable
 from trulens_eval.utils.wrap import wrap_callable
 
 T = TypeVar("T")
@@ -356,30 +343,60 @@ class Instrument(object):
         class InstrumentationCallbacks(CallableCallbacks):
 
             def __init__(
-                self, app: Any, query: Lens, method_name: str, cls: type,
-                obj: object, sig: inspect.Signature, **kwargs: Dict[str, Any]
+                self,
+                #app: Any, query: Lens,
+                method_name: str,
+                cls: type,
+                #obj: object,
+                sig: inspect.Signature,
+                **kwargs: Dict[str, Any]
             ):
                 super().__init__(**kwargs)
 
                 print("init callbacks for ", query, method_name)
 
-                self.app = app
-                self.query = query
-                self.method_name = method_name
-                self.cls = cls
-                self.obj = obj
-                self.sig = sig
+                #self.app = app
+                #self.query = query
+                self.method_name: str = method_name
+                self.cls: Type = cls
+                #self.obj = obj
+                self.sig: inspect.Signature = sig
+                self.obj_id: Optional[int] = None
+
+                self.obj: Optional[object] = None
 
                 tracer = mod_trace.get_tracer()
                 self.span_context = tracer.method()
                 self.span = self.span_context.__enter__()
 
-                self.app_contexts = app.on_new_record(func)
+                # self.app_contexts = app.on_new_record(func)
                 # TODO: remove
+
+            def on_callable_call(
+                self, bindings: BoundArguments, **kwargs: Dict[str, Any]
+            ) -> BoundArguments:
+                if "self" in bindings.arguments:
+                    self.obj = bindings.arguments["self"]
+
+                return super().on_callable_call(bindings=bindings, **kwargs)
 
             def on_callable_end(self):
                 print("exiting callbacks for ", query, method_name)
 
+                span = self.span
+                span.call_id = self.call_id
+                span.obj = self.obj
+                span.cls = self.cls
+                span.method_name = self.method_name
+                span.args = self.bindings.arguments if self.bindings is not None else {}
+                span.ret = self.ret
+                span.error = self.error
+                span.perf = mod_base_schema.Perf(
+                    start_time=self.start_time, end_time=self.end_time
+                )
+                span.pid = os.getpid()
+                span.tid = th.get_native_id()
+                """
                 frame_ident = mod_record_schema.RecordAppCallMethod(
                     path=self.query,
                     method=Method.of_method(
@@ -414,12 +431,13 @@ class Instrument(object):
                 call = mod_record_schema.RecordAppCall(**record_app_args)
                 # ctx.add_call(call)
                 self.span.call = call
-
+                
                 # TODO: remove
                 for ctx in self.app_contexts:
                     # Notify apps if this was a root call.
                     if self.span.is_root():
                         self.app.on_add_root_span(ctx=ctx, span=self.span)
+                """
 
                 if self.error is not None:
                     self.span_context.__exit__(
@@ -433,12 +451,11 @@ class Instrument(object):
         return wrap_callable(
             func=func,
             callback_class=InstrumentationCallbacks,
-            call_selfid=id(obj),
-            app=self.app,
-            query=query,
+            #app=self.app,
+            #query=query,
             method_name=method_name,
             cls=cls,
-            obj=obj,
+            #obj=obj,
             sig=safe_signature(func)
         )
 
