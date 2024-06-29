@@ -8,8 +8,10 @@ import logging
 from pprint import PrettyPrinter
 from time import sleep
 from types import ModuleType
-from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
-                    Sequence, Tuple, Type, TypeVar)
+from typing import (
+    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
+    Type, TypeVar
+)
 
 from pydantic import Field
 import requests

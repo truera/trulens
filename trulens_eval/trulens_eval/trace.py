@@ -95,7 +95,7 @@ class Span(pydantic.BaseModel):
 
         if self.parent is None:
             return True
-        
+
         parent = self.context.tracer.spans.get(self.parent)
         return parent.is_root()
 
@@ -157,16 +157,19 @@ class Tracer(pydantic.BaseModel):
         span: SpanMethodCall,
         stack: List[mod_record_schema.RecordAppCallMethod] = []
     ):
+        assert span.call is not None
         stack = stack + [span.call.top()]
         span.call.stack = stack
-            
+
         for subspan in span.iter_children(transitive=False):
             if not isinstance(subspan, SpanMethodCall):
                 continue
 
             Tracer._fill_stacks(subspan, stack=stack)
 
-    def records_of_recording(self, recording: SpanAppRecordingContext) -> Iterable[mod_record_schema.Record]:
+    def records_of_recording(
+        self, recording: SpanAppRecordingContext
+    ) -> Iterable[mod_record_schema.Record]:
         """Convert a recording based on spans to a list of records."""
 
         for root_span in recording.iter_children(transitive=False):

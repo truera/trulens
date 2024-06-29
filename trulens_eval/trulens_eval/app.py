@@ -840,7 +840,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         self.recording_contexts.reset(ctx.token)
         ctx.tracer[0].__exit__(exc_type, exc_value, exc_tb)
 
-        for record in ctx.tracer[1].context.tracer.records_of_recording(ctx.tracer[1]):
+        for record in ctx.tracer[1].context.tracer.records_of_recording(
+                ctx.tracer[1]):
             ctx.records.append(record)
 
         #print("finished recording, have:")
@@ -871,7 +872,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         ctx: RecordingContext,
         span: mod_trace.Span,
     ) -> None:
-        print("got root span", ctx, span)
+        # print("got root span", ctx, span)
+        pass
 
     # WithInstrumentCallbacks requirement
     def on_add_record(

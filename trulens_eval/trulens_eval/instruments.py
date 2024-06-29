@@ -18,8 +18,10 @@ import logging
 import os
 import threading as th
 import traceback
-from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
-                    Sequence, Set, Tuple, Type, TypeVar, Union)
+from typing import (
+    Any, Awaitable, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple,
+    Type, TypeVar, Union
+)
 import weakref
 
 import pydantic
@@ -359,6 +361,8 @@ class Instrument(object):
             ):
                 super().__init__(**kwargs)
 
+                print("init callbacks for ", query, method_name)
+
                 self.app = app
                 self.query = query
                 self.method_name = method_name
@@ -371,15 +375,20 @@ class Instrument(object):
                 self.span = self.span_context.__enter__()
 
                 self.app_contexts = app.on_new_record(func)
+                # TODO: remove
 
             def on_callable_end(self):
+                print("exiting callbacks for ", query, method_name)
+
                 frame_ident = mod_record_schema.RecordAppCallMethod(
                     path=self.query,
                     method=Method.of_method(
                         self.func, obj=self.obj, cls=self.cls
                     )
                 )
-                stack = (frame_ident,) # to be filled in later from collected spans
+                stack = (
+                    frame_ident,
+                )  # rest to be filled in later from collected spans
 
                 nonself = {
                     k: jsonify(v) for k, v in (
@@ -400,29 +409,31 @@ class Instrument(object):
                     error=str(self.error) if self.error is not None else None
                 )
 
-                for ctx in self.app_contexts:
-                    record_app_args['stack'] = stack
-                    call = mod_record_schema.RecordAppCall(**record_app_args)
-                    ctx.add_call(call)
-                    self.span.call = call
+                #for ctx in self.app_contexts:
+                record_app_args['stack'] = stack
+                call = mod_record_schema.RecordAppCall(**record_app_args)
+                # ctx.add_call(call)
+                self.span.call = call
 
+                # TODO: remove
+                for ctx in self.app_contexts:
+                    # Notify apps if this was a root call.
                     if self.span.is_root():
                         self.app.on_add_root_span(ctx=ctx, span=self.span)
 
                 if self.error is not None:
                     self.span_context.__exit__(
-                        type(self.error),
-                        self.error,
-                        self.error.__traceback__
+                        type(self.error), self.error, self.error.__traceback__
                     )
                 else:
-                    self.span_context.__exit__(
-                        None, None, None
-                    )
+                    self.span_context.__exit__(None, None, None)
+
+        print("creating wrapped callable for ", query, method_name)
 
         return wrap_callable(
             func=func,
             callback_class=InstrumentationCallbacks,
+            call_selfid=id(obj),
             app=self.app,
             query=query,
             method_name=method_name,

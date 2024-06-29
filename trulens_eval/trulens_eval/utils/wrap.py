@@ -392,8 +392,10 @@ CALLBACKS = "__tru_callbacks"
 
 
 def wrap_callable(
-    func: Callable, callback_class: Type[CallableCallbacks], **kwargs: Dict[str,
-                                                                            Any]
+    func: Callable,
+    callback_class: Type[CallableCallbacks],
+    call_selfid: int,
+    **kwargs: Dict[str, Any]
 ) -> Callable:
     """Create a wrapper of the given function to emit various callbacks at
     different stages of its evaluation.
@@ -401,24 +403,44 @@ def wrap_callable(
     Args:
         func: The function to wrap.
 
+        callback_class: The class that provides callbacks.
+
+        call_selfid: The id of the object "self" in the wrapped call to route to
+            the given callbacks.
+
         **kwargs: All other arguments are passed in as they are to the
             callback_class constructor upon the call to the wrapped func..
     """
 
+    if hasattr(func, "__wrapper__"):
+        # For cases where multiple refs to func are captured before we we begin
+        # wrapping it and each of the refs is wrapped. We don't want to re-wrap
+        # as we would miss some callbacks. We thus store the wrapper in
+        # func.__wrapper__ and check for it here. The rest of the call will
+        # assume func is the wrapper and will add more callbacks instead of
+        # creating a new wrapper.
+        func = func.__wrapper__
+
     cb_args: Dict[str, Any] = {'func': func}
 
     if safe_hasattr(func, CALLBACKS):
-        # If CALLBACKS is set, return the wrapped function.
-        # This is to prevent double wrapping.
+        # If CALLBACKS is set, it was already a wrapper.
 
-        existing_callbacks = getattr(func, CALLBACKS)
-        existing_callbacks.append(callback_class, (callback_class, kwargs))
+        existing_callbacks: Dict[Optional[int], List[Tuple[
+            Type[CallableCallbacks], Dict[str,
+                                          Any]]]] = getattr(func, CALLBACKS)
+        if call_selfid not in existing_callbacks:
+            existing_callbacks[call_selfid] = [(callback_class, kwargs)]
+        else:
+            existing_callbacks[call_selfid].append((callback_class, kwargs))
 
-        existing_wrapper = func.__wrapper__
-        callback_class.on_callable_wrapped(**cb_args, wrapper=existing_wrapper)
+        callback_class.on_callable_wrapped(
+            func=func.__func__,  # wrapped func is stored in __func__.
+            wrapper=func
+        )
 
         # Return the existing wrapper made by a prior wrap_callable call.
-        return existing_wrapper
+        return func
 
     # If CALLBACKS is not set, create a wrapper and return it.
     @functools.wraps(func)
@@ -429,8 +451,14 @@ def wrap_callable(
 
         call_id: uuid.UUID = uuid.uuid4()
 
+        selfid = None
+        if len(args) > 0:
+            selfid = id(args[0])
+
         callbacks = []
-        for callback_class, callback_init_kwargs in getattr(func.__wrapper__, CALLBACKS):
+        for callback_class, callback_init_kwargs in getattr(
+                wrapper, CALLBACKS).get(selfid, []):
+
             callbacks.append(
                 callback_class(
                     call_id=call_id,
@@ -475,7 +503,7 @@ def wrap_callable(
             return ret
 
         except Exception as e:
-            # Or the exception it raised.
+            # Exception on wrapped func call: ret = func(...)
 
             end_time: datetime = datetime.now()
 
@@ -547,7 +575,8 @@ def wrap_callable(
 
     cb_args['wrapper'] = wrapper
 
-    setattr(wrapper, CALLBACKS, [(callback_class, kwargs)])
+    setattr(wrapper, CALLBACKS, {call_selfid: [(callback_class, kwargs)]})
+    wrapper.__func__ = func
     func.__wrapper__ = wrapper
 
     callback_class.on_callable_wrapped(**cb_args)
