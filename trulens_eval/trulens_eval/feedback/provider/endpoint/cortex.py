@@ -14,13 +14,13 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-with OptionalImports(messages=REQUIREMENT_CORTEX):
+with OptionalImports(messages=REQUIREMENT_CORTEX) as opt:
     import snowflake
     from snowflake.snowpark import DataFrame
     from snowflake.snowpark import Session
 
 if sys.version_info < (3, 12):
-    OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
+    opt.assert_installed(snowflake)
 
 
 class CortexCallback(EndpointCallback):

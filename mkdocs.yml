@@ -277,6 +277,7 @@ nav:
           - trulens_eval/api/database/index.md
           - ✨ Migration: trulens_eval/api/database/migration.md
           - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
+      - Streamlit: trulens_eval/api/streamlit.md
       - 🧰 Utils:
           # - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md

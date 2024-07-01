@@ -14,6 +14,7 @@ from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import types as mod_types_schema
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
+from trulens_eval.utils import threading as mod_threading_utils
 from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.json import obj_id_of_obj
 from trulens_eval.utils.python import Future
@@ -170,14 +171,23 @@ class Record(serial.SerialModel, Hashable):
         return hash(self.record_id)
 
     def wait_for_feedback_results(
-        self
+        self,
+        feedback_timeout: Optional[float] = None
     ) -> Dict[mod_feedback_schema.FeedbackDefinition,
               mod_feedback_schema.FeedbackResult]:
         """Wait for feedback results to finish.
 
+        Args:
+            feedback_timeout: Timeout in seconds for each feedback function. If
+                not given, will use the default timeout
+                `trulens_eval.utils.threading.TP.DEBUG_TIMEOUT`. 
+
         Returns:
             A mapping of feedback functions to their results.
         """
+
+        if feedback_timeout is None:
+            feedback_timeout = mod_threading_utils.TP.DEBUG_TIMEOUT
 
         if self.feedback_and_future_results is None:
             return {}
@@ -185,8 +195,14 @@ class Record(serial.SerialModel, Hashable):
         ret = {}
 
         for feedback_def, future_result in self.feedback_and_future_results:
-            feedback_result = future_result.result()
-            ret[feedback_def] = feedback_result
+            try:
+                feedback_result = future_result.result(timeout=feedback_timeout)
+                ret[feedback_def] = feedback_result
+            except TimeoutError:
+                logger.error(
+                    "Timeout waiting for feedback result for %s.",
+                    feedback_def.name
+                )
 
         return ret
 
