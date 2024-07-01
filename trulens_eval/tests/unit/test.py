@@ -1,10 +1,11 @@
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
+import functools
 import json
 import os
 from pathlib import Path
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence, Set
 import unittest
 from unittest import TestCase
 
@@ -13,6 +14,7 @@ from pydantic import BaseModel
 import yaml
 
 from trulens_eval.utils.python import caller_frame
+from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
 
@@ -63,17 +65,37 @@ class JSONTestCase(TestCase):
 
     def assertGoldenJSONEqual(
         self,
-        actual,
+        actual: JSON,
         golden_filename: str,
-        skips=None,
+        skips: Optional[Set[str]] = None,
         numeric_places: int = 7,
     ):
-        """Assert equality between JSON-like `actual` and the content of
-        `golden_filename`.
+        """Assert equality between [JSON-like][trulens_eval.util.serial.JSON]
+        `actual` and the content of `golden_filename`.
 
         If the environment variable `WRITE_GOLDEN` is set, the golden file will
-        be overwritten with the `actual` content. See `assertJSONEqual` for
+        be overwritten with the `actual` content. See
+        [assertJSONEqual][trulens_eval.tests.unit.test.assertJSONEqual] for
         details on the equality check.
+
+        Args:
+            actual: The actual JSON-like object produced by some test.
+
+            golden_filename: The name of the golden file to compare against that
+            stores the expected JSON-like results for the test.
+
+            skips: A set of keys to skip in the comparison.
+
+            numeric_places: The number of decimal places to compare for floating
+                point
+
+        Raises:
+            FileNotFoundError: If the golden file is not found.
+
+            AssertionError: If the actual JSON-like object does not match the
+                expected JSON-like object
+
+            AssertionError: If the golden file is written.  
         """
 
         write_golden: bool = bool(os.environ.get("WRITE_GOLDEN", ""))
@@ -81,16 +103,20 @@ class JSONTestCase(TestCase):
         caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
         golden_path = (caller_path / "golden" / golden_filename).resolve()
 
+        if golden_path.suffix == ".json":
+            writer = json.dump
+            loader = json.load
+        elif golden_path.suffix == ".yaml":
+            writer = yaml.dump
+            loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
+        else:
+            raise ValueError(
+                f"Unknown file extension {golden_path.suffix}."
+            )
+
         if write_golden:
             with golden_path.open("w") as f:
-                if golden_path.suffix == ".json":
-                    json.dump(actual, f)
-                elif golden_path.suffix == ".yaml":
-                    yaml.dump(actual, f)
-                else:
-                    raise ValueError(
-                        f"Unknown file extension {golden_path.suffix}."
-                    )
+                writer(actual, f)
 
             self.fail("Golden file written.")
 
@@ -98,16 +124,8 @@ class JSONTestCase(TestCase):
             if not golden_path.exists():
                 raise FileNotFoundError(f"Golden file {golden_path} not found.")
 
-            if golden_path.suffix == ".json":
-                with golden_path.open("r") as f:
-                    expected = json.load(f)
-            elif golden_path.suffix == ".yaml":
-                with golden_path.open("r") as f:
-                    expected = yaml.load(f, Loader=yaml.FullLoader)
-            else:
-                raise ValueError(
-                    f"Unknown file extension {golden_path.suffix}."
-                )
+            with golden_path.open("r") as f:
+                expected = loader(f)
 
             self.assertJSONEqual(
                 actual, expected, skips=skips, numeric_places=numeric_places
@@ -115,10 +133,10 @@ class JSONTestCase(TestCase):
 
     def assertJSONEqual(
         self,
-        j1,
-        j2,
-        path: Lens = None,
-        skips=None,
+        j1: JSON,
+        j2: JSON,
+        path: Optional[Lens] = None,
+        skips: Optional[Set[str]] = None,
         numeric_places: int = 7
     ) -> None:
         """Assert equality between JSON-like `j1` and `j2`.
@@ -132,11 +150,8 @@ class JSONTestCase(TestCase):
 
         Data types supported for comparison are:
 
-        - int
-        - float
-        - str
-        - dict
-        - list
+        - JSON-like base types (int, float, str)
+        - JSON-like constructors (list, dict)
         - datetime
         - dataclasses
         - pydantic models
@@ -151,8 +166,12 @@ class JSONTestCase(TestCase):
             skips: A set of keys to skip in the comparison.
 
             numeric_places: The number of decimal places to compare for floating
-            point
-                numbers.
+                point numbers.
+
+        Raises:
+            AssertionError: If the two JSON-like objects are
+                not equal (except for anything skipped) or anything within
+                numeric tolerance.
         """
 
         skips = skips or set([])
