@@ -2,6 +2,7 @@ import asyncio
 import json
 import math
 from typing import List
+
 import pandas as pd
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
@@ -15,15 +16,13 @@ from streamlit_pills import pills
 from trulens_eval import Tru
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.react_components.record_viewer import record_viewer
+from trulens_eval.schema.app import AppDefinition
 from trulens_eval.schema.feedback import FeedbackCall
 from trulens_eval.schema.record import Record
-from trulens_eval.schema.app import AppDefinition
 from trulens_eval.utils import display
 from trulens_eval.utils.python import Future
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
-
-from trulens_eval import Tru
 
 
 class FeedbackDisplay(BaseModel):

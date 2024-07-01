@@ -1,3 +1,4 @@
+import json
 import os
 
 from dotenv import load_dotenv
@@ -9,8 +10,6 @@ from trulens_eval import streamlit as trulens_st
 from trulens_eval import Tru
 from trulens_eval import TruChain
 from trulens_eval.feedback.provider import OpenAI as fOpenAI
-
-import json
 
 load_dotenv()
 
