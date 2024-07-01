@@ -38,7 +38,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
 
     Args:
 
-        app_ids : A list of application IDs (default is None)
+        app_ids List[str]: A list of application IDs (default is None)
 
     !!! example
 
@@ -155,7 +155,7 @@ def trulens_feedback(record: Record):
 
     Args:
 
-        record : A trulens record.
+        record (Record): A trulens record.
 
     !!! example
 
@@ -167,7 +167,7 @@ def trulens_feedback(record: Record):
 
         record, response = recording.get()
 
-        trulens_st.trulens_leaderboard()
+        trulens_st.trulens_feedback(record=record)
         ```
     """
     feedback_cols = []
@@ -210,14 +210,13 @@ def trulens_feedback(record: Record):
         )
 
 
-def trulens_trace(record):
+def trulens_trace(record: Record):
     """
     Display the trace view for a record.
 
     Args:
 
-        app: A trulens app.
-        record_json : json representation of a trulens record.
+        record (Record): A trulens record.
 
     !!! example
 
@@ -229,7 +228,7 @@ def trulens_trace(record):
             
         record, response = recording.get()
 
-        trulens_st.trulens_leaderboard()
+        trulens_st.trulens_trace(record=record)
         ```
     """
 
