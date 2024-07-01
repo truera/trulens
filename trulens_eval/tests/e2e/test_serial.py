@@ -114,11 +114,11 @@ class TestSerial(JSONTestCase):
                     skips=set(
                         [
                             'feedback_definition_id', 'id', 'last_ts',
-                            'record_id', 'feedback_result_id', 'result',
-                            'LABEL_0', 'LABEL_1', 'LABEL_2', 'ret'
+                            'record_id', 'feedback_result_id',
+                            # Skip these if non-determinism becomes a problem:
+                            #'result', 'LABEL_0', 'LABEL_1', 'LABEL_2', 'ret' 
                         ]
                     )
-                    # Having trouble controlling result determinism for this test.
                 )
 
 
