@@ -20,7 +20,12 @@ class CustomAgent(dummy.Dummy):
 
         self.description = description or "Custom Agent"
         self.app = app
-        # self.tru_app = TruCustomApp(self.app, app_id=description)
+
+        # TODO: This agent is meant to use a tru recorded internally but doing
+        # so is presently broken in tracing. Renable this and the recording in
+        # invoke once fixed.
+
+        #self.tru_app = TruCustomApp(self.app, app_id=description)
 
         self.dummy_allocate()
 
@@ -30,9 +35,10 @@ class CustomAgent(dummy.Dummy):
 
         self.dummy_wait()
 
+        # TODO: see prior note.
+        
         #with self.tru_app as recorder:
         #    self.app.respond_to_query(query=data)
-
         # return recorder.get().model_dump_json()
 
         return "Record placeholder"
