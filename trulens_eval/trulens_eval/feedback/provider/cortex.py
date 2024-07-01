@@ -8,13 +8,13 @@ from trulens_eval.feedback.provider.endpoint.cortex import CortexEndpoint
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_CORTEX
 
-with OptionalImports(messages=REQUIREMENT_CORTEX):
+with OptionalImports(messages=REQUIREMENT_CORTEX) as opt:
     import snowflake
     import snowflake.connector
     from snowflake.connector import SnowflakeConnection
 
 if sys.version_info < (3, 12):
-    OptionalImports(messages=REQUIREMENT_CORTEX).assert_installed(snowflake)
+    opt.assert_installed(snowflake)
 
 
 class Cortex(LLMProvider):
@@ -102,7 +102,7 @@ class Cortex(LLMProvider):
             kwargs['messages'] = messages
 
         elif prompt is not None:
-            kwargs['messages'] = [{"role": "user", "content": prompt}]
+            kwargs['messages'] = [{"role": "system", "content": prompt}]
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
