@@ -1,8 +1,7 @@
 import pandas as pd
-from trulens_eval.schema.record import Record
 from trulens_eval.schema.feedback import FeedbackDefinition
+from trulens_eval.schema.record import Record
 from trulens_eval.ux.styles import CATEGORY
-
 
 def get_feedback_result(tru_record: Record, feedback_name: str) -> pd.DataFrame:
     feedback_calls = next(
