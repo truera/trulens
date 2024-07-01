@@ -1,18 +1,16 @@
 """
-# Tests endpoints.
+Dummy API tests.
 
-These tests make use of potentially non-free apis and require
-various secrets configured. See `setUp` below.
+Uses and records an invocation of the CustomApp example which internally uses
+DummyAPI for its requests.
 """
 
-import os
 from unittest import main
 
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
-from trulens_eval.feedback.provider.dummy import DummyProvider
 from trulens_eval.tru_custom_app import TruCustomApp
 
 
