@@ -74,15 +74,17 @@ class RecordAppCall(serial.SerialModel):
     tid: int
     """Thread id."""
 
+    @property
     def top(self) -> RecordAppCallMethod:
         """The top of the stack."""
 
         return self.stack[-1]
 
+    @property
     def method(self) -> pyschema.Method:
         """The method at the top of the stack."""
 
-        return self.top().method
+        return self.top.method
 
 
 class Record(serial.SerialModel, Hashable):
@@ -211,7 +213,7 @@ class Record(serial.SerialModel, Hashable):
 
         for call in self.calls:
             # Info about the method call is at the top of the stack
-            frame_info = call.top()
+            frame_info = call.top
 
             # Adds another attribute to path, from method name:
             path = frame_info.path._append(

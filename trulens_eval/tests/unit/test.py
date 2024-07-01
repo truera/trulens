@@ -18,9 +18,13 @@ from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
 
-# Env var that were to evaluate to true indicates that optional tests are to be
-# run.
 OPTIONAL_ENV_VAR = "TEST_OPTIONAL"
+"""Env var that were to evaluate to true indicates that optional tests are to be
+run."""
+
+WRITE_GOLDEN_VAR = "WRITE_GOLDEN"
+"""Env var for indicating whether golden expected results are to be written (if
+true) or read and compared (if false/undefined)."""
 
 
 def optional_test(testmethodorclass):
@@ -73,8 +77,9 @@ class JSONTestCase(TestCase):
         """Assert equality between [JSON-like][trulens_eval.util.serial.JSON]
         `actual` and the content of `golden_filename`.
 
-        If the environment variable `WRITE_GOLDEN` is set, the golden file will
-        be overwritten with the `actual` content. See
+        If the environment variable
+        [WRITE_GOLDEN_VAR][trulens_eval.tests.unit.test.WRITE_GOLDEN_VAR] is
+        set, the golden file will be overwritten with the `actual` content. See
         [assertJSONEqual][trulens_eval.tests.unit.test.assertJSONEqual] for
         details on the equality check.
 
@@ -98,7 +103,7 @@ class JSONTestCase(TestCase):
             AssertionError: If the golden file is written.  
         """
 
-        write_golden: bool = bool(os.environ.get("WRITE_GOLDEN", ""))
+        write_golden: bool = bool(os.environ.get(WRITE_GOLDEN_VAR, ""))
 
         caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
         golden_path = (caller_path / "golden" / golden_filename).resolve()
@@ -149,12 +154,11 @@ class JSONTestCase(TestCase):
         numbers.
 
         Data types supported for comparison are:
-
-        - JSON-like base types (int, float, str)
-        - JSON-like constructors (list, dict)
-        - datetime
-        - dataclasses
-        - pydantic models
+            - JSON-like base types (int, float, str)
+            - JSON-like constructors (list, dict)
+            - datetime
+            - dataclasses
+            - pydantic models
         
         Args:
             j1: The first JSON-like object.

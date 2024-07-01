@@ -814,6 +814,16 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
         `bindings`.
+
+        Args:
+            func: The main function we are targetting in this determination.
+
+            sig: The signature of the above.
+
+            bindings: The arguments to be passed to the function.
+
+        Returns:
+            The main input string.
         """
 
         if bindings is None:

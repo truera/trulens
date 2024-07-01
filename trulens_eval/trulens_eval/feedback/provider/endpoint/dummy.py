@@ -1,14 +1,22 @@
+"""
+Dummy API and Endpoint.
+
+These are are meant to resemble (make similar sequences of calls) real APIs and
+Endpoints but not they do not actually make any network requests. Some
+randomness is introduced to simulate the behavior of real APIs.
+"""
+
 from __future__ import annotations
 
 import inspect
 import logging
-from pprint import PrettyPrinter
+from pprint import pformat
 import random
-import sys
 from time import sleep
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TypeVar
 
 from numpy import random as np_random
+import numpy as np
 import pydantic
 from pydantic import Field
 
@@ -23,11 +31,34 @@ from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
-pp = PrettyPrinter()
-
 A = TypeVar("A")
 B = TypeVar("B")
 T = TypeVar("T")
+
+
+class NonDeterminism(pydantic.BaseModel):
+    """Hold random number generators and seeds for controlling non-deterministic behavior."""
+
+    random: Any = Field(exclude=True)
+    """Random number generator."""
+
+    np_random: Any = Field(exclude=True)
+    """Numpy Random number generator."""
+
+    seed: int = 0xdeadbeef
+    """Control randomness."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.random = random.Random(self.seed)
+        self.np_random = np_random.RandomState(self.seed)
+
+    def discrete_choice(self, seq: Sequence[A], probs: Sequence[float]) -> A:
+        """Sample a random element from a sequence with the given
+        probabilities."""
+
+        return self.random.choices(seq, weights=probs, k=1)[0]
 
 
 class DummyAPI(pydantic.BaseModel):
@@ -37,145 +68,124 @@ class DummyAPI(pydantic.BaseModel):
     this class are instrumented for cost tracking testing.
     """
 
-    loading_prob: float
+    loading_time_uniform_params: Tuple[pydantic.NonNegativeFloat, pydantic.NonNegativeFloat] = (0.7, 3.7)
+    """How much time to indicate as needed to load the model.
+    
+    Parameters of a uniform distribution.
+    """
+
+    loading_prob: pydantic.NonNegativeFloat = 0.0
     """How often to produce the "model loading" response that huggingface api
     sometimes produces."""
 
-    loading_time: Callable[[DummyAPI],
-                           float] = lambda s: s.random.uniform(0.73, 3.7)
-    """How much time to indicate as needed to load the model."""
-
-    error_prob: float
+    error_prob: pydantic.NonNegativeFloat = 0.0
     """How often to produce an error response."""
 
-    freeze_prob: float
+    freeze_prob: pydantic.NonNegativeFloat = 0.0
     """How often to freeze instead of producing a response."""
 
-    overloaded_prob: float
-    """How often to produce the overloaded message that huggingface sometimes produces."""
+    overloaded_prob: pydantic.NonNegativeFloat = 0.0
+    """How often to produce the overloaded message that huggingface sometimes
+    produces."""
 
-    alloc: int
+    # NOTE: All probability not covered by the above is for a normal response
+    # without error or delay.
+
+    alloc: pydantic.NonNegativeInt = 1024
     """How much data in bytes to allocate when making requests."""
 
-    delay: float = 0.0
-    """How long to delay each request."""
+    delay: pydantic.NonNegativeFloat = 0.0
+    """How long to delay each request.
+    
+    Delay is normally distributed with this mean and half this standard
+    deviation, in seconds. Any delay sample below 0 is replaced with 0.
+    """
 
-    seed: int = 0xdeadbeef
-    """Control randomness."""
-
-    random: Any = Field(exclude=True)
-    """Random number generator."""
-
-    np_random: Any = Field(exclude=True)
-    """Numpy Random number generator."""
+    ndt: NonDeterminism = Field(default_factory=NonDeterminism)
 
     def __init__(
         self,
-        error_prob: float = 0 / 100,
-        freeze_prob: float = 0 / 100,
-        overloaded_prob: float = 1 / 100,
-        loading_prob: float = 1 / 100,
-        alloc: int = 1024 * 1024,
-        delay: float = 0.0,
-        seed: int = 0xdeadbeef,
         **kwargs
     ):
-        assert error_prob + freeze_prob + overloaded_prob + loading_prob <= 1.0, "Probabilites should not exceed 1.0 ."
-        assert alloc >= 0
-        assert delay >= 0.0
-
-        super().__init__(
-            **locals_except("self", "kwargs"),
-            random=random.Random(seed),
-            np_random=np_random.RandomState(seed)
-        )
+        super().__init__(**kwargs)
+        assert self.error_prob + self.freeze_prob + self.overloaded_prob + self.loading_prob <= 1.0, \
+            "Total probabilites should not exceed 1.0 ."
 
     def post(
         self, url: str, payload: JSON, timeout: Optional[float] = None
     ) -> Any:
         """Pretend to make an http post request to some model execution API."""
 
+        assert isinstance(payload, dict), "Payload should be a dict."
+
         if timeout is None:
             timeout = DEFAULT_NETWORK_TIMEOUT
 
         # allocate some data to pretend we are doing hard work
-        temporary = [0x42] * self.alloc
-        # Use `temporary`` to make sure it doesn't get compiled away.
-        logger.debug("I have allocated %s bytes.", sys.getsizeof(temporary))
+        temporary = np.empty(self.alloc, dtype=np.int8)
 
         if self.delay > 0.0:
-            sleep(max(0.0, self.np_random.normal(self.delay, self.delay / 2)))
+            sleep(max(0.0, self.ndt.np_random.normal(self.delay, self.delay / 2)))
 
-        r = random.random()
-        j = {}
+        r = self.ndt.discrete_choice(
+            seq=["normal", "freeze", "error", "loading", "overloaded"],
+            probs=[
+                1 - self.freeze_prob - self.error_prob - self.loading_prob -
+                self.overloaded_prob, self.freeze_prob, self.error_prob,
+                self.loading_prob, self.overloaded_prob
+            ]
+        )
 
-        if r < self.freeze_prob:
+        if r == "freeze":
             # Simulated freeze outcome.
 
             while True:
                 sleep(timeout)
-                raise TimeoutError()
 
-        r -= self.freeze_prob
-
-        if r < self.error_prob:
+        elif r == "error":
             # Simulated error outcome.
 
             raise RuntimeError("Simulated error happened.")
-        r -= self.error_prob
 
-        if r < self.loading_prob:
+        elif r == "loading":
             # Simulated loading model outcome.
 
-            j = {'estimated_time': self.loading_time(self)}
-        r -= self.loading_prob
-
-        if r < self.overloaded_prob:
-            # Simulated overloaded outcome.
-
-            j = {'error': "overloaded"}
-        r -= self.overloaded_prob
-
-        # The rest is the same as in Endpoint:
-
-        # Huggingface public api sometimes tells us that a model is loading and
-        # how long to wait:
-        if "estimated_time" in j:
-            wait_time = float(j['estimated_time'])
+            wait_time = self.ndt.np_random.uniform(*self.wait_time_uniform_params)
             logger.warning(
-                "Waiting for %s (%s) second(s).",
-                j,
+                "Waiting for model to load (%s) second(s).",
                 wait_time,
             )
             sleep(wait_time + 2)
             return self.post(url, payload, timeout=timeout)
 
-        if isinstance(j, Dict) and "error" in j:
-            error = j['error']
-            if error == "overloaded":
-                logger.warning(
-                    "Waiting for overloaded API before trying again."
-                )
-                sleep(10)
-                return self.post(url, payload, timeout=timeout)
+        elif r == "overloaded":
+            # Simulated overloaded outcome.
 
-            raise RuntimeError(error)
-
-        if "api-inference.huggingface.co" in url:
-            # pretend to produce huggingface api classification results
-            return self._fake_classification()
-        else:
-            return self._fake_completion(
-                model=payload['model'],
-                prompt=payload['prompt'],
-                temperature=payload['temperature']
+            logger.warning(
+                "Waiting for overloaded API before trying again."
             )
+            sleep(10)
+            return self.post(url, payload, timeout=timeout)
 
-    @staticmethod
-    def _fake_completion(model: str, prompt: str, temperature: float) -> Dict:
-        generated_text: str = "my original response is " + prompt
+        elif r == "normal":
 
-        result = {
+            if "api-inference.huggingface.co" in url:
+                # pretend to produce huggingface api classification results
+                return self._fake_classification()
+            else:
+                return self._fake_completion(
+                    model=payload['model'],
+                    prompt=payload['prompt'],
+                    temperature=payload['temperature']
+                )
+
+        else:
+            raise RuntimeError("Unknown random result type.")
+
+    def _fake_completion(self, model: str, prompt: str, temperature: float) -> Dict:
+        generated_text: str = f"my original response to model {model} with temperature {temperature} is {prompt}"
+
+        return {
             'completion': generated_text,
             'status': 'success',
             'usage':
@@ -193,8 +203,6 @@ class DummyAPI(pydantic.BaseModel):
                 }
         }
 
-        return result
-
     def completion(
         self, *args, model: str, temperature: float = 0.0, prompt: str
     ) -> Dict:
@@ -207,27 +215,29 @@ class DummyAPI(pydantic.BaseModel):
                 'mode': 'completion',
                 'model': model,
                 'prompt': prompt,
-                'temperature': temperature
+                'temperature': temperature,
+                'args': args # include extra args to see them in post span
             }
         )
 
-    @staticmethod
-    def _fake_classification():
-        # Simulated success outcome with some constant results plus some randomness.
-        result = [
+    def _fake_classification(self):
+        # Simulated success outcome with some random scores. Should add up to 1.
+        r1 = self.ndt.random.uniform(0.1, 0.9)
+        r2 = self.ndt.random.uniform(0.1, 0.9-r1)
+        r3 = 1 - (r1 + r2)
+
+        return [
             {
                 'label': 'LABEL_1',
-                'score': 0.6034979224205017 + random.random()
+                'score': r1
             }, {
                 'label': 'LABEL_2',
-                'score': 0.2648237645626068 + random.random()
+                'score': r2
             }, {
                 'label': 'LABEL_0',
-                'score': 0.13167837262153625 + random.random()
+                'score': r3
             }
         ]
-
-        return result
 
     def classification(
         self, *args, model: str = "fakeclassier", text: str
@@ -241,7 +251,8 @@ class DummyAPI(pydantic.BaseModel):
             payload={
                 'mode': 'classification',
                 'model': model,
-                'inputs': text
+                'inputs': text,
+                'args': args # include extra args to see them in post span
             }
         )
 
@@ -384,5 +395,5 @@ class DummyEndpoint(Endpoint):
         if not counted_something:
             logger.warning(
                 "Could not find usage information in DummyAPI response:\n%s",
-                pp.pformat(response)
+                pformat(response)
             )

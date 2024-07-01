@@ -263,11 +263,11 @@ nav:
           - 🦜️🔗 LangChain: trulens_eval/api/provider/langchain.md
           - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
           - Cortex: trulens_eval/api/provider/cortex.md
-          - Dummy: trulens_eval/api/provider/dummy.md
+          - 📏 Dummy: trulens_eval/api/provider/dummy.md
           - Endpoint:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
-              - Dummy: trulens_eval/api/endpoint/dummy.md
+              - 📏 Dummy: trulens_eval/api/endpoint/dummy.md
       - 𝄢 Instruments: trulens_eval/api/instruments.md
       - 🛡️ Guardrails:
           - trulens_eval/api/guardrails/index.md
@@ -277,16 +277,16 @@ nav:
           - trulens_eval/api/database/index.md
           - ✨ Migration: trulens_eval/api/database/migration.md
           - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
-      - Utils:
+      - 🧰 Utils:
           # - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
           - trulens_eval/api/utils/serial.md
           - trulens_eval/api/utils/json.md
-          - trulens_eval/api/utils/frameworks.md
+#           - trulens_eval/api/utils/frameworks.md # most of the content moved to guardrails docs
           - trulens_eval/api/utils/utils.md
-      - Testing:
+      - 📏 Testing:
           - trulens_eval/api/testing/custom_app.md
-#          - trulens_eval/api/testing/test.md
+#          - trulens_eval/api/testing/test.md # namespace clash with trulens_explain needs to be resolved
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
       - 🧭 Design: trulens_eval/contributing/design.md
