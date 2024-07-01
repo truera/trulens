@@ -1,6 +1,7 @@
 # Custom App
 
-This app features typical of LLM apps but uses only the Dummy provider and endpoint for its LLM.
+This demo/testing app has components found in typical LLM apps but uses only the
+Dummy provider and endpoint for its LLM.
 
 ::: examples.expositional.end2end_apps.custom_app.custom_app
 
