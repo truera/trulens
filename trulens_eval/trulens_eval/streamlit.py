@@ -16,14 +16,12 @@ from trulens_eval import Tru
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema.feedback import FeedbackCall
-from trulens_eval.schema.feedback import FeedbackDefinition
 from trulens_eval.schema.record import Record
 from trulens_eval.schema.app import AppDefinition
 from trulens_eval.utils import display
 from trulens_eval.utils.python import Future
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
-from trulens_eval.ux.styles import CATEGORY
 
 from trulens_eval import Tru
 
@@ -182,7 +180,7 @@ def trulens_feedback(record: Record):
         feedbacks[call_data['feedback_name']] = FeedbackDisplay(
             score=call_data['result'],
             calls=[],
-            icon=_get_icon(fdef=feedback, result=feedback_result.result)
+            icon=display.get_icon(fdef=feedback, result=feedback_result.result)
         )
         icons.append(feedbacks[call_data['feedback_name']].icon)
 
@@ -208,29 +206,7 @@ def trulens_feedback(record: Record):
             hide_index=True
         )
 
-
-def _get_icon(fdef: FeedbackDefinition, result: float) -> str:
-    """
-    Get the icon for a given feedback definition and result.
-
-    Args:
-
-    fdef : FeedbackDefinition
-        The feedback definition
-    result : float
-        The result of the feedback
-
-    Returns:
-        str: The icon for the feedback
-    """
-    cat = CATEGORY.of_score(
-        result or 0,
-        higher_is_better=fdef.higher_is_better
-        if fdef.higher_is_better is not None else True
-    )
-    return cat.icon
-
-def trulens_trace(record_json: dict, app: AppDefinition):
+def trulens_trace(record):
     """
     Display the trace view for a record.
 
@@ -252,4 +228,10 @@ def trulens_trace(record_json: dict, app: AppDefinition):
         trulens_st.trulens_leaderboard()
         ```
     """
+
+    tru = Tru()
+    
+    app = tru.get_app(app_id=record.app_id)
+    records, feedback = tru.get_records_and_feedback()
+    record_json = json.loads(records.loc[records['record_id'] == record.record_id]['record_json'].values[0])
     record_viewer(record_json=record_json, app_json=app)
