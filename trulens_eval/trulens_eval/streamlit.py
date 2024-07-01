@@ -20,6 +20,7 @@ from trulens_eval.schema.app import AppDefinition
 from trulens_eval.schema.feedback import FeedbackCall
 from trulens_eval.schema.record import Record
 from trulens_eval.utils import display
+from trulens_eval.utils.json import json_str_of_obj
 from trulens_eval.utils.python import Future
 from trulens_eval.ux import styles
 from trulens_eval.ux.components import draw_metadata
@@ -232,11 +233,5 @@ def trulens_trace(record: Record):
     """
 
     tru = Tru()
-
     app = tru.get_app(app_id=record.app_id)
-    records, feedback = tru.get_records_and_feedback()
-    record_json = json.loads(
-        records.loc[records['record_id'] == record.record_id]
-        ['record_json'].values[0]
-    )
-    record_viewer(record_json=record_json, app_json=app)
+    record_viewer(record_json=json.loads(json_str_of_obj(record)), app_json=app)
