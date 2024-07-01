@@ -219,7 +219,7 @@ class Tracer(pydantic.BaseModel):
         # TODO: what if it is not a method call?
 
         frame_ident = mod_record_schema.RecordAppCallMethod(
-            path=obj_to_path_map.get(id(span.self), None),
+            path=obj_to_path_map.get(id(span.obj), None),
             method=mod_pyschema.Method.of_method(
                 span.func, obj=span.obj, cls=span.cls
             )
