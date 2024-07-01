@@ -87,7 +87,13 @@ class JSONTestCase(TestCase):
             actual: The actual JSON-like object produced by some test.
 
             golden_filename: The name of the golden file to compare against that
-            stores the expected JSON-like results for the test.
+                stores the expected JSON-like results for the test. File must
+                have an extension of either `.json` or `.yaml`. The extension
+                determines output format.
+
+                !!! WARNING
+                    YAML dumper does not fully serialize all types which
+                    prevents them from being loaded again.            
 
             skips: A set of keys to skip in the comparison.
 
