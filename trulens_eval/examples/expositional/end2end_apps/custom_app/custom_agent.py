@@ -36,7 +36,7 @@ class CustomAgent(dummy.Dummy):
         self.dummy_wait()
 
         # TODO: see prior note.
-        
+
         #with self.tru_app as recorder:
         #    self.app.respond_to_query(query=data)
         # return recorder.get().model_dump_json()

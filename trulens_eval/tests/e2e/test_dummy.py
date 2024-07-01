@@ -26,7 +26,7 @@ class TestDummy(JSONTestCase):
         and produces a consistent record."""
 
         # Create custom app:
-        ca = CustomApp(delay=0.0, alloc=0) # uses DummyAPI internally
+        ca = CustomApp(delay=0.0, alloc=0)  # uses DummyAPI internally
 
         # Create trulens wrapper:
         ta = TruCustomApp(

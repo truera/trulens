@@ -71,7 +71,8 @@ class DummyAPI(pydantic.BaseModel):
     this class are instrumented for cost tracking testing.
     """
 
-    loading_time_uniform_params: Tuple[pydantic.NonNegativeFloat, pydantic.NonNegativeFloat] = (0.7, 3.7)
+    loading_time_uniform_params: Tuple[pydantic.NonNegativeFloat,
+                                       pydantic.NonNegativeFloat] = (0.7, 3.7)
     """How much time to indicate as needed to load the model.
     
     Parameters of a uniform distribution.
@@ -106,10 +107,7 @@ class DummyAPI(pydantic.BaseModel):
 
     ndt: NonDeterminism = Field(default_factory=NonDeterminism)
 
-    def __init__(
-        self,
-        **kwargs
-    ):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         assert self.error_prob + self.freeze_prob + self.overloaded_prob + self.loading_prob <= 1.0, \
             "Total probabilites should not exceed 1.0 ."
@@ -128,7 +126,9 @@ class DummyAPI(pydantic.BaseModel):
         temporary = np.empty(self.alloc, dtype=np.int8)
 
         if self.delay > 0.0:
-            sleep(max(0.0, self.ndt.np_random.normal(self.delay, self.delay / 2)))
+            sleep(
+                max(0.0, self.ndt.np_random.normal(self.delay, self.delay / 2))
+            )
 
         r = self.ndt.discrete_choice(
             seq=["normal", "freeze", "error", "loading", "overloaded"],
@@ -153,7 +153,9 @@ class DummyAPI(pydantic.BaseModel):
         elif r == "loading":
             # Simulated loading model outcome.
 
-            wait_time = self.ndt.np_random.uniform(*self.wait_time_uniform_params)
+            wait_time = self.ndt.np_random.uniform(
+                *self.wait_time_uniform_params
+            )
             logger.warning(
                 "Waiting for model to load (%s) second(s).",
                 wait_time,
@@ -164,9 +166,7 @@ class DummyAPI(pydantic.BaseModel):
         elif r == "overloaded":
             # Simulated overloaded outcome.
 
-            logger.warning(
-                "Waiting for overloaded API before trying again."
-            )
+            logger.warning("Waiting for overloaded API before trying again.")
             sleep(10)
             return self.post(url, payload, timeout=timeout)
 
@@ -185,7 +185,9 @@ class DummyAPI(pydantic.BaseModel):
         else:
             raise RuntimeError("Unknown random result type.")
 
-    def _fake_completion(self, model: str, prompt: str, temperature: float) -> Dict:
+    def _fake_completion(
+        self, model: str, prompt: str, temperature: float
+    ) -> Dict:
         generated_text: str = f"my original response to model {model} with temperature {temperature} is {prompt}"
 
         return {
@@ -219,14 +221,14 @@ class DummyAPI(pydantic.BaseModel):
                 'model': model,
                 'prompt': prompt,
                 'temperature': temperature,
-                'args': args # include extra args to see them in post span
+                'args': args  # include extra args to see them in post span
             }
         )
 
     def _fake_classification(self):
         # Simulated success outcome with some random scores. Should add up to 1.
         r1 = self.ndt.random.uniform(0.1, 0.9)
-        r2 = self.ndt.random.uniform(0.1, 0.9-r1)
+        r2 = self.ndt.random.uniform(0.1, 0.9 - r1)
         r3 = 1 - (r1 + r2)
 
         return [
@@ -255,7 +257,7 @@ class DummyAPI(pydantic.BaseModel):
                 'mode': 'classification',
                 'model': model,
                 'inputs': text,
-                'args': args # include extra args to see them in post span
+                'args': args  # include extra args to see them in post span
             }
         )
 

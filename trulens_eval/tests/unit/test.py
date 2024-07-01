@@ -121,9 +121,7 @@ class JSONTestCase(TestCase):
             writer = yaml.dump
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
         else:
-            raise ValueError(
-                f"Unknown file extension {golden_path.suffix}."
-            )
+            raise ValueError(f"Unknown file extension {golden_path.suffix}.")
 
         if write_golden:
             with golden_path.open("w") as f:

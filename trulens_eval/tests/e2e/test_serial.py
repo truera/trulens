@@ -113,10 +113,13 @@ class TestSerial(JSONTestCase):
                     golden_filename=f"customapp_{name}.result.json",
                     skips=set(
                         [
-                            'feedback_definition_id', 'id', 'last_ts',
-                            'record_id', 'feedback_result_id',
+                            'feedback_definition_id',
+                            'id',
+                            'last_ts',
+                            'record_id',
+                            'feedback_result_id',
                             # Skip these if non-determinism becomes a problem:
-                            #'result', 'LABEL_0', 'LABEL_1', 'LABEL_2', 'ret' 
+                            #'result', 'LABEL_0', 'LABEL_1', 'LABEL_2', 'ret'
                         ]
                     )
                 )
