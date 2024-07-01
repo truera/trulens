@@ -734,25 +734,3 @@ class HuggingfaceLocal(HuggingfaceBase):
         raise NotImplementedError(
             "Currently not implemented in for local Huggingface!"
         )
-
-
-class Dummy(Huggingface):
-
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        error_prob: float = 1 / 100,
-        loading_prob: float = 1 / 100,
-        freeze_prob: float = 1 / 100,
-        overloaded_prob: float = 1 / 100,
-        alloc: int = 1024 * 1024,
-        rpm: float = 600,
-        delay: float = 1.0,
-        **kwargs
-    ):
-        kwargs['name'] = name or "dummyhugs"
-        kwargs['endpoint'] = DummyEndpoint(
-            name="dummyendhugspoint", **locals_except("self", "name", "kwargs")
-        )
-
-        super().__init__(**kwargs)
