@@ -25,10 +25,12 @@ from trulens_eval.ux.components import draw_metadata
 
 from trulens_eval import Tru
 
+
 class FeedbackDisplay(BaseModel):
     score: float = 0
     calls: List[FeedbackCall]
     icon: str
+
 
 def trulens_leaderboard(app_ids: List[str] = None):
     """
@@ -145,6 +147,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
 
         st.markdown("""---""")
 
+
 @st.experimental_fragment(run_every=2)
 def trulens_feedback(record: Record):
     """
@@ -206,6 +209,7 @@ def trulens_feedback(record: Record):
             hide_index=True
         )
 
+
 def trulens_trace(record):
     """
     Display the trace view for a record.
@@ -233,5 +237,8 @@ def trulens_trace(record):
 
     app = tru.get_app(app_id=record.app_id)
     records, feedback = tru.get_records_and_feedback()
-    record_json = json.loads(records.loc[records['record_id'] == record.record_id]['record_json'].values[0])
+    record_json = json.loads(
+        records.loc[records['record_id'] == record.record_id]
+        ['record_json'].values[0]
+    )
     record_viewer(record_json=record_json, app_json=app)

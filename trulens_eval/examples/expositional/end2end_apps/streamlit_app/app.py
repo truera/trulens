@@ -24,6 +24,7 @@ f_coherence = Feedback(provider.coherence_with_cot_reasons).on_output()
 
 feedbacks = [f_coherence]
 
+
 def generate_response(input_text):
     llm = OpenAI(temperature=0.7)
     tru_llm = TruChain(llm, app_id="LLM v1", feedbacks=feedbacks)
