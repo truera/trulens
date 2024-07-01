@@ -49,7 +49,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
     tru = Tru()
 
     lms = tru.db
-    df, feedback_col_names = lms.get_records_and_feedback([])
+    df, feedback_col_names = lms.get_records_and_feedback(app_ids=[app_ids])
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
@@ -230,7 +230,7 @@ def trulens_trace(record):
     """
 
     tru = Tru()
-    
+
     app = tru.get_app(app_id=record.app_id)
     records, feedback = tru.get_records_and_feedback()
     record_json = json.loads(records.loc[records['record_id'] == record.record_id]['record_json'].values[0])
