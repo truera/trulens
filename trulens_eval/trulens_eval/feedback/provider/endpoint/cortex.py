@@ -61,7 +61,7 @@ class CortexEndpoint(Endpoint):
                     "Ignoring additional kwargs for singleton endpoint %s: %s",
                     self.name, pp.pformat(kwargs)
                 )
-            self.warning()
+                self.warning()
             return
 
         kwargs['name'] = "cortex"

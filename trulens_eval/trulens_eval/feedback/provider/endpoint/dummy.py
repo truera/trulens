@@ -49,6 +49,9 @@ class NonDeterminism(pydantic.BaseModel):
     """Control randomness."""
 
     def __init__(self, **kwargs):
+        kwargs['random'] = None
+        kwargs['np_random'] = None
+
         super().__init__(**kwargs)
 
         self.random = random.Random(self.seed)
