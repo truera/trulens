@@ -1,8 +1,19 @@
 """
-# Tests serialization of various components.
+Tests serialization of various components into JSON.
+
+These tests make sure that:
+
+1. Serialization does not fail.
+
+2. Produced json matches the golden expected results already collected as part
+   of this test.
+
+To refresh the golden files, set the environment variable `WRITE_GOLDEN` to
+anything that evalutes to true. This will overwrite the golden files with the
+actual results produced by the tests. Only do this if changes to serialization
+are expected.
 """
 
-from pprint import PrettyPrinter
 from unittest import main
 
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
@@ -12,8 +23,6 @@ from trulens_eval import Feedback
 from trulens_eval.feedback.provider.dummy import DummyProvider
 from trulens_eval.feedback.provider.hugs import Dummy
 from trulens_eval.tru_custom_app import TruCustomApp
-
-pp = PrettyPrinter()
 
 
 class TestSerial(JSONTestCase):
