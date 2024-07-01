@@ -1,1 +1,42 @@
-{"feedback_result_id": "feedback_result_hash_562635af13edd1ae7d9f07986c7669d5", "record_id": "record_hash_8c2268b50720fc6937862cc07799858b", "feedback_definition_id": "feedback_definition_hash_16cab0a714d34645ab8dd74252b0a8e4", "last_ts": "2024-07-01T16:28:30.829718", "status": "done", "cost": {"n_requests": 0, "n_successful_requests": 0, "n_classes": 0, "n_tokens": 0, "n_stream_chunks": 0, "n_prompt_tokens": 0, "n_completion_tokens": 0, "cost": 0.0}, "name": "language_match", "calls": [{"args": {"text1": "hello", "text2": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ..."}, "ret": 0.885953763259937, "meta": {"text1_scores": {"LABEL_1": 0.47570595681596817, "LABEL_2": 0.2943444078143559, "LABEL_0": 0.22994963536967594}, "text2_scores": {"LABEL_1": 0.5897521935560311, "LABEL_2": 0.2529751618246674, "LABEL_0": 0.15727264461930146}}}], "result": 0.885953763259937, "error": null, "multi_result": "null"}
+{
+  "feedback_result_id": "feedback_result_hash_1d93469b6e08906e4948518f64668322",
+  "record_id": "record_hash_509edddf469c73b50116c4536664f8e7",
+  "feedback_definition_id": "feedback_definition_hash_2a2108cf0413ffb79caa06843ea9e852",
+  "last_ts": "2024-07-01T16:34:52.809644",
+  "status": "done",
+  "cost": {
+    "n_requests": 0,
+    "n_successful_requests": 0,
+    "n_classes": 0,
+    "n_tokens": 0,
+    "n_stream_chunks": 0,
+    "n_prompt_tokens": 0,
+    "n_completion_tokens": 0,
+    "cost": 0.0
+  },
+  "name": "language_match",
+  "calls": [
+    {
+      "args": {
+        "text1": "hello",
+        "text2": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ..."
+      },
+      "ret": 0.885953763259937,
+      "meta": {
+        "text1_scores": {
+          "LABEL_1": 0.47570595681596817,
+          "LABEL_2": 0.2943444078143559,
+          "LABEL_0": 0.22994963536967594
+        },
+        "text2_scores": {
+          "LABEL_1": 0.5897521935560311,
+          "LABEL_2": 0.2529751618246674,
+          "LABEL_0": 0.15727264461930146
+        }
+      }
+    }
+  ],
+  "result": 0.885953763259937,
+  "error": null,
+  "multi_result": "null"
+}

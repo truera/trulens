@@ -109,7 +109,7 @@ class JSONTestCase(TestCase):
         golden_path = (caller_path / "golden" / golden_filename).resolve()
 
         if golden_path.suffix == ".json":
-            writer = json.dump
+            writer = functools.partial(json.dump, indent=2)
             loader = json.load
         elif golden_path.suffix == ".yaml":
             writer = yaml.dump

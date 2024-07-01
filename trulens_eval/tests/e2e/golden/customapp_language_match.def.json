@@ -1,1 +1,299 @@
-{"tru_class_info": {"name": "Feedback", "module": {"package_name": "trulens_eval.feedback", "module_name": "trulens_eval.feedback.feedback"}, "bases": [{"name": "Feedback", "module": {"package_name": "trulens_eval.feedback", "module_name": "trulens_eval.feedback.feedback"}, "bases": null}, {"name": "FeedbackDefinition", "module": {"package_name": "trulens_eval.schema", "module_name": "trulens_eval.schema.feedback"}, "bases": null}, {"name": "WithClassInfo", "module": {"package_name": "trulens_eval.utils", "module_name": "trulens_eval.utils.pyschema"}, "bases": null}, {"name": "SerialModel", "module": {"package_name": "trulens_eval.utils", "module_name": "trulens_eval.utils.serial"}, "bases": null}, {"name": "BaseModel", "module": {"package_name": "pydantic", "module_name": "pydantic.main"}, "bases": null}, {"name": "Hashable", "module": {"package_name": "collections", "module_name": "collections.abc"}, "bases": null}, {"name": "Generic", "module": {"package_name": "", "module_name": "typing"}, "bases": null}, {"name": "object", "module": {"package_name": "", "module_name": "builtins"}, "bases": null}]}, "implementation": {"obj": {"cls": {"name": "Dummy", "module": {"package_name": "trulens_eval.feedback.provider", "module_name": "trulens_eval.feedback.provider.hugs"}, "bases": null}, "id": 6108126720, "init_bindings": {"args": [], "kwargs": {"tru_class_info": {"name": "Dummy", "module": {"package_name": "trulens_eval.feedback.provider", "module_name": "trulens_eval.feedback.provider.hugs"}, "bases": [{"name": "Dummy", "module": {"package_name": "trulens_eval.feedback.provider", "module_name": "trulens_eval.feedback.provider.hugs"}, "bases": null}, {"name": "Huggingface", "module": {"package_name": "trulens_eval.feedback.provider", "module_name": "trulens_eval.feedback.provider.hugs"}, "bases": null}, {"name": "HuggingfaceBase", "module": {"package_name": "trulens_eval.feedback.provider", "module_name": "trulens_eval.feedback.provider.hugs"}, "bases": null}, {"name": "Provider", "module": {"package_name": "trulens_eval.feedback.provider", "module_name": "trulens_eval.feedback.provider.base"}, "bases": null}, {"name": "WithClassInfo", "module": {"package_name": "trulens_eval.utils", "module_name": "trulens_eval.utils.pyschema"}, "bases": null}, {"name": "SerialModel", "module": {"package_name": "trulens_eval.utils", "module_name": "trulens_eval.utils.serial"}, "bases": null}, {"name": "BaseModel", "module": {"package_name": "pydantic", "module_name": "pydantic.main"}, "bases": null}, {"name": "object", "module": {"package_name": "", "module_name": "builtins"}, "bases": null}]}, "endpoint": {"tru_class_info": {"name": "DummyEndpoint", "module": {"package_name": "trulens_eval.feedback.provider.endpoint", "module_name": "trulens_eval.feedback.provider.endpoint.dummy"}, "bases": [{"name": "DummyEndpoint", "module": {"package_name": "trulens_eval.feedback.provider.endpoint", "module_name": "trulens_eval.feedback.provider.endpoint.dummy"}, "bases": null}, {"name": "Endpoint", "module": {"package_name": "trulens_eval.feedback.provider.endpoint", "module_name": "trulens_eval.feedback.provider.endpoint.base"}, "bases": null}, {"name": "WithClassInfo", "module": {"package_name": "trulens_eval.utils", "module_name": "trulens_eval.utils.pyschema"}, "bases": null}, {"name": "SerialModel", "module": {"package_name": "trulens_eval.utils", "module_name": "trulens_eval.utils.serial"}, "bases": null}, {"name": "BaseModel", "module": {"package_name": "pydantic", "module_name": "pydantic.main"}, "bases": null}, {"name": "SingletonPerName", "module": {"package_name": "trulens_eval.utils", "module_name": "trulens_eval.utils.python"}, "bases": null}, {"name": "Generic", "module": {"package_name": "", "module_name": "typing"}, "bases": null}, {"name": "object", "module": {"package_name": "", "module_name": "builtins"}, "bases": null}]}, "name": "dummyendpoint", "rpm": 60.0, "retries": 3, "api": {"loading_time_uniform_params": [0.7, 3.7], "loading_prob": 0.0, "error_prob": 0.0, "freeze_prob": 0.0, "overloaded_prob": 0.0, "alloc": 0, "delay": 0.0, "ndt": {"random": {"__tru_non_serialized_object": {"cls": {"name": "Random", "module": {"package_name": "", "module_name": "random"}, "bases": null}, "id": 5759569952, "init_bindings": null}}, "np_random": {"__tru_non_serialized_object": {"cls": {"name": "RandomState", "module": {"package_name": "numpy.random", "module_name": "numpy.random.mtrand"}, "bases": null}, "id": 6108285248, "init_bindings": null}}, "seed": 3735928559}}}}}}, "name": "language_match"}, "aggregator": null, "combinations": "product", "feedback_definition_id": "feedback_definition_hash_16cab0a714d34645ab8dd74252b0a8e4", "if_exists": null, "if_missing": "error", "selectors": {"text1": "__record__.main_input", "text2": "__record__.main_output"}, "supplied_name": null, "higher_is_better": true}
+{
+  "tru_class_info": {
+    "name": "Feedback",
+    "module": {
+      "package_name": "trulens_eval.feedback",
+      "module_name": "trulens_eval.feedback.feedback"
+    },
+    "bases": [
+      {
+        "name": "Feedback",
+        "module": {
+          "package_name": "trulens_eval.feedback",
+          "module_name": "trulens_eval.feedback.feedback"
+        },
+        "bases": null
+      },
+      {
+        "name": "FeedbackDefinition",
+        "module": {
+          "package_name": "trulens_eval.schema",
+          "module_name": "trulens_eval.schema.feedback"
+        },
+        "bases": null
+      },
+      {
+        "name": "WithClassInfo",
+        "module": {
+          "package_name": "trulens_eval.utils",
+          "module_name": "trulens_eval.utils.pyschema"
+        },
+        "bases": null
+      },
+      {
+        "name": "SerialModel",
+        "module": {
+          "package_name": "trulens_eval.utils",
+          "module_name": "trulens_eval.utils.serial"
+        },
+        "bases": null
+      },
+      {
+        "name": "BaseModel",
+        "module": {
+          "package_name": "pydantic",
+          "module_name": "pydantic.main"
+        },
+        "bases": null
+      },
+      {
+        "name": "Hashable",
+        "module": {
+          "package_name": "collections",
+          "module_name": "collections.abc"
+        },
+        "bases": null
+      },
+      {
+        "name": "Generic",
+        "module": {
+          "package_name": "",
+          "module_name": "typing"
+        },
+        "bases": null
+      },
+      {
+        "name": "object",
+        "module": {
+          "package_name": "",
+          "module_name": "builtins"
+        },
+        "bases": null
+      }
+    ]
+  },
+  "implementation": {
+    "obj": {
+      "cls": {
+        "name": "Dummy",
+        "module": {
+          "package_name": "trulens_eval.feedback.provider",
+          "module_name": "trulens_eval.feedback.provider.hugs"
+        },
+        "bases": null
+      },
+      "id": 5593292528,
+      "init_bindings": {
+        "args": [],
+        "kwargs": {
+          "tru_class_info": {
+            "name": "Dummy",
+            "module": {
+              "package_name": "trulens_eval.feedback.provider",
+              "module_name": "trulens_eval.feedback.provider.hugs"
+            },
+            "bases": [
+              {
+                "name": "Dummy",
+                "module": {
+                  "package_name": "trulens_eval.feedback.provider",
+                  "module_name": "trulens_eval.feedback.provider.hugs"
+                },
+                "bases": null
+              },
+              {
+                "name": "Huggingface",
+                "module": {
+                  "package_name": "trulens_eval.feedback.provider",
+                  "module_name": "trulens_eval.feedback.provider.hugs"
+                },
+                "bases": null
+              },
+              {
+                "name": "HuggingfaceBase",
+                "module": {
+                  "package_name": "trulens_eval.feedback.provider",
+                  "module_name": "trulens_eval.feedback.provider.hugs"
+                },
+                "bases": null
+              },
+              {
+                "name": "Provider",
+                "module": {
+                  "package_name": "trulens_eval.feedback.provider",
+                  "module_name": "trulens_eval.feedback.provider.base"
+                },
+                "bases": null
+              },
+              {
+                "name": "WithClassInfo",
+                "module": {
+                  "package_name": "trulens_eval.utils",
+                  "module_name": "trulens_eval.utils.pyschema"
+                },
+                "bases": null
+              },
+              {
+                "name": "SerialModel",
+                "module": {
+                  "package_name": "trulens_eval.utils",
+                  "module_name": "trulens_eval.utils.serial"
+                },
+                "bases": null
+              },
+              {
+                "name": "BaseModel",
+                "module": {
+                  "package_name": "pydantic",
+                  "module_name": "pydantic.main"
+                },
+                "bases": null
+              },
+              {
+                "name": "object",
+                "module": {
+                  "package_name": "",
+                  "module_name": "builtins"
+                },
+                "bases": null
+              }
+            ]
+          },
+          "endpoint": {
+            "tru_class_info": {
+              "name": "DummyEndpoint",
+              "module": {
+                "package_name": "trulens_eval.feedback.provider.endpoint",
+                "module_name": "trulens_eval.feedback.provider.endpoint.dummy"
+              },
+              "bases": [
+                {
+                  "name": "DummyEndpoint",
+                  "module": {
+                    "package_name": "trulens_eval.feedback.provider.endpoint",
+                    "module_name": "trulens_eval.feedback.provider.endpoint.dummy"
+                  },
+                  "bases": null
+                },
+                {
+                  "name": "Endpoint",
+                  "module": {
+                    "package_name": "trulens_eval.feedback.provider.endpoint",
+                    "module_name": "trulens_eval.feedback.provider.endpoint.base"
+                  },
+                  "bases": null
+                },
+                {
+                  "name": "WithClassInfo",
+                  "module": {
+                    "package_name": "trulens_eval.utils",
+                    "module_name": "trulens_eval.utils.pyschema"
+                  },
+                  "bases": null
+                },
+                {
+                  "name": "SerialModel",
+                  "module": {
+                    "package_name": "trulens_eval.utils",
+                    "module_name": "trulens_eval.utils.serial"
+                  },
+                  "bases": null
+                },
+                {
+                  "name": "BaseModel",
+                  "module": {
+                    "package_name": "pydantic",
+                    "module_name": "pydantic.main"
+                  },
+                  "bases": null
+                },
+                {
+                  "name": "SingletonPerName",
+                  "module": {
+                    "package_name": "trulens_eval.utils",
+                    "module_name": "trulens_eval.utils.python"
+                  },
+                  "bases": null
+                },
+                {
+                  "name": "Generic",
+                  "module": {
+                    "package_name": "",
+                    "module_name": "typing"
+                  },
+                  "bases": null
+                },
+                {
+                  "name": "object",
+                  "module": {
+                    "package_name": "",
+                    "module_name": "builtins"
+                  },
+                  "bases": null
+                }
+              ]
+            },
+            "name": "dummyendpoint",
+            "rpm": 60.0,
+            "retries": 3,
+            "api": {
+              "loading_time_uniform_params": [
+                0.7,
+                3.7
+              ],
+              "loading_prob": 0.0,
+              "error_prob": 0.0,
+              "freeze_prob": 0.0,
+              "overloaded_prob": 0.0,
+              "alloc": 0,
+              "delay": 0.0,
+              "ndt": {
+                "random": {
+                  "__tru_non_serialized_object": {
+                    "cls": {
+                      "name": "Random",
+                      "module": {
+                        "package_name": "",
+                        "module_name": "random"
+                      },
+                      "bases": null
+                    },
+                    "id": 5336454688,
+                    "init_bindings": null
+                  }
+                },
+                "np_random": {
+                  "__tru_non_serialized_object": {
+                    "cls": {
+                      "name": "RandomState",
+                      "module": {
+                        "package_name": "numpy.random",
+                        "module_name": "numpy.random.mtrand"
+                      },
+                      "bases": null
+                    },
+                    "id": 5593434432,
+                    "init_bindings": null
+                  }
+                },
+                "seed": 3735928559
+              }
+            }
+          }
+        }
+      }
+    },
+    "name": "language_match"
+  },
+  "aggregator": null,
+  "combinations": "product",
+  "feedback_definition_id": "feedback_definition_hash_2a2108cf0413ffb79caa06843ea9e852",
+  "if_exists": null,
+  "if_missing": "error",
+  "selectors": {
+    "text1": "__record__.main_input",
+    "text2": "__record__.main_output"
+  },
+  "supplied_name": null,
+  "higher_is_better": true
+}

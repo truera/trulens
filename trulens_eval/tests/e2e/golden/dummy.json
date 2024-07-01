@@ -1,1 +1,907 @@
-{"record_id": "record_hash_c963d45bbdc6460e03ef6d7abb41fca2", "app_id": "customapp", "cost": {"n_requests": 0, "n_successful_requests": 0, "n_classes": 0, "n_tokens": 0, "n_stream_chunks": 0, "n_prompt_tokens": 0, "n_completion_tokens": 0, "cost": 0.0}, "perf": {"start_time": "2024-07-01T16:28:28.186172", "end_time": "2024-07-01T16:28:28.384277"}, "ts": "2024-07-01T16:28:28.384309", "tags": "-", "meta": null, "main_input": "hello", "main_output": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ...", "main_error": null, "calls": [{"call_id": "a6b60f23-d39c-483a-ae86-c09c4b6d40f8", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app.agents[0]", "method": {"obj": {"cls": {"name": "CustomAgent", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"}, "bases": null}, "id": 6108900640, "init_bindings": null}, "name": "invoke"}}], "args": {"data": "hello"}, "rets": "Record placeholder", "error": null, "perf": {"start_time": "2024-07-01T16:28:28.212623", "end_time": "2024-07-01T16:28:28.216886"}, "pid": 80989, "tid": 6444784}, {"call_id": "321454f6-2b27-4ace-a205-043617cfc638", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app.agents[1]", "method": {"obj": {"cls": {"name": "CustomAgent", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"}, "bases": null}, "id": 6108900640, "init_bindings": null}, "name": "invoke"}}], "args": {"data": "hello"}, "rets": "Record placeholder", "error": null, "perf": {"start_time": "2024-07-01T16:28:28.230843", "end_time": "2024-07-01T16:28:28.235050"}, "pid": 80989, "tid": 6444784}, {"call_id": "3d7a830d-90f0-4316-9b56-12c089b05719", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "get_context"}}, {"path": "app.retriever", "method": {"obj": {"cls": {"name": "CustomRetriever", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_retriever"}, "bases": null}, "id": 6108905152, "init_bindings": null}, "name": "retrieve_chunks"}}], "args": {"data": "hello"}, "rets": ["Relevant chunk: HELLO", "Relevant chunk: olleholleholleh"], "error": null, "perf": {"start_time": "2024-07-01T16:28:28.267870", "end_time": "2024-07-01T16:28:28.272211"}, "pid": 80989, "tid": 6444784}, {"call_id": "941bc3d3-2397-4042-ad08-edb4eabd8a25", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "get_context"}}, {"path": "app.reranker", "method": {"obj": {"cls": {"name": "CustomReranker", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_reranker"}, "bases": null}, "id": 6108894064, "init_bindings": null}, "name": "rerank"}}], "args": {"query_text": "hello", "chunks": ["Relevant chunk: HELLO", "Relevant chunk: olleholleholleh"], "chunk_scores": null}, "rets": [["Relevant chunk: HELLO", 16.0], ["Relevant chunk: olleholleholleh", 26.0]], "error": null, "perf": {"start_time": "2024-07-01T16:28:28.286535", "end_time": "2024-07-01T16:28:28.290816"}, "pid": 80989, "tid": 6444784}, {"call_id": "edb10cb6-63be-448a-a214-da70d3fcebf8", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "get_context"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "process_chunk_by_random_tool"}}, {"path": "app.tools[0]", "method": {"obj": {"cls": {"name": "CustomTool", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"}, "bases": null}, "id": 6108584592, "init_bindings": null}, "name": "invoke"}}], "args": {"data": "Relevant chunk: HELLO"}, "rets": "'Relevant chunk: HELLO'", "error": null, "perf": {"start_time": "2024-07-01T16:28:28.306432", "end_time": "2024-07-01T16:28:28.309508"}, "pid": 80989, "tid": 6444836}, {"call_id": "a28a370f-a1ea-4da1-874a-dab16ff3b7d0", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "get_context"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "process_chunk_by_random_tool"}}], "args": {"chunk_and_score": ["Relevant chunk: HELLO", 16.0]}, "rets": "'Relevant chunk: HELLO'", "error": null, "perf": {"start_time": "2024-07-01T16:28:28.301517", "end_time": "2024-07-01T16:28:28.309529"}, "pid": 80989, "tid": 6444836}, {"call_id": "378ef104-8c00-469a-8dc9-3ac96ee25084", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "get_context"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "process_chunk_by_random_tool"}}, {"path": "app.tools[3]", "method": {"obj": {"cls": {"name": "CustomStackTool", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"}, "bases": null}, "id": 6108584592, "init_bindings": null}, "name": "invoke"}}], "args": {"data": "Relevant chunk: olleholleholleh"}, "rets": "'Relevant chunk: olleholleholleh'", "error": null, "perf": {"start_time": "2024-07-01T16:28:28.311112", "end_time": "2024-07-01T16:28:28.312146"}, "pid": 80989, "tid": 6444837}, {"call_id": "764111ba-1b54-47e8-a3ea-76d31e564c42", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "get_context"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "process_chunk_by_random_tool"}}], "args": {"chunk_and_score": ["Relevant chunk: olleholleholleh", 26.0]}, "rets": "'Relevant chunk: olleholleholleh'", "error": null, "perf": {"start_time": "2024-07-01T16:28:28.308813", "end_time": "2024-07-01T16:28:28.312165"}, "pid": 80989, "tid": 6444837}, {"call_id": "1bcf5238-d893-468d-bd01-3392d23c157f", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "get_context"}}], "args": {"input": "hello"}, "rets": ["'Relevant chunk: HELLO'", "'Relevant chunk: olleholleholleh'"], "error": null, "perf": {"start_time": "2024-07-01T16:28:28.249257", "end_time": "2024-07-01T16:28:28.312209"}, "pid": 80989, "tid": 6444784}, {"call_id": "0034d178-b1a5-4050-bd1e-7fa9411538b1", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app.memory", "method": {"obj": {"cls": {"name": "CustomMemory", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"}, "bases": null}, "id": 6108905056, "init_bindings": null}, "name": "remember"}}], "args": {"data": "hello"}, "rets": null, "error": null, "perf": {"start_time": "2024-07-01T16:28:28.325846", "end_time": "2024-07-01T16:28:28.329933"}, "pid": 80989, "tid": 6444784}, {"call_id": "be441713-239a-43f1-95f4-4de5f703d491", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app.llm", "method": {"obj": {"cls": {"name": "CustomLLM", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"}, "bases": null}, "id": 6108905200, "init_bindings": null}, "name": "generate"}}], "args": {"prompt": "'Relevant chunk: HELLO','Relevant chunk: olleholleholleh'"}, "rets": "my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh'", "error": null, "perf": {"start_time": "2024-07-01T16:28:28.343716", "end_time": "2024-07-01T16:28:28.347797"}, "pid": 80989, "tid": 6444784}, {"call_id": "76cbd8a9-50fa-4c0e-9b2f-07514ac0f975", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app.template", "method": {"obj": {"cls": {"name": "CustomTemplate", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108724880, "init_bindings": null}, "name": "fill"}}], "args": {"question": "hello", "answer": "my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh'"}, "rets": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ...", "error": null, "perf": {"start_time": "2024-07-01T16:28:28.361807", "end_time": "2024-07-01T16:28:28.365875"}, "pid": 80989, "tid": 6444784}, {"call_id": "aea0da50-3f8f-4ee8-a3d8-99a88addb3f9", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}, {"path": "app.memory", "method": {"obj": {"cls": {"name": "CustomMemory", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"}, "bases": null}, "id": 6108905056, "init_bindings": null}, "name": "remember"}}], "args": {"data": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ..."}, "rets": null, "error": null, "perf": {"start_time": "2024-07-01T16:28:28.379858", "end_time": "2024-07-01T16:28:28.384263"}, "pid": 80989, "tid": 6444784}, {"call_id": "231d190f-ada8-4784-87f9-9aae6b362568", "stack": [{"path": "app", "method": {"obj": {"cls": {"name": "CustomApp", "module": {"package_name": "examples.expositional.end2end_apps.custom_app", "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"}, "bases": null}, "id": 6108905008, "init_bindings": null}, "name": "respond_to_query"}}], "args": {"query": "hello"}, "rets": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ...", "error": null, "perf": {"start_time": "2024-07-01T16:28:28.186172", "end_time": "2024-07-01T16:28:28.384277"}, "pid": 80989, "tid": 6444784}]}
+{
+  "record_id": "record_hash_c222c38e0014e6159bb4ed08d1bbbe7b",
+  "app_id": "customapp",
+  "cost": {
+    "n_requests": 0,
+    "n_successful_requests": 0,
+    "n_classes": 0,
+    "n_tokens": 0,
+    "n_stream_chunks": 0,
+    "n_prompt_tokens": 0,
+    "n_completion_tokens": 0,
+    "cost": 0.0
+  },
+  "perf": {
+    "start_time": "2024-07-01T16:34:50.105513",
+    "end_time": "2024-07-01T16:34:50.308553"
+  },
+  "ts": "2024-07-01T16:34:50.308586",
+  "tags": "-",
+  "meta": null,
+  "main_input": "hello",
+  "main_output": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ...",
+  "main_error": null,
+  "calls": [
+    {
+      "call_id": "26a5b6dc-7337-48eb-bb27-63027a09f65f",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app.agents[0]",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomAgent",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"
+                },
+                "bases": null
+              },
+              "id": 13427411568,
+              "init_bindings": null
+            },
+            "name": "invoke"
+          }
+        }
+      ],
+      "args": {
+        "data": "hello"
+      },
+      "rets": "Record placeholder",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.132534",
+        "end_time": "2024-07-01T16:34:50.136816"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    },
+    {
+      "call_id": "45522a26-7c42-4a15-9c4f-9a50fabd9516",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app.agents[1]",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomAgent",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"
+                },
+                "bases": null
+              },
+              "id": 13427411568,
+              "init_bindings": null
+            },
+            "name": "invoke"
+          }
+        }
+      ],
+      "args": {
+        "data": "hello"
+      },
+      "rets": "Record placeholder",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.150956",
+        "end_time": "2024-07-01T16:34:50.155226"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    },
+    {
+      "call_id": "1ddca93f-6df3-4583-8c9e-cf2b8509d1e6",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "get_context"
+          }
+        },
+        {
+          "path": "app.retriever",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomRetriever",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_retriever"
+                },
+                "bases": null
+              },
+              "id": 13427410848,
+              "init_bindings": null
+            },
+            "name": "retrieve_chunks"
+          }
+        }
+      ],
+      "args": {
+        "data": "hello"
+      },
+      "rets": [
+        "Relevant chunk: HELLO",
+        "Relevant chunk: olleholleholleh"
+      ],
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.188924",
+        "end_time": "2024-07-01T16:34:50.193198"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    },
+    {
+      "call_id": "d8c31f59-dbef-4572-9e37-1990d813d689",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "get_context"
+          }
+        },
+        {
+          "path": "app.reranker",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomReranker",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_reranker"
+                },
+                "bases": null
+              },
+              "id": 13427411520,
+              "init_bindings": null
+            },
+            "name": "rerank"
+          }
+        }
+      ],
+      "args": {
+        "query_text": "hello",
+        "chunks": [
+          "Relevant chunk: HELLO",
+          "Relevant chunk: olleholleholleh"
+        ],
+        "chunk_scores": null
+      },
+      "rets": [
+        [
+          "Relevant chunk: HELLO",
+          16.0
+        ],
+        [
+          "Relevant chunk: olleholleholleh",
+          26.0
+        ]
+      ],
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.208015",
+        "end_time": "2024-07-01T16:34:50.212478"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    },
+    {
+      "call_id": "5d9adf2c-b454-40ff-860a-0accf936afa8",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "get_context"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "process_chunk_by_random_tool"
+          }
+        },
+        {
+          "path": "app.tools[0]",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomTool",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                },
+                "bases": null
+              },
+              "id": 13427287744,
+              "init_bindings": null
+            },
+            "name": "invoke"
+          }
+        }
+      ],
+      "args": {
+        "data": "Relevant chunk: HELLO"
+      },
+      "rets": "'Relevant chunk: HELLO'",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.228778",
+        "end_time": "2024-07-01T16:34:50.232457"
+      },
+      "pid": 81484,
+      "tid": 6450716
+    },
+    {
+      "call_id": "a8ae7b68-efad-45fa-a53a-fdb56349ecb1",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "get_context"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "process_chunk_by_random_tool"
+          }
+        }
+      ],
+      "args": {
+        "chunk_and_score": [
+          "Relevant chunk: HELLO",
+          16.0
+        ]
+      },
+      "rets": "'Relevant chunk: HELLO'",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.222609",
+        "end_time": "2024-07-01T16:34:50.232484"
+      },
+      "pid": 81484,
+      "tid": 6450716
+    },
+    {
+      "call_id": "0e29f61a-2e64-47f9-a3db-f90583b7f150",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "get_context"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "process_chunk_by_random_tool"
+          }
+        },
+        {
+          "path": "app.tools[3]",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomStackTool",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                },
+                "bases": null
+              },
+              "id": 13427287744,
+              "init_bindings": null
+            },
+            "name": "invoke"
+          }
+        }
+      ],
+      "args": {
+        "data": "Relevant chunk: olleholleholleh"
+      },
+      "rets": "'Relevant chunk: olleholleholleh'",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.233597",
+        "end_time": "2024-07-01T16:34:50.234720"
+      },
+      "pid": 81484,
+      "tid": 6450717
+    },
+    {
+      "call_id": "244eca4b-6bad-4f34-a490-8ba45d4ebbfe",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "get_context"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "process_chunk_by_random_tool"
+          }
+        }
+      ],
+      "args": {
+        "chunk_and_score": [
+          "Relevant chunk: olleholleholleh",
+          26.0
+        ]
+      },
+      "rets": "'Relevant chunk: olleholleholleh'",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.231273",
+        "end_time": "2024-07-01T16:34:50.234739"
+      },
+      "pid": 81484,
+      "tid": 6450717
+    },
+    {
+      "call_id": "e1789391-f9a9-44a7-9cbb-d9269c7bcef1",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "get_context"
+          }
+        }
+      ],
+      "args": {
+        "input": "hello"
+      },
+      "rets": [
+        "'Relevant chunk: HELLO'",
+        "'Relevant chunk: olleholleholleh'"
+      ],
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.169725",
+        "end_time": "2024-07-01T16:34:50.234785"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    },
+    {
+      "call_id": "f038d213-f755-40e6-b82e-69293de57203",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app.memory",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomMemory",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+                },
+                "bases": null
+              },
+              "id": 13427410752,
+              "init_bindings": null
+            },
+            "name": "remember"
+          }
+        }
+      ],
+      "args": {
+        "data": "hello"
+      },
+      "rets": null,
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.248544",
+        "end_time": "2024-07-01T16:34:50.252838"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    },
+    {
+      "call_id": "75642f30-21cb-4d83-bdf8-0899da5f0979",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app.llm",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomLLM",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"
+                },
+                "bases": null
+              },
+              "id": 13427410896,
+              "init_bindings": null
+            },
+            "name": "generate"
+          }
+        }
+      ],
+      "args": {
+        "prompt": "'Relevant chunk: HELLO','Relevant chunk: olleholleholleh'"
+      },
+      "rets": "my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh'",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.267059",
+        "end_time": "2024-07-01T16:34:50.271404"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    },
+    {
+      "call_id": "f0ad5b33-e188-443a-b544-d26fb25649e1",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app.template",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomTemplate",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410944,
+              "init_bindings": null
+            },
+            "name": "fill"
+          }
+        }
+      ],
+      "args": {
+        "question": "hello",
+        "answer": "my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh'"
+      },
+      "rets": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ...",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.285593",
+        "end_time": "2024-07-01T16:34:50.289875"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    },
+    {
+      "call_id": "0a7132bd-c5a6-4752-a629-70323b07d207",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app.memory",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomMemory",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+                },
+                "bases": null
+              },
+              "id": 13427410752,
+              "init_bindings": null
+            },
+            "name": "remember"
+          }
+        }
+      ],
+      "args": {
+        "data": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ..."
+      },
+      "rets": null,
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.304291",
+        "end_time": "2024-07-01T16:34:50.308539"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    },
+    {
+      "call_id": "b8baa985-20ae-4e2e-9da0-0b96d8ec356c",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 13427410704,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        }
+      ],
+      "args": {
+        "query": "hello"
+      },
+      "rets": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ...",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-01T16:34:50.105513",
+        "end_time": "2024-07-01T16:34:50.308553"
+      },
+      "pid": 81484,
+      "tid": 6450665
+    }
+  ]
+}

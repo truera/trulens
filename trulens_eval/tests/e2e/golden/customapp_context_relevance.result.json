@@ -1,1 +1,31 @@
-{"feedback_result_id": "feedback_result_hash_cb1a264740ec251ae2355241bd4abd2a", "record_id": "record_hash_8c2268b50720fc6937862cc07799858b", "feedback_definition_id": "feedback_definition_hash_4c3b6e55d10550be438d62c297155878", "last_ts": "2024-07-01T16:28:30.846515", "status": "done", "cost": {"n_requests": 0, "n_successful_requests": 0, "n_classes": 0, "n_tokens": 0, "n_stream_chunks": 0, "n_prompt_tokens": 0, "n_completion_tokens": 0, "cost": 0.0}, "name": "context_relevance", "calls": [{"args": {"question": "hello", "context": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ..."}, "ret": 0.0, "meta": {}}], "result": 0.0, "error": null, "multi_result": "null"}
+{
+  "feedback_result_id": "feedback_result_hash_1ec167f5316e500c10e87522357f7a59",
+  "record_id": "record_hash_509edddf469c73b50116c4536664f8e7",
+  "feedback_definition_id": "feedback_definition_hash_9ad77c82bb3410639a20de1d79cef3dc",
+  "last_ts": "2024-07-01T16:34:52.826292",
+  "status": "done",
+  "cost": {
+    "n_requests": 0,
+    "n_successful_requests": 0,
+    "n_classes": 0,
+    "n_tokens": 0,
+    "n_stream_chunks": 0,
+    "n_prompt_tokens": 0,
+    "n_completion_tokens": 0,
+    "cost": 0.0
+  },
+  "name": "context_relevance",
+  "calls": [
+    {
+      "args": {
+        "question": "hello",
+        "context": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ..."
+      },
+      "ret": 0.0,
+      "meta": {}
+    }
+  ],
+  "result": 0.0,
+  "error": null,
+  "multi_result": "null"
+}
