@@ -2,6 +2,7 @@ import json
 import random
 from typing import Dict, List, Optional
 
+import pprint as pp
 import pandas as pd
 import streamlit as st
 
@@ -19,7 +20,7 @@ from trulens_eval.utils.pyschema import is_noserio
 from trulens_eval.utils.serial import GetItemOrAttribute
 from trulens_eval.utils.serial import JSON_BASES
 from trulens_eval.utils.serial import Lens
-
+from trulens_eval.ux.styles import CATEGORY
 
 def write_or_json(st, obj):
     """
@@ -277,3 +278,59 @@ def draw_tool_info(query: Lens, component: ComponentView) -> None:
                     st.text(value)
                 else:
                     st.write(value)
+
+
+def display_feedback_call(
+    calls: List[Dict[str, str]],
+    feedback_name: str,
+    higher_is_better: bool
+):
+
+    def highlight(s):
+        if "distance" in feedback_name:
+            return [
+                f"background-color: {CATEGORY.UNKNOWN.color}"
+            ] * len(s)
+        cat = CATEGORY.of_score(
+            s.result,
+            higher_is_better=higher_is_better
+        )
+        return [f"background-color: {cat.color}"] * len(s)
+
+    if calls is not None and len(calls) > 0:
+        # NOTE(piotrm for garett): converting feedback
+        # function inputs to strings here as other
+        # structures get rendered as [object Object] in the
+        # javascript downstream. If the first input/column
+        # is a list, the DataFrame.from_records does create
+        # multiple rows, one for each element, but if the
+        # second or other column is a list, it will not do
+        # this.
+        for c in calls:
+            args = c['args']
+            for k, v in args.items():
+                if not isinstance(v, str):
+                    args[k] = pp.pformat(v)
+
+        df = pd.DataFrame.from_records(c['args'] for c in calls)
+
+        df["result"] = pd.DataFrame(
+            [
+                float(calls[i]["ret"])
+                if calls[i]["ret"] is not None else -1
+                for i in range(len(calls))
+            ]
+        )
+        df["meta"] = pd.Series(
+            [calls[i]["meta"] for i in range(len(calls))]
+        )
+        df = df.join(
+            df.meta.apply(lambda m: pd.Series(m))
+        ).drop(columns="meta")
+
+        st.dataframe(
+            df.style.apply(highlight, axis=1).format("{:.2f}", subset=["result"])
+        )
+
+    else:
+        st.text("No feedback details.")

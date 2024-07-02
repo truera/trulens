@@ -1,12 +1,10 @@
 import asyncio
 import json
-import pprint as pp
 from typing import Dict, Iterable, Tuple
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
-import pprint
 from pprint import pformat
 
 import matplotlib.pyplot as plt
@@ -18,8 +16,6 @@ from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_pills import pills
-from ux.page_config import set_page_config
-from ux.styles import CATEGORY
 
 from trulens_eval import Tru
 from trulens_eval.app import Agent
@@ -37,13 +33,15 @@ from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.components import draw_agent_info
-from trulens_eval.ux.components import draw_call
+from trulens_eval.ux.components import display_feedback_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_prompt_info
 from trulens_eval.ux.components import draw_tool_info
 from trulens_eval.ux.components import render_selector_markdown
-from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
+from trulens_eval.ux.page_config import set_page_config
+from trulens_eval.ux.styles import CATEGORY
+
 
 set_page_config(page_title="Evaluations")
 st.title("Evaluations")
@@ -157,6 +155,228 @@ def extract_metadata(row: pd.Series) -> str:
     return str(record_data["meta"])
 
 
+def preprocess_evaluations_df(app_df: pd.DataFrame) -> pd.DataFrame:
+    evaluations_df = app_df
+
+    # By default the cells in the df are unicode-escaped, so we have to reverse it.
+    input_array = evaluations_df['input'].to_numpy()
+    output_array = evaluations_df['output'].to_numpy()
+
+    decoded_input = np.vectorize(
+        lambda x: x.encode('utf-8').decode('unicode-escape')
+    )(input_array)
+    decoded_output = np.vectorize(
+        lambda x: x.encode('utf-8').decode('unicode-escape')
+    )(output_array)
+
+    evaluations_df['input'] = decoded_input
+    evaluations_df['output'] = decoded_output
+
+    # Apply the function to each row and create a new column 'record_metadata'
+    evaluations_df['record_metadata'] = evaluations_df.apply(
+        extract_metadata, axis=1
+    )
+    return evaluations_df
+
+def _build_evals_grid(
+    evaluations_df: pd.DataFrame, 
+    compare_by_record: bool = False,
+    wrap_text: bool = False
+):
+
+    gridOptions = {"alwaysShowHorizontalScroll": True}
+    gb = GridOptionsBuilder.from_dataframe(evaluations_df)
+
+    gb.configure_column("type", header_name="App Type", hide=True)
+    gb.configure_column("record_json", header_name="Record JSON", hide=True)
+    gb.configure_column("app_json", header_name="App JSON", hide=True)
+    gb.configure_column("cost_json", header_name="Cost JSON", hide=True)
+    gb.configure_column("perf_json", header_name="Perf. JSON", hide=True)
+
+    gb.configure_column("record_id", header_name="Record ID", hide=True)
+    gb.configure_column(
+        "app_id", 
+        filter=True, 
+        rowGroup=compare_by_record, 
+        rowGroupIndex=1, 
+        header_name="App ID"
+    )
+
+    gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
+    
+    gb.configure_column(
+        "input", 
+        filter=True, 
+        rowGroup=compare_by_record, 
+        rowGroupIndex=0, 
+        header_name="User Input",
+        wrapText=wrap_text,
+        autoHeight=True,
+    )
+    gb.configure_column(
+        "output",
+        filter=True,
+        header_name="Response",
+        wrapText=wrap_text,
+        autoHeight=True,
+    )
+    gb.configure_column("record_metadata", header_name="Record Metadata")
+
+    gb.configure_column("total_tokens", header_name="Total Tokens (#)")
+    gb.configure_column("total_cost", header_name="Total Cost (USD)")
+    gb.configure_column("latency", header_name="Latency (Seconds)")
+    gb.configure_column("tags", header_name="Application Tag")
+    gb.configure_column("ts", header_name="Time Stamp", sort="desc")
+
+    non_feedback_cols = [
+        "app_id",
+        "type",
+        "ts",
+        "total_tokens",
+        "total_cost",
+        "record_json",
+        "latency",
+        "tags",
+        "record_metadata",
+        "record_id",
+        "cost_json",
+        "app_json",
+        "input",
+        "output",
+        "perf_json",
+    ]
+
+    for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
+        if "distance" in feedback_col:
+            gb.configure_column(
+                feedback_col, 
+                hide=feedback_col.endswith("_calls"), 
+                aggFunc="avg",
+                suppressAggFuncInHeader=True
+            )
+        else:
+            # cell highlight depending on feedback direction
+
+            cellstyle = JsCode(
+                cellstyle_jscode[feedback_directions.get(
+                    feedback_col, default_direction
+                )]
+            )
+            
+            gb.configure_column(
+                feedback_col,
+                hide=feedback_col.endswith("_calls"),
+                cellStyle=cellstyle,
+                aggFunc="avg",
+                suppressAggFuncInHeader=True
+            )
+
+    gb.configure_pagination()
+    gb.configure_side_bar()
+    gb.configure_selection(selection_mode="single", use_checkbox=False)
+
+    gridOptions = gb.build()
+    return AgGrid(
+        evaluations_df,
+        gridOptions=gridOptions,
+        update_mode=GridUpdateMode.SELECTION_CHANGED,
+        allow_unsafe_jscode=True,
+        key=f"grid_{'compare' if compare_by_record else 'eval'}_{'wrap' if wrap_text else 'no_wrap'}"
+    )
+
+def evaluation_tab():
+    evaluations_df = preprocess_evaluations_df(app_df)
+    compare_by_record = st.toggle(
+        "Compare by record", 
+        key="compare_by_record_toggle", 
+        value=False
+    )
+    wrap_text = st.toggle(
+        "Wrap Text",
+        key="wrap_text_toggle",
+        value=False
+    )
+    data = _build_evals_grid(evaluations_df, compare_by_record, wrap_text)
+
+    selected_rows = data.selected_rows
+    selected_rows = pd.DataFrame(selected_rows)
+
+    if len(selected_rows) == 0:
+        st.write("Hint: select a row to display details of a record")
+
+    else:
+        # Start the record specific section
+        st.divider()
+
+        # Breadcrumbs
+        st.caption(
+            f"{selected_rows['app_id'][0]} / {selected_rows['record_id'][0]}"
+        )
+        st.header(f"{selected_rows['record_id'][0]}")
+
+        render_record_metrics(app_df, selected_rows)
+
+        details = selected_rows["app_json"][0]
+        record_str = selected_rows["record_json"][0]
+        record_json = json.loads(record_str)
+
+        app_json = json.loads(
+            details
+        )  # apps may not be deserializable, don't try to, keep it json.
+
+        row = selected_rows.head().iloc[0]
+
+        st.markdown("#### Feedback results")
+        if len(feedback_cols) == 0:
+            st.write("No feedback details")
+        else:
+            feedback_with_valid_results = sorted(
+                list(filter(lambda fcol: row[fcol] is not None, feedback_cols))
+            )
+
+            def get_icon(feedback_name):
+                cat = CATEGORY.of_score(
+                    row[feedback_name],
+                    higher_is_better=feedback_directions.get(
+                        feedback_name, default_direction
+                    ) == default_direction
+                )
+                return cat.icon
+
+            icons = list(
+                map(
+                    lambda fcol: get_icon(fcol), feedback_with_valid_results
+                )
+            )
+
+            selected_fcol = None
+            if len(feedback_with_valid_results) > 0:
+                selected_fcol = pills(
+                    "Feedback functions (click on a pill to learn more)",
+                    feedback_with_valid_results,
+                    index=None,
+                    format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
+                    icons=icons
+                )
+            else:
+                st.write("No feedback functions found.")
+
+            if selected_fcol is not None:
+                try:
+                    if MULTI_CALL_NAME_DELIMITER in selected_fcol:
+                        selected_fcol = selected_fcol.split(
+                            MULTI_CALL_NAME_DELIMITER
+                        )[0]
+                    feedback_calls = row[f"{selected_fcol}_calls"]
+                    higher_is_better = feedback_directions.get(selected_fcol, default_direction) == default_direction
+                    display_feedback_call(feedback_calls, selected_fcol, higher_is_better=higher_is_better)
+                except Exception:
+                    pass
+
+        st.subheader("Trace details")
+        val = record_viewer(record_json, app_json)
+        st.markdown("")
+
 if df_results.empty:
     st.write("No records yet...")
 
@@ -169,253 +389,26 @@ else:
 
     st.query_params['app'] = app
 
-    options = st.multiselect("Filter Applications", apps, default=app)
+    selected_apps = st.multiselect("Filter Applications", apps, default=app)
 
-    if len(options) == 0:
+    if len(selected_apps) == 0:
         st.header("All Applications")
         app_df = df_results
 
-    elif len(options) == 1:
-        st.header(options[0])
+    elif len(selected_apps) == 1:
+        st.header(selected_apps[0])
 
-        app_df = df_results[df_results.app_id.isin(options)]
+        app_df = df_results[df_results.app_id.isin(selected_apps)]
 
     else:
         st.header("Multiple Applications Selected")
 
-        app_df = df_results[df_results.app_id.isin(options)]
+        app_df = df_results[df_results.app_id.isin(selected_apps)]
 
     tab1, tab2 = st.tabs(["Records", "Feedback Functions"])
 
     with tab1:
-        gridOptions = {"alwaysShowHorizontalScroll": True}
-        evaluations_df = app_df
-
-        # By default the cells in the df are unicode-escaped, so we have to reverse it.
-        input_array = evaluations_df['input'].to_numpy()
-        output_array = evaluations_df['output'].to_numpy()
-
-        decoded_input = np.vectorize(
-            lambda x: x.encode('utf-8').decode('unicode-escape')
-        )(input_array)
-        decoded_output = np.vectorize(
-            lambda x: x.encode('utf-8').decode('unicode-escape')
-        )(output_array)
-
-        evaluations_df['input'] = decoded_input
-        evaluations_df['output'] = decoded_output
-
-        # Apply the function to each row and create a new column 'record_metadata'
-        evaluations_df['record_metadata'] = evaluations_df.apply(
-            extract_metadata, axis=1
-        )
-
-        gb = GridOptionsBuilder.from_dataframe(evaluations_df)
-
-        gb.configure_column("type", header_name="App Type")
-        gb.configure_column("record_json", header_name="Record JSON", hide=True)
-        gb.configure_column("app_json", header_name="App JSON", hide=True)
-        gb.configure_column("cost_json", header_name="Cost JSON", hide=True)
-        gb.configure_column("perf_json", header_name="Perf. JSON", hide=True)
-
-        gb.configure_column("record_id", header_name="Record ID", hide=True)
-        gb.configure_column("app_id", header_name="App ID")
-
-        gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
-        gb.configure_column("input", header_name="User Input")
-        gb.configure_column("output", header_name="Response")
-        gb.configure_column("record_metadata", header_name="Record Metadata")
-
-        gb.configure_column("total_tokens", header_name="Total Tokens (#)")
-        gb.configure_column("total_cost", header_name="Total Cost (USD)")
-        gb.configure_column("latency", header_name="Latency (Seconds)")
-        gb.configure_column("tags", header_name="Application Tag")
-        gb.configure_column("ts", header_name="Time Stamp", sort="desc")
-
-        non_feedback_cols = [
-            "app_id",
-            "type",
-            "ts",
-            "total_tokens",
-            "total_cost",
-            "record_json",
-            "latency",
-            "tags",
-            "record_metadata",
-            "record_id",
-            "cost_json",
-            "app_json",
-            "input",
-            "output",
-            "perf_json",
-        ]
-
-        for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
-            if "distance" in feedback_col:
-                gb.configure_column(
-                    feedback_col, hide=feedback_col.endswith("_calls")
-                )
-            else:
-                # cell highlight depending on feedback direction
-                cellstyle = JsCode(
-                    cellstyle_jscode[feedback_directions.get(
-                        feedback_col, default_direction
-                    )]
-                )
-
-                gb.configure_column(
-                    feedback_col,
-                    cellStyle=cellstyle,
-                    hide=feedback_col.endswith("_calls")
-                )
-
-        gb.configure_pagination()
-        gb.configure_side_bar()
-        gb.configure_selection(selection_mode="single", use_checkbox=False)
-
-        gridOptions = gb.build()
-        data = AgGrid(
-            evaluations_df,
-            gridOptions=gridOptions,
-            update_mode=GridUpdateMode.SELECTION_CHANGED,
-            allow_unsafe_jscode=True,
-        )
-
-        selected_rows = data.selected_rows
-        selected_rows = pd.DataFrame(selected_rows)
-
-        if len(selected_rows) == 0:
-            st.write("Hint: select a row to display details of a record")
-
-        else:
-            # Start the record specific section
-            st.divider()
-
-            # Breadcrumbs
-            st.caption(
-                f"{selected_rows['app_id'][0]} / {selected_rows['record_id'][0]}"
-            )
-            st.header(f"{selected_rows['record_id'][0]}")
-
-            render_record_metrics(app_df, selected_rows)
-
-            st.markdown("")
-
-            prompt = selected_rows["input"][0]
-            response = selected_rows["output"][0]
-            details = selected_rows["app_json"][0]
-            record_str = selected_rows["record_json"][0]
-            record_json = json.loads(record_str)
-            record_metadata = selected_rows["record_metadata"][0]
-
-            app_json = json.loads(
-                details
-            )  # apps may not be deserializable, don't try to, keep it json.
-
-            row = selected_rows.head().iloc[0]
-
-            st.markdown("#### Feedback results")
-            if len(feedback_cols) == 0:
-                st.write("No feedback details")
-            else:
-                feedback_with_valid_results = sorted(
-                    list(filter(lambda fcol: row[fcol] != None, feedback_cols))
-                )
-
-                def get_icon(feedback_name):
-                    cat = CATEGORY.of_score(
-                        row[feedback_name],
-                        higher_is_better=feedback_directions.get(
-                            feedback_name, default_direction
-                        ) == default_direction
-                    )
-                    return cat.icon
-
-                icons = list(
-                    map(
-                        lambda fcol: get_icon(fcol), feedback_with_valid_results
-                    )
-                )
-
-                selected_fcol = None
-                if len(feedback_with_valid_results) > 0:
-                    selected_fcol = pills(
-                        "Feedback functions (click on a pill to learn more)",
-                        feedback_with_valid_results,
-                        index=None,
-                        format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
-                        icons=icons
-                    )
-                else:
-                    st.write("No feedback functions found.")
-
-                def display_feedback_call(call, feedback_name):
-
-                    def highlight(s):
-                        if "distance" in feedback_name:
-                            return [
-                                f"background-color: {CATEGORY.UNKNOWN.color}"
-                            ] * len(s)
-                        cat = CATEGORY.of_score(
-                            s.result,
-                            higher_is_better=feedback_directions.get(
-                                feedback_name, default_direction
-                            ) == default_direction
-                        )
-                        return [f"background-color: {cat.color}"] * len(s)
-
-                    if call is not None and len(call) > 0:
-                        # NOTE(piotrm for garett): converting feedback
-                        # function inputs to strings here as other
-                        # structures get rendered as [object Object] in the
-                        # javascript downstream. If the first input/column
-                        # is a list, the DataFrame.from_records does create
-                        # multiple rows, one for each element, but if the
-                        # second or other column is a list, it will not do
-                        # this.
-                        for c in call:
-                            args = c['args']
-                            for k, v in args.items():
-                                if not isinstance(v, str):
-                                    args[k] = pp.pformat(v)
-
-                        df = pd.DataFrame.from_records(c['args'] for c in call)
-
-                        df["result"] = pd.DataFrame(
-                            [
-                                float(call[i]["ret"])
-                                if call[i]["ret"] is not None else -1
-                                for i in range(len(call))
-                            ]
-                        )
-                        df["meta"] = pd.Series(
-                            [call[i]["meta"] for i in range(len(call))]
-                        )
-                        df = df.join(df.meta.apply(lambda m: pd.Series(m))
-                                    ).drop(columns="meta")
-
-                        st.dataframe(
-                            df.style.apply(highlight, axis=1
-                                          ).format("{:.2f}", subset=["result"])
-                        )
-
-                    else:
-                        st.text("No feedback details.")
-
-                if selected_fcol != None:
-                    try:
-                        if MULTI_CALL_NAME_DELIMITER in selected_fcol:
-                            fcol = selected_fcol.split(
-                                MULTI_CALL_NAME_DELIMITER
-                            )[0]
-                        feedback_calls = row[f"{selected_fcol}_calls"]
-                        display_feedback_call(feedback_calls, selected_fcol)
-                    except Exception:
-                        pass
-
-            st.subheader("Trace details")
-            val = record_viewer(record_json, app_json)
-            st.markdown("")
+        evaluation_tab()
 
     with tab2:
         feedback = feedback_cols
