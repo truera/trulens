@@ -186,6 +186,7 @@ nav:
           - trulens_eval/getting_started/quickstarts/text2text_quickstart.ipynb
           - trulens_eval/getting_started/quickstarts/groundtruth_evals.ipynb
           - trulens_eval/getting_started/quickstarts/human_feedback.ipynb
+          - trulens_eval/getting_started/quickstarts/custom_example.ipynb
       - ⭐ Core Concepts:
           - trulens_eval/getting_started/core_concepts/index.md
           - ☔ Feedback Functions: trulens_eval/getting_started/core_concepts/feedback_functions.md
