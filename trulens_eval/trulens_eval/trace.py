@@ -9,18 +9,20 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
+import inspect
 import logging
 import random
 import traceback
-from typing import Any, Callable, Dict, Iterable, List, Optional, Type
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
 import uuid
 
 import pydantic
 
-# import trulens_eval.app as mod_app
+# import trulens_eval.app as mod_app # circular import issues
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils import pyschema as mod_pyschema
+from trulens_eval.utils import json as mod_json_utils
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
@@ -103,6 +105,8 @@ class Span(pydantic.BaseModel):
         return parent.is_root()
 
     def cost_tally(self) -> mod_base_schema.Cost:
+        """Total costs of this span and all its transitive children."""
+
         total = mod_base_schema.Cost()
 
         for span in self.iter_family():
@@ -116,7 +120,7 @@ class SpanAppRecordingContext(Span):
     """Tracks the context of an app used as a context manager."""
 
     # record: Optional[mod_record_schema.Record] = None
-    ctx: Optional[Any] = None  # TODO: Type
+    ctx: Optional[Any] = None  # TODO: app.RecordingContext # circular import issues
 
     def is_root(self) -> bool:
         return True
@@ -129,6 +133,8 @@ class LiveSpanCall(Span):
         This span contains references to live objects. These may change after
         this span is created but before it is dumped or exported.
     """
+
+    model_config = {'arbitrary_types_allowed': True}
 
     call_id: Optional[uuid.UUID] = None
 
@@ -150,14 +156,26 @@ class LiveSpanCall(Span):
     WARNING: This is a live object.
     """
 
+    sig: Optional[inspect.Signature] = None
+    """Signature of the function."""
+
     func_name: Optional[str] = None
     """Function name."""
 
-    args: Optional[Dict[str, Any]] = None
-    """Arguments to the function call.
+    args: Optional[Tuple[Any,...]] = None
+    """Positional arguments to the function call.
     
     WARNING: Contains references to live objects.
     """
+
+    kwargs: Optional[Dict[str, Any]] = None
+    """Keyword arguments to the function call.
+
+    WARNING: Contains references to live objects.
+    """
+
+    bindings: Optional[inspect.BoundArguments] = None
+    """Bound arguments to the function call if can be bound."""
 
     ret: Optional[Any] = None
     """Return value of the function call.
@@ -213,13 +231,15 @@ class Tracer(pydantic.BaseModel):
     @staticmethod
     def _fill_stacks(
         span: LiveSpanCall,
-        obj_to_path_map: Dict[int, Lens] = {},
+        get_method_path: Callable,
         stack: List[mod_record_schema.RecordAppCallMethod] = []
     ):
         # TODO: what if it is not a method call?
 
+        path = get_method_path(obj=span.obj, func=span.func)
+
         frame_ident = mod_record_schema.RecordAppCallMethod(
-            path=obj_to_path_map.get(id(span.obj), None),
+            path=path,
             method=mod_pyschema.Method.of_method(
                 span.func, obj=span.obj, cls=span.cls
             )
@@ -232,17 +252,22 @@ class Tracer(pydantic.BaseModel):
             if not isinstance(subspan, LiveSpanCall):
                 continue
 
-            Tracer._fill_stacks(subspan, stack=stack)
+            Tracer._fill_stacks(subspan, stack=stack, get_method_path=get_method_path)
 
     def _call_of_spancall(
         self, span: LiveSpanCall
     ) -> mod_record_schema.RecordAppCall:
         """Convert a SpanCall to a RecordAppCall."""
 
+        args = dict(span.bindings.arguments) if span.bindings is not None else None
+        if args is not None:
+            if "self" in args:
+                del args["self"] # remove self 
+
         return mod_record_schema.RecordAppCall(
-            call_id=span.call_id,
+            call_id=str(span.call_id),
             stack=span.stack,
-            args=span.args,
+            args=args,
             rets=span.ret,
             error=span.error,
             perf=span.perf,
@@ -255,11 +280,11 @@ class Tracer(pydantic.BaseModel):
     ) -> Iterable[mod_record_schema.Record]:
         """Convert a recording based on spans to a list of records."""
 
-        obj_id_to_path_map = {}
+        app = recording.ctx.app
 
         for root_span in recording.iter_children(transitive=False):
             assert isinstance(root_span, LiveSpanCall)
-            self._fill_stacks(root_span, obj_to_path_map=obj_id_to_path_map)
+            self._fill_stacks(root_span, get_method_path=app.get_method_path)
 
             root_perf = root_span.perf
             root_cost = root_span.cost_tally()
@@ -270,16 +295,38 @@ class Tracer(pydantic.BaseModel):
                     continue
                 calls.append(self._call_of_spancall(span))
 
+            bindings = root_span.bindings
+            main_error = root_span.error
+
+            if bindings is not None: 
+                main_input = app.main_input(
+                    func=root_span.func, sig=root_span.sig, bindings=root_span.bindings
+                )
+                if main_error is None:
+                    main_output = app.main_output(
+                        func=root_span.func, sig=root_span.sig, bindings=root_span.bindings, ret=root_span.ret
+                    )
+                else:
+                    main_output = None
+            else:
+                main_input = None
+                main_output = None
+
+
             record = mod_record_schema.Record(
-                record_id=str(uuid.uuid4()),
-                app_id=str(uuid.uuid4()),
-                main_input="placeholder",
-                main_output="placeholder",
-                main_error=None,
+                record_id="placeholder",
+                app_id=app.app_id,
+                main_input=main_input,
+                main_output=main_output,
+                main_error=main_error,
                 calls=calls,
                 perf=root_perf,
                 cost=root_cost
             )
+            
+            # record_id determinism
+            record.record_id = mod_json_utils.obj_id_of_obj(record, prefix="record")
+            
             yield record
 
     @contextlib.contextmanager

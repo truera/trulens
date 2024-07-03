@@ -12,7 +12,7 @@ class Dummy():
         alloc: How much memory to allocate in the dummy allocate operations.
     """
 
-    def __init__(self, delay: float = 0.0, alloc: int = 1024):
+    def __init__(self, delay: float = 0.0, alloc: int = 32):
         self.delay = delay
         self.alloc = alloc
 

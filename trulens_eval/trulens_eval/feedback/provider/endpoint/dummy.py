@@ -66,7 +66,7 @@ class DummyAPI(pydantic.BaseModel):
         freeze_prob: float = 1 / 100,
         overloaded_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
-        alloc: int = 1024 * 1024,
+        alloc: int = 64,
         delay: float = 0.0,
         **kwargs
     ):

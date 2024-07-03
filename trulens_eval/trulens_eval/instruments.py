@@ -19,6 +19,7 @@ from typing import (
     Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type,
     TypeVar, Union
 )
+import uuid
 
 import pydantic
 
@@ -345,7 +346,7 @@ class Instrument(object):
             def __init__(
                 self,
                 #app: Any, query: Lens,
-                method_name: str,
+                func_name: str,
                 cls: type,
                 #obj: object,
                 sig: inspect.Signature,
@@ -353,11 +354,11 @@ class Instrument(object):
             ):
                 super().__init__(**kwargs)
 
-                print("init callbacks for ", query, method_name)
+                print("init callbacks for ", query, func_name)
 
                 #self.app = app
                 #self.query = query
-                self.method_name: str = method_name
+                self.func_name: str = func_name
                 self.cls: Type = cls
                 #self.obj = obj
                 self.sig: inspect.Signature = sig
@@ -387,8 +388,12 @@ class Instrument(object):
                 span.call_id = self.call_id
                 span.obj = self.obj
                 span.cls = self.cls
-                span.method_name = self.method_name
-                span.args = self.bindings.arguments if self.bindings is not None else {}
+                span.func_name = self.func_name
+                span.func = self.func
+                span.sig = self.sig
+                span.bindings = self.bindings
+                span.args = self.call_args
+                span.kwargs = self.call_kwargs
                 span.ret = self.ret
                 span.error = self.error
                 span.perf = mod_base_schema.Perf(
@@ -396,6 +401,7 @@ class Instrument(object):
                 )
                 span.pid = os.getpid()
                 span.tid = th.get_native_id()
+
                 """
                 frame_ident = mod_record_schema.RecordAppCallMethod(
                     path=self.query,
@@ -453,7 +459,7 @@ class Instrument(object):
             callback_class=InstrumentationCallbacks,
             #app=self.app,
             #query=query,
-            method_name=method_name,
+            func_name=method_name,
             cls=cls,
             #obj=obj,
             sig=safe_signature(func)

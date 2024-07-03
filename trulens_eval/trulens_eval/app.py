@@ -151,7 +151,6 @@ class RecordingContext():
         """OTEL-like tracer for recording.
         
         !!! Warning
-
             This is transitional alternate recording mechanism to aid in the otel-compatibility work.
         """
 
