@@ -1,4 +1,3 @@
-import dis
 import inspect
 from typing import Callable, Optional
 
@@ -15,7 +14,7 @@ for name in dir(str):
 
     if isinstance(func, Callable):
         try:
-            ret = func("test me ! LOLS")
+            ret = func("test me")
             if isinstance(ret, str):
                 str_maps.append(func)
 
@@ -68,6 +67,9 @@ class CustomStackTool(CustomTool):
         super().__init__(*args, imp=self.save_stack, **kwargs)
 
     def save_stack(self, data: str) -> str:
+        """Save the call stack for later rendering or inspection in the recorded
+        trace."""
+
         CustomStackTool.last_stack = list(superstack())
 
         ret = "<table>\n"
@@ -82,14 +84,17 @@ class CustomStackTool(CustomTool):
                     "trulens_eval"):
                 continue
 
-            bytecode = dis.Bytecode(frame.f_code)
             ret += f"""
             <tr>
                 <td>{fmod}</td>
                 <td>{ffunc}</td>
-                <td><pre><code>{bytecode.dis()}</code></pre></td>
             </tr>
             """
+
+            # Don't include bytecode as it it has non-deterministic addresses which mess with
+            # golden test comparsion.
+            # bytecode = dis.Bytecode(frame.f_code)
+            # <td><pre><code>{bytecode.dis()}</code></pre></td>
 
         ret += "</table>\n"
 

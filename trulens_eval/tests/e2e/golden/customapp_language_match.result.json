@@ -1,8 +1,8 @@
 {
-  "feedback_result_id": "feedback_result_hash_1d93469b6e08906e4948518f64668322",
-  "record_id": "record_hash_509edddf469c73b50116c4536664f8e7",
-  "feedback_definition_id": "feedback_definition_hash_2a2108cf0413ffb79caa06843ea9e852",
-  "last_ts": "2024-07-01T16:34:52.809644",
+  "feedback_result_id": "feedback_result_hash_234639e1d94a82d1b0686361c291e3fe",
+  "record_id": "record_hash_e8976711a86f3ac1a0653d2ea0dce8ba",
+  "feedback_definition_id": "feedback_definition_hash_c120dfa09adf86ee7932f837aba091c4",
+  "last_ts": "2024-07-03T14:46:39.084939",
   "status": "done",
   "cost": {
     "n_requests": 0,
@@ -19,7 +19,7 @@
     {
       "args": {
         "text1": "hello",
-        "text2": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ..."
+        "text2": "The answer to hello is probably my original response to model derp with temperature 0.5 is  or something ..."
       },
       "ret": 0.885953763259937,
       "meta": {

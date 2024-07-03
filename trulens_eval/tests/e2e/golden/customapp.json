@@ -104,14 +104,14 @@
   "app": {
     "agents": [
       {
-        "alloc": 1024,
+        "alloc": 32,
         "app": {
           "agents": [],
-          "alloc": 1024,
+          "alloc": 32,
           "delay": 0.0,
           "llm": {
             "_dummy_allocated_data": null,
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "model": "derp",
             "model_type": "HerpDerp",
@@ -152,7 +152,7 @@
             }
           },
           "memory": {
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "memory_type": "dummy-memory",
             "messages": [],
@@ -193,7 +193,7 @@
           },
           "reranker": {
             "_dummy_allocated_data": null,
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "model_name": "herpderp-v1-reranker",
             "seed": 3735928559,
@@ -234,7 +234,7 @@
           },
           "retriever": {
             "_dummy_allocated_data": null,
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "num_contexts": 2,
             "seed": 3735928559,
@@ -275,7 +275,7 @@
           "seed": 3735928559,
           "template": {
             "_dummy_allocated_data": null,
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "seed": 3735928559,
             "template": "The answer to {question} is probably {answer} or something ...",
@@ -315,126 +315,9 @@
           },
           "tools": [
             {
-              "alloc": 1024,
+              "alloc": 32,
               "delay": 0.0,
-              "description": "Return repr(self).",
-              "seed": 3735928559,
-              "tru_class_info": {
-                "name": "CustomTool",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                },
-                "bases": [
-                  {
-                    "name": "CustomTool",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "Dummy",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "object",
-                    "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
-                    },
-                    "bases": null
-                  }
-                ]
-              }
-            },
-            {
-              "alloc": 1024,
-              "delay": 0.0,
-              "description": "Return repr(self).",
-              "seed": 3735928559,
-              "tru_class_info": {
-                "name": "CustomTool",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                },
-                "bases": [
-                  {
-                    "name": "CustomTool",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "Dummy",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "object",
-                    "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
-                    },
-                    "bases": null
-                  }
-                ]
-              }
-            },
-            {
-              "alloc": 1024,
-              "delay": 0.0,
-              "description": "Return repr(self).",
-              "seed": 3735928559,
-              "tru_class_info": {
-                "name": "CustomTool",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                },
-                "bases": [
-                  {
-                    "name": "CustomTool",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "Dummy",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "object",
-                    "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
-                    },
-                    "bases": null
-                  }
-                ]
-              }
-            },
-            {
-              "alloc": 1024,
-              "delay": 0.0,
-              "description": "Return repr(self).",
+              "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
               "last_stack": null,
               "seed": 3735928559,
               "tru_class_info": {
@@ -452,6 +335,123 @@
                     },
                     "bases": null
                   },
+                  {
+                    "name": "CustomTool",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "Dummy",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "object",
+                    "module": {
+                      "package_name": "",
+                      "module_name": "builtins"
+                    },
+                    "bases": null
+                  }
+                ]
+              }
+            },
+            {
+              "alloc": 32,
+              "delay": 0.0,
+              "description": "Return repr(self).",
+              "seed": 3735928559,
+              "tru_class_info": {
+                "name": "CustomTool",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                },
+                "bases": [
+                  {
+                    "name": "CustomTool",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "Dummy",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "object",
+                    "module": {
+                      "package_name": "",
+                      "module_name": "builtins"
+                    },
+                    "bases": null
+                  }
+                ]
+              }
+            },
+            {
+              "alloc": 32,
+              "delay": 0.0,
+              "description": "Return repr(self).",
+              "seed": 3735928559,
+              "tru_class_info": {
+                "name": "CustomTool",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                },
+                "bases": [
+                  {
+                    "name": "CustomTool",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "Dummy",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "object",
+                    "module": {
+                      "package_name": "",
+                      "module_name": "builtins"
+                    },
+                    "bases": null
+                  }
+                ]
+              }
+            },
+            {
+              "alloc": 32,
+              "delay": 0.0,
+              "description": "Return repr(self).",
+              "seed": 3735928559,
+              "tru_class_info": {
+                "name": "CustomTool",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                },
+                "bases": [
                   {
                     "name": "CustomTool",
                     "module": {
@@ -552,14 +552,14 @@
         }
       },
       {
-        "alloc": 1024,
+        "alloc": 32,
         "app": {
           "agents": [],
-          "alloc": 1024,
+          "alloc": 32,
           "delay": 0.0,
           "llm": {
             "_dummy_allocated_data": null,
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "model": "derp",
             "model_type": "HerpDerp",
@@ -600,7 +600,7 @@
             }
           },
           "memory": {
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "memory_type": "dummy-memory",
             "messages": [],
@@ -641,7 +641,7 @@
           },
           "reranker": {
             "_dummy_allocated_data": null,
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "model_name": "herpderp-v1-reranker",
             "seed": 3735928559,
@@ -682,7 +682,7 @@
           },
           "retriever": {
             "_dummy_allocated_data": null,
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "num_contexts": 2,
             "seed": 3735928559,
@@ -723,7 +723,7 @@
           "seed": 3735928559,
           "template": {
             "_dummy_allocated_data": null,
-            "alloc": 1024,
+            "alloc": 32,
             "delay": 0.0,
             "seed": 3735928559,
             "template": "The answer to {question} is probably {answer} or something ...",
@@ -763,126 +763,9 @@
           },
           "tools": [
             {
-              "alloc": 1024,
+              "alloc": 32,
               "delay": 0.0,
-              "description": "Return repr(self).",
-              "seed": 3735928559,
-              "tru_class_info": {
-                "name": "CustomTool",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                },
-                "bases": [
-                  {
-                    "name": "CustomTool",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "Dummy",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "object",
-                    "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
-                    },
-                    "bases": null
-                  }
-                ]
-              }
-            },
-            {
-              "alloc": 1024,
-              "delay": 0.0,
-              "description": "Return repr(self).",
-              "seed": 3735928559,
-              "tru_class_info": {
-                "name": "CustomTool",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                },
-                "bases": [
-                  {
-                    "name": "CustomTool",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "Dummy",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "object",
-                    "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
-                    },
-                    "bases": null
-                  }
-                ]
-              }
-            },
-            {
-              "alloc": 1024,
-              "delay": 0.0,
-              "description": "Return repr(self).",
-              "seed": 3735928559,
-              "tru_class_info": {
-                "name": "CustomTool",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                },
-                "bases": [
-                  {
-                    "name": "CustomTool",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "Dummy",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "object",
-                    "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
-                    },
-                    "bases": null
-                  }
-                ]
-              }
-            },
-            {
-              "alloc": 1024,
-              "delay": 0.0,
-              "description": "Return repr(self).",
+              "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
               "last_stack": null,
               "seed": 3735928559,
               "tru_class_info": {
@@ -900,6 +783,123 @@
                     },
                     "bases": null
                   },
+                  {
+                    "name": "CustomTool",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "Dummy",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "object",
+                    "module": {
+                      "package_name": "",
+                      "module_name": "builtins"
+                    },
+                    "bases": null
+                  }
+                ]
+              }
+            },
+            {
+              "alloc": 32,
+              "delay": 0.0,
+              "description": "Return repr(self).",
+              "seed": 3735928559,
+              "tru_class_info": {
+                "name": "CustomTool",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                },
+                "bases": [
+                  {
+                    "name": "CustomTool",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "Dummy",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "object",
+                    "module": {
+                      "package_name": "",
+                      "module_name": "builtins"
+                    },
+                    "bases": null
+                  }
+                ]
+              }
+            },
+            {
+              "alloc": 32,
+              "delay": 0.0,
+              "description": "Return repr(self).",
+              "seed": 3735928559,
+              "tru_class_info": {
+                "name": "CustomTool",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                },
+                "bases": [
+                  {
+                    "name": "CustomTool",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "Dummy",
+                    "module": {
+                      "package_name": "examples.expositional.end2end_apps.custom_app",
+                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    },
+                    "bases": null
+                  },
+                  {
+                    "name": "object",
+                    "module": {
+                      "package_name": "",
+                      "module_name": "builtins"
+                    },
+                    "bases": null
+                  }
+                ]
+              }
+            },
+            {
+              "alloc": 32,
+              "delay": 0.0,
+              "description": "Return repr(self).",
+              "seed": 3735928559,
+              "tru_class_info": {
+                "name": "CustomTool",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                },
+                "bases": [
                   {
                     "name": "CustomTool",
                     "module": {
@@ -1168,7 +1168,7 @@
     "seed": 3735928559,
     "template": {
       "_dummy_allocated_data": null,
-      "alloc": 1024,
+      "alloc": 32,
       "delay": 0.0,
       "seed": 3735928559,
       "template": "The answer to {question} is probably {answer} or something ...",
@@ -1210,124 +1210,7 @@
       {
         "alloc": 0,
         "delay": 0.0,
-        "description": "Return repr(self).",
-        "seed": 3735928559,
-        "tru_class_info": {
-          "name": "CustomTool",
-          "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-          },
-          "bases": [
-            {
-              "name": "CustomTool",
-              "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-              },
-              "bases": null
-            },
-            {
-              "name": "Dummy",
-              "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-              },
-              "bases": null
-            },
-            {
-              "name": "object",
-              "module": {
-                "package_name": "",
-                "module_name": "builtins"
-              },
-              "bases": null
-            }
-          ]
-        }
-      },
-      {
-        "alloc": 0,
-        "delay": 0.0,
-        "description": "Return repr(self).",
-        "seed": 3735928559,
-        "tru_class_info": {
-          "name": "CustomTool",
-          "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-          },
-          "bases": [
-            {
-              "name": "CustomTool",
-              "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-              },
-              "bases": null
-            },
-            {
-              "name": "Dummy",
-              "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-              },
-              "bases": null
-            },
-            {
-              "name": "object",
-              "module": {
-                "package_name": "",
-                "module_name": "builtins"
-              },
-              "bases": null
-            }
-          ]
-        }
-      },
-      {
-        "alloc": 0,
-        "delay": 0.0,
-        "description": "Return repr(self).",
-        "seed": 3735928559,
-        "tru_class_info": {
-          "name": "CustomTool",
-          "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-          },
-          "bases": [
-            {
-              "name": "CustomTool",
-              "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-              },
-              "bases": null
-            },
-            {
-              "name": "Dummy",
-              "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-              },
-              "bases": null
-            },
-            {
-              "name": "object",
-              "module": {
-                "package_name": "",
-                "module_name": "builtins"
-              },
-              "bases": null
-            }
-          ]
-        }
-      },
-      {
-        "alloc": 0,
-        "delay": 0.0,
-        "description": "Return repr(self).",
+        "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
         "last_stack": null,
         "seed": 3735928559,
         "tru_class_info": {
@@ -1345,6 +1228,123 @@
               },
               "bases": null
             },
+            {
+              "name": "CustomTool",
+              "module": {
+                "package_name": "examples.expositional.end2end_apps.custom_app",
+                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+              },
+              "bases": null
+            },
+            {
+              "name": "Dummy",
+              "module": {
+                "package_name": "examples.expositional.end2end_apps.custom_app",
+                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+              },
+              "bases": null
+            },
+            {
+              "name": "object",
+              "module": {
+                "package_name": "",
+                "module_name": "builtins"
+              },
+              "bases": null
+            }
+          ]
+        }
+      },
+      {
+        "alloc": 0,
+        "delay": 0.0,
+        "description": "Return repr(self).",
+        "seed": 3735928559,
+        "tru_class_info": {
+          "name": "CustomTool",
+          "module": {
+            "package_name": "examples.expositional.end2end_apps.custom_app",
+            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+          },
+          "bases": [
+            {
+              "name": "CustomTool",
+              "module": {
+                "package_name": "examples.expositional.end2end_apps.custom_app",
+                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+              },
+              "bases": null
+            },
+            {
+              "name": "Dummy",
+              "module": {
+                "package_name": "examples.expositional.end2end_apps.custom_app",
+                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+              },
+              "bases": null
+            },
+            {
+              "name": "object",
+              "module": {
+                "package_name": "",
+                "module_name": "builtins"
+              },
+              "bases": null
+            }
+          ]
+        }
+      },
+      {
+        "alloc": 0,
+        "delay": 0.0,
+        "description": "Return repr(self).",
+        "seed": 3735928559,
+        "tru_class_info": {
+          "name": "CustomTool",
+          "module": {
+            "package_name": "examples.expositional.end2end_apps.custom_app",
+            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+          },
+          "bases": [
+            {
+              "name": "CustomTool",
+              "module": {
+                "package_name": "examples.expositional.end2end_apps.custom_app",
+                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+              },
+              "bases": null
+            },
+            {
+              "name": "Dummy",
+              "module": {
+                "package_name": "examples.expositional.end2end_apps.custom_app",
+                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+              },
+              "bases": null
+            },
+            {
+              "name": "object",
+              "module": {
+                "package_name": "",
+                "module_name": "builtins"
+              },
+              "bases": null
+            }
+          ]
+        }
+      },
+      {
+        "alloc": 0,
+        "delay": 0.0,
+        "description": "Return repr(self).",
+        "seed": 3735928559,
+        "tru_class_info": {
+          "name": "CustomTool",
+          "module": {
+            "package_name": "examples.expositional.end2end_apps.custom_app",
+            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+          },
+          "bases": [
             {
               "name": "CustomTool",
               "module": {

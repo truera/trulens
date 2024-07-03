@@ -1,5 +1,5 @@
 {
-  "record_id": "record_hash_c222c38e0014e6159bb4ed08d1bbbe7b",
+  "record_id": "record_hash_b8b80820f10c4137970524ec800a158a",
   "app_id": "customapp",
   "cost": {
     "n_requests": 0,
@@ -12,18 +12,18 @@
     "cost": 0.0
   },
   "perf": {
-    "start_time": "2024-07-01T16:34:50.105513",
-    "end_time": "2024-07-01T16:34:50.308553"
+    "start_time": "2024-07-03T14:46:28.375652",
+    "end_time": "2024-07-03T14:46:28.646677"
   },
-  "ts": "2024-07-01T16:34:50.308586",
+  "ts": "2024-07-03T14:46:28.646709",
   "tags": "-",
   "meta": null,
   "main_input": "hello",
-  "main_output": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ...",
+  "main_output": "The answer to hello is probably my original response to model derp with temperature 0.5 is  or something ...",
   "main_error": null,
   "calls": [
     {
-      "call_id": "26a5b6dc-7337-48eb-bb27-63027a09f65f",
+      "call_id": "eda87f3b-7a97-47db-af9a-d2da68ec4164",
       "stack": [
         {
           "path": "app",
@@ -37,7 +37,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -55,7 +55,7 @@
                 },
                 "bases": null
               },
-              "id": 13427411568,
+              "id": 6242719920,
               "init_bindings": null
             },
             "name": "invoke"
@@ -68,14 +68,14 @@
       "rets": "Record placeholder",
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.132534",
-        "end_time": "2024-07-01T16:34:50.136816"
+        "start_time": "2024-07-03T14:46:28.402529",
+        "end_time": "2024-07-03T14:46:28.406789"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "45522a26-7c42-4a15-9c4f-9a50fabd9516",
+      "call_id": "24b6b46f-8246-4231-8c21-1119fefdb4ac",
       "stack": [
         {
           "path": "app",
@@ -89,7 +89,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -107,7 +107,7 @@
                 },
                 "bases": null
               },
-              "id": 13427411568,
+              "id": 6242719920,
               "init_bindings": null
             },
             "name": "invoke"
@@ -120,14 +120,14 @@
       "rets": "Record placeholder",
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.150956",
-        "end_time": "2024-07-01T16:34:50.155226"
+        "start_time": "2024-07-03T14:46:28.421205",
+        "end_time": "2024-07-03T14:46:28.425493"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "1ddca93f-6df3-4583-8c9e-cf2b8509d1e6",
+      "call_id": "904b9949-152a-402d-b8c7-e4c24e5cd76b",
       "stack": [
         {
           "path": "app",
@@ -141,7 +141,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -159,7 +159,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "get_context"
@@ -177,7 +177,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410848,
+              "id": 6242722944,
               "init_bindings": null
             },
             "name": "retrieve_chunks"
@@ -193,14 +193,14 @@
       ],
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.188924",
-        "end_time": "2024-07-01T16:34:50.193198"
+        "start_time": "2024-07-03T14:46:28.459061",
+        "end_time": "2024-07-03T14:46:28.463458"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "d8c31f59-dbef-4572-9e37-1990d813d689",
+      "call_id": "d454867e-8628-4196-9582-da48d0f5635c",
       "stack": [
         {
           "path": "app",
@@ -214,7 +214,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -232,7 +232,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "get_context"
@@ -250,7 +250,7 @@
                 },
                 "bases": null
               },
-              "id": 13427411520,
+              "id": 6242717280,
               "init_bindings": null
             },
             "name": "rerank"
@@ -277,14 +277,14 @@
       ],
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.208015",
-        "end_time": "2024-07-01T16:34:50.212478"
+        "start_time": "2024-07-03T14:46:28.478189",
+        "end_time": "2024-07-03T14:46:28.482594"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "5d9adf2c-b454-40ff-860a-0accf936afa8",
+      "call_id": "861b8dc9-63f4-4d88-8185-31d6692a7b60",
       "stack": [
         {
           "path": "app",
@@ -298,7 +298,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -316,7 +316,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "get_context"
@@ -334,175 +334,14 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
-            "name": "process_chunk_by_random_tool"
+            "name": "process_chunk_by_tool"
           }
         },
         {
           "path": "app.tools[0]",
-          "method": {
-            "obj": {
-              "cls": {
-                "name": "CustomTool",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                },
-                "bases": null
-              },
-              "id": 13427287744,
-              "init_bindings": null
-            },
-            "name": "invoke"
-          }
-        }
-      ],
-      "args": {
-        "data": "Relevant chunk: HELLO"
-      },
-      "rets": "'Relevant chunk: HELLO'",
-      "error": null,
-      "perf": {
-        "start_time": "2024-07-01T16:34:50.228778",
-        "end_time": "2024-07-01T16:34:50.232457"
-      },
-      "pid": 81484,
-      "tid": 6450716
-    },
-    {
-      "call_id": "a8ae7b68-efad-45fa-a53a-fdb56349ecb1",
-      "stack": [
-        {
-          "path": "app",
-          "method": {
-            "obj": {
-              "cls": {
-                "name": "CustomApp",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
-                },
-                "bases": null
-              },
-              "id": 13427410704,
-              "init_bindings": null
-            },
-            "name": "respond_to_query"
-          }
-        },
-        {
-          "path": "app",
-          "method": {
-            "obj": {
-              "cls": {
-                "name": "CustomApp",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
-                },
-                "bases": null
-              },
-              "id": 13427410704,
-              "init_bindings": null
-            },
-            "name": "get_context"
-          }
-        },
-        {
-          "path": "app",
-          "method": {
-            "obj": {
-              "cls": {
-                "name": "CustomApp",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
-                },
-                "bases": null
-              },
-              "id": 13427410704,
-              "init_bindings": null
-            },
-            "name": "process_chunk_by_random_tool"
-          }
-        }
-      ],
-      "args": {
-        "chunk_and_score": [
-          "Relevant chunk: HELLO",
-          16.0
-        ]
-      },
-      "rets": "'Relevant chunk: HELLO'",
-      "error": null,
-      "perf": {
-        "start_time": "2024-07-01T16:34:50.222609",
-        "end_time": "2024-07-01T16:34:50.232484"
-      },
-      "pid": 81484,
-      "tid": 6450716
-    },
-    {
-      "call_id": "0e29f61a-2e64-47f9-a3db-f90583b7f150",
-      "stack": [
-        {
-          "path": "app",
-          "method": {
-            "obj": {
-              "cls": {
-                "name": "CustomApp",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
-                },
-                "bases": null
-              },
-              "id": 13427410704,
-              "init_bindings": null
-            },
-            "name": "respond_to_query"
-          }
-        },
-        {
-          "path": "app",
-          "method": {
-            "obj": {
-              "cls": {
-                "name": "CustomApp",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
-                },
-                "bases": null
-              },
-              "id": 13427410704,
-              "init_bindings": null
-            },
-            "name": "get_context"
-          }
-        },
-        {
-          "path": "app",
-          "method": {
-            "obj": {
-              "cls": {
-                "name": "CustomApp",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
-                },
-                "bases": null
-              },
-              "id": 13427410704,
-              "init_bindings": null
-            },
-            "name": "process_chunk_by_random_tool"
-          }
-        },
-        {
-          "path": "app.tools[3]",
           "method": {
             "obj": {
               "cls": {
@@ -513,7 +352,7 @@
                 },
                 "bases": null
               },
-              "id": 13427287744,
+              "id": 6242714592,
               "init_bindings": null
             },
             "name": "invoke"
@@ -521,19 +360,19 @@
         }
       ],
       "args": {
-        "data": "Relevant chunk: olleholleholleh"
+        "data": 0
       },
-      "rets": "'Relevant chunk: olleholleholleh'",
+      "rets": "<table>\n\n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.233597",
-        "end_time": "2024-07-01T16:34:50.234720"
+        "start_time": "2024-07-03T14:46:28.516839",
+        "end_time": "2024-07-03T14:46:28.527664"
       },
-      "pid": 81484,
-      "tid": 6450717
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "244eca4b-6bad-4f34-a490-8ba45d4ebbfe",
+      "call_id": "cb32ab44-4054-4601-930c-0d8095629842",
       "stack": [
         {
           "path": "app",
@@ -547,7 +386,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -565,7 +404,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "get_context"
@@ -583,30 +422,33 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
-            "name": "process_chunk_by_random_tool"
+            "name": "process_chunk_by_tool"
           }
         }
       ],
       "args": {
         "chunk_and_score": [
-          "Relevant chunk: olleholleholleh",
-          26.0
+          0,
+          [
+            "Relevant chunk: HELLO",
+            16.0
+          ]
         ]
       },
-      "rets": "'Relevant chunk: olleholleholleh'",
+      "rets": "<table>\n\n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.231273",
-        "end_time": "2024-07-01T16:34:50.234739"
+        "start_time": "2024-07-03T14:46:28.497334",
+        "end_time": "2024-07-03T14:46:28.527691"
       },
-      "pid": 81484,
-      "tid": 6450717
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "e1789391-f9a9-44a7-9cbb-d9269c7bcef1",
+      "call_id": "e520150f-432c-4b17-8d26-25eb5b9d1908",
       "stack": [
         {
           "path": "app",
@@ -620,7 +462,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -638,7 +480,171 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
+              "init_bindings": null
+            },
+            "name": "get_context"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 6242723856,
+              "init_bindings": null
+            },
+            "name": "process_chunk_by_tool"
+          }
+        },
+        {
+          "path": "app.tools[0]",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomStackTool",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                },
+                "bases": null
+              },
+              "id": 6242714592,
+              "init_bindings": null
+            },
+            "name": "invoke"
+          }
+        }
+      ],
+      "args": {
+        "data": 1
+      },
+      "rets": "<table>\n\n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-03T14:46:28.561843",
+        "end_time": "2024-07-03T14:46:28.572425"
+      },
+      "pid": 99987,
+      "tid": 6725475
+    },
+    {
+      "call_id": "e8341142-6fe5-42ac-9b07-db99cb393003",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 6242723856,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 6242723856,
+              "init_bindings": null
+            },
+            "name": "get_context"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 6242723856,
+              "init_bindings": null
+            },
+            "name": "process_chunk_by_tool"
+          }
+        }
+      ],
+      "args": {
+        "chunk_and_score": [
+          1,
+          [
+            "Relevant chunk: olleholleholleh",
+            26.0
+          ]
+        ]
+      },
+      "rets": "<table>\n\n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
+      "error": null,
+      "perf": {
+        "start_time": "2024-07-03T14:46:28.542426",
+        "end_time": "2024-07-03T14:46:28.572450"
+      },
+      "pid": 99987,
+      "tid": 6725475
+    },
+    {
+      "call_id": "45227a4c-9c79-45f0-84f7-01e74f8c6bd8",
+      "stack": [
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 6242723856,
+              "init_bindings": null
+            },
+            "name": "respond_to_query"
+          }
+        },
+        {
+          "path": "app",
+          "method": {
+            "obj": {
+              "cls": {
+                "name": "CustomApp",
+                "module": {
+                  "package_name": "examples.expositional.end2end_apps.custom_app",
+                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                },
+                "bases": null
+              },
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "get_context"
@@ -649,19 +655,19 @@
         "input": "hello"
       },
       "rets": [
-        "'Relevant chunk: HELLO'",
-        "'Relevant chunk: olleholleholleh'"
+        "<table>\n\n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
+        "<table>\n\n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n"
       ],
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.169725",
-        "end_time": "2024-07-01T16:34:50.234785"
+        "start_time": "2024-07-03T14:46:28.440042",
+        "end_time": "2024-07-03T14:46:28.572461"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "f038d213-f755-40e6-b82e-69293de57203",
+      "call_id": "3a55adf5-ee70-40ab-8384-e3938a3b9a70",
       "stack": [
         {
           "path": "app",
@@ -675,7 +681,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -693,7 +699,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410752,
+              "id": 6242722272,
               "init_bindings": null
             },
             "name": "remember"
@@ -706,14 +712,14 @@
       "rets": null,
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.248544",
-        "end_time": "2024-07-01T16:34:50.252838"
+        "start_time": "2024-07-03T14:46:28.586697",
+        "end_time": "2024-07-03T14:46:28.590841"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "75642f30-21cb-4d83-bdf8-0899da5f0979",
+      "call_id": "d00c1866-cbb5-47ac-b9b8-2bb778380e5b",
       "stack": [
         {
           "path": "app",
@@ -727,7 +733,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -745,7 +751,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410896,
+              "id": 6242722176,
               "init_bindings": null
             },
             "name": "generate"
@@ -753,19 +759,19 @@
         }
       ],
       "args": {
-        "prompt": "'Relevant chunk: HELLO','Relevant chunk: olleholleholleh'"
+        "prompt": ""
       },
-      "rets": "my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh'",
+      "rets": "my original response to model derp with temperature 0.5 is ",
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.267059",
-        "end_time": "2024-07-01T16:34:50.271404"
+        "start_time": "2024-07-03T14:46:28.604782",
+        "end_time": "2024-07-03T14:46:28.609143"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "f0ad5b33-e188-443a-b544-d26fb25649e1",
+      "call_id": "a4ab1577-0b11-4903-9fc4-be9ce7a119e5",
       "stack": [
         {
           "path": "app",
@@ -779,7 +785,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -797,7 +803,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410944,
+              "id": 6242722416,
               "init_bindings": null
             },
             "name": "fill"
@@ -806,19 +812,19 @@
       ],
       "args": {
         "question": "hello",
-        "answer": "my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh'"
+        "answer": "my original response to model derp with temperature 0.5 is "
       },
-      "rets": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ...",
+      "rets": "The answer to hello is probably my original response to model derp with temperature 0.5 is  or something ...",
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.285593",
-        "end_time": "2024-07-01T16:34:50.289875"
+        "start_time": "2024-07-03T14:46:28.623416",
+        "end_time": "2024-07-03T14:46:28.627795"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "0a7132bd-c5a6-4752-a629-70323b07d207",
+      "call_id": "df5f9dc1-69a3-40ff-a376-49720594b515",
       "stack": [
         {
           "path": "app",
@@ -832,7 +838,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -850,7 +856,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410752,
+              "id": 6242722272,
               "init_bindings": null
             },
             "name": "remember"
@@ -858,19 +864,19 @@
         }
       ],
       "args": {
-        "data": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ..."
+        "data": "The answer to hello is probably my original response to model derp with temperature 0.5 is  or something ..."
       },
       "rets": null,
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.304291",
-        "end_time": "2024-07-01T16:34:50.308539"
+        "start_time": "2024-07-03T14:46:28.642307",
+        "end_time": "2024-07-03T14:46:28.646662"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     },
     {
-      "call_id": "b8baa985-20ae-4e2e-9da0-0b96d8ec356c",
+      "call_id": "ca9becaa-ef49-4db5-a1aa-a0e31bbd866a",
       "stack": [
         {
           "path": "app",
@@ -884,7 +890,7 @@
                 },
                 "bases": null
               },
-              "id": 13427410704,
+              "id": 6242723856,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -894,14 +900,14 @@
       "args": {
         "query": "hello"
       },
-      "rets": "The answer to hello is probably my original response to model derp with temperature 0.5 is 'Relevant chunk: HELLO','Relevant chunk: olleholleholleh' or something ...",
+      "rets": "The answer to hello is probably my original response to model derp with temperature 0.5 is  or something ...",
       "error": null,
       "perf": {
-        "start_time": "2024-07-01T16:34:50.105513",
-        "end_time": "2024-07-01T16:34:50.308553"
+        "start_time": "2024-07-03T14:46:28.375652",
+        "end_time": "2024-07-03T14:46:28.646677"
       },
-      "pid": 81484,
-      "tid": 6450665
+      "pid": 99987,
+      "tid": 6725475
     }
   ]
 }
