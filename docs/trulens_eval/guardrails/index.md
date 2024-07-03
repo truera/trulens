@@ -34,7 +34,7 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
         )
 
         class RAG_from_scratch:
-        @context_filter(feedback, 0.5)
+        @context_filter(feedback, 0.5, keyword_for_prompt="query")
         def retrieve(query: str) -> list:
             results = vector_store.query(
             query_texts=query,
