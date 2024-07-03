@@ -34,7 +34,7 @@ apply when referring to things like package names, classes, methods.
 
 - Use `pylint` for various code issues.
 
-- Use `yapf` to format code with configuration:
+- Use `yapf==0.32.0` to format code with configuration:
 
     ```toml
     [style]
@@ -44,6 +44,8 @@ apply when referring to things like package names, classes, methods.
     SPLIT_COMPLEX_COMPREHENSION=true
     COLUMN_LIMIT=80
     ```
+
+  - Add the formatter as a pre-commit hook by running `sh setup-hooks.sh` from `trulens/`
 
 ### Imports
 
