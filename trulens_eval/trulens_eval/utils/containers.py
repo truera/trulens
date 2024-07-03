@@ -7,7 +7,14 @@ from __future__ import annotations
 import itertools
 import logging
 from pprint import PrettyPrinter
-from typing import Callable, Dict, Iterable, Sequence, Tuple, TypeVar, Union
+from threading import Condition
+from threading import Event
+from threading import RLock
+from threading import Thread
+from typing import (
+    Callable, Dict, Generic, Iterable, Optional, Sequence, Set, Tuple, TypeVar,
+    Union
+)
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -15,6 +22,92 @@ pp = PrettyPrinter()
 T = TypeVar("T")
 A = TypeVar("A")
 B = TypeVar("B")
+
+
+class BlockingSet(set, Generic[T]):
+    """A set with max size that has blocking peek/get/add ."""
+
+    def __init__(
+        self, items: Optional[Iterable[T]] = None, max_size: int = 1024
+    ):
+        if items is not None:
+            items = list(items)
+        else:
+            items = []
+
+        if len(items) > max_size:
+            raise ValueError("Initial items exceed max size.")
+
+        self.content: Set[T] = set(items)
+        self.max_size = max_size
+
+        # TODO: unsure if these 2 locks are sufficient to prevent all deadlocks
+        self.read_lock = RLock()
+        self.write_lock = RLock()
+        self.nonempty = Event()
+        self.nonfull = Event()
+
+        if len(self.content) > 0:
+            self.nonempty.set()
+
+        if len(self.content) < self.max_size:
+            self.nonfull.set()
+
+    def empty(self) -> bool:
+        """Check if the set is empty."""
+        return len(self.content) == 0
+
+    def peek(self) -> T:
+        """Get an item from the set.
+         
+        Blocks until an item is available.
+        """
+
+        with self.read_lock:
+            self.nonempty.wait()
+            return next(iter(self.content))
+
+    def remove(self, item: T):
+        """Remove an item from the set."""
+        with self.write_lock:
+            self.content.remove(item)
+
+            self.nonfull.set()
+
+            if len(self.content) == 0:
+                self.nonempty.clear()
+
+    def pop(self) -> T:
+        """Get and remove an item from the set.
+        
+        Blocks until an item is available.
+        """
+
+        with self.read_lock:
+            self.nonempty.wait()
+
+            item = next(iter(self.content))
+            self.content.remove(item)
+
+            if len(self.content) == 0:
+                self.nonempty.clear()
+
+        return item
+
+    def add(self, item: T):
+        """Add an item to the set.
+         
+        Blocks if set is full.
+        """
+
+        with self.write_lock:
+            self.nonfull.wait()
+            self.content.add(item)
+
+            self.nonempty.set()
+            if len(self.content) >= self.max_size:
+                self.nonfull.clear()
+
 
 # Collection utilities
 

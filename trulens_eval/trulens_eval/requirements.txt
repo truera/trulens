@@ -38,7 +38,7 @@ typing-inspect     >= 0.8.0  # fixes bug with langchain on python < 3.9
 # UI
 millify            >= 0.1.1
 humanize           >= 4.6.0
-streamlit          >= 1.32.2
+streamlit          >= 1.33.0
 streamlit-aggrid   == 0.3.4 # selected rows is broken in latest version
 streamlit-extras   >= 0.4.0
 streamlit-pills    >= 0.3.0
