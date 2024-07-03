@@ -54,6 +54,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.core.base.llms.base import BaseLLM
         from llama_index.core.base.llms.types import LLMMetadata
         from llama_index.core.base.response.schema import Response
+        from llama_index.core.base.response.schema import StreamingResponse
         from llama_index.core.chat_engine.types import AgentChatResponse
         from llama_index.core.chat_engine.types import BaseChatEngine
         from llama_index.core.chat_engine.types import \
@@ -64,7 +65,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.core.node_parser.interface import NodeParser
         from llama_index.core.postprocessor.types import BaseNodePostprocessor
         from llama_index.core.question_gen.types import BaseQuestionGenerator
-        from llama_index.core.base.response.schema import StreamingResponse
         from llama_index.core.response_synthesizers import BaseSynthesizer
         from llama_index.core.response_synthesizers import Refine
         from llama_index.core.retrievers import BaseRetriever
