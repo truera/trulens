@@ -30,9 +30,7 @@ class context_filter:
         ```
     """
 
-    def __init__(
-        self, feedback: Feedback, threshold: float, keyword_for_prompt: str
-    ):
+    def __init__(self, feedback: Feedback, threshold: float, keyword_for_prompt: str):
         self.feedback = feedback
         self.threshold = threshold
         self.keyword_for_prompt = keyword_for_prompt
