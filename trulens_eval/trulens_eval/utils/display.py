@@ -1,12 +1,15 @@
-import pandas as pd
 import time
+
+import pandas as pd
 
 from trulens_eval.schema.feedback import FeedbackDefinition
 from trulens_eval.schema.record import Record
 from trulens_eval.ux.styles import CATEGORY
 
 
-def get_feedback_result(tru_record: Record, feedback_name: str, timeout: int = 60) -> pd.DataFrame:
+def get_feedback_result(
+    tru_record: Record, feedback_name: str, timeout: int = 60
+) -> pd.DataFrame:
     """
     Retrieve the feedback results for a given feedback name from a TruLens record.
 
@@ -35,7 +38,9 @@ def get_feedback_result(tru_record: Record, feedback_name: str, timeout: int = 6
         time.sleep(1)  # Wait for 1 second before checking again
 
     if feedback_calls is None:
-        raise TimeoutError(f"Feedback for '{feedback_name}' not available within {timeout} seconds.")
+        raise TimeoutError(
+            f"Feedback for '{feedback_name}' not available within {timeout} seconds."
+        )
 
     # Ensure feedback_calls is iterable
     if not hasattr(feedback_calls, '__iter__'):
