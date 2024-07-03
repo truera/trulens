@@ -35,8 +35,10 @@ class CustomTool(Dummy):
     ):
         super().__init__(*args, **kwargs)
 
-        if description is None:
+        if imp is None:
             imp = self.random.choice(str_maps)
+
+        if description is None:
             description = imp.__doc__
 
         self.description = description
@@ -63,9 +65,8 @@ class CustomStackTool(CustomTool):
     that processes the return from the tool in destructive ways."""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(imp=self.save_stack, *args, **kwargs)
+        super().__init__(*args, imp=self.save_stack, **kwargs)
 
-    @instrument
     def save_stack(self, data: str) -> str:
         CustomStackTool.last_stack = list(superstack())
 
@@ -90,6 +91,6 @@ class CustomStackTool(CustomTool):
             </tr>
             """
 
-        ret += "</table>"
+        ret += "</table>\n"
 
         return ret

@@ -79,8 +79,10 @@ class CustomApp(Dummy):
             "The answer to {question} is probably {answer} or something ..."
         )
 
-        self.tools = [CustomTool(**kwargs) for _ in range(3)
-                     ] + [CustomStackTool(**kwargs)]
+        # Put some tools into the app and make sure one of them is the one that
+        # dumps the stack.
+        self.tools = [CustomStackTool(**kwargs)
+                     ] + [CustomTool(**kwargs) for _ in range(3)]
 
         self.agents = [
             CustomAgent(
@@ -95,12 +97,12 @@ class CustomApp(Dummy):
         # Tasks ?
 
     @instrument
-    def process_chunk_by_random_tool(
-        self, chunk_and_score: Tuple[str, float]
+    def process_chunk_by_tool(
+        self, chunk_and_score: Tuple[str, float], tool_num: int = 0
     ) -> str:
-        return self\
-            .tools[self.random.randint(0, len(self.tools) - 1)]\
-            .invoke(chunk_and_score[0])
+        return (
+            self.tools[tool_num % len(self.tools)].invoke(chunk_and_score[0])
+        )
 
     @instrument
     def get_context(self, input: str):
@@ -117,8 +119,9 @@ class CustomApp(Dummy):
         ex = ThreadPoolExecutor(max_workers=max(1, len(chunks)))
 
         futures = list(
-            ex.submit(self.process_chunk_by_random_tool, chunk_and_score=chunk)
-            for chunk in chunks
+            ex.submit(
+                self.process_chunk_by_tool, chunk_and_score=chunk, tool_num=i
+            ) for i, chunk in enumerate(chunks)
         )
 
         wait(futures)
@@ -141,7 +144,10 @@ class CustomApp(Dummy):
         self.memory.remember(query)
 
         # Do some generation.
-        answer = self.llm.generate(",".join(chunks))
+        answer = self.llm.generate(
+            ",".join(filter(lambda c: len(c) < 128, chunks))
+        )
+        # Skip sthe large chunk coming from CustomStackTool.
 
         # Do some templating.
         output = self.template.fill(question=query, answer=answer)
