@@ -651,7 +651,7 @@ tru.run_dashboard() # open a local streamlit app to explore
 # ! pip install trulens_eval chromadb openai
 
 
-# In[1]:
+# In[2]:
 
 
 import os
@@ -662,7 +662,7 @@ os.environ["OPENAI_API_KEY"] = "sk-..."
 # 
 # In this case, we'll just initialize some simple text in the notebook.
 
-# In[2]:
+# In[3]:
 
 
 uw_info = """
@@ -695,9 +695,10 @@ As the world's largest coffeehouse chain, Starbucks is seen to be the main repre
 # 
 # Create a chromadb vector store in memory.
 
-# In[3]:
+# In[4]:
 
 
+import os
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
@@ -712,7 +713,7 @@ vector_store = chroma_client.get_or_create_collection(name="Washington",
 
 # Populate the vector store.
 
-# In[4]:
+# In[5]:
 
 
 vector_store.add("uw_info", documents=uw_info)
@@ -725,7 +726,7 @@ vector_store.add("starbucks_info", documents=starbucks_info)
 # 
 # Build a custom RAG from scratch, and add TruLens custom instrumentation.
 
-# In[5]:
+# In[6]:
 
 
 from trulens_eval import Tru
@@ -734,14 +735,14 @@ tru = Tru()
 tru.reset_database()
 
 
-# In[6]:
+# In[7]:
 
 
 from openai import OpenAI
 oai_client = OpenAI()
 
 
-# In[7]:
+# In[8]:
 
 
 from openai import OpenAI
@@ -795,7 +796,7 @@ rag = RAG_from_scratch()
 # 
 # Here we'll use groundedness, answer relevance and context relevance to detect hallucination.
 
-# In[8]:
+# In[9]:
 
 
 from trulens_eval import Feedback, Select
@@ -803,7 +804,7 @@ from trulens_eval.feedback.provider.openai import OpenAI
 
 import numpy as np
 
-provider = OpenAI()
+provider = OpenAI(model_engine="gpt-4o")
 
 # Define a groundedness feedback function
 f_groundedness = (
@@ -830,7 +831,7 @@ f_context_relevance = (
 # ## Construct the app
 # Wrap the custom RAG with TruCustomApp, add list of feedbacks for eval
 
-# In[9]:
+# In[10]:
 
 
 from trulens_eval import TruCustomApp
@@ -842,7 +843,7 @@ tru_rag = TruCustomApp(rag,
 # ## Run the app
 # Use `tru_rag` as a context manager for the custom RAG-from-scratch app.
 
-# In[10]:
+# In[11]:
 
 
 with tru_rag as recording:
@@ -853,13 +854,13 @@ with tru_rag as recording:
 # 
 # We can view results in the leaderboard.
 
-# In[11]:
+# In[12]:
 
 
 tru.get_leaderboard()
 
 
-# In[12]:
+# In[13]:
 
 
 last_record = recording.records[-1]
@@ -874,7 +875,7 @@ get_feedback_result(last_record, "Context Relevance")
 # 
 # To do so, we'll rebuild our RAG using the @context-filter decorator on the method we want to filter, and pass in the feedback function and threshold to use for guardrailing.
 
-# In[13]:
+# In[14]:
 
 
 # note: feedback function used for guardrail must only return a score, not also reasons
@@ -930,7 +931,7 @@ filtered_rag = filtered_RAG_from_scratch()
 
 # ## Record and operate as normal
 
-# In[14]:
+# In[15]:
 
 
 from trulens_eval import TruCustomApp
@@ -942,7 +943,7 @@ with filtered_tru_rag as recording:
     filtered_rag.query(query="when was the university of washington founded?")
 
 
-# In[15]:
+# In[19]:
 
 
 tru.get_leaderboard(app_ids=[])
@@ -950,7 +951,7 @@ tru.get_leaderboard(app_ids=[])
 
 # See the power of filtering!
 
-# In[16]:
+# In[17]:
 
 
 last_record = recording.records[-1]
@@ -959,10 +960,16 @@ from trulens_eval.utils.display import get_feedback_result
 get_feedback_result(last_record, "Context Relevance")
 
 
+# In[23]:
+
+
+tru.run_dashboard(port=3453, force=True)
+
+
 # In[ ]:
 
 
-tru.run_dashboard()
+
 
 
 # # Prototype Evals
