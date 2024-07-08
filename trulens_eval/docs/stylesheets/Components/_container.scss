@@ -1,0 +1,43 @@
+@import "../Base/Mixins/responsive";
+
+
+.container {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+
+    @include res-min-desktop-large {
+        max-width: 1240px;
+    }
+
+    &__bg {
+        position: relative;
+        background-color: var(--color-primary);
+        overflow: hidden;
+    }
+
+    &__wrapper {
+        position: relative;
+        border-top: 1px solid rgba(3, 74, 97, 0.25);
+        padding: 5rem 0;
+
+        .container__wrapper {
+            padding-bottom:0px;
+        }
+        
+        @include res-max-mobile {
+            padding: 2.5rem 0;
+
+            &.mt-xxl {
+                padding-top: var(--gap-xl);
+                padding-bottom: 0;
+                margin-top: var(--gap-xl);
+            }
+        }
+
+    }
+
+    &__empty {
+        position: relative;
+    }
+}

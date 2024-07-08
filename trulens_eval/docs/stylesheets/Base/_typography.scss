@@ -1,0 +1,108 @@
+@import "Mixins/responsive";
+
+$font-family-headers: 'Space Grotesk', sans-serif;
+$font-family-body: 'Source Sans Pro', sans-serif;
+
+body {
+    font-family: $font-family-body;
+    font-size: 1.125rem;
+    line-height: 1.875rem;
+    color: var(--color-text);
+
+    @include res-max-tablet {
+        font-size: 1rem;
+        line-height: 1.25rem;
+    }
+}
+
+h1, h2, h3, h4, h5 {
+    margin-top: 0;
+    color: var(--color-primary);
+    font-family: $font-family-headers;
+}
+
+h1 {
+    font-size: 4rem;
+    line-height: 1;
+    margin: 2.813rem 0 2.5rem 0;
+    color: var(--color-secondary);
+
+    @include res-max-tablet {
+        font-size: 42px;
+    }
+}
+
+h2 {
+    font-size: 2.625rem;
+    line-height: 115%;
+    margin-bottom: 1.5rem;
+    
+    @include res-max-tablet {
+        font-size: 2.125rem;
+    }
+}
+
+h3 {
+    font-size: 1.75rem;
+    line-height: 115%;
+    margin-bottom: 1.5rem;
+    
+    @include res-max-tablet {
+        font-size: 1.5rem;
+    }
+}
+
+h4 {
+    font-size: 1.75rem;
+    line-height: 120%;
+    margin-bottom: 1.5rem;
+    
+    @include res-max-tablet {
+        font-size: 1.5rem;
+    }
+}
+
+h5 {
+    font-size: 1.375rem;
+    line-height: 120%;
+    margin-bottom: 1.5rem;
+    
+    @include res-max-tablet {
+        font-size: 1.175rem;
+    }
+}
+
+a, a:visited {
+    color: var(--color-link);
+    text-decoration: none;
+}
+
+.small {
+    font-size: 0.938rem;
+    line-height: 1.625rem;
+}
+
+.strong {
+    font-weight: 700;
+}
+
+.subtitle {
+    font-size: 1.625rem;
+    line-height: 115%;
+    
+    @include res-max-tablet {
+        font-size: 1.25rem;
+    }
+}
+
+.font-primary {
+    font-family: $font-family-headers;
+}
+
+.font-secondary {
+    $font-family-body: "Source Sans Pro";
+}
+
+p {
+    margin: 0;
+}

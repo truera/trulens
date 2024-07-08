@@ -1,0 +1,14 @@
+[data-md-color-scheme="trulens"] {
+  --md-primary-fg-color: #0A2C37;
+  --md-primary-fg-color--light: #D5E2E1;
+  --md-accent-fg-color: #E0735C;
+}
+
+[data-md-color-scheme="trulens"] h1,
+[data-md-color-scheme="trulens"] h2,
+[data-md-color-scheme="trulens"] h3,
+[data-md-color-scheme="trulens"] h4,
+[data-md-color-scheme="trulens"] h5,
+[data-md-color-scheme="trulens"] h6 {
+  color: #0A2C37;
+}
