@@ -14,6 +14,7 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
+import socket
 from typing import (
     Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple,
     TypeVar, Union
@@ -987,6 +988,13 @@ class Tru(python.SingletonPerName):
 
         self._evaluator_proc = None
 
+    def find_unused_port(self) -> int:
+        """Find an unused port."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            return s.getsockname()[1]
+
     def run_dashboard(
         self,
         port: Optional[int] = 8501,
@@ -1071,7 +1079,11 @@ class Tru(python.SingletonPerName):
             env_opts['env'] = os.environ
             env_opts['env']['PYTHONPATH'] = str(_dev)
 
+        if port is None:
+            port = self.find_unused_port()
+            
         args = ["streamlit", "run", "--server.headless=True"]
+        args.append(f"--server.port={port}")
         if port is not None:
             args.append(f"--server.port={port}")
         if address is not None:
