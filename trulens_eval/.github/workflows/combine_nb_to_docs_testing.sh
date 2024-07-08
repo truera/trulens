@@ -25,7 +25,7 @@ cat intro.md > README.md
 
 # Create top level readme from testable code trulens_eval_gh_top_readme.ipynb
 printf "\n\n" >> break.md
-cat gh_top_intro.md break.md ../trulens_explain/gh_top_intro.md > TOP_README.md
+cat gh_top_intro.md break.md > TOP_README.md
 
 # Create non-jupyter scripts
 OUT_DIR=./getting_started/quickstarts/
