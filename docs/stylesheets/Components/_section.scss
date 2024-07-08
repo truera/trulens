@@ -1,0 +1,155 @@
+@import "../Base/Mixins/responsive";
+
+.section {
+
+    @include res-max-desktop-large {
+        padding: 0 var(--gap-xl);
+    }
+
+    @include res-max-mobile {
+        padding: 0 1.25rem;
+    }
+    
+    &:nth-of-type(2n+0) {
+        background-color: var(--color-background-sec);
+    }
+
+    &--contact {
+        text-align: center;
+    }
+
+    img {
+        max-width:100%;
+        box-shadow: 0px 0px 30px 10px rgba(45, 115, 109, 0.1);
+    }
+
+    p + img {
+        margin-top:1rem;
+    }
+}
+
+header {
+    z-index: 1;
+
+    h1 {
+        position: relative;
+        z-index: 1;
+    }
+
+    @include res-max-desktop-large {
+        padding: 0 var(--gap-xl);
+    }
+    
+    @include res-max-tablet {
+        padding: 3rem 1.25rem;
+
+        h1 {
+            margin-top:0px;
+        }
+    }
+}
+
+.header {
+    &__bg {
+        position: absolute;
+
+        @include res-min-desktop-large {
+            left: 50%;
+            top: 50%;
+            transform: translate(-10%, -50%);
+        }
+
+        @include res-max-desktop-large {
+            right: 0;
+            bottom: -50px;
+        }
+
+        @include res-max-mobile {
+            bottom: -10vw;  
+            right: 0;
+
+            svg {
+                width: 137vw;
+                height: auto;
+            }
+        }
+        &.llm {
+            left:0px;
+            top:auto;
+            bottom:0px;
+            right:0px;
+            transform:none;
+            display: flex;
+            align-items: end;
+            svg {
+                width:100%;
+                height:auto;
+            }
+
+            @include res-max-tablet {
+                left: -150px;
+                right:-50px;
+            }
+
+        }
+    }
+    img {
+        max-width:calc(100% + 20px);
+    }
+}
+
+.get-started {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.bottom-img {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: -1;
+    opacity: 0.1;  
+
+    @include res-max-desktop-large {
+        svg {
+            width: 60vw;
+            height: auto;
+        } 
+    }
+
+}
+
+.footer {
+    padding-bottom: var(--gap-xl);
+
+    p {    
+        font-size: 1.125rem;
+        opacity: 0.15;
+        color: var(--color-primary);
+        
+    }
+    
+    @include res-max-mobile {
+        border-top: 1px solid rgba(3, 74, 97, 0.25);
+        padding-top: 2.5rem;
+        padding-bottom: 1rem;
+
+        > .fd-r {
+            flex-direction: column;
+            gap: var(--gap-xl);
+        }
+    }
+} 
+
+.home {
+    header {
+        h1 {
+
+        }
+        p {
+            color:$white;
+            max-width:600px;
+        }
+    }
+}

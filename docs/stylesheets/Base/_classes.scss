@@ -1,0 +1,357 @@
+@mixin grid-create($cols: 2, $rows: 0, $size: auto, $gap: var(--gap-lg)) {
+    display: grid;
+    
+    @if $cols != 0 {
+        grid-template-columns: repeat($cols, $size);
+    }
+
+    @if $rows != 0 {
+        grid-template-columns: repeat($rows, $size);
+    }
+
+    @if $gap != 0 {
+        grid-gap: $gap;
+    }
+
+    @content;
+}
+
+$align-types: (
+    "sb": space-between, 
+    "sa": space-around, 
+    "c": center, 
+    "fe": flex-end, 
+    "fs": flex-start
+);
+
+$align-directions: (
+    "r": right,
+    "l": left,
+    "c": center
+);
+
+$directions: (
+    "b": margin-bottom,
+    "t": margin-top,
+    "l": margin-left,
+    "r": margin-right,
+    "a": margin
+);
+
+$directions-padding: (
+    "b": padding-bottom,
+    "t": padding-top,
+    "l": padding-left,
+    "r": padding-right,
+    "a": padding
+);
+
+$sizes: (
+  "0" : 0,
+  "xs": var(--gap-xs),  
+  "sm": var(--gap-sm),  
+  "md": var(--gap-md),  
+  "lg": var(--gap-lg),  
+  "xl": var(--gap-xl),  
+  "xll": var(--gap-xll),
+  "xxl": var(--gap-xxl)  
+);
+
+$text-sizes: (
+  "xs": var(--text-xs),  
+  "sm": var(--text-sm),  
+  "md": var(--text-md),  
+  "lg": var(--text-lg),  
+  "xl": var(--text-xl),  
+  "xll": var(--gap-xll),
+  "xxl": var(--text-xxl),  
+  "h1": var(--text-h1),  
+  "h2": var(--text-h2),  
+  "h3": var(--text-h3),  
+);
+
+$display: (
+    "b": block,
+    "ib": inline-block,
+    "f": flex,
+    "if": inline-flex,
+    "g": grid,
+    "c": contents,
+    "n": none
+);
+
+$color-types: (
+    "primary",
+    "accent",
+    "info",
+    "warning",
+    "danger",
+    "success",
+    "error"
+);
+
+
+@mixin generate {
+    .d {
+        @each $type, $val in $display {
+            &-#{$type} {
+                display: $val;
+            }
+        }
+    }
+
+    .grid-columns {
+        &-3 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3rem;
+
+            > * {
+                flex: 1 1 20rem;
+            }
+
+            @include res-max-tablet {
+                gap: 0.5rem;
+            }
+        }
+        
+        &-2 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3rem;
+
+            > * {
+                flex: 1 1 30rem;
+            }
+
+            @include res-max-tablet {
+                gap: 0.5rem;
+            }
+        }
+    }
+
+    .flex-columns {
+        @for $i from 2 through 5 {
+            &-#{$i} > * {
+                flex: 0 0 calc(100 / #{$i} * 1%);
+            }
+        }
+    }
+
+    
+    .fd {
+        &-r {
+            flex-direction: row;
+        }
+
+        &-c {
+            flex-direction: column;
+        }
+    }
+
+    .fw {
+        &-w {
+            flex-wrap: wrap;
+        }
+
+        &-nw {
+            flex-wrap: nowrap;
+        }
+    }
+    
+    .jc {
+        @each $type, $val in $align-types {
+            &-#{$type} {
+                justify-content: $val;
+            }
+        }
+    }
+
+    // align items
+    .ai {
+        @each $type, $val in $align-types {
+            &-#{$type} {
+                align-items: $val;
+            }
+        }
+    }
+    // margin
+    .m {
+        &l-a {
+            margin-left: auto;
+        }
+
+        &r-a {
+            margin-right: auto;
+        }
+
+        &-a {
+            margin: auto
+        }
+
+        @each $dir, $val in $directions {
+            @each $size, $val2 in $sizes {
+                &#{$dir}-#{$size} {
+                    #{$val}: #{$val2};
+                }
+            }
+        }
+    }
+
+    @include res-max-tablet {
+        .m {
+            &t-xxl, &t-xxl-mob {
+                margin-top: 2.5rem;
+            }
+            
+            &b-xxl, &b-xxl-mob {
+                margin-bottom: 2.5rem;
+            }
+            &t-xll, &t-xll-mob {
+                margin-top: 2.5rem;
+            }
+            
+            &b-xll, &b-xll-mob {
+                margin-bottom: 2.5rem;
+            }
+        }
+    }
+
+    .p {
+        @each $dir, $val in $directions-padding {
+            @each $size, $val2 in $sizes {
+                &#{$dir}-#{$size} {
+                    #{$val}: #{$val2};
+                }
+            }
+        }
+    }
+
+    .ta {
+        @each $type, $val in $align-directions {
+            &-#{$type} {
+                text-align: $val;
+            }
+        }
+    }
+
+    .va {
+        &-m {
+            vertical-align: middle;
+        }
+    }
+
+    .td {
+        &-n {
+            text-decoration: none;
+        }
+
+        &-u {
+            text-decoration: underline
+        }
+    }
+
+    .text {
+        @each $type, $val in $text-sizes {
+            &-#{$type} {
+                font-size: $val;
+            }
+        }
+
+        &--bold {
+            font-weight: 700;
+        }
+    }
+
+
+    .w {
+        &-100 {
+            width: 100%;
+        }
+
+        &-50 {
+            width: 50%;
+        }
+
+        &-a {
+            width: auto;
+        }
+    }
+
+    .p {
+        &-a {
+            position: absolute;
+        }
+
+        &-r {
+            position: relative;
+        }
+    }
+
+    .c-p {
+        cursor: pointer;
+    }
+
+    .text {
+        @each $type, $val in $text-sizes {
+            &-#{$type} {
+                font-size: $val;
+            }
+        }
+
+        &--bold {
+            font-weight: 700;
+        }
+    }
+
+    .icon {
+        &-sm {
+            font-size: 0.875em;
+        }
+
+        &-md {
+            font-size: var(--text);
+        }
+
+        &-lg {
+            font-size: 1.33em;
+        }
+
+        &-2x {
+            font-size: 2em;
+        }
+
+        &-3x {
+            font-size: 3em;
+        }
+    }
+
+    .color {
+        @each $type in $color-types {
+            &-#{$type} {
+                color: var(--color-#{$type});
+            }
+        }
+    }
+
+    .max-height-col {
+        max-height: 50rem;
+        overflow: auto;
+    }
+
+    .hidden {
+        display: none;
+
+        &-important {
+            display: none !important;
+        }
+    }
+
+    .bg {
+        &--sec {
+            background-color: var(--color-background-sec);
+        }
+    }
+}
+
+@include generate();

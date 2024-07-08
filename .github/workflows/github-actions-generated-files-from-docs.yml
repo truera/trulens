@@ -1,0 +1,46 @@
+name: GitHub Actions Generate Files from Docs Notebooks
+run-name: GitHub Actions Generate Files from Docs Notebooks
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/trulens_eval/gh_top_intro.md"
+      - "docs/trulens_eval/trulens_eval_gh_top_readme.ipynb"
+      - "trulens_eval/examples/quickstart/llama_index_quickstart.ipynb"
+      - "trulens_eval/examples/quickstart/langchain_quickstart.ipynb"
+      - "trulens_eval/examples/quickstart/quickstart.ipynb"
+      - ".github/workflows/*"
+jobs:
+  Generate-Docs-and-Testing-Files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d-%H-%M-%S')"
+      - name: Generate Files
+        run: |
+          cd ${{ github.workspace }}/docs/trulens_eval
+          pip install jupyter
+          pip install nbmerge
+          pip install yapf==0.32.0
+          pip install isort==5.10.1
+          ../../.github/workflows/combine_nb_to_docs_testing.sh
+          rm -rf break.md
+          cd ${{ github.workspace }}
+          ./format.sh
+      - name: Commit Branch
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Automated File Generation from Docs Notebook Changes
+          branch: generated_files_branch_${{ steps.date.outputs.date }}
+          status_options: "--untracked-files=normal"
+          add_options: "-A"
+          skip_dirty_check: true
+          create_branch: true
+      - name: create pull request
+        run: gh pr create -B main -H generated_files_branch_${{ steps.date.outputs.date }} --title 'Merge generated docs and test files into main' --body 'Created by Github action'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

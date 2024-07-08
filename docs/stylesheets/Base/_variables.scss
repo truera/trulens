@@ -1,0 +1,40 @@
+$font-family-headers: 'Space Grotesk', sans-serif;;
+$font-family-body: "Source Sans Pro";
+
+$white: #FFFFFF;
+$teal: #84DCD7;
+$d-teal: #64B9B4;
+$yellow: #F6D881;
+$violet: #3E2B53;
+$dark: #0A2C37;
+
+:root {
+    --color-primary: #0A2C37;
+    --color-secondary: #F6D881;
+    --color-accent: #84DCD7;
+    --color-link: #64B9B4;
+    --color-text: #034A61;
+    --color-text-highlight: #FFFFFF;
+    --color-background: #D2EBEA;
+    --color-background-sec: #D4D4D4;
+    --color-navigation: var(--color-primary);
+    --color-border: #bbb;
+    --gap-xs: 0.125rem;
+    --gap-sm: 0.25rem;
+    --gap-md: 0.5rem;
+    --gap-lg: 1rem;
+    --gap-xl: 1.5rem;
+    --gap-xll: 2.5rem;
+    --gap-xxl: 4rem;
+    --text-xs: 0.75rem; 
+    --text-sm: 0.875rem; 
+    --text-md: 1rem; 
+    --text-lg: 1.125rem; 
+    --text-xl: 1.375rem; 
+    --text-xxl: 1.5rem; 
+    --text-h1: 4rem; 
+    --text-h2: 2.625rem; 
+    --text-h3: 2.125rem;
+    --text: var(--text-sm);
+}
+
