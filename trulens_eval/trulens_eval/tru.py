@@ -1083,7 +1083,6 @@ class Tru(python.SingletonPerName):
             port = self.find_unused_port()
 
         args = ["streamlit", "run", "--server.headless=True"]
-        args.append(f"--server.port={port}")
         if port is not None:
             args.append(f"--server.port={port}")
         if address is not None:
