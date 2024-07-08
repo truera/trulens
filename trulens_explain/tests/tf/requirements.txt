@@ -1,2 +1,0 @@
-tensorflow==1.15.4
-protobuf==3.20.*
