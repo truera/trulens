@@ -1125,9 +1125,13 @@ Feedback function signature:
                 if k in kwargs:
                     arg_vals[k] = [kwargs[k]]
                 else:
-                    logger.debug(f"Calling q.get with source_data: {source_data}")
+                    logger.debug(
+                        f"Calling q.get with source_data: {source_data}"
+                    )
                     result = q.get(source_data)
-                    logger.debug(f"Result of q.get(source_data) for key '{k}': {result}")
+                    logger.debug(
+                        f"Result of q.get(source_data) for key '{k}': {result}"
+                    )
                     arg_vals[k] = list(result)
             except Exception as e:
                 raise InvalidSelector(
