@@ -23,7 +23,7 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, List, Optional, TypeVar, Union
 
 from langchain.schema import Generation
 from langchain.schema import LLMResult
@@ -158,64 +158,76 @@ class OpenAIClient(SerialModel):
         )
 
 
-class OpenAICallback(EndpointCallback):
+T = TypeVar("T")  # TODO: what does openai return for completions?
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    langchain_handler: OpenAICallbackHandler = pydantic.Field(
-        default_factory=OpenAICallbackHandler, exclude=True
-    )
+class OpenAICallback(EndpointCallback[T]):
+    """Process the results of instrumented openai calls to extract cost information."""
 
-    chunks: List[Generation] = pydantic.Field(
-        default_factory=list,
-        exclude=True,
-    )
+    # EndpointCallback optional
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def on_return(
+        self.langchain_handler: OpenAICallbackHandler = OpenAICallbackHandler()
+
+        self.chunks: List[Any] = []
+
+    # EndpointCallback optional
+    def on_response(
         self,
-        func: Callable,
-        bindings: inspect.BoundArguments,
-        ret: Any,
-    ) -> Optional[mod_base_schema.Cost]:
-        # TODO: cleanup/refactor. This method inspects the results of an
-        # instrumented call made by an openai client. As there are multiple
-        # types of calls being handled here, we need to make various checks to
-        # see what sort of data to process based on the call made.
+        response: Any,
+    ) -> None:
+        """Process a returned response from an openai call.
+        
+        As there are multiple types of calls being handled here, we need to make
+        various checks to see what sort of data to process based on the call
+        made."""
+
+        # TODO: cleanup/refactor. 
+
+        func = self.func
+        bindings = self.bindings
+
+        assert bindings is not None
 
         logger.debug(
             "Handling openai instrumented call to func: %s,\n"
             "\tbindings: %s,\n"
-            "\tresponse: %s", func, bindings, ret
+            "\tresponse: %s", func, bindings, response
         )
 
         model_name = ""
         if 'model' in bindings.kwargs:
             model_name = bindings.kwargs["model"]
 
-        if isinstance(ret, oai.Stream):
+        if isinstance(response, oai.Stream):
             # NOTE(piotrm): Merely checking membership in these will exhaust internal
             # genertors or iterators which will break users' code. While we work
             # out something, I'm disabling any cost-tracking for these streams.
             logger.warning("Cannot track costs from a OpenAI Stream.")
             return
 
-        results = None
-        if "results" in ret:
-            results = ret['results']
+        if not isinstance(response, dict):
+            logger.warning(
+                "OpenAI response is not a dict, got %s", type(response)
+            )
+            return
 
-        cost = None
+        results = None
+        if "results" in response:
+            results = response['results']
 
         counted_something = False
-        if hasattr(ret, 'usage'):
+        if hasattr(response, 'usage'):
 
             counted_something = True
 
-            if isinstance(ret.usage, pydantic.BaseModel):
-                usage = ret.usage.model_dump()
-            elif isinstance(ret.usage, pydantic.v1.BaseModel):
-                usage = ret.usage.dict()
-            elif isinstance(ret.usage, Dict):
-                usage = ret.usage
+            if isinstance(response.usage, pydantic.BaseModel):
+                usage = response.usage.model_dump()
+            elif isinstance(response.usage, pydantic.v1.BaseModel):
+                usage = response.usage.dict()
+            elif isinstance(response.usage, Dict):
+                usage = response.usage
             else:
                 usage = None
 
@@ -226,14 +238,14 @@ class OpenAICallback(EndpointCallback):
                 run=None,
             )
 
-            self.handle_generation(response=llm_res)
+            self.on_generation(response=llm_res)
 
-        if "choices" in ret and 'delta' in ret.choices[0]:
+        if "choices" in response and 'delta' in response.choices[0]:
             # Streaming data.
-            content = ret.choices[0].delta.content
+            content = response.choices[0].delta.content
 
-            gen = Generation(text=content or '', generation_info=ret)
-            self.handle_generation_chunk(gen)
+            gen = Generation(text=content or '', generation_info=response)
+            self.on_generation_chunk(gen)
 
             counted_something = True
 
@@ -241,18 +253,21 @@ class OpenAICallback(EndpointCallback):
             for res in results:
                 if "categories" in res:
                     counted_something = True
-                    self.handle_classification(response=res)
+                    self.on_classification(response=res)
 
         if not counted_something:
             logger.warning(
                 "Could not find usage information in openai response:\n%s",
-                pp.pformat(ret)
+                pp.pformat(response)
             )
 
-        return cost
+        return
 
-    def handle_generation_chunk(self, response: Any) -> None:
-        super().handle_generation_chunk(response=response)
+    # EndpointCallback optional
+    def on_generation_chunk(self, response: Any) -> None:
+        """Process a generation chunk."""
+
+        super().on_generation_chunk(response=response)
 
         self.chunks.append(response)
 
@@ -262,30 +277,38 @@ class OpenAICallback(EndpointCallback):
                 generations=[self.chunks],
             )
             self.chunks = []
-            self.handle_generation(response=llm_result)
+            self.on_generation(response=llm_result)
 
-    def handle_generation(self, response: LLMResult) -> None:
-        super().handle_generation(response)
+    # EndpointCallback optional
+    def on_generation(self, response: LLMResult) -> None:
+        """Process a generation/completion."""
+
+        super().on_generation(response)
 
         self.langchain_handler.on_llm_end(response)
 
-        for cost_field, langchain_field in [
-            ("cost", "total_cost"),
-            ("n_tokens", "total_tokens"),
-            ("n_successful_requests", "successful_requests"),
-            ("n_prompt_tokens", "prompt_tokens"),
-            ("n_completion_tokens", "completion_tokens"),
-        ]:
-            setattr(
-                self.cost, cost_field,
-                getattr(self.cost, cost_field, 0) +
-                getattr(self.langchain_handler, langchain_field, 0)
-            )
+        assert self.cost is not None
+
+        self.cost += mod_base_schema.Cost(
+            **{
+                cost_field: getattr(self.langchain_handler, langchain_field, 0)
+                for cost_field, langchain_field in [
+                    ("cost", "total_cost"),
+                    ("n_tokens", "total_tokens"),
+                    ("n_successful_requests", "successful_requests"),
+                    ("n_prompt_tokens", "prompt_tokens"),
+                    ("n_completion_tokens", "completion_tokens"),
+                ]
+            }
+        )
 
 
 class OpenAIEndpoint(Endpoint):
-    """
-    OpenAI endpoint. Instruments "create" methods in openai client.
+    """OpenAI endpoint.
+    
+    !!! Instruments
+        - Modules `openai.resources.*` method `create`.
+        - Modules `openai.resources.chat.*` method `create`.
 
     Args:
         client: openai client to use. If not provided, a new client will be

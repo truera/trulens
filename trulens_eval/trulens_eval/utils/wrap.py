@@ -295,7 +295,13 @@ class CallableCallbacks(Generic[T]):
     def on_callable_wrapped(
         func: Callable, wrapper: Callable, **kwargs: Dict[str, Any]
     ):
-        """Called immediately after the wrapper is produced."""
+        """Called immediately after the wrapper is produced.
+        
+        !!! NOTE
+            There is only one wrapper produced for each wrapped function. If
+            wrapping is done again for an already wrapped function, this
+            callback will get called with the existing wrapper.
+        """
 
     def __init__(
         self, call_id: uuid.UUID, func: Callable, wrapper: Callable,

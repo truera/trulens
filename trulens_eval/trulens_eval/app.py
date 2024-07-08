@@ -120,23 +120,21 @@ class RecordingContext():
         self,
         app: App,
         record_metadata: JSON = None,
-        tracer: Optional[mod_trace.Tracer] = None
+        tracer: Optional[mod_trace.Tracer] = None,
+        span: Optional[mod_trace.PhantomSpanRecordingContext] = None,
+        span_ctx: Optional[mod_trace.Context] = None
     ):
-        self.calls: Dict[mod_types_schema.CallID,
-                         mod_record_schema.RecordAppCall] = {}
-        """A record (in terms of its RecordAppCall) in process of being created.
+        self.records: List[mod_record_schema.Record] = []
+        """Completed records.
         
-        Storing as a map as we want to override calls with the same id which may
-        happen due to methods producing awaitables or generators. These result
-        in calls before the awaitables are awaited and then get updated after
-        the result is ready.
+        !!! NOTE
+            Since migration to span-based tracing, these records are produced by
+            converting spans.
         """
 
-        self.records: List[mod_record_schema.Record] = []
-        """Completed records."""
-
         self.lock: Lock = Lock()
-        """Lock blocking access to `calls` and `records` when adding calls or finishing a record."""
+        """Lock blocking access to `records` when adding calls or
+        finishing a record."""
 
         self.token: Optional[contextvars.Token] = None
         """Token for context management."""
@@ -151,8 +149,22 @@ class RecordingContext():
         """OTEL-like tracer for recording.
         
         !!! Warning
-            This is transitional alternate recording mechanism to aid in the otel-compatibility work.
+            This is transitional alternate recording mechanism to aid in the
+            otel-compatibility work.
         """
+
+        self.span: Optional[mod_trace.PhantomSpanRecordingContext] = span
+
+        self.span_ctx = span_ctx
+
+    @property
+    def spans(self) -> Dict[mod_trace.Context, mod_trace.Span]:
+        """Get the spans of the tracer in this context."""
+
+        if self.tracer is None:
+            return {}
+
+        return self.tracer.spans
 
     def __iter__(self):
         return iter(self.records)
@@ -186,15 +198,6 @@ class RecordingContext():
     def __eq__(self, other):
         return hash(self) == hash(other)
         # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
-
-    def add_call(self, call: mod_record_schema.RecordAppCall):
-        """
-        Add the given call to the currently tracked call list.
-        """
-        with self.lock:
-            # NOTE: This might override existing call record which happens when
-            # processing calls with awaitable or generator results.
-            self.calls[call.call_id] = call
 
     def finish_record(
         self,
@@ -577,8 +580,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             # Recursively extract content from nested pydantic models
             return {
-                k: self._extract_content(v)
-                if isinstance(v, (pydantic.BaseModel, dict, list)) else v
+                k:
+                    self._extract_content(v)
+                    if isinstance(v, (pydantic.BaseModel, dict, list)) else v
                 for k, v in value.dict().items()
             }
 
@@ -591,8 +595,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             # Recursively extract content from nested dictionaries
             return {
-                k: self._extract_content(v) if isinstance(v,
-                                                          (dict, list)) else v
+                k:
+                    self._extract_content(v) if isinstance(v,
+                                                           (dict, list)) else v
                 for k, v in value.items()
             }
 
@@ -830,34 +835,35 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
     # For use as a context manager.
     def __enter__(self):
-        tracer = mod_trace.tracer_provider.trace()
-        recording = tracer.__enter__()
+        tracer: mod_trace.Tracer = mod_trace.get_tracer()
+        # recording = tracer.__enter__()
 
-        ctx = RecordingContext(app=self, tracer=(tracer, recording))
-        recording.ctx = ctx
+        recording_span_ctx = tracer.recording()
+        recording_span: mod_trace.PhantomSpanRecordingContext = recording_span_ctx.__enter__()
+        recording: RecordingContext = RecordingContext(
+            app=self,
+            tracer=tracer,
+            span=recording_span,
+            span_ctx=recording_span_ctx
+        )
+        recording_span.recording = recording
+        
+        # recording.ctx = ctx
 
-        token = self.recording_contexts.set(ctx)
-        ctx.token = token
+        token = self.recording_contexts.set(recording)
+        recording.token = token
 
-        return ctx
+        return recording
 
     # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
-        ctx = self.recording_contexts.get()
+        recording: RecordingContext = self.recording_contexts.get()
 
-        assert ctx is not None, "Not in a tracing context."
-        assert ctx.tracer is not None, "Not in a tracing context."
+        assert recording is not None, "Not in a tracing context."
+        assert recording.tracer is not None, "Not in a tracing context."
 
-        self.recording_contexts.reset(ctx.token)
-        ctx.tracer[0].__exit__(exc_type, exc_value, exc_tb)
-
-        for record in ctx.tracer[1].context.tracer.records_of_recording(
-                ctx.tracer[1]):
-            ctx.records.append(record)
-
-        #print("finished recording, have:")
-        #for context, span in ctx.tracer[1].context.tracer.spans.items():
-        #    print(context, span.__class__.__name__)
+        self.recording_contexts.reset(recording.token)
+        recording.span_ctx.__exit__(exc_type, exc_value, exc_tb)
 
         if exc_type is not None:
             raise exc_value
@@ -865,80 +871,29 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         return
 
     # WithInstrumentCallbacks requirement
-    def on_new_record(self, func) -> Iterable[RecordingContext]:
-        """Called at the start of record creation.
+    def get_active_contexts(self) -> Iterable[RecordingContext]:
+        """Get all active recording contexts."""
 
-        See
-        [WithInstrumentCallbacks.on_new_record][trulens_eval.instruments.WithInstrumentCallbacks.on_new_record].
-        """
-        ctx = self.recording_contexts.get(contextvars.Token.MISSING)
+        recording = self.recording_contexts.get(contextvars.Token.MISSING)
 
-        while ctx is not contextvars.Token.MISSING:
-            yield ctx
-            ctx = ctx.token.old_value
+        while recording is not contextvars.Token.MISSING:
+            yield recording
+            recording = recording.token.old_value
 
     # WithInstrumentCallbacks requirement
-    def on_add_root_span(
+    def on_new_root_span(
         self,
-        ctx: RecordingContext,
-        span: mod_trace.Span,
-    ) -> None:
-        # print("got root span", ctx, span)
-        pass
+        recording: RecordingContext,
+        root_span: mod_trace.Span,
+    ) -> 'Record':
+        
+        tracer = root_span.context.tracer
 
-    # WithInstrumentCallbacks requirement
-    def on_add_record(
-        self,
-        ctx: RecordingContext,
-        func: Callable,
-        sig: Signature,
-        bindings: BoundArguments,
-        ret: Any,
-        error: Any,
-        perf: Optional[mod_base_schema.Perf] = None,
-        cost: Optional[mod_base_schema.Cost] = None,
-        existing_record: Optional[mod_record_schema.Record] = None
-    ) -> mod_record_schema.Record:
-        """Called by instrumented methods if they use _new_record to construct a record call list.
+        record = tracer.record_of_root_span(root_span=root_span, recording=recording)
+        recording.records.append(record)
+        # need to jsonify?
 
-        See [WithInstrumentCallbacks.on_add_record][trulens_eval.instruments.WithInstrumentCallbacks.on_add_record].
-        """
-
-        def build_record(
-            calls: Iterable[mod_record_schema.RecordAppCall],
-            record_metadata: JSON,
-            existing_record: Optional[mod_record_schema.Record] = None
-        ) -> mod_record_schema.Record:
-            calls = list(calls)
-
-            assert len(calls) > 0, "No information recorded in call."
-
-            main_in = self.main_input(func, sig, bindings)
-            main_out = self.main_output(func, sig, bindings, ret)
-
-            updates = dict(
-                main_input=jsonify(main_in),
-                main_output=jsonify(main_out),
-                main_error=jsonify(error),
-                calls=calls,
-                cost=cost,
-                perf=perf,
-                app_id=self.app_id,
-                tags=self.tags,
-                meta=jsonify(record_metadata)
-            )
-
-            if existing_record is not None:
-                existing_record.update(**updates)
-            else:
-                existing_record = mod_record_schema.Record(**updates)
-
-            return existing_record
-
-        # Finishing record needs to be done in a thread lock, done there:
-        record = ctx.finish_record(
-            build_record, existing_record=existing_record
-        )
+        error = root_span.error
 
         if error is not None:
             # May block on DB.

@@ -18,14 +18,13 @@ import requests
 
 from trulens_eval import trace as mod_trace
 from trulens_eval.schema import base as mod_base_schema
-from trulens_eval.trace import SpanCost
-from trulens_eval.utils import asynchro as mod_asynchro_utils
+from trulens_eval.trace import PhantomSpanCost
 from trulens_eval.utils import pace as mod_pace
+from trulens_eval.utils import wrap as mod_wrap_utils
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import class_name
-from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import module_name
 from trulens_eval.utils.python import safe_hasattr
@@ -34,7 +33,6 @@ from trulens_eval.utils.python import Thunk
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import SerialModel
 from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
-from trulens_eval.utils.wrap import wrap_awaitable
 
 logger = logging.getLogger(__name__)
 
@@ -50,36 +48,87 @@ DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
 
 
-class EndpointCallback(SerialModel):
+class EndpointCallback(mod_wrap_utils.CallableCallbacks[T]):
     """Callbacks to be invoked after various API requests and track various metrics
     like token usage.
     """
 
-    endpoint: Endpoint = Field(exclude=True)
-    """The endpoint owning this callback."""
+    # overriding CallableCallbacks
+    def __init__(self, *args, endpoint: Endpoint, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    cost: mod_base_schema.Cost = Field(default_factory=mod_base_schema.Cost)
-    """Costs tracked by this callback."""
+        self.cost: Optional[mod_base_schema.Cost] = None
+        self.endpoint: Endpoint = endpoint
 
-    def handle(self, response: Any) -> None:
-        """Called after each request."""
+        self.cost_span_context = None
+        self.cost_span: Optional[mod_trace.PhantomSpanCost] = None
+
+    # overriding CallableCallbacks
+    def on_callable_call(self, *args, **kwargs) -> inspect.BoundArguments:
+        """Called before a request is invoked."""
+
+        self.cost_span_context = mod_trace.get_tracer().cost()
+        self.cost_span = self.cost_span_context.__enter__()
+        self.cost = self.cost_span.cost
         self.cost.n_requests += 1
 
-    def handle_chunk(self, response: Any) -> None:
-        """Called after receiving a chunk from a request."""
+        return super().on_callable_call(*args, **kwargs)
+
+    # overriding CallableCallbacks
+    def on_callable_end(self):
+        assert self.cost_span_context is not None
+
+        if self.error is not None:
+            self.cost_span_context.__exit__(
+                type(self.error), self.error, self.error.__traceback__
+            )
+        else:
+            assert self.cost_span is not None
+            self.cost += self.cost_span.cost
+            self.cost_span_context.__exit__(None, None, None)
+
+    # overriding CallableCallbacks
+    def on_callable_return(self, ret: T, **kwargs) -> T:
+        """Called after a request returns."""
+
+        self.cost.n_responses += 1
+
+        ret = super().on_callable_return(ret=ret, **kwargs)
+
+        self.on_response(response=ret)
+
+        return ret
+
+    def on_response(self, response: Any) -> None:
+        """Called after each non-error response."""
+
+        logger.warning("No on_response method defined for %s.", self)
+
+
+#    def on_chunk(self, response: Any) -> None:
+#        """Called after receiving a chunk from a request."""
+#        self.cost.n_stream_chunks += 1
+
+    def on_generation(self, response: Any) -> None:
+        """Called after each completion request."""
+
+        self.cost.n_successful_requests += 1
+        self.cost.n_generations += 1
+
+        # self.on_request(response)
+
+    def on_generation_chunk(self, response: Any) -> None:
+        """Called after receiving a chunk from a completion request."""
+
         self.cost.n_stream_chunks += 1
 
-    def handle_generation(self, response: Any) -> None:
-        """Called after each completion request."""
-        self.handle(response)
-
-    def handle_generation_chunk(self, response: Any) -> None:
-        """Called after receiving a chunk from a completion request."""
-        self.handle_chunk(response)
-
-    def handle_classification(self, response: Any) -> None:
+    def on_classification(self, response: Any) -> None:
         """Called after each classification response."""
-        self.handle(response)
+
+        self.cost.n_successful_requests += 1
+        self.cost.n_classifications += 1
+
+        # logger.warning("No on_classification method defined for %s.", self)
 
 
 class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
@@ -223,6 +272,29 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         return self.pace.mark()
 
+    @staticmethod
+    def track_all_costs_tally(func: Callable[..., T], *args,
+                              **kwargs) -> Tuple[T, mod_base_schema.Cost]:
+        """Track the costs of all instrumented methods in the given thunk.
+
+        Args:
+            func: The function to run and track costs for.
+
+            args: The arguments to pass to the function.
+
+            kwargs: The keyword arguments to pass to the function.
+
+        Returns:
+            The return value of func and the total cost of all cost instrumented
+            methods called during the execution of func.
+        """
+
+        tracer = mod_trace.get_tracer()
+        with tracer.phantom() as span:
+            ret = func(*args, **kwargs)
+
+        return ret, span.total_cost()
+
     def post(
         self,
         url: str,
@@ -353,8 +425,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(
-                wrapped_thing if wrapped_thing != object else
-                "unknown dynamically generated class(es)"
+                wrapped_thing if wrapped_thing !=
+                object else "unknown dynamically generated class(es)"
             )
             for original, _, endpoint in wrappers:
                 print(
@@ -445,143 +517,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             func: The function to wrap.
         """
 
-        if safe_hasattr(func, INSTRUMENT):
-            # Store the callback class that will handle calls to the wrapped
-            # function in the INSTRUMENT attribute. This will be used to invoke
-            # appropriate callbacks when the wrapped function gets called.
-
-            # If INSTRUMENT is set, we don't need to instrument the method again
-            # but we require that only one endpoint's EndpointCallback class is
-            # registered to handle the wrapped call so we check any subsequent
-            # wrap attempts are with the same endpoint.
-
-            callback_class = getattr(func, INSTRUMENT)
-
-            if not isinstance(callback_class, Type):
-                raise TypeError(
-                    "Wrapped INSTRUMENT attribute is expected to be a callback class."
-                )
-
-            if self.callback_class is not callback_class:
-                raise ValueError(
-                    f"Attempting to set more than one EndpointCallback for function {func}."
-                )
-
-            # If our callback class is already in the list, dont bother
-            # adding it again.
-
-            logger.warning(
-                "%s already instrumented for callbacks of type %s for endpoint %s",
-                func.__name__, self.callback_class.__name__,
-                self.__class__.__name__
-            )
-
-            return func
-
-        # If INSTRUMENT is not set, create a wrapper method and return it.
-        @functools.wraps(func)
-        def tru_wrapper(*args, **kwargs):
-            logger.debug(
-                "Calling instrumented method %s of type %s, "
-                "iscoroutinefunction=%s, "
-                "isasyncgeneratorfunction=%s", func, type(func),
-                is_really_coroutinefunction(func),
-                inspect.isasyncgenfunction(func)
-            )
-
-            ret: Any = None  # return of wrapped call if it did not raise an exception
-            error: Any = None  # exception raised by wrapped call if any
-
-            callback_class = getattr(tru_wrapper, INSTRUMENT)
-            callback = callback_class(endpoint=self)
-
-            common_args = {'func': func}
-            callback.on_call(**common_args, args=args, kwargs=kwargs)
-            common_args['bindings'] = None
-
-            try:
-                common_args['bindings'] = inspect.signature(func).bind(
-                    *args, **kwargs
-                )
-
-            except Exception as e:
-                callback.on_bind_error(
-                    **common_args, error=e, args=args, kwargs=kwargs
-                )
-                # Continue to try to execute func which should fail and produce
-                # some exception with regards to not being able to bind.
-
-            with mod_trace.get_tracer().cost() as span:
-                try:
-                    # Get the result of the wrapped function.
-                    ret = func(*args, **kwargs)
-
-                except Exception as e:
-                    # Or the exception it raised.
-                    error = e
-
-            # The rest of the code invokes the appropriate callbacks and then
-            # populates the content of span created above.
-
-            span.endpoint = callback.endpoint
-            span.cost = callback.cost
-
-            if error is None and common_args['bindings'] is None:
-                # If bindings is None, the `.bind()` line above should have failed.
-                # In that case we expect the `func(...)` line to also fail. We bail
-                # without the rest of the logic in that case while issuing a stern
-                # warning.
-                logger.warning(
-                    "Wrapped function executed but we could not bind its arguments."
-                )
-                span.cost = callback.cost
-                return ret
-
-            if error is not None:
-                callback.on_exception(**common_args, error=error)
-                # common_args['bindings'] may be None in case the `.bind()` line
-                # failed. The exception we caught when executing `func()` will
-                # be the normal exception raised by bad function arguments which
-                # is what we record in the cost span and reraise.
-                span.error = str(error)
-                span.cost = callback.cost
-                raise error
-            """
-            # disabling Awaitable and other lazy value handling for now
-
-            if isinstance(ret, Awaitable):
-                common_args['awaitable'] = ret
-
-                callback.on_async_start(**common_args)
-
-                def response_callback(_, response):
-                    logger.debug("Handling endpoint %s.", callback.endpoint.name)
-
-                    callback.on_async_end(
-                        **common_args,
-                        result=response,
-                    )
-                    span.cost = callback.cost
-
-                return wrap_awaitable(
-                    ret,
-                    on_result=response_callback
-                )
-            """
-
-            # else ret is not Awaitable
-
-            callback.on_return(**common_args, ret=ret)
-            return ret
-
-        # Set our tracking attribute to tell whether something is already
-        # instrumented onto both the sync and async version since either one
-        # could be returned from this method.
-        setattr(tru_wrapper, INSTRUMENT, self.callback_class)
-
-        logger.debug("Instrumenting %s for %s.", func.__name__, self.name)
-
-        return tru_wrapper
+        return mod_wrap_utils.wrap_callable(
+            func=func, callback_class=self.callback_class, endpoint=self
+        )
 
 
 EndpointCallback.model_rebuild()

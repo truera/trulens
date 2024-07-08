@@ -1,7 +1,6 @@
 import asyncio
 import json
 import pprint as pp
-from typing import Dict, Iterable, Tuple
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -19,7 +18,6 @@ from ux.page_config import set_page_config
 from ux.styles import CATEGORY
 
 from trulens_eval import Tru
-from trulens_eval.app import Agent
 from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.utils.streamlit import init_from_args

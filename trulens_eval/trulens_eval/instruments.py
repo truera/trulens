@@ -1,5 +1,5 @@
 """
-# Instrumentation
+Instrumentation
 
 This module contains the core of the app instrumentation scheme employed by
 trulens_eval to track and record apps. These details should not be relevant for
@@ -11,7 +11,6 @@ from __future__ import annotations
 import dataclasses
 import inspect
 from inspect import BoundArguments
-from inspect import Signature
 import logging
 import os
 import threading as th
@@ -19,14 +18,12 @@ from typing import (
     Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type,
     TypeVar, Union
 )
-import uuid
 
 import pydantic
 
 from trulens_eval import trace as mod_trace
 from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.schema import base as mod_base_schema
-from trulens_eval.schema import record as mod_record_schema
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.imports import Dummy
@@ -104,53 +101,19 @@ class WithInstrumentCallbacks:
 
         raise NotImplementedError
 
-    # Called during invocation.
-    def on_new_record(self, func: Callable):
-        """
-        Called by instrumented methods in cases where they cannot find a record
-        call list in the stack. If we are inside a context manager, return a new
-        call list.
-        """
-
-        raise NotImplementedError
-
-    # Called during invocation.
-    def on_add_record(
+    # Called after recording of an invocation.
+    def on_new_root_span(
         self,
         ctx: 'RecordingContext',
-        func: Callable,
-        sig: Signature,
-        bindings: BoundArguments,
-        ret: Any,
-        error: Any,
-        perf: mod_base_schema.Perf,
-        cost: mod_base_schema.Cost,
-        existing_record: Optional[mod_record_schema.Record] = None
-    ):
-        """
-        Called by instrumented methods if they are root calls (first instrumned
+        root_span: 'Span',
+    ) -> 'Record':
+        """Called by instrumented methods if they are root calls (first instrumned
         methods in a call stack).
 
         Args:
             ctx: The context of the recording.
 
-            func: The function that was called.
-
-            sig: The signature of the function.
-
-            bindings: The bound arguments of the function.
-
-            ret: The return value of the function.
-
-            error: The error raised by the function if any.
-
-            perf: The performance of the function.
-
-            cost: The cost of the function.
-
-            existing_record: If the record has already been produced (i.e.
-                because it was an awaitable), it can be passed here to avoid
-                re-creating it.
+            root_span: The root span that was recorded.
         """
 
         raise NotImplementedError
@@ -342,13 +305,35 @@ class Instrument(object):
         logger.debug("\t\t\t%s: instrumenting %s=%s", query, method_name, func)
 
         class InstrumentationCallbacks(CallableCallbacks):
+            # Adjust our name so make it clear that this is a callbacks class
+            # made for a particular func, if we ever print this class.
+            __name__ = f"InstrumentationCallbacks({func.__name__})"
+
+            @staticmethod
+            def on_callable_wrapped(
+                func: Callable[..., Any], wrapper: Callable[..., Any],
+                **kwargs: Dict[str, Any]
+            ):
+                # Store all of the apps that have instrumented this method in
+                # the wrapper.
+                # TODO: Change to weakrefs.
+
+                if not safe_hasattr(wrapper, Instrument.APPS):
+                    apps = set()
+                    setattr(wrapper, Instrument.APPS, apps)
+                else:
+                    apps = getattr(wrapper, Instrument.APPS)
+
+                apps.add(self.app)
+
+                return CallableCallbacks.on_callable_wrapped(
+                    func, wrapper, **kwargs
+                )
 
             def __init__(
                 self,
-                #app: Any, query: Lens,
                 func_name: str,
                 cls: type,
-                #obj: object,
                 sig: inspect.Signature,
                 **kwargs: Dict[str, Any]
             ):
@@ -356,22 +341,17 @@ class Instrument(object):
 
                 print("init callbacks for ", query, func_name)
 
-                #self.app = app
-                #self.query = query
                 self.func_name: str = func_name
                 self.cls: Type = cls
-                #self.obj = obj
                 self.sig: inspect.Signature = sig
                 self.obj_id: Optional[int] = None
-
                 self.obj: Optional[object] = None
 
                 tracer = mod_trace.get_tracer()
                 self.span_context = tracer.method()
                 self.span = self.span_context.__enter__()
 
-                # self.app_contexts = app.on_new_record(func)
-                # TODO: remove
+                self.apps = safe_getattr(self.wrapper, Instrument.APPS)
 
             def on_callable_call(
                 self, bindings: BoundArguments, **kwargs: Dict[str, Any]
@@ -403,46 +383,12 @@ class Instrument(object):
                 span.tid = th.get_native_id()
 
                 """
-                frame_ident = mod_record_schema.RecordAppCallMethod(
-                    path=self.query,
-                    method=Method.of_method(
-                        self.func, obj=self.obj, cls=self.cls
-                    )
-                )
-                stack = (
-                    frame_ident,
-                )  # rest to be filled in later from collected spans
-
-                nonself = {
-                    k: jsonify(v) for k, v in (
-                        self.bindings.arguments.items() if self.
-                        bindings is not None else {}
-                    ) if k != "self"
-                }
-
-                record_app_args = dict(
-                    call_id=str(self.call_id),
-                    args=nonself,
-                    perf=mod_base_schema.Perf(
-                        start_time=self.start_time, end_time=self.end_time
-                    ),
-                    pid=os.getpid(),
-                    tid=th.get_native_id(),
-                    rets=jsonify(self.ret),
-                    error=str(self.error) if self.error is not None else None
-                )
-
-                #for ctx in self.app_contexts:
-                record_app_args['stack'] = stack
-                call = mod_record_schema.RecordAppCall(**record_app_args)
-                # ctx.add_call(call)
-                self.span.call = call
-                
-                # TODO: remove
-                for ctx in self.app_contexts:
-                    # Notify apps if this was a root call.
-                    if self.span.is_root():
-                        self.app.on_add_root_span(ctx=ctx, span=self.span)
+                if self.span.is_root():
+                    apps = getattr(self.wrapper, Instrument.APPS)
+                    for app in apps:
+                        for ctx in app.get_active_contexts():
+                            # Notify apps if this was a root call.        
+                            app.on_new_root_span(ctx=ctx, root_span=self.span)
                 """
 
                 if self.error is not None:
@@ -457,11 +403,8 @@ class Instrument(object):
         return wrap_callable(
             func=func,
             callback_class=InstrumentationCallbacks,
-            #app=self.app,
-            #query=query,
             func_name=method_name,
             cls=cls,
-            #obj=obj,
             sig=safe_signature(func)
         )
 

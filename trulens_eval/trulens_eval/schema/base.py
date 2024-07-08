@@ -19,8 +19,17 @@ class Cost(serial.SerialModel, pydantic.BaseModel):
     n_requests: int = 0
     """Number of requests."""
 
+    n_responses: int = 0
+    """Number of respones, successful or not."""
+
     n_successful_requests: int = 0
     """Number of successful requests."""
+
+    n_generations: int = 0
+    """Number of successful generations."""
+
+    n_classifications: int = 0
+    """Number of successful classifications."""
 
     n_classes: int = 0
     """Number of class scores retrieved."""
