@@ -8,13 +8,21 @@ rm -rf all_tools.ipynb
 # IF MOVING ANY IPYNB, MAKE SURE TO RE-SYMLINK. MANY IPYNB REFERENCED HERE LIVE
 # IN OTHER PATHS
 ALL_NOTEBOOKS=(
+    ./clear_trulens_module.ipynb
     ./getting_started/quickstarts/langchain_quickstart.ipynb
+    ./clear_trulens_module.ipynb
     ./getting_started/quickstarts/llama_index_quickstart.ipynb
+    ./clear_trulens_module.ipynb
     ./getting_started/quickstarts/quickstart.ipynb
+    ./clear_trulens_module.ipynb
     ./getting_started/quickstarts/prototype_evals.ipynb
+    ./clear_trulens_module.ipynb
     ./getting_started/quickstarts/human_feedback.ipynb
+    ./clear_trulens_module.ipynb
     ./getting_started/quickstarts/groundtruth_evals.ipynb
+    ./clear_trulens_module.ipynb
     ./tracking/logging/logging.ipynb
+    ./clear_trulens_module.ipynb
     ./evaluation/feedback_implementations/custom_feedback_functions.ipynb
 )
 echo "Merging notebooks to all_tools.ipynb: ${ALL_NOTEBOOKS[@]}"
