@@ -25,25 +25,10 @@ T = TypeVar("T")
 
 
 class LiteLLMCallback(EndpointCallback[T]):
-
-    def on_generation(self, response: Any) -> None:
-        super().on_generation(response)
-
-        assert self.cost is not None
-
-        self.cost += mod_base_schema.Cost(
-            **{
-                cost_field: response.get(litellm_field, 0)
-                for cost_field, litellm_field in [
-                    ("n_tokens", "total_tokens"),
-                    ("n_prompt_tokens", "prompt_tokens"),
-                    ("n_completion_tokens", "completion_tokens"),
-                ]
-            }
-        )
+    """Process litellm wrapped calls to extract cost information."""
 
     def on_response(self, response: pydantic.BaseModel) -> None:
-        """Get the usage information from litellm response's usage field."""
+        """Process a returned call."""
 
         response = response.model_dump()
 
@@ -74,6 +59,26 @@ class LiteLLMCallback(EndpointCallback[T]):
                 "Unrecognized litellm response format. It did not have usage information:\n%s",
                 pp.pformat(response)
             )
+
+    def on_generation(self, response: Any) -> None:
+        """Process a generation/completion."""
+
+        super().on_generation(response)
+
+        assert self.cost is not None
+
+        self.cost += mod_base_schema.Cost(
+            **{
+                cost_field: response.get(litellm_field, 0)
+                for cost_field, litellm_field in [
+                    ("n_tokens", "total_tokens"),
+                    ("n_prompt_tokens", "prompt_tokens"),
+                    ("n_completion_tokens", "completion_tokens"),
+                ]
+            }
+        )
+
+
 
 class LiteLLMEndpoint(Endpoint):
     """LiteLLM endpoint."""

@@ -11,8 +11,14 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
+
 class LangchainCallback(EndpointCallback[T]):
-    pass
+    """Process langchain wrapped calls to extract cost information.
+    
+    !!! WARNING
+        There is currently no cost tracking other than the number of requests
+        included for langchain calls.
+    """
 
 
 class LangchainEndpoint(Endpoint):

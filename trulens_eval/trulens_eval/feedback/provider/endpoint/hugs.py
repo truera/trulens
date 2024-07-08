@@ -1,6 +1,5 @@
-import inspect
 import json
-from typing import Callable, Optional, TypeVar
+from typing import TypeVar
 
 import requests
 
@@ -8,18 +7,22 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
-from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.utils.python import safe_hasattr
 
 T = TypeVar("T")
 
 
 class HuggingfaceCallback(EndpointCallback[T]):
+    """Process huggingface wrapped calls to extract cost information.
+    
+    !!! Note
+        Huggingface free inference api does not have its own modules and the
+        documentation suggests to use `requests`. Therefore, this class
+        processes request module responses.
+    """
 
     def on_response(self, response: requests.Response) -> None:
-        # Huggingface free inference api doesn't seem to have its own library
-        # and the docs say to use `requests`` so that is what we instrument and
-        # process to track api calls.
+        """Process a returned call."""
 
         super().on_response(response)
 
@@ -41,6 +44,8 @@ class HuggingfaceCallback(EndpointCallback[T]):
             self.on_classification(response=content)
 
     def on_classification(self, response: dict) -> None:
+        """Process a classification response."""
+
         super().on_classification(response)
 
         # Handle case when multiple items returned by hf api
@@ -49,9 +54,11 @@ class HuggingfaceCallback(EndpointCallback[T]):
 
 
 class HuggingfaceEndpoint(Endpoint):
-    """
-    Huggingface. Instruments the requests.post method for requests to
-    "https://api-inference.huggingface.co".
+    """Huggingface endpoint.
+    
+    !!! Instruments
+        - module `requests` method `post` when making requests to
+        urls starting with "https://api-inference.huggingface.co".
     """
 
     def __new__(cls, *args, **kwargs):
