@@ -1,0 +1,993 @@
+import sys
+
+for module in list(sys.modules.keys()):
+    if module.startswith('trulens'):
+        del sys.modules[module]
+
+# ! pip install trulens_eval openai langchain langchain-openai langchain_community faiss-cpu bs4 tiktoken
+
+import os
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+# Imports main tools:
+from trulens_eval import TruChain, Tru
+tru = Tru()
+tru.reset_database()
+
+# Imports from LangChain to build app
+import bs4
+from langchain import hub
+from langchain.chat_models import ChatOpenAI
+from langchain.document_loaders import WebBaseLoader
+from langchain.schema import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+
+loader = WebBaseLoader(
+    web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
+    bs_kwargs=dict(
+        parse_only=bs4.SoupStrainer(
+            class_=("post-content", "post-title", "post-header")
+        )
+    ),
+)
+docs = loader.load()
+
+from langchain_openai import OpenAIEmbeddings
+
+embeddings = OpenAIEmbeddings()
+
+from langchain_community.vectorstores import FAISS
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+
+text_splitter = RecursiveCharacterTextSplitter()
+documents = text_splitter.split_documents(docs)
+vectorstore = FAISS.from_documents(documents, embeddings)
+
+retriever = vectorstore.as_retriever()
+
+prompt = hub.pull("rlm/rag-prompt")
+llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+rag_chain = (
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
+)
+
+rag_chain.invoke("What is Task Decomposition?")
+
+from trulens_eval.feedback.provider import OpenAI
+from trulens_eval import Feedback
+import numpy as np
+
+# Initialize provider class
+provider = OpenAI()
+
+# select context to be used in feedback. the location of context is app specific.
+from trulens_eval.app import App
+context = App.select_context(rag_chain)
+
+# Define a groundedness feedback function
+f_groundedness = (
+    Feedback(provider.groundedness_measure_with_cot_reasons, name = "Groundedness")
+    .on(context.collect()) # collect context chunks into a list
+    .on_output()
+)
+
+# Question/answer relevance between overall question and answer.
+f_answer_relevance = (
+    Feedback(provider.relevance_with_cot_reasons, name = "Answer Relevance")
+    .on_input_output()
+)
+# Context relevance between question and each context chunk.
+f_context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+    .on_input()
+    .on(context)
+    .aggregate(np.mean)
+)
+
+tru_recorder = TruChain(rag_chain,
+    app_id='Chain1_ChatApplication',
+    feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness])
+
+with tru_recorder as recording:
+    llm_response = rag_chain.invoke("What is Task Decomposition?")
+
+display(llm_response)
+
+tru.get_leaderboard()
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+get_feedback_result(last_record, "Context Relevance")
+
+from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments
+
+# note: feedback function used for guardrail must only return a score, not also reasons
+f_context_relevance_score = (
+    Feedback(provider.context_relevance)
+)
+
+filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
+        retriever=retriever,
+        feedback=f_context_relevance_score,
+        threshold=0.75
+    )
+
+rag_chain = (
+    {"context": filtered_retriever | format_docs, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
+)
+
+tru_recorder = TruChain(rag_chain,
+    app_id='Chain1_ChatApplication_Filtered',
+    feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness])
+
+with tru_recorder as recording:
+    llm_response = rag_chain.invoke("What is Task Decomposition?")
+
+display(llm_response)
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+get_feedback_result(last_record, "Context Relevance")
+
+tru.run_dashboard()
+
+# The record of the app invocation can be retrieved from the `recording`:
+
+rec = recording.get() # use .get if only one record
+# recs = recording.records # use .records if multiple
+
+display(rec)
+
+# The results of the feedback functions can be rertrieved from
+# `Record.feedback_results` or using the `wait_for_feedback_result` method. The
+# results if retrieved directly are `Future` instances (see
+# `concurrent.futures`). You can use `as_completed` to wait until they have
+# finished evaluating or use the utility method:
+
+for feedback, feedback_result in rec.wait_for_feedback_results().items():
+    print(feedback.name, feedback_result.result)
+
+# See more about wait_for_feedback_results:
+# help(rec.wait_for_feedback_results)
+
+records, feedback = tru.get_records_and_feedback(app_ids=[])
+
+records.head()
+
+tru.get_leaderboard(app_ids=[])
+
+tru.run_dashboard() # open a local streamlit app to explore
+
+# tru.stop_dashboard() # stop if needed
+
+json_like = last_record.layout_calls_as_app()
+
+json_like
+
+from ipytree import Tree, Node
+
+def display_call_stack(data):
+    tree = Tree()
+    tree.add_node(Node('Record ID: {}'.format(data['record_id'])))
+    tree.add_node(Node('App ID: {}'.format(data['app_id'])))
+    tree.add_node(Node('Cost: {}'.format(data['cost'])))
+    tree.add_node(Node('Performance: {}'.format(data['perf'])))
+    tree.add_node(Node('Timestamp: {}'.format(data['ts'])))
+    tree.add_node(Node('Tags: {}'.format(data['tags'])))
+    tree.add_node(Node('Main Input: {}'.format(data['main_input'])))
+    tree.add_node(Node('Main Output: {}'.format(data['main_output'])))
+    tree.add_node(Node('Main Error: {}'.format(data['main_error'])))
+    
+    calls_node = Node('Calls')
+    tree.add_node(calls_node)
+    
+    for call in data['calls']:
+        call_node = Node('Call')
+        calls_node.add_node(call_node)
+        
+        for step in call['stack']:
+            step_node = Node('Step: {}'.format(step['path']))
+            call_node.add_node(step_node)
+            if 'expanded' in step:
+                expanded_node = Node('Expanded')
+                step_node.add_node(expanded_node)
+                for expanded_step in step['expanded']:
+                    expanded_step_node = Node('Step: {}'.format(expanded_step['path']))
+                    expanded_node.add_node(expanded_step_node)
+    
+    return tree
+
+# Usage
+tree = display_call_stack(json_like)
+tree
+
+import sys
+
+for module in list(sys.modules.keys()):
+    if module.startswith('trulens'):
+        del sys.modules[module]
+
+# pip install trulens_eval llama_index openai
+
+import os
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+from trulens_eval import Tru
+tru = Tru()
+tru.reset_database()
+
+import os
+import urllib.request
+
+url = "https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt"
+file_path = 'data/paul_graham_essay.txt'
+
+if not os.path.exists('data'):
+    os.makedirs('data')
+
+if not os.path.exists(file_path):
+    urllib.request.urlretrieve(url, file_path)
+
+
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from llama_index.core import Settings
+from llama_index.llms.openai import OpenAI
+
+Settings.chunk_size = 128
+Settings.chunk_overlap = 16
+Settings.llm = OpenAI()
+
+documents = SimpleDirectoryReader("data").load_data()
+index = VectorStoreIndex.from_documents(documents)
+
+query_engine = index.as_query_engine(similarity_top_k=3)
+
+response = query_engine.query("What did the author do growing up?")
+print(response)
+
+from trulens_eval.feedback.provider import OpenAI
+from trulens_eval import Feedback
+import numpy as np
+
+# Initialize provider class
+provider = OpenAI()
+
+# select context to be used in feedback. the location of context is app specific.
+from trulens_eval.app import App
+context = App.select_context(query_engine)
+
+# Define a groundedness feedback function
+f_groundedness = (
+    Feedback(provider.groundedness_measure_with_cot_reasons, name = "Groundedness")
+    .on(context.collect()) # collect context chunks into a list
+    .on_output()
+)
+
+# Question/answer relevance between overall question and answer.
+f_answer_relevance = (
+    Feedback(provider.relevance_with_cot_reasons, name = "Answer Relevance")
+    .on_input_output()
+)
+# Question/statement relevance between question and each context chunk.
+f_context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+    .on_input()
+    .on(context)
+    .aggregate(np.mean)
+)
+
+from trulens_eval import TruLlama
+tru_query_engine_recorder = TruLlama(query_engine,
+    app_id='LlamaIndex_App1',
+    feedbacks=[f_groundedness, f_answer_relevance, f_context_relevance])
+
+# or as context manager
+with tru_query_engine_recorder as recording:
+    query_engine.query("What did the author do growing up?")
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+get_feedback_result(last_record, "Context Relevance")
+
+from trulens_eval.guardrails.llama import WithFeedbackFilterNodes
+
+# note: feedback function used for guardrail must only return a score, not also reasons
+f_context_relevance_score = Feedback(provider.context_relevance)
+
+filtered_query_engine = WithFeedbackFilterNodes(query_engine, feedback=f_context_relevance_score, threshold=0.5)
+
+tru_recorder = TruLlama(filtered_query_engine,
+    app_id='LlamaIndex_App1_Filtered',
+    feedbacks=[f_answer_relevance, f_context_relevance, f_groundedness])
+
+with tru_recorder as recording:
+    llm_response = filtered_query_engine.query("What did the author do growing up?")
+
+display(llm_response)
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+get_feedback_result(last_record, "Context Relevance")
+
+tru.get_leaderboard()
+
+# The record of the app invocation can be retrieved from the `recording`:
+
+rec = recording.get() # use .get if only one record
+# recs = recording.records # use .records if multiple
+
+display(rec)
+
+tru.run_dashboard()
+
+# The results of the feedback functions can be rertireved from
+# `Record.feedback_results` or using the `wait_for_feedback_result` method. The
+# results if retrieved directly are `Future` instances (see
+# `concurrent.futures`). You can use `as_completed` to wait until they have
+# finished evaluating or use the utility method:
+
+for feedback, feedback_result in rec.wait_for_feedback_results().items():
+    print(feedback.name, feedback_result.result)
+
+# See more about wait_for_feedback_results:
+# help(rec.wait_for_feedback_results)
+
+records, feedback = tru.get_records_and_feedback(app_ids=[])
+
+records.head()
+
+tru.get_leaderboard(app_ids=[])
+
+tru.run_dashboard() # open a local streamlit app to explore
+
+# tru.stop_dashboard() # stop if needed
+
+import sys
+
+for module in list(sys.modules.keys()):
+    if module.startswith('trulens'):
+        del sys.modules[module]
+
+# ! pip install trulens_eval chromadb openai
+
+import os
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+uw_info = """
+The University of Washington, founded in 1861 in Seattle, is a public research university
+with over 45,000 students across three campuses in Seattle, Tacoma, and Bothell.
+As the flagship institution of the six public universities in Washington state,
+UW encompasses over 500 buildings and 20 million square feet of space,
+including one of the largest library systems in the world.
+"""
+
+wsu_info = """
+Washington State University, commonly known as WSU, founded in 1890, is a public research university in Pullman, Washington.
+With multiple campuses across the state, it is the state's second largest institution of higher education.
+WSU is known for its programs in veterinary medicine, agriculture, engineering, architecture, and pharmacy.
+"""
+
+seattle_info = """
+Seattle, a city on Puget Sound in the Pacific Northwest, is surrounded by water, mountains and evergreen forests, and contains thousands of acres of parkland.
+It's home to a large tech industry, with Microsoft and Amazon headquartered in its metropolitan area.
+The futuristic Space Needle, a legacy of the 1962 World's Fair, is its most iconic landmark.
+"""
+
+starbucks_info = """
+Starbucks Corporation is an American multinational chain of coffeehouses and roastery reserves headquartered in Seattle, Washington.
+As the world's largest coffeehouse chain, Starbucks is seen to be the main representation of the United States' second wave of coffee culture.
+"""
+
+import os
+import chromadb
+from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+
+embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'),
+                                             model_name="text-embedding-ada-002")
+
+
+chroma_client = chromadb.Client()
+vector_store = chroma_client.get_or_create_collection(name="Washington",
+                                                      embedding_function=embedding_function)
+
+vector_store.add("uw_info", documents=uw_info)
+vector_store.add("wsu_info", documents=wsu_info)
+vector_store.add("seattle_info", documents=seattle_info)
+vector_store.add("starbucks_info", documents=starbucks_info)
+
+from trulens_eval import Tru
+from trulens_eval.tru_custom_app import instrument
+tru = Tru()
+tru.reset_database()
+
+from openai import OpenAI
+oai_client = OpenAI()
+
+from openai import OpenAI
+oai_client = OpenAI()
+
+class RAG_from_scratch:
+    @instrument
+    def retrieve(self, query: str) -> list:
+        """
+        Retrieve relevant text from vector store.
+        """
+        results = vector_store.query(
+            query_texts=query,
+            n_results=4
+        )
+        # Flatten the list of lists into a single list
+        return [doc for sublist in results['documents'] for doc in sublist]
+
+    @instrument
+    def generate_completion(self, query: str, context_str: list) -> str:
+        """
+        Generate answer from context.
+        """
+        completion = oai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        temperature=0,
+        messages=
+        [
+            {"role": "user",
+            "content": 
+            f"We have provided context information below. \n"
+            f"---------------------\n"
+            f"{context_str}"
+            f"\n---------------------\n"
+            f"Given this information, please answer the question: {query}"
+            }
+        ]
+        ).choices[0].message.content
+        return completion
+
+    @instrument
+    def query(self, query: str) -> str:
+        context_str = self.retrieve(query)
+        completion = self.generate_completion(query, context_str)
+        return completion
+
+rag = RAG_from_scratch()
+
+from trulens_eval import Feedback, Select
+from trulens_eval.feedback.provider.openai import OpenAI
+
+import numpy as np
+
+provider = OpenAI(model_engine="gpt-4o")
+
+# Define a groundedness feedback function
+f_groundedness = (
+    Feedback(provider.groundedness_measure_with_cot_reasons, name = "Groundedness")
+    .on(Select.RecordCalls.retrieve.rets.collect())
+    .on_output()
+)
+# Question/answer relevance between overall question and answer.
+f_answer_relevance = (
+    Feedback(provider.relevance_with_cot_reasons, name = "Answer Relevance")
+    .on_input()
+    .on_output()
+)
+
+# Context relevance between question and each context chunk.
+f_context_relevance = (
+    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+    .on_input()
+    .on(Select.RecordCalls.retrieve.rets[:])
+    .aggregate(np.mean) # choose a different aggregation method if you wish
+)
+
+from trulens_eval import TruCustomApp
+tru_rag = TruCustomApp(rag,
+    app_id = 'RAG v1',
+    feedbacks = [f_groundedness, f_answer_relevance, f_context_relevance])
+
+with tru_rag as recording:
+    rag.query("When was the University of Washington founded?")
+
+tru.get_leaderboard()
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+get_feedback_result(last_record, "Context Relevance")
+
+# note: feedback function used for guardrail must only return a score, not also reasons
+f_context_relevance_score = (
+    Feedback(provider.context_relevance, name = "Context Relevance")
+)
+
+from trulens_eval.guardrails.base import context_filter
+
+class filtered_RAG_from_scratch:
+    @instrument
+    @context_filter(f_context_relevance_score, 0.75, keyword_for_prompt="query")
+    def retrieve(self, query: str) -> list:
+        """
+        Retrieve relevant text from vector store.
+        """
+        results = vector_store.query(
+        query_texts=query,
+        n_results=4
+    )
+        return [doc for sublist in results['documents'] for doc in sublist]
+
+    @instrument
+    def generate_completion(self, query: str, context_str: list) -> str:
+        """
+        Generate answer from context.
+        """
+        completion = oai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        temperature=0,
+        messages=
+        [
+            {"role": "user",
+            "content": 
+            f"We have provided context information below. \n"
+            f"---------------------\n"
+            f"{context_str}"
+            f"\n---------------------\n"
+            f"Given this information, please answer the question: {query}"
+            }
+        ]
+        ).choices[0].message.content
+        return completion
+
+    @instrument
+    def query(self, query: str) -> str:
+        context_str = self.retrieve(query=query)
+        completion = self.generate_completion(query=query, context_str=context_str)
+        return completion
+
+filtered_rag = filtered_RAG_from_scratch()
+
+from trulens_eval import TruCustomApp
+filtered_tru_rag = TruCustomApp(filtered_rag,
+    app_id = 'RAG v2',
+    feedbacks = [f_groundedness, f_answer_relevance, f_context_relevance])
+
+with filtered_tru_rag as recording:
+    filtered_rag.query(query="when was the university of washington founded?")
+
+tru.get_leaderboard(app_ids=[])
+
+last_record = recording.records[-1]
+
+from trulens_eval.utils.display import get_feedback_result
+get_feedback_result(last_record, "Context Relevance")
+
+tru.run_dashboard(port=3453, force=True)
+
+
+
+import sys
+
+for module in list(sys.modules.keys()):
+    if module.startswith('trulens'):
+        del sys.modules[module]
+
+# ! pip install trulens_eval
+
+from trulens_eval import Feedback
+from trulens_eval import Tru
+
+tru = Tru()
+
+tru.run_dashboard()
+
+import os
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+from openai import OpenAI
+oai_client = OpenAI()
+
+from trulens_eval.tru_custom_app import instrument
+
+class APP:
+    @instrument
+    def completion(self, prompt):
+        completion = oai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                temperature=0,
+                messages=
+                [
+                    {"role": "user",
+                    "content": 
+                    f"Please answer the question: {prompt}"
+                    }
+                ]
+                ).choices[0].message.content
+        return completion
+    
+llm_app = APP()
+
+from trulens_eval.feedback.provider.hugs import Dummy
+
+# hugs = Huggingface()
+hugs = Dummy()
+
+f_positive_sentiment = Feedback(hugs.positive_sentiment).on_output()
+
+# add trulens as a context manager for llm_app with dummy feedback
+from trulens_eval import TruCustomApp
+tru_app = TruCustomApp(llm_app,
+                       app_id = 'LLM App v1',
+                       feedbacks = [f_positive_sentiment])
+
+with tru_app as recording:
+    llm_app.completion('give me a good name for a colorful sock company')
+
+tru.get_leaderboard(app_ids=[tru_app.app_id])
+
+import sys
+
+for module in list(sys.modules.keys()):
+    if module.startswith('trulens'):
+        del sys.modules[module]
+
+# ! pip install trulens_eval openai
+
+import os
+
+from trulens_eval import Tru
+from trulens_eval import TruCustomApp
+
+tru = Tru()
+
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+from openai import OpenAI
+oai_client = OpenAI()
+
+from trulens_eval.tru_custom_app import instrument
+
+class APP:
+    @instrument
+    def completion(self, prompt):
+        completion = oai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                temperature=0,
+                messages=
+                [
+                    {"role": "user",
+                    "content": 
+                    f"Please answer the question: {prompt}"
+                    }
+                ]
+                ).choices[0].message.content
+        return completion
+    
+llm_app = APP()
+
+# add trulens as a context manager for llm_app
+tru_app = TruCustomApp(llm_app, app_id = 'LLM App v1')
+
+
+with tru_app as recording:
+    llm_app.completion("Give me 10 names for a colorful sock company")
+
+# Get the record to add the feedback to.
+record = recording.get()
+
+from ipywidgets import Button, HBox, VBox
+
+thumbs_up_button = Button(description='👍')
+thumbs_down_button = Button(description='👎')
+
+human_feedback = None
+
+def on_thumbs_up_button_clicked(b):
+    global human_feedback
+    human_feedback = 1
+
+def on_thumbs_down_button_clicked(b):
+    global human_feedback
+    human_feedback = 0
+
+thumbs_up_button.on_click(on_thumbs_up_button_clicked)
+thumbs_down_button.on_click(on_thumbs_down_button_clicked)
+
+HBox([thumbs_up_button, thumbs_down_button])
+
+# add the human feedback to a particular app and record
+tru.add_feedback(
+    name="Human Feedack",
+    record_id=record.record_id,
+    app_id=tru_app.app_id,
+    result=human_feedback
+)
+
+tru.get_leaderboard(app_ids=[tru_app.app_id])
+
+import sys
+
+for module in list(sys.modules.keys()):
+    if module.startswith('trulens'):
+        del sys.modules[module]
+
+# ! pip install trulens_eval openai
+
+import os
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+from trulens_eval import Tru
+
+tru = Tru()
+
+from openai import OpenAI
+oai_client = OpenAI()
+
+from trulens_eval.tru_custom_app import instrument
+
+class APP:
+    @instrument
+    def completion(self, prompt):
+        completion = oai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                temperature=0,
+                messages=
+                [
+                    {"role": "user",
+                    "content": 
+                    f"Please answer the question: {prompt}"
+                    }
+                ]
+                ).choices[0].message.content
+        return completion
+    
+llm_app = APP()
+
+from trulens_eval import Feedback
+from trulens_eval.feedback import GroundTruthAgreement
+
+golden_set = [
+    {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
+    {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+]
+
+f_groundtruth = Feedback(GroundTruthAgreement(golden_set).agreement_measure, name = "Ground Truth").on_input_output()
+
+# add trulens as a context manager for llm_app
+from trulens_eval import TruCustomApp
+tru_app = TruCustomApp(llm_app, app_id = 'LLM App v1', feedbacks = [f_groundtruth])
+
+# Instrumented query engine can operate as a context manager:
+with tru_app as recording:
+    llm_app.completion("¿quien invento la bombilla?")
+    llm_app.completion("who invented the lightbulb?")
+
+tru.get_leaderboard(app_ids=[tru_app.app_id])
+
+import sys
+
+for module in list(sys.modules.keys()):
+    if module.startswith('trulens'):
+        del sys.modules[module]
+
+# Imports main tools:
+from trulens_eval import Feedback
+from trulens_eval import Huggingface
+from trulens_eval import Tru
+from trulens_eval import TruChain
+
+tru = Tru()
+
+Tru().migrate_database()
+
+from langchain.chains import LLMChain
+from langchain_community.llms import OpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import HumanMessagePromptTemplate
+from langchain.prompts import PromptTemplate
+
+full_prompt = HumanMessagePromptTemplate(
+    prompt=PromptTemplate(
+        template=
+        "Provide a helpful response with relevant background information for the following: {prompt}",
+        input_variables=["prompt"],
+    )
+)
+
+chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
+
+llm = OpenAI(temperature=0.9, max_tokens=128)
+
+chain = LLMChain(llm=llm, prompt=chat_prompt_template, verbose=True)
+
+truchain = TruChain(
+    chain,
+    app_id='Chain1_ChatApplication',
+    tru=tru
+)
+with truchain:
+    chain("This will be automatically logged.")
+
+# Initialize Huggingface-based feedback function collection class:
+hugs = Huggingface()
+
+# Define a language match feedback function using HuggingFace.
+f_lang_match = Feedback(hugs.language_match).on_input_output()
+# By default this will check language match on the main app input and main app
+# output.
+
+truchain = TruChain(
+    chain,
+    app_id='Chain1_ChatApplication',
+    feedbacks=[f_lang_match], # feedback functions
+    tru=tru
+)
+with truchain:
+    chain("This will be automatically logged.")
+
+tc = TruChain(chain, app_id='Chain1_ChatApplication')
+
+prompt_input = 'que hora es?'
+gpt3_response, record = tc.with_record(chain.__call__, prompt_input)
+
+tru.add_app(app=truchain)
+
+tru.add_record(record)
+
+thumb_result = True
+tru.add_feedback(
+    name="👍 (1) or 👎 (0)", 
+    record_id=record.record_id, 
+    result=thumb_result
+)
+
+feedback_results = tru.run_feedback_functions(
+    record=record,
+    feedback_functions=[f_lang_match]
+)
+for result in feedback_results:
+    display(result)
+
+tru.add_feedbacks(feedback_results)
+
+truchain: TruChain = TruChain(
+    chain,
+    app_id='Chain1_ChatApplication',
+    feedbacks=[f_lang_match],
+    tru=tru,
+    feedback_mode="deferred"
+)
+
+with truchain:
+    chain("This will be logged by deferred evaluator.")
+
+tru.start_evaluator()
+# tru.stop_evaluator()
+
+import sys
+
+for module in list(sys.modules.keys()):
+    if module.startswith('trulens'):
+        del sys.modules[module]
+
+from trulens_eval import Provider, Feedback, Select, Tru
+
+class StandAlone(Provider):
+    def custom_feedback(self, my_text_field: str) -> float:
+        """
+        A dummy function of text inputs to float outputs.
+
+        Parameters:
+            my_text_field (str): Text to evaluate.
+
+        Returns:
+            float: square length of the text
+        """
+        return 1.0 / (1.0 + len(my_text_field) * len(my_text_field))
+
+
+standalone = StandAlone()
+f_custom_function = Feedback(standalone.custom_feedback).on(
+    my_text_field=Select.RecordOutput
+)
+
+tru = Tru()
+feedback_results = tru.run_feedback_functions(
+    record=record,
+    feedback_functions=[f_custom_function]
+)
+tru.add_feedbacks(feedback_results)
+
+from trulens_eval.feedback.provider import AzureOpenAI
+from trulens_eval.utils.generated import re_0_10_rating
+
+class Custom_AzureOpenAI(AzureOpenAI):
+    def style_check_professional(self, response: str) -> float:
+        """
+        Custom feedback function to grade the professional style of the resposne, extending AzureOpenAI provider.
+
+        Args:
+            response (str): text to be graded for professional style.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not professional" and 1 being "professional".
+        """
+        professional_prompt = str.format("Please rate the professionalism of the following text on a scale from 0 to 10, where 0 is not at all professional and 10 is extremely professional: \n\n{}", response)
+        return self.generate_score(system_prompt=professional_prompt)
+
+from typing import Tuple, Dict
+from trulens_eval.feedback import prompts
+
+class Custom_AzureOpenAI(AzureOpenAI):
+    def context_relevance_with_cot_reasons_extreme(self, question: str, context: str) -> Tuple[float, Dict]:
+        """
+        Tweaked version of context relevance, extending AzureOpenAI provider.
+        A function that completes a template to check the relevance of the statement to the question.
+        Scoring guidelines for scores 5-8 are removed to push the LLM to more extreme scores.
+        Also uses chain of thought methodology and emits the reasons.
+
+        Args:
+            question (str): A question being asked. 
+            context (str): A statement to the question.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+        """
+
+        # remove scoring guidelines around middle scores
+        system_prompt = prompts.CONTEXT_RELEVANCE_SYSTEM.replace(
+        "- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.\n\n", "")
+        
+        user_prompt = str.format(prompts.CONTEXT_RELEVANCE_USER, question = question, context = context)
+        user_prompt = user_prompt.replace(
+            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(system_prompt, user_prompt)
+
+multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name="multi").on(
+    input_param=Select.RecordOutput
+)
+feedback_results = tru.run_feedback_functions(
+    record=record,
+    feedback_functions=[multi_output_feedback]
+)
+tru.add_feedbacks(feedback_results)
+
+# Aggregators will run on the same dict keys.
+import numpy as np
+multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name="multi-agg").on(
+    input_param=Select.RecordOutput
+).aggregate(np.mean)
+feedback_results = tru.run_feedback_functions(
+    record=record,
+    feedback_functions=[multi_output_feedback]
+)
+tru.add_feedbacks(feedback_results)
+
+
+# For multi-context chunking, an aggregator can operate on a list of multi output dictionaries.
+def dict_aggregator(list_dict_input):
+    agg = 0
+    for dict_input in list_dict_input:
+        agg += dict_input['output_key1']
+    return agg
+multi_output_feedback = Feedback(lambda input_param: {'output_key1': 0.1, 'output_key2': 0.9}, name="multi-agg-dict").on(
+    input_param=Select.RecordOutput
+).aggregate(dict_aggregator)
+feedback_results = tru.run_feedback_functions(
+    record=record,
+    feedback_functions=[multi_output_feedback]
+)
+tru.add_feedbacks(feedback_results)
+
