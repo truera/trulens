@@ -1,5 +1,5 @@
 site_name: 🦑 TruLens
-site_description: Evaluate and track LLM applications. Explain Deep Neural Nets.
+site_description: Evaluate and track LLM applications.
 
 repo_name: truera/trulens
 repo_url: https://github.com/truera/trulens
@@ -42,8 +42,7 @@ markdown_extensions:
   - attr_list
 
 watch:
-  - trulens_explain/trulens
-  - trulens_eval/trulens_eval
+  - trulens_eval
 
 plugins:
   - include-markdown:
@@ -115,7 +114,6 @@ plugins:
               - "^__call__$" # and __call__ methods
 
           paths:
-            - trulens_explain
             - trulens_eval
           #selection:
 
@@ -288,21 +286,6 @@ nav:
       - 💣 Tech Debt: trulens_eval/contributing/techdebt.md
       - ⛅ Optional Pckages: trulens_eval/contributing/optional.md
       - ✨ Database Migration: trulens_eval/contributing/migration.md
-  - ❓ Explain:
-      # PLACEHOLDER: - trulens_explain/index.md
-      - Getting Started:
-          # PLACEHOLDER: - trulens_explain/getting_started/index.md
-          - Installation: trulens_explain/getting_started/install.md
-          - Quickstart: trulens_explain/getting_started/quickstart.md
-      - Attributions: trulens_explain/attribution_parameterization.md
-      - ☕ API Reference:
-          # PLACEHOLDER: - trulens_explain/api/index.md
-          - Attribution: trulens_explain/api/attribution.md
-          - Models: trulens_explain/api/model_wrappers.md
-          - Slices: trulens_explain/api/slices.md
-          - Quantities: trulens_explain/api/quantities.md
-          - Distributions: trulens_explain/api/distributions.md
-          - Visualizations: trulens_explain/api/visualizations.md
 
 #  - Resources:
 #    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/

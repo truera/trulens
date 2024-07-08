@@ -5,7 +5,7 @@ trulens_eval/README.md . If you are editing README.md, your changes will be over
 -->
 # Welcome to TruLens-Eval!
 
-![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
+![TruLens](https://www.trulens.org/assets/images/Trulens_Logo.png)
 
 **Don't just vibe-check your llm app!** Systematically evaluate and track your
 LLM experiments with TruLens. As you develop your app including prompts, models,
