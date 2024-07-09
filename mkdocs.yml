@@ -227,8 +227,10 @@ nav:
           - trulens_eval/tracking/instrumentation/llama_index.ipynb
           - trulens_eval/tracking/instrumentation/nemo.ipynb
       - Logging:
-          - Where to Log: trulens_eval/tracking/logging/where_to_log/index.md
-          - ❄️ Logging in Snowflake: trulens_eval/tracking/logging/where_to_log/log_in_snowflake.md
+          - Where to Log:
+              - trulens_eval/tracking/logging/where_to_log/index.md
+              - ❄️ Logging in Snowflake: trulens_eval/tracking/logging/where_to_log/log_in_snowflake.md
+          - 📓 Logging Methods: trulens_eval/tracking/logging/logging.ipynb
   - 🛡️ Guardrails: trulens_eval/guardrails/index.md
   - 🔍 Guides:
       # PLACEHOLDER: - trulens_eval/guides/index.md
