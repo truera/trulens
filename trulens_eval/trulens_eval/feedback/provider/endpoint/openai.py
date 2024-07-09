@@ -173,7 +173,7 @@ class OpenAICallback(EndpointCallback[T]):
         self.chunks: List[Any] = []
 
     # EndpointCallback optional
-    def on_response(
+    def on_endpoint_response(
         self,
         response: Any,
     ) -> None:
@@ -238,14 +238,14 @@ class OpenAICallback(EndpointCallback[T]):
                 run=None,
             )
 
-            self.on_generation(response=llm_res)
+            self.on_endpoint_generation(response=llm_res)
 
         if "choices" in response and 'delta' in response.choices[0]:
             # Streaming data.
             content = response.choices[0].delta.content
 
             gen = Generation(text=content or '', generation_info=response)
-            self.on_generation_chunk(gen)
+            self.on_endpoint_generation_chunk(gen)
 
             counted_something = True
 
@@ -253,7 +253,7 @@ class OpenAICallback(EndpointCallback[T]):
             for res in results:
                 if "categories" in res:
                     counted_something = True
-                    self.on_classification(response=res)
+                    self.on_endpoint_classification(response=res)
 
         if not counted_something:
             logger.warning(
@@ -264,10 +264,10 @@ class OpenAICallback(EndpointCallback[T]):
         return
 
     # EndpointCallback optional
-    def on_generation_chunk(self, response: Any) -> None:
+    def on_endpoint_generation_chunk(self, response: Any) -> None:
         """Process a generation chunk."""
 
-        super().on_generation_chunk(response=response)
+        super().on_endpoint_generation_chunk(response=response)
 
         self.chunks.append(response)
 
@@ -277,13 +277,13 @@ class OpenAICallback(EndpointCallback[T]):
                 generations=[self.chunks],
             )
             self.chunks = []
-            self.on_generation(response=llm_result)
+            self.on_endpoint_generation(response=llm_result)
 
     # EndpointCallback optional
-    def on_generation(self, response: LLMResult) -> None:
+    def on_endpoint_generation(self, response: LLMResult) -> None:
         """Process a generation/completion."""
 
-        super().on_generation(response)
+        super().on_endpoint_generation(response)
 
         self.langchain_handler.on_llm_end(response)
 

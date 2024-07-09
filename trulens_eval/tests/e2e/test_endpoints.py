@@ -24,27 +24,68 @@ class TestEndpoints(TestCase):
     def setUp(self):
         check_keys(
             # for non-azure openai tests
-            "OPENAI_API_KEY",
+#            "OPENAI_API_KEY",
 
             # for huggingface tests
-            "HUGGINGFACE_API_KEY",
+#            "HUGGINGFACE_API_KEY",
 
             # for bedrock tests
-            "AWS_REGION_NAME",
-            "AWS_ACCESS_KEY_ID",
-            "AWS_SECRET_ACCESS_KEY",
-            "AWS_SESSION_TOKEN",
+#            "AWS_REGION_NAME",
+#            "AWS_ACCESS_KEY_ID",
+#            "AWS_SECRET_ACCESS_KEY",
+#            "AWS_SESSION_TOKEN",
 
             # for azure openai tests
-            "AZURE_OPENAI_API_KEY",
-            "AZURE_OPENAI_ENDPOINT",
-            "AZURE_OPENAI_DEPLOYMENT_NAME",
+#            "AZURE_OPENAI_API_KEY",
+#            "AZURE_OPENAI_ENDPOINT",
+#            "AZURE_OPENAI_DEPLOYMENT_NAME",
 
             # for snowflake cortex
-            "SNOWFLAKE_ACCOUNT",
-            "SNOWFLAKE_USER",
-            "SNOWFLAKE_USER_PASSWORD"
+#            "SNOWFLAKE_ACCOUNT",
+#            "SNOWFLAKE_USER",
+#            "SNOWFLAKE_USER_PASSWORD"
         )
+
+    def _test_hugs_provider_endpoint(self, provider, with_cost: bool = True):
+        """Check that cost tracking works for the huggingface endpoints."""
+
+        _, cost = Endpoint.track_all_costs_tally(
+            provider.positive_sentiment, text="This rocks!"
+        )
+
+        self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
+
+        self.assertEqual(cost.n_responses, 1, "Expected exactly one response.")
+
+        self.assertEqual(
+            cost.n_successful_requests, 1,
+            "Expected exactly one successful request."
+        )
+
+        self.assertEqual(
+            cost.n_classes, 3,
+            "Expected exactly three classes for sentiment classification."
+        )
+
+        self.assertEqual(
+            cost.n_stream_chunks, 0,
+            "Expected zero chunks for classification endpoints."
+        )
+
+        self.assertEqual(cost.n_tokens, 0, "Expected zero tokens.")
+
+        self.assertEqual(
+            cost.n_prompt_tokens, 0, "Expected zero prompt tokens."
+        )
+
+        self.assertEqual(
+            cost.n_completion_tokens, 0.0, "Expected zero completion tokens."
+        )
+
+        if with_cost:
+            self.assertEqual(
+                cost.cost, 0.0, "Expected zero cost for huggingface endpoint."
+            )
 
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
         """Cost checks for endpoints whose providers implement LLMProvider."""
@@ -54,21 +95,29 @@ class TestEndpoints(TestCase):
         )
 
         self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
+
+        self.assertEqual(cost.n_responses, 1, "Expected exactly one response.")
+
         self.assertEqual(
             cost.n_successful_requests, 1,
             "Expected exactly one successful request."
         )
+
         self.assertEqual(
             cost.n_classes, 0, "Expected zero classes for LLM-based endpoints."
         )
+
         self.assertEqual(
             cost.n_stream_chunks, 0,
             "Expected zero chunks when not using streaming mode."
         )
+
         self.assertGreater(cost.n_tokens, 0, "Expected non-zero tokens.")
+
         self.assertGreater(
             cost.n_prompt_tokens, 0, "Expected non-zero prompt tokens."
         )
+        
         self.assertGreater(
             cost.n_completion_tokens, 0.0,
             "Expected non-zero completion tokens."
@@ -77,43 +126,28 @@ class TestEndpoints(TestCase):
         if with_cost:
             self.assertGreater(cost.cost, 0.0, "Expected non-zero cost.")
 
-    @skip("This test needs to be updated.")
+    def test_dummy_hugs(self):
+        """Check that cost tracking works for the dummy huggingface provider."""
+
+        from trulens_eval.feedback.provider.hugs import DummyHuggingface
+
+        self._test_hugs_provider_endpoint(DummyHuggingface())
+
+    def test_dummy_llm(self):
+        """Check that cost tracking works for dummy llm provider."""
+
+        from trulens_eval.feedback.provider import DummyLLMProvider
+
+        self._test_llm_provider_endpoint(DummyLLMProvider())
+
+
     @optional_test
     def test_hugs(self):
         """Check that cost tracking works for the huggingface endpoint."""
 
         from trulens_eval.feedback.provider import Huggingface
 
-        hugs = Huggingface()
-
-        _, cost = Endpoint.track_all_costs_tally(
-            hugs.positive_sentiment, text="This rocks!"
-        )
-
-        self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
-        self.assertEqual(
-            cost.n_successful_requests, 1,
-            "Expected exactly one successful request."
-        )
-        self.assertEqual(
-            cost.n_classes, 3,
-            "Expected exactly three classes for sentiment classification."
-        )
-        self.assertEqual(
-            cost.n_stream_chunks, 0,
-            "Expected zero chunks for classification endpoints."
-        )
-        self.assertEqual(cost.n_tokens, 0, "Expected zero tokens.")
-        self.assertEqual(
-            cost.n_prompt_tokens, 0, "Expected zero prompt tokens."
-        )
-        self.assertEqual(
-            cost.n_completion_tokens, 0.0, "Expected zero completion tokens."
-        )
-
-        self.assertEqual(
-            cost.cost, 0.0, "Expected zero cost for huggingface endpoint."
-        )
+        self._test_llm_provider_endpoint(Huggingface())
 
     @skip("This test needs to be updated.")
     @optional_test

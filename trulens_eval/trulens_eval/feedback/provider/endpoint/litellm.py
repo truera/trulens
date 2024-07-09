@@ -27,7 +27,7 @@ T = TypeVar("T")
 class LiteLLMCallback(EndpointCallback[T]):
     """Process litellm wrapped calls to extract cost information."""
 
-    def on_response(self, response: pydantic.BaseModel) -> None:
+    def on_endpoint_response(self, response: pydantic.BaseModel) -> None:
         """Process a returned call."""
 
         response = response.model_dump()
@@ -42,7 +42,7 @@ class LiteLLMCallback(EndpointCallback[T]):
                 # should not double count here.
 
                 # Increment number of requests.
-                super().on_generation(response=usage)
+                super().on_endpoint_generation(response=usage)
 
             elif self.endpoint.litellm_provider not in ["openai"]:
                 # The total cost does not seem to be properly tracked except by
@@ -51,7 +51,7 @@ class LiteLLMCallback(EndpointCallback[T]):
                 # TODO: what if it is not a completion?
                 from litellm import completion_cost
 
-                super().on_generation(response)
+                super().on_endpoint_generation(response)
                 self.cost.cost += completion_cost(response)
 
         else:
@@ -60,10 +60,10 @@ class LiteLLMCallback(EndpointCallback[T]):
                 pp.pformat(response)
             )
 
-    def on_generation(self, response: Any) -> None:
+    def on_endpoint_generation(self, response: Any) -> None:
         """Process a generation/completion."""
 
-        super().on_generation(response)
+        super().on_endpoint_generation(response)
 
         assert self.cost is not None
 

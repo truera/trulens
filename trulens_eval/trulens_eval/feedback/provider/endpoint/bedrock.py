@@ -31,7 +31,7 @@ class BedrockCallback(EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_generation_chunk(self, response: Any) -> None:
-        super().on_generation_chunk(response)
+        super().on_endpoint_generation_chunk(response)
 
         # Example chunk:
         """
@@ -77,7 +77,7 @@ class BedrockCallback(EndpointCallback):
             self.cost.n_tokens += int(input_tokens)
 
     def handle_generation(self, response: Any) -> None:
-        super().on_generation(response)
+        super().on_endpoint_generation(response)
 
         # Example response for completion:
         """
@@ -222,13 +222,13 @@ class BedrockEndpoint(Endpoint):
         if func.__name__ == "invoke_model":
             self.global_callback.handle_generation(response=response)
             if callback is not None:
-                callback.on_generation(response=response)
+                callback.on_endpoint_generation(response=response)
                 cost = callback.cost
 
         elif func.__name__ == "invoke_model_with_response_stream":
             self.global_callback.handle_generation(response=response)
             if callback is not None:
-                callback.on_generation(response=response)
+                callback.on_endpoint_generation(response=response)
                 cost = callback.cost
 
             body = response.get("body")
@@ -236,7 +236,7 @@ class BedrockEndpoint(Endpoint):
                 for chunk in body:
                     self.global_callback.handle_generation_chunk(response=chunk)
                     if callback is not None:
-                        callback.on_generation_chunk(response=chunk)
+                        callback.on_endpoint_generation_chunk(response=chunk)
                         cost = callback.cost
 
             else:

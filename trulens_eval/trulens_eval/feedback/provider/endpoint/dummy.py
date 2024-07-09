@@ -78,7 +78,7 @@ class DummyAPI(pydantic.BaseModel):
 
     def post(
         self, url: str, payload: JSON, timeout: Optional[float] = None
-    ) -> Dict:
+    ) -> dict:
         """Pretend to make an http post request to some model execution API."""
 
         if timeout is None:
@@ -259,16 +259,14 @@ class DummyAPICreator(object):
 class DummyEndpointCallback(EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
-    def on_call(self, func: Callable, args: Tuple[str], kwargs: Dict[str, Any]):
-        self.cost.n_requests += 1
-
-    def on_return(
-        self, func: Callable[..., Any], bindings: inspect.BoundArguments,
-        ret: Any
+    def on_callable_return(
+        self, ret: Any, **kwargs
     ):
-        self.cost.n_successful_requests += 1
+        super().on_callable_return(ret=ret, **kwargs)
 
         if "usage" in ret:
+            self.cost.n_successful_requests += 1
+
             # fake completion
             usage = ret["usage"]
             self.cost.cost += usage.get("cost", 0.0)
@@ -277,14 +275,16 @@ class DummyEndpointCallback(EndpointCallback):
             self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
 
         elif "scores" in ret:
+            self.cost.n_successful_requests += 1
+
             # fake classification
             self.cost.n_classes += len(ret.get("scores", []))
 
         else:
             logger.warning("Could not determine cost from DummyAPI call.")
 
-    def on_iteration(self):
-        self.cost.n_stream_chunks += 1
+    #def on_iteration(self):
+    #    self.cost.n_stream_chunks += 1
 
 
 class DummyEndpoint(Endpoint):

@@ -6,7 +6,7 @@ from trulens_eval.feedback.provider.endpoint import DummyEndpoint
 from trulens_eval.utils.python import locals_except
 
 
-class DummyProvider(LLMProvider):
+class DummyLLMProvider(LLMProvider):
     """Fake LLM provider.
     
     Does not make any networked requests but pretends to.
@@ -49,4 +49,6 @@ class DummyProvider(LLMProvider):
         if prompt is None:
             prompt = json.dumps(messages)
 
-        return self.endpoint.api.completion(prompt=prompt, **kwargs)
+        return self.endpoint.api.completion(
+            prompt=prompt, model=self.model_engine, **kwargs
+        )

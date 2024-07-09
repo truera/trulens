@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
-from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
+from trulens_eval.feedback.provider.endpoint import DummyEndpoint, HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.python import Future
 from trulens_eval.utils.threading import ThreadPoolExecutor
@@ -93,8 +93,6 @@ class HuggingfaceBase(Provider):
     def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
         ...
 
-    # TODEP
-    @_tci
     @abstractmethod
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
         ...
@@ -459,9 +457,7 @@ class HuggingfaceBase(Provider):
 
 
 class Huggingface(HuggingfaceBase):
-    """
-    Out of the box feedback functions calling Huggingface APIs.
-    """
+    """Out of the box feedback functions calling Huggingface APIs."""
 
     endpoint: Endpoint
 
@@ -651,9 +647,7 @@ class Huggingface(HuggingfaceBase):
 
 
 class HuggingfaceLocal(HuggingfaceBase):
-    """
-    Out of the box feedback functions calling Huggingface APIs.
-    """
+    """Out of the box feedback functions calling Huggingface APIs."""
 
     _cached_tokenizers: Dict[str, Any] = {}
     _cached_models: Dict[str, Any] = {}
@@ -734,3 +728,14 @@ class HuggingfaceLocal(HuggingfaceBase):
         raise NotImplementedError(
             "Currently not implemented in for local Huggingface!"
         )
+
+
+class DummyHuggingface(Huggingface):
+    """Fake request.post-based provider.
+    
+    Does not make any networked requests but pretends to.
+    """
+
+    def __init__(self, **kwargs):
+        kwargs['endpoint'] = DummyEndpoint()
+        super().__init__(**kwargs)

@@ -21,10 +21,10 @@ class HuggingfaceCallback(EndpointCallback[T]):
         processes request module responses.
     """
 
-    def on_response(self, response: requests.Response) -> None:
+    def on_endpoint_response(self, response: requests.Response) -> None:
         """Process a returned call."""
 
-        super().on_response(response)
+        super().on_endpoint_response(response)
 
         bindings = self.bindings
 
@@ -41,12 +41,12 @@ class HuggingfaceCallback(EndpointCallback[T]):
 
         if response.ok:
             content = json.loads(response.text)
-            self.on_classification(response=content)
+            self.on_endpoint_classification(response=content)
 
-    def on_classification(self, response: dict) -> None:
+    def on_endpoint_classification(self, response: dict) -> None:
         """Process a classification response."""
 
-        super().on_classification(response)
+        super().on_endpoint_classification(response)
 
         # Handle case when multiple items returned by hf api
         for item in response:

@@ -1,31 +1,25 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
-import functools
 import inspect
 import logging
 from pprint import PrettyPrinter
 from time import sleep
 from types import ModuleType
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple,
-    Type, TypeVar
-)
+from typing import (Any, Callable, ClassVar, Dict, List, Optional, Sequence,
+                    Tuple, Type, TypeVar)
 
 from pydantic import Field
 import requests
 
 from trulens_eval import trace as mod_trace
 from trulens_eval.schema import base as mod_base_schema
-from trulens_eval.trace import PhantomSpanCost
 from trulens_eval.utils import pace as mod_pace
 from trulens_eval.utils import wrap as mod_wrap_utils
 from trulens_eval.utils.pyschema import safe_getattr
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import class_name
-from trulens_eval.utils.python import is_really_coroutinefunction
 from trulens_eval.utils.python import module_name
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import SingletonPerName
@@ -63,16 +57,10 @@ class EndpointCallback(mod_wrap_utils.CallableCallbacks[T]):
         self.cost_span_context = None
         self.cost_span: Optional[mod_trace.PhantomSpanCost] = None
 
-    # overriding CallableCallbacks
-    def on_callable_call(self, *args, **kwargs) -> inspect.BoundArguments:
-        """Called before a request is invoked."""
-
         self.cost_span_context = mod_trace.get_tracer().cost()
         self.cost_span = self.cost_span_context.__enter__()
         self.cost = self.cost_span.cost
         self.cost.n_requests += 1
-
-        return super().on_callable_call(*args, **kwargs)
 
     # overriding CallableCallbacks
     def on_callable_end(self):
@@ -95,21 +83,22 @@ class EndpointCallback(mod_wrap_utils.CallableCallbacks[T]):
 
         ret = super().on_callable_return(ret=ret, **kwargs)
 
-        self.on_response(response=ret)
+        self.on_endpoint_response(response=ret)
 
         return ret
 
-    def on_response(self, response: Any) -> None:
+    # our optional
+    def on_endpoint_response(self, response: Any) -> None:
         """Called after each non-error response."""
 
         logger.warning("No on_response method defined for %s.", self)
-
 
 #    def on_chunk(self, response: Any) -> None:
 #        """Called after receiving a chunk from a request."""
 #        self.cost.n_stream_chunks += 1
 
-    def on_generation(self, response: Any) -> None:
+    # our optional
+    def on_endpoint_generation(self, response: Any) -> None:
         """Called after each completion request."""
 
         self.cost.n_successful_requests += 1
@@ -117,12 +106,14 @@ class EndpointCallback(mod_wrap_utils.CallableCallbacks[T]):
 
         # self.on_request(response)
 
-    def on_generation_chunk(self, response: Any) -> None:
+    # our optional
+    def on_endpoint_generation_chunk(self, response: Any) -> None:
         """Called after receiving a chunk from a completion request."""
 
         self.cost.n_stream_chunks += 1
 
-    def on_classification(self, response: Any) -> None:
+    # our optional
+    def on_endpoint_classification(self, response: Any) -> None:
         """Called after each classification response."""
 
         self.cost.n_successful_requests += 1
@@ -135,45 +126,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     """API usage, pacing, and utilities for API endpoints."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
-    @dataclass
-    class EndpointSetup():
-        """Class for storing supported endpoint information.
-
-        See [track_all_costs][trulens_eval.feedback.provider.endpoint.base.Endpoint.track_all_costs]
-        for usage.
-        """
-        arg_flag: str
-        module_name: str
-        class_name: str
-
-    ENDPOINT_SETUPS: ClassVar[List[EndpointSetup]] = [
-        EndpointSetup(
-            arg_flag="with_openai",
-            module_name="trulens_eval.feedback.provider.endpoint.openai",
-            class_name="OpenAIEndpoint"
-        ),
-        EndpointSetup(
-            arg_flag="with_hugs",
-            module_name="trulens_eval.feedback.provider.endpoint.hugs",
-            class_name="HuggingfaceEndpoint"
-        ),
-        EndpointSetup(
-            arg_flag="with_litellm",
-            module_name="trulens_eval.feedback.provider.endpoint.litellm",
-            class_name="LiteLLMEndpoint"
-        ),
-        EndpointSetup(
-            arg_flag="with_bedrock",
-            module_name="trulens_eval.feedback.provider.endpoint.bedrock",
-            class_name="BedrockEndpoint"
-        ),
-        EndpointSetup(
-            arg_flag="with_cortex",
-            module_name="trulens_eval.feedback.provider.endpoint.cortex",
-            class_name="CortexEndpoint"
-        )
-    ]
 
     instrumented_methods: ClassVar[Dict[Any, List[Tuple[Callable, Callable, Type[Endpoint]]]]] \
         = defaultdict(list)
@@ -290,6 +242,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """
 
         tracer = mod_trace.get_tracer()
+        ret = None
         with tracer.phantom() as span:
             ret = func(*args, **kwargs)
 
@@ -522,5 +475,5 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         )
 
 
-EndpointCallback.model_rebuild()
+# EndpointCallback.model_rebuild()
 Endpoint.model_rebuild()
