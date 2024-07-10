@@ -42,7 +42,6 @@ from trulens_eval.utils import threading as mod_threading_utils
 # from trulens_eval import schema as tru_schema # also breaks pydantic
 
 logger = logging.getLogger(__name__)
-
 A = TypeVar("A")
 
 ImpCallable = Callable[[A], Union[float, Tuple[float, Dict[str, Any]]]]
@@ -1126,7 +1125,14 @@ Feedback function signature:
                 if k in kwargs:
                     arg_vals[k] = [kwargs[k]]
                 else:
-                    arg_vals[k] = list(q.get(source_data))
+                    logger.debug(
+                        f"Calling q.get with source_data: {source_data}"
+                    )
+                    result = q.get(source_data)
+                    logger.debug(
+                        f"Result of q.get(source_data) for key '{k}': {result}"
+                    )
+                    arg_vals[k] = list(result)
             except Exception as e:
                 raise InvalidSelector(
                     selector=q, source_data=source_data
