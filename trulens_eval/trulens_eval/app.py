@@ -834,6 +834,28 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         )
 
     # For use as a context manager.
+    async def __aenter__(self):
+        tracer: mod_trace.Tracer = mod_trace.get_tracer()
+        # recording = tracer.__enter__()
+
+        recording_span_ctx = await tracer.arecording()
+        recording_span: mod_trace.PhantomSpanRecordingContext = await recording_span_ctx.__aenter__()
+        recording: RecordingContext = RecordingContext(
+            app=self,
+            tracer=tracer,
+            span=recording_span,
+            span_ctx=recording_span_ctx
+        )
+        recording_span.recording = recording
+        
+        # recording.ctx = ctx
+
+        token = self.recording_contexts.set(recording)
+        recording.token = token
+
+        return recording
+
+    # For use as a context manager.
     def __enter__(self):
         tracer: mod_trace.Tracer = mod_trace.get_tracer()
         # recording = tracer.__enter__()
@@ -863,12 +885,17 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         assert recording.tracer is not None, "Not in a tracing context."
 
         self.recording_contexts.reset(recording.token)
-        recording.span_ctx.__exit__(exc_type, exc_value, exc_tb)
+        return recording.span_ctx.__exit__(exc_type, exc_value, exc_tb)
+    
+    # For use as a context manager.
+    async def __aexit__(self, exc_type, exc_value, exc_tb):
+        recording: RecordingContext = self.recording_contexts.get()
 
-        if exc_type is not None:
-            raise exc_value
+        assert recording is not None, "Not in a tracing context."
+        assert recording.tracer is not None, "Not in a tracing context."
 
-        return
+        self.recording_contexts.reset(recording.token)
+        return await recording.span_ctx.__aexit__(exc_type, exc_value, exc_tb)
 
     # WithInstrumentCallbacks requirement
     def get_active_contexts(self) -> Iterable[RecordingContext]:

@@ -339,8 +339,6 @@ class Instrument(object):
             ):
                 super().__init__(**kwargs)
 
-                print("init callbacks for ", query, func_name)
-
                 self.func_name: str = func_name
                 self.cls: Type = cls
                 self.sig: inspect.Signature = sig
@@ -362,8 +360,6 @@ class Instrument(object):
                 return super().on_callable_call(bindings=bindings, **kwargs)
 
             def on_callable_end(self):
-                print("exiting callbacks for ", query, method_name)
-
                 span = self.span
                 span.call_id = self.call_id
                 span.obj = self.obj
@@ -382,23 +378,12 @@ class Instrument(object):
                 span.pid = os.getpid()
                 span.tid = th.get_native_id()
 
-                """
-                if self.span.is_root():
-                    apps = getattr(self.wrapper, Instrument.APPS)
-                    for app in apps:
-                        for ctx in app.get_active_contexts():
-                            # Notify apps if this was a root call.        
-                            app.on_new_root_span(ctx=ctx, root_span=self.span)
-                """
-
                 if self.error is not None:
                     self.span_context.__exit__(
                         type(self.error), self.error, self.error.__traceback__
                     )
                 else:
                     self.span_context.__exit__(None, None, None)
-
-        print("creating wrapped callable for ", query, method_name)
 
         return wrap_callable(
             func=func,

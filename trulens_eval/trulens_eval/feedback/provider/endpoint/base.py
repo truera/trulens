@@ -71,7 +71,6 @@ class EndpointCallback(mod_wrap_utils.CallableCallbacks[T]):
                 type(self.error), self.error, self.error.__traceback__
             )
         else:
-            assert self.cost_span is not None
             self.cost += self.cost_span.cost
             self.cost_span_context.__exit__(None, None, None)
 

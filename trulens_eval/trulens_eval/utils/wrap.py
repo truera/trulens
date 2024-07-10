@@ -493,7 +493,7 @@ def wrap_callable(
 
             callback.on_callable_end()
 
-            raise wrapped_e from e
+            raise wrapped_e # intentionally not "from e"
 
         # The rest of the code invokes the appropriate callbacks and then
         # populates the content of span created above.

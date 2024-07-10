@@ -262,7 +262,7 @@ class DummyEndpointCallback(EndpointCallback):
     def on_callable_return(
         self, ret: Any, **kwargs
     ):
-        super().on_callable_return(ret=ret, **kwargs)
+        ret = super().on_callable_return(ret=ret, **kwargs)
 
         if "usage" in ret:
             self.cost.n_successful_requests += 1
@@ -282,6 +282,8 @@ class DummyEndpointCallback(EndpointCallback):
 
         else:
             logger.warning("Could not determine cost from DummyAPI call.")
+
+        return ret
 
     #def on_iteration(self):
     #    self.cost.n_stream_chunks += 1

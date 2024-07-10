@@ -85,6 +85,9 @@ class Span(pydantic.BaseModel):
     def finish(self):
         pass
 
+    async def afinish(self):
+        return self.finish()
+
     def iter_children(
         self,
         transitive: bool = True,
@@ -177,10 +180,8 @@ class PhantomSpanRecordingContext(PhantomSpan):
 
     def finish(self):
         app = self.recording.app
-        print(f"finishing context for app {app.app_id} for {self}")
 
         for span in self.iter_children(transitive=False):
-            print(f"got: {span}")
             if not isinstance(span, LiveSpanCall):
                 continue
             app.on_new_root_span(recording=self.recording, root_span=span)
@@ -412,7 +413,6 @@ class Tracer(pydantic.BaseModel):
 
     @contextlib.contextmanager
     def _span(self, cls, **kwargs):
-        print("tracer", cls.__name__)
         context = Context(trace_id=self.trace_id, tracer=self)
         span = cls(
             context=context, tracer=self, parent=self.context.get(), **kwargs
@@ -428,7 +428,29 @@ class Tracer(pydantic.BaseModel):
         finally:
             self.context.reset(token)
             span.finish()
-            return
+            if span.error is not None:
+                raise span.error
+
+    @contextlib.asynccontextmanager
+    async def _aspan(self, cls, **kwargs):
+        print("tracer", cls.__name__)
+        context = Context(trace_id=self.trace_id, tracer=self)
+        span = cls(
+            context=context, tracer=self, parent=self.context.get(), **kwargs
+        )
+        self.spans_[context] = span
+
+        token = self.context.set(context)
+
+        try:
+            yield span
+        except BaseException as e:
+            span.error = e
+        finally:
+            self.context.reset(token)
+            await span.afinish()
+            if span.error is not None:
+                raise span.error
 
     def recording(self):
         return self._span(PhantomSpanRecordingContext)
@@ -441,6 +463,18 @@ class Tracer(pydantic.BaseModel):
 
     def phantom(self):
         return self._span(PhantomSpan)
+    
+    async def arecording(self):
+        return self._aspan(PhantomSpanRecordingContext)
+
+    async def amethod(self):
+        return self._aspan(LiveSpanCall)
+
+    async def acost(self, cost: Optional[mod_base_schema.Cost] = None):
+        return self._aspan(PhantomSpanCost, cost=cost)
+
+    async def aphantom(self):
+        return self._aspan(PhantomSpan)
 
     @property
     def spans(self):
@@ -452,19 +486,39 @@ class NullTracer(Tracer):
 
     @contextlib.contextmanager
     def _span(self, cls):
-        print("null", cls.__name__)
         context = Context(trace_id=self.trace_id, tracer=self)
         span = cls(context=context, tracer=self, parent=self.context.get())
         token = self.context.set(context)
+
+        error = None
 
         try:
             yield span
         except BaseException as e:
             # ignore exception since spans are also ignored/not recorded
-            pass
+            error = e
         finally:
             self.context.reset(token)
-            return
+            if error is not None:
+                raise error
+            
+    @contextlib.asynccontextmanager
+    async def _aspan(self, cls):
+        context = Context(trace_id=self.trace_id, tracer=self)
+        span = cls(context=context, tracer=self, parent=self.context.get())
+        token = self.context.set(context)
+
+        error = None
+
+        try:
+            yield span
+        except BaseException as e:
+            # ignore exception since spans are also ignored/not recorded
+            error = e
+        finally:
+            self.context.reset(token)
+            if error is not None:
+                raise error
 
     @property
     def spans(self):
