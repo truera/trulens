@@ -15,8 +15,8 @@ import sys
 from types import ModuleType
 import typing
 from typing import (
-    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator,
-    List, Optional, Sequence, Type, TypeVar, Union
+    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterable,
+    Iterator, List, Optional, Protocol, Sequence, Type, TypeVar, Union
 )
 
 T = TypeVar("T")
@@ -136,6 +136,36 @@ def callable_name(c: Callable):
         return callable_name(c.__call__)
 
     return str(c)
+
+
+def superstack() -> Iterator['frame']:
+    """Get the current stack (not including this function) with frames reaching
+    across Tasks and threads.
+    """
+
+    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    # NOTE: skipping offset frames is done below since the full stack may need
+    # to be reconstructed there.
+
+    # Using queue for frames as additional frames may be added due to handling threads.
+    q = queue.Queue()
+    for f in frames:
+        q.put(f)
+
+    while not q.empty():
+        f = q.get()
+        yield f
+
+        if id(f.f_code) == id(_future_target_wrapper.__code__):
+            locs = f.f_locals
+
+            assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
+            for fi in locs['pre_start_stack']:
+                q.put(fi.frame)
+
+            continue
+
+    return
 
 
 def id_str(obj: Any) -> str:
@@ -583,113 +613,6 @@ def get_first_local_in_call_stack(
     except StopIteration:
         logger.debug("no frames found")
         return None
-
-
-# Wrapping utilities
-
-
-class OpaqueWrapper(Generic[T]):
-    """Wrap an object preventing all access.
-
-    Any access except to
-    [unwrap][trulens_eval.utils.python.OpaqueWrapper.unwrap] will result in an
-    exception with the given message.
-
-    Args:
-        obj: The object to wrap.
-
-        e: The exception to raise when an attribute is accessed.
-    """
-
-    def __init__(self, obj: T, e: Exception):
-        self._obj = obj
-        self._e = e
-
-    def unwrap(self) -> T:
-        """Get the wrapped object back."""
-        return self._obj
-
-    def __getattr__(self, name):
-        raise self._e
-
-    def __setattr__(self, name, value):
-        if name in ["_obj", "_e"]:
-            return super().__setattr__(name, value)
-        raise self._e
-
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        raise self._e
-
-
-def wrap_awaitable(
-    awaitable: Awaitable[T],
-    on_await: Optional[Callable[[], Any]] = None,
-    on_done: Optional[Callable[[T], Any]] = None
-) -> Awaitable[T]:
-    """Wrap an awaitable in another awaitable that will call callbacks before
-    and after the given awaitable finishes.
-
-    Note that the resulting awaitable needs to be awaited for the callback to
-    eventually trigger.
-
-    Args:
-        awaitable: The awaitable to wrap.
-
-        on_await: The callback to call when the wrapper awaitable is awaited but
-            before the wrapped awaitable is awaited.
-        
-        on_done: The callback to call with the result of the wrapped awaitable
-            once it is ready.
-    """
-
-    async def wrapper(awaitable):
-        if on_await is not None:
-            on_await()
-
-        val = await awaitable
-
-        if on_done is not None:
-            on_done(val)
-
-        return val
-
-    return wrapper(awaitable)
-
-
-def wrap_generator(
-    gen: Generator[T, None, None],
-    on_iter: Optional[Callable[[], Any]] = None,
-    on_next: Optional[Callable[[T], Any]] = None,
-    on_done: Optional[Callable[[], Any]] = None
-) -> Generator[T, None, None]:
-    """Wrap a generator in another generator that will call callbacks at various
-    points in the generation process.
-
-    Args:
-        gen: The generator to wrap.
-
-        on_iter: The callback to call when the wrapper generator is created but
-            before a first iteration is produced.
-
-        on_next: The callback to call with the result of each iteration of the
-            wrapped generator.
-
-        on_done: The callback to call when the wrapped generator is exhausted.
-    """
-
-    def wrapper(gen):
-        if on_iter is not None:
-            on_iter()
-
-        for val in gen:
-            if on_next is not None:
-                on_next(val)
-            yield val
-
-        if on_done is not None:
-            on_done()
-
-    return wrapper(gen)
 
 
 # Class utilities

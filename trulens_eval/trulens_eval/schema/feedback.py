@@ -15,10 +15,10 @@ import pydantic
 from trulens_eval import app as mod_app
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import types as mod_types_schema
+from trulens_eval.utils import json as mod_json
 from trulens_eval.utils import pyschema
 from trulens_eval.utils import serial
-from trulens_eval.utils.json import obj_id_of_obj
-from trulens_eval.utils.text import retab
+from trulens_eval.utils import text as mod_text
 
 T = TypeVar("T")
 
@@ -26,9 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class Select:
-    """
-    Utilities for creating selectors using Lens and aliases/shortcuts.
-    """
+    """Utilities for creating selectors using Lens and aliases/shortcuts."""
 
     # TODEP
     Query = serial.Lens
@@ -258,7 +256,7 @@ class FeedbackCall(serial.SerialModel):
             out += f"{tab}{k} = {v}\n"
         out += f"{tab}ret = {self.ret}\n"
         if self.meta:
-            out += f"{tab}meta = \n{retab(tab=tab*2, s=pformat(self.meta))}\n"
+            out += f"{tab}meta = \n{mod_text.retab(tab=tab*2, s=pformat(self.meta))}\n"
 
         return out
 
@@ -321,21 +319,30 @@ class FeedbackResult(serial.SerialModel):
     cost: mod_base_schema.Cost = pydantic.Field(
         default_factory=mod_base_schema.Cost
     )
+    """Costs for this feedback result."""
 
-    # Given name of the feedback.
     name: str
+    """Given name of the feedback."""
 
-    # Individual feedback function invocations.
     calls: List[FeedbackCall] = []
+    """Individual feedback function invocations.
+    
+    More than one call would be noted if the selectors name more than one value
+    for some feedback argument.
+    """
 
-    # Final result, potentially aggregating multiple calls.
     result: Optional[float] = None
+    """Final result, potentially aggregating multiple calls."""
 
-    # Error information if there was an error.
     error: Optional[str] = None
+    """Error info if there was an error."""
 
-    # TODO: doc
     multi_result: Optional[str] = None
+    """Another result for feedback functions with multiple results.
+    
+    !!! Warning
+        This option might be outdated.
+    """
 
     def __init__(
         self,
@@ -345,7 +352,7 @@ class FeedbackResult(serial.SerialModel):
         super().__init__(feedback_result_id="temporary", **kwargs)
 
         if feedback_result_id is None:
-            feedback_result_id = obj_id_of_obj(
+            feedback_result_id = mod_json.obj_id_of_obj(
                 self.model_dump(), prefix="feedback_result"
             )
 
@@ -497,7 +504,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
         if feedback_definition_id is None:
             if implementation is not None:
-                feedback_definition_id = obj_id_of_obj(
+                feedback_definition_id = mod_json.obj_id_of_obj(
                     self.model_dump(), prefix="feedback_definition"
                 )
             else:

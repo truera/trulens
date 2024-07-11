@@ -48,7 +48,8 @@ provider you need!
 
 ## 🐛 Fix Bugs
 
-Most bugs are reported and tracked in the Github [Issues](https://github.com/truera/trulens/issues) Page. We try our best in
+Most bugs are reported and tracked in the Github
+[Issues](https://github.com/truera/trulens/issues) Page. We try our best in
 triaging and tagging these issues:
 
 Issues tagged as bug are confirmed bugs. New contributors may want to start with

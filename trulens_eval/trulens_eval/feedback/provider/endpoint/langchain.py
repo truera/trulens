@@ -1,6 +1,5 @@
-import inspect
 import logging
-from typing import Any, Callable, ClassVar, Dict, Optional, Union
+from typing import Any, TypeVar, Union
 
 from langchain.chat_models.base import BaseChatModel
 from langchain.llms.base import BaseLLM
@@ -10,22 +9,20 @@ from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
-class LangchainCallback(EndpointCallback):
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
-    def handle_classification(self, response: Dict) -> None:
-        super().handle_classification(response)
-
-    def handle_generation(self, response: Any) -> None:
-        super().handle_generation(response)
+class LangchainCallback(EndpointCallback[T]):
+    """Process langchain wrapped calls to extract cost information.
+    
+    !!! WARNING
+        There is currently no cost tracking other than the number of requests
+        included for langchain calls.
+    """
 
 
 class LangchainEndpoint(Endpoint):
-    """
-    LangChain endpoint.
-    """
+    """LangChain endpoint."""
 
     # Cannot validate BaseLLM / BaseChatModel as they are pydantic v1 and there
     # is some bug involving their use within pydantic v2.
@@ -34,18 +31,6 @@ class LangchainEndpoint(Endpoint):
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="langchain")
-
-    def handle_wrapped_call(
-        self,
-        func: Callable,
-        bindings: inspect.BoundArguments,
-        response: Any,
-        callback: Optional[EndpointCallback],
-    ) -> None:
-        # TODO: Implement this and wrapped
-        self.global_callback.handle_generation(response=None)
-        if callback is not None:
-            callback.handle_generation(response=None)
 
     def __init__(self, chain: Union[BaseLLM, BaseChatModel], *args, **kwargs):
         if chain is None:

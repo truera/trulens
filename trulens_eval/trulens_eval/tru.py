@@ -16,8 +16,7 @@ import threading
 from threading import Thread
 from time import sleep
 from typing import (
-    Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple,
-    TypeVar, Union
+    Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 )
 
 import humanize
@@ -40,7 +39,7 @@ from trulens_eval.utils import serial
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.imports import static_resource
 from trulens_eval.utils.python import Future  # code style exception
-from trulens_eval.utils.python import OpaqueWrapper
+from trulens_eval.utils.wrap import OpaqueWrapper
 
 pp = PrettyPrinter()
 

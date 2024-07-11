@@ -282,6 +282,7 @@ nav:
           - trulens_eval/api/utils/json.md
           - trulens_eval/api/utils/frameworks.md
           - trulens_eval/api/utils/utils.md
+          - trulens_eval/api/utils/wrap.md
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
       - 🧭 Design: trulens_eval/contributing/design.md

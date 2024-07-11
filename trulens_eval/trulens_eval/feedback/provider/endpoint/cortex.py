@@ -31,7 +31,7 @@ class CortexCallback(EndpointCallback):
         usage = response['usage']
 
         # Increment number of requests.
-        super().handle_generation(response)
+        super().on_endpoint_generation(response)
 
         # Assume a response that had usage field was successful. Note at the time of writing 06/12/2024, the usage
         # information from Cortex LLM functions is only available when called via snow SQL. It's not fully supported in
@@ -90,7 +90,7 @@ class CortexEndpoint(Endpoint):
                 self.global_callback.handle_generation(response=response)
 
                 if callback is not None:
-                    callback.handle_generation(response=response)
+                    callback.on_endpoint_generation(response=response)
 
             if not counted_something:
                 logger.warning(

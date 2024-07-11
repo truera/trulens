@@ -13,11 +13,9 @@ from tqdm.auto import tqdm
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
-from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
-from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
+from trulens_eval.feedback.provider.endpoint import DummyEndpoint, HuggingfaceEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.python import Future
-from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
@@ -95,8 +93,6 @@ class HuggingfaceBase(Provider):
     def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
         ...
 
-    # TODEP
-    @_tci
     @abstractmethod
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
         ...
@@ -461,9 +457,7 @@ class HuggingfaceBase(Provider):
 
 
 class Huggingface(HuggingfaceBase):
-    """
-    Out of the box feedback functions calling Huggingface APIs.
-    """
+    """Out of the box feedback functions calling Huggingface APIs."""
 
     endpoint: Endpoint
 
@@ -653,9 +647,7 @@ class Huggingface(HuggingfaceBase):
 
 
 class HuggingfaceLocal(HuggingfaceBase):
-    """
-    Out of the box feedback functions calling Huggingface APIs.
-    """
+    """Out of the box feedback functions calling Huggingface APIs."""
 
     _cached_tokenizers: Dict[str, Any] = {}
     _cached_models: Dict[str, Any] = {}
@@ -738,23 +730,12 @@ class HuggingfaceLocal(HuggingfaceBase):
         )
 
 
-class Dummy(Huggingface):
+class DummyHuggingface(Huggingface):
+    """Fake request.post-based provider.
+    
+    Does not make any networked requests but pretends to.
+    """
 
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        error_prob: float = 1 / 100,
-        loading_prob: float = 1 / 100,
-        freeze_prob: float = 1 / 100,
-        overloaded_prob: float = 1 / 100,
-        alloc: int = 1024 * 1024,
-        rpm: float = 600,
-        delay: float = 1.0,
-        **kwargs
-    ):
-        kwargs['name'] = name or "dummyhugs"
-        kwargs['endpoint'] = DummyEndpoint(
-            name="dummyendhugspoint", **locals_except("self", "name", "kwargs")
-        )
-
+    def __init__(self, **kwargs):
+        kwargs['endpoint'] = DummyEndpoint()
         super().__init__(**kwargs)

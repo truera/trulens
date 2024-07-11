@@ -1,4 +1,5 @@
 from trulens_eval.feedback.provider.base import Provider
+from trulens_eval.feedback.provider.dummy import DummyLLMProvider
 from trulens_eval.feedback.provider.hugs import Huggingface
 from trulens_eval.feedback.provider.hugs import HuggingfaceLocal
 from trulens_eval.feedback.provider.langchain import Langchain
@@ -31,4 +32,6 @@ __all__ = [
     "Bedrock",
     "Langchain",
     "Cortex",
+    "DummyLLMProvider",
+    "DummyHugs"
 ]

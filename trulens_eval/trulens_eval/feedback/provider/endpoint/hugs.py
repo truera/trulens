@@ -1,6 +1,5 @@
-import inspect
 import json
-from typing import Callable, Dict, Hashable, Optional
+from typing import TypeVar
 
 import requests
 
@@ -8,43 +7,26 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.keys import _check_key
 from trulens_eval.keys import get_huggingface_headers
-from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.python import SingletonPerName
+
+T = TypeVar("T")
 
 
-class HuggingfaceCallback(EndpointCallback):
-
-    def handle_classification(self, response: requests.Response) -> None:
-        # Huggingface free inference api doesn't seem to have its own library
-        # and the docs say to use `requests`` so that is what we instrument and
-        # process to track api calls.
-
-        super().handle_classification(response)
-
-        if response.ok:
-            self.cost.n_successful_requests += 1
-            content = json.loads(response.text)
-
-            # Handle case when multiple items returned by hf api
-            for item in content:
-                self.cost.n_classes += len(item)
-
-
-class HuggingfaceEndpoint(Endpoint):
-    """
-    Huggingface. Instruments the requests.post method for requests to
-    "https://api-inference.huggingface.co".
+class HuggingfaceCallback(EndpointCallback[T]):
+    """Process huggingface wrapped calls to extract cost information.
+    
+    !!! Note
+        Huggingface free inference api does not have its own modules and the
+        documentation suggests to use `requests`. Therefore, this class
+        processes request module responses.
     """
 
-    def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="huggingface")
+    def on_endpoint_response(self, response: requests.Response) -> None:
+        """Process a returned call."""
 
-    def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments,
-        response: requests.Response, callback: Optional[EndpointCallback]
-    ) -> None:
-        # Call here can only be requests.post .
+        super().on_endpoint_response(response)
+
+        bindings = self.bindings
 
         if "url" not in bindings.arguments:
             return
@@ -57,10 +39,30 @@ class HuggingfaceEndpoint(Endpoint):
         # type of request. Currently we use huggingface only for classification
         # in feedback but this can change.
 
-        self.global_callback.handle_classification(response=response)
+        if response.ok:
+            content = json.loads(response.text)
+            self.on_endpoint_classification(response=content)
 
-        if callback is not None:
-            callback.handle_classification(response=response)
+    def on_endpoint_classification(self, response: dict) -> None:
+        """Process a classification response."""
+
+        super().on_endpoint_classification(response)
+
+        # Handle case when multiple items returned by hf api
+        for item in response:
+            self.cost.n_classes += len(item)
+
+
+class HuggingfaceEndpoint(Endpoint):
+    """Huggingface endpoint.
+    
+    !!! Instruments
+        - module `requests` method `post` when making requests to
+        urls starting with "https://api-inference.huggingface.co".
+    """
+
+    def __new__(cls, *args, **kwargs):
+        return super(Endpoint, cls).__new__(cls, name="huggingface")
 
     def __init__(self, *args, **kwargs):
         if safe_hasattr(self, "name"):
