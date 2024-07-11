@@ -29,3 +29,15 @@ class CustomMemory(Dummy):
             data +
             f" and I'm keeping around {sys.getsizeof(self.temporary)} bytes"
         )
+
+    @instrument
+    async def aremember(self, data: str):
+        """Add a piece of data to memory."""
+
+        # Fake delay.
+        await self.dummy_await()
+
+        self.messages.append(
+            data +
+            f" and I'm keeping around {sys.getsizeof(self.temporary)} bytes"
+        )

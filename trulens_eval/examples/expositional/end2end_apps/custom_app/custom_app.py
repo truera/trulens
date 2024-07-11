@@ -4,8 +4,10 @@ This app does not make any external network requests or hard work but has some
 delays and allocs to mimic the effects of such things.
 """
 
+import asyncio
 from concurrent.futures import wait
-from typing import Tuple
+from typing import List, Optional, Tuple
+import logging
 
 from examples.expositional.end2end_apps.custom_app.custom_agent import \
     CustomAgent
@@ -25,6 +27,8 @@ from examples.expositional.end2end_apps.custom_app.dummy import Dummy
 from trulens_eval.tru_custom_app import instrument
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
+logger = logging.getLogger(__name__)
+
 instrument.method(CustomMemory, "remember")
 
 
@@ -37,8 +41,14 @@ class CustomTemplate(Dummy):
         self.template = template
 
     @instrument
-    def fill(self, question, answer):
-        """Fill in the template with the question and answer."""
+    def fill(self, question: str, answer: str) -> str:
+        """Fill in the template with the question and answer.
+        
+        Args:
+            question: The question to fill in.
+            
+            answer: The answer to fill in.
+        """
 
         return self.template[:] \
             .replace("{question}", question) \
@@ -49,25 +59,43 @@ class CustomApp(Dummy):
     """Dummy app implementation.
     
     Contains:
-    - A memory component.
+        - A memory component.
 
-    - A retriever component.
+        - A retriever component.
 
-    - A language model component.
+        - A language model component.
 
-    - A template component.
+        - A template component.
 
-    - A few tools. Each is a random string->string method that is applied to
-      retrieved chunks.
+        - A few tools. Each is a random string->string method that is applied to
+          retrieved chunks.
 
-    - A reranker component.
+        - A reranker component.
 
-    - A few agents. Be careful about these as these replicate the custom app
-      itself and might produce infinite loops.
+        - A few agents. Be careful about these as these replicate the custom app
+          itself and might produce infinite loops.
+
+    Args:
+        num_agents: Number of agents to create.
+
+        use_threads: Whether to use threads for processing chunks. This is for
+            testing/tracing threads. Result might be non-deterministic though.
     """
 
-    def __init__(self, num_agents: int = 2, **kwargs):
+    DEFAULT_USE_THREADS: bool = False
+
+    def __init__(
+        self,
+        num_agents: int = 2,
+        use_threads: Optional[bool] = None,
+        **kwargs
+    ):
+        if use_threads is None:
+            use_threads = CustomApp.DEFAULT_USE_THREADS
+
         super().__init__(**kwargs)
+
+        self.use_threads = use_threads
 
         self.memory = CustomMemory(**kwargs)
 
@@ -100,46 +128,116 @@ class CustomApp(Dummy):
     def process_chunk_by_tool(
         self, chunk_and_score: Tuple[str, float], tool_num: int = 0
     ) -> str:
+        """Process a (retrieved) chunk by a specified tool.
+        
+        Args:
+            chunk_and_score: The chunk to process including its text and score.
+
+            tool_num: The tool number to use.
+        """
+
         return (
             self.tools[tool_num % len(self.tools)].invoke(chunk_and_score[0])
         )
 
     @instrument
-    def get_context(self, input: str):
-        """Invoke and process contexts retrieval."""
+    async def aprocess_chunk_by_tool(
+        self, chunk_and_score: Tuple[str, float], tool_num: int = 0
+    ) -> str:
+        """Process a (retrieved) chunk by a specified tool.
+        
+        Args:
+            chunk_and_score: The chunk to process including its text and score.
 
-        chunks = self.retriever.retrieve_chunks(input)
+            tool_num: The tool number to use.
+        """
+
+        return (
+            await
+            self.tools[tool_num % len(self.tools)].ainvoke(chunk_and_score[0])
+        )
+
+    @instrument
+    def get_context(self, query: str) -> List[str]:
+        """Invoke and process contexts retrieval.
+        
+        Args:
+            query: The input to retrieve context for.
+        """
+
+        chunks = self.retriever.retrieve_chunks(query)
 
         chunks = self.reranker.rerank(
-            query_text=input, chunks=chunks, chunk_scores=None
+            query_text=query, chunks=chunks, chunk_scores=None
         ) if self.reranker else chunks
 
-        # NOTE(piotrm): Disabling threaded parallel execution for now due to non-determinism problems
-        # when checking golden test results.
+        if self.use_threads:
+            # Creates a few threads to process chunks in parallel to test apps
+            # that make use of threads.
+            ex = ThreadPoolExecutor(max_workers=max(1, len(chunks)))
 
-        # Creates a few threads to process chunks in parallel to test apps that
-        # make use of threads.
-        # ex = ThreadPoolExecutor(max_workers=max(1, len(chunks)))
+            futures = list(
+                ex.submit(
+                    self.process_chunk_by_tool,
+                    chunk_and_score=chunk,
+                    tool_num=i
+                ) for i, chunk in enumerate(chunks)
+            )
 
-        #futures = list(
-        #    ex.submit(
-        #        self.process_chunk_by_tool, chunk_and_score=chunk, tool_num=i
-        #    ) for i, chunk in enumerate(chunks)
-        #)
-
-        #wait(futures)
-        #chunks = list(future.result() for future in futures)
-
-        # Temporary deterministic processing.
-        chunks = list(map(self.process_chunk_by_tool, enumerate(chunks)))
+            wait(futures)
+            chunks = list(future.result() for future in futures)
+        else:
+            # Non-threading but eterministic processing.
+            chunks = list(
+                self.process_chunk_by_tool(i, chunk)
+                for chunk in enumerate(chunks)
+            )
 
         return chunks
 
     @instrument
-    def respond_to_query(self, query: str):
-        """Respond to a query. This is the main method."""
+    async def aget_context(self, query: str) -> List[str]:
+        """Invoke and process contexts retrieval.
+        
+        Args:
+            query: The input to retrieve context for.
+        """
 
-        # Run the agents on the same input. These perform the same steps as this app.
+        chunks = await self.retriever.aretrieve_chunks(query)
+
+        chunks = await self.reranker.arerank(
+            query_text=query, chunks=chunks, chunk_scores=None
+        ) if self.reranker else chunks
+
+        if self.use_threads:
+            logger.warning(
+                "use_threads=True but threads are not used in the async version of get_context."
+            )
+
+        # TODO: how to make this deterministic for testing against golden sets?
+        tasks = list(
+            asyncio.create_task(self.aprocess_chunk_by_tool(chunk_and_score=chunk,tool_num=i))
+            for i, chunk in enumerate(chunks)
+        )
+
+        results, _ = await asyncio.wait(tasks)
+
+        chunks = list(task.result() for task in results)
+
+        return chunks
+
+    @instrument
+    def respond_to_query(self, query: str) -> str:
+        """Respond to a query.
+        
+        This is the main method.
+        
+        Args:
+            query: The query to respond to.
+        """
+
+        # Run the agents on the same input. These perform the same steps as this
+        # app.
         for agent in self.agents:
             agent.invoke(query)
 
@@ -160,5 +258,40 @@ class CustomApp(Dummy):
 
         # Do some more remembering.
         self.memory.remember(output)
+
+        return output
+    
+    @instrument
+    async def arespond_to_query(self, query: str) -> str:
+        """Respond to a query.
+        
+        This is the main method.
+        
+        Args:
+            query: The query to respond to.
+        """
+
+        # Run the agents on the same input. These perform the same steps as this
+        # app.
+        for agent in self.agents:
+            await agent.ainvoke(query)
+
+        # Get rerankined, process chunks.
+        chunks = await self.aget_context(query)
+
+        # Do some remembering.
+        await self.memory.aremember(query)
+
+        # Do some generation.
+        answer = await self.llm.agenerate(
+            ",".join(filter(lambda c: len(c) < 128, chunks))
+        )
+        # Skip sthe large chunk coming from CustomStackTool.
+
+        # Do some templating.
+        output = self.template.fill(question=query, answer=answer)
+
+        # Do some more remembering.
+        await self.memory.aremember(output)
 
         return output

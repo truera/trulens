@@ -31,3 +31,21 @@ class CustomRetriever(Dummy):
                 f"Relevant chunk: I allocated {sys.getsizeof(temporary)} bytes to pretend I'm doing something."
             ] * 3
         )[:self.num_contexts]
+
+    @instrument
+    async def aretrieve_chunks(self, data):
+        """Fake chunk retrieval."""
+
+        # Fake delay.
+        await self.dummy_await()
+
+        # Fake memory usage.
+        temporary = self.dummy_allocate()
+
+        return (
+            [
+                f"Relevant chunk: {data.upper()}",
+                f"Relevant chunk: {data[::-1] * 3}",
+                f"Relevant chunk: I allocated {sys.getsizeof(temporary)} bytes to pretend I'm doing something."
+            ] * 3
+        )[:self.num_contexts]
