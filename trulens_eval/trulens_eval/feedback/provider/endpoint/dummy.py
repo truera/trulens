@@ -112,6 +112,12 @@ class DummyAPI(pydantic.BaseModel):
         assert self.error_prob + self.freeze_prob + self.overloaded_prob + self.loading_prob <= 1.0, \
             "Total probabilites should not exceed 1.0 ."
 
+    async def apost(
+        self, url: str, payload: JSON, timeout: Optional[float] = None
+    ) -> Any:
+        # TODO: use async inside post
+        return self.post(url=url, payload=payload, timeout=timeout)
+
     def post(
         self, url: str, payload: JSON, timeout: Optional[float] = None
     ) -> Any:
@@ -224,6 +230,23 @@ class DummyAPI(pydantic.BaseModel):
                 'args': args  # include extra args to see them in post span
             }
         )
+    
+    async def acompletion(
+        self, *args, model: str, temperature: float = 0.0, prompt: str
+    ) -> Dict:
+        """Fake text completion request."""
+
+        # Fake http post request, might raise an exception or cause delays.
+        return await self.apost(
+            url="https://fakeservice.com/classify",
+            payload={
+                'mode': 'completion',
+                'model': model,
+                'prompt': prompt,
+                'temperature': temperature,
+                'args': args  # include extra args to see them in post span
+            }
+        )
 
     def _fake_classification(self):
         # Simulated success outcome with some random scores. Should add up to 1.
@@ -261,6 +284,22 @@ class DummyAPI(pydantic.BaseModel):
             }
         )
 
+    async def aclassification(
+        self, *args, model: str = "fakeclassier", text: str
+    ) -> Dict:
+        """Fake classification request."""
+
+        # Fake http post request, might raise an exception or cause delays.
+        return await self.apost(
+            url=
+            "https://api-inference.huggingface.co/classify",  # url makes the fake post produce fake classification scores
+            payload={
+                'mode': 'classification',
+                'model': model,
+                'inputs': text,
+                'args': args  # include extra args to see them in post span
+            }
+        )
 
 class DummyAPICreator():
     """Creator of DummyAPI methods.
