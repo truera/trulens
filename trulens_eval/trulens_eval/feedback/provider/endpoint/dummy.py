@@ -230,7 +230,7 @@ class DummyAPI(pydantic.BaseModel):
                 'args': args  # include extra args to see them in post span
             }
         )
-    
+
     async def acompletion(
         self, *args, model: str, temperature: float = 0.0, prompt: str
     ) -> Dict:
@@ -300,6 +300,7 @@ class DummyAPI(pydantic.BaseModel):
                 'args': args  # include extra args to see them in post span
             }
         )
+
 
 class DummyAPICreator():
     """Creator of DummyAPI methods.

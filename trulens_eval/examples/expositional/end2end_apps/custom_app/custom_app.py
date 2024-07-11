@@ -110,9 +110,7 @@ class CustomApp(Dummy):
 
         self.use_parallel = use_parallel
 
-        self.memory = CustomMemory(
-            **kwargs, **comp_kwargs[CustomMemory]
-        )
+        self.memory = CustomMemory(**kwargs, **comp_kwargs[CustomMemory])
 
         self.retriever = CustomRetriever(
             **kwargs, **comp_kwargs[CustomRetriever]
@@ -129,10 +127,7 @@ class CustomApp(Dummy):
         # dumps the stack.
         self.tools = [
             CustomStackTool(**kwargs, **comp_kwargs[CustomStackTool])
-        ] + [
-            CustomTool(**kwargs, **comp_kwargs[CustomTool])
-            for _ in range(3)
-        ]
+        ] + [CustomTool(**kwargs, **comp_kwargs[CustomTool]) for _ in range(3)]
 
         self.agents = [
             CustomAgent(
@@ -143,9 +138,7 @@ class CustomApp(Dummy):
             ) for i in range(num_agents)
         ]
 
-        self.reranker = CustomReranker(
-            **kwargs, **comp_kwargs[CustomReranker]
-        )
+        self.reranker = CustomReranker(**kwargs, **comp_kwargs[CustomReranker])
 
         self.dummy_allocate()
 

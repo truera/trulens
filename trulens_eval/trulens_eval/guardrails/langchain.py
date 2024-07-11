@@ -81,9 +81,10 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         # Evaluate the filter on each, in parallel.
         with ThreadPoolExecutor(max_workers=max(1, len(docs))) as ex:
             future_to_doc = {
-                ex.
-                submit(lambda doc=doc: self.feedback(query, doc.page_content)):
-                doc for doc in docs
+                ex.submit(
+                    lambda doc=doc: self.feedback(query, doc.page_content)
+                ):
+                    doc for doc in docs
             }
             filtered = []
             for future in as_completed(future_to_doc):

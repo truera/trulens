@@ -31,12 +31,16 @@ class CustomLLM(Dummy):
         )['completion']
 
     @instrument
-    async def agenerate(self, prompt: str, temperature: Optional[float] = None) -> str:
+    async def agenerate(
+        self, prompt: str, temperature: Optional[float] = None
+    ) -> str:
         """Fake LLM generation."""
 
         if temperature is None:
             temperature = self.temperature
 
-        return (await self.api.acompletion(
-            model=self.model, temperature=temperature, prompt=prompt
-        ))['completion']
+        return (
+            await self.api.acompletion(
+                model=self.model, temperature=temperature, prompt=prompt
+            )
+        )['completion']

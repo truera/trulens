@@ -28,7 +28,8 @@ class CustomAgent(dummy.Dummy):
     def __init__(
         self,
         *args,
-        app: Any, description: Optional[str] = None,
+        app: Any,
+        description: Optional[str] = None,
         use_app: Optional[bool] = None,
         use_recorder: Optional[bool] = None,
         **kwargs
