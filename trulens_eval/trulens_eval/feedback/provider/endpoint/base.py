@@ -362,8 +362,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(
-                wrapped_thing if wrapped_thing !=
-                object else "unknown dynamically generated class(es)"
+                wrapped_thing if wrapped_thing != object else
+                "unknown dynamically generated class(es)"
             )
             for original, _, endpoint in wrappers:
                 print(

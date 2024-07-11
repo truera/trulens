@@ -44,11 +44,9 @@ class context_filter:
             with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
                 future_to_context = {
                     ex.submit(
-                        lambda context=context: self.feedback(
-                            kwargs[self.keyword_for_prompt], context
-                        )
-                    ):
-                        context for context in contexts
+                        lambda context=context: self.
+                        feedback(kwargs[self.keyword_for_prompt], context)
+                    ): context for context in contexts
                 }
                 filtered = []
                 for future in as_completed(future_to_context):
