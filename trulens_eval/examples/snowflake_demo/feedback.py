@@ -11,13 +11,13 @@ from trulens_eval.feedback.provider.cortex import Cortex
 from trulens_eval.feedback.provider.litellm import LiteLLM
 
 db_url = "snowflake://{user}:{password}@{account}/{dbname}/{schema}?warehouse={warehouse}&role={role}".format(
-    user=os.environ["SNOWFLAKE_USER"],
-    account=os.environ["SNOWFLAKE_ACCOUNT"],
-    password=os.environ["SNOWFLAKE_USER_PASSWORD"],
-    dbname=os.environ["SNOWFLAKE_DATABASE"],
-    schema=os.environ["SNOWFLAKE_SCHEMA"],
-    warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
-    role=os.environ["SNOWFLAKE_ROLE"],
+    user=os.environ["TRULENS_SNOWFLAKE_USER"],
+    account=os.environ["TRULENS_SNOWFLAKE_ACCOUNT"],
+    password=os.environ["TRULENS_SNOWFLAKE_USER_PASSWORD"],
+    dbname=os.environ["TRULENS_SNOWFLAKE_DATABASE"],
+    schema=os.environ["TRULENS_SNOWFLAKE_SCHEMA"],
+    warehouse=os.environ["TRULENS_SNOWFLAKE_WAREHOUSE"],
+    role=os.environ["TRULENS_SNOWFLAKE_ROLE"],
 )
 
 tru = Tru(database_url=db_url)

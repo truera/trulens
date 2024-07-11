@@ -37,20 +37,20 @@ class CortexSearchRetriever:
 
     def retrieve(self, query: str):
         connection_parameters = {
-            "account": os.environ["SNOWFLAKE_ACCOUNT"],
-            "user": os.environ["SNOWFLAKE_USER"],
-            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
-            "role": os.environ["SNOWFLAKE_ROLE"],
-            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+            "account": os.environ["TRULENS_SNOWFLAKE_ACCOUNT"],
+            "user": os.environ["TRULENS_SNOWFLAKE_USER"],
+            "password": os.environ["TRULENS_SNOWFLAKE_USER_PASSWORD"],
+            "role": os.environ["TRULENS_SNOWFLAKE_ROLE"],
+            "warehouse": os.environ["TRULENS_SNOWFLAKE_WAREHOUSE"],
         }
         session = None
         try:
             session = Session.builder.configs(connection_parameters).create()
             root = Root(session)
             cortex_search_service = root.databases[
-                os.environ["SNOWFLAKE_DATABASE"]].schemas[
-                    os.environ["SNOWFLAKE_SCHEMA"]].cortex_search_services[
-                        os.environ["SNOWFLAKE_CORTEX_SEARCH_SERVICE"]]
+                os.environ["TRULENS_SNOWFLAKE_DATABASE"]].schemas[
+                    os.environ["TRULENS_SNOWFLAKE_SCHEMA"]].cortex_search_services[
+                        os.environ["TRULENS_SNOWFLAKE_CORTEX_SEARCH_SERVICE"]]
             resp = cortex_search_service.search(
                 query=query,
                 columns=["doc_text"],

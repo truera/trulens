@@ -43,12 +43,12 @@ class Cortex(LLMProvider):
 
         # Create a Snowflake connector
         self_kwargs['snowflake_conn'] = snowflake.connector.connect(
-            account=os.environ["SNOWFLAKE_ACCOUNT"],
-            user=os.environ["SNOWFLAKE_USER"],
-            password=os.environ["SNOWFLAKE_USER_PASSWORD"],
-            database=os.environ["SNOWFLAKE_DATABASE"],
-            schema=os.environ["SNOWFLAKE_SCHEMA"],
-            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"]
+            account=os.environ["TRULENS_SNOWFLAKE_ACCOUNT"],
+            user=os.environ["TRULENS_SNOWFLAKE_USER"],
+            password=os.environ["TRULENS_SNOWFLAKE_USER_PASSWORD"],
+            database=os.environ["TRULENS_SNOWFLAKE_DATABASE"],
+            schema=os.environ["TRULENS_SNOWFLAKE_SCHEMA"],
+            warehouse=os.environ["TRULENS_SNOWFLAKE_WAREHOUSE"]
         )
         super().__init__(**self_kwargs)
 

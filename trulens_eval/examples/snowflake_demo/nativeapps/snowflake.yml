@@ -1,0 +1,17 @@
+# This is a project definition file, a required component if you intend to use Snowflake CLI in a project directory such as this template.
+
+definition_version: 1
+native_app:
+  name: trulens_demo
+  artifacts:
+    - src: app/*
+      dest: ./
+  package:
+    name: trulens_na_pkg
+    role: ENGINEER
+    warehouse: DKUROKAWA
+  application:
+    name: trulens_demo_na
+    debug: false
+    role: ENGINEER
+    warehouse: DKUROKAWA

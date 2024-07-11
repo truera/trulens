@@ -5,9 +5,9 @@ set -e
 # Parameters.
 ORG_NAME="sfengineering"
 ACCOUNT_NAME="mlplatformtest"
-DB_NAME="dkurokawa"
+DB_NAME="gtok"
 SCHEMA_NAME="trulens_demo"
-IMAGE_REPOSITORY_NAME="dkurokawa_trulens_demo_image_repository"
+IMAGE_REPOSITORY_NAME="trulens_image_repo"
 IMAGE_NAME="trulens_demo"
 IMAGE_TAG="latest"
 USER="dkurokawa"
