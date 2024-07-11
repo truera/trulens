@@ -41,7 +41,7 @@ class CustomAgent(dummy.Dummy):
             use_recorder = CustomAgent.DEFAULT_USE_RECORDER
 
         self.use_app = use_app
-        self.use_recorder = use_rec
+        self.use_recorder = use_recorder
         self.description = description or "Custom Agent"
         self.app = app
 
@@ -69,5 +69,23 @@ class CustomAgent(dummy.Dummy):
                 return recorder.get().model_dump_json()
             else:
                 return self.app.respond_to_query(query=data)
+        else:
+            return "Record placeholder"
+
+    @instrument
+    async def ainvoke(self, data: str) -> str:
+        """Invoke the dummy tool."""
+
+        self.dummy_wait()
+
+        # TODO: see prior note.
+
+        if self.use_app:
+            if self.use_recorder:
+                with self.tru_app as recorder:
+                    await self.app.arespond_to_query(query=data)
+                return recorder.get().model_dump_json()
+            else:
+                return await self.app.arespond_to_query(query=data)
         else:
             return "Record placeholder"
