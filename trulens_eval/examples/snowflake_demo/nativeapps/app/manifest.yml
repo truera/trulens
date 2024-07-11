@@ -1,0 +1,17 @@
+# This is a manifest.yml file, a required component of creating a Snowflake Native App.
+# This file defines properties required by the application package, including the location of the setup script and version definitions.
+# Refer to https://docs.snowflake.com/en/developer-guide/native-apps/creating-manifest for a detailed understanding of this file.
+manifest_version: 1
+
+artifacts:
+  setup_script: setup_script.sql
+  readme: README.md
+  container_services:
+    images:
+      - /gtok/trulens_demo/trulens_image_repo/trulens_demo:latest
+
+privileges:
+  - CREATE COMPUTE POOL:
+      description: "Permission to create compute pools for running services"
+  - BIND SERVICE ENDPOINT:
+      description: "Required to allow endpoints to be externally accessible."
