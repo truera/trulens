@@ -102,16 +102,28 @@
     "bases": null
   },
   "app": {
+    "DEFAULT_ALLOC": 0,
+    "DEFAULT_DELAY": 0.0,
+    "DEFAULT_SEED": 3735928559,
     "agents": [
       {
-        "alloc": 32,
+        "DEFAULT_ALLOC": 0,
+        "DEFAULT_DELAY": 0.0,
+        "DEFAULT_SEED": 3735928559,
+        "alloc": 0,
         "app": {
+          "DEFAULT_ALLOC": 0,
+          "DEFAULT_DELAY": 0.0,
+          "DEFAULT_SEED": 3735928559,
           "agents": [],
-          "alloc": 32,
+          "alloc": 0,
           "delay": 0.0,
           "llm": {
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
-            "alloc": 32,
+            "alloc": 0,
             "delay": 0.0,
             "model": "derp",
             "model_type": "HerpDerp",
@@ -152,7 +164,10 @@
             }
           },
           "memory": {
-            "alloc": 32,
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
+            "alloc": 0,
             "delay": 0.0,
             "memory_type": "dummy-memory",
             "messages": [],
@@ -192,8 +207,11 @@
             }
           },
           "reranker": {
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
-            "alloc": 32,
+            "alloc": 0,
             "delay": 0.0,
             "model_name": "herpderp-v1-reranker",
             "seed": 3735928559,
@@ -233,8 +251,11 @@
             }
           },
           "retriever": {
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
-            "alloc": 32,
+            "alloc": 0,
             "delay": 0.0,
             "num_contexts": 2,
             "seed": 3735928559,
@@ -274,11 +295,14 @@
           },
           "seed": 3735928559,
           "template": {
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
-            "alloc": 32,
+            "alloc": 0,
             "delay": 0.0,
             "seed": 3735928559,
-            "template": "The answer to {question} is probably {answer} or something ...",
+            "template": "Please answer the following question given the context.\nQUESTION: {question}\nCONTEXT: {context}\n",
             "tru_class_info": {
               "name": "CustomTemplate",
               "module": {
@@ -315,7 +339,10 @@
           },
           "tools": [
             {
-              "alloc": 32,
+              "DEFAULT_ALLOC": 0,
+              "DEFAULT_DELAY": 0.0,
+              "DEFAULT_SEED": 3735928559,
+              "alloc": 0,
               "delay": 0.0,
               "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
               "last_stack": null,
@@ -363,7 +390,10 @@
               }
             },
             {
-              "alloc": 32,
+              "DEFAULT_ALLOC": 0,
+              "DEFAULT_DELAY": 0.0,
+              "DEFAULT_SEED": 3735928559,
+              "alloc": 0,
               "delay": 0.0,
               "description": "Return repr(self).",
               "seed": 3735928559,
@@ -402,46 +432,10 @@
               }
             },
             {
-              "alloc": 32,
-              "delay": 0.0,
-              "description": "Return repr(self).",
-              "seed": 3735928559,
-              "tru_class_info": {
-                "name": "CustomTool",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                },
-                "bases": [
-                  {
-                    "name": "CustomTool",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "Dummy",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "object",
-                    "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
-                    },
-                    "bases": null
-                  }
-                ]
-              }
-            },
-            {
-              "alloc": 32,
+              "DEFAULT_ALLOC": 0,
+              "DEFAULT_DELAY": 0.0,
+              "DEFAULT_SEED": 3735928559,
+              "alloc": 0,
               "delay": 0.0,
               "description": "Return repr(self).",
               "seed": 3735928559,
@@ -480,6 +474,7 @@
               }
             }
           ],
+          "use_parallel": false,
           "tru_class_info": {
             "name": "CustomApp",
             "module": {
@@ -517,6 +512,8 @@
         "delay": 0.0,
         "description": "ensamble agent 0",
         "seed": 3735928559,
+        "use_app": false,
+        "use_recorder": false,
         "tru_class_info": {
           "name": "CustomAgent",
           "module": {
@@ -552,14 +549,23 @@
         }
       },
       {
-        "alloc": 32,
+        "DEFAULT_ALLOC": 0,
+        "DEFAULT_DELAY": 0.0,
+        "DEFAULT_SEED": 3735928559,
+        "alloc": 0,
         "app": {
+          "DEFAULT_ALLOC": 0,
+          "DEFAULT_DELAY": 0.0,
+          "DEFAULT_SEED": 3735928559,
           "agents": [],
-          "alloc": 32,
+          "alloc": 0,
           "delay": 0.0,
           "llm": {
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
-            "alloc": 32,
+            "alloc": 0,
             "delay": 0.0,
             "model": "derp",
             "model_type": "HerpDerp",
@@ -600,7 +606,10 @@
             }
           },
           "memory": {
-            "alloc": 32,
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
+            "alloc": 0,
             "delay": 0.0,
             "memory_type": "dummy-memory",
             "messages": [],
@@ -640,8 +649,11 @@
             }
           },
           "reranker": {
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
-            "alloc": 32,
+            "alloc": 0,
             "delay": 0.0,
             "model_name": "herpderp-v1-reranker",
             "seed": 3735928559,
@@ -681,8 +693,11 @@
             }
           },
           "retriever": {
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
-            "alloc": 32,
+            "alloc": 0,
             "delay": 0.0,
             "num_contexts": 2,
             "seed": 3735928559,
@@ -722,11 +737,14 @@
           },
           "seed": 3735928559,
           "template": {
+            "DEFAULT_ALLOC": 0,
+            "DEFAULT_DELAY": 0.0,
+            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
-            "alloc": 32,
+            "alloc": 0,
             "delay": 0.0,
             "seed": 3735928559,
-            "template": "The answer to {question} is probably {answer} or something ...",
+            "template": "Please answer the following question given the context.\nQUESTION: {question}\nCONTEXT: {context}\n",
             "tru_class_info": {
               "name": "CustomTemplate",
               "module": {
@@ -763,7 +781,10 @@
           },
           "tools": [
             {
-              "alloc": 32,
+              "DEFAULT_ALLOC": 0,
+              "DEFAULT_DELAY": 0.0,
+              "DEFAULT_SEED": 3735928559,
+              "alloc": 0,
               "delay": 0.0,
               "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
               "last_stack": null,
@@ -811,7 +832,10 @@
               }
             },
             {
-              "alloc": 32,
+              "DEFAULT_ALLOC": 0,
+              "DEFAULT_DELAY": 0.0,
+              "DEFAULT_SEED": 3735928559,
+              "alloc": 0,
               "delay": 0.0,
               "description": "Return repr(self).",
               "seed": 3735928559,
@@ -850,46 +874,10 @@
               }
             },
             {
-              "alloc": 32,
-              "delay": 0.0,
-              "description": "Return repr(self).",
-              "seed": 3735928559,
-              "tru_class_info": {
-                "name": "CustomTool",
-                "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                },
-                "bases": [
-                  {
-                    "name": "CustomTool",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "Dummy",
-                    "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-                    },
-                    "bases": null
-                  },
-                  {
-                    "name": "object",
-                    "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
-                    },
-                    "bases": null
-                  }
-                ]
-              }
-            },
-            {
-              "alloc": 32,
+              "DEFAULT_ALLOC": 0,
+              "DEFAULT_DELAY": 0.0,
+              "DEFAULT_SEED": 3735928559,
+              "alloc": 0,
               "delay": 0.0,
               "description": "Return repr(self).",
               "seed": 3735928559,
@@ -928,6 +916,7 @@
               }
             }
           ],
+          "use_parallel": false,
           "tru_class_info": {
             "name": "CustomApp",
             "module": {
@@ -965,6 +954,8 @@
         "delay": 0.0,
         "description": "ensamble agent 1",
         "seed": 3735928559,
+        "use_app": false,
+        "use_recorder": false,
         "tru_class_info": {
           "name": "CustomAgent",
           "module": {
@@ -1003,6 +994,9 @@
     "alloc": 0,
     "delay": 0.0,
     "llm": {
+      "DEFAULT_ALLOC": 0,
+      "DEFAULT_DELAY": 0.0,
+      "DEFAULT_SEED": 3735928559,
       "_dummy_allocated_data": null,
       "alloc": 0,
       "delay": 0.0,
@@ -1045,6 +1039,9 @@
       }
     },
     "memory": {
+      "DEFAULT_ALLOC": 0,
+      "DEFAULT_DELAY": 0.0,
+      "DEFAULT_SEED": 3735928559,
       "alloc": 0,
       "delay": 0.0,
       "memory_type": "dummy-memory",
@@ -1085,6 +1082,9 @@
       }
     },
     "reranker": {
+      "DEFAULT_ALLOC": 0,
+      "DEFAULT_DELAY": 0.0,
+      "DEFAULT_SEED": 3735928559,
       "_dummy_allocated_data": null,
       "alloc": 0,
       "delay": 0.0,
@@ -1126,6 +1126,9 @@
       }
     },
     "retriever": {
+      "DEFAULT_ALLOC": 0,
+      "DEFAULT_DELAY": 0.0,
+      "DEFAULT_SEED": 3735928559,
       "_dummy_allocated_data": null,
       "alloc": 0,
       "delay": 0.0,
@@ -1167,11 +1170,14 @@
     },
     "seed": 3735928559,
     "template": {
+      "DEFAULT_ALLOC": 0,
+      "DEFAULT_DELAY": 0.0,
+      "DEFAULT_SEED": 3735928559,
       "_dummy_allocated_data": null,
-      "alloc": 32,
+      "alloc": 0,
       "delay": 0.0,
       "seed": 3735928559,
-      "template": "The answer to {question} is probably {answer} or something ...",
+      "template": "Please answer the following question given the context.\nQUESTION: {question}\nCONTEXT: {context}\n",
       "tru_class_info": {
         "name": "CustomTemplate",
         "module": {
@@ -1208,6 +1214,9 @@
     },
     "tools": [
       {
+        "DEFAULT_ALLOC": 0,
+        "DEFAULT_DELAY": 0.0,
+        "DEFAULT_SEED": 3735928559,
         "alloc": 0,
         "delay": 0.0,
         "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
@@ -1256,6 +1265,9 @@
         }
       },
       {
+        "DEFAULT_ALLOC": 0,
+        "DEFAULT_DELAY": 0.0,
+        "DEFAULT_SEED": 3735928559,
         "alloc": 0,
         "delay": 0.0,
         "description": "Return repr(self).",
@@ -1295,45 +1307,9 @@
         }
       },
       {
-        "alloc": 0,
-        "delay": 0.0,
-        "description": "Return repr(self).",
-        "seed": 3735928559,
-        "tru_class_info": {
-          "name": "CustomTool",
-          "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-          },
-          "bases": [
-            {
-              "name": "CustomTool",
-              "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
-              },
-              "bases": null
-            },
-            {
-              "name": "Dummy",
-              "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
-              },
-              "bases": null
-            },
-            {
-              "name": "object",
-              "module": {
-                "package_name": "",
-                "module_name": "builtins"
-              },
-              "bases": null
-            }
-          ]
-        }
-      },
-      {
+        "DEFAULT_ALLOC": 0,
+        "DEFAULT_DELAY": 0.0,
+        "DEFAULT_SEED": 3735928559,
         "alloc": 0,
         "delay": 0.0,
         "description": "Return repr(self).",
@@ -1373,6 +1349,7 @@
         }
       }
     ],
+    "use_parallel": false,
     "tru_class_info": {
       "name": "CustomApp",
       "module": {

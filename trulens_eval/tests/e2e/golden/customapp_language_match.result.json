@@ -1,8 +1,8 @@
 {
-  "feedback_result_id": "feedback_result_hash_234639e1d94a82d1b0686361c291e3fe",
-  "record_id": "record_hash_e8976711a86f3ac1a0653d2ea0dce8ba",
-  "feedback_definition_id": "feedback_definition_hash_c120dfa09adf86ee7932f837aba091c4",
-  "last_ts": "2024-07-03T14:46:39.084939",
+  "feedback_result_id": "feedback_result_hash_d9ac14c3ff557ad57f01407475eaa550",
+  "record_id": "record_hash_2e949bade2cb0956f64632b87f13b934",
+  "feedback_definition_id": "feedback_definition_hash_aaab0174c42423c7bd60ae9ccc4febac",
+  "last_ts": "2024-07-11T14:40:56.188134",
   "status": "done",
   "cost": {
     "n_requests": 0,
@@ -19,7 +19,7 @@
     {
       "args": {
         "text1": "hello",
-        "text2": "The answer to hello is probably my original response to model derp with temperature 0.5 is  or something ..."
+        "text2": "This is my response to a prompt of length 166 with a model derp with temperature 0.5."
       },
       "ret": 0.885953763259937,
       "meta": {
