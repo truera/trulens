@@ -194,7 +194,7 @@ class DummyAPI(pydantic.BaseModel):
     def _fake_completion(
         self, model: str, prompt: str, temperature: float
     ) -> Dict:
-        generated_text: str = f"my original response to model {model} with temperature {temperature} is {prompt}"
+        generated_text: str = f"This is my response to a prompt of length {len(prompt)} with a model {model} with temperature {temperature}."
 
         return {
             'completion': generated_text,
@@ -221,7 +221,7 @@ class DummyAPI(pydantic.BaseModel):
 
         # Fake http post request, might raise an exception or cause delays.
         return self.post(
-            url="https://fakeservice.com/classify",
+            url="https://fakeservice.com/completion",
             payload={
                 'mode': 'completion',
                 'model': model,
@@ -238,7 +238,7 @@ class DummyAPI(pydantic.BaseModel):
 
         # Fake http post request, might raise an exception or cause delays.
         return await self.apost(
-            url="https://fakeservice.com/classify",
+            url="https://fakeservice.com/completion",
             payload={
                 'mode': 'completion',
                 'model': model,

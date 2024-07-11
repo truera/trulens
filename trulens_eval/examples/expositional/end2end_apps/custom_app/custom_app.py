@@ -8,7 +8,9 @@ import asyncio
 from collections import defaultdict
 from concurrent.futures import wait
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import (
+    Any, AsyncIterable, Dict, Iterable, List, Optional, Tuple, Type
+)
 
 from examples.expositional.end2end_apps.custom_app.custom_agent import \
     CustomAgent
@@ -42,7 +44,7 @@ class CustomTemplate(Dummy):
         self.template = template
 
     @instrument
-    def fill(self, question: str, answer: str) -> str:
+    def fill(self, question: str, context: str) -> str:
         """Fill in the template with the question and answer.
         
         Args:
@@ -53,7 +55,7 @@ class CustomTemplate(Dummy):
 
         return self.template[:] \
             .replace("{question}", question) \
-            .replace("{answer}", answer)
+            .replace("{context}", context)
 
 
 class CustomApp(Dummy):
@@ -68,8 +70,9 @@ class CustomApp(Dummy):
 
         - A template component.
 
-        - A few tools. Each is a random string->string method that is applied to
-          retrieved chunks.
+        - A few tools. The first tool is one that records the call stack when it
+          gets invokved. Each of the following ones is random string->string
+          method that is applied to retrieved chunks.
 
         - A reranker component.
 
@@ -78,6 +81,8 @@ class CustomApp(Dummy):
 
     Args:
         num_agents: Number of agents to create.
+
+        num_tools: Number of tools to create.
 
         use_parallel: Whether to use parallelism for processing retrieval
             chunks. This is either threads or async parallelism depending on
@@ -92,17 +97,14 @@ class CustomApp(Dummy):
             arguments.
     """
 
-    DEFAULT_USE_PARALLEL: bool = False
-
     def __init__(
         self,
         num_agents: int = 2,
-        use_parallel: Optional[bool] = None,
+        num_tools: int = 3,
+        use_parallel: Optional[bool] = False,
         comp_kwargs: Dict[Type, Dict[str, Any]] = {},
         **kwargs
     ):
-        if use_parallel is None:
-            use_parallel = CustomApp.DEFAULT_USE_PARALLEL
 
         super().__init__(**kwargs)
 
@@ -119,15 +121,20 @@ class CustomApp(Dummy):
         self.llm = CustomLLM(**kwargs, **comp_kwargs[CustomLLM])
 
         self.template = CustomTemplate(
-            "The answer to {question} is probably {answer} or something ...",
-            **kwargs, **comp_kwargs[CustomTemplate]
+            """Please answer the following question given the context.
+QUESTION: {question}
+CONTEXT: {context}
+""", **kwargs, **comp_kwargs[CustomTemplate]
         )
 
-        # Put some tools into the app and make sure one of them is the one that
+        # Put some tools into the app and make sure the first is the one that
         # dumps the stack.
         self.tools = [
             CustomStackTool(**kwargs, **comp_kwargs[CustomStackTool])
-        ] + [CustomTool(**kwargs, **comp_kwargs[CustomTool]) for _ in range(3)]
+        ] + [
+            CustomTool(**kwargs, **comp_kwargs[CustomTool])
+            for _ in range(num_tools - 1)
+        ]
 
         self.agents = [
             CustomAgent(
@@ -273,18 +280,20 @@ class CustomApp(Dummy):
         self.memory.remember(query)
 
         # Do some generation.
-        answer = self.llm.generate(
+        summary = self.llm.generate(
             ",".join(filter(lambda c: len(c) < 128, chunks))
         )
-        # Skip sthe large chunk coming from CustomStackTool.
 
         # Do some templating.
-        output = self.template.fill(question=query, answer=answer)
+        answer_prompt = self.template.fill(question=query, context=summary)
+
+        # Another llm call to "get the final answer".
+        answer = self.llm.generate(answer_prompt)
 
         # Do some more remembering.
-        self.memory.remember(output)
+        self.memory.remember(answer)
 
-        return output
+        return answer
 
     @instrument
     async def arespond_to_query(self, query: str) -> str:
@@ -308,15 +317,93 @@ class CustomApp(Dummy):
         await self.memory.aremember(query)
 
         # Do some generation.
-        answer = await self.llm.agenerate(
+        summary = await self.llm.agenerate(
             ",".join(filter(lambda c: len(c) < 128, chunks))
         )
-        # Skip sthe large chunk coming from CustomStackTool.
 
         # Do some templating.
-        output = self.template.fill(question=query, answer=answer)
+        answer_prompt = self.template.fill(question=query, context=summary)
+
+        # Another llm call to "get the final answer".
+        answer = await self.llm.agenerate(answer_prompt)
 
         # Do some more remembering.
-        await self.memory.aremember(output)
+        self.memory.remember(answer)
 
-        return output
+        return answer
+
+    @instrument
+    def stream_respond_to_query(self, query: str) -> Iterable[str]:
+        """Respond to a query.
+        
+        This is the main method.
+        
+        Args:
+            query: The query to respond to.
+        """
+
+        # Run the agents on the same input. These perform the same steps as this
+        # app.
+        for agent in self.agents:
+            agent.invoke(query)
+
+        # Get rerankined, process chunks.
+        chunks = self.get_context(query)
+
+        # Do some remembering.
+        self.memory.remember(query)
+
+        # Do some generation.
+        summary = self.llm.generate(
+            ",".join(filter(lambda c: len(c) < 128, chunks))
+        )
+
+        # Do some templating.
+        answer_prompt = self.template.fill(question=query, context=summary)
+
+        # Another llm call to "get the final answer". Streaming this time.
+        answer = ""
+        for chunk in self.llm.stream(answer_prompt):
+            answer += chunk
+            yield chunk
+
+        # Do some more remembering.
+        self.memory.remember(answer)
+
+    @instrument
+    async def astream_respond_to_query(self, query: str) -> AsyncIterable[str]:
+        """Respond to a query.
+        
+        This is the main method.
+        
+        Args:
+            query: The query to respond to.
+        """
+
+        # Run the agents on the same input. These perform the same steps as this
+        # app.
+        for agent in self.agents:
+            await agent.ainvoke(query)
+
+        # Get rerankined, process chunks.
+        chunks = await self.aget_context(query)
+
+        # Do some remembering.
+        await self.memory.aremember(query)
+
+        # Do some generation.
+        summary = await self.llm.agenerate(
+            ",".join(filter(lambda c: len(c) < 128, chunks))
+        )
+
+        # Do some templating.
+        answer_prompt = self.template.fill(question=query, context=summary)
+
+        # Another llm call to "get the final answer". Streaming this time.
+        answer = ""
+        async for chunk in self.llm.astream(answer_prompt):
+            answer += chunk
+            yield chunk
+
+        # Do some more remembering.
+        self.memory.remember(answer)

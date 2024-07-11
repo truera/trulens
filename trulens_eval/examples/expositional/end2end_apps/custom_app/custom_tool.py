@@ -53,6 +53,14 @@ class CustomTool(Dummy):
 
         return self.imp(data)
 
+    @instrument
+    async def ainvoke(self, data: str):
+        """Invoke the dummy tool."""
+
+        await self.dummy_await()
+
+        return self.imp(data)
+
 
 class CustomStackTool(CustomTool):
     """A tool that returns a rendering of the call stack when it is invokved."""

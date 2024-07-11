@@ -40,17 +40,23 @@ class Dummy():
 
         self._dummy_allocated_data = None
 
-    def dummy_wait(self):
+    def dummy_wait(self, delay: Optional[float] = None):
         """Wait for a while."""
 
-        if self.delay > 0.0:
-            time.sleep(self.delay)
+        if delay is None:
+            delay = self.delay
 
-    async def dummy_await(self):
+        if delay > 0.0:
+            time.sleep(delay)
+
+    async def dummy_await(self, delay: Optional[float] = None):
         """Wait for a while."""
 
-        if self.delay > 0.0:
-            await asyncio.sleep(self.delay)
+        if delay is None:
+            delay = self.delay
+
+        if delay > 0.0:
+            await asyncio.sleep(delay)
 
     def dummy_allocate(self):
         """Allocate some memory."""
