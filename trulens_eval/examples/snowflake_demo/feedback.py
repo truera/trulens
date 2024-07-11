@@ -46,7 +46,7 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
     f_groundedness = (
         Feedback(
             provider.groundedness_measure_with_cot_reasons, name="Groundedness"
-        ).on(Select.RecordCalls.retrieve_context.rets[:]).on_output()
+        ).on(Select.RecordCalls.retrieve_context.rets[:].collect()).on_output()
     )
     f_context_relevance = (
         Feedback(provider.context_relevance,
@@ -61,45 +61,16 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
                      np.mean
                  )
     )
-    f_criminality_input = (
-        Feedback(
-            provider.criminality_with_cot_reasons,
-            name="Criminality input",
-            higher_is_better=False
-        ).on(Select.RecordInput)
-    )
-    f_criminality_output = (
-        Feedback(
-            provider.criminality_with_cot_reasons,
-            name="Criminality output",
-            higher_is_better=False
-        ).on_output()
-    )
-    f_criminality_input = Feedback(
-        provider.criminality_with_cot_reasons,
-        name="Criminality input",
-        higher_is_better=False,
-    ).on(Select.RecordInput)
-    f_criminality_output = Feedback(
-        provider.criminality_with_cot_reasons,
-        name="Criminality output",
-        higher_is_better=False,
-    ).on_output()
-
     if use_rag:
         return [
           f_context_relevance,
           #f_small_local_models_context_relevance,
           f_answer_relevance,
           f_groundedness,
-          #f_criminality_input,
-          #f_criminality_output,
           ]
     else:
         return [
-          f_answer_relevance,
-            #f_criminality_input,
-            #f_criminality_output
+          f_answer_relevance
       ]
     
 provider = get_provider("Cortex")
