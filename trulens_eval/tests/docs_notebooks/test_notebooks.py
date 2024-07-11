@@ -99,7 +99,6 @@ NOTEBOOKS_TO_TEST_BACKWARDS_COMPATIBILITY = [
     "human_feedback.ipynb",
     "groundtruth_evals.ipynb",
     "logging.ipynb",
-    "custom_feedback_functions.ipynb",
 ]
 
 for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
