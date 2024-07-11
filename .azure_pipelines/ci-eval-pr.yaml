@@ -57,9 +57,7 @@ jobs:
           set -e
           source activate $(python-version)
 
-          # versions of yapf and isort are important
-          pip install yapf==0.32.0 --verbose
-          pip install isort==5.10.1 --verbose
+          pip install -r requirements.dev.txt --verbose
 
           yapf --version
           isort --vn
@@ -90,8 +88,7 @@ jobs:
           set -e
           source activate $(python-version)
 
-          pip install --verbose \
-            pytest==7.0.1 pytest-subtests pytest-azurepipelines
+          pip install -r requirements.test.txt --verbose 
 
         displayName: Install testing packages
 

@@ -22,11 +22,10 @@ jobs:
         run: echo "::set-output name=date::$(date +'%Y-%m-%d-%H-%M-%S')"
       - name: Generate Files
         run: |
+          pip install -r requirements.dev.txt
           cd ${{ github.workspace }}/docs/trulens_eval
           pip install jupyter
-          pip install nbmerge
-          pip install yapf==0.32.0
-          pip install isort==5.10.1
+          pip install nbmerge        
           ../../.github/workflows/combine_nb_to_docs_testing.sh
           rm -rf break.md
           cd ${{ github.workspace }}

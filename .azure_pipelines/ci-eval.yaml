@@ -54,11 +54,11 @@ jobs:
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
+          pip install -r requirements.dev.txt
+
           cd ./trulens_eval
           pip install -e .
           pip install -r tests/docs_notebooks/requirements.txt
-          pip install yapf==0.32.0
-          pip install isort==5.10.1
           pip install ipykernel
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name $(condaEnvFileSuffix)
         displayName: Install pip package

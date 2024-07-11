@@ -1,4 +1,5 @@
 # Packages required for building documentation pages.
+
 mkdocs               >= 1.5.3
 mkdocstrings-python  >= 1.8.0
 mkdocstrings         >= 0.24.0
@@ -18,7 +19,3 @@ jupyter_contrib_nbextensions >= 0.7.0
 notebook <7
 
 black >= 24.4.2
-
-# Formatting packages pinned for consistency with format checker.
-yapf    == 0.32.0
-isort   == 5.10.1
