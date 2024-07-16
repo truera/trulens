@@ -45,6 +45,9 @@ apply when referring to things like package names, classes, methods.
     COLUMN_LIMIT=80
     ```
 
+  !!! Warning
+    `yapf` version matters. The one we expect and compare against in pull requests can be found in `requirements.dev.txt`.
+
 ### Imports
 
 - Use `isort` to organize import statements.

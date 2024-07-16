@@ -10,7 +10,9 @@ CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; 
 	$(CONDA) .conda/docs; \
 	pip install -r trulens_eval/trulens_eval/requirements.txt; \
 	pip install -r trulens_eval/trulens_eval/requirements.optional.txt; \
-	pip install -r docs/docs_requirements.txt
+	pip install -r requirements.docs.txt; \
+	pip install -r requirements.dev.txt
+
 
 # Run the code formatter.
 format: .conda/docs
