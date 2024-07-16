@@ -24,6 +24,7 @@ tru = Tru(database_url=db_url)
 
 AVAILABLE_PROVIDERS = ["Replicate", "Cortex"]
 
+
 @st.cache_resource
 def get_provider(provider_name: str):
     if provider_name == "Replicate":
@@ -50,10 +51,11 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
     )
     f_context_relevance = (
         Feedback(provider.context_relevance,
-                name="Context Relevance").on_input().on(
-                    Select.RecordCalls.retrieve_context.rets[:]
-                ).aggregate(np.mean
-                            )  # choose a different aggregation method if you wish
+                 name="Context Relevance").on_input().on(
+                     Select.RecordCalls.retrieve_context.rets[:]
+                 ).aggregate(
+                     np.mean
+                 )  # choose a different aggregation method if you wish
     )
     f_answer_relevance = (
         Feedback(provider.relevance_with_cot_reasons,
@@ -63,25 +65,24 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
     )
     if use_rag:
         return [
-          f_context_relevance,
-          #f_small_local_models_context_relevance,
-          f_answer_relevance,
-          f_groundedness,
-          ]
+            f_context_relevance,
+            #f_small_local_models_context_relevance,
+            f_answer_relevance,
+            f_groundedness,
+        ]
     else:
-        return [
-          f_answer_relevance
-      ]
-    
+        return [f_answer_relevance]
+
+
 provider = get_provider("Cortex")
 
 f_context_relevance = (
-        Feedback(provider.context_relevance,
-                name="Context Relevance").on_input().on(
-                    Select.RecordCalls.retrieve_context.rets[:]
-                ).aggregate(np.mean
-                            )  # choose a different aggregation method if you wish
-    )
+    Feedback(provider.context_relevance,
+             name="Context Relevance").on_input().on(
+                 Select.RecordCalls.retrieve_context.rets[:]
+             ).aggregate(np.mean
+                        )  # choose a different aggregation method if you wish
+)
 
 small_local_model_provider = SmallLocalModels()
 f_small_local_models_context_relevance = (
