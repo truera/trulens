@@ -1956,16 +1956,82 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../tracking/logging/where_to_log.md" class="md-nav__link">
+    
+    
+      
         
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tracking/logging/where_to_log/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
     Where to Log
   </span>
   
 
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_2_1" id="__nav_5_2_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            Where to Log
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tracking/logging/where_to_log/log_in_snowflake/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ❄️ Logging in Snowflake
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2178,6 +2244,8 @@
   
     
     
+      
+        
       
         
       
@@ -3139,6 +3207,27 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../streamlit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Streamlit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
       
@@ -3167,10 +3256,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_10" >
         
           
-          <label class="md-nav__link" for="__nav_8_9" id="__nav_8_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8_10" id="__nav_8_10_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -3181,8 +3270,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8_9">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_10">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -3972,17 +4061,21 @@
       <p>Provides a decorator to filter contexts based on a given feedback and threshold.</p>
 <p>Parameters:
 feedback (Feedback): The feedback object to use for filtering.
-threshold (float): The minimum feedback value required for a context to be included.</p>
+threshold (float): The minimum feedback value required for a context to be included.
+keyword_for_prompt (str): Keyword argument to decorator to use for prompt.</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">groundedness_measure_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Groundedness&quot;</span><span class="p">)</span>
-<span class="nd">@context_filter</span><span class="p">(</span><span class="n">feedback</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">retrieve</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">query_texts</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
-    <span class="n">n_results</span><span class="o">=</span><span class="mi">3</span>
-<span class="p">)</span>
-<span class="k">return</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;documents&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Context Relevance&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">RAG_from_scratch</span><span class="p">:</span>
+    <span class="o">...</span>
+    <span class="nd">@context_filter</span><span class="p">(</span><span class="n">feedback</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;query&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+            <span class="n">query_texts</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">n_results</span><span class="o">=</span><span class="mi">3</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;documents&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+    <span class="o">...</span>
 </code></pre></div>
 </div>
 

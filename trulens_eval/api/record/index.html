@@ -1956,16 +1956,82 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../tracking/logging/where_to_log.md" class="md-nav__link">
+    
+    
+      
         
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tracking/logging/where_to_log/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
     Where to Log
   </span>
   
 
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_2_1" id="__nav_5_2_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            Where to Log
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tracking/logging/where_to_log/log_in_snowflake/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ❄️ Logging in Snowflake
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2178,6 +2244,8 @@
   
     
     
+      
+        
       
         
       
@@ -3732,6 +3800,27 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../streamlit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Streamlit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
       
@@ -3760,10 +3849,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_10" >
         
           
-          <label class="md-nav__link" for="__nav_8_9" id="__nav_8_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8_10" id="__nav_8_10_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -3774,8 +3863,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8_9">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_10">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -5160,7 +5249,7 @@
   </span>
 
 <a href="#trulens_eval.schema.record.Record.ts" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">ts</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime.now" href="https://docs.python.org/3/library/datetime.html#datetime.datetime.now">now</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">ts</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime.now" href="https://docs.python.org/3/library/datetime.html#datetime.datetime.now">now</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5333,7 +5422,7 @@ as the app that generated this record via <code>layout_calls_as_app</code>.</p>
 <a href="#trulens_eval.schema.record.Record.feedback_and_future_results" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_and_future_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
     <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackDefinition" href="../feedback/#trulens_eval.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Future" href="../utils/python/#trulens_eval.utils.python.Future">Future</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackResult" href="../feedback/#trulens_eval.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">]]]</span>
-<span class="p">]</span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5361,7 +5450,7 @@ be filled in when read from database. Also, will not fill in when using
 
 <a href="#trulens_eval.schema.record.Record.feedback_results" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.utils.python.Future" href="../utils/python/#trulens_eval.utils.python.Future">Future</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackResult" href="../feedback/#trulens_eval.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">]]]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -5405,14 +5494,46 @@ be filled in when read from database. Also, will not fill in when using
 
 
 <a href="#trulens_eval.schema.record.Record.wait_for_feedback_results" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">wait_for_feedback_results</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="p">(</span>
-    <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackDefinition" href="../feedback/#trulens_eval.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackResult" href="../feedback/#trulens_eval.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">]</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">wait_for_feedback_results</span><span class="p">(</span>
+    <span class="n">feedback_timeout</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackDefinition" href="../feedback/#trulens_eval.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens_eval.schema.feedback.FeedbackResult" href="../feedback/#trulens_eval.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
       <p>Wait for feedback results to finish.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>feedback_timeout</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Timeout in seconds for each feedback function. If
+not given, will use the default timeout
+<code>trulens_eval.utils.threading.TP.DEBUG_TIMEOUT</code>. </p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>]</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 <table>
@@ -5529,7 +5650,7 @@ object here as the layout of records differ in these ways:</p>
   </span>
 
 <a href="#trulens_eval.schema.record.RecordAppCall.call_id" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">call_id</span><span class="p">:</span> <span class="n"><span title="trulens_eval.schema.types.CallID">CallID</span></span> <span class="o">=</span> <span class="n"><span title="pydantic.Field">Field</span></span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n"><span title="trulens_eval.schema.types.new_call_id">new_call_id</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">call_id</span><span class="p">:</span> <span class="n"><span title="trulens_eval.schema.types.CallID">CallID</span></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n"><span title="trulens_eval.schema.types.new_call_id">new_call_id</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

@@ -2090,16 +2090,82 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../../tracking/logging/where_to_log.md" class="md-nav__link">
+    
+    
+      
         
+          
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../tracking/logging/where_to_log/" class="md-nav__link ">
+              
   
   <span class="md-ellipsis">
     Where to Log
   </span>
   
 
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_2_1" id="__nav_5_2_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            Where to Log
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tracking/logging/where_to_log/log_in_snowflake/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ❄️ Logging in Snowflake
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2310,6 +2376,8 @@
   
     
     
+      
+        
       
         
       
@@ -3254,6 +3322,27 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../../api/streamlit/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Streamlit
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
       
@@ -3279,10 +3368,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_10" >
         
           
-          <label class="md-nav__link" for="__nav_8_9" id="__nav_8_9_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_8_10" id="__nav_8_10_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -3293,8 +3382,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8_9">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_10">
             <span class="md-nav__icon md-icon"></span>
             Utils
           </label>
@@ -4563,7 +4652,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy for="cell-2">
@@ -4603,7 +4692,7 @@ os.environ["OPENAI_API_KEY"] = "sk-..."</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy for="cell-3">
@@ -4687,7 +4776,7 @@ As the world's largest coffeehouse chain, Starbucks is seen to be the main repre
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy for="cell-4">
@@ -4700,7 +4789,8 @@ As the world's largest coffeehouse chain, Starbucks is seen to be the main repre
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">chromadb</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">chromadb</span>
 <span class="kn">from</span> <span class="nn">chromadb.utils.embedding_functions</span> <span class="kn">import</span> <span class="n">OpenAIEmbeddingFunction</span>
 
 <span class="n">embedding_function</span> <span class="o">=</span> <span class="n">OpenAIEmbeddingFunction</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'OPENAI_API_KEY'</span><span class="p">),</span>
@@ -4711,7 +4801,8 @@ As the world's largest coffeehouse chain, Starbucks is seen to be the main repre
 <span class="n">vector_store</span> <span class="o">=</span> <span class="n">chroma_client</span><span class="o">.</span><span class="n">get_or_create_collection</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Washington"</span><span class="p">,</span>
                                                       <span class="n">embedding_function</span><span class="o">=</span><span class="n">embedding_function</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4">import chromadb
+<div class="clipboard-copy-txt" id="cell-4">import os
+import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
 embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'),
@@ -4743,7 +4834,7 @@ vector_store = chroma_client.get_or_create_collection(name="Washington",
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy for="cell-5">
@@ -4787,7 +4878,7 @@ vector_store.add("starbucks_info", documents=starbucks_info)</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy for="cell-6">
@@ -4819,14 +4910,6 @@ tru.reset_database()</div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>/opt/anaconda3/envs/snowday/lib/python3.11/site-packages/_distutils_hack/__init__.py:26: UserWarning: Setuptools is replacing distutils.
-  warnings.warn("Setuptools is replacing distutils.")
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>🦑 Tru initialized with db url sqlite:///default.sqlite .
 🛑 Secret keys may be written to the database. See the `database_redact_keys` option of `Tru` to prevent this.
@@ -4842,10 +4925,39 @@ tru.reset_database()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy for="cell-7">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="n">oai_client</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-7">from openai import OpenAI
+oai_client = OpenAI()</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-8">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4901,7 +5013,7 @@ tru.reset_database()</div>
 
 <span class="n">rag</span> <span class="o">=</span> <span class="n">RAG_from_scratch</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-7">from openai import OpenAI
+<div class="clipboard-copy-txt" id="cell-8">from openai import OpenAI
 oai_client = OpenAI()
 
 class RAG_from_scratch:
@@ -4968,10 +5080,10 @@ rag = RAG_from_scratch()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-8">
+<clipboard-copy for="cell-9">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4986,7 +5098,7 @@ rag = RAG_from_scratch()</div>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="n">provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">)</span>
 
 <span class="c1"># Define a groundedness feedback function</span>
 <span class="n">f_groundedness</span> <span class="o">=</span> <span class="p">(</span>
@@ -5009,12 +5121,12 @@ rag = RAG_from_scratch()</div>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> <span class="c1"># choose a different aggregation method if you wish</span>
 <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8">from trulens_eval import Feedback, Select
+<div class="clipboard-copy-txt" id="cell-9">from trulens_eval import Feedback, Select
 from trulens_eval.feedback.provider.openai import OpenAI
 
 import numpy as np
 
-provider = OpenAI()
+provider = OpenAI(model_engine="gpt-4o")
 
 # Define a groundedness feedback function
 f_groundedness = (
@@ -5076,10 +5188,10 @@ f_context_relevance = (
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-9">
+<clipboard-copy for="cell-10">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -5094,7 +5206,7 @@ f_context_relevance = (
     <span class="n">app_id</span> <span class="o">=</span> <span class="s1">'RAG v1'</span><span class="p">,</span>
     <span class="n">feedbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">f_groundedness</span><span class="p">,</span> <span class="n">f_answer_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9">from trulens_eval import TruCustomApp
+<div class="clipboard-copy-txt" id="cell-10">from trulens_eval import TruCustomApp
 tru_rag = TruCustomApp(rag,
     app_id = 'RAG v1',
     feedbacks = [f_groundedness, f_answer_relevance, f_context_relevance])</div>
@@ -5120,10 +5232,10 @@ tru_rag = TruCustomApp(rag,
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-10">
+<clipboard-copy for="cell-11">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -5136,7 +5248,7 @@ tru_rag = TruCustomApp(rag,
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="k">with</span> <span class="n">tru_rag</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
     <span class="n">rag</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"When was the University of Washington founded?"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-10">with tru_rag as recording:
+<div class="clipboard-copy-txt" id="cell-11">with tru_rag as recording:
     rag.query("When was the University of Washington founded?")</div>
 </div>
 </div>
@@ -5160,10 +5272,10 @@ tru_rag = TruCustomApp(rag,
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-11">
+<clipboard-copy for="cell-12">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -5175,7 +5287,7 @@ tru_rag = TruCustomApp(rag,
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_leaderboard</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11">tru.get_leaderboard()</div>
+<div class="clipboard-copy-txt" id="cell-12">tru.get_leaderboard()</div>
 </div>
 </div>
 </div>
@@ -5185,7 +5297,7 @@ tru_rag = TruCustomApp(rag,
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[12]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -5205,9 +5317,6 @@ tru_rag = TruCustomApp(rag,
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>Groundedness</th>
-<th>Answer Relevance</th>
-<th>Context Relevance</th>
 <th>latency</th>
 <th>total_cost</th>
 </tr>
@@ -5215,18 +5324,12 @@ tru_rag = TruCustomApp(rag,
 <th>app_id</th>
 <th></th>
 <th></th>
-<th></th>
-<th></th>
-<th></th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>RAG v1</th>
-<td>1.0</td>
-<td>1.0</td>
-<td>0.4</td>
-<td>1.0</td>
+<td>3.0</td>
 <td>0.000511</td>
 </tr>
 </tbody>
@@ -5243,10 +5346,10 @@ tru_rag = TruCustomApp(rag,
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-12">
+<clipboard-copy for="cell-13">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -5259,12 +5362,12 @@ tru_rag = TruCustomApp(rag,
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">last_record</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">records</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
 <span class="kn">from</span> <span class="nn">trulens_eval.utils.display</span> <span class="kn">import</span> <span class="n">get_feedback_result</span>
-<span class="n">get_feedback_result</span><span class="p">(</span><span class="n">last_record</span><span class="p">,</span> <span class="s1">'Context Relevance'</span><span class="p">)</span>
+<span class="n">get_feedback_result</span><span class="p">(</span><span class="n">last_record</span><span class="p">,</span> <span class="s2">"Context Relevance"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-12">last_record = recording.records[-1]
+<div class="clipboard-copy-txt" id="cell-13">last_record = recording.records[-1]
 
 from trulens_eval.utils.display import get_feedback_result
-get_feedback_result(last_record, 'Context Relevance')</div>
+get_feedback_result(last_record, "Context Relevance")</div>
 </div>
 </div>
 </div>
@@ -5274,7 +5377,7 @@ get_feedback_result(last_record, 'Context Relevance')</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[11]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[13]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -5310,19 +5413,19 @@ get_feedback_result(last_record, 'Context Relevance')</div>
 <th>1</th>
 <td>When was the University of Washington founded?</td>
 <td>\nWashington State University, commonly known ...</td>
-<td>0.2</td>
+<td>0.0</td>
 </tr>
 <tr>
 <th>2</th>
 <td>When was the University of Washington founded?</td>
 <td>\nSeattle, a city on Puget Sound in the Pacifi...</td>
-<td>0.2</td>
+<td>0.0</td>
 </tr>
 <tr>
 <th>3</th>
 <td>When was the University of Washington founded?</td>
 <td>\nStarbucks Corporation is an American multina...</td>
-<td>0.2</td>
+<td>0.0</td>
 </tr>
 </tbody>
 </table>
@@ -5344,16 +5447,16 @@ get_feedback_result(last_record, 'Context Relevance')</div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-13">
+<clipboard-copy for="cell-14">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -5366,15 +5469,13 @@ get_feedback_result(last_record, 'Context Relevance')</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># note: feedback function used for guardrail must only return a score, not also reasons</span>
 <span class="n">f_context_relevance_score</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">"Context Relevance"</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
-    <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">rets</span><span class="p">)</span>
 <span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">trulens_eval.guardrails.base</span> <span class="kn">import</span> <span class="n">context_filter</span>
 
 <span class="k">class</span> <span class="nc">filtered_RAG_from_scratch</span><span class="p">:</span>
     <span class="nd">@instrument</span>
-    <span class="nd">@context_filter</span><span class="p">(</span><span class="n">f_context_relevance_score</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="nd">@context_filter</span><span class="p">(</span><span class="n">f_context_relevance_score</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="n">keyword_for_prompt</span><span class="o">=</span><span class="s2">"query"</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Retrieve relevant text from vector store.</span>
@@ -5409,24 +5510,22 @@ get_feedback_result(last_record, 'Context Relevance')</div>
 
     <span class="nd">@instrument</span>
     <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">context_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-        <span class="n">completion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_completion</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">context_str</span><span class="p">)</span>
+        <span class="n">context_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">completion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_completion</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">context_str</span><span class="o">=</span><span class="n">context_str</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">completion</span>
 
 <span class="n">filtered_rag</span> <span class="o">=</span> <span class="n">filtered_RAG_from_scratch</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13"># note: feedback function used for guardrail must only return a score, not also reasons
+<div class="clipboard-copy-txt" id="cell-14"># note: feedback function used for guardrail must only return a score, not also reasons
 f_context_relevance_score = (
     Feedback(provider.context_relevance, name = "Context Relevance")
-    .on_input()
-    .on(Select.RecordCalls.retrieve.rets)
 )
 
 from trulens_eval.guardrails.base import context_filter
 
 class filtered_RAG_from_scratch:
     @instrument
-    @context_filter(f_context_relevance_score, 0.5)
+    @context_filter(f_context_relevance_score, 0.75, keyword_for_prompt="query")
     def retrieve(self, query: str) -&gt; list:
         """
         Retrieve relevant text from vector store.
@@ -5461,25 +5560,11 @@ class filtered_RAG_from_scratch:
 
     @instrument
     def query(self, query: str) -&gt; str:
-        context_str = self.retrieve(query)
-        completion = self.generate_completion(query, context_str)
+        context_str = self.retrieve(query=query)
+        completion = self.generate_completion(query=query, context_str=context_str)
         return completion
 
 filtered_rag = filtered_RAG_from_scratch()</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>✅ In Context Relevance, input question will be set to __record__.main_input or `Select.RecordInput` .
-✅ In Context Relevance, input context will be set to __record__.app.retrieve.rets .
-</pre>
 </div>
 </div>
 </div>
@@ -5502,10 +5587,10 @@ filtered_rag = filtered_RAG_from_scratch()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-14">
+<clipboard-copy for="cell-15">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -5521,15 +5606,15 @@ filtered_rag = filtered_RAG_from_scratch()</div>
     <span class="n">feedbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">f_groundedness</span><span class="p">,</span> <span class="n">f_answer_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
 
 <span class="k">with</span> <span class="n">filtered_tru_rag</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">filtered_rag</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"when was the university of washington founded?"</span><span class="p">)</span>
+    <span class="n">filtered_rag</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">"when was the university of washington founded?"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-14">from trulens_eval import TruCustomApp
+<div class="clipboard-copy-txt" id="cell-15">from trulens_eval import TruCustomApp
 filtered_tru_rag = TruCustomApp(filtered_rag,
     app_id = 'RAG v2',
     feedbacks = [f_groundedness, f_answer_relevance, f_context_relevance])
 
 with filtered_tru_rag as recording:
-    filtered_rag.query("when was the university of washington founded?")</div>
+    filtered_rag.query(query="when was the university of washington founded?")</div>
 </div>
 </div>
 </div>
@@ -5541,10 +5626,10 @@ with filtered_tru_rag as recording:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-15">
+<clipboard-copy for="cell-16">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -5556,7 +5641,7 @@ with filtered_tru_rag as recording:
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">get_leaderboard</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[])</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-15">tru.get_leaderboard(app_ids=[])</div>
+<div class="clipboard-copy-txt" id="cell-16">tru.get_leaderboard(app_ids=[])</div>
 </div>
 </div>
 </div>
@@ -5566,7 +5651,7 @@ with filtered_tru_rag as recording:
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[14]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[19]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -5586,8 +5671,8 @@ with filtered_tru_rag as recording:
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>Groundedness</th>
 <th>Answer Relevance</th>
+<th>Groundedness</th>
 <th>Context Relevance</th>
 <th>latency</th>
 <th>total_cost</th>
@@ -5606,15 +5691,15 @@ with filtered_tru_rag as recording:
 <th>RAG v2</th>
 <td>1.0</td>
 <td>1.0</td>
+<td>1.00</td>
 <td>1.0</td>
-<td>1.0</td>
-<td>0.002268</td>
+<td>0.000203</td>
 </tr>
 <tr>
 <th>RAG v1</th>
 <td>1.0</td>
 <td>1.0</td>
-<td>0.4</td>
+<td>0.25</td>
 <td>1.0</td>
 <td>0.000511</td>
 </tr>
@@ -5643,10 +5728,10 @@ with filtered_tru_rag as recording:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-16">
+<clipboard-copy for="cell-17">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -5659,12 +5744,12 @@ with filtered_tru_rag as recording:
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">last_record</span> <span class="o">=</span> <span class="n">recording</span><span class="o">.</span><span class="n">records</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
 <span class="kn">from</span> <span class="nn">trulens_eval.utils.display</span> <span class="kn">import</span> <span class="n">get_feedback_result</span>
-<span class="n">get_feedback_result</span><span class="p">(</span><span class="n">last_record</span><span class="p">,</span> <span class="s1">'Context Relevance'</span><span class="p">)</span>
+<span class="n">get_feedback_result</span><span class="p">(</span><span class="n">last_record</span><span class="p">,</span> <span class="s2">"Context Relevance"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-16">last_record = recording.records[-1]
+<div class="clipboard-copy-txt" id="cell-17">last_record = recording.records[-1]
 
 from trulens_eval.utils.display import get_feedback_result
-get_feedback_result(last_record, 'Context Relevance')</div>
+get_feedback_result(last_record, "Context Relevance")</div>
 </div>
 </div>
 </div>
@@ -5674,7 +5759,7 @@ get_feedback_result(last_record, 'Context Relevance')</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[15]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[17]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -5720,10 +5805,10 @@ get_feedback_result(last_record, 'Context Relevance')</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-17">
+<clipboard-copy for="cell-18">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -5733,9 +5818,9 @@ get_feedback_result(last_record, 'Context Relevance')</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">tru</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">3453</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-17">tru.run_dashboard()</div>
+<div class="clipboard-copy-txt" id="cell-18">tru.run_dashboard(port=3453, force=True)</div>
 </div>
 </div>
 </div>
@@ -5762,14 +5847,41 @@ Credentials file already exists. Skipping writing process.
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Dashboard started at http://192.168.4.206:11177 .
+<pre>Dashboard started at http://192.168.4.206:3453 .
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[16]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[23]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>&lt;Popen: returncode: None args: ['streamlit', 'run', '--server.headless=True'...&gt;</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-19">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-19"></div>
 </div>
 </div>
 </div>
