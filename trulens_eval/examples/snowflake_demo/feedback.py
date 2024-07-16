@@ -66,7 +66,6 @@ def get_feedbacks(provider_name: str, use_rag: bool = True):
     if use_rag:
         return [
             f_context_relevance,
-            #f_small_local_models_context_relevance,
             f_answer_relevance,
             f_groundedness,
         ]
@@ -82,14 +81,4 @@ f_context_relevance = (
                  Select.RecordCalls.retrieve_context.rets[:]
              ).aggregate(np.mean
                         )  # choose a different aggregation method if you wish
-)
-
-small_local_model_provider = SmallLocalModels()
-f_small_local_models_context_relevance = (
-    Feedback(
-        small_local_model_provider.context_relevance,
-        name="[Small Local Model] Context Relevance",
-    ).on_input().on(Select.RecordCalls.retrieve_context.rets[:]).aggregate(
-        np.mean
-    )  # choose a different aggregation method if you wish
 )
