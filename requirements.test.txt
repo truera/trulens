@@ -1,0 +1,5 @@
+# Packages required for testing and pipeline execution.
+
+pytest==7.0.1
+pytest-subtests
+pytest-azurepipelines
