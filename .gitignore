@@ -39,9 +39,6 @@ imagenet_class_index.json.*
 config.toml
 credentials.toml
 
-# Generated Files, not enabling this yet
-# trulens_eval/generated_files/*.{py,md,ipynb}
-
 **/*.sqlite
 
 # Virtual environments

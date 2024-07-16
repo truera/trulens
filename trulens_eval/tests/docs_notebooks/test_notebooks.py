@@ -65,9 +65,6 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
     def test(self):
         OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
         HUGGINGFACE_API_KEY = os.environ['HUGGINGFACE_API_KEY']
-        PINECONE_API_KEY = os.environ['PINECONE_API_KEY']
-        PINECONE_ENV = os.environ['PINECONE_ENV']
-        HUGGINGFACEHUB_API_TOKEN = os.environ['HUGGINGFACEHUB_API_TOKEN']
 
         notebook_preprocessor = VariableSettingPreprocessor
         notebook_preprocessor_kwargs = {
@@ -80,9 +77,6 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
                     f"import os",
                     f"os.environ['OPENAI_API_KEY']='{OPENAI_API_KEY}'",
                     f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
-                    f"os.environ['PINECONE_API_KEY']='{PINECONE_API_KEY}'",
-                    f"os.environ['PINECONE_ENV']='{PINECONE_ENV}'",
-                    f"os.environ['HUGGINGFACEHUB_API_TOKEN']='{HUGGINGFACEHUB_API_TOKEN}'",
                 ]
         }
         if db_compat_version is not None:
@@ -97,6 +91,16 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
     return test
 
 
+NOTEBOOKS_TO_TEST_BACKWARDS_COMPATIBILITY = [
+    "langchain_quickstart.ipynb",
+    "llama_index_quickstart.ipynb",
+    "quickstart.ipynb",
+    "prototype_evals.ipynb",
+    "human_feedback.ipynb",
+    "groundtruth_evals.ipynb",
+    "logging.ipynb",
+]
+
 for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
     if filename.endswith('.ipynb'):
 
@@ -105,7 +109,7 @@ for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):
             get_unit_test_for_filename(filename)
         )
 
-        if 'all_tools' in filename or 'llama_index_quickstart' in filename:
+        if filename in NOTEBOOKS_TO_TEST_BACKWARDS_COMPATIBILITY:
             # If you want to test all versions uncomment and replace the below for loop
             ### for version in migration.migration_versions:
 

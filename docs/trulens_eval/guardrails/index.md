@@ -27,14 +27,10 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
         ```python
         from trulens_eval.guardrails.base import context_filter
 
-        feedback = (
-            Feedback(provider.context_relevance)
-            .on_input()
-            .on(Select.RecordCalls.retrieve.rets)
-        )
+        feedback = Feedback(provider.context_relevance)
 
         class RAG_from_scratch:
-        @context_filter(feedback, 0.5)
+        @context_filter(feedback, 0.5, keyword_for_prompt="query")
         def retrieve(query: str) -> list:
             results = vector_store.query(
             query_texts=query,
@@ -49,11 +45,7 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
         ```python
         from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments
 
-        feedback = (
-            Feedback(provider.context_relevance)
-            .on_input()
-            .on(Select.RecordCalls.retrieve.rets)
-        )
+        feedback = Feedback(provider.context_relevance)
 
         filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever,
@@ -75,11 +67,7 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
         ```python
         from trulens_eval.guardrails.llama import WithFeedbackFilterNodes
 
-        feedback = (
-            Feedback(provider.context_relevance)
-            .on_input()
-            .on(Select.RecordCalls.retrieve.rets)
-        )
+        feedback = Feedback(provider.context_relevance)
 
         filtered_query_engine = WithFeedbackFilterNodes(query_engine,
             feedback=feedback,

@@ -7,6 +7,21 @@ increment only the `patch` number. No releases have yet made a `major` version
 increment. Those are expected to be major releases that introduce large number
 of breaking changes.
 
+## 0.33.0
+
+### What's Changed
+* timeouts for wait_for_feedback_results by @sfc-gh-pmardziel in https://github.com/truera/trulens/pull/1267
+* TruLens Streamlit components by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1224
+* Run the dashboard on an unused port by default by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1280 and @sfc-gh-jreini in https://github.com/truera/trulens/pull/1275
+
+### Documentation Updates
+* Reflect Snowflake SQLAlchemy Release in "Connect to Snowflake" Docs by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1281
+* Update guardrails examples by @sfc-gh-jreini in https://github.com/truera/trulens/pull/1275
+
+### Bug Fixes
+* Remove duplicated tests by @sfc-gh-dkurokawa in https://github.com/truera/trulens/pull/1283
+* fix LlamaIndex streaming response import by @sfc-gh-chu in https://github.com/truera/trulens/pull/1276
+
 ## 0.32.0
 
 ### What's Changed

@@ -9,6 +9,7 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 from pprint import PrettyPrinter
+import socket
 import subprocess
 import sys
 import threading
@@ -987,9 +988,16 @@ class Tru(python.SingletonPerName):
 
         self._evaluator_proc = None
 
+    def find_unused_port(self) -> int:
+        """Find an unused port."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            return s.getsockname()[1]
+
     def run_dashboard(
         self,
-        port: Optional[int] = 8501,
+        port: Optional[int] = None,
         address: Optional[str] = None,
         force: bool = False,
         _dev: Optional[Path] = None
@@ -1070,6 +1078,9 @@ class Tru(python.SingletonPerName):
         if _dev is not None:
             env_opts['env'] = os.environ
             env_opts['env']['PYTHONPATH'] = str(_dev)
+
+        if port is None:
+            port = self.find_unused_port()
 
         args = ["streamlit", "run", "--server.headless=True"]
         if port is not None:
