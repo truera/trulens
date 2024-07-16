@@ -101,7 +101,7 @@ class CustomApp(Dummy):
         self,
         num_agents: int = 2,
         num_tools: int = 3,
-        use_parallel: Optional[bool] = False,
+        use_parallel: bool = False,
         comp_kwargs: Dict[Type, Dict[str, Any]] = {},
         **kwargs
     ):

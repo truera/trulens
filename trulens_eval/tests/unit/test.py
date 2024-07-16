@@ -5,10 +5,11 @@ import functools
 import json
 import os
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Set
+from typing import Any, Dict, Mapping, Optional, Sequence, Set, TypeVar
 import unittest
 from unittest import TestCase
 
+from frozendict import frozendict
 import pydantic
 from pydantic import BaseModel
 import yaml
@@ -64,6 +65,94 @@ def module_installed(module: str) -> bool:
         return False
 
 
+T = TypeVar("T")
+
+
+def hashable_skip(obj: T, skips: Set[str]) -> T:
+    """Return a hashable copy of `obj` with all keys/attributes in `skips`
+    removed. 
+    
+    Sequences are returned as tuples and container types are returned as
+    frozendicts. Floats are retuned as 0.0 to avoid tolerance issues. Note that
+    the returned objects are only used for ordering their originals and are not
+    compared themselves.
+
+    Args:
+        obj: The object to remove keys/attributes from.
+
+        skips: The keys to remove.
+    """
+
+    def recur(obj):
+        return hashable_skip(obj, skips=skips)
+
+    if isinstance(obj, float):
+        return 0.0
+
+    if isinstance(obj, JSON_BASES):
+        return obj
+
+    if isinstance(obj, Mapping):
+        return frozendict(
+            {k: recur(v) for k, v in obj.items() if k not in skips}
+        )
+
+    elif isinstance(obj, Sequence):
+        return tuple(recur(v) for v in obj)
+
+    elif is_dataclass(obj):
+        ret = {}
+        for f in fields(obj):
+            if f.name in skips:
+                continue
+
+            ret[f.name] = recur(getattr(obj, f.name))
+
+        return frozendict(ret)
+
+    elif isinstance(obj, BaseModel):
+        ret = {}
+        for f in obj.model_fields:
+            if f in skips:
+                continue
+
+            ret[f] = recur(getattr(obj, f))
+
+        return frozendict(ret)
+
+    elif isinstance(obj, pydantic.v1.BaseModel):
+        ret = {}
+
+        for f in j1.__fields__:
+            if f in skips:
+                continue
+
+            ret[f] = recur(getattr(obj, f))
+
+        return frozendict(ret)
+
+    else:
+        return obj
+
+
+def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
+    """Return a sorted version of `obj` by string order.
+
+    Items are convered to strings using `hashable_skip` with `skips`
+    keys/attributes skipped.
+
+    Args:
+        seq: The sequence to sort.
+
+        skips: The keys/attributes to skip for string conversion.
+    """
+
+    objs_and_strs = [(o, str(hashable_skip(o, skips=skips))) for o in seq]
+    objs_and_strs_sorted = sorted(objs_and_strs, key=lambda x: x[1])
+
+    return [o for o, _ in objs_and_strs_sorted]
+
+
 class JSONTestCase(TestCase):
     """TestCase class that adds JSON comparisons and golden expectation handling."""
 
@@ -73,6 +162,8 @@ class JSONTestCase(TestCase):
         golden_filename: str,
         skips: Optional[Set[str]] = None,
         numeric_places: int = 7,
+        unordereds: Optional[Set[str]] = None,
+        unordered: bool = False,
     ):
         """Assert equality between [JSON-like][trulens_eval.util.serial.JSON]
         `actual` and the content of `golden_filename`.
@@ -99,6 +190,13 @@ class JSONTestCase(TestCase):
 
             numeric_places: The number of decimal places to compare for floating
                 point
+
+            unordereds: A set of keys or attribute names whose associated values
+                are compared without orderered if they are sequences.
+
+            unordered: If true, the order of elements in a sequence is not
+                checked. Note that this only applies to the inputs `j1` and `j2`
+                and not to any nested elements.
 
         Raises:
             FileNotFoundError: If the golden file is not found.
@@ -137,7 +235,12 @@ class JSONTestCase(TestCase):
                 expected = loader(f)
 
             self.assertJSONEqual(
-                actual, expected, skips=skips, numeric_places=numeric_places
+                actual,
+                expected,
+                skips=skips,
+                numeric_places=numeric_places,
+                unordereds=unordereds,
+                unordered=unordered
             )
 
     def assertJSONEqual(
@@ -146,7 +249,9 @@ class JSONTestCase(TestCase):
         j2: JSON,
         path: Optional[Lens] = None,
         skips: Optional[Set[str]] = None,
-        numeric_places: int = 7
+        numeric_places: int = 7,
+        unordereds: Optional[Set[str]] = None,
+        unordered: bool = False,
     ) -> None:
         """Assert equality between JSON-like `j1` and `j2`.
         
@@ -176,6 +281,13 @@ class JSONTestCase(TestCase):
             numeric_places: The number of decimal places to compare for floating
                 point numbers.
 
+            unordereds: A set of keys or attribute names whose associated values
+                are compared without orderered if they are sequences.
+
+            unordered: If true, the order of elements in a sequence is not
+                checked. Note that this only applies to the inputs `j1` and `j2`
+                and not to any nested elements.
+
         Raises:
             AssertionError: If the two JSON-like objects are
                 not equal (except for anything skipped) or anything within
@@ -184,10 +296,17 @@ class JSONTestCase(TestCase):
 
         skips = skips or set([])
         path = path or Lens()
+        unordereds = unordereds or set([])
 
-        def recur(j1, j2, path):
+        def recur(j1, j2, path, unordered=False):
             return self.assertJSONEqual(
-                j1, j2, path=path, skips=skips, numeric_places=numeric_places
+                j1,
+                j2,
+                path=path,
+                skips=skips,
+                numeric_places=numeric_places,
+                unordered=unordered,
+                unordereds=unordereds
             )
 
         ps = str(path)
@@ -211,10 +330,14 @@ class JSONTestCase(TestCase):
                 if k in skips:
                     continue
 
-                recur(j1[k], j2[k], path=path[k])
+                recur(j1[k], j2[k], path=path[k], unordered=k in unordereds)
 
         elif isinstance(j1, Sequence):
             self.assertEqual(len(j1), len(j2), ps)
+
+            if unordered:
+                j1 = str_sorted(j1, skips=skips)
+                j2 = str_sorted(j2, skips=skips)
 
             for i, (v1, v2) in enumerate(zip(j1, j2)):
                 recur(v1, v2, path=path[i])
@@ -229,7 +352,12 @@ class JSONTestCase(TestCase):
 
                 self.assertTrue(hasattr(j2, f.name))
 
-                recur(getattr(j1, f.name), getattr(j2, f.name), path[f.name])
+                recur(
+                    getattr(j1, f.name),
+                    getattr(j2, f.name),
+                    path[f.name],
+                    unordered=f.name in unordereds
+                )
 
         elif isinstance(j1, BaseModel):
             for f in j1.model_fields:
@@ -238,7 +366,12 @@ class JSONTestCase(TestCase):
 
                 self.assertTrue(hasattr(j2, f))
 
-                recur(getattr(j1, f), getattr(j2, f), path[f])
+                recur(
+                    getattr(j1, f),
+                    getattr(j2, f),
+                    path[f],
+                    unordered=f in unordereds
+                )
 
         elif isinstance(j1, pydantic.v1.BaseModel):
             for f in j1.__fields__:
@@ -247,7 +380,12 @@ class JSONTestCase(TestCase):
 
                 self.assertTrue(hasattr(j2, f))
 
-                recur(getattr(j1, f), getattr(j2, f), path[f])
+                recur(
+                    getattr(j1, f),
+                    getattr(j2, f),
+                    path[f],
+                    unordered=f in unordereds
+                )
 
         else:
             raise RuntimeError(

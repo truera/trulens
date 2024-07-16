@@ -26,13 +26,12 @@ class TestDummy(JSONTestCase):
         and produces a consistent record."""
 
         # Create custom app:
-        ca = CustomApp(delay=0.0, alloc=0)  # uses DummyAPI internally
+        ca = CustomApp(
+            delay=0.0, alloc=0, use_parallel=True
+        )  # uses DummyAPI internally
 
         # Create trulens wrapper:
-        ta = TruCustomApp(
-            ca,
-            app_id="customapp",
-        )
+        ta = TruCustomApp(ca, app_id="customapp")
 
         with ta as recorder:
             res = ca.respond_to_query(f"hello")
@@ -47,7 +46,8 @@ class TestDummy(JSONTestCase):
                     "record_id", 'start_time', 'end_time', 'ts', 'pid', 'tid',
                     'call_id', 'id'
                 ]
-            )
+            ),
+            unordereds=set(["calls"])
         )
 
 
