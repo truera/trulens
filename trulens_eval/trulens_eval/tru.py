@@ -745,6 +745,39 @@ class Tru(python.SingletonPerName):
 
         return leaderboard
 
+    def get_leaderboard_grouped_by_metadata(
+            record_metadata_key: str = None,
+            app_ids: Optional[List[mod_types_schema.AppID]] = None,
+            
+        ) -> pd.DataFrame:
+        """Get a leaderboard for the given apps grouped by record metadata
+    
+        Args:
+            app_ids: A list of app ids to filter records by. If empty or not given, all
+                apps will be included in leaderboard.
+            record_metadata_key: A key included in record metadata that you want to group results by.
+    
+        Returns:
+            Dataframe of apps with their feedback results aggregated and grouped by the specified record metadata key.
+        """
+    
+        if app_ids is None:
+            app_ids = []
+    
+        df, feedback_cols = tru.get_records_and_feedback(app_ids)
+    
+        df['meta'] = [json.loads(records["record_json"][i])["meta"] for i in range(len(df))]
+    
+        df[str(record_metadata_key)] = [item.get(record_metadata_key, 'Error') for item in df['meta']]
+    
+        col_agg_list = feedback_cols + ['latency', 'total_cost']
+    
+        leaderboard = df.groupby(['app_id',str(record_metadata_key)])[col_agg_list].mean().sort_values(
+                by=feedback_cols, ascending=False
+        )
+    
+        return leaderboard
+
     def start_evaluator(
         self,
         restart: bool = False,
