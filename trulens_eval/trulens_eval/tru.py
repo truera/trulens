@@ -15,6 +15,7 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
+import json
 from typing import (
     Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple,
     TypeVar, Union
@@ -764,9 +765,9 @@ class Tru(python.SingletonPerName):
         if app_ids is None:
             app_ids = []
     
-        df, feedback_cols = tru.get_records_and_feedback(app_ids)
+        df, feedback_cols = self.db.get_records_and_feedback(app_ids)
     
-        df['meta'] = [json.loads(records["record_json"][i])["meta"] for i in range(len(df))]
+        df['meta'] = [json.loads(df["record_json"][i])["meta"] for i in range(len(df))]
     
         df[str(record_metadata_key)] = [item.get(record_metadata_key, 'Error') for item in df['meta']]
     
