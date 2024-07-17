@@ -4,6 +4,7 @@ from collections import defaultdict
 from concurrent import futures
 from datetime import datetime
 from datetime import timedelta
+import json
 import logging
 from multiprocessing import Process
 import os
@@ -15,7 +16,6 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-import json
 from typing import (
     Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple,
     TypeVar, Union
@@ -747,10 +747,9 @@ class Tru(python.SingletonPerName):
         return leaderboard
 
     def get_leaderboard_grouped_by_metadata(
-            record_metadata_key: str = None,
-            app_ids: Optional[List[mod_types_schema.AppID]] = None,
-            
-        ) -> pd.DataFrame:
+        record_metadata_key: str = None,
+        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+    ) -> pd.DataFrame:
         """Get a leaderboard for the given apps grouped by record metadata
     
         Args:
@@ -761,22 +760,26 @@ class Tru(python.SingletonPerName):
         Returns:
             Dataframe of apps with their feedback results aggregated and grouped by the specified record metadata key.
         """
-    
+
         if app_ids is None:
             app_ids = []
-    
+
         df, feedback_cols = self.db.get_records_and_feedback(app_ids)
-    
-        df['meta'] = [json.loads(df["record_json"][i])["meta"] for i in range(len(df))]
-    
-        df[str(record_metadata_key)] = [item.get(record_metadata_key, 'Error') for item in df['meta']]
-    
+
+        df['meta'] = [
+            json.loads(df["record_json"][i])["meta"] for i in range(len(df))
+        ]
+
+        df[str(record_metadata_key)
+          ] = [item.get(record_metadata_key, 'Error') for item in df['meta']]
+
         col_agg_list = feedback_cols + ['latency', 'total_cost']
-    
-        leaderboard = df.groupby(['app_id',str(record_metadata_key)])[col_agg_list].mean().sort_values(
-                by=feedback_cols, ascending=False
-        )
-    
+
+        leaderboard = df.groupby(['app_id', str(record_metadata_key)]
+                                )[col_agg_list].mean().sort_values(
+                                    by=feedback_cols, ascending=False
+                                )
+
         return leaderboard
 
     def start_evaluator(
