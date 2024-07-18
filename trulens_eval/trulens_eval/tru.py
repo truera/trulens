@@ -16,8 +16,10 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Generic, Iterable, List, Optional,
-                    Sequence, Tuple, TypeVar, Union)
+from typing import (
+    Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple,
+    TypeVar, Union
+)
 
 import humanize
 import pandas
@@ -743,20 +745,22 @@ class Tru(python.SingletonPerName):
             json.loads(df["record_json"][i])["meta"] for i in range(len(df))
         ]
 
-        df[str(group_by_metadata_key)
-          ] = [item.get(group_by_metadata_key, None) for item in df['meta']]
+        df[str(group_by_metadata_key)] = [
+            item.get(group_by_metadata_key, None)
+            if isinstance(item, dict) else None for item in df['meta']
+        ]
 
         col_agg_list = feedback_cols + ['latency', 'total_cost']
 
         if group_by_metadata_key is not None:
             return df.groupby(['app_id', str(group_by_metadata_key)]
-                                )[col_agg_list].mean().sort_values(
-                                    by=feedback_cols, ascending=False
-                                )
+                             )[col_agg_list].mean().sort_values(
+                                 by=feedback_cols, ascending=False
+                             )
         else:
             return df.groupby('app_id')[col_agg_list].mean().sort_values(
-            by=feedback_cols, ascending=False
-        )
+                by=feedback_cols, ascending=False
+            )
 
     def start_evaluator(
         self,
