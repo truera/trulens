@@ -741,18 +741,17 @@ class Tru(python.SingletonPerName):
 
         df, feedback_cols = self.db.get_records_and_feedback(app_ids)
 
-        df['meta'] = [
-            json.loads(df["record_json"][i])["meta"] for i in range(len(df))
-        ]
-
-        df[str(group_by_metadata_key)] = [
-            item.get(group_by_metadata_key, None)
-            if isinstance(item, dict) else None for item in df['meta']
-        ]
-
         col_agg_list = feedback_cols + ['latency', 'total_cost']
 
         if group_by_metadata_key is not None:
+            df['meta'] = [
+            json.loads(df["record_json"][i])["meta"] for i in range(len(df))
+        ]
+
+            df[str(group_by_metadata_key)] = [
+                item.get(group_by_metadata_key, None)
+                if isinstance(item, dict) else None for item in df['meta']
+            ]
             return df.groupby(['app_id', str(group_by_metadata_key)]
                              )[col_agg_list].mean().sort_values(
                                  by=feedback_cols, ascending=False
