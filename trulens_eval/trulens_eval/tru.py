@@ -16,10 +16,8 @@ import sys
 import threading
 from threading import Thread
 from time import sleep
-from typing import (
-    Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple,
-    TypeVar, Union
-)
+from typing import (Any, Callable, Dict, Generic, Iterable, List, Optional,
+                    Sequence, Tuple, TypeVar, Union)
 
 import humanize
 import pandas
@@ -739,20 +737,26 @@ class Tru(python.SingletonPerName):
         if app_ids is None:
             app_ids = []
 
-        if group_by_metadata_key is not None:
-            return self.get_leaderboard_grouped_by_metadata(
-                record_metadata_key=group_by_metadata_key, app_ids=app_ids
-            )
-
         df, feedback_cols = self.db.get_records_and_feedback(app_ids)
+
+        df['meta'] = [
+            json.loads(df["record_json"][i])["meta"] for i in range(len(df))
+        ]
+
+        df[str(group_by_metadata_key)
+          ] = [item.get(group_by_metadata_key, None) for item in df['meta']]
 
         col_agg_list = feedback_cols + ['latency', 'total_cost']
 
-        leaderboard = df.groupby('app_id')[col_agg_list].mean().sort_values(
+        if group_by_metadata_key is not None:
+            return df.groupby(['app_id', str(group_by_metadata_key)]
+                                )[col_agg_list].mean().sort_values(
+                                    by=feedback_cols, ascending=False
+                                )
+        else:
+            return df.groupby('app_id')[col_agg_list].mean().sort_values(
             by=feedback_cols, ascending=False
         )
-
-        return leaderboard
 
     def start_evaluator(
         self,
