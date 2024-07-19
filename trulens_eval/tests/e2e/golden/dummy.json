@@ -1,5 +1,5 @@
 {
-  "record_id": "record_hash_18972182ea8c735e10287b04321268af",
+  "record_id": "record_hash_377c0585f4f63a320c431beeb862574e",
   "app_id": "customapp",
   "cost": {
     "n_requests": 0,
@@ -12,10 +12,10 @@
     "cost": 0.0
   },
   "perf": {
-    "start_time": "2024-07-16T13:51:51.861012",
-    "end_time": "2024-07-16T13:51:52.146287"
+    "start_time": "2024-07-19T14:21:06.926697",
+    "end_time": "2024-07-19T14:21:07.152921"
   },
-  "ts": "2024-07-16T13:51:52.146331",
+  "ts": "2024-07-19T14:21:07.152955",
   "tags": "-",
   "meta": null,
   "main_input": "hello",
@@ -23,21 +23,21 @@
   "main_error": null,
   "calls": [
     {
-      "call_id": "48a9891c-7932-4b5f-be0c-7a10ce527c48",
+      "call_id": "76304b21-3cf9-49a4-a079-29b98de4e5f8",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -48,14 +48,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomAgent",
+                "name": "DummyAgent",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.agent"
                 },
                 "bases": null
               },
-              "id": 13587770752,
+              "id": 13982018272,
               "init_bindings": null
             },
             "name": "invoke"
@@ -68,28 +68,28 @@
       "rets": "Record placeholder",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:51.892621",
-        "end_time": "2024-07-16T13:51:51.897967"
+        "start_time": "2024-07-19T14:21:06.953843",
+        "end_time": "2024-07-19T14:21:06.958318"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "e4bb2df1-c349-4861-b600-8709f363f646",
+      "call_id": "b8d3f25c-9398-4f19-b6e1-55a3ccf319aa",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -100,14 +100,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomAgent",
+                "name": "DummyAgent",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.agent"
                 },
                 "bases": null
               },
-              "id": 13587770752,
+              "id": 13982018272,
               "init_bindings": null
             },
             "name": "invoke"
@@ -120,28 +120,28 @@
       "rets": "Record placeholder",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:51.915375",
-        "end_time": "2024-07-16T13:51:51.920740"
+        "start_time": "2024-07-19T14:21:06.972762",
+        "end_time": "2024-07-19T14:21:06.977120"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "2423d297-c24a-47e4-920b-46baf6ce049c",
+      "call_id": "81d6b9be-aaf3-441e-a1a9-d98ba99a8c9d",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -152,14 +152,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "get_context"
@@ -170,14 +170,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomRetriever",
+                "name": "DummyRetriever",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_retriever"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.retriever"
                 },
                 "bases": null
               },
-              "id": 13587770128,
+              "id": 13982017648,
               "init_bindings": null
             },
             "name": "retrieve_chunks"
@@ -193,28 +193,28 @@
       ],
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:51.960829",
-        "end_time": "2024-07-16T13:51:51.965835"
+        "start_time": "2024-07-19T14:21:07.010428",
+        "end_time": "2024-07-19T14:21:07.014837"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "d21afc00-8a34-4882-9c85-21ab03b9d1af",
+      "call_id": "839cb854-a6ee-445b-86ee-e09cfee722b3",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -225,14 +225,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "get_context"
@@ -243,14 +243,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomReranker",
+                "name": "DummyReranker",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_reranker"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.reranker"
                 },
                 "bases": null
               },
-              "id": 13587770704,
+              "id": 13982018224,
               "init_bindings": null
             },
             "name": "rerank"
@@ -277,28 +277,28 @@
       ],
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:51.981569",
-        "end_time": "2024-07-16T13:51:51.986959"
+        "start_time": "2024-07-19T14:21:07.029479",
+        "end_time": "2024-07-19T14:21:07.033939"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "71099f8d-9e43-4965-ba4c-1fae442621c9",
+      "call_id": "d8ab43e3-9be5-4021-a0c1-c93b8f17c1fa",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -309,14 +309,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "get_context"
@@ -327,14 +327,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "process_chunk_by_tool"
@@ -345,14 +345,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomStackTool",
+                "name": "DummyStackTool",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.tool"
                 },
                 "bases": null
               },
-              "id": 13587763504,
+              "id": 13981579408,
               "init_bindings": null
             },
             "name": "invoke"
@@ -362,31 +362,31 @@
       "args": {
         "data": "Relevant chunk: HELLO"
       },
-      "rets": "<table>\n\n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
+      "rets": "<table>\n\n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>respond_to_query</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:52.011664",
-        "end_time": "2024-07-16T13:51:52.022025"
+        "start_time": "2024-07-19T14:21:07.048296",
+        "end_time": "2024-07-19T14:21:07.059736"
       },
-      "pid": 1955,
-      "tid": 8251050
+      "pid": 87285,
+      "tid": 8873519
     },
     {
-      "call_id": "849db4c1-c936-48c0-975d-60ad54766224",
+      "call_id": "37fce265-ed6e-4760-a22c-92b312ab488b",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -397,14 +397,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "get_context"
@@ -415,14 +415,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "process_chunk_by_tool"
@@ -436,31 +436,31 @@
         ],
         "tool_num": 0
       },
-      "rets": "<table>\n\n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
+      "rets": "<table>\n\n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>respond_to_query</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:52.003199",
-        "end_time": "2024-07-16T13:51:52.022076"
+        "start_time": "2024-07-19T14:21:07.043994",
+        "end_time": "2024-07-19T14:21:07.059763"
       },
-      "pid": 1955,
-      "tid": 8251050
+      "pid": 87285,
+      "tid": 8873519
     },
     {
-      "call_id": "f3f5f78f-e118-4e4b-8150-7fd530c00232",
+      "call_id": "fcb6f454-f51d-4a57-8e97-031f4200f3e1",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -471,14 +471,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "get_context"
@@ -489,14 +489,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "process_chunk_by_tool"
@@ -507,14 +507,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomTool",
+                "name": "DummyTool",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.tool"
                 },
                 "bases": null
               },
-              "id": 13587764464,
+              "id": 13982011216,
               "init_bindings": null
             },
             "name": "invoke"
@@ -527,28 +527,28 @@
       "rets": "'Relevant chunk: olleholleholleh'",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:52.018249",
-        "end_time": "2024-07-16T13:51:52.023030"
+        "start_time": "2024-07-19T14:21:07.057574",
+        "end_time": "2024-07-19T14:21:07.060417"
       },
-      "pid": 1955,
-      "tid": 8251059
+      "pid": 87285,
+      "tid": 8873520
     },
     {
-      "call_id": "f0a6677b-bba3-438f-9b73-f52e10693642",
+      "call_id": "eb030b78-9a42-4efb-9db6-3001065818fe",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -559,14 +559,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "get_context"
@@ -577,14 +577,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "process_chunk_by_tool"
@@ -601,28 +601,28 @@
       "rets": "'Relevant chunk: olleholleholleh'",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:52.010350",
-        "end_time": "2024-07-16T13:51:52.023058"
+        "start_time": "2024-07-19T14:21:07.052467",
+        "end_time": "2024-07-19T14:21:07.060437"
       },
-      "pid": 1955,
-      "tid": 8251059
+      "pid": 87285,
+      "tid": 8873520
     },
     {
-      "call_id": "6c82ea5c-d715-4e0b-8076-8fb384c598ba",
+      "call_id": "dba53bff-3196-4321-8217-1bfeaa7e06ae",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -633,14 +633,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "get_context"
@@ -651,33 +651,33 @@
         "query": "hello"
       },
       "rets": [
-        "<table>\n\n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.expositional.end2end_apps.custom_app.custom_app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
+        "<table>\n\n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>respond_to_query</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
         "'Relevant chunk: olleholleholleh'"
       ],
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:51.936649",
-        "end_time": "2024-07-16T13:51:52.023113"
+        "start_time": "2024-07-19T14:21:06.991326",
+        "end_time": "2024-07-19T14:21:07.060479"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "2e7cdbeb-9b29-423c-9288-7bd9faacffa9",
+      "call_id": "42efe1b5-9f2f-4235-b3c8-0613778f4e52",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -688,14 +688,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomMemory",
+                "name": "DummyMemory",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.memory"
                 },
                 "bases": null
               },
-              "id": 13587770032,
+              "id": 13982017552,
               "init_bindings": null
             },
             "name": "remember"
@@ -708,28 +708,28 @@
       "rets": null,
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:52.039662",
-        "end_time": "2024-07-16T13:51:52.045145"
+        "start_time": "2024-07-19T14:21:07.074524",
+        "end_time": "2024-07-19T14:21:07.078866"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "86a28040-801f-4bdf-b692-e3a8f3b4c4a5",
+      "call_id": "5975c24a-78d9-459a-8853-e7e6dda239a4",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -740,14 +740,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomLLM",
+                "name": "DummyLLM",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.llm"
                 },
                 "bases": null
               },
-              "id": 13587770176,
+              "id": 13982017696,
               "init_bindings": null
             },
             "name": "generate"
@@ -760,28 +760,28 @@
       "rets": "This is my response to a prompt of length 33 with a model derp with temperature 0.5.",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:52.062181",
-        "end_time": "2024-07-16T13:51:52.068182"
+        "start_time": "2024-07-19T14:21:07.093162",
+        "end_time": "2024-07-19T14:21:07.097488"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "523f9494-5ad9-415b-8409-75a3a19fbb05",
+      "call_id": "a8c47e0b-ecd1-4351-837e-59d38be2687a",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -792,14 +792,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomTemplate",
+                "name": "DummyTemplate",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.template"
                 },
                 "bases": null
               },
-              "id": 13587770416,
+              "id": 13982017936,
               "init_bindings": null
             },
             "name": "fill"
@@ -813,28 +813,28 @@
       "rets": "Please answer the following question given the context.\nQUESTION: hello\nCONTEXT: This is my response to a prompt of length 33 with a model derp with temperature 0.5.\n",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:52.094091",
-        "end_time": "2024-07-16T13:51:52.100315"
+        "start_time": "2024-07-19T14:21:07.111847",
+        "end_time": "2024-07-19T14:21:07.116203"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "570cfeb1-fb45-4829-a26d-0c3d2180b6ba",
+      "call_id": "89cc4026-0bcf-4acd-a460-c748f1a17acb",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -845,14 +845,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomLLM",
+                "name": "DummyLLM",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.llm"
                 },
                 "bases": null
               },
-              "id": 13587770176,
+              "id": 13982017696,
               "init_bindings": null
             },
             "name": "generate"
@@ -865,28 +865,28 @@
       "rets": "This is my response to a prompt of length 166 with a model derp with temperature 0.5.",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:52.115892",
-        "end_time": "2024-07-16T13:51:52.122116"
+        "start_time": "2024-07-19T14:21:07.130698",
+        "end_time": "2024-07-19T14:21:07.134923"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "223e3bb1-d9df-4d5a-bbfc-5ff621f16147",
+      "call_id": "9040c5a7-ccda-4718-a54d-beff3109c58d",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -897,14 +897,14 @@
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomMemory",
+                "name": "DummyMemory",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.memory"
                 },
                 "bases": null
               },
-              "id": 13587770032,
+              "id": 13982017552,
               "init_bindings": null
             },
             "name": "remember"
@@ -917,28 +917,28 @@
       "rets": null,
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:52.140552",
-        "end_time": "2024-07-16T13:51:52.146261"
+        "start_time": "2024-07-19T14:21:07.148791",
+        "end_time": "2024-07-19T14:21:07.152908"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     },
     {
-      "call_id": "1c330312-499c-443d-92b9-5436a572834c",
+      "call_id": "ca057941-3641-4fd3-9f92-758f1f2b8c7d",
       "stack": [
         {
           "path": "app",
           "method": {
             "obj": {
               "cls": {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
-              "id": 13587769936,
+              "id": 13982017456,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -951,11 +951,11 @@
       "rets": "This is my response to a prompt of length 166 with a model derp with temperature 0.5.",
       "error": null,
       "perf": {
-        "start_time": "2024-07-16T13:51:51.861012",
-        "end_time": "2024-07-16T13:51:52.146287"
+        "start_time": "2024-07-19T14:21:06.926697",
+        "end_time": "2024-07-19T14:21:07.152921"
       },
-      "pid": 1955,
-      "tid": 8250383
+      "pid": 87285,
+      "tid": 8873477
     }
   ]
 }

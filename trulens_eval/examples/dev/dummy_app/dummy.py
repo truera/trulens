@@ -7,8 +7,11 @@ from trulens_eval.utils.python import OpaqueWrapper
 
 
 class Dummy():
-    """Perform some operations to inject performance-related characteristics
-    into the dummy app.
+    """Dummy component base class.
+     
+    Provides operations to inject performance-related characteristics into the
+    dummy app and maintains random number generators for controlling
+    non-determinism.
     """
 
     DEFAULT_ALLOC: int = 0

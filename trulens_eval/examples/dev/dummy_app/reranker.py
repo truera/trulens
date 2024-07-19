@@ -1,12 +1,12 @@
 from typing import List, Optional, Tuple
 
-from examples.expositional.end2end_apps.custom_app.dummy import Dummy
+from examples.dev.dummy_app.dummy import Dummy
 
 from trulens_eval.tru_custom_app import instrument
 
 
-class CustomReranker(Dummy):
-    """Fake reranker that uses a text length to score chunks."""
+class DummyReranker(Dummy):
+    """Dummy reranker that uses a text length to score chunks."""
 
     def __init__(self, *args, top_n: int = 2, **kwargs):
         super().__init__(*args, **kwargs)

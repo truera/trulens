@@ -92,10 +92,9 @@ class TestTru(TestCase):
                         # cannot change the arguments in next test.
 
     def _create_custom(self):
-        from examples.expositional.end2end_apps.custom_app.custom_app import \
-            CustomApp
+        from examples.dev.dummy_app.app import DummyApp
 
-        return CustomApp()
+        return DummyApp()
 
     def _create_basic(self):
 

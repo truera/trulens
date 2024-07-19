@@ -4,7 +4,7 @@ Tests for TruCustomApp.
 
 from unittest import main
 
-from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
+from examples.dev.dummy_app.app import DummyApp
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
@@ -21,7 +21,7 @@ class TestTruCustomApp(JSONTestCase):
     def setUp(self):
         self.tru = Tru()
 
-        self.ca = CustomApp()
+        self.ca = DummyApp()
         self.ta_recorder = TruCustomApp(self.ca, app_id="custom_app")
 
     def test_with_record(self):

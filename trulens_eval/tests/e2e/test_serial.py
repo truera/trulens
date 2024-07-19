@@ -16,7 +16,7 @@ are expected.
 
 from unittest import main
 
-from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
+from examples.dev.dummy_app.app import DummyApp
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Feedback
@@ -34,7 +34,7 @@ class TestSerial(JSONTestCase):
     def test_app_serial(self):
         """Check that the custom app and products are serialized consistently."""
 
-        ca = CustomApp(delay=0.0, alloc=0)
+        ca = DummyApp(delay=0.0, alloc=0)
 
         d = DummyProvider(
             loading_prob=0.0,

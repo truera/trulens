@@ -1,13 +1,17 @@
 from typing import AsyncIterable, Iterable, Optional
 
-from examples.expositional.end2end_apps.custom_app.dummy import Dummy
+from examples.dev.dummy_app.dummy import Dummy
 
 from trulens_eval.feedback.provider.endpoint.dummy import DummyAPI
 from trulens_eval.tru_custom_app import instrument
 
 
-class CustomLLM(Dummy):
-    """Fake LLM."""
+class DummyLLM(Dummy):
+    """Dummy LLM.
+    
+    Uses DummyAPI to make calls that have similar call stacks to real API
+    invocations. DummyAPI use incorporates dummy costs.
+    """
 
     def __init__(
         self, *args, model: str = "derp", temperature: float = 0.5, **kwargs

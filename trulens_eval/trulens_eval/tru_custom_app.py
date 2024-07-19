@@ -46,12 +46,13 @@ This wrapper is the most flexible option for instrumenting an application, and c
             ]
     ```
 
-The core tool for instrumenting these classes is the `@instrument` decorator. _TruLens_ needs to be aware
-of two high-level concepts to usefully monitor the app: components and methods
-used by components. The `instrument` must decorate each method that the user wishes to track.
+The core tool for instrumenting these classes is the `@instrument` decorator.
+_TruLens_ needs to be aware of two high-level concepts to usefully monitor the
+app: components and methods used by components. The `instrument` must decorate
+each method that the user wishes to track.
 
-The owner classes of any decorated method is then viewed as an app component. In this example, case `CustomApp` and
-`CustomRetriever` are components. 
+The owner classes of any decorated method is then viewed as an app component. In
+this example, case `CustomApp` and `CustomRetriever` are components. 
 
     !!! example
 

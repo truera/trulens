@@ -1,13 +1,16 @@
 import random
 import sys
 
-from examples.expositional.end2end_apps.custom_app.dummy import Dummy
+from examples.dev.dummy_app.dummy import Dummy
 
 from trulens_eval.tru_custom_app import instrument
 
 
-class CustomRetriever(Dummy):
-    """Fake retriever."""
+class DummyRetriever(Dummy):
+    """Dummy retriever.
+    
+    Fakes the retrieval of a few chunks.
+    """
 
     def __init__(self, *args, num_contexts: int = 2, **kwargs):
         super().__init__(*args, **kwargs)

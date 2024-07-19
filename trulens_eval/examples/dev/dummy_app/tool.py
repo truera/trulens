@@ -1,7 +1,7 @@
 import inspect
 from typing import Callable, Optional
 
-from examples.expositional.end2end_apps.custom_app.dummy import Dummy
+from examples.dev.dummy_app.dummy import Dummy
 
 from trulens_eval.tru_custom_app import instrument
 from trulens_eval.utils.python import superstack
@@ -22,7 +22,7 @@ for name in dir(str):
             pass
 
 
-class CustomTool(Dummy):
+class DummyTool(Dummy):
     """Dummy tool implementation."""
 
     def __init__(
@@ -62,7 +62,7 @@ class CustomTool(Dummy):
         return self.imp(data)
 
 
-class CustomStackTool(CustomTool):
+class DummyStackTool(DummyTool):
     """A tool that returns a rendering of the call stack when it is invokved."""
 
     last_stack = None
@@ -78,10 +78,10 @@ class CustomStackTool(CustomTool):
         """Save the call stack for later rendering or inspection in the recorded
         trace."""
 
-        CustomStackTool.last_stack = list(superstack())
+        DummyStackTool.last_stack = list(superstack())
 
         ret = "<table>\n"
-        for frame in CustomStackTool.last_stack:
+        for frame in DummyStackTool.last_stack:
             fmod = inspect.getmodule(frame)
             if fmod is None:
                 continue

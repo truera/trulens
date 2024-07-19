@@ -1,64 +1,26 @@
-"""Custom app example.
-
-This app does not make any external network requests or hard work but has some
-delays and allocs to mimic the effects of such things.
-"""
-
 import asyncio
 from collections import defaultdict
 from concurrent.futures import wait
 import logging
-from typing import (
-    Any, AsyncIterable, Dict, Iterable, List, Optional, Tuple, Type
-)
+from typing import (Any, AsyncIterable, Dict, Iterable, List, Optional, Tuple,
+                    Type)
 
-from examples.expositional.end2end_apps.custom_app.custom_agent import \
-    CustomAgent
-from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
-from examples.expositional.end2end_apps.custom_app.custom_memory import \
-    CustomMemory
-from examples.expositional.end2end_apps.custom_app.custom_reranker import \
-    CustomReranker
-from examples.expositional.end2end_apps.custom_app.custom_retriever import \
-    CustomRetriever
-from examples.expositional.end2end_apps.custom_app.custom_tool import \
-    CustomStackTool
-from examples.expositional.end2end_apps.custom_app.custom_tool import \
-    CustomTool
-from examples.expositional.end2end_apps.custom_app.dummy import Dummy
+from examples.dev.dummy_app.agent import DummyAgent
+from examples.dev.dummy_app.dummy import Dummy
+from examples.dev.dummy_app.llm import DummyLLM
+from examples.dev.dummy_app.memory import DummyMemory
+from examples.dev.dummy_app.reranker import DummyReranker
+from examples.dev.dummy_app.retriever import DummyRetriever
+from examples.dev.dummy_app.template import DummyTemplate
+from examples.dev.dummy_app.tool import DummyStackTool
+from examples.dev.dummy_app.tool import DummyTool
 
 from trulens_eval.tru_custom_app import instrument
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
-instrument.method(CustomMemory, "remember")
-
-
-class CustomTemplate(Dummy):
-    """Simple template class that fills in a question and answer."""
-
-    def __init__(self, template, **kwargs):
-        super().__init__(**kwargs)
-
-        self.template = template
-
-    @instrument
-    def fill(self, question: str, context: str) -> str:
-        """Fill in the template with the question and answer.
-        
-        Args:
-            question: The question to fill in.
-            
-            answer: The answer to fill in.
-        """
-
-        return self.template[:] \
-            .replace("{question}", question) \
-            .replace("{context}", context)
-
-
-class CustomApp(Dummy):
+class DummyApp(Dummy):
     """Dummy app implementation.
     
     Contains:
@@ -112,40 +74,40 @@ class CustomApp(Dummy):
 
         self.use_parallel = use_parallel
 
-        self.memory = CustomMemory(**kwargs, **comp_kwargs[CustomMemory])
+        self.memory = DummyMemory(**kwargs, **comp_kwargs[DummyMemory])
 
-        self.retriever = CustomRetriever(
-            **kwargs, **comp_kwargs[CustomRetriever]
+        self.retriever = DummyRetriever(
+            **kwargs, **comp_kwargs[DummyRetriever]
         )
 
-        self.llm = CustomLLM(**kwargs, **comp_kwargs[CustomLLM])
+        self.llm = DummyLLM(**kwargs, **comp_kwargs[DummyLLM])
 
-        self.template = CustomTemplate(
+        self.template = DummyTemplate(
             """Please answer the following question given the context.
 QUESTION: {question}
 CONTEXT: {context}
-""", **kwargs, **comp_kwargs[CustomTemplate]
+""", **kwargs, **comp_kwargs[DummyTemplate]
         )
 
         # Put some tools into the app and make sure the first is the one that
         # dumps the stack.
         self.tools = [
-            CustomStackTool(**kwargs, **comp_kwargs[CustomStackTool])
+            DummyStackTool(**kwargs, **comp_kwargs[DummyStackTool])
         ] + [
-            CustomTool(**kwargs, **comp_kwargs[CustomTool])
+            DummyTool(**kwargs, **comp_kwargs[DummyTool])
             for _ in range(num_tools - 1)
         ]
 
         self.agents = [
-            CustomAgent(
-                app=CustomApp(num_agents=0),
+            DummyAgent(
+                app=DummyApp(num_agents=0),
                 description=f"ensamble agent {i}",
                 **kwargs,
-                **comp_kwargs[CustomAgent]
+                **comp_kwargs[DummyAgent]
             ) for i in range(num_agents)
         ]
 
-        self.reranker = CustomReranker(**kwargs, **comp_kwargs[CustomReranker])
+        self.reranker = DummyReranker(**kwargs, **comp_kwargs[DummyReranker])
 
         self.dummy_allocate()
 

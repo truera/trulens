@@ -1,13 +1,13 @@
 """
 Dummy API tests.
 
-Uses and records an invocation of the CustomApp example which internally uses
+Uses and records an invocation of the DummyApp example which internally uses
 DummyAPI for its requests.
 """
 
 from unittest import main
 
-from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
+from examples.dev.dummy_app.app import DummyApp
 from tests.unit.test import JSONTestCase
 
 from trulens_eval import Tru
@@ -26,7 +26,7 @@ class TestDummy(JSONTestCase):
         and produces a consistent record."""
 
         # Create custom app:
-        ca = CustomApp(
+        ca = DummyApp(
             delay=0.0, alloc=0, use_parallel=True
         )  # uses DummyAPI internally
 

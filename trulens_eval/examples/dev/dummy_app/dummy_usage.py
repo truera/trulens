@@ -1,9 +1,9 @@
-from examples.frameworks.custom.custom_app import CustomApp
+from examples.dev.dummy_app.app import DummyApp
 
 from trulens_eval import TruApp
 
-ca = CustomApp()
-tru_recorder = TruApp(ca, feedbacks=[], instrument_langchain=False)
+ca = DummyApp()
+tru_recorder = TruApp(ca)
 
 with tru_recorder as recording:
     ca.respond_to_query("What is the capital of Indonesia?")

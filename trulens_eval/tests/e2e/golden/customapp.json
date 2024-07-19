@@ -94,10 +94,10 @@
   "feedback_definitions": [],
   "feedback_mode": "with_app_thread",
   "root_class": {
-    "name": "CustomApp",
+    "name": "DummyApp",
     "module": {
-      "package_name": "examples.expositional.end2end_apps.custom_app",
-      "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+      "package_name": "examples.dev.dummy_app",
+      "module_name": "examples.dev.dummy_app.app"
     },
     "bases": null
   },
@@ -130,25 +130,25 @@
             "seed": 3735928559,
             "temperature": 0.5,
             "tru_class_info": {
-              "name": "CustomLLM",
+              "name": "DummyLLM",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.llm"
               },
               "bases": [
                 {
-                  "name": "CustomLLM",
+                  "name": "DummyLLM",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.llm"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -173,25 +173,25 @@
             "messages": [],
             "seed": 3735928559,
             "tru_class_info": {
-              "name": "CustomMemory",
+              "name": "DummyMemory",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.memory"
               },
               "bases": [
                 {
-                  "name": "CustomMemory",
+                  "name": "DummyMemory",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.memory"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -217,25 +217,25 @@
             "seed": 3735928559,
             "top_n": 2,
             "tru_class_info": {
-              "name": "CustomReranker",
+              "name": "DummyReranker",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_reranker"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.reranker"
               },
               "bases": [
                 {
-                  "name": "CustomReranker",
+                  "name": "DummyReranker",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_reranker"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.reranker"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -260,25 +260,25 @@
             "num_contexts": 2,
             "seed": 3735928559,
             "tru_class_info": {
-              "name": "CustomRetriever",
+              "name": "DummyRetriever",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_retriever"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.retriever"
               },
               "bases": [
                 {
-                  "name": "CustomRetriever",
+                  "name": "DummyRetriever",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_retriever"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.retriever"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -304,25 +304,25 @@
             "seed": 3735928559,
             "template": "Please answer the following question given the context.\nQUESTION: {question}\nCONTEXT: {context}\n",
             "tru_class_info": {
-              "name": "CustomTemplate",
+              "name": "DummyTemplate",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.template"
               },
               "bases": [
                 {
-                  "name": "CustomTemplate",
+                  "name": "DummyTemplate",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.template"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -348,33 +348,33 @@
               "last_stack": null,
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "CustomStackTool",
+                "name": "DummyStackTool",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.tool"
                 },
                 "bases": [
                   {
-                    "name": "CustomStackTool",
+                    "name": "DummyStackTool",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.tool"
                     },
                     "bases": null
                   },
                   {
-                    "name": "CustomTool",
+                    "name": "DummyTool",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.tool"
                     },
                     "bases": null
                   },
                   {
                     "name": "Dummy",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.dummy"
                     },
                     "bases": null
                   },
@@ -398,25 +398,25 @@
               "description": "Return repr(self).",
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "CustomTool",
+                "name": "DummyTool",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.tool"
                 },
                 "bases": [
                   {
-                    "name": "CustomTool",
+                    "name": "DummyTool",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.tool"
                     },
                     "bases": null
                   },
                   {
                     "name": "Dummy",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.dummy"
                     },
                     "bases": null
                   },
@@ -440,25 +440,25 @@
               "description": "Return repr(self).",
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "CustomTool",
+                "name": "DummyTool",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.tool"
                 },
                 "bases": [
                   {
-                    "name": "CustomTool",
+                    "name": "DummyTool",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.tool"
                     },
                     "bases": null
                   },
                   {
                     "name": "Dummy",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.dummy"
                     },
                     "bases": null
                   },
@@ -476,25 +476,25 @@
           ],
           "use_parallel": false,
           "tru_class_info": {
-            "name": "CustomApp",
+            "name": "DummyApp",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.app"
             },
             "bases": [
               {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
               {
                 "name": "Dummy",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.dummy"
                 },
                 "bases": null
               },
@@ -515,25 +515,25 @@
         "use_app": false,
         "use_recorder": false,
         "tru_class_info": {
-          "name": "CustomAgent",
+          "name": "DummyAgent",
           "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"
+            "package_name": "examples.dev.dummy_app",
+            "module_name": "examples.dev.dummy_app.agent"
           },
           "bases": [
             {
-              "name": "CustomAgent",
+              "name": "DummyAgent",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.agent"
               },
               "bases": null
             },
             {
               "name": "Dummy",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.dummy"
               },
               "bases": null
             },
@@ -572,25 +572,25 @@
             "seed": 3735928559,
             "temperature": 0.5,
             "tru_class_info": {
-              "name": "CustomLLM",
+              "name": "DummyLLM",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.llm"
               },
               "bases": [
                 {
-                  "name": "CustomLLM",
+                  "name": "DummyLLM",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.llm"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -615,25 +615,25 @@
             "messages": [],
             "seed": 3735928559,
             "tru_class_info": {
-              "name": "CustomMemory",
+              "name": "DummyMemory",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.memory"
               },
               "bases": [
                 {
-                  "name": "CustomMemory",
+                  "name": "DummyMemory",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.memory"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -659,25 +659,25 @@
             "seed": 3735928559,
             "top_n": 2,
             "tru_class_info": {
-              "name": "CustomReranker",
+              "name": "DummyReranker",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_reranker"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.reranker"
               },
               "bases": [
                 {
-                  "name": "CustomReranker",
+                  "name": "DummyReranker",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_reranker"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.reranker"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -702,25 +702,25 @@
             "num_contexts": 2,
             "seed": 3735928559,
             "tru_class_info": {
-              "name": "CustomRetriever",
+              "name": "DummyRetriever",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_retriever"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.retriever"
               },
               "bases": [
                 {
-                  "name": "CustomRetriever",
+                  "name": "DummyRetriever",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_retriever"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.retriever"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -746,25 +746,25 @@
             "seed": 3735928559,
             "template": "Please answer the following question given the context.\nQUESTION: {question}\nCONTEXT: {context}\n",
             "tru_class_info": {
-              "name": "CustomTemplate",
+              "name": "DummyTemplate",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.template"
               },
               "bases": [
                 {
-                  "name": "CustomTemplate",
+                  "name": "DummyTemplate",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.template"
                   },
                   "bases": null
                 },
                 {
                   "name": "Dummy",
                   "module": {
-                    "package_name": "examples.expositional.end2end_apps.custom_app",
-                    "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                    "package_name": "examples.dev.dummy_app",
+                    "module_name": "examples.dev.dummy_app.dummy"
                   },
                   "bases": null
                 },
@@ -790,33 +790,33 @@
               "last_stack": null,
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "CustomStackTool",
+                "name": "DummyStackTool",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.tool"
                 },
                 "bases": [
                   {
-                    "name": "CustomStackTool",
+                    "name": "DummyStackTool",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.tool"
                     },
                     "bases": null
                   },
                   {
-                    "name": "CustomTool",
+                    "name": "DummyTool",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.tool"
                     },
                     "bases": null
                   },
                   {
                     "name": "Dummy",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.dummy"
                     },
                     "bases": null
                   },
@@ -840,25 +840,25 @@
               "description": "Return repr(self).",
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "CustomTool",
+                "name": "DummyTool",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.tool"
                 },
                 "bases": [
                   {
-                    "name": "CustomTool",
+                    "name": "DummyTool",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.tool"
                     },
                     "bases": null
                   },
                   {
                     "name": "Dummy",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.dummy"
                     },
                     "bases": null
                   },
@@ -882,25 +882,25 @@
               "description": "Return repr(self).",
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "CustomTool",
+                "name": "DummyTool",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.tool"
                 },
                 "bases": [
                   {
-                    "name": "CustomTool",
+                    "name": "DummyTool",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.tool"
                     },
                     "bases": null
                   },
                   {
                     "name": "Dummy",
                     "module": {
-                      "package_name": "examples.expositional.end2end_apps.custom_app",
-                      "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                      "package_name": "examples.dev.dummy_app",
+                      "module_name": "examples.dev.dummy_app.dummy"
                     },
                     "bases": null
                   },
@@ -918,25 +918,25 @@
           ],
           "use_parallel": false,
           "tru_class_info": {
-            "name": "CustomApp",
+            "name": "DummyApp",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.app"
             },
             "bases": [
               {
-                "name": "CustomApp",
+                "name": "DummyApp",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.app"
                 },
                 "bases": null
               },
               {
                 "name": "Dummy",
                 "module": {
-                  "package_name": "examples.expositional.end2end_apps.custom_app",
-                  "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                  "package_name": "examples.dev.dummy_app",
+                  "module_name": "examples.dev.dummy_app.dummy"
                 },
                 "bases": null
               },
@@ -957,25 +957,25 @@
         "use_app": false,
         "use_recorder": false,
         "tru_class_info": {
-          "name": "CustomAgent",
+          "name": "DummyAgent",
           "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"
+            "package_name": "examples.dev.dummy_app",
+            "module_name": "examples.dev.dummy_app.agent"
           },
           "bases": [
             {
-              "name": "CustomAgent",
+              "name": "DummyAgent",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_agent"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.agent"
               },
               "bases": null
             },
             {
               "name": "Dummy",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.dummy"
               },
               "bases": null
             },
@@ -1005,25 +1005,25 @@
       "seed": 3735928559,
       "temperature": 0.5,
       "tru_class_info": {
-        "name": "CustomLLM",
+        "name": "DummyLLM",
         "module": {
-          "package_name": "examples.expositional.end2end_apps.custom_app",
-          "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"
+          "package_name": "examples.dev.dummy_app",
+          "module_name": "examples.dev.dummy_app.llm"
         },
         "bases": [
           {
-            "name": "CustomLLM",
+            "name": "DummyLLM",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.custom_llm"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.llm"
             },
             "bases": null
           },
           {
             "name": "Dummy",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.dummy"
             },
             "bases": null
           },
@@ -1048,25 +1048,25 @@
       "messages": [],
       "seed": 3735928559,
       "tru_class_info": {
-        "name": "CustomMemory",
+        "name": "DummyMemory",
         "module": {
-          "package_name": "examples.expositional.end2end_apps.custom_app",
-          "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+          "package_name": "examples.dev.dummy_app",
+          "module_name": "examples.dev.dummy_app.memory"
         },
         "bases": [
           {
-            "name": "CustomMemory",
+            "name": "DummyMemory",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.custom_memory"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.memory"
             },
             "bases": null
           },
           {
             "name": "Dummy",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.dummy"
             },
             "bases": null
           },
@@ -1092,25 +1092,25 @@
       "seed": 3735928559,
       "top_n": 2,
       "tru_class_info": {
-        "name": "CustomReranker",
+        "name": "DummyReranker",
         "module": {
-          "package_name": "examples.expositional.end2end_apps.custom_app",
-          "module_name": "examples.expositional.end2end_apps.custom_app.custom_reranker"
+          "package_name": "examples.dev.dummy_app",
+          "module_name": "examples.dev.dummy_app.reranker"
         },
         "bases": [
           {
-            "name": "CustomReranker",
+            "name": "DummyReranker",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.custom_reranker"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.reranker"
             },
             "bases": null
           },
           {
             "name": "Dummy",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.dummy"
             },
             "bases": null
           },
@@ -1135,25 +1135,25 @@
       "num_contexts": 2,
       "seed": 3735928559,
       "tru_class_info": {
-        "name": "CustomRetriever",
+        "name": "DummyRetriever",
         "module": {
-          "package_name": "examples.expositional.end2end_apps.custom_app",
-          "module_name": "examples.expositional.end2end_apps.custom_app.custom_retriever"
+          "package_name": "examples.dev.dummy_app",
+          "module_name": "examples.dev.dummy_app.retriever"
         },
         "bases": [
           {
-            "name": "CustomRetriever",
+            "name": "DummyRetriever",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.custom_retriever"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.retriever"
             },
             "bases": null
           },
           {
             "name": "Dummy",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.dummy"
             },
             "bases": null
           },
@@ -1179,25 +1179,25 @@
       "seed": 3735928559,
       "template": "Please answer the following question given the context.\nQUESTION: {question}\nCONTEXT: {context}\n",
       "tru_class_info": {
-        "name": "CustomTemplate",
+        "name": "DummyTemplate",
         "module": {
-          "package_name": "examples.expositional.end2end_apps.custom_app",
-          "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+          "package_name": "examples.dev.dummy_app",
+          "module_name": "examples.dev.dummy_app.template"
         },
         "bases": [
           {
-            "name": "CustomTemplate",
+            "name": "DummyTemplate",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.template"
             },
             "bases": null
           },
           {
             "name": "Dummy",
             "module": {
-              "package_name": "examples.expositional.end2end_apps.custom_app",
-              "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+              "package_name": "examples.dev.dummy_app",
+              "module_name": "examples.dev.dummy_app.dummy"
             },
             "bases": null
           },
@@ -1223,33 +1223,33 @@
         "last_stack": null,
         "seed": 3735928559,
         "tru_class_info": {
-          "name": "CustomStackTool",
+          "name": "DummyStackTool",
           "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+            "package_name": "examples.dev.dummy_app",
+            "module_name": "examples.dev.dummy_app.tool"
           },
           "bases": [
             {
-              "name": "CustomStackTool",
+              "name": "DummyStackTool",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.tool"
               },
               "bases": null
             },
             {
-              "name": "CustomTool",
+              "name": "DummyTool",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.tool"
               },
               "bases": null
             },
             {
               "name": "Dummy",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.dummy"
               },
               "bases": null
             },
@@ -1273,25 +1273,25 @@
         "description": "Return repr(self).",
         "seed": 3735928559,
         "tru_class_info": {
-          "name": "CustomTool",
+          "name": "DummyTool",
           "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+            "package_name": "examples.dev.dummy_app",
+            "module_name": "examples.dev.dummy_app.tool"
           },
           "bases": [
             {
-              "name": "CustomTool",
+              "name": "DummyTool",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.tool"
               },
               "bases": null
             },
             {
               "name": "Dummy",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.dummy"
               },
               "bases": null
             },
@@ -1315,25 +1315,25 @@
         "description": "Return repr(self).",
         "seed": 3735928559,
         "tru_class_info": {
-          "name": "CustomTool",
+          "name": "DummyTool",
           "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+            "package_name": "examples.dev.dummy_app",
+            "module_name": "examples.dev.dummy_app.tool"
           },
           "bases": [
             {
-              "name": "CustomTool",
+              "name": "DummyTool",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.custom_tool"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.tool"
               },
               "bases": null
             },
             {
               "name": "Dummy",
               "module": {
-                "package_name": "examples.expositional.end2end_apps.custom_app",
-                "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+                "package_name": "examples.dev.dummy_app",
+                "module_name": "examples.dev.dummy_app.dummy"
               },
               "bases": null
             },
@@ -1351,25 +1351,25 @@
     ],
     "use_parallel": false,
     "tru_class_info": {
-      "name": "CustomApp",
+      "name": "DummyApp",
       "module": {
-        "package_name": "examples.expositional.end2end_apps.custom_app",
-        "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+        "package_name": "examples.dev.dummy_app",
+        "module_name": "examples.dev.dummy_app.app"
       },
       "bases": [
         {
-          "name": "CustomApp",
+          "name": "DummyApp",
           "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.custom_app"
+            "package_name": "examples.dev.dummy_app",
+            "module_name": "examples.dev.dummy_app.app"
           },
           "bases": null
         },
         {
           "name": "Dummy",
           "module": {
-            "package_name": "examples.expositional.end2end_apps.custom_app",
-            "module_name": "examples.expositional.end2end_apps.custom_app.dummy"
+            "package_name": "examples.dev.dummy_app",
+            "module_name": "examples.dev.dummy_app.dummy"
           },
           "bases": null
         },
