@@ -295,13 +295,13 @@ class LLMProvider(Provider):
             temperature=temperature
         )
 
-    def qs_relevance(self, question: str, context: str) -> float:
+    def context_relevance(self, question: str, context: str) -> float:
         """
         Question statement relevance is deprecated and will be removed in future versions. Please use context relevance in its place.
         """
 
         warnings.warn(
-            "The method 'qs_relevance' is deprecated and will be removed in future versions. "
+            "The method 'context_relevance' is deprecated and will be removed in future versions. "
             "Please use 'context_relevance' instead.", DeprecationWarning
         )
 
@@ -353,14 +353,14 @@ class LLMProvider(Provider):
             temperature=temperature
         )
 
-    def qs_relevance_with_cot_reasons(self, question: str,
-                                      context: str) -> Tuple[float, Dict]:
+    def context_relevance_with_cot_reasons(self, question: str,
+                                           context: str) -> Tuple[float, Dict]:
         """
         Question statement relevance is deprecated and will be removed in future versions. Please use context relevance in its place.
         """
 
         warnings.warn(
-            "The method 'qs_relevance_with_cot_reasons' is deprecated and will be removed in future versions. "
+            "The method 'context_relevance_with_cot_reasons' is deprecated and will be removed in future versions. "
             "Please use 'context_relevance_with_cot_reasons' instead.",
             DeprecationWarning
         )
