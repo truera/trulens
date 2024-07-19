@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "trulens_langchain"
+name = "trulens-langchain"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = ["Truera Inc <all@truera.com>"]
@@ -12,7 +12,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens_core = {path = "../core", develop = false}
+trulens-core = {path = "../core", develop = false}
 langchain = "^0.1.14"
 langchain-core = "^0.1.6"
 langchain-community = "^0.0.38"

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "trulens_dashboard"
+name = "trulens-dashboard"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = ["Truera Inc <all@truera.com>"]
@@ -11,7 +11,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
-trulens_core = {path = "../core", develop = true}
+trulens-core = {path = "../core", develop = true}
 millify = "^0.1.1"
 humanize = "^4.6.0"
 streamlit = "^1.33.0"

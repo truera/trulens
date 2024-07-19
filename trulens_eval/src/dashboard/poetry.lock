@@ -2483,7 +2483,7 @@ psutil = "^5.9.8"
 pydantic = "^2"
 sqlalchemy = "^2.0.19"
 tqdm = "^4.66.1"
-trulens_utils = {path = "../utils", develop = true}
+trulens-utils = {path = "../utils", develop = true}
 typing_extensions = "^4.9.0"
 
 [package.source]
@@ -2625,4 +2625,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.9.7 || >3.9.7,<4.0"
-content-hash = "6c1a9187a2dae899ce699dcbe4f898bb2d77f9466bc6bc25b12578514966a340"
+content-hash = "77a678fd5625dfd602e0201b7515d73b4be09d6ad9183934cd881391442ee919"

@@ -1409,7 +1409,7 @@ psutil = "^5.9.8"
 pydantic = "^2"
 sqlalchemy = "^2.0.19"
 tqdm = "^4.66.1"
-trulens_utils = {path = "../utils"}
+trulens-utils = {path = "../utils", develop = true}
 typing_extensions = "^4.9.0"
 
 [package.source]
@@ -1423,7 +1423,7 @@ description = "Library to systematically track and evaluate LLM based applicatio
 optional = false
 python-versions = "^3.9"
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 merkle-json = "^1.0.0"
@@ -1585,4 +1585,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "d35b31aa397d0bf64ee733f5bd2fc3230ee6f77078b6afaf63c98b475a8f9bb4"
+content-hash = "31cc08c3bde23e3480b576aeb2c7da00530940a04717441433dfa2ed8be133da"

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "trulens_core"
+name = "trulens-core"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = ["Truera Inc <all@truera.com>"]
@@ -12,7 +12,6 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens_utils = {path = "../utils", develop = true}
 numpy = "^1.23.5"
 munch = "^3.0.0"
 dill = "^0.3.7"

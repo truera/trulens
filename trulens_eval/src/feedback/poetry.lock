@@ -882,7 +882,7 @@ psutil = "^5.9.8"
 pydantic = "^2"
 sqlalchemy = "^2.0.19"
 tqdm = "^4.66.1"
-trulens_utils = {path = "../utils", develop = true}
+trulens-utils = {path = "../utils", develop = true}
 typing_extensions = "^4.9.0"
 
 [package.source]
@@ -940,4 +940,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "428191ea8f236345ddf0fdcf42cd5dcf2810c94bbe42871480960581e0dff002"
+content-hash = "1cababa2c127de1072e47d3ad32a1c62cf03424532c204945f3beff997ec429c"
