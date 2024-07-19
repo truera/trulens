@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "trulens_llamaindex"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = ["Truera Inc <all@truera.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "trulens" },
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.9"
+trulens_core = {path = "../core", develop = true}
+pydantic = "^2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

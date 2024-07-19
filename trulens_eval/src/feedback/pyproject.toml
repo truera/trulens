@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "trulens_feedback"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = ["Truera Inc <all@truera.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "trulens" },
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.9"
+trulens_core = {path = "../core", develop = true}
+requests = "^2.31.0"
+nltk = "^3.8.1"
+tqdm = "^4.66.1"
+munch = "^3.0.0"
+pydantic = "^2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "trulens_dashboard"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = ["Truera Inc <all@truera.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "trulens" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
+trulens_core = {path = "../core", develop = true}
+millify = "^0.1.1"
+humanize = "^4.6.0"
+streamlit = "^1.33.0"
+streamlit-aggrid = "==0.3.4"
+streamlit-extras = "^0.4.0"
+streamlit-pills = "^0.3.0"
+rich = "^13.6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

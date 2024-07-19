@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "trulens_langchain"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = ["Truera Inc <all@truera.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "trulens" },
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.9"
+trulens_core = {path = "../core", develop = false}
+langchain = "^0.1.14"
+langchain-core = "^0.1.6"
+langchain-community = "^0.0.38"
+typing-inspect = "^0.8.0"
+pydantic = "^2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
