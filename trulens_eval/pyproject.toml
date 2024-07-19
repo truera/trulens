@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "trulens_monorepo"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = ["Truera Inc <all@truera.com>"]
+license = "MIT"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
+
+[tool.poetry.group.dev.dependencies]
+trulens_utils = { path = "src/utils", develop = true }
+trulens_core = { path = "src/core", develop = true }
+trulens_dashboard = { path = "src/dashboard", develop = true }
+trulens_feedback = { path = "src/feedback", develop = true }
+trulens_langchain = { path = "src/langchain", develop = true }
+trulens_llamaindex = { path = "src/llamaindex", develop = true }
+yapf = "^0.40.2"
+isort = "^5.13.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "google"
+
+[tool.yapf]
+based_on_style = "google"
+dedent_closing_brackets = true
+split_before_first_argumnet = true
+split_complex_comprehension = true
+column_limit = 80
