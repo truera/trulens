@@ -102,26 +102,14 @@
     "bases": null
   },
   "app": {
-    "DEFAULT_ALLOC": 0,
-    "DEFAULT_DELAY": 0.0,
-    "DEFAULT_SEED": 3735928559,
     "agents": [
       {
-        "DEFAULT_ALLOC": 0,
-        "DEFAULT_DELAY": 0.0,
-        "DEFAULT_SEED": 3735928559,
         "alloc": 0,
         "app": {
-          "DEFAULT_ALLOC": 0,
-          "DEFAULT_DELAY": 0.0,
-          "DEFAULT_SEED": 3735928559,
           "agents": [],
           "alloc": 0,
           "delay": 0.0,
           "llm": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
             "alloc": 0,
             "delay": 0.0,
@@ -164,9 +152,6 @@
             }
           },
           "memory": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "alloc": 0,
             "delay": 0.0,
             "memory_type": "dummy-memory",
@@ -207,9 +192,6 @@
             }
           },
           "reranker": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
             "alloc": 0,
             "delay": 0.0,
@@ -251,9 +233,6 @@
             }
           },
           "retriever": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
             "alloc": 0,
             "delay": 0.0,
@@ -295,9 +274,6 @@
           },
           "seed": 3735928559,
           "template": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
             "alloc": 0,
             "delay": 0.0,
@@ -339,9 +315,6 @@
           },
           "tools": [
             {
-              "DEFAULT_ALLOC": 0,
-              "DEFAULT_DELAY": 0.0,
-              "DEFAULT_SEED": 3735928559,
               "alloc": 0,
               "delay": 0.0,
               "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
@@ -390,9 +363,6 @@
               }
             },
             {
-              "DEFAULT_ALLOC": 0,
-              "DEFAULT_DELAY": 0.0,
-              "DEFAULT_SEED": 3735928559,
               "alloc": 0,
               "delay": 0.0,
               "description": "Return repr(self).",
@@ -432,9 +402,6 @@
               }
             },
             {
-              "DEFAULT_ALLOC": 0,
-              "DEFAULT_DELAY": 0.0,
-              "DEFAULT_SEED": 3735928559,
               "alloc": 0,
               "delay": 0.0,
               "description": "Return repr(self).",
@@ -549,21 +516,12 @@
         }
       },
       {
-        "DEFAULT_ALLOC": 0,
-        "DEFAULT_DELAY": 0.0,
-        "DEFAULT_SEED": 3735928559,
         "alloc": 0,
         "app": {
-          "DEFAULT_ALLOC": 0,
-          "DEFAULT_DELAY": 0.0,
-          "DEFAULT_SEED": 3735928559,
           "agents": [],
           "alloc": 0,
           "delay": 0.0,
           "llm": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
             "alloc": 0,
             "delay": 0.0,
@@ -606,9 +564,6 @@
             }
           },
           "memory": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "alloc": 0,
             "delay": 0.0,
             "memory_type": "dummy-memory",
@@ -649,9 +604,6 @@
             }
           },
           "reranker": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
             "alloc": 0,
             "delay": 0.0,
@@ -693,9 +645,6 @@
             }
           },
           "retriever": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
             "alloc": 0,
             "delay": 0.0,
@@ -737,9 +686,6 @@
           },
           "seed": 3735928559,
           "template": {
-            "DEFAULT_ALLOC": 0,
-            "DEFAULT_DELAY": 0.0,
-            "DEFAULT_SEED": 3735928559,
             "_dummy_allocated_data": null,
             "alloc": 0,
             "delay": 0.0,
@@ -781,9 +727,6 @@
           },
           "tools": [
             {
-              "DEFAULT_ALLOC": 0,
-              "DEFAULT_DELAY": 0.0,
-              "DEFAULT_SEED": 3735928559,
               "alloc": 0,
               "delay": 0.0,
               "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
@@ -832,9 +775,6 @@
               }
             },
             {
-              "DEFAULT_ALLOC": 0,
-              "DEFAULT_DELAY": 0.0,
-              "DEFAULT_SEED": 3735928559,
               "alloc": 0,
               "delay": 0.0,
               "description": "Return repr(self).",
@@ -874,9 +814,6 @@
               }
             },
             {
-              "DEFAULT_ALLOC": 0,
-              "DEFAULT_DELAY": 0.0,
-              "DEFAULT_SEED": 3735928559,
               "alloc": 0,
               "delay": 0.0,
               "description": "Return repr(self).",
@@ -994,9 +931,6 @@
     "alloc": 0,
     "delay": 0.0,
     "llm": {
-      "DEFAULT_ALLOC": 0,
-      "DEFAULT_DELAY": 0.0,
-      "DEFAULT_SEED": 3735928559,
       "_dummy_allocated_data": null,
       "alloc": 0,
       "delay": 0.0,
@@ -1039,9 +973,6 @@
       }
     },
     "memory": {
-      "DEFAULT_ALLOC": 0,
-      "DEFAULT_DELAY": 0.0,
-      "DEFAULT_SEED": 3735928559,
       "alloc": 0,
       "delay": 0.0,
       "memory_type": "dummy-memory",
@@ -1082,9 +1013,6 @@
       }
     },
     "reranker": {
-      "DEFAULT_ALLOC": 0,
-      "DEFAULT_DELAY": 0.0,
-      "DEFAULT_SEED": 3735928559,
       "_dummy_allocated_data": null,
       "alloc": 0,
       "delay": 0.0,
@@ -1126,9 +1054,6 @@
       }
     },
     "retriever": {
-      "DEFAULT_ALLOC": 0,
-      "DEFAULT_DELAY": 0.0,
-      "DEFAULT_SEED": 3735928559,
       "_dummy_allocated_data": null,
       "alloc": 0,
       "delay": 0.0,
@@ -1170,9 +1095,6 @@
     },
     "seed": 3735928559,
     "template": {
-      "DEFAULT_ALLOC": 0,
-      "DEFAULT_DELAY": 0.0,
-      "DEFAULT_SEED": 3735928559,
       "_dummy_allocated_data": null,
       "alloc": 0,
       "delay": 0.0,
@@ -1214,9 +1136,6 @@
     },
     "tools": [
       {
-        "DEFAULT_ALLOC": 0,
-        "DEFAULT_DELAY": 0.0,
-        "DEFAULT_SEED": 3735928559,
         "alloc": 0,
         "delay": 0.0,
         "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
@@ -1265,9 +1184,6 @@
         }
       },
       {
-        "DEFAULT_ALLOC": 0,
-        "DEFAULT_DELAY": 0.0,
-        "DEFAULT_SEED": 3735928559,
         "alloc": 0,
         "delay": 0.0,
         "description": "Return repr(self).",
@@ -1307,9 +1223,6 @@
         }
       },
       {
-        "DEFAULT_ALLOC": 0,
-        "DEFAULT_DELAY": 0.0,
-        "DEFAULT_SEED": 3735928559,
         "alloc": 0,
         "delay": 0.0,
         "description": "Return repr(self).",
