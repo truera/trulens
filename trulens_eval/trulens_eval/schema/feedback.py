@@ -161,10 +161,16 @@ class Select:
         return f"{ret}"
 
 
-class FeedbackMode(Enum):
+class FeedbackMode(str, Enum):
     """Mode of feedback evaluation.
 
-    Specify this using the `feedback_mode` to [App][trulens_eval.app.App] constructors.
+    Specify this using the `feedback_mode` to [App][trulens_eval.app.App]
+    constructors.
+    
+    !!! Note
+        This class extends [str][str] to allow users to compare its values with
+        their string representations, i.e. in `if mode == "none": ...`. Internal
+        uses should use the enum instances.
     """
 
     NONE = "none"
@@ -183,8 +189,15 @@ class FeedbackMode(Enum):
     `tru.start_deferred_feedback_evaluator`."""
 
 
-class FeedbackResultStatus(Enum):
-    """For deferred feedback evaluation, these values indicate status of evaluation."""
+class FeedbackResultStatus(str, Enum):
+    """For deferred feedback evaluation, these values indicate status of
+    evaluation.
+    
+    !!! Note
+        This class extends [str][str] to allow users to compare its values with
+        their string representations, i.e. in `if status == "done": ...`. Internal
+        uses should use the enum instances.
+    """
 
     NONE = "none"
     """Initial value is none."""
@@ -207,11 +220,16 @@ class FeedbackResultStatus(Enum):
     """
 
 
-class FeedbackOnMissingParameters(Enum):
+class FeedbackOnMissingParameters(str, Enum):
     """How to handle missing parameters in feedback function calls.
     
     This is specifically for the case were a feedback function has a selector
     that selects something that does not exist in a record/app.
+
+    !!! Note
+        This class extends [str][str] to allow users to compare its values with
+        their string representations, i.e. in `if onmissing == "error": ...`.
+        Internal uses should use the enum instances.
     """
 
     ERROR = "error"
@@ -362,7 +380,7 @@ class FeedbackResult(serial.SerialModel):
         return str(self)
 
 
-class FeedbackCombinations(Enum):
+class FeedbackCombinations(str, Enum):
     """How to collect arguments for feedback function calls.
     
     Note that this applies only to cases where selectors pick out more than one
