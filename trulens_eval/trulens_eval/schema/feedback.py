@@ -161,7 +161,7 @@ class Select:
         return f"{ret}"
 
 
-class FeedbackMode(str, Enum):
+class FeedbackMode(Enum):
     """Mode of feedback evaluation.
 
     Specify this using the `feedback_mode` to [App][trulens_eval.app.App] constructors.
@@ -183,7 +183,7 @@ class FeedbackMode(str, Enum):
     `tru.start_deferred_feedback_evaluator`."""
 
 
-class FeedbackResultStatus(str, Enum):
+class FeedbackResultStatus(Enum):
     """For deferred feedback evaluation, these values indicate status of evaluation."""
 
     NONE = "none"
@@ -207,7 +207,7 @@ class FeedbackResultStatus(str, Enum):
     """
 
 
-class FeedbackOnMissingParameters(str, Enum):
+class FeedbackOnMissingParameters(Enum):
     """How to handle missing parameters in feedback function calls.
     
     This is specifically for the case were a feedback function has a selector
@@ -362,7 +362,7 @@ class FeedbackResult(serial.SerialModel):
         return str(self)
 
 
-class FeedbackCombinations(str, Enum):
+class FeedbackCombinations(Enum):
     """How to collect arguments for feedback function calls.
     
     Note that this applies only to cases where selectors pick out more than one
