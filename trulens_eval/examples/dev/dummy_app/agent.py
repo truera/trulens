@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from examples.dev.dummy_app.dummy import Dummy
 
@@ -37,7 +37,7 @@ class DummyAgent(Dummy):
         description: Optional[str] = None,
         use_app: bool = False,
         use_recorder: bool = False,
-        **kwargs
+        **kwargs: Dict[str, Any]
     ):
         super().__init__(*args, **kwargs)
 

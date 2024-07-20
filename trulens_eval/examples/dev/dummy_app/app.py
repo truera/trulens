@@ -65,7 +65,7 @@ class DummyApp(Dummy):
         num_tools: int = 3,
         use_parallel: bool = False,
         comp_kwargs: Dict[Type, Dict[str, Any]] = {},
-        **kwargs
+        **kwargs: Dict[str, Any]
     ):
 
         super().__init__(**kwargs)

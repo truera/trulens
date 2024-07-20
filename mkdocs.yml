@@ -186,7 +186,6 @@ nav:
           - trulens_eval/getting_started/quickstarts/text2text_quickstart.ipynb
           - trulens_eval/getting_started/quickstarts/groundtruth_evals.ipynb
           - trulens_eval/getting_started/quickstarts/human_feedback.ipynb
-          - trulens_eval/getting_started/quickstarts/custom_example.ipynb
       - ⭐ Core Concepts:
           - trulens_eval/getting_started/core_concepts/index.md
           - ☔ Feedback Functions: trulens_eval/getting_started/core_concepts/feedback_functions.md
@@ -265,11 +264,9 @@ nav:
           - 🦜️🔗 LangChain: trulens_eval/api/provider/langchain.md
           - 🤗 HuggingFace: trulens_eval/api/provider/huggingface.md
           - Cortex: trulens_eval/api/provider/cortex.md
-          - 📏 Dummy: trulens_eval/api/provider/dummy.md
           - Endpoint:
               - trulens_eval/api/endpoint/index.md
               - OpenAI: trulens_eval/api/endpoint/openai.md
-              - 📏 Dummy: trulens_eval/api/endpoint/dummy.md
       - 𝄢 Instruments: trulens_eval/api/instruments.md
       - 🛡️ Guardrails:
           - trulens_eval/api/guardrails/index.md
@@ -287,8 +284,10 @@ nav:
           - trulens_eval/api/utils/json.md
 #           - trulens_eval/api/utils/frameworks.md # most of the content moved to guardrails docs
           - trulens_eval/api/utils/utils.md
-      - 📏 Testing:
-          - trulens_eval/api/testing/custom_app.md
+      - 📏 Dev:
+          - trulens_eval/api/dev/dummy_app.md
+          - 📏 DummyProvider: trulens_eval/api/provider/dummy.md
+          - 📏 DummyEndpoint: trulens_eval/api/endpoint/dummy.md
 #          - trulens_eval/api/testing/test.md # namespace clash with trulens_explain needs to be resolved
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
