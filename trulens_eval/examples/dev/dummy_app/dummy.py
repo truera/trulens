@@ -12,33 +12,25 @@ class Dummy():
     Provides operations to inject performance-related characteristics into the
     dummy app and maintains random number generators for controlling
     non-determinism.
+
+    Args:
+        delay: How long to wait in the dummy wait operations.
+        
+        alloc: How much memory to allocate in the dummy allocate operations.
+        
+        seed: Random seed for the dummy random number generator.
     """
-
-    DEFAULT_ALLOC: int = 0
-    """How much memory to allocate in the dummy allocate operations."""
-
-    DEFAULT_DELAY: float = 0.0
-    """How long to wait in the dummy wait operations."""
-
-    DEFAULT_SEED: int = 0xdeadbeef
-    """Random seed for the dummy random number generator."""
 
     def __init__(
         self,
-        delay: Optional[float] = None,
-        alloc: Optional[int] = None,
-        seed: Optional[int] = None
+        delay: float = 0.0,
+        alloc: int = 0,
+        seed: int = 0xdeadbeef
     ):
-        if delay is None:
-            delay = Dummy.DEFAULT_DELAY
-        if alloc is None:
-            alloc = Dummy.DEFAULT_ALLOC
-        if seed is None:
-            seed = Dummy.DEFAULT_SEED
-
         self.delay = delay
         self.alloc = alloc
         self.seed = seed
+        
         self.random = random.Random(seed)
 
         self._dummy_allocated_data = None

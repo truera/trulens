@@ -22,7 +22,7 @@ class DummyTemplate(Dummy):
         Args:
             question: The question to fill in.
             
-            answer: The answer to fill in.
+            context: The context to fill in.
         """
 
         return self.template[:] \

@@ -24,22 +24,32 @@ class DummyApp(Dummy):
     """Dummy app implementation.
     
     Contains:
-        - A memory component.
+        - A memory component of type
+          [DummyMemory][examples.dev.dummy_app.memory.DummyMemory].
 
-        - A retriever component.
+        - A retriever component of type
+          [DummyRetriever][examples.dev.dummy_app.retriever.DummyRetriever]
 
-        - A language model component.
+        - A language model component of type
+          [DummyLLM][examples.dev.dummy_app.llm.DummyLLM].
 
-        - A template component.
+        - A template component of type
+          [DummyTemplate][examples.dev.dummy_app.template.DummyTemplate].
 
-        - A few tools. The first tool is one that records the call stack when it
-          gets invokved. Each of the following ones is random string->string
-          method that is applied to retrieved chunks.
+        - A few tools of type
+          [DummyTool][examples.dev.dummy_app.tool.DummyTool]. The first tool is
+          one that records the call stack when it gets invokved
+          ([DummyStackTool][examples.dev.dummy_app.tool.DummyStackTool]). Each
+          of the following ones (is random string->string method that is applied
+          to retrieved chunks.
 
-        - A reranker component.
+        - A reranker component of type
+          [DummyReranker][examples.dev.dummy_app.reranker.DummyReranker]
 
-        - A few agents. Be careful about these as these replicate the custom app
-          itself and might produce infinite loops.
+        - A few agents of type
+          [DummyAgent][examples.dev.dummy_app.agent.DummyAgent]. Be careful
+          about these as these replicate the custom app itself and might produce
+          infinite loops.
 
     Args:
         num_agents: Number of agents to create.
@@ -55,8 +65,7 @@ class DummyApp(Dummy):
             dictionary of arguments to pass to the constructor.
 
         **kwargs: Additional arguments passed in to all constructors meant for
-            [Dummy][examples.expositional.end2end_apps.custom_app.dummy.Dummy]
-            arguments.
+            [Dummy][examples.dev.dummy_app.dummy.Dummy] arguments.
     """
 
     def __init__(
@@ -64,13 +73,13 @@ class DummyApp(Dummy):
         num_agents: int = 2,
         num_tools: int = 3,
         use_parallel: bool = False,
-        comp_kwargs: Dict[Type, Dict[str, Any]] = {},
+        comp_kwargs: Optional[Dict[Type, Dict[str, Any]]] = None,
         **kwargs: Dict[str, Any]
     ):
 
         super().__init__(**kwargs)
 
-        comp_kwargs = defaultdict(dict, comp_kwargs)
+        comp_kwargs = defaultdict(dict, comp_kwargs if comp_kwargs else {})
 
         self.use_parallel = use_parallel
 

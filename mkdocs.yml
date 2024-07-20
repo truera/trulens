@@ -285,7 +285,7 @@ nav:
 #           - trulens_eval/api/utils/frameworks.md # most of the content moved to guardrails docs
           - trulens_eval/api/utils/utils.md
       - 📏 Dev:
-          - trulens_eval/api/dev/dummy_app.md
+          - 📏 DummyApp: trulens_eval/api/dev/dummy_app.md
           - 📏 DummyProvider: trulens_eval/api/provider/dummy.md
           - 📏 DummyEndpoint: trulens_eval/api/endpoint/dummy.md
 #          - trulens_eval/api/testing/test.md # namespace clash with trulens_explain needs to be resolved
