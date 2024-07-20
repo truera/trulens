@@ -6,6 +6,7 @@ from trulens_eval.tru_custom_app import instrument
 
 logger = logging.getLogger(__name__)
 
+
 class DummyTemplate(Dummy):
     """Dummy template class that fills a question and context into a template
     that has placeholders for these."""

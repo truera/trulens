@@ -57,14 +57,15 @@ from .agent import DummyAgent
 from .app import DummyApp
 from .dummy import Dummy
 from .llm import DummyLLM
+from .memory import DummyMemory
 from .reranker import DummyReranker
 from .retriever import DummyRetriever
-from .tool import DummyTool
-from .memory import DummyMemory
 from .template import DummyTemplate
 from .tool import DummyStackTool
+from .tool import DummyTool
 
 __all__ = [
     "DummyAgent", "DummyApp", "Dummy", "DummyLLM", "DummyReranker",
-    "DummyRetriever", "DummyTool", "DummyMemory", "DummyTemplate", "DummyStackTool"
+    "DummyRetriever", "DummyTool", "DummyMemory", "DummyTemplate",
+    "DummyStackTool"
 ]

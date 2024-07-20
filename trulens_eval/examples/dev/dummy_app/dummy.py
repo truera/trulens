@@ -22,15 +22,12 @@ class Dummy():
     """
 
     def __init__(
-        self,
-        delay: float = 0.0,
-        alloc: int = 0,
-        seed: int = 0xdeadbeef
+        self, delay: float = 0.0, alloc: int = 0, seed: int = 0xdeadbeef
     ):
         self.delay = delay
         self.alloc = alloc
         self.seed = seed
-        
+
         self.random = random.Random(seed)
 
         self._dummy_allocated_data = None

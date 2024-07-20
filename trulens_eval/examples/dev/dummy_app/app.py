@@ -2,8 +2,9 @@ import asyncio
 from collections import defaultdict
 from concurrent.futures import wait
 import logging
-from typing import (Any, AsyncIterable, Dict, Iterable, List, Optional, Tuple,
-                    Type)
+from typing import (
+    Any, AsyncIterable, Dict, Iterable, List, Optional, Tuple, Type
+)
 
 from examples.dev.dummy_app.agent import DummyAgent
 from examples.dev.dummy_app.dummy import Dummy
@@ -19,6 +20,7 @@ from trulens_eval.tru_custom_app import instrument
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
+
 
 class DummyApp(Dummy):
     """Dummy app implementation.
@@ -85,9 +87,7 @@ class DummyApp(Dummy):
 
         self.memory = DummyMemory(**kwargs, **comp_kwargs[DummyMemory])
 
-        self.retriever = DummyRetriever(
-            **kwargs, **comp_kwargs[DummyRetriever]
-        )
+        self.retriever = DummyRetriever(**kwargs, **comp_kwargs[DummyRetriever])
 
         self.llm = DummyLLM(**kwargs, **comp_kwargs[DummyLLM])
 
@@ -100,12 +100,11 @@ CONTEXT: {context}
 
         # Put some tools into the app and make sure the first is the one that
         # dumps the stack.
-        self.tools = [
-            DummyStackTool(**kwargs, **comp_kwargs[DummyStackTool])
-        ] + [
-            DummyTool(**kwargs, **comp_kwargs[DummyTool])
-            for _ in range(num_tools - 1)
-        ]
+        self.tools = [DummyStackTool(**kwargs, **comp_kwargs[DummyStackTool])
+                     ] + [
+                         DummyTool(**kwargs, **comp_kwargs[DummyTool])
+                         for _ in range(num_tools - 1)
+                     ]
 
         self.agents = [
             DummyAgent(
