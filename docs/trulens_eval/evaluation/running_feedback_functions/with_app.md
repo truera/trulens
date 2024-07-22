@@ -6,13 +6,13 @@ implementation with `Feedback` and select what components of your app to
 evaluate. Optionally, you can also select an aggregation method.
 
 ```python
-f_context_relevance = Feedback(openai.qs_relevance)
+f_context_relevance = Feedback(openai.context_relevance)
     .on_input()
     .on(context)
     .aggregate(numpy.min)
 
 # Implementation signature:
-# def qs_relevance(self, question: str, statement: str) -> float:
+# def context_relevance(self, question: str, statement: str) -> float:
 ```
 
 Once you've defined the feedback functions to run with your application, you can
