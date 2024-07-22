@@ -46,19 +46,19 @@ class Provider(WithClassInfo, SerialModel):
         # OpenAI.moderation_not_violancegraphic
 
         # Derived from CompletionProvider:
-        # OpenAI.qs_relevance
+        # OpenAI.context_relevance
         # OpenAI.relevance
         # OpenAI.sentiment
         # OpenAI.model_agreement
-        # OpenAI.qs_relevance
+        # OpenAI.context_relevance
         # OpenAI.conciseness
         # OpenAI.correctness
         # OpenAI.coherence
-        # OpenAI.qs_relevance
+        # OpenAI.context_relevance
         # OpenAI.harmfulness
         # OpenAI.maliciousness
         # OpenAI.helpfulness
-        # OpenAI.qs_relevance
+        # OpenAI.context_relevance
         # OpenAI.controversiality
         # OpenAI.misogony
         # OpenAI.criminality

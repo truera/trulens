@@ -124,7 +124,7 @@ The top level record also contains these helper accessors
 
 ## Multiple Inputs Per Argument
 
-As in the `f_qs_relevance` example, a selector for a _single_ argument may point
+As in the `f_context_relevance` example, a selector for a _single_ argument may point
 to more than one aspect of a record/app. These are specified using the slice or
 lists in key/index poisitions. In that case, the feedback function is evaluated
 multiple times, its outputs collected, and finally aggregated into a main

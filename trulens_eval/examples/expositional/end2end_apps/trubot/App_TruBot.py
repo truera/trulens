@@ -47,7 +47,7 @@ f_qa_relevance = Feedback(openai.relevance).on(
     prompt=Select.RecordInput, response=Select.RecordOutput
 )
 
-f_qs_relevance = Feedback(openai.qs_relevance).on(
+f_context_relevance = Feedback(openai.context_relevance).on(
     question=Select.RecordInput,
     statement=Select.Record.chain.combine_docs_chain._call.args.inputs.
     input_documents[:].page_content
@@ -152,7 +152,7 @@ if user_input:
     feedbacks = tru.run_feedback_functions(
         app=app,
         record=record,
-        feedback_functions=[f_lang_match, f_qa_relevance, f_qs_relevance]
+        feedback_functions=[f_lang_match, f_qa_relevance, f_context_relevance]
     )
 
     # Add value to database
