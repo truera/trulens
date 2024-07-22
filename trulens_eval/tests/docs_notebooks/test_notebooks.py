@@ -7,8 +7,7 @@ from unittest import TestCase
 
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import read
-
-from trulens_eval.database.legacy import migration
+from trulens.database.legacy import migration
 
 
 class DocsNotebookTests(TestCase):
@@ -22,13 +21,13 @@ class VariableSettingPreprocessor(ExecutePreprocessor):
         code_to_run_before_each_cell: Sequence[str]
     ):
         super().__init__(timeout=timeout, kernel_name=kernel_name)
-        self.code_to_run_before_each_cell = "\n".join(
+        self.code_to_run_before_each_cell = '\n'.join(
             code_to_run_before_each_cell
-        ) + "\n"
+        ) + '\n'
 
     def preprocess_cell(self, cell, resources, index, **kwargs):
-        if cell["cell_type"] == "code":
-            cell["source"] = self.code_to_run_before_each_cell + cell["source"]
+        if cell['cell_type'] == 'code':
+            cell['source'] = self.code_to_run_before_each_cell + cell['source']
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
         return ret
 
@@ -45,16 +44,16 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
             code_to_run_before_each_cell=code_to_run_before_each_cell
         )
         shutil.copyfile(
-            f"./release_dbs/{db_compat_version}/default.sqlite",
-            "./default.sqlite"
+            f'./release_dbs/{db_compat_version}/default.sqlite',
+            './default.sqlite'
         )
 
     def preprocess_cell(self, cell, resources, index, **kwargs):
-        if 'Tru()' in cell["source"]:
-            cell["source"] = cell[
-                "source"
-            ] + f"\nfrom trulens_eval import Tru\ntru=Tru()\ntru.migrate_database()\n" \
-            + f"\nfrom trulens_eval.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n"
+        if 'Tru()' in cell['source']:
+            cell['source'] = cell[
+                'source'
+            ] + f'\nfrom trulens import Tru\ntru=Tru()\ntru.migrate_database()\n' \
+            + f'\nfrom trulens.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n'
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 
         return ret
@@ -74,7 +73,7 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
                 'trulens-llm',
             'code_to_run_before_each_cell':
                 [
-                    f"import os",
+                    f'import os',
                     f"os.environ['OPENAI_API_KEY']='{OPENAI_API_KEY}'",
                     f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
                 ]
@@ -92,13 +91,13 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
 
 
 NOTEBOOKS_TO_TEST_BACKWARDS_COMPATIBILITY = [
-    "langchain_quickstart.ipynb",
-    "llama_index_quickstart.ipynb",
-    "quickstart.ipynb",
-    "prototype_evals.ipynb",
-    "human_feedback.ipynb",
-    "groundtruth_evals.ipynb",
-    "logging.ipynb",
+    'langchain_quickstart.ipynb',
+    'llama_index_quickstart.ipynb',
+    'quickstart.ipynb',
+    'prototype_evals.ipynb',
+    'human_feedback.ipynb',
+    'groundtruth_evals.ipynb',
+    'logging.ipynb',
 ]
 
 for filename in listdir('./tests/docs_notebooks/notebooks_to_test/'):

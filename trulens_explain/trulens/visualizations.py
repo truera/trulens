@@ -1,9 +1,9 @@
-""" 
+"""
 One clear use case for measuring attributions is for human consumption. In order
 to be fully leveraged by humans, explanations need to be interpretable &mdash; a
 large vector of numbers doesn’t in general make us more confident we understand
 what a network is doing. We therefore view an *explanation* as comprised of both
-an *attribution measurement* and an *interpretation* of what the attribution 
+an *attribution measurement* and an *interpretation* of what the attribution
 values represent.
 
 One obvious way to interpret attributions, particularly in the image domain, is
@@ -97,7 +97,7 @@ class Visualizer(object):
         cmap: Colormap = None
     ):
         """
-        Configures the default parameters for the `__call__` method (these can 
+        Configures the default parameters for the `__call__` method (these can
         be overridden by passing in values to `__call__`).
 
         Parameters:
@@ -109,47 +109,47 @@ class Visualizer(object):
                 Specifies one of the following configurations for normalizing
                 the attributions (each item is normalized separately):
 
-                - `'unsigned_max'`: normalizes the attributions to the range 
-                  [-1, 1] by dividing the attributions by the maximum absolute 
+                - `'unsigned_max'`: normalizes the attributions to the range
+                  [-1, 1] by dividing the attributions by the maximum absolute
                   attribution value.
                 - `'unsigned_max_positive_centered'`: same as above, but scales
                   the values to the range [0, 1], with negative scores less than
-                  0.5 and positive scores greater than 0.5. 
-                - `'magnitude_max'`: takes the absolute value of the 
-                  attributions, then normalizes the attributions to the range 
+                  0.5 and positive scores greater than 0.5.
+                - `'magnitude_max'`: takes the absolute value of the
+                  attributions, then normalizes the attributions to the range
                   [0, 1] by dividing by the maximum absolute attribution value.
-                - `'magnitude_sum'`: takes the absolute value of the 
-                  attributions, then scales them such that they sum to 1. If 
-                  this option is used, each channel is normalized separately, 
+                - `'magnitude_sum'`: takes the absolute value of the
+                  attributions, then scales them such that they sum to 1. If
+                  this option is used, each channel is normalized separately,
                   such that each channel sums to 1.
-                - `'signed_max'`: normalizes the attributions to the range 
-                  [-1, 1] by dividing the positive values by the maximum 
-                  positive attribution value and the negative values by the 
+                - `'signed_max'`: normalizes the attributions to the range
+                  [-1, 1] by dividing the positive values by the maximum
+                  positive attribution value and the negative values by the
                   minimum negative attribution value.
-                - `'signed_max_positive_centered'`: same as above, but scales 
+                - `'signed_max_positive_centered'`: same as above, but scales
                   the values to the range [0, 1], with negative scores less than
                   0.5 and positive scores greater than 0.5.
-                - `'signed_sum'`: scales the positive attributions such that 
+                - `'signed_sum'`: scales the positive attributions such that
                   they sum to 1 and the negative attributions such that they
-                  scale to -1. If this option is used, each channel is 
+                  scale to -1. If this option is used, each channel is
                   normalized separately.
-                - `'01'`: normalizes the attributions to the range [0, 1] by 
+                - `'01'`: normalizes the attributions to the range [0, 1] by
                   subtracting the minimum attribution value then dividing by the
                   maximum attribution value.
                 - `'unnormalized'`: leaves the attributions unaffected.
 
-                If `None`, either `'unsigned_max'` (for single-channel data) or 
+                If `None`, either `'unsigned_max'` (for single-channel data) or
                 `'unsigned_max_positive_centered'` (for multi-channel data) is
                 used.
 
             blur:
-                Gives the radius of a Gaussian blur to be applied to the 
+                Gives the radius of a Gaussian blur to be applied to the
                 attributions before visualizing. This can be used to help focus
                 on salient regions rather than specific salient pixels.
 
             cmap: matplotlib.colors.Colormap | str, optional
-                Colormap or name of a Colormap to use for the visualization. If 
-                `None`, the colormap will be chosen based on the normalization 
+                Colormap or name of a Colormap to use for the visualization. If
+                `None`, the colormap will be chosen based on the normalization
                 type. This argument is only used for single-channel data
                 (including when `combine_channels` is True).
         """
@@ -208,31 +208,31 @@ class Visualizer(object):
                 Specifies one of the following configurations for normalizing
                 the attributions (each item is normalized separately):
 
-                - `'unsigned_max'`: normalizes the attributions to the range 
-                  [-1, 1] by dividing the attributions by the maximum absolute 
+                - `'unsigned_max'`: normalizes the attributions to the range
+                  [-1, 1] by dividing the attributions by the maximum absolute
                   attribution value.
                 - `'unsigned_max_positive_centered'`: same as above, but scales
                   the values to the range [0, 1], with negative scores less than
-                  0.5 and positive scores greater than 0.5. 
-                - `'magnitude_max'`: takes the absolute value of the 
-                  attributions, then normalizes the attributions to the range 
+                  0.5 and positive scores greater than 0.5.
+                - `'magnitude_max'`: takes the absolute value of the
+                  attributions, then normalizes the attributions to the range
                   [0, 1] by dividing by the maximum absolute attribution value.
-                - `'magnitude_sum'`: takes the absolute value of the 
-                  attributions, then scales them such that they sum to 1. If 
-                  this option is used, each channel is normalized separately, 
+                - `'magnitude_sum'`: takes the absolute value of the
+                  attributions, then scales them such that they sum to 1. If
+                  this option is used, each channel is normalized separately,
                   such that each channel sums to 1.
-                - `'signed_max'`: normalizes the attributions to the range 
-                  [-1, 1] by dividing the positive values by the maximum 
-                  positive attribution value and the negative values by the 
+                - `'signed_max'`: normalizes the attributions to the range
+                  [-1, 1] by dividing the positive values by the maximum
+                  positive attribution value and the negative values by the
                   minimum negative attribution value.
-                - `'signed_max_positive_centered'`: same as above, but scales 
+                - `'signed_max_positive_centered'`: same as above, but scales
                   the values to the range [0, 1], with negative scores less than
                   0.5 and positive scores greater than 0.5.
-                - `'signed_sum'`: scales the positive attributions such that 
+                - `'signed_sum'`: scales the positive attributions such that
                   they sum to 1 and the negative attributions such that they
-                  scale to -1. If this option is used, each channel is 
+                  scale to -1. If this option is used, each channel is
                   normalized separately.
-                - `'01'`: normalizes the attributions to the range [0, 1] by 
+                - `'01'`: normalizes the attributions to the range [0, 1] by
                   subtracting the minimum attribution value then dividing by the
                   maximum attribution value.
                 - `'unnormalized'`: leaves the attributions unaffected.
@@ -240,7 +240,7 @@ class Visualizer(object):
                 If `None`, defaults to the value supplied to the constructor.
 
             blur:
-                Gives the radius of a Gaussian blur to be applied to the 
+                Gives the radius of a Gaussian blur to be applied to the
                 attributions before visualizing. This can be used to help focus
                 on salient regions rather than specific salient pixels. If
                 `None`, defaults to the value supplied to the constructor.
@@ -251,7 +251,7 @@ class Visualizer(object):
 
         Returns:
             A `np.ndarray` array of the numerical representation of the
-            attributions as modified for the visualization. This includes 
+            attributions as modified for the visualization. This includes
             normalization, blurring, etc.
         """
         combine_channels, normalization_type, blur, cmap = self._check_args(
@@ -467,7 +467,7 @@ class HeatmapVisualizer(Visualizer):
         cmap='jet'
     ):
         """
-        Configures the default parameters for the `__call__` method (these can 
+        Configures the default parameters for the `__call__` method (these can
         be overridden by passing in values to `__call__`).
 
         Parameters:
@@ -479,47 +479,47 @@ class HeatmapVisualizer(Visualizer):
                 Specifies one of the following configurations for normalizing
                 the attributions (each item is normalized separately):
 
-                - `'unsigned_max'`: normalizes the attributions to the range 
-                  [-1, 1] by dividing the attributions by the maximum absolute 
+                - `'unsigned_max'`: normalizes the attributions to the range
+                  [-1, 1] by dividing the attributions by the maximum absolute
                   attribution value.
                 - `'unsigned_max_positive_centered'`: same as above, but scales
                   the values to the range [0, 1], with negative scores less than
-                  0.5 and positive scores greater than 0.5. 
-                - `'magnitude_max'`: takes the absolute value of the 
-                  attributions, then normalizes the attributions to the range 
+                  0.5 and positive scores greater than 0.5.
+                - `'magnitude_max'`: takes the absolute value of the
+                  attributions, then normalizes the attributions to the range
                   [0, 1] by dividing by the maximum absolute attribution value.
-                - `'magnitude_sum'`: takes the absolute value of the 
-                  attributions, then scales them such that they sum to 1. If 
-                  this option is used, each channel is normalized separately, 
+                - `'magnitude_sum'`: takes the absolute value of the
+                  attributions, then scales them such that they sum to 1. If
+                  this option is used, each channel is normalized separately,
                   such that each channel sums to 1.
-                - `'signed_max'`: normalizes the attributions to the range 
-                  [-1, 1] by dividing the positive values by the maximum 
-                  positive attribution value and the negative values by the 
+                - `'signed_max'`: normalizes the attributions to the range
+                  [-1, 1] by dividing the positive values by the maximum
+                  positive attribution value and the negative values by the
                   minimum negative attribution value.
-                - `'signed_max_positive_centered'`: same as above, but scales 
+                - `'signed_max_positive_centered'`: same as above, but scales
                   the values to the range [0, 1], with negative scores less than
                   0.5 and positive scores greater than 0.5.
-                - `'signed_sum'`: scales the positive attributions such that 
+                - `'signed_sum'`: scales the positive attributions such that
                   they sum to 1 and the negative attributions such that they
-                  scale to -1. If this option is used, each channel is 
+                  scale to -1. If this option is used, each channel is
                   normalized separately.
-                - `'01'`: normalizes the attributions to the range [0, 1] by 
+                - `'01'`: normalizes the attributions to the range [0, 1] by
                   subtracting the minimum attribution value then dividing by the
                   maximum attribution value.
                 - `'unnormalized'`: leaves the attributions unaffected.
 
-                If `None`, either `'unsigned_max'` (for single-channel data) or 
+                If `None`, either `'unsigned_max'` (for single-channel data) or
                 `'unsigned_max_positive_centered'` (for multi-channel data) is
                 used.
 
             blur:
-                Gives the radius of a Gaussian blur to be applied to the 
+                Gives the radius of a Gaussian blur to be applied to the
                 attributions before visualizing. This can be used to help focus
                 on salient regions rather than specific salient pixels.
 
             cmap: matplotlib.colors.Colormap | str, optional
-                Colormap or name of a Colormap to use for the visualization. If 
-                `None`, the colormap will be chosen based on the normalization 
+                Colormap or name of a Colormap to use for the visualization. If
+                `None`, the colormap will be chosen based on the normalization
                 type. This argument is only used for single-channel data
                 (including when `combine_channels` is True).
         """
@@ -547,7 +547,7 @@ class HeatmapVisualizer(Visualizer):
         cmap=None
     ) -> np.ndarray:
         """
-        Visualizes the given attributions by overlaying an attribution heatmap 
+        Visualizes the given attributions by overlaying an attribution heatmap
         over the given image.
 
         Parameters:
@@ -556,7 +556,7 @@ class HeatmapVisualizer(Visualizer):
 
             x:
                 A `np.ndarray` of items in the same shape as `attributions`
-                corresponding to the records explained by the given 
+                corresponding to the records explained by the given
                 attributions. The visualization will be superimposed onto the
                 corresponding set of records.
 
@@ -580,38 +580,38 @@ class HeatmapVisualizer(Visualizer):
 
             overlay_opacity: float
                 Value in the range [0, 1] specifying the opacity for the heatmap
-                overlay. If `None`, defaults to the value supplied to the 
+                overlay. If `None`, defaults to the value supplied to the
                 constructor.
 
             normalization_type:
                 Specifies one of the following configurations for normalizing
                 the attributions (each item is normalized separately):
 
-                - `'unsigned_max'`: normalizes the attributions to the range 
-                  [-1, 1] by dividing the attributions by the maximum absolute 
+                - `'unsigned_max'`: normalizes the attributions to the range
+                  [-1, 1] by dividing the attributions by the maximum absolute
                   attribution value.
                 - `'unsigned_max_positive_centered'`: same as above, but scales
                   the values to the range [0, 1], with negative scores less than
-                  0.5 and positive scores greater than 0.5. 
-                - `'magnitude_max'`: takes the absolute value of the 
-                  attributions, then normalizes the attributions to the range 
+                  0.5 and positive scores greater than 0.5.
+                - `'magnitude_max'`: takes the absolute value of the
+                  attributions, then normalizes the attributions to the range
                   [0, 1] by dividing by the maximum absolute attribution value.
-                - `'magnitude_sum'`: takes the absolute value of the 
-                  attributions, then scales them such that they sum to 1. If 
-                  this option is used, each channel is normalized separately, 
+                - `'magnitude_sum'`: takes the absolute value of the
+                  attributions, then scales them such that they sum to 1. If
+                  this option is used, each channel is normalized separately,
                   such that each channel sums to 1.
-                - `'signed_max'`: normalizes the attributions to the range 
-                  [-1, 1] by dividing the positive values by the maximum 
-                  positive attribution value and the negative values by the 
+                - `'signed_max'`: normalizes the attributions to the range
+                  [-1, 1] by dividing the positive values by the maximum
+                  positive attribution value and the negative values by the
                   minimum negative attribution value.
-                - `'signed_max_positive_centered'`: same as above, but scales 
+                - `'signed_max_positive_centered'`: same as above, but scales
                   the values to the range [0, 1], with negative scores less than
                   0.5 and positive scores greater than 0.5.
-                - `'signed_sum'`: scales the positive attributions such that 
+                - `'signed_sum'`: scales the positive attributions such that
                   they sum to 1 and the negative attributions such that they
-                  scale to -1. If this option is used, each channel is 
+                  scale to -1. If this option is used, each channel is
                   normalized separately.
-                - `'01'`: normalizes the attributions to the range [0, 1] by 
+                - `'01'`: normalizes the attributions to the range [0, 1] by
                   subtracting the minimum attribution value then dividing by the
                   maximum attribution value.
                 - `'unnormalized'`: leaves the attributions unaffected.
@@ -619,7 +619,7 @@ class HeatmapVisualizer(Visualizer):
                 If `None`, defaults to the value supplied to the constructor.
 
             blur:
-                Gives the radius of a Gaussian blur to be applied to the 
+                Gives the radius of a Gaussian blur to be applied to the
                 attributions before visualizing. This can be used to help focus
                 on salient regions rather than specific salient pixels. If
                 `None`, defaults to the value supplied to the constructor.
@@ -630,7 +630,7 @@ class HeatmapVisualizer(Visualizer):
 
         Returns:
             A `np.ndarray` array of the numerical representation of the
-            attributions as modified for the visualization. This includes 
+            attributions as modified for the visualization. This includes
             normalization, blurring, etc.
         """
         _, normalization_type, blur, cmap = self._check_args(
@@ -683,7 +683,7 @@ class HeatmapVisualizer(Visualizer):
 class MaskVisualizer(object):
     """
     Visualizes attributions by masking the original image to highlight the
-    regions with influence above a given threshold percentile. Intended 
+    regions with influence above a given threshold percentile. Intended
     particularly for use with input-attributions.
     """
 
@@ -697,21 +697,21 @@ class MaskVisualizer(object):
         positive_only=True
     ):
         """
-        Configures the default parameters for the `__call__` method (these can 
+        Configures the default parameters for the `__call__` method (these can
         be overridden by passing in values to `__call__`).
 
         Parameters:
             blur:
-                Gives the radius of a Gaussian blur to be applied to the 
+                Gives the radius of a Gaussian blur to be applied to the
                 attributions before visualizing. This can be used to help focus
                 on salient regions rather than specific salient pixels.
 
             threshold:
-                Value in the range [0, 1]. Attribution values at or  below the 
+                Value in the range [0, 1]. Attribution values at or  below the
                 percentile given by `threshold` (after normalization, blurring,
                 etc.) will be masked.
 
-            masked_opacity: 
+            masked_opacity:
                 Value in the range [0, 1] specifying the opacity for the parts
                 of the image that are masked.
 
@@ -721,11 +721,11 @@ class MaskVisualizer(object):
 
             use_attr_as_opacity:
                 If `True`, instead of using `threshold` and `masked_opacity`,
-                the opacity of each pixel is given by the 0-1-normalized 
+                the opacity of each pixel is given by the 0-1-normalized
                 attribution value.
 
             positive_only:
-                If `True`, only pixels with positive attribution will be 
+                If `True`, only pixels with positive attribution will be
                 unmasked (or given nonzero opacity when `use_attr_as_opacity` is
                 true).
         """
@@ -865,7 +865,7 @@ class ChannelMaskVisualizer(object):
         positive_only=None
     ):
         """
-        Configures the default parameters for the `__call__` method (these can 
+        Configures the default parameters for the `__call__` method (these can
         be overridden by passing in values to `__call__`).
 
         Parameters:
@@ -873,41 +873,41 @@ class ChannelMaskVisualizer(object):
                 The wrapped model whose channel we're visualizing.
 
             layer:
-                The identifier (either index or name) of the layer in which the 
+                The identifier (either index or name) of the layer in which the
                 channel we're visualizing resides.
 
             channel:
-                Index of the channel (for convolutional layers) or internal 
+                Index of the channel (for convolutional layers) or internal
                 neuron (for fully-connected layers) that we'd like to visualize.
 
             channel_axis:
                 If different from the channel axis specified by the backend, the
-                supplied `channel_axis` will be used if operating on a 
+                supplied `channel_axis` will be used if operating on a
                 convolutional layer with 4-D image format.
 
             agg_fn:
-                Function with which to aggregate the remaining dimensions 
-                (except the batch dimension) in order to get a single scalar 
+                Function with which to aggregate the remaining dimensions
+                (except the batch dimension) in order to get a single scalar
                 value for each channel; If `None`, a sum over each neuron in the
-                channel will be taken. This argument is not used when the 
+                channel will be taken. This argument is not used when the
                 channels are scalars, e.g., for dense layers.
 
             doi:
                 The distribution of interest to use when computing the input
-                attributions towards the specified channel. If `None`, 
+                attributions towards the specified channel. If `None`,
                 `PointDoI` will be used.
 
             blur:
-                Gives the radius of a Gaussian blur to be applied to the 
+                Gives the radius of a Gaussian blur to be applied to the
                 attributions before visualizing. This can be used to help focus
                 on salient regions rather than specific salient pixels.
 
             threshold:
-                Value in the range [0, 1]. Attribution values at or  below the 
+                Value in the range [0, 1]. Attribution values at or  below the
                 percentile given by `threshold` (after normalization, blurring,
                 etc.) will be masked.
 
-            masked_opacity: 
+            masked_opacity:
                 Value in the range [0, 1] specifying the opacity for the parts
                 of the image that are masked.
 
@@ -917,11 +917,11 @@ class ChannelMaskVisualizer(object):
 
             use_attr_as_opacity:
                 If `True`, instead of using `threshold` and `masked_opacity`,
-                the opacity of each pixel is given by the 0-1-normalized 
+                the opacity of each pixel is given by the 0-1-normalized
                 attribution value.
 
             positive_only:
-                If `True`, only pixels with positive attribution will be 
+                If `True`, only pixels with positive attribution will be
                 unmasked (or given nonzero opacity when `use_attr_as_opacity` is
                 true).
         """
@@ -953,7 +953,7 @@ class ChannelMaskVisualizer(object):
         combine_channels=None
     ):
         """
-        Visualizes the given attributions by overlaying an attribution heatmap 
+        Visualizes the given attributions by overlaying an attribution heatmap
         over the given image.
 
         Parameters
@@ -968,10 +968,10 @@ class ChannelMaskVisualizer(object):
 
         x_preprocessed : numpy.ndarray, optional
             If the model requires a preprocessed input (e.g., with the mean
-            subtracted) that is different from how the image should be 
-            visualized, ``x_preprocessed`` should be specified. In this case 
+            subtracted) that is different from how the image should be
+            visualized, ``x_preprocessed`` should be specified. In this case
             ``x`` will be used for visualization, and ``x_preprocessed`` will be
-            passed to the model when calculating attributions. Must be the same 
+            passed to the model when calculating attributions. Must be the same
             shape as ``x``.
 
         output_file : str, optional
@@ -981,22 +981,22 @@ class ChannelMaskVisualizer(object):
         blur : float, optional
             If specified, gives the radius of a Gaussian blur to be applied to
             the attributions before visualizing. This can be used to help focus
-            on salient regions rather than specific salient pixels. If None, 
+            on salient regions rather than specific salient pixels. If None,
             defaults to the value supplied to the constructor. Default None.
 
         threshold : float
-            Value in the range [0, 1]. Attribution values at or  below the 
-            percentile given by ``threshold`` will be masked. If None, defaults 
+            Value in the range [0, 1]. Attribution values at or  below the
+            percentile given by ``threshold`` will be masked. If None, defaults
             to the value supplied to the constructor. Default None.
 
         masked_opacity: float
             Value in the range [0, 1] specifying the opacity for the parts of
-            the image that are masked. Default 0.2. If None, defaults to the 
+            the image that are masked. Default 0.2. If None, defaults to the
             value supplied to the constructor. Default None.
 
         combine_channels : bool
             If True, the attributions will be averaged across the channel
-            dimension, resulting in a 1-channel attribution map. If None, 
+            dimension, resulting in a 1-channel attribution map. If None,
             defaults to the value supplied to the constructor. Default None.
         """
 
@@ -1049,10 +1049,10 @@ class PlainText(Output):
     """Plain text visualization output format."""
 
     def blank(self):
-        return ""
+        return ''
 
     def space(self):
-        return " "
+        return ' '
 
     def escape(self, s):
         return s
@@ -1061,7 +1061,7 @@ class PlainText(Output):
         return s
 
     def magnitude_colored(self, s, mag):
-        return f"{s}({mag:0.3f})"
+        return f'{s}({mag:0.3f})'
 
     def append(self, *parts):
         return ''.join(parts)
@@ -1075,23 +1075,23 @@ class HTML(Output):
 
     def __init__(self):
         try:
-            self.m_html = importlib.import_module("html")
+            self.m_html = importlib.import_module('html')
         except:
             raise ImportError(
                 "HTML output requires html python module. Try 'pip install html'."
             )
 
     def blank(self):
-        return ""
+        return ''
 
     def space(self):
-        return "&nbsp;"
+        return '&nbsp;'
 
     def escape(self, s):
         return self.m_html.escape(s)
 
     def linebreak(self):
-        return "<br/>"
+        return '<br/>'
 
     def line(self, s):
         return f"<span style='padding: 2px; margin: 2px; background: gray; border-radius: 4px;'>{s}</span>"
@@ -1125,7 +1125,7 @@ class IPython(HTML):
     def __init__(self):
         super(IPython, self).__init__()
         try:
-            self.m_ipy = importlib.import_module("IPython")
+            self.m_ipy = importlib.import_module('IPython')
         except:
             raise ImportError(
                 "Jupyter output requires IPython python module. Try 'pip install ipykernel'."
@@ -1140,15 +1140,15 @@ class NLP(object):
     """NLP Visualization tools."""
 
     # Batches of text inputs not yet tokenized.
-    TextBatch = TypeVar("TextBatch")
+    TextBatch = TypeVar('TextBatch')
 
     # Inputs that are directly accepted by wrapped models, tokenized.
     # TODO(piotrm): Reuse other typevars/aliases from elsewhere.
-    ModelInput = TypeVar("ModelInput")
+    ModelInput = TypeVar('ModelInput')
 
     # Outputs produced by wrapped models.
     # TODO(piotrm): Reuse other typevars/aliases from elsewhere.
-    ModelOutput = TypeVar("ModelOutput")
+    ModelOutput = TypeVar('ModelOutput')
 
     def __init__(
         self,
@@ -1209,7 +1209,7 @@ class NLP(object):
             except NameError:
                 output = PlainText()
                 tru_logger(
-                    "WARNING: could not guess preferred visualization output format, using PlainText"
+                    'WARNING: could not guess preferred visualization output format, using PlainText'
                 )
 
         # TODO: automatic inference of various parameters for common repositories like huggingface, tfhub.
@@ -1241,7 +1241,7 @@ class NLP(object):
 
             attr: AttributionMethod
                 The attribution method to generate the token importances with.
-        
+
         Returns: Any
             The visualization in the format specified by this class's `output` parameter.
         """
@@ -1249,7 +1249,7 @@ class NLP(object):
         B = get_backend()
 
         if self.tokenize is None:
-            return ValueError("tokenize not provided to NLP visualizer.")
+            return ValueError('tokenize not provided to NLP visualizer.')
 
         inputs = self.tokenize(texts)
 
@@ -1264,7 +1264,7 @@ class NLP(object):
 
         if (not isinstance(input_ids, Iterable)) or isinstance(input_ids, dict):
             raise ValueError(
-                f"Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor."
+                f'Inputs ({input_ids.__class__.__name__}) need to be iterable over instances. You might need to set input_accessor.'
             )
 
         output_logits = outputs
@@ -1274,7 +1274,7 @@ class NLP(object):
         if (not isinstance(output_logits, Iterable)) or isinstance(
                 output_logits, dict):
             raise ValueError(
-                f"Outputs ({output_logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor."
+                f'Outputs ({output_logits.__class__.__name__}) need to be iterable over instances. You might need to set output_accessor.'
             )
 
         for i, (sentence_word_id, attr,
@@ -1289,7 +1289,7 @@ class NLP(object):
                 pred_name = str(pred)
 
             sent = self.output.append(
-                self.output.escape(pred_name), ":", self.output.space()
+                self.output.escape(pred_name), ':', self.output.space()
             )
 
             for word_id, attr in zip(sentence_word_id, attr):

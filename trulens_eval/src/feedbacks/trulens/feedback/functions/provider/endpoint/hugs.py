@@ -3,7 +3,6 @@ import json
 from typing import Callable, Dict, Hashable, Optional
 
 import requests
-
 from trulens.feedback import Endpoint
 from trulens.feedback import EndpointCallback
 from trulens.utils.keys import _check_key
@@ -38,7 +37,7 @@ class HuggingfaceEndpoint(Endpoint):
     """
 
     def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="huggingface")
+        return super(Endpoint, cls).__new__(cls, name='huggingface')
 
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments,
@@ -46,11 +45,11 @@ class HuggingfaceEndpoint(Endpoint):
     ) -> None:
         # Call here can only be requests.post .
 
-        if "url" not in bindings.arguments:
+        if 'url' not in bindings.arguments:
             return
 
         url = bindings.arguments['url']
-        if not url.startswith("https://api-inference.huggingface.co"):
+        if not url.startswith('https://api-inference.huggingface.co'):
             return
 
         # TODO: Determine whether the request was a classification or some other
@@ -63,18 +62,18 @@ class HuggingfaceEndpoint(Endpoint):
             callback.handle_classification(response=response)
 
     def __init__(self, *args, **kwargs):
-        if safe_hasattr(self, "name"):
+        if safe_hasattr(self, 'name'):
             # Already created with SingletonPerName mechanism
             return
 
-        kwargs['name'] = "huggingface"
+        kwargs['name'] = 'huggingface'
         kwargs['callback_class'] = HuggingfaceCallback
 
         # Returns true in "warn" mode to indicate that key is set. Does not
         # print anything even if key not set.
-        if _check_key("HUGGINGFACE_API_KEY", silent=True, warn=True):
+        if _check_key('HUGGINGFACE_API_KEY', silent=True, warn=True):
             kwargs['post_headers'] = get_huggingface_headers()
 
         super().__init__(*args, **kwargs)
 
-        self._instrument_class(requests, "post")
+        self._instrument_class(requests, 'post')

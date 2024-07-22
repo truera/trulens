@@ -12,18 +12,17 @@ from millify import millify
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
-
 from trulens import Tru
-from trulens.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens.dashboard import display
 from trulens.dashboard.react_components.record_viewer import record_viewer
+from trulens.dashboard.ux import styles
+from trulens.dashboard.ux.components import draw_metadata
+from trulens.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.schema.app import AppDefinition
 from trulens.schema.feedback import FeedbackCall
 from trulens.schema.record import Record
-from trulens.dashboard import display
 from trulens.utils.json import json_str_of_obj
 from trulens.utils.python import Future
-from trulens.dashboard.ux import styles
-from trulens.dashboard.ux.components import draw_metadata
 
 
 class FeedbackDisplay(BaseModel):
@@ -55,20 +54,20 @@ def trulens_leaderboard(app_ids: List[str] = None):
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
-            row.feedback_json.get("supplied_name", "") or
-            row.feedback_json["implementation"]["name"]
-        ): row.feedback_json.get("higher_is_better", True)
+            row.feedback_json.get('supplied_name', '') or
+            row.feedback_json['implementation']['name']
+        ): row.feedback_json.get('higher_is_better', True)
         for _, row in feedback_defs.iterrows()
     }
 
     if df.empty:
-        st.write("No records yet...")
+        st.write('No records yet...')
         return
 
-    df.sort_values(by="app_id", inplace=True)
+    df.sort_values(by='app_id', inplace=True)
 
     if df.empty:
-        st.write("No records yet...")
+        st.write('No records yet...')
 
     if app_ids is None:
         app_ids = list(df.app_id.unique())
@@ -77,9 +76,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
         app_df = df.loc[df.app_id == app_id]
         if app_df.empty:
             continue
-        app_str = app_df["app_json"].iloc[0]
+        app_str = app_df['app_json'].iloc[0]
         app_json = json.loads(app_str)
-        metadata = app_json.get("metadata")
+        metadata = app_json.get('metadata')
         st.header(app_id, help=draw_metadata(metadata))
         app_feedback_col_names = [
             col_name for col_name in feedback_col_names
@@ -89,24 +88,24 @@ def trulens_leaderboard(app_ids: List[str] = None):
             5 + len(app_feedback_col_names)
         )
         latency_mean = (
-            app_df["latency"].
+            app_df['latency'].
             apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None).mean()
         )
 
-        col1.metric("Records", len(app_df))
+        col1.metric('Records', len(app_df))
         col2.metric(
-            "Average Latency (Seconds)",
+            'Average Latency (Seconds)',
             (
-                f"{millify(round(latency_mean, 5), precision=2)}"
-                if not math.isnan(latency_mean) else "nan"
+                f'{millify(round(latency_mean, 5), precision=2)}'
+                if not math.isnan(latency_mean) else 'nan'
             ),
         )
         col3.metric(
-            "Total Cost (USD)",
-            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision = 2)}",
+            'Total Cost (USD)',
+            f'${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision = 2)}',
         )
         col4.metric(
-            "Total Tokens",
+            'Total Tokens',
             millify(
                 sum(
                     tokens for tokens in app_df.total_tokens
@@ -126,22 +125,22 @@ def trulens_leaderboard(app_ids: List[str] = None):
 
             higher_is_better = feedback_directions.get(col_name, True)
 
-            if "distance" in col_name:
+            if 'distance' in col_name:
                 feedback_cols[i].metric(
                     label=col_name,
-                    value=f"{round(mean, 2)}",
-                    delta_color="normal"
+                    value=f'{round(mean, 2)}',
+                    delta_color='normal'
                 )
             else:
                 cat = CATEGORY.of_score(mean, higher_is_better=higher_is_better)
                 feedback_cols[i].metric(
                     label=col_name,
-                    value=f"{round(mean, 2)}",
-                    delta=f"{cat.icon} {cat.adjective}",
+                    value=f'{round(mean, 2)}',
+                    delta=f'{cat.icon} {cat.adjective}',
                     delta_color=(
-                        "normal" if cat.compare(
+                        'normal' if cat.compare(
                             mean, CATEGORY.PASS[cat.direction].threshold
-                        ) else "inverse"
+                        ) else 'inverse'
                     ),
                 )
 
@@ -189,12 +188,12 @@ def trulens_feedback(record: Record):
 
     st.write('**Feedback functions**')
     selected_feedback = pills(
-        "Feedback functions",
+        'Feedback functions',
         feedback_cols,
         index=None,
-        format_func=lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}",
+        format_func=lambda fcol: f'{fcol} {feedbacks[fcol].score:.4f}',
         label_visibility=
-        "collapsed",  # Hiding because we can't format the label here.
+        'collapsed',  # Hiding because we can't format the label here.
         icons=icons,
         key=
         f"{call_data['feedback_name']}_{len(feedbacks)}"  # Important! Otherwise streamlit sometimes lazily skips update even with st.experimental_fragment
@@ -225,7 +224,7 @@ def trulens_trace(record: Record):
 
         with tru_llm as recording:
             response = llm.invoke(input_text)
-            
+
         record, response = recording.get()
 
         trulens_st.trulens_trace(record=record)

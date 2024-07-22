@@ -11,7 +11,6 @@ from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from pydantic import BaseModel
 from sqlalchemy import Engine
-
 from trulens.database import base as mod_db
 
 logger = logging.getLogger(__name__)
@@ -24,22 +23,22 @@ def alembic_config(
 ) -> Iterator[Config]:
 
     alembic_dir = os.path.dirname(os.path.abspath(__file__))
-    db_url = str(engine.url).replace("%", "%%")  # Escape any '%' in db_url
-    config = Config(os.path.join(alembic_dir, "alembic.ini"))
-    config.set_main_option("script_location", alembic_dir)
+    db_url = str(engine.url).replace('%', '%%')  # Escape any '%' in db_url
+    config = Config(os.path.join(alembic_dir, 'alembic.ini'))
+    config.set_main_option('script_location', alembic_dir)
     config.set_main_option(
-        "calling_context", "PYTHON"
+        'calling_context', 'PYTHON'
     )  # skips CLI-specific setup
-    config.set_main_option("sqlalchemy.url", db_url)
-    config.set_main_option("trulens.table_prefix", prefix)
-    config.attributes["engine"] = engine
+    config.set_main_option('sqlalchemy.url', db_url)
+    config.set_main_option('trulens.table_prefix', prefix)
+    config.attributes['engine'] = engine
 
     yield config
 
 
 def upgrade_db(
     engine: Engine,
-    revision: str = "head",
+    revision: str = 'head',
     prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
 ):
     with alembic_config(engine, prefix=prefix) as config:
@@ -48,7 +47,7 @@ def upgrade_db(
 
 def downgrade_db(
     engine: Engine,
-    revision: str = "base",
+    revision: str = 'base',
     prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
 ):
     with alembic_config(engine, prefix=prefix) as config:
@@ -61,7 +60,7 @@ def get_current_db_revision(
 ) -> Optional[str]:
     with engine.connect() as conn:
         return MigrationContext.configure(
-            conn, opts=dict(version_table=prefix + "alembic_version")
+            conn, opts=dict(version_table=prefix + 'alembic_version')
         ).get_current_revision()
 
 
@@ -78,7 +77,7 @@ def get_revision_history(
             reversed(
                 [
                     rev.revision for rev in
-                    scripts.iterate_revisions(lower="base", upper="head")
+                    scripts.iterate_revisions(lower='base', upper='head')
                 ]
             )
         )
@@ -89,7 +88,7 @@ class DbRevisions(BaseModel):
     history: List[str]  # all past revisions, including `latest`
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}({super().__str__()})"
+        return f'{self.__class__.__name__}({super().__str__()})'
 
     @property
     def latest(self) -> str:

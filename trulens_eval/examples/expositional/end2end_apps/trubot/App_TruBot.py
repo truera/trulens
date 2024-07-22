@@ -2,36 +2,36 @@ import os
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
-from langchain.chains import ConversationalRetrievalChain
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.memory import ConversationSummaryBufferMemory
 from langchain_community.callbacks import get_openai_callback
 from langchain_community.llms import OpenAI
 from langchain_community.vectorstores import Pinecone
 import numpy as np
 import pinecone
 import streamlit as st
+from trulens import feedback
+from trulens import Select
+from trulens import tru
+from trulens import tru_chain_recorder
+from trulens.feedback import Feedback
+from trulens.keys import check_keys
 
-from trulens_eval import feedback
-from trulens_eval import Select
-from trulens_eval import tru
-from trulens_eval import tru_chain_recorder
-from trulens_eval.feedback import Feedback
-from trulens_eval.keys import check_keys
+from langchain.chains import ConversationalRetrievalChain
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.memory import ConversationSummaryBufferMemory
 
-check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
+check_keys('PINECONE_API_KEY', 'PINECONE_ENV', 'OPENAI_API_KEY')
 
 # Set up GPT-3 model
-model_name = "gpt-3.5-turbo"
+model_name = 'gpt-3.5-turbo'
 
-app_id = "TruBot"
+app_id = 'TruBot'
 # app_id = "TruBot_langprompt"
 # app_id = "TruBot_relevance"
 
 # Pinecone configuration.
 pinecone.init(
-    api_key=os.environ.get("PINECONE_API_KEY"),  # find at app.pinecone.io
-    environment=os.environ.get("PINECONE_ENV")  # next to api key in console
+    api_key=os.environ.get('PINECONE_API_KEY'),  # find at app.pinecone.io
+    environment=os.environ.get('PINECONE_ENV')  # next to api key in console
 )
 
 identity = lambda h: h
@@ -59,7 +59,7 @@ def generate_response(prompt):
     # Embedding needed for Pinecone vector db.
     embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
     docsearch = Pinecone.from_existing_index(
-        index_name="llmdemo", embedding=embedding
+        index_name='llmdemo', embedding=embedding
     )
     retriever = docsearch.as_retriever()
 
@@ -70,7 +70,7 @@ def generate_response(prompt):
     memory = ConversationSummaryBufferMemory(
         max_token_limit=650,
         llm=llm,
-        memory_key="chat_history",
+        memory_key='chat_history',
         output_key='answer'
     )
 
@@ -85,33 +85,33 @@ def generate_response(prompt):
     )
 
     # Language mismatch fix:
-    if "langprompt" in app_id:
+    if 'langprompt' in app_id:
         chain.combine_docs_chain.llm_chain.prompt.template = \
-            "Use the following pieces of CONTEXT to answer the question at the end " \
+            'Use the following pieces of CONTEXT to answer the question at the end ' \
             "in the same language as the question. If you don't know the answer, " \
             "just say that you don't know, don't try to make up an answer.\n" \
-            "\n" \
-            "CONTEXT: {context}\n" \
-            "\n" \
-            "Question: {question}\n" \
-            "Helpful Answer: "
+            '\n' \
+            'CONTEXT: {context}\n' \
+            '\n' \
+            'Question: {question}\n' \
+            'Helpful Answer: '
 
-    elif "relevance" in app_id:
+    elif 'relevance' in app_id:
         # Contexts fix
         chain.combine_docs_chain.llm_chain.prompt.template = \
-            "Use only the relevant contexts to answer the question at the end " \
+            'Use only the relevant contexts to answer the question at the end ' \
             ". Some pieces of context may not be relevant. If you don't know the answer, " \
             "just say that you don't know, don't try to make up an answer.\n" \
-            "\n" \
-            "Contexts: \n" \
-            "{context}\n" \
-            "\n" \
-            "Question: {question}\n" \
-            "Helpful Answer: "
+            '\n' \
+            'Contexts: \n' \
+            '{context}\n' \
+            '\n' \
+            'Question: {question}\n' \
+            'Helpful Answer: '
 
         # space is important
 
-        chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
+        chain.combine_docs_chain.document_prompt.template = '\tContext: {page_content}'
 
     # Trulens instrumentation.
     tc = tru_chain_recorder.TruChain(chain, app_id=app_id)
@@ -120,8 +120,8 @@ def generate_response(prompt):
 
 
 # Set up Streamlit app
-st.title("TruBot")
-user_input = st.text_input("Ask a question about TruEra")
+st.title('TruBot')
+user_input = st.text_input('Ask a question about TruEra')
 
 if user_input:
     # Generate GPT-3 response

@@ -20,7 +20,7 @@ then pass them as a list to the instrumentation class of your choice, along with
 the app itself. These make up the `recorder`.
 
 ```python
-from trulens_eval import TruChain
+from trulens import TruChain
 # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
 tru_recorder = TruChain(
     chain,
@@ -43,7 +43,7 @@ feedback functions. These are accessed by the feedback mode and included when
 you construct the recorder, like so:
 
 ```python
-from trulens_eval import FeedbackMode
+from trulens import FeedbackMode
 
 tru_recorder = TruChain(
     chain,

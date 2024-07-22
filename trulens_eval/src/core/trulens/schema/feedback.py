@@ -6,12 +6,10 @@ import datetime
 from enum import Enum
 import logging
 from pprint import pformat
-from typing import (
-    Any, ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar, Union
-)
+from typing import (Any, ClassVar, Dict, Hashable, List, Optional, Tuple,
+                    TypeVar, Union)
 
 import pydantic
-
 from trulens import app as mod_app
 from trulens.schema import base as mod_base_schema
 from trulens.schema import types as mod_types_schema
@@ -20,7 +18,7 @@ from trulens.utils import serial
 from trulens.utils.json import obj_id_of_obj
 from trulens.utils.text import retab
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +49,7 @@ class Select:
 
     RecordCalls: Query = Record.app  # type: ignore
     """Selector for the calls made by the wrapped app.
-    
+
     Layed out by path into components.
     """
 
@@ -73,7 +71,7 @@ class Select:
 
         if len(select.path) == 0:
             raise ValueError(
-                "Given selector is empty so does not name a method."
+                'Given selector is empty so does not name a method.'
             )
 
         firsts = select.path[:-1]
@@ -81,7 +79,7 @@ class Select:
 
         if not isinstance(last, serial.StepItemOrAttribute):
             raise ValueError(
-                "Last part of selector is not an attribute so does not name a method."
+                'Last part of selector is not an attribute so does not name a method.'
             )
 
         method_name = last.get_item_or_attribute()
@@ -119,38 +117,38 @@ class Select:
         """Render the given query for use in dashboard to help user specify feedback functions."""
 
         if len(query) == 0:
-            return "Select.Query()"
+            return 'Select.Query()'
 
-        ret = ""
+        ret = ''
         rest = None
 
         if query.path[0:2] == Select.RecordInput.path:
-            ret = "Select.RecordInput"
+            ret = 'Select.RecordInput'
             rest = query.path[2:]
         elif query.path[0:2] == Select.RecordOutput.path:
-            ret = "Select.RecordOutput"
+            ret = 'Select.RecordOutput'
             rest = query.path[2:]
 
         elif query.path[0:4] == Select.RecordArgs.path:
-            ret = "Select.RecordArgs"
+            ret = 'Select.RecordArgs'
             rest = query.path[4:]
         elif query.path[0:4] == Select.RecordRets.path:
-            ret = "Select.RecordRets"
+            ret = 'Select.RecordRets'
             rest = query.path[4:]
 
         elif query.path[0:2] == Select.RecordCalls.path:
-            ret = "Select.RecordCalls"
+            ret = 'Select.RecordCalls'
             rest = query.path[2:]
 
         elif query.path[0:3] == Select.RecordCall.path:
-            ret = "Select.RecordCall"
+            ret = 'Select.RecordCall'
             rest = query.path[3:]
 
         elif query.path[0] == Select.Record.path[0]:
-            ret = "Select.Record"
+            ret = 'Select.Record'
             rest = query.path[1:]
         elif query.path[0] == Select.App.path[0]:
-            ret = "Select.App"
+            ret = 'Select.App'
             rest = query.path[1:]
         else:
             rest = query.path
@@ -158,7 +156,7 @@ class Select:
         for step in rest:
             ret += repr(step)
 
-        return f"{ret}"
+        return f'{ret}'
 
 
 class FeedbackMode(str, Enum):
@@ -167,18 +165,18 @@ class FeedbackMode(str, Enum):
     Specify this using the `feedback_mode` to [App][trulens_eval.app.App] constructors.
     """
 
-    NONE = "none"
+    NONE = 'none'
     """No evaluation will happen even if feedback functions are specified."""
 
-    WITH_APP = "with_app"
+    WITH_APP = 'with_app'
     """Try to run feedback functions immediately and before app returns a
     record."""
 
-    WITH_APP_THREAD = "with_app_thread"
+    WITH_APP_THREAD = 'with_app_thread'
     """Try to run feedback functions in the same process as the app but after
     it produces a record."""
 
-    DEFERRED = "deferred"
+    DEFERRED = 'deferred'
     """Evaluate later via the process started by
     `tru.start_deferred_feedback_evaluator`."""
 
@@ -186,21 +184,21 @@ class FeedbackMode(str, Enum):
 class FeedbackResultStatus(Enum):
     """For deferred feedback evaluation, these values indicate status of evaluation."""
 
-    NONE = "none"
+    NONE = 'none'
     """Initial value is none."""
 
-    RUNNING = "running"
+    RUNNING = 'running'
     """Once queued/started, status is updated to "running"."""
 
-    FAILED = "failed"
+    FAILED = 'failed'
     """Run failed."""
 
-    DONE = "done"
+    DONE = 'done'
     """Run completed successfully."""
 
-    SKIPPED = "skipped"
+    SKIPPED = 'skipped'
     """This feedback was skipped.
-     
+
     This can be because because it had an `if_exists` selector and did not
     select anything or it has a selector that did not select anything the
     `on_missing` was set to warn or ignore.
@@ -209,28 +207,28 @@ class FeedbackResultStatus(Enum):
 
 class FeedbackOnMissingParameters(str, Enum):
     """How to handle missing parameters in feedback function calls.
-    
+
     This is specifically for the case were a feedback function has a selector
     that selects something that does not exist in a record/app.
     """
 
-    ERROR = "error"
+    ERROR = 'error'
     """Raise an error if a parameter is missing.
-    
+
     The result status will be set to
     [FAILED][trulens_eval.schema.feedback.FeedbackResultStatus.FAILED].
     """
 
-    WARN = "warn"
+    WARN = 'warn'
     """Warn if a parameter is missing.
-    
+
     The result status will be set to
     [SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
 
-    IGNORE = "ignore"
-    """Do nothing. 
-    
+    IGNORE = 'ignore'
+    """Do nothing.
+
     No warning or error message will be shown. The result status will be set to
     [SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
@@ -238,7 +236,7 @@ class FeedbackOnMissingParameters(str, Enum):
 
 class FeedbackCall(serial.SerialModel):
     """Invocations of feedback function results in one of these instances.
-    
+
     Note that a single `Feedback` instance might require more than one call.
     """
 
@@ -252,13 +250,13 @@ class FeedbackCall(serial.SerialModel):
     """Any additional data a feedback function returns to display alongside its float result."""
 
     def __str__(self) -> str:
-        out = ""
-        tab = "  "
+        out = ''
+        tab = '  '
         for k, v in self.args.items():
-            out += f"{tab}{k} = {v}\n"
-        out += f"{tab}ret = {self.ret}\n"
+            out += f'{tab}{k} = {v}\n'
+        out += f'{tab}ret = {self.ret}\n'
         if self.meta:
-            out += f"{tab}meta = \n{retab(tab=tab*2, s=pformat(self.meta))}\n"
+            out += f'{tab}meta = \n{retab(tab=tab*2, s=pformat(self.meta))}\n'
 
         return out
 
@@ -268,7 +266,7 @@ class FeedbackCall(serial.SerialModel):
 
 class FeedbackResult(serial.SerialModel):
     """Feedback results for a single [Feedback][trulens_eval.feedback.feedback.Feedback] instance.
-    
+
     This might involve multiple feedback function calls. Typically you should
     not be constructing these objects yourself except for the cases where you'd
     like to log human feedback.
@@ -342,17 +340,17 @@ class FeedbackResult(serial.SerialModel):
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
         **kwargs
     ):
-        super().__init__(feedback_result_id="temporary", **kwargs)
+        super().__init__(feedback_result_id='temporary', **kwargs)
 
         if feedback_result_id is None:
             feedback_result_id = obj_id_of_obj(
-                self.model_dump(), prefix="feedback_result"
+                self.model_dump(), prefix='feedback_result'
             )
 
         self.feedback_result_id = feedback_result_id
 
     def __str__(self):
-        out = f"{self.name} ({self.status}) = {self.result}\n"
+        out = f'{self.name} ({self.status}) = {self.result}\n'
         for call in self.calls:
             out += pformat(call)
 
@@ -364,7 +362,7 @@ class FeedbackResult(serial.SerialModel):
 
 class FeedbackCombinations(str, Enum):
     """How to collect arguments for feedback function calls.
-    
+
     Note that this applies only to cases where selectors pick out more than one
     thing for feedback function arguments. This option is used for the field
     `combinations` of
@@ -373,16 +371,16 @@ class FeedbackCombinations(str, Enum):
     [Feedback.aggregate][trulens_eval.feedback.feedback.Feedback.aggregate].
     """
 
-    ZIP = "zip"
-    """Match argument values per position in produced values. 
-    
+    ZIP = 'zip'
+    """Match argument values per position in produced values.
+
     Example:
         If the selector for `arg1` generates values `0, 1, 2` and one for `arg2`
         generates values `"a", "b", "c"`, the feedback function will be called 3
         times with kwargs:
 
         - `{'arg1': 0, arg2: "a"}`,
-        - `{'arg1': 1, arg2: "b"}`, 
+        - `{'arg1': 1, arg2: "b"}`,
         - `{'arg1': 2, arg2: "c"}`
 
     If the quantities of items in the various generators do not match, the
@@ -394,7 +392,7 @@ class FeedbackCombinations(str, Enum):
     value instead of multiple values.
     """
 
-    PRODUCT = "product"
+    PRODUCT = 'product'
     """Evaluate feedback on all combinations of feedback function arguments.
 
     Example:
@@ -416,8 +414,8 @@ class FeedbackCombinations(str, Enum):
 
 
 class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
-    """Serialized parts of a feedback function. 
-    
+    """Serialized parts of a feedback function.
+
     The non-serialized parts are in the
     [Feedback][trulens_eval.feedback.feedback.Feedback] class.
     """
@@ -440,7 +438,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     if_exists: Optional[serial.Lens] = None
     """Only execute the feedback function if the following selector names
     something that exists in a record/app.
-    
+
     Can use this to evaluate conditionally on presence of some calls, for
     example. Feedbacks skipped this way will have a status of
     [FeedbackResultStatus.SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
@@ -480,7 +478,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             kwargs['supplied_name'] = name
 
         super().__init__(
-            feedback_definition_id="temporary",
+            feedback_definition_id='temporary',
             implementation=implementation,
             aggregator=aggregator,
             selectors=selectors,
@@ -498,15 +496,15 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
         if feedback_definition_id is None:
             if implementation is not None:
                 feedback_definition_id = obj_id_of_obj(
-                    self.model_dump(), prefix="feedback_definition"
+                    self.model_dump(), prefix='feedback_definition'
                 )
             else:
-                feedback_definition_id = "anonymous_feedback_definition"
+                feedback_definition_id = 'anonymous_feedback_definition'
 
         self.feedback_definition_id = feedback_definition_id
 
     def __repr__(self):
-        return f"FeedbackDefinition({self.name},\n\tselectors={self.selectors},\n\tif_exists={self.if_exists}\n)"
+        return f'FeedbackDefinition({self.name},\n\tselectors={self.selectors},\n\tif_exists={self.if_exists}\n)'
 
     def __str__(self):
         return repr(self)
@@ -517,7 +515,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     @property
     def name(self) -> str:
         """Name of the feedback function.
-        
+
         Derived from the name of the serialized implementation function if name
         was not provided.
         """
@@ -526,7 +524,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             return self.supplied_name
 
         if self.implementation is None:
-            raise RuntimeError("This feedback function has no implementation.")
+            raise RuntimeError('This feedback function has no implementation.')
 
         return self.implementation.name
 

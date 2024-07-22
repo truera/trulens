@@ -2,11 +2,10 @@ import importlib
 import os
 
 import numpy as np
+import trulens
 from trulens.nn.backend import Backend
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
-
-import trulens
 
 
 class EnvironmentTestBase(object):

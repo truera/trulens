@@ -9,7 +9,7 @@
     @include res-max-mobile {
         padding: 0 1.25rem;
     }
-    
+
     &:nth-of-type(2n+0) {
         background-color: var(--color-background-sec);
     }
@@ -39,7 +39,7 @@ header {
     @include res-max-desktop-large {
         padding: 0 var(--gap-xl);
     }
-    
+
     @include res-max-tablet {
         padding: 3rem 1.25rem;
 
@@ -65,7 +65,7 @@ header {
         }
 
         @include res-max-mobile {
-            bottom: -10vw;  
+            bottom: -10vw;
             right: 0;
 
             svg {
@@ -109,13 +109,13 @@ header {
     bottom: 0;
     right: 0;
     z-index: -1;
-    opacity: 0.1;  
+    opacity: 0.1;
 
     @include res-max-desktop-large {
         svg {
             width: 60vw;
             height: auto;
-        } 
+        }
     }
 
 }
@@ -123,13 +123,13 @@ header {
 .footer {
     padding-bottom: var(--gap-xl);
 
-    p {    
+    p {
         font-size: 1.125rem;
         opacity: 0.15;
         color: var(--color-primary);
-        
+
     }
-    
+
     @include res-max-mobile {
         border-top: 1px solid rgba(3, 74, 97, 0.25);
         padding-top: 2.5rem;
@@ -140,7 +140,7 @@ header {
             gap: var(--gap-xl);
         }
     }
-} 
+}
 
 .home {
     header {

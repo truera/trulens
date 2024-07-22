@@ -2,7 +2,6 @@ from typing import Dict, Tuple, Union
 
 import numpy as np
 from pydantic import PrivateAttr
-
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LLAMA
 from trulens.utils.imports import REQUIREMENT_SKLEARN
@@ -22,7 +21,7 @@ class Embeddings(WithClassInfo, SerialModel):
     _embed_model: 'Embedder' = PrivateAttr()
 
     def __init__(self, embed_model: 'Embedder' = None):
-        """Instantiates embeddings for feedback functions. 
+        """Instantiates embeddings for feedback functions.
         ```
         f_embed = feedback.Embeddings(embed_model=embed_model)
         ```
@@ -42,7 +41,7 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs cosine distance on the query and document embeddings
 
         !!! example
-    
+
             Below is just one example. See supported embedders:
             https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
             from langchain.embeddings.openai import OpenAIEmbeddings
@@ -67,7 +66,7 @@ class Embeddings(WithClassInfo, SerialModel):
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            query (str): A text prompt to a vector DB. 
+            query (str): A text prompt to a vector DB.
             document (str): The document returned from the vector DB.
 
         Returns:
@@ -98,7 +97,7 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L1 distance on the query and document embeddings
 
         !!! example
-    
+
             Below is just one example. See supported embedders:
             https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
             from langchain.embeddings.openai import OpenAIEmbeddings
@@ -123,7 +122,7 @@ class Embeddings(WithClassInfo, SerialModel):
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            query (str): A text prompt to a vector DB. 
+            query (str): A text prompt to a vector DB.
             document (str): The document returned from the vector DB.
 
         Returns:
@@ -154,11 +153,11 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L2 distance on the query and document embeddings
 
         !!! example
-    
+
             Below is just one example. See supported embedders:
             https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
             from langchain.embeddings.openai import OpenAIEmbeddings
-            
+
             ```python
             model_name = 'text-embedding-ada-002'
 
@@ -179,7 +178,7 @@ class Embeddings(WithClassInfo, SerialModel):
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            query (str): A text prompt to a vector DB. 
+            query (str): A text prompt to a vector DB.
             document (str): The document returned from the vector DB.
 
         Returns:

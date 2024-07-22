@@ -4,14 +4,14 @@ Tests for TruBasicApp.
 
 from unittest import main
 
+from trulens import Tru
+from trulens import TruBasicApp
+from trulens.keys import check_keys
+from trulens.schema.feedback import FeedbackMode
+
 from tests.unit.test import JSONTestCase
 
-from trulens_eval import Tru
-from trulens_eval import TruBasicApp
-from trulens_eval.keys import check_keys
-from trulens_eval.schema.feedback import FeedbackMode
-
-check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
+check_keys('OPENAI_API_KEY', 'HUGGINGFACE_API_KEY')
 
 
 class TestTruBasicApp(JSONTestCase):
@@ -19,7 +19,7 @@ class TestTruBasicApp(JSONTestCase):
     def setUp(self):
 
         def custom_application(prompt: str) -> str:
-            return "a response"
+            return 'a response'
 
         self.tru = Tru()
 
@@ -33,14 +33,14 @@ class TestTruBasicApp(JSONTestCase):
 
         self.tru_basic_app_recorder = TruBasicApp(
             self.basic_app,
-            app_id="Custom Application v1",
+            app_id='Custom Application v1',
             feedback_mode=FeedbackMode.WITH_APP
         )
 
     def test_no_fail(self):
         # Most naive test to make sure the basic app runs at all.
 
-        msg = "What is the phone number for HR?"
+        msg = 'What is the phone number for HR?'
 
         res1 = self.basic_app(msg)
         with self.tru_basic_app_recorder as recording:

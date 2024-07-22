@@ -9,7 +9,7 @@ COT_REASONS_TEMPLATE = \
 """
 Please answer using the entire template below.
 
-TEMPLATE: 
+TEMPLATE:
 Score: <The score 0-10 based on the given criteria>
 Criteria: <Provide the criteria for this evaluation>
 Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
@@ -17,9 +17,9 @@ Supporting Evidence: <Provide your reasons for scoring based on the listed crite
 
 # Keep this in line with the LLM output template as above
 GROUNDEDNESS_REASON_TEMPLATE = """
-Criteria: {statement_sentence} 
-Supporting Evidence: {supporting_evidence} 
-Score: {score} 
+Criteria: {statement_sentence}
+Supporting Evidence: {supporting_evidence}
+Score: {score}
 """
 
 LLM_GROUNDEDNESS_FULL_PROMPT = """Give me the INFORMATION OVERLAP of this SOURCE and STATEMENT.
@@ -52,12 +52,12 @@ SENTIMENT_SYSTEM = v2.Sentiment.system_prompt.template
 SENTIMENT_USER = v2.Sentiment.user_prompt.template
 
 CORRECT_SYSTEM = \
-""" 
+"""
 You are a fact bot and you answer with verifiable facts
 """
 
 AGREEMENT_SYSTEM = \
-""" 
+"""
 You will continually start seeing responses to the prompt:
 
 %s
@@ -66,12 +66,12 @@ The expected answer is:
 
 %s
 
-Answer only with an integer from 1 to 10 based on how semantically similar the responses are to the expected answer. 
+Answer only with an integer from 1 to 10 based on how semantically similar the responses are to the expected answer.
 where 0 is no semantic similarity at all and 10 is perfect agreement between the responses and the expected answer.
 On a NEW LINE, give the integer score and nothing more.
 """
 
-REMOVE_Y_N = " If so, respond Y. If not, respond N."
+REMOVE_Y_N = ' If so, respond Y. If not, respond N.'
 
 LANGCHAIN_CONCISENESS_SYSTEM_PROMPT = v2.Conciseness.system_prompt.template
 

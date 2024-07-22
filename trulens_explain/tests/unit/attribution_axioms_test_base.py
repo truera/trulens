@@ -2,7 +2,7 @@
 These unit tests check that various parameterizations of Internal Influence
 satisfy several axioms from the following two papers:
 
-    1.  Leino et al. "Influence-based Explanations for Convolutional Neural 
+    1.  Leino et al. "Influence-based Explanations for Convolutional Neural
         Networks" ITC 2018 [Arxiv](https://arxiv.org/pdf/1802.03788.pdf)
 
     2.  Sundararajan et al. "Axiomatic Attribution for Deep Networks" ICML 2017
@@ -31,7 +31,7 @@ class AxiomsTestBase(object):
 
     def setUp(self):
         self.atol = tolerance(get_backend())
-        print("atol=", self.atol)
+        print('atol=', self.atol)
 
         np.random.seed(2020)
 

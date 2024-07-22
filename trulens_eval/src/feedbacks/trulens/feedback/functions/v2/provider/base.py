@@ -1,13 +1,13 @@
 from abc import abstractmethod
 from typing import ClassVar, Iterable, Optional
 
+from trulens.feedback import Endpoint
 from trulens.feedback.functions.v2.feedback import ClassificationModel
 from trulens.feedback.functions.v2.feedback import Hate
 from trulens.feedback.functions.v2.feedback import HateThreatening
 from trulens.feedback.functions.v2.feedback import Model
 from trulens.feedback.functions.v2.feedback import WithExamples
 from trulens.feedback.functions.v2.feedback import WithPrompt
-from trulens.feedback import Endpoint
 from trulens.utils.pyschema import WithClassInfo
 from trulens.utils.serial import SerialModel
 
@@ -68,7 +68,7 @@ class Provider(WithClassInfo, SerialModel):
 
 
 class OpenAIProvider(Provider):
-    default_completion_model: str = ""
+    default_completion_model: str = ''
 
     def supported_models(self) -> Iterable[Model]:
         return super().supported_models()
@@ -80,13 +80,13 @@ class OpenAIProvider(Provider):
         self.models = set(Hate, HateThreatening)
 
     def classify(self, model: ClassificationModel, *args, **kwargs) -> int:
-        prompt = ""
+        prompt = ''
 
         if isinstance(model, WithPrompt):
             prompt = model.prompt
         else:
             raise ValueError(
-                "Cannot classify for model {model} without at least a prompt."
+                'Cannot classify for model {model} without at least a prompt.'
             )
 
         if isinstance(model, WithExamples):

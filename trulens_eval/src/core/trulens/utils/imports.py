@@ -1,7 +1,7 @@
 """Import utilities for required and optional imports.
 
 Utilities for importing python modules and optional importing. This is some long
-line. Hopefully this wraps automatically. 
+line. Hopefully this wraps automatically.
 """
 
 import builtins
@@ -18,7 +18,6 @@ from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union
 from packaging import requirements
 from packaging import version
 from pip._internal.req import parse_requirements
-
 from trulens import __name__ as trulens_name
 
 logger = logging.getLogger(__name__)
@@ -43,12 +42,12 @@ def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
 if sys.version_info >= (3, 9):
     # This does not exist in 3.8 .
     from importlib.abc import Traversable
-    _trulens_eval_resources: Traversable = resources.files("trulens_eval")
-    """Traversable for resources in the trulens_eval package."""
+    _trulens_eval_resources: Traversable = resources.files('trulens')
+    """Traversable for resources in the trulens package."""
 
 
 def static_resource(filepath: Union[Path, str]) -> Path:
-    """Get the path to a static resource file in the trulens_eval package.
+    """Get the path to a static resource file in the trulens package.
 
     By static here we mean something that exists in the filesystem already and
     not in some temporary folder. We use the `importlib.resources` context
@@ -66,27 +65,27 @@ def static_resource(filepath: Union[Path, str]) -> Path:
     else:
         # This is deprecated starting 3.11
         parts = filepath.parts
-        with resources.path("trulens_eval", parts[0]) as _path:
+        with resources.path('trulens', parts[0]) as _path:
             # NOTE: resources.path does not allow the resource to incude folders.
             for part in parts[1:]:
                 _path = _path / part
             return _path
 
 
-required_packages: Dict[str, requirements.Requirement] = \
-    requirements_of_file(static_resource("requirements.txt"))
-"""Mapping of required package names to the requirement object with info
-about that requirement including version constraints."""
+# required_packages: Dict[str, requirements.Requirement] = \
+#     requirements_of_file(static_resource('requirements.txt'))
+# """Mapping of required package names to the requirement object with info
+# about that requirement including version constraints."""
 
-optional_packages: Dict[str, requirements.Requirement] = \
-    requirements_of_file(static_resource("requirements.optional.txt"))
-"""Mapping of optional package names to the requirement object with info
-about that requirement including version constraints."""
+# optional_packages: Dict[str, requirements.Requirement] = \
+#     requirements_of_file(static_resource('requirements.optional.txt'))
+# """Mapping of optional package names to the requirement object with info
+# about that requirement including version constraints."""
 
-all_packages: Dict[str, requirements.Requirement] = {
-    **required_packages,
-    **optional_packages
-}
+# all_packages: Dict[str, requirements.Requirement] = {
+#     **required_packages,
+#     **optional_packages
+# }
 """Mapping of optional and required package names to the requirement object
 with info about that requirement including version constraints."""
 
@@ -124,7 +123,7 @@ MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND = \
 
 If your distribution is in a bad place beyond this package, you may need to
 reinstall trulens_eval so that all of the dependencies get installed:
-    
+
     ```bash
     pip uninstall -y trulens_eval
     pip install trulens_eval
@@ -158,7 +157,7 @@ If you are running trulens_eval in a notebook, you may need to restart the
 kernel after resolving the conflict. If your distribution is in a bad place
 beyond this package, you may need to reinstall trulens_eval so that all of the
 dependencies get installed and hopefully corrected:
-    
+
     ```bash
     pip uninstall -y trulens_eval
     pip install trulens_eval
@@ -228,10 +227,10 @@ def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
     """
 
     spec = str(r)
-    if ">=" not in spec:
-        raise ValueError(f"Requirement {spec} is not lower-bounded.")
+    if '>=' not in spec:
+        raise ValueError(f'Requirement {spec} is not lower-bounded.')
 
-    spec = spec.replace(">=", "==")
+    spec = spec.replace('>=', '==')
     return requirements.Requirement(spec)
 
 
@@ -262,7 +261,7 @@ def format_import_errors(
     """
 
     if purpose is None:
-        purpose = f"using {packages}"
+        purpose = f'using {packages}'
 
     if isinstance(packages, str):
         packages = [packages]
@@ -275,14 +274,14 @@ def format_import_errors(
             requirements.append(str(all_packages[pkg]))
             requirements_pinned.append(str(pin_spec(all_packages[pkg])))
         else:
-            logger.warning("Package %s not present in requirements.", pkg)
+            logger.warning('Package %s not present in requirements.', pkg)
             requirements.append(pkg)
 
     packs = ','.join(packages)
-    pack_s = "package" if len(packages) == 1 else "packages"
-    is_are = "is" if len(packages) == 1 else "are"
-    it_them = "it" if len(packages) == 1 else "them"
-    this_these = "this" if len(packages) == 1 else "these"
+    pack_s = 'package' if len(packages) == 1 else 'packages'
+    is_are = 'is' if len(packages) == 1 else 'are'
+    it_them = 'it' if len(packages) == 1 else 'them'
+    this_these = 'this' if len(packages) == 1 else 'these'
 
     msg = (
         f"""
@@ -299,7 +298,7 @@ You should be able to install {it_them} with pip:
         f"""
 You have {packs} installed but we could not import the required
 components. There may be a version incompatibility. Please try installing {this_these}
-exact {pack_s} with pip: 
+exact {pack_s} with pip:
 
     ```bash
     pip install {' '.join(map(lambda a: f'"{a}"', requirements_pinned))}
@@ -325,58 +324,58 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
 
 
 REQUIREMENT_LLAMA = format_import_errors(
-    'llama-index', purpose="instrumenting LlamaIndex apps"
+    'llama-index', purpose='instrumenting LlamaIndex apps'
 )
 
 REQUIREMENT_LANGCHAIN = format_import_errors(
-    'langchain', purpose="instrumenting LangChain apps"
+    'langchain', purpose='instrumenting LangChain apps'
 )
 
 REQUIREMENT_RAILS = format_import_errors(
-    "nemoguardrails", purpose="instrumenting NeMo Guardrails apps"
+    'nemoguardrails', purpose='instrumenting NeMo Guardrails apps'
 )
 
 REQUIREMENT_PINECONE = format_import_errors(
     # package name is "pinecone-client" but module is "pinecone"
     ['pinecone-client', 'langchain_community'],
-    purpose="running TruBot"
+    purpose='running TruBot'
 )
 
 REQUIREMENT_SKLEARN = format_import_errors(
-    "scikit-learn", purpose="using embedding vector distances"
+    'scikit-learn', purpose='using embedding vector distances'
 )
 
 REQUIREMENT_LITELLM = format_import_errors(
-    ['litellm'], purpose="using LiteLLM models"
+    ['litellm'], purpose='using LiteLLM models'
 )
 
 REQUIREMENT_BEDROCK = format_import_errors(
-    ['boto3', 'botocore'], purpose="using Bedrock models"
+    ['boto3', 'botocore'], purpose='using Bedrock models'
 )
 
 REQUIREMENT_OPENAI = format_import_errors(
-    ['openai', 'langchain_community'], purpose="using OpenAI models"
+    ['openai', 'langchain_community'], purpose='using OpenAI models'
 )
 
 REQUIREMENT_CORTEX = format_import_errors(
     ['snowflake-snowpark-python', 'snowflake-connector-python'],
-    purpose="using Snowflake Cortex serverless LLM functions"
+    purpose='using Snowflake Cortex serverless LLM functions'
 )
 
 REQUIREMENT_GROUNDEDNESS = format_import_errors(
-    'nltk', purpose="using some groundedness feedback functions"
+    'nltk', purpose='using some groundedness feedback functions'
 )
 
 REQUIREMENT_BERT_SCORE = format_import_errors(
-    "bert-score", purpose="measuring BERT Score"
+    'bert-score', purpose='measuring BERT Score'
 )
 
 REQUIREMENT_EVALUATE = format_import_errors(
-    "evaluate", purpose="using certain metrics"
+    'evaluate', purpose='using certain metrics'
 )
 
 REQUIREMENT_NOTEBOOK = format_import_errors(
-    ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
+    ['ipython', 'ipywidgets'], purpose='using TruLens-Eval in a notebook'
 )
 
 
@@ -399,12 +398,12 @@ class Dummy(type, object):
     """
 
     def __str__(self) -> str:
-        ret = f"Dummy({self.name}"
+        ret = f'Dummy({self.name}'
 
         if self.original_exception is not None:
-            ret += f", original_exception={self.original_exception}"
+            ret += f', original_exception={self.original_exception}'
 
-        ret += ")"
+        ret += ')'
 
         return ret
 
@@ -413,7 +412,7 @@ class Dummy(type, object):
 
     def __new__(cls, name, *args, **kwargs):
         if len(args) >= 2 and isinstance(args[1],
-                                         dict) and "__classcell__" in args[1]:
+                                         dict) and '__classcell__' in args[1]:
             # Used as type, for subclassing for example.
 
             return type.__new__(cls, name, args[0], args[1])
@@ -436,11 +435,11 @@ class Dummy(type, object):
         else:
             message: str = kwargs.get('message', None)
             exception_class: Type[Exception] = kwargs.get(
-                "exception_class", ModuleNotFoundError
+                'exception_class', ModuleNotFoundError
             )
-            importer = kwargs.get("importer", None)
+            importer = kwargs.get('importer', None)
             original_exception: Optional[Exception] = kwargs.get(
-                "original_exception", None
+                'original_exception', None
             )
 
         self.name = name
@@ -497,10 +496,10 @@ class Dummy(type, object):
 
         # Prevent pydantic inspecting this object as if it were a type from triggering the exception
         # message below.
-        if name in ["__pydantic_generic_metadata__",
-                    "__get_pydantic_core_schema__", "__get_validators__",
-                    "__get_pydantic_json_schema__", "__modify_schema__",
-                    "__origin__", "__dataclass_fields__"]:
+        if name in ['__pydantic_generic_metadata__',
+                    '__get_pydantic_core_schema__', '__get_validators__',
+                    '__get_pydantic_json_schema__', '__modify_schema__',
+                    '__origin__', '__dataclass_fields__']:
             raise AttributeError()
 
         # If we are still in an optional import block, continue making dummies
@@ -508,7 +507,7 @@ class Dummy(type, object):
         if self.importer is not None and (self.importer.importing and
                                           not self.importer.fail):
             return Dummy(
-                name=self.name + "." + name,
+                name=self.name + '.' + name,
                 message=self.message,
                 importer=self.importer,
                 original_exception=self.original_exception,
@@ -578,7 +577,7 @@ class OptionalImports(object):
         while frame.f_code == self.__import__.__code__:
             frame = frame.f_back
 
-        module_name = frame.f_globals["__name__"]
+        module_name = frame.f_globals['__name__']
 
         if not module_name.startswith(trulens_name):
             return self.imp(name, globals, locals, fromlist, level)
@@ -638,9 +637,9 @@ class OptionalImports(object):
         # TODO: Better handle nested contexts. For now we don't override import
         # and just let the already-overridden one do its thing.
 
-        if "trulens_eval" in str(builtins.__import__):
+        if 'trulens_eval' in str(builtins.__import__):
             logger.debug(
-                "Nested optional imports context used. This context will be ignored."
+                'Nested optional imports context used. This context will be ignored.'
             )
         else:
             builtins.__import__ = self.__import__

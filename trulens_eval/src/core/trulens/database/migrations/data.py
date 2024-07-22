@@ -6,7 +6,6 @@ from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
 from trulens.database.base import DB
 from trulens.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.database.legacy.migration import VersionException
@@ -17,7 +16,7 @@ from trulens.schema import feedback as mod_feedback_schema
 from trulens.schema import record as mod_record_schema
 from trulens.utils.pyschema import FunctionOrMethod
 
-sql_alchemy_migration_versions: List[str] = ["1"]
+sql_alchemy_migration_versions: List[str] = ['1']
 """DB versions that need data migration.
 
 The most recent should be the first in the list.
@@ -72,10 +71,10 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
 
         # Check only classes
         if inspect.isclass(orm_obj):
-            mod_check = str(orm_obj).split(".")
+            mod_check = str(orm_obj).split('.')
 
             # Check only orm defined classes
-            if len(mod_check) > 2 and "orm" == mod_check[
+            if len(mod_check) > 2 and 'orm' == mod_check[
                     -2]:  # <class mod.mod.mod.orm.SQLORM>
                 stmt = select(orm_obj)
 
@@ -86,7 +85,7 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                     for attr_name in db_record.__dict__:
 
                         # Check only json columns
-                        if "_json" in attr_name:
+                        if '_json' in attr_name:
                             db_json_str = getattr(db_record, attr_name)
                             if db_json_str == MIGRATION_UNKNOWN_STR:
                                 continue
@@ -110,36 +109,36 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                         # It signals that the function cannot be used for deferred evaluation.
                                         pass
 
-                                if attr_name == "record_json":
+                                if attr_name == 'record_json':
                                     mod_record_schema.Record.model_validate(
                                         test_json
                                     )
-                                elif attr_name == "cost_json":
+                                elif attr_name == 'cost_json':
                                     mod_base_schema.Cost.model_validate(
                                         test_json
                                     )
-                                elif attr_name == "perf_json":
+                                elif attr_name == 'perf_json':
                                     mod_base_schema.Perf.model_validate(
                                         test_json
                                     )
-                                elif attr_name == "calls_json":
+                                elif attr_name == 'calls_json':
                                     for record_app_call_json in test_json[
                                             'calls']:
                                         mod_feedback_schema.FeedbackCall.model_validate(
                                             record_app_call_json
                                         )
-                                elif attr_name == "feedback_json":
+                                elif attr_name == 'feedback_json':
                                     mod_feedback_schema.FeedbackDefinition.model_validate(
                                         test_json
                                     )
-                                elif attr_name == "app_json":
+                                elif attr_name == 'app_json':
                                     mod_app_schema.AppDefinition.model_validate(
                                         test_json
                                     )
                                 else:
                                     # If this happens, trulens needs to add a migration
                                     raise VersionException(
-                                        f"serialized column migration not implemented: {attr_name}."
+                                        f'serialized column migration not implemented: {attr_name}.'
                                     )
 
 
@@ -157,14 +156,14 @@ def data_migrate(db: DB, from_version: str):
     """
 
     if from_version is None:
-        sql_alchemy_from_version = "1"
+        sql_alchemy_from_version = '1'
     else:
         sql_alchemy_from_version = from_version
     from_compat_version = _get_sql_alchemy_compatibility_version(
         sql_alchemy_from_version
     )
     to_compat_version = None
-    fail_advice = "Please open a ticket on trulens github page including this error message. The migration completed so you can still proceed; but stability is not guaranteed. If needed, you can `tru.reset_database()`"
+    fail_advice = 'Please open a ticket on trulens github page including this error message. The migration completed so you can still proceed; but stability is not guaranteed. If needed, you can `tru.reset_database()`'
 
     try:
         while from_compat_version in sqlalchemy_upgrade_paths:
@@ -174,19 +173,19 @@ def data_migrate(db: DB, from_version: str):
             migrate_fn(db=db)
             from_compat_version = to_compat_version
 
-        print("DB Migration complete!")
+        print('DB Migration complete!')
     except Exception as e:
         tb = traceback.format_exc()
         current_revision = DbRevisions.load(db.engine).current
         raise VersionException(
-            f"Migration failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
+            f'Migration failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}'
         ) from e
     try:
         _sql_alchemy_serialization_asserts(db)
-        print("DB Validation complete!")
+        print('DB Validation complete!')
     except Exception as e:
         tb = traceback.format_exc()
         current_revision = DbRevisions.load(db.engine).current
         raise VersionException(
-            f"Validation failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
+            f'Validation failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}'
         ) from e

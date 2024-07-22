@@ -1,11 +1,17 @@
 """
-Tests for Feedback class. 
+Tests for Feedback class.
 """
 
 from unittest import main
 from unittest import TestCase
 
 import numpy as np
+from trulens import Feedback
+from trulens.schema.feedback import FeedbackMode
+from trulens.schema.feedback import FeedbackResultStatus
+from trulens.schema.feedback import Select
+from trulens.tru_basic_app import TruBasicApp
+
 # Get the "globally importable" feedback implementations.
 from tests.unit.feedbacks import custom_feedback_function
 from tests.unit.feedbacks import CustomClassNoArgs
@@ -13,12 +19,6 @@ from tests.unit.feedbacks import CustomClassWithArgs
 from tests.unit.feedbacks import CustomProvider
 from tests.unit.feedbacks import make_nonglobal_feedbacks
 from tests.unit.feedbacks import skip_if_odd
-
-from trulens_eval import Feedback
-from trulens_eval.schema.feedback import FeedbackMode
-from trulens_eval.schema.feedback import FeedbackResultStatus
-from trulens_eval.schema.feedback import Select
-from trulens_eval.tru_basic_app import TruBasicApp
 
 
 class TestFeedbackEval(TestCase):
@@ -98,8 +98,8 @@ class TestFeedbackConstructors(TestCase):
     """Test for feedback function serialization/deserialization."""
 
     def setUp(self):
-        self.app = TruBasicApp(text_to_text=lambda t: f"returning {t}")
-        _, self.record = self.app.with_record(self.app.app, t="hello")
+        self.app = TruBasicApp(text_to_text=lambda t: f'returning {t}')
+        _, self.record = self.app.with_record(self.app.app, t='hello')
 
     def test_global_feedback_functions(self):
         # NOTE: currently static methods and class methods are not supported
@@ -192,14 +192,14 @@ class TestFeedbackConstructors(TestCase):
 
                 # OK to use with App as long as not deferred mode:
                 TruBasicApp(
-                    text_to_text=lambda t: f"returning {t}",
+                    text_to_text=lambda t: f'returning {t}',
                     feedbacks=[f],
                     feedback_mode=FeedbackMode.WITH_APP
                 )
 
                 # OK to use with App as long as not deferred mode:
                 TruBasicApp(
-                    text_to_text=lambda t: f"returning {t}",
+                    text_to_text=lambda t: f'returning {t}',
                     feedbacks=[f],
                     feedback_mode=FeedbackMode.WITH_APP_THREAD
                 )
@@ -208,7 +208,7 @@ class TestFeedbackConstructors(TestCase):
                 # fail at app construction:
                 with self.assertRaises(Exception):
                     TruBasicApp(
-                        text_to_text=lambda t: f"returning {t}",
+                        text_to_text=lambda t: f'returning {t}',
                         feedbacks=[f],
                         feedback_mode=FeedbackMode.DEFERRED
                     )

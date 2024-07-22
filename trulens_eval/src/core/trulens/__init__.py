@@ -6,18 +6,19 @@ This top-level import includes everything to get started.
 
 import importlib.metadata
 
-# This check is intentionally done ahead of the other imports as we want to
-# print out a nice warning/error before an import error happens further down
-# this sequence.
-from trulens.utils.imports import check_imports
-
-check_imports()
-
 from trulens import tru as mod_tru
 from trulens import tru_basic_app as mod_tru_basic_app
 from trulens import tru_custom_app as mod_tru_custom_app
 from trulens import tru_virtual as mod_tru_virtual
 from trulens.utils import threading as mod_threading_utils
+
+# This check is intentionally done ahead of the other imports as we want to
+# print out a nice warning/error before an import error happens further down
+# this sequence.
+# from trulens.utils.imports import check_imports
+
+# check_imports()
+
 # from trulens import tru_chain as mod_tru_chain
 # from trulens.feedback import feedback as mod_feedback
 # from trulens.feedback.provider import base as mod_provider
@@ -25,7 +26,6 @@ from trulens.utils import threading as mod_threading_utils
 # from trulens.feedback.provider import langchain as mod_langchain_provider
 # from trulens.schema import feedback as mod_feedback_schema
 # from trulens.utils import imports as mod_imports_utils
-
 
 __version__ = importlib.metadata.version(__package__ or __name__)
 
@@ -74,18 +74,18 @@ TP = mod_threading_utils.TP
 # Select = mod_feedback_schema.Select
 
 __all__ = [
-    "Tru",  # main interface
+    'Tru',  # main interface
 
     # app types
-    "TruBasicApp",
-    "TruCustomApp",
-    "TruVirtual",
+    'TruBasicApp',
+    'TruCustomApp',
+    'TruVirtual',
     # "TruChain",
     # "TruLlama",
     # "TruRails",
 
     # app setup
-    "FeedbackMode",
+    'FeedbackMode',
 
     # feedback setup
     # "Feedback",
@@ -103,5 +103,5 @@ __all__ = [
     # "Cortex",
 
     # misc utility
-    "TP",
+    'TP',
 ]

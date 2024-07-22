@@ -46,4 +46,3 @@ the RAG are also accurate.
 
 To see the RAG triad in action, check out the [TruLens
 Quickstart](../quickstarts/quickstart.ipynb)
-

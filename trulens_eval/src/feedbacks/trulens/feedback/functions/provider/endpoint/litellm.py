@@ -4,7 +4,6 @@ import pprint
 from typing import Any, Callable, ClassVar, Optional
 
 import pydantic
-
 from trulens.feedback import Endpoint
 from trulens.feedback import EndpointCallback
 from trulens.utils.imports import OptionalImports
@@ -35,7 +34,7 @@ class LiteLLMCallback(EndpointCallback):
 
         usage = response['usage']
 
-        if self.endpoint.litellm_provider not in ["openai", "azure", "bedrock"]:
+        if self.endpoint.litellm_provider not in ['openai', 'azure', 'bedrock']:
             # We are already tracking costs from the openai or bedrock endpoint so we
             # should not double count here.
 
@@ -47,9 +46,9 @@ class LiteLLMCallback(EndpointCallback):
             self.cost.n_successful_requests += 1
 
             for cost_field, litellm_field in [
-                ("n_tokens", "total_tokens"),
-                ("n_prompt_tokens", "prompt_tokens"),
-                ("n_completion_tokens", "completion_tokens"),
+                ('n_tokens', 'total_tokens'),
+                ('n_prompt_tokens', 'prompt_tokens'),
+                ('n_completion_tokens', 'completion_tokens'),
             ]:
                 setattr(
                     self.cost, cost_field,
@@ -57,50 +56,50 @@ class LiteLLMCallback(EndpointCallback):
                     usage.get(litellm_field, 0)
                 )
 
-        if self.endpoint.litellm_provider not in ["openai"]:
+        if self.endpoint.litellm_provider not in ['openai']:
             # The total cost does not seem to be properly tracked except by
             # openai so we can use litellm costs for this.
 
             from litellm import completion_cost
-            setattr(self.cost, "cost", completion_cost(response))
+            setattr(self.cost, 'cost', completion_cost(response))
 
 
 class LiteLLMEndpoint(Endpoint):
     """LiteLLM endpoint."""
 
-    litellm_provider: str = "openai"
+    litellm_provider: str = 'openai'
     """The litellm provider being used.
-    
+
     This is checked to determine whether cost tracking should come from litellm
     or from another endpoint which we already have cost tracking for. Otherwise
     there will be double counting.
     """
 
-    def __init__(self, litellm_provider: str = "openai", **kwargs):
-        if hasattr(self, "name"):
+    def __init__(self, litellm_provider: str = 'openai', **kwargs):
+        if hasattr(self, 'name'):
             # singleton already made
             if len(kwargs) > 0:
                 logger.warning(
-                    "Ignoring additional kwargs for singleton endpoint %s: %s",
+                    'Ignoring additional kwargs for singleton endpoint %s: %s',
                     self.name, pp.pformat(kwargs)
                 )
                 self.warning()
             return
 
-        kwargs['name'] = "litellm"
+        kwargs['name'] = 'litellm'
         kwargs['callback_class'] = LiteLLMCallback
 
         super().__init__(litellm_provider=litellm_provider, **kwargs)
 
         import litellm
-        self._instrument_module_members(litellm, "completion")
+        self._instrument_module_members(litellm, 'completion')
 
-    def __new__(cls, litellm_provider: str = "openai", **kwargs):
+    def __new__(cls, litellm_provider: str = 'openai', **kwargs):
         # Problem here if someone uses litellm with different providers. Only a
         # single one will be made. Cannot make a fix just here as
         # track_all_costs creates endpoints via the singleton mechanism.
 
-        return super(Endpoint, cls).__new__(cls, name="litellm")
+        return super(Endpoint, cls).__new__(cls, name='litellm')
 
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
@@ -119,6 +118,6 @@ class LiteLLMEndpoint(Endpoint):
 
         if not counted_something:
             logger.warning(
-                "Unrecognized litellm response format. It did not have usage information:\n%s",
+                'Unrecognized litellm response format. It did not have usage information:\n%s',
                 pp.pformat(response)
             )

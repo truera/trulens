@@ -10,7 +10,6 @@ from pprint import PrettyPrinter
 from typing import Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
-
 from trulens import app as mod_app
 from trulens.instruments import ClassFilter
 from trulens.instruments import Instrument
@@ -25,7 +24,7 @@ pp = PrettyPrinter()
 class TruWrapperApp(object):
     """Wrapper of basic apps.
 
-    This will be wrapped by instrumentation. 
+    This will be wrapped by instrumentation.
 
     Warning:
         Because `TruWrapperApp` may wrap different types of callables, we cannot
@@ -54,7 +53,7 @@ class TruBasicCallableInstrument(Instrument):
         CLASSES = lambda: {TruWrapperApp}
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, ClassFilter] = {"_call": TruWrapperApp}
+        METHODS: Dict[str, ClassFilter] = {'_call': TruWrapperApp}
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -67,17 +66,17 @@ class TruBasicCallableInstrument(Instrument):
 
 class TruBasicApp(mod_app.App):
     """Instantiates a Basic app that makes little assumptions.
-    
+
     Assumes input text and output text.
-        
+
     Example:
         ```python
         def custom_application(prompt: str) -> str:
             return "a response"
-        
+
         from trulens import TruBasicApp
         # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
-        tru_recorder = TruBasicApp(custom_application, 
+        tru_recorder = TruBasicApp(custom_application,
             app_id="Custom Application v1",
             feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
 
@@ -98,7 +97,7 @@ class TruBasicApp(mod_app.App):
 
         app: A TruWrapperApp instance. If not provided, `text_to_text` must
             be provided.
-        
+
         **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
             and [AppDefinition][trulens_eval.schema.app.AppDefinition]
     """
@@ -113,7 +112,7 @@ class TruBasicApp(mod_app.App):
         of_callable(TruWrapperApp._call)
     )
     """The root callable to be instrumented.
-    
+
     This is the method that will be called by the main_input method."""
 
     def __init__(
@@ -125,7 +124,7 @@ class TruBasicApp(mod_app.App):
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
         else:
-            assert app is not None, "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
+            assert app is not None, 'Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`.'
 
         kwargs['app'] = app
         kwargs['root_class'] = Class.of_object(app)
@@ -162,7 +161,7 @@ class TruBasicApp(mod_app.App):
 
     def call_with_record(self, *args, **kwargs) -> None:
 
-        self._throw_dep_message(method="call", is_async=False, with_record=True)
+        self._throw_dep_message(method='call', is_async=False, with_record=True)
 
 
 import trulens_eval  # for App class annotations

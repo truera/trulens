@@ -12,12 +12,14 @@ python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "src/core", develop = true }
-trulens-dashboard = { path = "src/dashboard", develop = true }
 trulens-feedbacks = { path = "src/feedbacks", develop = true }
+trulens-dashboard = { path = "src/dashboard", develop = true }
 trulens-langchain = { path = "src/langchain", develop = true }
 trulens-llamaindex = { path = "src/llamaindex", develop = true }
 yapf = "^0.40.2"
 isort = "^5.13.2"
+pre-commit = "^3.7.1"
+toml = "^0.10.2"
 
 
 [build-system]
@@ -30,6 +32,6 @@ profile = "google"
 [tool.yapf]
 based_on_style = "google"
 dedent_closing_brackets = true
-split_before_first_argumnet = true
+split_before_first_argument = true
 split_complex_comprehension = true
 column_limit = 80

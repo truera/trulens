@@ -12,17 +12,18 @@ from unittest import TestCase
 
 import tensorflow as tf
 
-if tf.__version__.startswith("1"):
+if tf.__version__.startswith('1'):
     from tensorflow import Graph
     from tensorflow import placeholder
     from tensorflow.nn import relu
 else:
     raise ImportError(
-        f"Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}"
+        f'Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}'
     )
 
-from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
+
+from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):

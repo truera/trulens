@@ -49,7 +49,7 @@ def gradient(scalar, wrt):
     Parameters
     ----------
     scalar : backend.Tensor
-        The scalar tensor result of a computation for which the gradient will be 
+        The scalar tensor result of a computation for which the gradient will be
         computed.
     wrt : backend.Tensor
         Tensor that the gradient is taken with respect to.
@@ -182,8 +182,8 @@ def sum(t, axis=None, keepdims=False):
         The dimensions to sum over, or if None sum over all
         dimensions. By default None
     keepdims : bool, optional
-        If `keepdims` is `False`, the rank of the tensor is reduced 
-        by 1 for each element in axis. If `keepdims` is `True`, 
+        If `keepdims` is `False`, the rank of the tensor is reduced
+        by 1 for each element in axis. If `keepdims` is `True`,
         the reduced dimension is  retained with length 1., by default False
 
     Returns
@@ -208,8 +208,8 @@ def max(t, axis=None, keepdims=False):
         The dimension to max over, or if None max over all
         dimensions. By default None
     keepdims : bool, optional
-        If `keepdims` is `False`, the rank of the tensor is reduced 
-        by 1. If `keepdims` is `True`, the reduced dimension is  retained 
+        If `keepdims` is `False`, the rank of the tensor is reduced
+        by 1. If `keepdims` is `True`, the reduced dimension is  retained
         with length 1., by default False
 
     Returns
@@ -225,7 +225,7 @@ def max(t, axis=None, keepdims=False):
 
 def min(t, axis=None, keepdims=False):
     """
-    min Minimum values of tensor, element-wise 
+    min Minimum values of tensor, element-wise
 
     Parameters
     ----------
@@ -234,8 +234,8 @@ def min(t, axis=None, keepdims=False):
         The dimension to min over, or if None min over all
         dimensions. By default None
     keepdims : bool, optional
-        If `keepdims` is `False`, the rank of the tensor is reduced 
-        by 1. If `keepdims` is `True`, the reduced dimension is  retained 
+        If `keepdims` is `False`, the rank of the tensor is reduced
+        by 1. If `keepdims` is `True`, the reduced dimension is  retained
         with length 1., by default False
 
     Returns
@@ -252,12 +252,12 @@ def min(t, axis=None, keepdims=False):
 def maximum(x, y):
     """
     maximum Element-wise max of two input tensors
-    
+
     Parameters
     ----------
     x : backend.Tensor
     y : backend.Tensor
-    
+
     Returns
     -------
     backend.Tensor
@@ -270,12 +270,12 @@ def maximum(x, y):
 def minimum(x, y):
     """
     minimum Element-wise minimum of two input tensors
-    
+
     Parameters
     ----------
     x : backend.Tensor
     y : backend.Tensor
-    
+
     Returns
     -------
     backend.Tensor
@@ -304,17 +304,17 @@ def ones_like(t, dtype=None, name=None):
     """
     ones_like Create a tensor of ones with the same shape of the input tensor
     on the same device
-    
+
     Parameters
     ----------
     t : backend.Tensor
     dtype : string, optional
-        The desired data type of returned Tensor. If None, 
+        The desired data type of returned Tensor. If None,
         defaults to the dtype of input, by default None
     requires_grad : bool, optional
-        If autograd should record operations on the returned 
+        If autograd should record operations on the returned
         tensor, by default False
-    
+
     Returns
     -------
     backend.Tensor
@@ -327,17 +327,17 @@ def zeros_like(t, dtype=None, name=None):
     """
     zeros_like Create a tensor of ones with the same shape of the input tensor
     on the same device
-    
+
     Parameters
     ----------
     t : backend.Tensor
     dtype : string, optional
-        The desired data type of returned Tensor. If None, 
+        The desired data type of returned Tensor. If None,
         defaults to the dtype of input, by default None
     requires_grad : bool, optional
-        If autograd should record operations on the returned 
+        If autograd should record operations on the returned
         tensor, by default False
-    
+
     Returns
     -------
     backend.Tensor
@@ -359,7 +359,7 @@ def clone(t, name=None):
     t : backend.Tensor
     name: string, optional
         Name for the variable to create., by default None
-    
+
     Returns
     -------
     backend.Tensor
@@ -370,14 +370,14 @@ def clone(t, name=None):
 
 def identity(t, name=None):
     """
-    identity An alias function for Keras naming convention 
+    identity An alias function for Keras naming convention
 
     Parameters
     ----------
     t : backend.Tensor
     name: string, optional
         Name for the variable to create., by default None
-    
+
     Returns
     -------
     backend.Tensor
@@ -433,7 +433,7 @@ def concat(ts: Sequence[Tensor], axis: int = 0) -> Tensor:
 
     Parameters
     ----------
-    ts : Sequence[backend.Tensor] 
+    ts : Sequence[backend.Tensor]
         The sequence of tensors to concatenante.
     axis : int, optional
         The dimensions along which to concatenate.
@@ -441,14 +441,14 @@ def concat(ts: Sequence[Tensor], axis: int = 0) -> Tensor:
     Returns
     -------
     backend.Tensor
-    
+
     """
     return K.concatenate(ts, axis=axis)
 
 
 def sigmoid(t, axis=None):
     """
-    sigmoid Sigmoid function 
+    sigmoid Sigmoid function
 
     Parameters
     ----------
@@ -467,14 +467,14 @@ def sigmoid(t, axis=None):
 def softmax(t, axis=-1):
     """
     softmax Softmax of a tensor
-    
+
     Parameters
     ----------
     t : backend.Tensor
     axis : int, optional
-        The dimension softmax would be performed on. 
+        The dimension softmax would be performed on.
         The default is -1 which indicates the last dimension, by default -1
-    
+
     Returns
     -------
     backend.Tensor
@@ -485,7 +485,7 @@ def softmax(t, axis=-1):
 def is_tensor(x):
     """
     is_tensor returns if x is a get_backend().Tensor
-    
+
     Parameters
     ----------
     x : backend.Tensor or other

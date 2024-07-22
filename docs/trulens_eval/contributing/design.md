@@ -7,7 +7,7 @@
 Currently to get going, a user needs to add  4 lines of python:
 
 ```python
-from trulens_eval import Tru # line 1
+from trulens import Tru # line 1
 tru = Tru() # line 2
 with tru.Chain(app): # 3
     app.invoke("some question") # doesn't count since they already had this
@@ -65,13 +65,13 @@ In addition to collecting app parameters, we also collect:
     - This allows us to deserialize some objects. Pydantic models can be
       deserialized once we know their class and fields, for example.
     - This information is also used to determine component types without having
-      to deserialize them first. 
+      to deserialize them first.
     - See [Class][trulens_eval.utils.pyschema.Class] for details.
 
 ### Functions/Methods
 
 Methods and functions are instrumented by overwriting choice attributes in
-various classes. 
+various classes.
 
 #### class/system specific
 
@@ -158,7 +158,7 @@ our reliance on info stored on the stack. Therefore we have a limitation:
   [ThreadPoolExecutor][trulens_eval.utils.threading.ThreadPoolExecutor] also
   defined in `utils/threading.py` in order for instrumented methods called in a
   thread to be tracked. As we rely on call stack for call instrumentation we
-  need to preserve the stack before a thread start which python does not do. 
+  need to preserve the stack before a thread start which python does not do.
 
 #### Async
 
@@ -216,7 +216,7 @@ themselves from invocations of apps that are being tracked from those not being
 tracked, and of those that are tracked, where in the call stack a instrumented
 method invocation is. To achieve this, we rely on inspecting the python call
 stack for specific frames:
-  
+
 - Prior frame -- Each instrumented call searches for the topmost instrumented
   call (except itself) in the stack to check its immediate caller (by immediate
   we mean only among instrumented methods) which forms the basis of the stack

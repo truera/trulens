@@ -17,7 +17,6 @@ from sqlalchemy.orm import configure_mappers
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
-
 from trulens.database.base import DEFAULT_DATABASE_PREFIX
 from trulens.schema import app as mod_app_schema
 from trulens.schema import feedback as mod_feedback_schema
@@ -54,16 +53,16 @@ class BaseWithTablePrefix(
     # before the two following attributes are set which we do in subclasses later.
     __abstract__ = True
 
-    _table_base_name: str = "not set"
-    """Base name for the table. 
-    
+    _table_base_name: str = 'not set'
+    """Base name for the table.
+
     Will be prefixed by the prefix to create table names. This should be set by
     subclasses.
     """
 
-    _table_prefix: str = ""
+    _table_prefix: str = ''
     """Prefix for the table name.
-    
+
     This should be set by subclasses of subclasses of this class.
     """
 
@@ -72,7 +71,7 @@ class BaseWithTablePrefix(
         return cls._table_prefix + cls._table_base_name
 
 
-T = TypeVar("T", bound=BaseWithTablePrefix)
+T = TypeVar('T', bound=BaseWithTablePrefix)
 
 
 # NOTE: lru_cache is important here as we don't want to create multiple classes
@@ -81,7 +80,7 @@ T = TypeVar("T", bound=BaseWithTablePrefix)
 @functools.lru_cache
 def new_base(prefix: str) -> Type[T]:
     """Create a new base class for ORM classes.
-    
+
     Note: This is a function to be able to define classes extending different
     SQLAlchemy delcarative bases. Each different such bases has a different set
     of mappings from classes to table names. If we only had one of these, our
@@ -93,11 +92,11 @@ def new_base(prefix: str) -> Type[T]:
 
     base = declarative_base()
     return type(
-        f"BaseWithTablePrefix{prefix}",
+        f'BaseWithTablePrefix{prefix}',
         (base, BaseWithTablePrefix),
         {
-            "_table_prefix": prefix,
-            "__abstract__":
+            '_table_prefix': prefix,
+            '__abstract__':
                 True  # stay abstract until _table_base_name is set in a subclass
         }
     )
@@ -119,8 +118,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
     """Create a new orm container from the given base table class."""
 
     class NewORM(ORM):
-        """Container for ORM classes. 
-        
+        """Container for ORM classes.
+
         Needs to be extended with classes that set table prefix.
 
         Warning:
@@ -133,7 +132,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
         registry: Dict[str, base] = \
             base.registry._class_registry
         """Table name to ORM class mapping for tables used by trulens_eval.
-        
+
         This can be used to iterate through all classes/tables.
         """
 
@@ -148,7 +147,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            _table_base_name: ClassVar[str] = "apps"
+            _table_base_name: ClassVar[str] = 'apps'
 
             app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
             app_json = Column(TYPE_JSON, nullable=False)
@@ -175,7 +174,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            _table_base_name = "feedback_defs"
+            _table_base_name = 'feedback_defs'
 
             feedback_definition_id = Column(
                 TYPE_ID, nullable=False, primary_key=True
@@ -203,7 +202,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            _table_base_name = "records"
+            _table_base_name = 'records'
 
             record_id = Column(TYPE_ID, nullable=False, primary_key=True)
             app_id = Column(TYPE_ID, nullable=False)  # foreign key
@@ -218,10 +217,10 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             app = relationship(
                 'AppDefinition',
-                backref=backref('records', cascade="all,delete"),
+                backref=backref('records', cascade='all,delete'),
                 primaryjoin='AppDefinition.app_id == Record.app_id',
                 foreign_keys=app_id,
-                order_by="(Record.ts,Record.record_id)"
+                order_by='(Record.ts,Record.record_id)'
             )
 
             @classmethod
@@ -259,7 +258,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            _table_base_name = "feedbacks"
+            _table_base_name = 'feedbacks'
 
             feedback_result_id = Column(
                 TYPE_ID, nullable=False, primary_key=True
@@ -279,21 +278,21 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             record = relationship(
                 'Record',
-                backref=backref('feedback_results', cascade="all,delete"),
+                backref=backref('feedback_results', cascade='all,delete'),
                 primaryjoin='Record.record_id == FeedbackResult.record_id',
                 foreign_keys=record_id,
                 order_by=
-                "(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)"
+                '(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)'
             )
 
             feedback_definition = relationship(
-                "FeedbackDefinition",
-                backref=backref("feedback_results", cascade="all,delete"),
+                'FeedbackDefinition',
+                backref=backref('feedback_results', cascade='all,delete'),
                 primaryjoin=
-                "FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
+                'FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id',
                 foreign_keys=feedback_definition_id,
                 order_by=
-                "(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)"
+                '(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)'
             )
 
             @classmethod
@@ -349,15 +348,15 @@ def make_base_for_prefix(
         A class that extends `base_type` and sets the table prefix to `table_prefix`.
     """
 
-    if not hasattr(base, "_table_base_name"):
+    if not hasattr(base, '_table_base_name'):
         raise ValueError(
-            "Expected `base` to be a subclass of `BaseWithTablePrefix`."
+            'Expected `base` to be a subclass of `BaseWithTablePrefix`.'
         )
 
     # sqlalchemy stores a mapping of class names to the classes we defined in
     # the ORM above. Here we want to create a class with the specific name
     # matching base_type hence use `type` instead of `class SomeName: ...`.
-    return type(base.__name__, (base,), {"_table_prefix": table_prefix})
+    return type(base.__name__, (base,), {'_table_prefix': table_prefix})
 
 
 # NOTE: lru_cache is important here as we don't want to create multiple classes for
@@ -381,9 +380,9 @@ def make_orm_for_prefix(
     return new_orm(base)
 
 
-@event.listens_for(Engine, "connect")
+@event.listens_for(Engine, 'connect')
 def _set_sqlite_pragma(dbapi_connection, _):
     if isinstance(dbapi_connection, SQLite3Connection):
         cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON;")
+        cursor.execute('PRAGMA foreign_keys=ON;')
         cursor.close()

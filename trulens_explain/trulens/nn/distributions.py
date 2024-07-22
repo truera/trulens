@@ -1,7 +1,7 @@
 """
-The distribution of interest lets us specify the set of samples over which we 
-want our explanations to be faithful. In some cases, we may want to explain the 
-model’s behavior on a particular record, whereas other times we may be 
+The distribution of interest lets us specify the set of samples over which we
+want our explanations to be faithful. In some cases, we may want to explain the
+model’s behavior on a particular record, whereas other times we may be
 interested in a more general behavior over a distribution of samples.
 """
 #from __future__ import annotations # Avoid expanding type aliases in mkdocs.
@@ -41,8 +41,8 @@ class DoiCutSupportError(ValueError):
 
 class DoI(AbstractBaseClass):
     """
-    Interface for distributions of interest. The *Distribution of Interest* 
-    (DoI) specifies the samples over which an attribution method is 
+    Interface for distributions of interest. The *Distribution of Interest*
+    (DoI) specifies the samples over which an attribution method is
     aggregated.
     """
 
@@ -50,10 +50,10 @@ class DoI(AbstractBaseClass):
         """"Initialize DoI
 
         Parameters:
-            cut (Cut, optional): 
+            cut (Cut, optional):
                 The Cut in which the DoI will be applied. If `None`, the DoI will be
                 applied to the input. otherwise, the distribution should be applied
-                to the latent space defined by the cut. 
+                to the latent space defined by the cut.
         """
         self._cut = cut
 
@@ -99,8 +99,8 @@ class DoI(AbstractBaseClass):
         Computes the distribution of interest from an initial point. If z:
         TensorLike is given, we assume there is only 1 input to the DoI layer. If
         z: List[TensorLike] is given, it provides all of the inputs to the DoI
-        layer. 
-        
+        layer.
+
         Either way, we always return List[List[TensorLike]] (alias
         Inputs[Uniform[TensorLike]]) with outer list spanning layer inputs, and
         inner list spanning a distribution's instance.
@@ -127,7 +127,7 @@ class DoI(AbstractBaseClass):
         Returns:
             The Cut in which the DoI will be applied. If `None`, the DoI will be
             applied to the input. otherwise, the distribution should be applied
-            to the latent space defined by the cut. 
+            to the latent space defined by the cut.
         """
         return self._cut
 
@@ -219,10 +219,10 @@ class PointDoi(DoI):
         """"Initialize PointDoI
 
         Parameters:
-            cut (Cut, optional): 
+            cut (Cut, optional):
                 The Cut in which the DoI will be applied. If `None`, the DoI will be
                 applied to the input. otherwise, the distribution should be applied
-                to the latent space defined by the cut. 
+                to the latent space defined by the cut.
         """
         super(PointDoi, self).__init__(cut)
 
@@ -240,7 +240,7 @@ class PointDoi(DoI):
 
 class LinearDoi(DoI):
     """
-    Distribution representing the linear interpolation between a baseline and 
+    Distribution representing the linear interpolation between a baseline and
     the given point. Used by Integrated Gradients.
     """
 
@@ -257,10 +257,10 @@ class LinearDoi(DoI):
         sample of `resolution` points equally spaced along this segment.
 
         Parameters:
-            cut (Cut, optional, from DoI): 
+            cut (Cut, optional, from DoI):
                 The Cut in which the DoI will be applied. If `None`, the DoI
                 will be applied to the input. otherwise, the distribution should
-                be applied to the latent space defined by the cut. 
+                be applied to the latent space defined by the cut.
             baseline (BaselineLike, optional):
                 The baseline to interpolate from. Must be same shape as the
                 space the distribution acts over, i.e., the shape of the points,
@@ -337,11 +337,11 @@ class LinearDoi(DoI):
         model_inputs: Optional[ModelInputs] = None
     ) -> Inputs[TensorLike]:
         """
-        Returns a term to multiply the gradient by to convert from "*influence 
+        Returns a term to multiply the gradient by to convert from "*influence
         space*" to "*attribution space*". Conceptually, "influence space"
-        corresponds to the potential effect of a slight increase in each 
+        corresponds to the potential effect of a slight increase in each
         feature, while "attribution space" corresponds to an approximation of
-        the net marginal contribution to the quantity of interest of each 
+        the net marginal contribution to the quantity of interest of each
         feature.
 
         Parameters:
@@ -431,10 +431,10 @@ class GaussianDoi(DoI):
 
             resolution:
                 Number of samples returned by each call to this DoI.
-            cut (Cut, optional): 
+            cut (Cut, optional):
                 The Cut in which the DoI will be applied. If `None`, the DoI will be
                 applied to the input. otherwise, the distribution should be applied
-                to the latent space defined by the cut. 
+                to the latent space defined by the cut.
         """
         super(GaussianDoi, self).__init__(cut)
         self._var = var

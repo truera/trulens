@@ -12,7 +12,7 @@ Consequently, these feedback functions face typical large language model (LLM) c
 
 Observing that many summarization benchmarks, such as those found at [SummEval](https://arxiv.org/abs/2007.12626), use human annotation of numerical scores, we propose to frame the problem of evaluating groundedness tasks as evaluating a summarization system. In particular, we generate test cases from [SummEval](https://arxiv.org/abs/2007.12626).
 
-SummEval is one of the datasets dedicated to automated evaluations on summarization tasks, which are closely related to the groundedness evaluation in RAG with the retrieved context (i.e. the source) and response (i.e. the summary). It contains human annotation of numerical score (**1** to **5**) comprised of scoring from 3 human expert annotators and 5 crowd-sourced annotators. There are 16 models being used for generation in total for 100 paragraphs in the test set, so there are a total of 16,000 machine-generated summaries. Each paragraph also has several human-written summaries for comparative analysis. 
+SummEval is one of the datasets dedicated to automated evaluations on summarization tasks, which are closely related to the groundedness evaluation in RAG with the retrieved context (i.e. the source) and response (i.e. the summary). It contains human annotation of numerical score (**1** to **5**) comprised of scoring from 3 human expert annotators and 5 crowd-sourced annotators. There are 16 models being used for generation in total for 100 paragraphs in the test set, so there are a total of 16,000 machine-generated summaries. Each paragraph also has several human-written summaries for comparative analysis.
 
 For evaluating groundedness feedback functions, we compute the annotated "consistency" scores, a measure of whether the summarized response is factually consisntent with the source texts and hence can be used as a proxy to evaluate groundedness in our RAG triad, and normalized to **0** to **1** score as our **expected_score** and to match the output of feedback functions.
 
@@ -32,7 +32,7 @@ For evaluating groundedness feedback functions, we compute the annotated "consis
 ### Methods
 
 This notebook follows an evaluation of a set of test cases generated from human
-annotated datasets. In particular, we generate test cases from 
+annotated datasets. In particular, we generate test cases from
 [MeetingBank](https://arxiv.org/abs/2305.17529) to evaluate our
 comprehensiveness feedback function.
 
@@ -40,7 +40,7 @@ MeetingBank is one of the datasets dedicated to automated evaluations on
 summarization tasks, which are closely related to the comprehensiveness
 evaluation in RAG with the retrieved context (i.e. the source) and response
 (i.e. the summary). It contains human annotation of numerical score (**1** to
-**5**). 
+**5**).
 
 For evaluating comprehensiveness feedback functions, we compute the annotated
 "informativeness" scores, a measure of how well  the summaries capture all the

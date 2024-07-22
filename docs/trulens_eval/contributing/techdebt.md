@@ -37,7 +37,7 @@ See `instruments.py` docstring for discussion why these are done.
 See `instruments.py` docstring for discussion why these are done.
 
 - "HACK002" -- We override `ThreadPoolExecutor` in `concurrent.futures`.
-  
+
 - "HACK007" -- We override `Thread` in `threading`.
 
 ### llama-index
@@ -45,7 +45,7 @@ See `instruments.py` docstring for discussion why these are done.
 - ~~"HACK001" -- `trace_method` decorator in llama_index does not preserve
   function signatures; we hack it so that it does.~~ Fixed as of llama_index
   0.9.26 or near there.
-  
+
 ### langchain
 
 - "HACK003" -- We override the base class of
@@ -97,7 +97,7 @@ See `instruments.py` docstring for discussion why these are done.
   have been defined for each model class that uses type annotations that
   reference types defined after its own definition (i.e. "forward refs").
 
-- "HACK014" -- cannot `from trulens_eval import schema` in some places due to
+- "HACK014" -- cannot `from trulens import schema` in some places due to
   strange interaction with pydantic. Results in:
 
   ```python

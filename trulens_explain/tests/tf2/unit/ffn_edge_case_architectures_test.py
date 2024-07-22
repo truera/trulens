@@ -46,7 +46,7 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         self.assertEqual(res[1].shape, (1, 1))
 
     def test_dict_inputs(self):
-        x1 = Input((5,), name="input1")
+        x1 = Input((5,), name='input1')
         z1 = Dense(6)(x1)
         y = Dense(3)(z1)
         inputs = dict(input1=x1)
@@ -60,14 +60,14 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
             res = infl.attributions(
                 *[
                     {
-                        "input1":
+                        'input1':
                             np.
                             array([[1., 2., 3., 4., 5.], [1., 2., 3., 4., 5.]])
                     }
                 ]
             )
-            self.assertEqual(len(res["input1"]), 2)
-            self.assertEqual(res["input1"].shape, (2, 5))
+            self.assertEqual(len(res['input1']), 2)
+            self.assertEqual(res['input1'].shape, (2, 5))
 
     def test_multiple_outputs(self):
         x = Input((5,))

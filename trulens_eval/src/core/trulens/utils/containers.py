@@ -9,17 +9,15 @@ import logging
 from pprint import PrettyPrinter
 from threading import Event
 from threading import RLock
-from typing import (
-    Callable, Dict, Generic, Iterable, Optional, Sequence, Set, Tuple, TypeVar,
-    Union
-)
+from typing import (Callable, Dict, Generic, Iterable, Optional, Sequence, Set,
+                    Tuple, TypeVar, Union)
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
-T = TypeVar("T")
-A = TypeVar("A")
-B = TypeVar("B")
+T = TypeVar('T')
+A = TypeVar('A')
+B = TypeVar('B')
 
 
 class BlockingSet(set, Generic[T]):
@@ -34,7 +32,7 @@ class BlockingSet(set, Generic[T]):
             items = []
 
         if len(items) > max_size:
-            raise ValueError("Initial items exceed max size.")
+            raise ValueError('Initial items exceed max size.')
 
         self.content: Set[T] = set(items)
         self.max_size = max_size
@@ -57,7 +55,7 @@ class BlockingSet(set, Generic[T]):
 
     def peek(self) -> T:
         """Get an item from the set.
-         
+
         Blocks until an item is available.
         """
 
@@ -77,7 +75,7 @@ class BlockingSet(set, Generic[T]):
 
     def pop(self) -> T:
         """Get and remove an item from the set.
-        
+
         Blocks until an item is available.
         """
 
@@ -94,7 +92,7 @@ class BlockingSet(set, Generic[T]):
 
     def add(self, item: T):
         """Add an item to the set.
-         
+
         Blocks if set is full.
         """
 
@@ -127,7 +125,7 @@ def third(seq: Sequence[T]) -> T:
 
 def is_empty(obj):
     """Check if an object is empty.
-    
+
     If object is not a sequence, returns False.
     """
 
@@ -139,7 +137,7 @@ def is_empty(obj):
 
 def dict_set_with(dict1: Dict[A, B], dict2: Dict[A, B]) -> Dict[A, B]:
     """Add the key/values from `dict2` to `dict1`.
-    
+
     Mutates and returns `dict1`.
     """
 
@@ -163,7 +161,7 @@ def dict_set_with_multikey(
 
 def dict_merge_with(dict1: Dict, dict2: Dict, merge: Callable) -> Dict:
     """Merge values from the second dictionary into the first.
-    
+
     If both dicts contain the same key, the given `merge` function is used to
     merge the values.
     """

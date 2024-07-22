@@ -6,7 +6,6 @@ import datetime
 from typing import Optional
 
 import pydantic
-
 from trulens.utils import serial
 
 MAX_DILL_SIZE: int = 1024 * 1024  # 1MB
@@ -57,7 +56,7 @@ class Cost(serial.SerialModel, pydantic.BaseModel):
 
 class Perf(serial.SerialModel, pydantic.BaseModel):
     """Performance information.
-    
+
     Presently only the start and end times, and thus latency.
     """
 
@@ -78,7 +77,7 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
     @staticmethod
     def now(latency: Optional[datetime.timedelta] = None) -> Perf:
         """Create a `Perf` instance starting now and ending now plus latency.
-         
+
         Args:
             latency: Latency in seconds. If given, end time will be now plus
                 latency. Otherwise end time will be a minimal interval plus start_time.

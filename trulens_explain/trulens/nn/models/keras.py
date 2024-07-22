@@ -38,7 +38,7 @@ def import_keras_backend():
 
 def import_tensorflow():
     '''
-    Dynamically import Tensorflow (if available). 
+    Dynamically import Tensorflow (if available).
     Used for calculating gradients using tf.GradientTape when tf.keras runs in eager execution mode.
     '''
     if get_backend().backend == Backend.TF_KERAS or get_backend(
@@ -150,7 +150,7 @@ class KerasModelWrapper(ModelWrapper):
             model (keras.models.Model): Keras model
 
         Returns:
-            OrderedDict[str, keras.layers.Layer]: Mapping of full heirarchical layer name to layer object  
+            OrderedDict[str, keras.layers.Layer]: Mapping of full heirarchical layer name to layer object
         """
         layers = OrderedDict()
 
@@ -162,17 +162,17 @@ class KerasModelWrapper(ModelWrapper):
                 # is a nested keras model
                 sub_layers = self._traverse_model(layer)
                 for sub_layer_name, sub_layer in sub_layers.items():
-                    layers[f"{layer_name}/{sub_layer_name}"] = sub_layer
+                    layers[f'{layer_name}/{sub_layer_name}'] = sub_layer
         return layers
 
     def _replace_probits_with_logits(
         self, model, probits_layer_name=-1, custom_objects=None
     ):
         """
-        _replace_softmax_with_logits Remove the final layer's activation 
+        _replace_softmax_with_logits Remove the final layer's activation
         function
 
-        When computing gradient-based attribution methods, better results 
+        When computing gradient-based attribution methods, better results
         usually obtain by removing the typical softmax activation function.
 
         Parameters
@@ -182,7 +182,7 @@ class KerasModelWrapper(ModelWrapper):
         softmax_layer : int, optional
             Layer containing relevant activation, by default -1
         custom_objects : list of keras.Layer, optional
-            If the model uses any user-defined layers, they must be passed in. 
+            If the model uses any user-defined layers, they must be passed in.
             By default None.
 
         Returns
@@ -300,7 +300,7 @@ class KerasModelWrapper(ModelWrapper):
             raise ValueError('Unsupported type for cut name:', type(name))
 
     def _get_layer_input(self, layer):
-        """Gets layer input tensor for layer in model. 
+        """Gets layer input tensor for layer in model.
         Since the layer can be shared (and have multiple input nodes) across different models,
         _innode_index tracks the input node index in this model
 
@@ -318,7 +318,7 @@ class KerasModelWrapper(ModelWrapper):
             return layer.input
 
     def _get_layer_output(self, layer):
-        """Gets layer output tensor for layer in model. 
+        """Gets layer output tensor for layer in model.
         Since the layer can be shared (and have multiple input nodes) across different models,
         _innode_index tracks the input node index in this model
 
@@ -337,7 +337,7 @@ class KerasModelWrapper(ModelWrapper):
 
     def _get_layers(self, cut):
         '''
-        get_layer Return the tensor(s) representing the layer(s) specified by 
+        get_layer Return the tensor(s) representing the layer(s) specified by
         the given cut.
 
         Parameters
@@ -378,7 +378,7 @@ class KerasModelWrapper(ModelWrapper):
 
         if cut.anchor not in ['in', 'out']:
             tru_logger.warning(
-                f"Unrecognized cut.anchor {cut.anchor}. Defaulting to `out` anchor."
+                f'Unrecognized cut.anchor {cut.anchor}. Defaulting to `out` anchor.'
             )
             outputs = [self._get_layer_output(layer) for layer in layers]
             outputs = [

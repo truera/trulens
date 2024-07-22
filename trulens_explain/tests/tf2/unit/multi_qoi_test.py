@@ -12,9 +12,10 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import GRU
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
-from tests.unit.multi_qoi_test_base import MultiQoiTestBase
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
+
+from tests.unit.multi_qoi_test_base import MultiQoiTestBase
 
 
 class MultiQoiTest(MultiQoiTestBase, TestCase):
@@ -29,8 +30,8 @@ class MultiQoiTest(MultiQoiTestBase, TestCase):
         base_model = Sequential(
             [
                 Input(shape=(num_timesteps, num_features)),
-                GRU(num_hidden_state, name="rnn", return_sequences=True),
-                Dense(num_classes, name="dense"),
+                GRU(num_hidden_state, name='rnn', return_sequences=True),
+                Dense(num_classes, name='dense'),
             ]
         )
 

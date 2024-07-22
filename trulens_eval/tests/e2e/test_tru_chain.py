@@ -5,6 +5,13 @@ Tests for TruChain. Some of the tests are outdated.
 import unittest
 from unittest import main
 
+from trulens import Tru
+from trulens.feedback.provider.endpoint import Endpoint
+from trulens.keys import check_keys
+from trulens.schema.feedback import FeedbackMode
+from trulens.schema.record import Record
+from trulens.utils.asynchro import sync
+
 from langchain.callbacks import AsyncIteratorCallbackHandler
 from langchain.chains import LLMChain
 from langchain.llms.openai import OpenAI
@@ -13,13 +20,6 @@ from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
 from tests.unit.test import JSONTestCase
 from tests.unit.test import optional_test
-
-from trulens_eval import Tru
-from trulens_eval.feedback.provider.endpoint import Endpoint
-from trulens_eval.keys import check_keys
-from trulens_eval.schema.feedback import FeedbackMode
-from trulens_eval.schema.record import Record
-from trulens_eval.utils.asynchro import sync
 
 
 class TestTruChain(JSONTestCase):
@@ -35,8 +35,8 @@ class TestTruChain(JSONTestCase):
     def setUp(self):
 
         check_keys(
-            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
-            "PINECONE_ENV"
+            'OPENAI_API_KEY', 'HUGGINGFACE_API_KEY', 'PINECONE_API_KEY',
+            'PINECONE_ENV'
         )
 
     @optional_test
@@ -52,8 +52,8 @@ class TestTruChain(JSONTestCase):
         chain1 = LLMChain(llm=llm, prompt=prompt)
 
         memory = ConversationSummaryBufferMemory(
-            memory_key="chat_history",
-            input_key="question",
+            memory_key='chat_history',
+            input_key='question',
             llm=llm,  # same llm now appears in a different spot
         )
         chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
@@ -86,10 +86,10 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tc = self._create_basic_chain(app_id="metaplain")
+        tc = self._create_basic_chain(app_id='metaplain')
 
-        message = "What is 1+2?"
-        meta = "this is plain metadata"
+        message = 'What is 1+2?'
+        meta = 'this is plain metadata'
 
         _, rec = tc.with_record(tc.app, message, record_metadata=meta)
 
@@ -103,7 +103,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check updating the record metadata in the db.
-        new_meta = "this is new meta"
+        new_meta = 'this is new meta'
         rec.meta = new_meta
         Tru().update_record(rec)
         recs, _ = Tru().get_records_and_feedback([tc.app_id])
@@ -135,10 +135,10 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tc = self._create_basic_chain(app_id="metajson")
+        tc = self._create_basic_chain(app_id='metajson')
 
-        message = "What is 1+2?"
-        meta = dict(field1="hello", field2="there")
+        message = 'What is 1+2?'
+        meta = dict(field1='hello', field2='there')
 
         _, rec = tc.with_record(tc.app, message, record_metadata=meta)
 
@@ -152,7 +152,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check updating the record metadata in the db.
-        new_meta = dict(hello="this is new meta")
+        new_meta = dict(hello='this is new meta')
         rec.meta = new_meta
         Tru().update_record(rec)
 
@@ -171,7 +171,7 @@ class TestTruChain(JSONTestCase):
 
         from langchain_openai import ChatOpenAI
 
-        msg = HumanMessage(content="Hello there")
+        msg = HumanMessage(content='Hello there')
 
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
@@ -188,7 +188,7 @@ class TestTruChain(JSONTestCase):
 
         async def test2():
             # Creates a task internally via asyncio.gather:
-            result = await chain.acall(inputs=dict(question="hello there"))
+            result = await chain.acall(inputs=dict(question='hello there'))
             return result
 
         res2, costs2 = Endpoint.track_all_costs(lambda: sync(test2))
@@ -221,7 +221,7 @@ class TestTruChain(JSONTestCase):
             """Honestly answer this question: {question}."""
         )
 
-        message = "What is 1+2?"
+        message = 'What is 1+2?'
 
         # Get sync results.
         llm = ChatOpenAI(temperature=0.0)
@@ -248,22 +248,22 @@ class TestTruChain(JSONTestCase):
             sync_record.model_dump(),
             skips=set(
                 [
-                    "id",
-                    "name",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                    "tid",
-                    "pid",
-                    "app_id",
-                    "cost"  # TODO(piotrm): cost tracking not working with async
+                    'id',
+                    'name',
+                    'ts',
+                    'start_time',
+                    'end_time',
+                    'record_id',
+                    'tid',
+                    'pid',
+                    'app_id',
+                    'cost'  # TODO(piotrm): cost tracking not working with async
                 ]
             )
         )
 
     @optional_test
-    @unittest.skip("bug in langchain")
+    @unittest.skip('bug in langchain')
     def test_async_token_gen(self):
         # Test of chain acall methods as requested in https://github.com/truera/trulens/issues/309 .
 
@@ -283,7 +283,7 @@ class TestTruChain(JSONTestCase):
         agent = LLMChain(llm=llm, prompt=prompt)
         agent_recorder = tru.Chain(agent)  #, feedbacks=[f_lang_match])
 
-        message = "What is 1+2? Explain your answer."
+        message = 'What is 1+2? Explain your answer.'
         with agent_recorder as recording:
             async_res = sync(agent.acall, inputs=dict(question=message))
 
@@ -301,16 +301,16 @@ class TestTruChain(JSONTestCase):
             sync_record.model_dump(),
             skips=set(
                 [
-                    "id",
-                    "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
-                    "name",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                    "tid",
-                    "pid",
-                    "run_id"
+                    'id',
+                    'cost',  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
+                    'name',
+                    'ts',
+                    'start_time',
+                    'end_time',
+                    'record_id',
+                    'tid',
+                    'pid',
+                    'run_id'
                 ]
             )
         )

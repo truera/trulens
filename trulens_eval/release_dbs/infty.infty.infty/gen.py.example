@@ -1,4 +1,4 @@
-from trulens_eval import Tru()
+from trulens import Tru()
 from sqlalchemy.sql import text
 
 with Tru().db.engine.connect() as c:

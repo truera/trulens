@@ -94,6 +94,6 @@ Backwards compatibility will be removed in 0.3.0 at earliest.
 
 - DB schema changes:
 
-    - Table `apps`: 
+    - Table `apps`:
 
         - Field `chain_id` renamed to `app_id` .

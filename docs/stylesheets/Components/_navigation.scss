@@ -25,7 +25,7 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
      @include res-max-mobile {
         padding: 0.5rem 1.25rem;
     }
-     
+
      &.sticky {
         position: fixed;
         background-color: var(--color-navigation);
@@ -36,7 +36,7 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
             margin-top: calc(2 * 1.25rem + 2.813rem + 60px);
         }
 
-        
+
         @include res-max-mobile {
             padding: 0.5rem 1.25rem;
 
@@ -45,7 +45,7 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
             }
         }
      }
-     
+
 
      a, a:visited {
          color: var(--color-text-highlight);
@@ -66,8 +66,8 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
         margin: 0;
         padding: 0;
         cursor: pointer;
-        opacity: 0; 
-        z-index: 2; 
+        opacity: 0;
+        z-index: 2;
         -webkit-touch-callout: none;
 
         &:checked ~ .nav__burger span {
@@ -88,28 +88,28 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
           transform: none;
         }
      }
-     
+
      &__burger {
         display: block;
         position: relative;
         margin: var(--gap-lg) 0 var(--gap-lg) auto;
         -webkit-user-select: none;
         user-select: none;
-    
+
         @include res-min-tablet {
             display: none;
         }
-    
+
         a {
             text-decoration: none;
             color: #232323;
             transition: color 0.3s ease;
-            
+
             &:hover {
               color: tomato;
             }
         }
-    
+
         span {
             display: block;
             width: $hamburger-item-width;
@@ -123,7 +123,7 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
             transition: transform 0.5s cubic-bezier(0.77,0.2,0.05,1.0),
                         background 0.5s cubic-bezier(0.77,0.2,0.05,1.0),
                         opacity 0.55s ease;
-    
+
             &:first-child {
                 transform-origin: 0% 0%;
             }
@@ -132,7 +132,7 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
             }
         }
     }
-    
+
     &__items {
         display: flex;
         flex-direction: row;
@@ -187,7 +187,7 @@ $hamburger-size: calc(var(--gap-lg) * 2 + #{$hamburger-item-width});
                 }
             }
         }
-    
+
         li {
             padding: var(--gap-md);
             margin: var(--gap-md);

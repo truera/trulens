@@ -6,7 +6,6 @@ from unittest import main
 from unittest import TestCase
 
 import numpy as np
-from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 from torch import Tensor
 from torch.nn import Linear
 from torch.nn import Module
@@ -15,6 +14,8 @@ from trulens.nn.backend import get_backend
 from trulens.nn.models.pytorch import PytorchModelWrapper
 from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import Cut
+
+from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):
@@ -84,8 +85,8 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
                 return layer2
 
         self.model_kwargs = PytorchModelWrapper(Mkwargs())
-        self.model_kwargs_layer1 = "layer1"
-        self.model_kwargs_layer2 = "layer2"
+        self.model_kwargs_layer1 = 'layer1'
+        self.model_kwargs_layer2 = 'layer2'
 
     # Overriden tests.
 

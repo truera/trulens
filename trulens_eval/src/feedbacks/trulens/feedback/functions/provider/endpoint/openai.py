@@ -25,10 +25,7 @@ import logging
 import pprint
 from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
 
-from langchain.schema import Generation
-from langchain.schema import LLMResult
 import pydantic
-
 from trulens.feedback import Endpoint
 from trulens.feedback import EndpointCallback
 from trulens.utils.imports import OptionalImports
@@ -40,10 +37,14 @@ from trulens.utils.pyschema import safe_getattr
 from trulens.utils.python import safe_hasattr
 from trulens.utils.serial import SerialModel
 
+from langchain.schema import Generation
+from langchain.schema import LLMResult
+
 with OptionalImports(messages=REQUIREMENT_OPENAI) as opt:
     # This is also required for running openai endpoints in trulens_eval:
-    from langchain.callbacks.openai_info import OpenAICallbackHandler
     import openai as oai
+
+    from langchain.callbacks.openai_info import OpenAICallbackHandler
 
 # check that oai is not a dummy, also the langchain component required for handling openai endpoint
 opt.assert_installed(mods=[oai, OpenAICallbackHandler])
@@ -56,7 +57,7 @@ pp = pprint.PrettyPrinter()
 class OpenAIClient(SerialModel):
     """
     A wrapper for openai clients.
-     
+
     This class allows wrapped clients to be serialized into json. Does not
     serialize API key though. You can access openai.OpenAI under the `client`
     attribute. Any attributes not defined by this wrapper are looked up from the
@@ -64,7 +65,7 @@ class OpenAIClient(SerialModel):
     `openai.OpenAI` instance.
     """
 
-    REDACTED_KEYS: ClassVar[List[str]] = ["api_key", "default_headers"]
+    REDACTED_KEYS: ClassVar[List[str]] = ['api_key', 'default_headers']
     """Parameters of the OpenAI client that will not be serialized because they
     contain secrets."""
 
@@ -91,9 +92,9 @@ class OpenAIClient(SerialModel):
             for rkey in OpenAIClient.REDACTED_KEYS:
                 if rkey in client_kwargs:
                     logger.warning(
-                        f"OpenAI parameter {rkey} is not serialized for DEFERRED feedback mode. "
-                        f"If you are not using DEFERRED, you do not need to do anything. "
-                        f"If you are using DEFERRED, try to specify this parameter through env variable or another mechanism."
+                        f'OpenAI parameter {rkey} is not serialized for DEFERRED feedback mode. '
+                        f'If you are not using DEFERRED, you do not need to do anything. '
+                        f'If you are using DEFERRED, try to specify this parameter through env variable or another mechanism.'
                     )
 
         if client is None:
@@ -102,7 +103,7 @@ class OpenAIClient(SerialModel):
 
             elif client_kwargs is None or client_cls is None:
                 raise ValueError(
-                    "`client_kwargs` and `client_cls` are both needed to deserialize an openai.`OpenAI` client."
+                    '`client_kwargs` and `client_cls` are both needed to deserialize an openai.`OpenAI` client.'
                 )
 
             else:
@@ -113,7 +114,7 @@ class OpenAIClient(SerialModel):
 
                 cls = client_cls.load()
 
-                timeout = client_kwargs.get("timeout")
+                timeout = client_kwargs.get('timeout')
                 if timeout is not None:
                     client_kwargs['timeout'] = oai.Timeout(**timeout)
 
@@ -153,7 +154,7 @@ class OpenAIClient(SerialModel):
             return safe_getattr(self.client, k)
 
         raise AttributeError(
-            f"No attribute {k} in wrapper OpenAiClient nor the wrapped OpenAI client."
+            f'No attribute {k} in wrapper OpenAiClient nor the wrapped OpenAI client.'
         )
 
 
@@ -189,11 +190,11 @@ class OpenAICallback(EndpointCallback):
         self.langchain_handler.on_llm_end(response)
 
         for cost_field, langchain_field in [
-            ("cost", "total_cost"),
-            ("n_tokens", "total_tokens"),
-            ("n_successful_requests", "successful_requests"),
-            ("n_prompt_tokens", "prompt_tokens"),
-            ("n_completion_tokens", "completion_tokens"),
+            ('cost', 'total_cost'),
+            ('n_tokens', 'total_tokens'),
+            ('n_successful_requests', 'successful_requests'),
+            ('n_prompt_tokens', 'prompt_tokens'),
+            ('n_completion_tokens', 'completion_tokens'),
         ]:
             setattr(
                 self.cost, cost_field,
@@ -219,18 +220,18 @@ class OpenAIEndpoint(Endpoint):
 
     def __init__(
         self,
-        name: str = "openai",
+        name: str = 'openai',
         client: Optional[Union[oai.OpenAI, oai.AzureOpenAI,
                                OpenAIClient]] = None,
         rpm: Optional[int] = None,
         pace: Optional[Pace] = None,
         **kwargs: dict
     ):
-        if safe_hasattr(self, "name") and client is not None:
+        if safe_hasattr(self, 'name') and client is not None:
             # Already created with SingletonPerName mechanism
             if len(kwargs) != 0:
                 logger.warning(
-                    "OpenAIClient singleton already made, ignoring arguments %s",
+                    'OpenAIClient singleton already made, ignoring arguments %s',
                     kwargs
                 )
                 self.warning(
@@ -257,14 +258,14 @@ class OpenAIEndpoint(Endpoint):
         else:
             if len(kwargs) != 0:
                 logger.warning(
-                    "Arguments %s are ignored as `client` was provided.",
+                    'Arguments %s are ignored as `client` was provided.',
                     list(kwargs.keys())
                 )
 
             # Convert openai client to our wrapper if needed.
             if not isinstance(client, OpenAIClient):
                 assert isinstance(client, (oai.OpenAI, oai.AzureOpenAI)), \
-                    "OpenAI client expected"
+                    'OpenAI client expected'
 
                 client = OpenAIClient(client=client)
 
@@ -277,11 +278,11 @@ class OpenAIEndpoint(Endpoint):
         from openai import resources
         from openai.resources import chat
 
-        self._instrument_module_members(resources, "create")
-        self._instrument_module_members(chat, "create")
+        self._instrument_module_members(resources, 'create')
+        self._instrument_module_members(chat, 'create')
 
     def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="openai")
+        return super(Endpoint, cls).__new__(cls, name='openai')
 
     def handle_wrapped_call(
         self,
@@ -296,24 +297,24 @@ class OpenAIEndpoint(Endpoint):
         # see what sort of data to process based on the call made.
 
         logger.debug(
-            "Handling openai instrumented call to func: %s,\n"
-            "\tbindings: %s,\n"
-            "\tresponse: %s", func, bindings, response
+            'Handling openai instrumented call to func: %s,\n'
+            '\tbindings: %s,\n'
+            '\tresponse: %s', func, bindings, response
         )
 
-        model_name = ""
+        model_name = ''
         if 'model' in bindings.kwargs:
-            model_name = bindings.kwargs["model"]
+            model_name = bindings.kwargs['model']
 
         if isinstance(response, oai.Stream):
             # NOTE(piotrm): Merely checking membership in these will exhaust internal
             # genertors or iterators which will break users' code. While we work
             # out something, I'm disabling any cost-tracking for these streams.
-            logger.warning("Cannot track costs from a OpenAI Stream.")
+            logger.warning('Cannot track costs from a OpenAI Stream.')
             return
 
         results = None
-        if "results" in response:
+        if 'results' in response:
             results = response['results']
 
         counted_something = False
@@ -342,7 +343,7 @@ class OpenAIEndpoint(Endpoint):
             if callback is not None:
                 callback.handle_generation(response=llm_res)
 
-        if "choices" in response and 'delta' in response.choices[0]:
+        if 'choices' in response and 'delta' in response.choices[0]:
             # Streaming data.
             content = response.choices[0].delta.content
 
@@ -355,7 +356,7 @@ class OpenAIEndpoint(Endpoint):
 
         if results is not None:
             for res in results:
-                if "categories" in res:
+                if 'categories' in res:
                     counted_something = True
                     self.global_callback.handle_classification(response=res)
 
@@ -364,6 +365,6 @@ class OpenAIEndpoint(Endpoint):
 
         if not counted_something:
             logger.warning(
-                "Could not find usage information in openai response:\n%s",
+                'Could not find usage information in openai response:\n%s',
                 pp.pformat(response)
             )

@@ -118,7 +118,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
         output_layers = []
         if self._model.outputs is None:
             raise Exception(
-                "Unable to determine output layers. Please set the outputs using set_output_layers."
+                'Unable to determine output layers. Please set the outputs using set_output_layers.'
             )
         for output in self._model.outputs:
             for layer in self._layers.values():
@@ -154,7 +154,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
 
     def set_output_layers(self, output_layers: list):
         if not isinstance(output_layers, list):
-            raise Exception("Output Layers must be a list of layers")
+            raise Exception('Output Layers must be a list of layers')
         self._model.outputs = output_layers
 
     def _fprop(
@@ -204,7 +204,7 @@ class Tensorflow2ModelWrapper(KerasModelWrapper
                         else:
                             if doi_cut.anchor is not None and doi_cut.anchor != 'out':
                                 tru_logger.warning(
-                                    f"Unrecognized doi_cut.anchor {doi_cut.anchor}. Defaulting to `out` anchor."
+                                    f'Unrecognized doi_cut.anchor {doi_cut.anchor}. Defaulting to `out` anchor.'
                                 )
                             layer.output_intervention = intervention_fn
                 else:

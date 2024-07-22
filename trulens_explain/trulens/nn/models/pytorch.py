@@ -50,23 +50,23 @@ class PytorchModelWrapper(ModelWrapper):
         model : pytorch.nn.Module
             Pytorch model implemented as nn.Module
         logit_layer: str
-            The name of the logit layer. If not supplied, it will assume any 
+            The name of the logit layer. If not supplied, it will assume any
             layer named 'logits' is the logit layer.
         device : string, optional
             device on which to run model, by default None
         force_eval : bool, optional
             If True, will call model.eval() to ensure determinism. Otherwise, keeps current model state, by default True
-            
+
         """
 
         if 'input_shape' in kwargs:
             tru_logger.deprecate(
-                f"PytorchModelWrapper: input_shape parameter is no longer used and will be removed in the future"
+                f'PytorchModelWrapper: input_shape parameter is no longer used and will be removed in the future'
             )
             del kwargs['input_shape']
         if 'input_dtype' in kwargs:
             tru_logger.deprecate(
-                f"PytorchModelWrapper: input_dtype parameter is no longer used and will be removed in the future"
+                f'PytorchModelWrapper: input_dtype parameter is no longer used and will be removed in the future'
             )
             del kwargs['input_dtype']
 
@@ -99,7 +99,7 @@ class PytorchModelWrapper(ModelWrapper):
 
         if len(self._tensors) == 0:
             tru_logger.warning(
-                "model has no visible components, you will not be able to specify cuts"
+                'model has no visible components, you will not be able to specify cuts'
             )
 
         # Check to see if this model outputs probits or logits.
@@ -210,7 +210,7 @@ class PytorchModelWrapper(ModelWrapper):
                 # TODO: similar messages for other backends.
 
                 raise ValueError(
-                    f"Could not get values for layer {k}. Is it evaluated when computing doi cut from input cut?"
+                    f'Could not get values for layer {k}. Is it evaluated when computing doi cut from input cut?'
                 )
             return hooks[k]
 
@@ -290,10 +290,10 @@ class PytorchModelWrapper(ModelWrapper):
                 else:
                     if isinstance(attribution_cut, InputCut):
                         raise ValueError(
-                            f"Requested tensors for attribution_cut=InputCut() but it contains a "
-                            f"non-differentiable tensor of type {t.dtype}. You may need to provide "
-                            f"an attribution_cut further down in the model where floating-point "
-                            f"values first arise."
+                            f'Requested tensors for attribution_cut=InputCut() but it contains a '
+                            f'non-differentiable tensor of type {t.dtype}. You may need to provide '
+                            f'an attribution_cut further down in the model where floating-point '
+                            f'values first arise.'
                         )
                     else:
                         # Could be a warning here but then we'd see a lot of warnings in NLP models.
@@ -346,7 +346,7 @@ class PytorchModelWrapper(ModelWrapper):
             else:
                 if doi_cut.anchor is not None and doi_cut.anchor != 'out':
                     tru_logger.warning(
-                        f"Unrecognized doi_cut.anchor {doi_cut.anchor}. Defaulting to `out` anchor."
+                        f'Unrecognized doi_cut.anchor {doi_cut.anchor}. Defaulting to `out` anchor.'
                     )
                 in_handle = (
                     self._get_layer(doi_cut.name
@@ -448,8 +448,8 @@ class PytorchModelWrapper(ModelWrapper):
                 # being summed. If there is only 1 dim, its likely the batching
                 # dimension so sum there is probably expected.
                 tru_logger.warning(
-                    f"Attribution tensor is not scalar (it is of shape {t.shape} "
-                    f"and will be summed. This may not be your intention."
+                    f'Attribution tensor is not scalar (it is of shape {t.shape} '
+                    f'and will be summed. This may not be your intention.'
                 )
 
             return B.sum(t)
@@ -468,7 +468,7 @@ class PytorchModelWrapper(ModelWrapper):
                     grads_for_qoi = B.gradient(qoi_out, zs)
 
             except RuntimeError as e:
-                if "cudnn RNN backward can only be called in training mode" in str(
+                if 'cudnn RNN backward can only be called in training mode' in str(
                         e):
                     raise RuntimeError(
                         "Cannot get deterministic gradients from RNN's with cudnn. See more about this issue here: https://github.com/pytorch/captum/issues/564 .\n"

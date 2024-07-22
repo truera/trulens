@@ -35,8 +35,8 @@ virtual_app = dict(
     template="information about the template I used in my app",
     debug="all of these fields are completely optional"
 )
-from trulens_eval import Select
-from trulens_eval.tru_virtual import VirtualApp
+from trulens import Select
+from trulens.tru_virtual import VirtualApp
 
 virtual_app = VirtualApp(virtual_app) # can start with the prior dictionary
 virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -45,7 +45,7 @@ virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
 When setting up the virtual app, you should also include any components that you would like to evaluate in the virtual app. This can be done using the `Select` class. Using selectors here lets use reuse the setup you use to define feedback functions. Below you can see how to set up a virtual app with a retriever component, which will be used later in the example for feedback evaluation.
 
 ```python
-from trulens_eval import Select
+from trulens import Select
 retriever_component = Select.RecordCalls.retriever
 virtual_app[retriever_component] = "this is the retriever component"
 ```
@@ -59,7 +59,7 @@ The parameters you'll use with `VirtualRecord` are the same as those for `Record
 In the example below, we add two records. Each record includes the inputs and outputs for a context retrieval component. Remember, you only need to provide the information that you want to track or evaluate. The selectors are references to methods that can be selected for feedback, as we'll demonstrate below.
 
 ```python
-from trulens_eval.tru_virtual import VirtualRecord
+from trulens.tru_virtual import VirtualRecord
 
 # The selector for a presumed context retrieval component's call to
 # `get_context`. The names are arbitrary but may be useful for readability on
@@ -131,8 +131,8 @@ for record in data_dict:
 Now that we've ingested constructed the virtual records, we can build our feedback functions. This is done just the same as normal, except the context selector will instead refer to the new `context_call` we added to the virtual record.
 
 ```python
-from trulens_eval.feedback.provider import OpenAI
-from trulens_eval.feedback.feedback import Feedback
+from trulens.feedback.provider import OpenAI
+from trulens.feedback.feedback import Feedback
 
 # Initialize provider class
 openai = OpenAI()
@@ -153,7 +153,7 @@ f_context_relevance = (
 Then, the feedback functions can be passed to `TruVirtual` to construct the `recorder`. Most of the fields that other non-virtual apps take can also be specified here.
 
 ```python
-from trulens_eval.tru_virtual import TruVirtual
+from trulens.tru_virtual import TruVirtual
 
 virtual_recorder = TruVirtual(
     app_id="a virtual app",
@@ -180,8 +180,8 @@ virtual_app = dict(
     debug="all of these fields are completely optional"
 )
 
-from trulens_eval.schema import Select
-from trulens_eval.tru_virtual import VirtualApp
+from trulens.schema import Select
+from trulens.tru_virtual import VirtualApp
 
 virtual_app = VirtualApp(virtual_app)
 ```

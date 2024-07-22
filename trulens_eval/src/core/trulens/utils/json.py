@@ -12,10 +12,9 @@ from typing import Any, Dict, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
 import pydantic
-
-from trulens.utils.keys import redact_value
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.keys import redact_value
 from trulens.utils.pyschema import CIRCLE
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import CLASS_INFO
@@ -35,7 +34,7 @@ from trulens.utils.serial import SerialModel
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 mj = MerkleJson()
 
@@ -58,13 +57,13 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
 
 
-def obj_id_of_obj(obj: dict, prefix="obj"):
+def obj_id_of_obj(obj: dict, prefix='obj'):
     """
     Create an id from a json-able structure/definition. Should produce the same
     name if definition stays the same.
     """
 
-    return f"{prefix}_hash_{mj.hash(obj)}"
+    return f'{prefix}_hash_{mj.hash(obj)}'
 
 
 def json_str_of_obj(
@@ -100,7 +99,7 @@ ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
 def jsonify_for_ui(*args, **kwargs):
     """Options for jsonify common to UI displays.
-    
+
     Redacts keys and hides special fields introduced by trulens.
     """
 
@@ -138,7 +137,7 @@ def jsonify(
             pydantic.
 
         depth: the depth of the serialization of the given object relative to
-            the serialization of its container. 
+            the serialization of its container.
 `
         max_depth: the maximum depth of the serialization of the given object.
             Objects to be serialized beyond this will be serialized as
@@ -382,7 +381,7 @@ def jsonify(
             cls=obj.__class__, with_bases=True
         ).model_dump()
 
-    if not isinstance(obj, Lens) and safe_hasattr(obj, "jsonify_extra"):
+    if not isinstance(obj, Lens) and safe_hasattr(obj, 'jsonify_extra'):
         # Problem with Lens and similar objects: they always say they have every attribute.
 
         content = obj.jsonify_extra(content)

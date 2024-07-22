@@ -1,10 +1,9 @@
 import time
 
 import pandas as pd
-
+from trulens.dashboard.ux.styles import CATEGORY
 from trulens.schema.feedback import FeedbackDefinition
 from trulens.schema.record import Record
-from trulens.dashboard.ux.styles import CATEGORY
 
 
 def get_feedback_result(
@@ -44,7 +43,7 @@ def get_feedback_result(
 
     # Ensure feedback_calls is iterable
     if not hasattr(feedback_calls, '__iter__'):
-        raise ValueError("feedback_calls is not iterable")
+        raise ValueError('feedback_calls is not iterable')
 
     feedback_result = [
         {

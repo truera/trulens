@@ -10,11 +10,11 @@ from pprint import PrettyPrinter
 from unittest import main
 from unittest import TestCase
 
-from tests.unit.test import optional_test
+from trulens.feedback.provider.endpoint import Endpoint
+from trulens.keys import check_keys
+from trulens.utils.asynchro import sync
 
-from trulens_eval.feedback.provider.endpoint import Endpoint
-from trulens_eval.keys import check_keys
-from trulens_eval.utils.asynchro import sync
+from tests.unit.test import optional_test
 
 pp = PrettyPrinter()
 
@@ -25,104 +25,104 @@ class TestEndpoints(TestCase):
     def setUp(self):
         check_keys(
             # for non-azure openai tests
-            "OPENAI_API_KEY",
+            'OPENAI_API_KEY',
 
             # for huggingface tests
-            "HUGGINGFACE_API_KEY",
+            'HUGGINGFACE_API_KEY',
 
             # for bedrock tests
-            "AWS_REGION_NAME",
-            "AWS_ACCESS_KEY_ID",
-            "AWS_SECRET_ACCESS_KEY",
-            "AWS_SESSION_TOKEN",
+            'AWS_REGION_NAME',
+            'AWS_ACCESS_KEY_ID',
+            'AWS_SECRET_ACCESS_KEY',
+            'AWS_SESSION_TOKEN',
 
             # for azure openai tests
-            "AZURE_OPENAI_API_KEY",
-            "AZURE_OPENAI_ENDPOINT",
-            "AZURE_OPENAI_DEPLOYMENT_NAME",
+            'AZURE_OPENAI_API_KEY',
+            'AZURE_OPENAI_ENDPOINT',
+            'AZURE_OPENAI_DEPLOYMENT_NAME',
 
             # for snowflake cortex
-            "SNOWFLAKE_ACCOUNT",
-            "SNOWFLAKE_USER",
-            "SNOWFLAKE_USER_PASSWORD"
+            'SNOWFLAKE_ACCOUNT',
+            'SNOWFLAKE_USER',
+            'SNOWFLAKE_USER_PASSWORD'
         )
 
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
         """Cost checks for endpoints whose providers implement LLMProvider."""
 
         _, cost = Endpoint.track_all_costs_tally(
-            provider.sentiment, text="This rocks!"
+            provider.sentiment, text='This rocks!'
         )
 
-        self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
+        self.assertEqual(cost.n_requests, 1, 'Expected exactly one request.')
         self.assertEqual(
             cost.n_successful_requests, 1,
-            "Expected exactly one successful request."
+            'Expected exactly one successful request.'
         )
         self.assertEqual(
-            cost.n_classes, 0, "Expected zero classes for LLM-based endpoints."
+            cost.n_classes, 0, 'Expected zero classes for LLM-based endpoints.'
         )
         self.assertEqual(
             cost.n_stream_chunks, 0,
-            "Expected zero chunks when not using streaming mode."
+            'Expected zero chunks when not using streaming mode.'
         )
-        self.assertGreater(cost.n_tokens, 0, "Expected non-zero tokens.")
+        self.assertGreater(cost.n_tokens, 0, 'Expected non-zero tokens.')
         self.assertGreater(
-            cost.n_prompt_tokens, 0, "Expected non-zero prompt tokens."
+            cost.n_prompt_tokens, 0, 'Expected non-zero prompt tokens.'
         )
         self.assertGreater(
             cost.n_completion_tokens, 0.0,
-            "Expected non-zero completion tokens."
+            'Expected non-zero completion tokens.'
         )
 
         if with_cost:
-            self.assertGreater(cost.cost, 0.0, "Expected non-zero cost.")
+            self.assertGreater(cost.cost, 0.0, 'Expected non-zero cost.')
 
     @optional_test
     def test_hugs(self):
         """Check that cost tracking works for the huggingface endpoint."""
 
-        from trulens_eval.feedback.provider import Huggingface
+        from trulens.feedback.provider import Huggingface
 
         hugs = Huggingface()
 
         _, cost = Endpoint.track_all_costs_tally(
-            hugs.positive_sentiment, text="This rocks!"
+            hugs.positive_sentiment, text='This rocks!'
         )
 
-        self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
+        self.assertEqual(cost.n_requests, 1, 'Expected exactly one request.')
         self.assertEqual(
             cost.n_successful_requests, 1,
-            "Expected exactly one successful request."
+            'Expected exactly one successful request.'
         )
         self.assertEqual(
             cost.n_classes, 3,
-            "Expected exactly three classes for sentiment classification."
+            'Expected exactly three classes for sentiment classification.'
         )
         self.assertEqual(
             cost.n_stream_chunks, 0,
-            "Expected zero chunks for classification endpoints."
+            'Expected zero chunks for classification endpoints.'
         )
-        self.assertEqual(cost.n_tokens, 0, "Expected zero tokens.")
+        self.assertEqual(cost.n_tokens, 0, 'Expected zero tokens.')
         self.assertEqual(
-            cost.n_prompt_tokens, 0, "Expected zero prompt tokens."
+            cost.n_prompt_tokens, 0, 'Expected zero prompt tokens.'
         )
         self.assertEqual(
-            cost.n_completion_tokens, 0.0, "Expected zero completion tokens."
+            cost.n_completion_tokens, 0.0, 'Expected zero completion tokens.'
         )
 
         self.assertEqual(
-            cost.cost, 0.0, "Expected zero cost for huggingface endpoint."
+            cost.cost, 0.0, 'Expected zero cost for huggingface endpoint.'
         )
 
     @optional_test
     def test_openai(self):
         """Check that cost tracking works for openai models."""
 
-        os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
-        os.environ["OPENAI_API_TYPE"] = "openai"
+        os.environ['OPENAI_API_VERSION'] = '2023-07-01-preview'
+        os.environ['OPENAI_API_TYPE'] = 'openai'
 
-        from trulens_eval.feedback.provider.openai import OpenAI
+        from trulens.feedback.provider.openai import OpenAI
 
         provider = OpenAI(model_engine=OpenAI.DEFAULT_MODEL_ENGINE)
 
@@ -132,17 +132,17 @@ class TestEndpoints(TestCase):
     def test_litellm_openai(self):
         """Check that cost tracking works for openai models through litellm."""
 
-        os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
-        os.environ["OPENAI_API_TYPE"] = "openai"
+        os.environ['OPENAI_API_VERSION'] = '2023-07-01-preview'
+        os.environ['OPENAI_API_TYPE'] = 'openai'
 
-        from trulens_eval.feedback.provider import LiteLLM
-        from trulens_eval.feedback.provider.openai import OpenAI
+        from trulens.feedback.provider import LiteLLM
+        from trulens.feedback.provider.openai import OpenAI
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        Endpoint.delete_singleton_by_name("litellm")
+        Endpoint.delete_singleton_by_name('litellm')
 
-        provider = LiteLLM(f"openai/{OpenAI.DEFAULT_MODEL_ENGINE}")
+        provider = LiteLLM(f'openai/{OpenAI.DEFAULT_MODEL_ENGINE}')
 
         self._test_llm_provider_endpoint(provider)
 
@@ -150,10 +150,10 @@ class TestEndpoints(TestCase):
     def test_openai_azure(self):
         """Check that cost tracking works for openai azure models."""
 
-        os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
-        os.environ["OPENAI_API_TYPE"] = "azure"
+        os.environ['OPENAI_API_VERSION'] = '2023-07-01-preview'
+        os.environ['OPENAI_API_TYPE'] = 'azure'
 
-        from trulens_eval.feedback.provider.openai import AzureOpenAI
+        from trulens.feedback.provider.openai import AzureOpenAI
 
         provider = AzureOpenAI(
             model_engine=AzureOpenAI.DEFAULT_MODEL_ENGINE,
@@ -166,14 +166,14 @@ class TestEndpoints(TestCase):
     def test_litellm_openai_azure(self):
         """Check that cost tracking works for openai models through litellm."""
 
-        os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
-        os.environ["OPENAI_API_TYPE"] = "azure"
+        os.environ['OPENAI_API_VERSION'] = '2023-07-01-preview'
+        os.environ['OPENAI_API_TYPE'] = 'azure'
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        Endpoint.delete_singleton_by_name("litellm")
+        Endpoint.delete_singleton_by_name('litellm')
 
-        from trulens_eval.feedback.provider import LiteLLM
+        from trulens.feedback.provider import LiteLLM
 
         provider = LiteLLM(
             f"azure/{os.environ['AZURE_OPENAI_DEPLOYMENT_NAME']}",
@@ -188,7 +188,7 @@ class TestEndpoints(TestCase):
     def test_bedrock(self):
         """Check that cost tracking works for bedrock models."""
 
-        from trulens_eval.feedback.provider.bedrock import Bedrock
+        from trulens.feedback.provider.bedrock import Bedrock
 
         provider = Bedrock(model_id=Bedrock.DEFAULT_MODEL_ID)
 
@@ -199,14 +199,14 @@ class TestEndpoints(TestCase):
     def test_litellm_bedrock(self):
         """Check that cost tracking works for bedrock models through litellm."""
 
-        from trulens_eval.feedback.provider import LiteLLM
-        from trulens_eval.feedback.provider.bedrock import Bedrock
+        from trulens.feedback.provider import LiteLLM
+        from trulens.feedback.provider.bedrock import Bedrock
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        Endpoint.delete_singleton_by_name("litellm")
+        Endpoint.delete_singleton_by_name('litellm')
 
-        provider = LiteLLM(f"bedrock/{Bedrock.DEFAULT_MODEL_ID}")
+        provider = LiteLLM(f'bedrock/{Bedrock.DEFAULT_MODEL_ID}')
 
         # Litellm comes with cost tracking for bedrock though it may be inaccurate.
         self._test_llm_provider_endpoint(provider)
@@ -214,9 +214,9 @@ class TestEndpoints(TestCase):
     @optional_test
     def test_cortex(self):
         """Check that cost (token) tracking works for Cortex LLM Functions"""
-        from trulens_eval.feedback.provider.cortex import Cortex
+        from trulens.feedback.provider.cortex import Cortex
 
-        provider = Cortex(model_engine="snowflake-arctic")
+        provider = Cortex(model_engine='snowflake-arctic')
 
         self._test_llm_provider_endpoint(provider)
 

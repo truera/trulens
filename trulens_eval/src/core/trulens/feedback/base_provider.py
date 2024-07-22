@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Provider(WithClassInfo, SerialModel):
     """Base Provider class.
-    
+
     TruLens makes use of *Feedback Providers* to generate evaluations of
     large language model applications. These providers act as an access point
     to different models, most commonly classification models and large language models.
@@ -22,7 +22,7 @@ class Provider(WithClassInfo, SerialModel):
     class and should not be instantiated directly. Rather, it should be subclassed
     and the subclass should implement the methods defined in this class.
 
-    There are many feedback providers available in TruLens that grant access to a wide range 
+    There are many feedback providers available in TruLens that grant access to a wide range
     of proprietary and open-source models.
 
     Providers for classification and other non-LLM models should directly subclass `Provider`.
@@ -63,7 +63,7 @@ class Provider(WithClassInfo, SerialModel):
 
     endpoint: Optional[mod_endpoint.Endpoint] = None
     """Endpoint supporting this provider.
-    
+
     Remote API invocations are handled by the endpoint.
     """
 

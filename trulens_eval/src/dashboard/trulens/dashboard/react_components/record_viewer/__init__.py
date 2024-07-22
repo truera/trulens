@@ -22,20 +22,20 @@ _RELEASE = True
 if not _RELEASE:
     _record_viewer = components.declare_component(
         # We give the component a simple, descriptive name
-        "record_viewer",
+        'record_viewer',
         # Pass `url` here to tell Streamlit that the component will be served
         # by the local dev server that you run via `npm run start`.
         # (This is useful while your component is in development.)
-        url="http://localhost:5173",
+        url='http://localhost:5173',
     )
 else:
     # When we're distributing a production version of the component, we'll
     # replace the `url` param with `path`, and point it to to the component's
     # build directory:
     parent_dir = os.path.dirname(os.path.abspath(__file__))
-    build_dir = os.path.join(parent_dir, "dist")
+    build_dir = os.path.join(parent_dir, 'dist')
     _record_viewer = components.declare_component(
-        "record_viewer", path=build_dir
+        'record_viewer', path=build_dir
     )
 
 
@@ -45,13 +45,13 @@ else:
 # our component's API: we can pre-process its input args, post-process its
 # output value, and add a docstring for users.
 def record_viewer(record_json, app_json, key=None):
-    """Create a new instance of "record_viewer", which produces a timeline 
+    """Create a new instance of "record_viewer", which produces a timeline
 
     Parameters
     ----------
     record_json: obj
         JSON of the record serialized by `json.loads`.
-    
+
     app_json: obj
         JSON of the app serialized by `json.loads`.
 
@@ -74,7 +74,7 @@ def record_viewer(record_json, app_json, key=None):
     # "default" is a special argument that specifies the initial return
     # value of the component before the user has interacted with it.
     component_value = _record_viewer(
-        record_json=record_json, app_json=app_json, key=key, default=""
+        record_json=record_json, app_json=app_json, key=key, default=''
     )
 
     return component_value

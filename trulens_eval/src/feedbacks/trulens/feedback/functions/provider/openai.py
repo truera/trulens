@@ -2,7 +2,6 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
-
 from trulens.feedback import Endpoint
 from trulens.feedback.functions.provider import LLMProvider
 from trulens.feedback.functions.provider.endpoint import OpenAIClient
@@ -28,9 +27,9 @@ class OpenAI(LLMProvider):
     Create an OpenAI Provider with out of the box feedback functions.
 
     !!! example
-    
+
         ```python
-        from trulens.feedback.provider.openai import OpenAI 
+        from trulens.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
         ```
 
@@ -45,7 +44,7 @@ class OpenAI(LLMProvider):
             and finally to the OpenAI client.
     """
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = 'gpt-3.5-turbo'
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
@@ -105,13 +104,13 @@ class OpenAI(LLMProvider):
         elif prompt is not None:
             completion = self.endpoint.client.chat.completions.create(
                 messages=[{
-                    "role": "system",
-                    "content": prompt
+                    'role': 'system',
+                    'content': prompt
                 }], **kwargs
             )
 
         else:
-            raise ValueError("`prompt` or `messages` must be specified.")
+            raise ValueError('`prompt` or `messages` must be specified.')
 
         return completion.choices[0].message.content
 
@@ -129,7 +128,7 @@ class OpenAI(LLMProvider):
         speech.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback.provider.openai import OpenAI
@@ -156,7 +155,7 @@ class OpenAI(LLMProvider):
         threatening speech.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback.provider.openai import OpenAI
@@ -184,7 +183,7 @@ class OpenAI(LLMProvider):
         self harm.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback.provider.openai import OpenAI
@@ -212,7 +211,7 @@ class OpenAI(LLMProvider):
         speech.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback.provider.openai import OpenAI
@@ -240,7 +239,7 @@ class OpenAI(LLMProvider):
         sexual minors.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback.provider.openai import OpenAI
@@ -269,7 +268,7 @@ class OpenAI(LLMProvider):
         violence.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback.provider.openai import OpenAI
@@ -297,7 +296,7 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback.provider.openai import OpenAI
@@ -325,7 +324,7 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback.provider.openai import OpenAI
@@ -352,7 +351,7 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback.provider.openai import OpenAI
@@ -377,7 +376,7 @@ class OpenAI(LLMProvider):
 class AzureOpenAI(OpenAI):
     """
     Out of the box feedback functions calling AzureOpenAI APIs. Has the same
-    functionality as OpenAI out of the box feedback functions, excluding the 
+    functionality as OpenAI out of the box feedback functions, excluding the
     moderation endpoint which is not supported by Azure. Please export the
     following env variables. These can be retrieved from https://oai.azure.com/
     .
@@ -405,7 +404,7 @@ class AzureOpenAI(OpenAI):
 
     # Sent to our openai client wrapper but need to keep here as well so that it
     # gets dumped when jsonifying.
-    deployment_name: str = pydantic.Field(alias="model_engine")
+    deployment_name: str = pydantic.Field(alias='model_engine')
 
     def __init__(
         self,
@@ -425,14 +424,14 @@ class AzureOpenAI(OpenAI):
         if CLASS_INFO in client_kwargs:
             del client_kwargs[CLASS_INFO]
 
-        if "model_engine" in client_kwargs:
+        if 'model_engine' in client_kwargs:
             # delete from client args
-            del client_kwargs["model_engine"]
+            del client_kwargs['model_engine']
         else:
             # but include in provider args
             kwargs['model_engine'] = deployment_name
 
-        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
+        kwargs['client'] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
 
         super().__init__(
             endpoint=None, **kwargs

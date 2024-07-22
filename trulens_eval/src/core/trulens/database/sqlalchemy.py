@@ -5,9 +5,8 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
-from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
-)
+from typing import (Any, ClassVar, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Type, Union)
 import warnings
 
 from alembic.ddl.impl import DefaultImpl
@@ -18,7 +17,6 @@ import sqlalchemy as sa
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
-
 from trulens import app as mod_app
 from trulens.database import base as mod_db
 from trulens.database import orm as mod_orm
@@ -56,13 +54,13 @@ class SnowflakeImpl(DefaultImpl):
 
 class SQLAlchemyDB(DB):
     """Database implemented using sqlalchemy.
-    
+
     See abstract class [DB][trulens_eval.database.base.DB] for method reference.
     """
 
     table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
-    """The prefix to use for all table names. 
-    
+    """The prefix to use for all table names.
+
     [DB][trulens_eval.database.base.DB] interface requirement.
     """
 
@@ -104,8 +102,8 @@ class SQLAlchemyDB(DB):
         if is_memory_sqlite(self.engine):
             warnings.warn(
                 UserWarning(
-                    "SQLite in-memory may not be threadsafe. "
-                    "See https://www.sqlite.org/threadsafe.html"
+                    'SQLite in-memory may not be threadsafe. '
+                    'See https://www.sqlite.org/threadsafe.html'
                 )
             )
 
@@ -125,19 +123,19 @@ class SQLAlchemyDB(DB):
     ) -> SQLAlchemyDB:
         """Process database-related configuration provided to the [Tru][trulens_eval.tru.Tru] class to
         create a database.
-        
+
         Emits warnings if appropriate.
         """
 
         if None not in (database_url, database_file):
             raise ValueError(
-                "Please specify at most one of `database_url` and `database_file`"
+                'Please specify at most one of `database_url` and `database_file`'
             )
 
         if database_file:
             warnings.warn(
                 (
-                    "`database_file` is deprecated, "
+                    '`database_file` is deprecated, '
                     "use `database_url` instead as in `database_url='sqlite:///filename'."
                 ),
                 DeprecationWarning,
@@ -145,7 +143,7 @@ class SQLAlchemyDB(DB):
             )
 
         if database_url is None:
-            database_url = f"sqlite:///{database_file or mod_db.DEFAULT_DATABASE_FILE}"
+            database_url = f'sqlite:///{database_file or mod_db.DEFAULT_DATABASE_FILE}'
 
         if 'table_prefix' not in kwargs:
             kwargs['table_prefix'] = database_prefix
@@ -156,17 +154,17 @@ class SQLAlchemyDB(DB):
         new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
-            "%s Tru initialized with db url %s ." %
+            '%s Tru initialized with db url %s .' %
             (text.UNICODE_SQUID, new_db.engine.url)
         )
         if database_redact_keys:
             print(
-                f"{text.UNICODE_LOCK} Secret keys will not be included in the database."
+                f'{text.UNICODE_LOCK} Secret keys will not be included in the database.'
             )
         else:
             print(
-                f"{text.UNICODE_STOP} Secret keys may be written to the database. "
-                "See the `database_redact_keys` option of `Tru` to prevent this."
+                f'{text.UNICODE_STOP} Secret keys may be written to the database. '
+                'See the `database_redact_keys` option of `Tru` to prevent this.'
             )
 
         return new_db
@@ -190,16 +188,16 @@ class SQLAlchemyDB(DB):
         # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
 
         engine_params = {
-            "url": url,
-            "pool_size": 10,
-            "pool_recycle": 300,
-            "pool_pre_ping": True,
+            'url': url,
+            'pool_size': 10,
+            'pool_recycle': 300,
+            'pool_pre_ping': True,
         }
 
         if not is_memory_sqlite(url=url):
             # These params cannot be given to memory-based sqlite engine.
-            engine_params["max_overflow"] = 2
-            engine_params["pool_use_lifo"] = True
+            engine_params['max_overflow'] = 2
+            engine_params['pool_use_lifo'] = True
 
         return cls(engine_params=engine_params, **kwargs)
 
@@ -208,7 +206,7 @@ class SQLAlchemyDB(DB):
         [DB.check_db_revision][trulens_eval.database.base.DB.check_db_revision]."""
 
         if self.engine is None:
-            raise ValueError("Database engine not initialized.")
+            raise ValueError('Database engine not initialized.')
 
         alembic_check_db_revision(self.engine, self.table_prefix)
 
@@ -216,7 +214,7 @@ class SQLAlchemyDB(DB):
         """See [DB.migrate_database][trulens_eval.database.base.DB.migrate_database]."""
 
         if self.engine is None:
-            raise ValueError("Database engine not initialized.")
+            raise ValueError('Database engine not initialized.')
 
         try:
             # Expect to get the the behind exception.
@@ -227,7 +225,7 @@ class SQLAlchemyDB(DB):
             )
 
             # If we get here, our db revision does not need upgrade.
-            logger.warning("Database does not need migration.")
+            logger.warning('Database does not need migration.')
 
         except DatabaseVersionException as e:
             if e.reason == DatabaseVersionException.Reason.BEHIND:
@@ -237,9 +235,9 @@ class SQLAlchemyDB(DB):
                 ### SCHEMA MIGRATION ###
                 if is_legacy_sqlite(self.engine):
                     raise RuntimeError(
-                        "Migrating legacy sqlite database is no longer supported. "
-                        "A database reset is required. This will delete all existing data: "
-                        "`tru.reset_database()`."
+                        'Migrating legacy sqlite database is no longer supported. '
+                        'A database reset is required. This will delete all existing data: '
+                        '`tru.reset_database()`.'
                     ) from e
 
                 else:
@@ -248,7 +246,7 @@ class SQLAlchemyDB(DB):
                     ### We might try copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first.
                     ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(
-                        self.engine, revision="head", prefix=self.table_prefix
+                        self.engine, revision='head', prefix=self.table_prefix
                     )
 
                 self._reload_engine(
@@ -277,12 +275,12 @@ class SQLAlchemyDB(DB):
                     for table_name in ['alembic_version'
                                       ] + [c._table_base_name
                                            for c in self.orm.registry.values()
-                                           if hasattr(c, "_table_base_name")]:
-                        old_version_table = f"{prior_prefix}{table_name}"
-                        new_version_table = f"{self.table_prefix}{table_name}"
+                                           if hasattr(c, '_table_base_name')]:
+                        old_version_table = f'{prior_prefix}{table_name}'
+                        new_version_table = f'{self.table_prefix}{table_name}'
 
                         logger.warning(
-                            "  %s -> %s", old_version_table, new_version_table
+                            '  %s -> %s', old_version_table, new_version_table
                         )
 
                         c.execute(
@@ -320,7 +318,7 @@ class SQLAlchemyDB(DB):
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
 
-            logger.info("{UNICODE_CHECK} added record %s", _rec.record_id)
+            logger.info('{UNICODE_CHECK} added record %s', _rec.record_id)
 
             return _rec.record_id
 
@@ -359,7 +357,7 @@ class SQLAlchemyDB(DB):
                 )
                 session.merge(_app)  # .add was not thread safe
 
-            logger.info("%s added app %s", UNICODE_CHECK, _app.app_id)
+            logger.info('%s added app %s', UNICODE_CHECK, _app.app_id)
 
             return _app.app_id
 
@@ -375,9 +373,9 @@ class SQLAlchemyDB(DB):
                                                              ).first()
             if _app:
                 session.delete(_app)
-                logger.info(f"{UNICODE_CHECK} deleted app {app_id}")
+                logger.info(f'{UNICODE_CHECK} deleted app {app_id}')
             else:
-                logger.warning(f"App {app_id} not found for deletion.")
+                logger.warning(f'App {app_id} not found for deletion.')
 
     def insert_feedback_definition(
         self, feedback_definition: mod_feedback_schema.FeedbackDefinition
@@ -398,7 +396,7 @@ class SQLAlchemyDB(DB):
                 session.merge(_fb_def)  # .add was not thread safe
 
             logger.info(
-                "%s added feedback definition %s", UNICODE_CHECK,
+                '%s added feedback definition %s', UNICODE_CHECK,
                 _fb_def.feedback_definition_id
             )
 
@@ -421,7 +419,7 @@ class SQLAlchemyDB(DB):
                     (fb.feedback_definition_id, json.loads(fb.feedback_json))
                     for fb in fb_defs
                 ),
-                columns=["feedback_definition_id", "feedback_json"],
+                columns=['feedback_definition_id', 'feedback_json'],
             )
 
     def insert_feedback(
@@ -456,10 +454,10 @@ class SQLAlchemyDB(DB):
             elif status == mod_feedback_schema.FeedbackResultStatus.FAILED:
                 icon = UNICODE_STOP
             else:
-                icon = "???"
+                icon = '???'
 
             logger.info(
-                "%s feedback result %s %s %s", icon, _feedback_result.name,
+                '%s feedback result %s %s %s', icon, _feedback_result.name,
                 status.name, _feedback_result.feedback_result_id
             )
 
@@ -534,7 +532,7 @@ class SQLAlchemyDB(DB):
 
         with self.session.begin() as session:
             q = self._feedback_query(
-                count=True, **locals_except("self", "session")
+                count=True, **locals_except('self', 'session')
             )
 
             results = session.query(self.orm.FeedbackResult.status,
@@ -562,7 +560,7 @@ class SQLAlchemyDB(DB):
         """See [DB.get_feedback][trulens_eval.database.base.DB.get_feedback]."""
 
         with self.session.begin() as session:
-            q = self._feedback_query(**locals_except("self", "session"))
+            q = self._feedback_query(**locals_except('self', 'session'))
 
             results = (row[0] for row in session.execute(q))
 
@@ -645,7 +643,7 @@ def _extract_feedback_results(
             _result.cost_json,  # why is cost_json not parsed?
             json.loads(_result.record.perf_json)
             if _result.record.perf_json != MIGRATION_UNKNOWN_STR else no_perf,
-            json.loads(_result.calls_json)["calls"],
+            json.loads(_result.calls_json)['calls'],
             json.loads(_result.feedback_definition.feedback_json)
             if _result.feedback_definition is not None else None,
             json.loads(_result.record.record_json),
@@ -671,11 +669,11 @@ def _extract_feedback_results(
             'feedback_json',
             'record_json',
             'app_json',
-            "type",
+            'type',
         ],
     )
-    df["latency"] = _extract_latency(df["perf_json"])
-    df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
+    df['latency'] = _extract_latency(df['perf_json'])
+    df = pd.concat([df, _extract_tokens_and_cost(df['cost_json'])], axis=1)
     return df
 
 
@@ -699,7 +697,7 @@ def _extract_latency(
         if perf_json is None:
             return 0
 
-        raise ValueError(f"Failed to parse perf_json: {perf_json}")
+        raise ValueError(f'Failed to parse perf_json: {perf_json}')
 
     return pd.Series(data=(_extract(p) for p in series))
 
@@ -717,19 +715,19 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
 
     return pd.DataFrame(
         data=(_extract(c) for c in cost_json),
-        columns=["total_tokens", "total_cost"],
+        columns=['total_tokens', 'total_cost'],
     )
 
 
 class AppsExtractor:
     """Utilities for creating dataframes from orm instances."""
 
-    app_cols = ["app_id", "app_json", "type"]
+    app_cols = ['app_id', 'app_json', 'type']
     rec_cols = [
-        "record_id", "input", "output", "tags", "record_json", "cost_json",
-        "perf_json", "ts"
+        'record_id', 'input', 'output', 'tags', 'record_json', 'cost_json',
+        'perf_json', 'ts'
     ]
-    extra_cols = ["latency", "total_tokens", "total_cost"]
+    extra_cols = ['latency', 'total_tokens', 'total_cost']
     all_cols = app_cols + rec_cols + extra_cols
 
     def __init__(self):
@@ -751,7 +749,7 @@ class AppsExtractor:
                 with `apps`.
         """
 
-        assert apps is None or records is None, "`apps` and `records` are mutually exclusive"
+        assert apps is None or records is None, '`apps` and `records` are mutually exclusive'
 
         if apps is not None:
             df = pd.concat(self.extract_apps(apps))
@@ -763,11 +761,11 @@ class AppsExtractor:
         else:
             raise ValueError("'apps` or `records` must be provided")
 
-        df["latency"] = _extract_latency(df["perf_json"])
+        df['latency'] = _extract_latency(df['perf_json'])
         df.reset_index(
             drop=True, inplace=True
         )  # prevent index mismatch on the horizontal concat that follows
-        df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
+        df = pd.concat([df, _extract_tokens_and_cost(df['cost_json'])], axis=1)
         return df, list(self.feedback_columns)
 
     def extract_apps(
@@ -803,7 +801,7 @@ class AppsExtractor:
                     df = pd.DataFrame(data=self.extract_records(_recs))
 
                     for col in self.app_cols:
-                        if col == "type":
+                        if col == 'type':
                             # Previous DBs did not contain entire app so we cannot
                             # deserialize AppDefinition here unless we fix prior DBs
                             # in migration. Because of this, loading just the
@@ -821,10 +819,10 @@ class AppsExtractor:
                     yield df
             except OperationalError as e:
                 print(
-                    "Error encountered while attempting to retrieve an app. "
-                    "This issue may stem from a corrupted database."
+                    'Error encountered while attempting to retrieve an app. '
+                    'This issue may stem from a corrupted database.'
                 )
-                print(f"Error details: {e}")
+                print(f'Error details: {e}')
 
     def extract_records(self,
                         records: Iterable[orm.Record]) -> Iterable[pd.Series]:
@@ -837,7 +835,7 @@ class AppsExtractor:
                 for _res in _rec.feedback_results:
 
                     calls[_res.name].append(
-                        json.loads(_res.calls_json)["calls"]
+                        json.loads(_res.calls_json)['calls']
                     )
                     if _res.multi_result is not None and (multi_result :=
                                                           json.loads(
@@ -845,7 +843,7 @@ class AppsExtractor:
                                                           )) is not None:
                         for key, val in multi_result.items():
                             if val is not None:  # avoid getting Nones into np.mean
-                                name = f"{_res.name}:::{key}"
+                                name = f'{_res.name}:::{key}'
                                 values[name] = val
                                 self.feedback_columns.add(name)
                     elif _res.result is not None:  # avoid getting Nones into np.mean
@@ -854,23 +852,23 @@ class AppsExtractor:
 
                 row = {
                     **{k: np.mean(v) for k, v in values.items()},
-                    **{k + "_calls": flatten(v) for k, v in calls.items()},
+                    **{k + '_calls': flatten(v) for k, v in calls.items()},
                 }
 
                 for col in self.rec_cols:
                     row[col] = datetime.fromtimestamp(
                         _rec.ts
-                    ).isoformat() if col == "ts" else getattr(_rec, col)
+                    ).isoformat() if col == 'ts' else getattr(_rec, col)
 
                 yield row
 
             except Exception as e:
                 # Handling unexpected errors, possibly due to database issues.
                 print(
-                    "Error encountered while attempting to retrieve feedback results. "
-                    "This issue may stem from a corrupted database."
+                    'Error encountered while attempting to retrieve feedback results. '
+                    'This issue may stem from a corrupted database.'
                 )
-                print(f"Error details: {e}")
+                print(f'Error details: {e}')
 
 
 def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:

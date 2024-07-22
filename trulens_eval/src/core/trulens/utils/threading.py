@@ -24,12 +24,12 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
-A = TypeVar("A")
+A = TypeVar('A')
 
 
 class Thread(fThread):
     """Thread that wraps target with stack/context tracking.
-    
+
     App components that do not use this thread class might not be properly
     tracked."""
 
@@ -65,7 +65,7 @@ threading.Thread = Thread
 class ThreadPoolExecutor(fThreadPoolExecutor):
     """A ThreadPoolExecutor that keeps track of the stack prior to each thread's
     invocation.
-    
+
     Apps that do not use this thread pool might not be properly tracked.
     """
 
@@ -121,13 +121,13 @@ class TP(SingletonPerName):  # "thread processing"
     """How long to wait (seconds) for any task before restarting it."""
 
     def __init__(self):
-        if safe_hasattr(self, "thread_pool"):
+        if safe_hasattr(self, 'thread_pool'):
             # Already initialized as per SingletonPerName mechanism.
             return
 
         # Run tasks started with this class using this pool.
         self.thread_pool = fThreadPoolExecutor(
-            max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit"
+            max_workers=TP.MAX_THREADS, thread_name_prefix='TP.submit'
         )
 
         # Keep a seperate pool for threads whose function is only to wait for
@@ -136,7 +136,7 @@ class TP(SingletonPerName):  # "thread processing"
         # never be run because the thread pool is filled with wait threads.
         self.thread_pool_debug_tasks = ThreadPoolExecutor(
             max_workers=TP.MAX_THREADS,
-            thread_name_prefix="TP.submit with debug timeout"
+            thread_name_prefix='TP.submit with debug timeout'
         )
 
         self.completed_tasks = 0
@@ -161,15 +161,15 @@ class TP(SingletonPerName):  # "thread processing"
 
         except TimeoutError as e:
             logger.error(
-                f"Run of {func.__name__} in {threading.current_thread()} timed out after {TP.DEBUG_TIMEOUT} second(s).\n"
-                f"{code_line(func)}"
+                f'Run of {func.__name__} in {threading.current_thread()} timed out after {TP.DEBUG_TIMEOUT} second(s).\n'
+                f'{code_line(func)}'
             )
 
             raise e
 
         except Exception as e:
             logger.warning(
-                f"Run of {func.__name__} in {threading.current_thread()} failed with: {e}"
+                f'Run of {func.__name__} in {threading.current_thread()} failed with: {e}'
             )
             raise e
 

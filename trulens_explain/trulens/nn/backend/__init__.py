@@ -32,9 +32,9 @@ class OutOfMemory(RuntimeError):
         self.settings = settings
 
     def __str__(self):
-        message = f"Ran out of memory ({self.kwargs}). Consider reducing memory-impactful parameters.\n"
+        message = f'Ran out of memory ({self.kwargs}). Consider reducing memory-impactful parameters.\n'
         for setting in self.settings:
-            message += "\t" + setting + "\n"
+            message += '\t' + setting + '\n'
 
         return message
 
@@ -44,7 +44,7 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
     """
     Context manager to catch device memory issues and report better suggestions
     than default exceptions.
-    
+
     Usage:
 
         with memory_suggestions("batch size=1000"):
@@ -75,7 +75,7 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
         raise OutOfMemory(settings=e.settings + settings, **e.kwargs)
 
     except RuntimeError as e:
-        if "out of memory" in str(e):  # cuda out of memory exception
+        if 'out of memory' in str(e):  # cuda out of memory exception
             raise OutOfMemory(settings=settings, **kwargs)
         else:
             # TODO: catch similar exceptions in other backends
@@ -134,11 +134,11 @@ def tile(what: TensorAKs, onto: TensorAKs) -> TensorAKs:
 
         if val.shape[0] != inputs_dim:
             tru_logger.warning(
-                f"Value {val} of shape {val.shape} is assumed to not be "
-                f"batchable due to its shape not matching prior batchable "
-                f"values of shape ({inputs_dim},...). If this is "
-                f"incorrect, make sure its first dimension matches prior "
-                f"batchable values."
+                f'Value {val} of shape {val.shape} is assumed to not be '
+                f'batchable due to its shape not matching prior batchable '
+                f'values of shape ({inputs_dim},...). If this is '
+                f'incorrect, make sure its first dimension matches prior '
+                f'batchable values.'
             )
             return val
 
@@ -152,7 +152,7 @@ def tile(what: TensorAKs, onto: TensorAKs) -> TensorAKs:
             return B.tile(val, repeat_shape)
         else:
             tru_logger.debug(
-                f"Ignoring tiling of unhandled val {val.__class__.__name__}"
+                f'Ignoring tiling of unhandled val {val.__class__.__name__}'
             )
             return val
 

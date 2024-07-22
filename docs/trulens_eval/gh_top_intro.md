@@ -1,6 +1,6 @@
 <!---
 start of trulens_eval/gh_top_intro.md
-NOTE: This content is from trulens_eval/gh_top_intro.md and is merged into
+NOTE: This content is from trulens/gh_top_intro.md and is merged into
 README.md . If you are editing README.md, your changes will be overwritten.
 -->
 
@@ -37,7 +37,7 @@ Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help
 you to identify failure modes & systematically iterate to improve your
 application.
 
-Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/), 
+Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/),
 [The RAG Triad](https://www.trulens.org/trulens_eval/getting_started/core_concepts/rag_triad/),
 and [Honest, Harmless and Helpful Evals](https://www.trulens.org/trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals/).
 

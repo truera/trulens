@@ -1,10 +1,10 @@
-""" 
+"""
 The TruLens library is designed to support models implemented via a variety of
-different popular python neural network frameworks: Keras (with TensorFlow or 
-Theano backend), TensorFlow, and Pytorch. In order provide the same 
-functionality to models made with frameworks that implement things (e.g., 
-gradient computations) a number of different ways, we provide an adapter class 
-to provide a unified model API. In order to compute attributions for a model, 
+different popular python neural network frameworks: Keras (with TensorFlow or
+Theano backend), TensorFlow, and Pytorch. In order provide the same
+functionality to models made with frameworks that implement things (e.g.,
+gradient computations) a number of different ways, we provide an adapter class
+to provide a unified model API. In order to compute attributions for a model,
 it should be wrapped as a `ModelWrapper` instance.
 """
 from abc import ABC as AbstractBaseClass
@@ -37,9 +37,9 @@ from trulens.utils.typing import Tensors
 
 class ModelWrapper(AbstractBaseClass):
     """
-    A wrapper interface for models that exposes the components needed for 
-    computing attributions. This is intended to produce a consistent 
-    functionality for all models regardless of the backend/library the model is 
+    A wrapper interface for models that exposes the components needed for
+    computing attributions. This is intended to produce a consistent
+    functionality for all models regardless of the backend/library the model is
     implemented with.
     """
 
@@ -63,7 +63,7 @@ class ModelWrapper(AbstractBaseClass):
         """
         Parameters:
             model:
-                The model to wrap. For the TensorFlow 1 backend, this is 
+                The model to wrap. For the TensorFlow 1 backend, this is
                 expected to be a graph object.
 
             logit_layer:
@@ -72,8 +72,8 @@ class ModelWrapper(AbstractBaseClass):
 
             replace_softmax:
                 _Supported for Keras models only._ If true, the activation
-                function in the softmax layer (specified by `softmax_layer`) 
-                will be changed to a `'linear'` activation. 
+                function in the softmax layer (specified by `softmax_layer`)
+                will be changed to a `'linear'` activation.
 
             softmax_layer:
                 _Supported for Keras models only._ Specifies the layer that
@@ -110,7 +110,7 @@ class ModelWrapper(AbstractBaseClass):
                 graph.
 
             session:
-                _Optional, for use with TensorFlow 1 graph models only._ A 
+                _Optional, for use with TensorFlow 1 graph models only._ A
                 `tf.Session` object to run the model graph in. If `None`, a new
                 temporary session will be generated every time the model is run.
         """
@@ -168,10 +168,10 @@ class ModelWrapper(AbstractBaseClass):
         for integrated gradients which produces one instance for each unit of
         resolution). If we have dimensions:
 
-            intervention: (B1, ...) 
-            
+            intervention: (B1, ...)
+
             model_inputs: (B2, ...)
-            
+
             doi_cut: (B2, ...)
 
         Then model_inputs are tiled B1/B2 times so that evaluating model on
@@ -180,14 +180,14 @@ class ModelWrapper(AbstractBaseClass):
         intervention.
 
         Parameters:
-            model_args, model_kwargs: 
+            model_args, model_kwargs:
                 The args and kwargs given to the call method of a model. This
                 should represent the instances to obtain attributions for,
                 assumed to be a *batched* input. if `self.model` supports
                 evaluation on *data tensors*, the  appropriate tensor type may
                 be used (e.g., Pytorch models may accept Pytorch tensors in
                 addition to `np.ndarray`s). The shape of the inputs must match
-                the input shape of `self.model`. 
+                the input shape of `self.model`.
 
             doi_cut:
                 Cut defining where the Distribution of Interest is applied. The
@@ -199,14 +199,14 @@ class ModelWrapper(AbstractBaseClass):
                 Cut defining the layer(s) up to which forward propagation should
                 be done. This will be the layer over which a quantity of
                 interest can be defined. If `to_cut` is `None`, the output of
-                the model will be used (i.e., `OutputCut()`). 
-            
+                the model will be used (i.e., `OutputCut()`).
+
             attribution_cut:
                 Cut defining where the attributions are collected. If
                 `attribution_cut` is `None`, it will be assumed to be the
                 `doi_cut`. `attribution_cut` should not preceed `doi_cut` in the
-                model architecture. 
-            
+                model architecture.
+
             intervention:
                 The intervention created from the Distribution of Interest. If
                 `intervention` is `None`, then it is equivalent to the point
@@ -292,9 +292,9 @@ class ModelWrapper(AbstractBaseClass):
 
                     if len(model_inputs.kwargs) > 0:
                         tru_logger.warning(
-                            "Intervention for InputCut DoI specified but contains only positional arguments. "
-                            "The rest will be taken from model_kwargs. If you need to intervene on keyword "
-                            "arguments, provide the intervention as a ModelInputs container."
+                            'Intervention for InputCut DoI specified but contains only positional arguments. '
+                            'The rest will be taken from model_kwargs. If you need to intervene on keyword '
+                            'arguments, provide the intervention as a ModelInputs container.'
                         )
 
             else:
@@ -308,7 +308,7 @@ class ModelWrapper(AbstractBaseClass):
             if intervention is None:
                 # Any situations where one wants to specify a non-InputCut intervention with input arguments?
                 raise ValueError(
-                    "intervention needs to be given for DoI cuts that are not InputCut"
+                    'intervention needs to be given for DoI cuts that are not InputCut'
                 )
             else:
                 # Using many_of_om here as sometimes interventions are passed in as single tensors but args needs a list.
@@ -346,7 +346,7 @@ class ModelWrapper(AbstractBaseClass):
     ) -> OM[Outputs, OM[Inputs, TensorLike]]:
         """
         **_Used internally by `AttributionMethod`._**
-        
+
         Runs the model beginning at `doi_cut` on input `intervention`, and
         returns the gradients calculated from `to_cut` with respect to
         `attribution_cut` of the quantity of interest.
@@ -354,16 +354,16 @@ class ModelWrapper(AbstractBaseClass):
         Parameters:
             qoi: a Quantity of Interest
                 This method will accumulate all gradients of the qoi w.r.t
-                `attribution_cut`. 
+                `attribution_cut`.
 
-            model_args, model_kwargs: 
+            model_args, model_kwargs:
                 The args and kwargs given to the call method of a model. This
                 should represent the instances to obtain attributions for,
                 assumed to be a *batched* input. if `self.model` supports
                 evaluation on *data tensors*, the  appropriate tensor type may
                 be used (e.g., Pytorch models may accept Pytorch tensors in
                 addition to `np.ndarray`s). The shape of the inputs must match
-                the input shape of `self.model`. 
+                the input shape of `self.model`.
 
             doi_cut:
                 Cut defining where the Distribution of Interest is applied. The
@@ -377,12 +377,12 @@ class ModelWrapper(AbstractBaseClass):
                 (i.e., `OutputCut()`). `to_cut` cannot preceed `doi_cut` in the
                 model architecture, i.e. the gradient of `doi_cut` w.r.t.
                 `attribution_cut` must be defined.
-            
+
             attribution_cut:
                 Cut defining where the attributions are collected. If
                 `attribution_cut` is `None`, it will be assumed to be the
                 `doi_cut`.
-            
+
             intervention:
                 The intervention created from the Distribution of Interest. If
                 `intervention` is `None`, then it is equivalent to the point
@@ -396,7 +396,7 @@ class ModelWrapper(AbstractBaseClass):
             (backend.Tensor or np.ndarray) for each attribution_cut input, for each qoi output
                 the gradients of `qoi` w.r.t. `attribution_cut`, keeping same
                 type as the input.
-                If attribution_cut has multiple inputs, return a list for each. 
+                If attribution_cut has multiple inputs, return a list for each.
                 If qoi has multiple outputs, returns a list of the above for each.
         """
 

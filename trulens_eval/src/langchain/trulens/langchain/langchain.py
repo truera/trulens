@@ -26,11 +26,11 @@ class Prompt(app.Prompt, app.LangChainComponent):
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name="langchain.prompts.base",
-            class_name="BasePromptTemplate"
+            module_name='langchain.prompts.base',
+            class_name='BasePromptTemplate'
         ) or cls.noserio_issubclass(
-            module_name="langchain.schema.prompt_template",
-            class_name="BasePromptTemplate"
+            module_name='langchain.schema.prompt_template',
+            class_name='BasePromptTemplate'
         )  # langchain >= 0.230
 
 
@@ -46,7 +46,7 @@ class LLM(app.LLM, app.LangChainComponent):
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name="langchain.llms.base", class_name="BaseLLM"
+            module_name='langchain.llms.base', class_name='BaseLLM'
         )
 
 
@@ -63,7 +63,7 @@ def constructor_of_class(cls: Class) -> Type[app.LangChainComponent]:
         if view.class_is(cls):
             return view
 
-    raise TypeError(f"Unknown llama_index component type with class {cls}")
+    raise TypeError(f'Unknown llama_index component type with class {cls}')
 
 
 def component_of_json(json: JSON) -> app.LangChainComponent:

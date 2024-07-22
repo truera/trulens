@@ -41,7 +41,7 @@ Some wrappers include additional shorthands:
   Usage:
 
   ```python
-  from trulens_eval import TruLlama
+  from trulens import TruLlama
   source_nodes = TruLlama.select_source_nodes(query_engine)
   ```
 
@@ -51,7 +51,7 @@ Some wrappers include additional shorthands:
   Usage:
 
   ```python
-  from trulens_eval import TruLlama
+  from trulens import TruLlama
   context = TruLlama.select_context(query_engine)
   ```
 
@@ -63,7 +63,7 @@ Some wrappers include additional shorthands:
   Usage:
 
   ```python
-  from trulens_eval import TruChain
+  from trulens import TruChain
   context = TruChain.select_context(retriever_chain)
   ```
 
@@ -75,6 +75,6 @@ Some wrappers include additional shorthands:
   Usage:
 
   ```python
-  from trulens_eval.app import App
+  from trulens.app import App
   context = App.select_context(rag_app)
   ```

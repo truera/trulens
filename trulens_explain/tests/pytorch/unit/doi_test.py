@@ -5,13 +5,14 @@ os.environ['TRULENS_BACKEND'] = 'pytorch'
 from unittest import main
 from unittest import TestCase
 
-from tests.unit.doi_test_base import DoiTestBase
 from torch import Tensor
 from torch.nn import Linear
 from torch.nn import Module
 from torch.nn import ReLU
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
+
+from tests.unit.doi_test_base import DoiTestBase
 
 
 class DoiTest(DoiTestBase, TestCase):
@@ -44,8 +45,8 @@ class DoiTest(DoiTestBase, TestCase):
         self.model = get_model_wrapper(DoubleExponential())
 
         self.layer0 = None
-        self.layer1 = "layer1"
-        self.layer2 = "layer2"
+        self.layer1 = 'layer1'
+        self.layer2 = 'layer2'
 
 
 if __name__ == '__main__':

@@ -1,10 +1,10 @@
 """
-Type aliases and data container classes. 
+Type aliases and data container classes.
 
 Large part of these utilities are meant to support a design decision: public
-methods are permissive in the types they accept while private methods are not. 
+methods are permissive in the types they accept while private methods are not.
 
-For example, 
+For example,
 
     attributions(*model_args: ArgsLike, **model_kwargs: ModelKwargs)
 
@@ -13,7 +13,7 @@ numpy array. For models that take in multiple inputs, model_args must be some
 iterable over Tensors or numpy arrays. The implication is that the user can call
 this method as in "attributions(inputA)" instead of attributions([inputA]). The
 other permissibility is that both backend Tensors and numpy arrays are supported
-and the method returns results in the same type. 
+and the method returns results in the same type.
 
 List of flexible typings:
 
@@ -21,7 +21,7 @@ List of flexible typings:
       This is indicated by the `ArgsLike` type alias (paraphrased):
 
       ``` ArgsLike[V] = Union[
-        V, Inputs[V] # len != 1 
+        V, Inputs[V] # len != 1
       ]
       ```
 
@@ -66,7 +66,7 @@ List of flexible typings:
       a Tensors (includes ModelInputs) structure. These correspond to single
       positional arg, multiple positional args, keyword args, and (both
       positional and keyword args).
-    
+
         - ModelWrapper.fprop: intervention argument, see InterventionLike
           (paraphrased):
 
@@ -104,13 +104,13 @@ Dealing with Magic Numbers for Axes Indices
     Some multi-dimensional (or nested) containers contain type hint and
     annotations for order of axes. For example AttributionResults:
 
-    AttributionResult.axes == 
+    AttributionResult.axes ==
 
     {'attributions': [
         trulens.utils.typing.Outputs,
         trulens.utils.typing.Inputs,
         typing.Union[numpy.ndarray, ~Tensor] # == TensorLike
-     ], 
+     ],
      'gradients': [
          trulens.utils.typing.Outputs,
          trulens.utils.typing.Inputs,
@@ -126,7 +126,7 @@ Dealing with Magic Numbers for Axes Indices
      You can then lookup an axis of interest:
 
      - gradients_axes = AttributionResult.axes['gradients']
-     - gradients_axes.index(Outputs) == 0 
+     - gradients_axes.index(Outputs) == 0
      - gradients_axes.index(TensorLike) == 3
 
 """
@@ -140,23 +140,21 @@ import collections
 from dataclasses import dataclass
 from dataclasses import field
 from inspect import signature
-from typing import (
-    Callable, Dict, Generic, Iterable, List, Optional, Tuple, Type, TypeVar,
-    Union
-)
+from typing import (Callable, Dict, Generic, Iterable, List, Optional, Tuple,
+                    Type, TypeVar, Union)
 
 import numpy as np
 
 # C for "container"
-C = TypeVar("C")
-C1 = TypeVar("C1")
-C2 = TypeVar("C2")
+C = TypeVar('C')
+C1 = TypeVar('C1')
+C2 = TypeVar('C2')
 # K for "key"
-K = TypeVar("K")
+K = TypeVar('K')
 # V for "value"
-V = TypeVar("V")
+V = TypeVar('V')
 # Another, different value
-U = TypeVar("U")
+U = TypeVar('U')
 
 
 # Lists that represent multiple inputs to some neural layer.
@@ -185,9 +183,9 @@ OM = Union[V, C]  # actually C[V] but cannot get python to accept that
 OMNested = Union[OM[V, C], 'OMNested[C, V]']
 
 # Each backend should define this.
-Tensor = TypeVar("Tensor")
+Tensor = TypeVar('Tensor')
 
-ModelLike = Union['tf.Graph',  # tf1 
+ModelLike = Union['tf.Graph',  # tf1
                   'keras.Model',  # keras
                   'tensorflow.keras.Model',  # tf2
                   'torch.nn.Module',  # pytorch
@@ -239,7 +237,7 @@ def nested_axes(typ):
 
     if len(args) != 1:
         raise ValueError(
-            f"Cannot extract axis order from multi-argument type {typ}."
+            f'Cannot extract axis order from multi-argument type {typ}.'
         )
 
     ret = [typ.__origin__] + nested_axes(args[0])
@@ -279,7 +277,7 @@ def nested_map(
     check_accessor: function
         A way to make instance checks from the container level.
     nest: int
-        Another way to specify which level to apply the function. This is the only way to apply a fn on a DATA_CONTAINER_TYPE. 
+        Another way to specify which level to apply the function. This is the only way to apply a fn on a DATA_CONTAINER_TYPE.
         Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors and functionally are not an actual container.
     Returns
     ------
@@ -329,7 +327,7 @@ def nested_zip(y1: OMNested[C, U],
     y2:  non-collective object or a nested list/tuple of objects
         The leaf objects will be zipped.
     nest: int
-        A way to specify which level to apply the zip. This is the only way to apply a zip on a DATA_CONTAINER_TYPE. 
+        A way to specify which level to apply the zip. This is the only way to apply a zip on a DATA_CONTAINER_TYPE.
         Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors and functionally are not an actual container.
     Returns
     ------
@@ -368,12 +366,12 @@ def nested_cast(
     )
 
 
-def tab(s: str, tab: str = "  "):
+def tab(s: str, tab: str = '  '):
     """
     Prepend `tab` to each line of input.
     """
 
-    return "\n".join(map(lambda ss: tab + ss, s.split("\n")))
+    return '\n'.join(map(lambda ss: tab + ss, s.split('\n')))
 
 
 def nested_str(items: OMNested[C, TensorLike]) -> str:
@@ -381,16 +379,16 @@ def nested_str(items: OMNested[C, TensorLike]) -> str:
     Generate string with shape information of the contents of given `items`.
     """
 
-    ret = ""
+    ret = ''
 
     if isinstance(items, DATA_CONTAINER_TYPE):
-        ret = f"[{len(items)}\n"
-        inner = "\n".join(map(nested_str, items))
-        ret += tab(inner) + "\n]"
+        ret = f'[{len(items)}\n'
+        inner = '\n'.join(map(nested_str, items))
+        ret += tab(inner) + '\n]'
 
     else:
-        if hasattr(items, "shape"):
-            ret += f"{items.__class__.__name__} {items.dtype} {items.shape}"
+        if hasattr(items, 'shape'):
+            ret += f'{items.__class__.__name__} {items.dtype} {items.shape}'
         else:
             ret += str(items)
 
@@ -410,7 +408,7 @@ def TensorLike_caster(backend: 'Backend',
     elif issubclass(astype, backend.Tensor):
         caster = backend.as_tensor
     else:
-        raise ValueError(f"Cannot cast unhandled type {astype}.")
+        raise ValueError(f'Cannot cast unhandled type {astype}.')
 
     return caster
 
@@ -454,14 +452,14 @@ def many_of_om(args: OM[C, V], innertype: Type = None) -> 'C[V]':
     elif innertype is None or isinstance(args, innertype):
         return [args]  # want C(args) but cannot materialize C in python
     else:
-        raise ValueError(f"Unhandled One-Or-More type {type(args)}")
+        raise ValueError(f'Unhandled One-Or-More type {type(args)}')
 
 
 def om_of_many(inputs: 'C[V]') -> OM[C, V]:
     """
     If there is more than 1 thing in container, will remain a container,
     otherwise will become V (typically TensorLike).
-    
+
     Opposite of `many_of_om`.
     """
 
@@ -492,7 +490,7 @@ class IndexableUtils:
             l = tuple(l)
         else:
             raise ValueError(
-                f"list or tuple expected but got {l.__class__.__name__}"
+                f'list or tuple expected but got {l.__class__.__name__}'
             )
 
         return l
@@ -597,7 +595,7 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
 
         # Check to make sure we don't accidentally set args to a single element.
         if not isinstance(args, DATA_CONTAINER_TYPE):
-            raise ValueError(f"container expected but is {args.__class__}")
+            raise ValueError(f'container expected but is {args.__class__}')
 
     def __len__(self):
         return len(self.args) + len(self.kwargs)
@@ -684,7 +682,7 @@ def accepts_model_inputs(func: Callable) -> bool:
     """Determine whether the given callable takes in model inputs or just
     activations."""
 
-    return "model_inputs" in signature(func).parameters
+    return 'model_inputs' in signature(func).parameters
 
 
 # Baselines are either explicit or computable from the same data as sent to DoI
@@ -702,16 +700,16 @@ InterventionLike = Union[ArgsLike[TensorLike], KwargsLike, Tensors]
 def render_object(obj, keys=None):
     """Render an instance of some class in a concise manner."""
 
-    temp = obj.__class__.__name__ + "("
+    temp = obj.__class__.__name__ + '('
 
     if keys is None:
         keys = dir(obj)
 
     vals = []
     for k in keys:
-        vals.append(f"{k}={getattr(obj, k)}")
+        vals.append(f'{k}={getattr(obj, k)}')
 
-    temp += ",".join(vals) + ")"
+    temp += ','.join(vals) + ')'
 
     return temp
 
@@ -723,22 +721,22 @@ def float_size(name: str) -> int:
     # this is hard to generalize. Just guessing based on bitlengths in names for
     # now.
 
-    if name == "double":
-        name = "float64"
+    if name == 'double':
+        name = 'float64'
 
-    if "float" not in name:
-        raise ValueError("Type name {name} does not refer to a float.")
+    if 'float' not in name:
+        raise ValueError('Type name {name} does not refer to a float.')
 
-    if name == "float":
+    if name == 'float':
         return 4
 
-    if "128" in name:
+    if '128' in name:
         return 16
-    elif "64" in name:
+    elif '64' in name:
         return 8
-    elif "32" in name:
+    elif '32' in name:
         return 4
-    elif "16" in name:
+    elif '16' in name:
         return 2
 
-    raise ValueError(f"Cannot guess size of {name}")
+    raise ValueError(f'Cannot guess size of {name}')

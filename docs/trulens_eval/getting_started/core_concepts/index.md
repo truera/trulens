@@ -39,9 +39,9 @@ General and 🦑_TruLens-Eval_-specific concepts.
   components include:
 
   - `Retriever`
-  
+
   - `Memory`
-  
+
   - `Tool`
 
   - `Agent`
@@ -69,11 +69,11 @@ General and 🦑_TruLens-Eval_-specific concepts.
   specializes its original training data. Fine-tuning aims to preserve the
   generality of the original and transfer of its capabilities to specialized
   tasks. Examples include fining-tuning on:
-  
+
   - financial articles
-  
+
   - medical notes
-  
+
   - synthetic languages (programming or otherwise)
 
   While fine-tuning generally requires access to the original model parameters,
@@ -144,7 +144,7 @@ General and 🦑_TruLens-Eval_-specific concepts.
 - `Record`. A "record" of the execution of a single execution of an app. Single
   execution means invocation of some top-level app method. Corresponds to
   [Record][trulens_eval.schema.record.Record]
-  
+
     !!! note
         This will be renamed to `Trace` in the future.
 

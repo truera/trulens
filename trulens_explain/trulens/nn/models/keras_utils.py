@@ -7,14 +7,14 @@ from trulens.utils.typing import om_of_many
 
 
 def hash_tensor(tensor):
-    if hasattr(tensor, "ref"):
+    if hasattr(tensor, 'ref'):
         return tensor.ref()
     else:
         return tensor
 
 
 def unhash_tensor(tensor_ref):
-    if hasattr(tensor_ref, "deref"):
+    if hasattr(tensor_ref, 'deref'):
         return tensor_ref.deref()
     else:
         return tensor_ref
@@ -38,7 +38,7 @@ def get_layer_input_paths(model):
 
     def recurse_outputs(obj, prefix=None):
         """Given a possibly nested data structure, return a mapping from Tensors to their path in the data structure.
-        
+
         Primitives used:
             str: represent dictionary keys
             int: represent list indexes or dictionary keys
@@ -68,7 +68,7 @@ def get_layer_input_paths(model):
                 except KeyError:
                     continue
             raise ValueError(
-                f"Unable to find matching layer in {layers}for arg {a}"
+                f'Unable to find matching layer in {layers}for arg {a}'
             )
 
         if B.is_tensor(obj):
@@ -78,7 +78,7 @@ def get_layer_input_paths(model):
         elif isinstance(obj, collections.abc.Iterable):
             return [path_from_tensor(a) for a in obj]
         else:
-            raise ValueError("Invalid argument found")
+            raise ValueError('Invalid argument found')
 
     layer_outputs = {}
     layer_input_paths = {}
@@ -117,8 +117,8 @@ def get_layer_input_paths(model):
 
                 if layer.name not in layer_input_paths:
                     layer_input_paths[layer.name] = {
-                        "args": arg_paths,
-                        "kwargs": kwarg_paths
+                        'args': arg_paths,
+                        'kwargs': kwarg_paths
                     }
                 else:
                     layer_input_paths[layer.name]['args'].extend(arg_paths)
@@ -137,13 +137,13 @@ def get_layer_input_tensors(
     ----------
     layer : keras.layers.Layer
         The layer to get the input tensors for
-    
+
     layer_outputs : Dict[keras.layers.Layer, Tensor]
         Mapping of previous layer to layer outputs
 
     layer_input_paths : Dict[str, (str, List[str], Dict[str, str])]
         Mapping from each layer name to their input tensor's mapping from the previous layer
-    
+
     keras_module : Python Module
         Either the keras module or tf.keras module
 
@@ -163,7 +163,7 @@ def get_layer_input_tensors(
                                                       collections.abc.Iterable):
                 out = out[part]
             else:
-                raise ValueError(f"Invalid part path {part} for object {out}")
+                raise ValueError(f'Invalid part path {part} for object {out}')
         return out
 
     def get_tensor_from_arg_path(arg):
@@ -176,7 +176,7 @@ def get_layer_input_tensors(
             elif isinstance(arg[0], collections.abc.Iterable):
                 return [lookup_arg_path(path) for path in arg]
         else:
-            raise ValueError(f"Invalid arg path {arg}")
+            raise ValueError(f'Invalid arg path {arg}')
 
     # No layers preceding Input layers. Use Input tensor
     if isinstance(layer, keras_module.layers.InputLayer):
@@ -216,8 +216,8 @@ def rename_nested_layers(model, keras_module):
         # Due to the recursive flattening operation, this method can be called
         # on the same model multiple times. Skip if renaming already occurred
         if not isinstance(layer, keras_module.layers.InputLayer
-                         ) and not layer.name.startswith(f"{model.name}/"):
-            layer._name = f"{model.name}/{layer.name}"
+                         ) and not layer.name.startswith(f'{model.name}/'):
+            layer._name = f'{model.name}/{layer.name}'
             if isinstance(layer, keras_module.models.Model):
                 rename_nested_layers(layer, keras_module)
 
@@ -230,7 +230,7 @@ def perform_replacements(model, replacements, keras_module):
     ----------
     model : keras.models.Model
         Base model
-    
+
     replacements : Dict[keras.layers.Layer, keras.layers.Layer]
         Mapping of keras layers with their replacement
 
@@ -312,7 +312,7 @@ def trace_input_indices(model, keras_module):
     disconnected inbound nodes. To specify which inbound nodes belong to the
     provided model, this method returns a mapping of layers to the index of their
     respective inbound node.
-     
+
     Parameters
     ----------
     model : keras.models.Model
@@ -320,7 +320,7 @@ def trace_input_indices(model, keras_module):
 
     keras_module : Python Module
         Either the keras module or tf.keras module
-    
+
     Returns
     -------
     Dict[str, int]
@@ -340,7 +340,7 @@ def trace_input_indices(model, keras_module):
                     out_layer, keras_module
                 )
                 for layer_name, idx in sub_innode_indices.items():
-                    innode_indices[f"{out_layer.name}/{layer_name}"] = idx
+                    innode_indices[f'{out_layer.name}/{layer_name}'] = idx
 
             if node in out_layer._inbound_nodes:
                 idx = out_layer._inbound_nodes.index(node)
@@ -348,7 +348,7 @@ def trace_input_indices(model, keras_module):
                         out_layer.name] != idx:
                     # May occur if layer is shared between other layers in the same model
                     tru_logger.warning(
-                        f"{out_layer.name}: input node conflict. orig: {innode_indices[out_layer.name]}, new: {idx}. Keeping original"
+                        f'{out_layer.name}: input node conflict. orig: {innode_indices[out_layer.name]}, new: {idx}. Keeping original'
                     )
                 if out_layer.name not in innode_indices:
                     innode_indices[out_layer.name] = idx
@@ -360,8 +360,8 @@ def trace_input_indices(model, keras_module):
         tracer(0)
     except AttributeError:
         tru_logger.warning(
-            "The provided model is missing Keras graph nodes metadata."
-            "TruLens will assume layers are using their default input/output tensors."
+            'The provided model is missing Keras graph nodes metadata.'
+            'TruLens will assume layers are using their default input/output tensors.'
             "This should not cause issues unless the model's layers have multiple inputs."
         )
         return {}
@@ -373,20 +373,20 @@ def load_keras_model_from_handle(
 ):
     '''
     load_keras_model_from_handle Load the tensorflow hub KerasLayer as a keras Model.
-     
+
     Parameters
     ----------
     handle : str
         TFHub handle
 
     orig_layer : KerasLayer
-    
+
     keras_module : Python Module
         Either the keras module or tf.keras module
-    
+
     tfhub_module : Python Module
         tensorflow_hub module. Used to resolve tfhub model paths
-    
+
     Returns
     -------
     keras.models.Model
@@ -411,10 +411,10 @@ def flatten_substitute_tfhub(model, keras_module, tfhub_module):
 
     keras_module : Python Module
         Either the keras module or tf.keras module
-    
+
     tfhub_module : Python Module
         tensorflow_hub module. Used to resolve tfhub model paths
-    
+
     Returns
     -------
     keras.models.Model
@@ -427,7 +427,7 @@ def flatten_substitute_tfhub(model, keras_module, tfhub_module):
         except (NotImplementedError, TypeError):
             layer_config = None
 
-        if tfhub_module and layer_config and "handle" in layer_config:
+        if tfhub_module and layer_config and 'handle' in layer_config:
             try:
                 submodel = load_keras_model_from_handle(
                     layer_config['handle'], layer, keras_module, tfhub_module
@@ -440,8 +440,8 @@ def flatten_substitute_tfhub(model, keras_module, tfhub_module):
             except (OSError, ValueError):
                 # TODO: default to chainrule if keras layer substitution doesn't work
                 tru_logger.warning(
-                    f"Unable to substitute Tensorflow Hub model {layer.name} with Keras implementation."
-                    f"Its nested layers will be hidden."
+                    f'Unable to substitute Tensorflow Hub model {layer.name} with Keras implementation.'
+                    f'Its nested layers will be hidden.'
                 )
         elif isinstance(layer, keras_module.models.Model):
             rename_nested_layers(layer, keras_module)

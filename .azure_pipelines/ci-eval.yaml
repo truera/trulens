@@ -29,7 +29,7 @@ jobs:
         latest:
           pythonVersion: "3.11"
           condaEnvFileSuffix: "trulens-llm"
-  
+
 
     steps:
       - checkout: self
@@ -50,7 +50,7 @@ jobs:
           which python
           python --version
         displayName: Which Python
-        
+
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
@@ -103,7 +103,7 @@ jobs:
       - bash: |
           source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
-          
+
           python -m pytest tests/e2e
 
         displayName: Run e2e tests
@@ -117,7 +117,7 @@ jobs:
       - bash: |
           source activate $(condaEnvFileSuffix)
           cd ./trulens_eval
-          
+
           python -m pytest tests/docs_notebooks
 
         displayName: Run notebook tests

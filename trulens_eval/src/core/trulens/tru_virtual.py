@@ -207,7 +207,6 @@ from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, Optional, Sequence, Union
 
 from pydantic import Field
-
 from trulens import app as mod_app
 from trulens.instruments import Instrument
 from trulens.schema import app as mod_app_schema
@@ -230,9 +229,9 @@ pp = PrettyPrinter()
 
 class VirtualApp(dict):
     """A dictionary meant to represent the components of a virtual app.
-    
+
     `TruVirtual` will refer to this class as the wrapped app. All calls will be
-    under `VirtualApp.root` 
+    under `VirtualApp.root`
     """
 
     def __setitem__(
@@ -251,7 +250,7 @@ class VirtualApp(dict):
 
         # Chop off "app" prefix if there.
         if isinstance(__name.path[0], GetItemOrAttribute) \
-            and __name.path[0].get_item_or_attribute() == "app":
+            and __name.path[0].get_item_or_attribute() == 'app':
             __name = serial.Lens(path=__name.path[1:])
 
         # Does not mutate so need to use dict.update .
@@ -266,14 +265,14 @@ class VirtualApp(dict):
 
 
 virtual_module = Module(
-    package_name="trulens_eval", module_name="trulens_eval.tru_virtual"
+    package_name='trulens_eval', module_name='trulens_eval.tru_virtual'
 )
 """Module to represent the module of virtual apps.
 
 Virtual apps will record this as their module.
 """
 
-virtual_class = Class(module=virtual_module, name="VirtualApp")
+virtual_class = Class(module=virtual_module, name='VirtualApp')
 """Class to represent the class of virtual apps.
 
 Virtual apps will record this as their class.
@@ -285,14 +284,14 @@ virtual_object = Obj(cls=virtual_class, id=0)
 Virtual apps will record this as their instance.
 """
 
-virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name="root")
+virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name='root')
 """Method call to represent the root call of virtual apps.
 
 Virtual apps will record this as their root call.
 """
 
 virtual_method_call = Method(
-    cls=virtual_class, obj=virtual_object, name="method_name_not_set"
+    cls=virtual_class, obj=virtual_object, name='method_name_not_set'
 )
 """Method call to represent virtual app calls that do not provide this
 information.
@@ -303,7 +302,7 @@ Method name will be replaced by the last attribute in the selector provided by u
 
 class VirtualRecord(mod_record_schema.Record):
     """Virtual records for virtual apps.
-        
+
     Many arguments are filled in by default values if not provided. See
     [Record][trulens_eval.schema.record.Record] for all arguments. Listing here is
     only for those which are required for this method or filled with default values.
@@ -327,7 +326,7 @@ class VirtualRecord(mod_record_schema.Record):
 
     | PARAMETER | TYPE |DEFAULT |
     | --- | ---| --- |
-    | `stack` | [List][typing.List][[RecordAppCallMethod][trulens_eval.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. | 
+    | `stack` | [List][typing.List][[RecordAppCallMethod][trulens_eval.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. |
     | `args` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
     | `rets` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
     | `perf` | [Perf][trulens_eval.schema.base.Perf] | Time spanning the processing of this virtual call. |
@@ -361,7 +360,7 @@ class VirtualRecord(mod_record_schema.Record):
             for call in calls_list:
                 substart_time = datetime.datetime.now()
 
-                if "stack" not in call:
+                if 'stack' not in call:
                     path, method_name = mod_feedback_schema.Select.path_and_method(
                         mod_feedback_schema.Select.dequalify(lens)
                     )
@@ -374,13 +373,13 @@ class VirtualRecord(mod_record_schema.Record):
                         )
                     ]
 
-                if "args" not in call:
+                if 'args' not in call:
                     call['args'] = []
-                if "rets" not in call:
+                if 'rets' not in call:
                     call['rets'] = []
-                if "pid" not in call:
+                if 'pid' not in call:
                     call['pid'] = 0
-                if "tid" not in call:
+                if 'tid' not in call:
                     call['tid'] = 0
 
                 subend_time = datetime.datetime.now()
@@ -391,7 +390,7 @@ class VirtualRecord(mod_record_schema.Record):
                 if (subend_time - substart_time).total_seconds() == 0.0:
                     subend_time += datetime.timedelta(microseconds=1)
 
-                if "perf" not in call:
+                if 'perf' not in call:
                     call['perf'] = mod_base_schema.Perf(
                         start_time=substart_time, end_time=subend_time
                     )
@@ -412,10 +411,10 @@ class VirtualRecord(mod_record_schema.Record):
             start_time=start_time, end_time=end_time
         )
 
-        if "main_input" not in kwargs:
-            kwargs['main_input'] = "No main_input provided."
-        if "main_output" not in kwargs:
-            kwargs['main_output'] = "No main_output provided."
+        if 'main_input' not in kwargs:
+            kwargs['main_input'] = 'No main_input provided.'
+        if 'main_output' not in kwargs:
+            kwargs['main_output'] = 'No main_output provided.'
 
         # append root call
         record_calls.append(
@@ -430,17 +429,17 @@ class VirtualRecord(mod_record_schema.Record):
             )
         )
 
-        if "app_id" not in kwargs:
+        if 'app_id' not in kwargs:
             kwargs[
                 'app_id'
-            ] = "No app_id provided."  # this gets replaced by TruVirtual.add_record .
+            ] = 'No app_id provided.'  # this gets replaced by TruVirtual.add_record .
 
         super().__init__(calls=record_calls, **kwargs)
 
 
 class TruVirtual(mod_app.App):
     """Recorder for virtual apps.
-    
+
     Virtual apps are data only in that they cannot be executed but for whom
     previously-computed results can be added using
     [add_record][trulens_eval.tru_virtual.TruVirtual]. The
@@ -462,7 +461,7 @@ class TruVirtual(mod_app.App):
     Usage:
         You can use `VirtualApp` to create the `app` structure or a plain
         dictionary. Using `VirtualApp` lets you use Selectors to define components:
-    
+
         ```python
         virtual_app = VirtualApp()
         virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -497,8 +496,8 @@ class TruVirtual(mod_app.App):
     """Selector checking is disabled for virtual apps."""
 
     selector_nocheck: bool = True
-    """The selector check must be disabled for virtual apps. 
-    
+    """The selector check must be disabled for virtual apps.
+
     This is because methods that could be called are not known in advance of
     creating virtual records.
     """
@@ -515,15 +514,15 @@ class TruVirtual(mod_app.App):
                 app = VirtualApp(app)
             else:
                 raise ValueError(
-                    "Unknown type for `app`. "
-                    "Either dict or `trulens_eval.tru_virtual.VirtualApp` expected."
+                    'Unknown type for `app`. '
+                    'Either dict or `trulens_eval.tru_virtual.VirtualApp` expected.'
                 )
 
-        if kwargs.get("selector_nocheck") is False or kwargs.get(
-                "selector_check_warning") is True:
+        if kwargs.get('selector_nocheck') is False or kwargs.get(
+                'selector_check_warning') is True:
             raise ValueError(
-                "Selector prechecking does not work with virtual apps. "
-                "The settings `selector_nocheck=True` and `selector_check_warning=False` are required."
+                'Selector prechecking does not work with virtual apps. '
+                'The settings `selector_nocheck=True` and `selector_check_warning=False` are required.'
             )
 
         super().__init__(app=app, **kwargs)
@@ -535,7 +534,7 @@ class TruVirtual(mod_app.App):
     ) -> mod_record_schema.Record:
         """Add the given record to the database and evaluate any pre-specified
         feedbacks on it.
-        
+
         The class `VirtualRecord` may be useful for creating
         records for virtual models. If `feedback_mode` is specified, will use
         that mode for this record only.

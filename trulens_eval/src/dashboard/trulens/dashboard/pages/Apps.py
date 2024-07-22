@@ -1,28 +1,28 @@
 import asyncio
 from typing import Optional
 
+from trulens.dashoard.streamlit_utils import init_from_args
+from trulens.dashoard.ux.apps import ChatRecord
 from trulens.schema import app as mod_app_schema
 from trulens.schema import record as mod_record_schema
 from trulens.tru import Tru
 from trulens.utils.json import jsonify_for_ui
 from trulens.utils.serial import JSON
 from trulens.utils.serial import Lens
-from trulens.dashoard.streamlit_utils import init_from_args
-from trulens.dashoard.ux.apps import ChatRecord
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 import streamlit as st
 from ux.page_config import set_page_config
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # If not imported, gets args from command line and creates Tru singleton
     init_from_args()
 
 tru = Tru()
 lms = tru.db
 
-set_page_config(page_title="App Runner")
+set_page_config(page_title='App Runner')
 
 
 def remove_selector(
@@ -43,18 +43,18 @@ def remove_selector(
     rows/records.
     """
 
-    state = st.session_state[f"selectors_{type}"]
+    state = st.session_state[f'selectors_{type}']
 
     if selector in state:
         state.remove(selector)
     else:
-        print("no such selector")
+        print('no such selector')
         return
 
     # Get and delete all of the containers for this selector. If this is a
     # record `type`, there will be one container for each record row.
-    key_norec = f"{type}_{selector_idx}"
-    for container in st.session_state[f"containers_{key_norec}"]:
+    key_norec = f'{type}_{selector_idx}'
+    for container in st.session_state[f'containers_{key_norec}']:
         del container
 
 
@@ -72,11 +72,11 @@ def update_selector(
     each `type`.
     """
 
-    state = st.session_state[f"selectors_{type}"]
+    state = st.session_state[f'selectors_{type}']
 
-    key = f"{type}_{selector_idx}_{record_idx}"
+    key = f'{type}_{selector_idx}_{record_idx}'
 
-    new_val = st.session_state[f"edit_input_{key}"]
+    new_val = st.session_state[f'edit_input_{key}']
 
     state[state.index(selector)] = new_val
 
@@ -93,38 +93,38 @@ def draw_selector(
     (type) and `selector_idx` and `record_idx`. The selector represents a
     Lens given as str in `selector`. Includes delete and edit widgets as
     well as the listing of the values attained by the selected path in the given
-    ChatRecord `rec`. 
+    ChatRecord `rec`.
     """
 
-    key = f"{type}_{selector_idx}_{record_idx}"
-    key_norec = f"{type}_{selector_idx}"
+    key = f'{type}_{selector_idx}_{record_idx}'
+    key_norec = f'{type}_{selector_idx}'
 
     container = st.empty()
 
     # Add the container for these elements into the state indexed by type and
     # selector so we can easily delete it later alongside its analogues in order
     # records (for "record" `type` selectors).
-    if f"containers_{key_norec}" not in st.session_state:
-        st.session_state[f"containers_{key_norec}"] = []
-    st.session_state[f"containers_{key_norec}"].append(container)
+    if f'containers_{key_norec}' not in st.session_state:
+        st.session_state[f'containers_{key_norec}'] = []
+    st.session_state[f'containers_{key_norec}'].append(container)
 
     # Cannot stack columns too deeply:
     #c1, c2 = st.columns(2)
 
     # TODO: figure out how to expand/collapse these across all records at the
     # same time, this session thing does not work.
-    st.session_state[f"expanded_{key_norec}"] = True
+    st.session_state[f'expanded_{key_norec}'] = True
 
     # Put everything in this expander:
     exp = container.expander(
-        label=selector, expanded=st.session_state[f"expanded_{key_norec}"]
+        label=selector, expanded=st.session_state[f'expanded_{key_norec}']
     )
 
     # Edit input.
     exp.text_input(
-        label="App selector",
+        label='App selector',
         value=selector,
-        key=f"edit_input_{key}",
+        key=f'edit_input_{key}',
         on_change=update_selector,
         kwargs=dict(
             container=container,
@@ -134,12 +134,12 @@ def draw_selector(
             selector=selector,
             rec=rec
         ),
-        label_visibility="collapsed"
+        label_visibility='collapsed'
     )
 
     # Get the relevant JSON to path into.
     obj = rec.app_json
-    if type == "record":
+    if type == 'record':
         obj = mod_record_schema.Record.model_validate(rec.record_json
                                                      ).layout_calls_as_app()
 
@@ -148,7 +148,7 @@ def draw_selector(
     try:
         path = Lens.of_string(selector)
     except Exception as e:
-        exp.write(f"parse error: {e}")
+        exp.write(f'parse error: {e}')
 
     if path is not None:
         try:
@@ -163,7 +163,7 @@ def draw_selector(
                     exp.write(json_val)
 
         except Exception as e:
-            exp.write(f"enumeration error: {e}")
+            exp.write(f'enumeration error: {e}')
 
 
 def draw_rec(record_idx: int, rec: ChatRecord, skip_human: bool = False):
@@ -177,11 +177,11 @@ def draw_rec(record_idx: int, rec: ChatRecord, skip_human: bool = False):
 
     if not skip_human:
         if rec.human is not None:
-            with st.chat_message("Human", avatar="🧑‍💻"):
+            with st.chat_message('Human', avatar='🧑‍💻'):
                 st.write(rec.human)
 
     if rec.computer is not None:
-        with st.chat_message("Computer", avatar="🤖"):
+        with st.chat_message('Computer', avatar='🤖'):
             st.write(rec.computer)
 
     if record_json is not None:
@@ -190,7 +190,7 @@ def draw_rec(record_idx: int, rec: ChatRecord, skip_human: bool = False):
         for selector_idx, selector in enumerate(
                 st.session_state.selectors_record):
             draw_selector(
-                type="record",
+                type='record',
                 selector_idx=selector_idx,
                 record_idx=record_idx,
                 selector=selector,
@@ -204,10 +204,10 @@ def set_selector(type: str):
     """
 
     # Get value from session:
-    input_key = f"set_{type}_selector_input"
+    input_key = f'set_{type}_selector_input'
     val = st.session_state[input_key]
 
-    st.session_state[f"selectors_{type}"] = val
+    st.session_state[f'selectors_{type}'] = val
 
 
 def add_selector(type: str):
@@ -216,20 +216,20 @@ def add_selector(type: str):
     """
 
     # Get value from session:
-    input_key = f"add_{type}_selector_input"
+    input_key = f'add_{type}_selector_input'
     val = st.session_state[input_key]
 
     # The list of selectors of the appropriate type:
-    state = st.session_state[f"selectors_{type}"]
+    state = st.session_state[f'selectors_{type}']
 
     # Add selector if not already in there:
     if val not in state:
         state.append(val)
 
         # Clear input
-        st.session_state[input_key] = ""
+        st.session_state[input_key] = ''
     else:
-        print(f"{type} selector {val} already exists")
+        print(f'{type} selector {val} already exists')
 
 
 def select_app(app_json: JSON):
@@ -243,7 +243,7 @@ def select_app(app_json: JSON):
 
     st.session_state.records = [ChatRecord(app_json=app_json, app=tru_app)]
 
-    for typ in ["app", "record"]:
+    for typ in ['app', 'record']:
         st.session_state[f'selectors_{typ}'] = []
 
 
@@ -295,12 +295,12 @@ def end_session():
     del st.session_state['records']
 
 
-if "records" not in st.session_state:
+if 'records' not in st.session_state:
     # This field only exists after a model is selected. Here no model was
     # selected yet. Show all loadable models for which a new session can be
     # started.
 
-    st.title("App Runner")
+    st.title('App Runner')
 
     loadable_apps = mod_app_schema.AppDefinition.get_loadable_apps()
 
@@ -309,7 +309,7 @@ if "records" not in st.session_state:
     for app_json in loadable_apps:
         st.subheader(app_json['app_id'])
         st.button(
-            label="New Session",
+            label='New Session',
             key=f"select_app_{app_json['app_id']}",
             on_click=select_app,
             args=(app_json,)
@@ -319,9 +319,9 @@ if "records" not in st.session_state:
 
     if len(loadable_apps) == 0:
         st.write(
-            "No loadable apps found in database. "
-            "To make an app loadable, specify a loader function via the `initial_app_loader` argument when wrapping the app. "
-            "See the notebook at https://github.com/truera/trulens/blob/main/trulens_eval/examples/experimental/streamlit_appui_example.ipynb for an example."
+            'No loadable apps found in database. '
+            'To make an app loadable, specify a loader function via the `initial_app_loader` argument when wrapping the app. '
+            'See the notebook at https://github.com/truera/trulens/blob/main/trulens_eval/examples/experimental/streamlit_appui_example.ipynb for an example.'
         )
 
 else:
@@ -334,7 +334,7 @@ else:
     # Show the app id and some app-level or session-level controls/links.
     st.title(f"App Runner: {app_json['app_id']}")
 
-    st.button(label="End session", on_click=end_session)
+    st.button(label='End session', on_click=end_session)
 
     # st.write(f"TODO: link to {app_json['app_id']} on other pages.")
 
@@ -346,9 +346,9 @@ else:
         # On the left are app selectors that show the properties of the app as
         # it is at the current/final state of the session.
 
-        st.write("#### App details")
+        st.write('#### App details')
         st.caption(
-            "Details about your app. Use app selectors below to select the pieces of information to highlight."
+            'Details about your app. Use app selectors below to select the pieces of information to highlight.'
         )
 
         # Create an add app selector input:
@@ -359,23 +359,23 @@ else:
                 st.session_state.selectors_app,
                 st.session_state.selectors_app,
                 on_change=set_selector,
-                key="set_app_selector_input",
-                args=("app",),
-                label_visibility="collapsed"
+                key='set_app_selector_input',
+                args=('app',),
+                label_visibility='collapsed'
             )
         st.text_input(
-            label="add app selector",
-            key="add_app_selector_input",
-            placeholder="Add an app selector (e.g. app.llm.model_name)",
+            label='add app selector',
+            key='add_app_selector_input',
+            placeholder='Add an app selector (e.g. app.llm.model_name)',
             on_change=add_selector,
-            args=("app",),
-            label_visibility="collapsed"
+            args=('app',),
+            label_visibility='collapsed'
         )
 
         # Draw existing app selectors.
         for i, selector in enumerate(st.session_state.selectors_app):
             draw_selector(
-                type="app",
+                type='app',
                 selector_idx=i,
                 record_idx=None,
                 selector=selector,
@@ -384,7 +384,7 @@ else:
 
     with right:
         # On the right 2/3 are rows, one per ChatRecord.
-        st.write("#### Records")
+        st.write('#### Records')
         st.caption(
             "Your interactive chat session. Type in a message below to 'chat' with the LLM application. Record selectors can be used to surface information on a per-record level."
         )
@@ -396,18 +396,18 @@ else:
                 st.session_state.selectors_record,
                 st.session_state.selectors_record,
                 on_change=set_selector,
-                key="set_record_selector_input",
-                args=("record",),
-                label_visibility="collapsed"
+                key='set_record_selector_input',
+                args=('record',),
+                label_visibility='collapsed'
             )
         st.text_input(
-            label="add record selector",
+            label='add record selector',
             placeholder=
-            "Add a record selector to view details about the records (e.g. cost.cost).",
-            key="add_record_selector_input",
+            'Add a record selector to view details about the records (e.g. cost.cost).',
+            key='add_record_selector_input',
             on_change=add_selector,
-            args=("record",),
-            label_visibility="collapsed"
+            args=('record',),
+            label_visibility='collapsed'
         )
 
         # Rows corresponding to ChatRecord:
@@ -421,7 +421,7 @@ else:
     # NOTE: chat input cannot be inside column.
     human_input = st.chat_input(
         on_submit=run_record,
-        key="human_input",
+        key='human_input',
         kwargs=dict(
             col=
             right  # should be the cols of the last row from the above enumeration.

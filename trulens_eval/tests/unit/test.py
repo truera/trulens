@@ -8,13 +8,12 @@ from unittest import TestCase
 
 import pydantic
 from pydantic import BaseModel
-
-from trulens_eval.utils.serial import JSON_BASES
-from trulens_eval.utils.serial import Lens
+from trulens.utils.serial import JSON_BASES
+from trulens.utils.serial import Lens
 
 # Env var that were to evaluate to true indicates that optional tests are to be
 # run.
-OPTIONAL_ENV_VAR = "TEST_OPTIONAL"
+OPTIONAL_ENV_VAR = 'TEST_OPTIONAL'
 
 
 def optional_test(testmethodorclass):
@@ -25,7 +24,7 @@ def optional_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        not os.environ.get(OPTIONAL_ENV_VAR), "optional test"
+        not os.environ.get(OPTIONAL_ENV_VAR), 'optional test'
     )(testmethodorclass)
 
 
@@ -37,7 +36,7 @@ def requiredonly_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        os.environ.get(OPTIONAL_ENV_VAR), "not an optional test"
+        os.environ.get(OPTIONAL_ENV_VAR), 'not an optional test'
     )(testmethodorclass)
 
 

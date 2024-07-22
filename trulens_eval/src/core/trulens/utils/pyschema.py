@@ -26,7 +26,6 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 import warnings
 
 import pydantic
-
 from trulens.utils.python import safe_hasattr
 from trulens.utils.python import safe_issubclass
 from trulens.utils.serial import SerialModel
@@ -35,14 +34,14 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 # Field/key name used to indicate a circular reference in dictified objects.
-CIRCLE = "__tru_circular_reference"
+CIRCLE = '__tru_circular_reference'
 
 # Field/key name used to indicate an exception in property retrieval (properties
 # execute code in property.fget).
-ERROR = "__tru_property_error"
+ERROR = '__tru_property_error'
 
 # Key for indicating non-serialized objects in json dumps.
-NOSERIO = "__tru_non_serialized_object"
+NOSERIO = '__tru_non_serialized_object'
 
 
 def is_noserio(obj):
@@ -91,7 +90,7 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
 
     if is_prop:
         if not get_prop:
-            raise ValueError(f"{k} is a property")
+            raise ValueError(f'{k} is a property')
 
         try:
             v = v.fget(obj)
@@ -114,7 +113,7 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
     serializing/displaying.
 
     If `include_props` is True, will produce attributes which are properties;
-    otherwise those will be excluded. 
+    otherwise those will be excluded.
     """
 
     keys = dir(obj)
@@ -122,12 +121,12 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
     ret = {}
 
     for k in keys:
-        if k.startswith("__"):
+        if k.startswith('__'):
             # These are typically very internal components not meant to be
             # exposed beyond immediate definitions. Ignoring these.
             continue
 
-        if include_props and k.startswith("_") and k[1:] in keys:
+        if include_props and k.startswith('_') and k[1:] in keys:
             # Objects often have properties named `name` with their values
             # coming from `_name`. This check lets avoid including both the
             # property and the value.
@@ -147,16 +146,16 @@ class Module(SerialModel):
     module_name: str
 
     def of_module(mod: ModuleType, loadable: bool = False) -> 'Module':
-        if loadable and mod.__name__ == "__main__":
+        if loadable and mod.__name__ == '__main__':
             # running in notebook
-            raise ImportError(f"Module {mod} is not importable.")
+            raise ImportError(f'Module {mod} is not importable.')
 
         return Module(package_name=mod.__package__, module_name=mod.__name__)
 
     def of_module_name(module_name: str, loadable: bool = False) -> 'Module':
-        if loadable and module_name == "__main__":
+        if loadable and module_name == '__main__':
             # running in notebook
-            raise ImportError(f"Module {module_name} is not importable.")
+            raise ImportError(f'Module {module_name} is not importable.')
 
         try:
             mod = importlib.import_module(module_name)
@@ -186,7 +185,7 @@ class Class(SerialModel):
     bases: Optional[Sequence[Class]] = None
 
     def __repr__(self):
-        return self.module.module_name + "." + self.name
+        return self.module.module_name + '.' + self.name
 
     def __str__(self):
         return f"{self.name}({self.module.module_name if self.module is not None else 'no module'})"
@@ -212,9 +211,9 @@ class Class(SerialModel):
         except Exception as e:
             print(e)
             raise ImportError(
-                f"Class {self} is not importable. "
-                "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
-                "If you defined a function in a notebook, it will not be importable."
+                f'Class {self} is not importable. '
+                'If you are defining custom feedback function implementations, make sure they can be imported by python scripts. '
+                'If you defined a function in a notebook, it will not be importable.'
             )
 
     @staticmethod
@@ -229,9 +228,9 @@ class Class(SerialModel):
         )
 
         if loadable:
-            if "<locals>" in repr(
+            if '<locals>' in repr(
                     cls):  # TODO: figure out a better way to check this
-                raise ImportError(f"Class {cls} is not globally importable.")
+                raise ImportError(f'Class {cls} is not globally importable.')
 
             ret._check_importable()
 
@@ -247,7 +246,7 @@ class Class(SerialModel):
 
     @staticmethod
     def of_class_info(json: dict):
-        assert CLASS_INFO in json, "Class info not in json."
+        assert CLASS_INFO in json, 'Class info not in json.'
         return Class.model_validate(json[CLASS_INFO])
 
     def load(self) -> type:  # class
@@ -256,12 +255,12 @@ class Class(SerialModel):
             return getattr(mod, self.name)
 
         except Exception as e:
-            raise RuntimeError(f"Could not load class {self} because {e}.")
+            raise RuntimeError(f'Could not load class {self} because {e}.')
 
     def noserio_issubclass(self, class_name: str, module_name: str):
         bases = self.bases
 
-        assert bases is not None, "Cannot do subclass check without bases. Serialize me with `Class.of_class(with_bases=True ...)`."
+        assert bases is not None, 'Cannot do subclass check without bases. Serialize me with `Class.of_class(with_bases=True ...)`.'
 
         for base in bases:
             if base.name == class_name and base.module.module_name == module_name:
@@ -346,8 +345,8 @@ class Obj(SerialModel):
                 sig = _safe_init_sig(cls)
                 if len(sig.parameters) > 0:
                     raise RuntimeError(
-                        f"Do not know how to get constructor arguments for object of type {cls.__name__}. "
-                        f"If you are defining a custom feedback function, define its implementation as a function or a method of a Provider subclass."
+                        f'Do not know how to get constructor arguments for object of type {cls.__name__}. '
+                        f'If you are defining a custom feedback function, define its implementation as a function or a method of a Provider subclass.'
                     )
 
                 init_args = ()
@@ -378,7 +377,7 @@ class Obj(SerialModel):
     def load(self) -> object:
         if self.init_bindings is None:
             raise RuntimeError(
-                "Cannot load object unless `init_bindings` is set."
+                'Cannot load object unless `init_bindings` is set.'
             )
 
         cls = self.cls.load()
@@ -402,11 +401,11 @@ class Obj(SerialModel):
                 )
 
             except Exception as e:
-                msg = f"Error binding constructor args for object:\n"
-                msg += str(e) + "\n"
-                msg += f"\tobj={self}\n"
-                msg += f"\targs={self.init_bindings.args}\n"
-                msg += f"\tkwargs={self.init_bindings.kwargs}\n"
+                msg = f'Error binding constructor args for object:\n'
+                msg += str(e) + '\n'
+                msg += f'\tobj={self}\n'
+                msg += f'\targs={self.init_bindings.args}\n'
+                msg += f'\tkwargs={self.init_bindings.kwargs}\n'
                 raise type(e)(msg)
 
             return cls(*bindings.args, **bindings.kwargs)
@@ -460,7 +459,7 @@ class FunctionOrMethod(SerialModel):
                 return super(cls, Function).model_validate(obj=obj, **kwargs)
             else:
                 raise ValueError(
-                    f"Cannot tell what type of callable this encodes: {obj}"
+                    f'Cannot tell what type of callable this encodes: {obj}'
                 )
         else:
             return super().model_validate(obj)
@@ -505,7 +504,7 @@ class Method(FunctionOrMethod):
         if obj is None:
             assert inspect.ismethod(
                 meth
-            ), f"Expected a method (maybe it is a function?): {meth}"
+            ), f'Expected a method (maybe it is a function?): {meth}'
             obj = meth.__self__
 
         if cls is None:
@@ -526,10 +525,10 @@ class Method(FunctionOrMethod):
 
 
 def object_module(obj):
-    if safe_hasattr(obj, "__module__"):
-        return getattr(obj, "__module__")
+    if safe_hasattr(obj, '__module__'):
+        return getattr(obj, '__module__')
     else:
-        return "builtins"
+        return 'builtins'
 
 
 class Function(FunctionOrMethod):
@@ -577,14 +576,14 @@ class Function(FunctionOrMethod):
                 return getattr(mod, self.name)  # function not inside a class
             except Exception:
                 raise ImportError(
-                    f"Function {self} is not importable. "
-                    "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
-                    "If you defined a function in a notebook, it will not be importable."
+                    f'Function {self} is not importable. '
+                    'If you are defining custom feedback function implementations, make sure they can be imported by python scripts. '
+                    'If you defined a function in a notebook, it will not be importable.'
                 )
 
 
 # Key of structure where class information is stored.
-CLASS_INFO = "tru_class_info"
+CLASS_INFO = 'tru_class_info'
 
 
 class WithClassInfo(pydantic.BaseModel):
@@ -594,7 +593,7 @@ class WithClassInfo(pydantic.BaseModel):
 
     tru_class_info: Class
     """Class information of this pydantic object for use in deserialization.
-    
+
     Using this odd key to not pollute attribute names in whatever class we mix
     this into. Should be the same as CLASS_INFO.
     """
@@ -618,7 +617,7 @@ class WithClassInfo(pydantic.BaseModel):
             return obj
 
         if CLASS_INFO not in obj:
-            raise ValueError("No class info present in object.")
+            raise ValueError('No class info present in object.')
 
         clsinfo = Class.model_validate(obj[CLASS_INFO])
         try:
@@ -667,7 +666,7 @@ class WithClassInfo(pydantic.BaseModel):
 
         if obj is not None:
             warnings.warn(
-                "`obj` does not need to be provided to WithClassInfo any more",
+                '`obj` does not need to be provided to WithClassInfo any more',
                 DeprecationWarning
             )
 
@@ -678,7 +677,7 @@ class WithClassInfo(pydantic.BaseModel):
             cls = type(obj)
 
         if class_info is None:
-            assert cls is not None, "Either `class_info`, `obj` or `cls` need to be specified."
+            assert cls is not None, 'Either `class_info`, `obj` or `cls` need to be specified.'
             class_info = Class.of_class(cls, with_bases=True)
 
         kwargs[CLASS_INFO] = class_info

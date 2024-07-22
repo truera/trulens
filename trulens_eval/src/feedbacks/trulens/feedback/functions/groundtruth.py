@@ -3,7 +3,6 @@ from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
-
 from trulens.feedback.base_provider import Provider
 from trulens.feedback.functions.generated import re_0_10_rating
 from trulens.utils.imports import OptionalImports
@@ -46,10 +45,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         self,
         ground_truth: Union[List, Callable, FunctionOrMethod],
         provider: Optional[Provider] = None,
-        bert_scorer: Optional["BERTScorer"] = None,
+        bert_scorer: Optional['BERTScorer'] = None,
         **kwargs
     ):
-        """Measures Agreement against a Ground Truth. 
+        """Measures Agreement against a Ground Truth.
 
         Usage 1:
         ```
@@ -90,7 +89,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ground_truth_imp = ground_truth.load()
         else:
             raise RuntimeError(
-                f"Unhandled ground_truth type: {type(ground_truth)}."
+                f'Unhandled ground_truth type: {type(ground_truth)}.'
             )
 
         super().__init__(
@@ -106,7 +105,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             return self.ground_truth_imp(prompt)
 
         responses = [
-            qr["response"] for qr in self.ground_truth if qr["query"] == prompt
+            qr['response'] for qr in self.ground_truth if qr['query'] == prompt
         ]
         if responses:
             return responses[0]
@@ -118,9 +117,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             return self.ground_truth_imp(prompt)
 
         responses = [
-            qr["expected_score"]
+            qr['expected_score']
             for qr in self.ground_truth
-            if qr["query"] == prompt and qr["response"] == response
+            if qr['query'] == prompt and qr['response'] == response
         ]
         if responses:
             return responses[0]
@@ -138,7 +137,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         whether previous Chat GPT's response is similar.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback import GroundTruthAgreement
@@ -148,12 +147,12 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set)
 
-            feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output() 
+            feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output()
             ```
             The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
-            prompt (str): A text prompt to an agent. 
+            prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
 
         Returns:
@@ -181,7 +180,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Primarily used for evaluation of model generated feedback against human feedback
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback import GroundTruthAgreement
@@ -200,20 +199,20 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         expected_score = self._find_score(prompt, response)
         if expected_score:
             ret = abs(float(score) - expected_score)
-            expected_score = "{:.2f}".format(expected_score
+            expected_score = '{:.2f}'.format(expected_score
                                             ).rstrip('0').rstrip('.')
         else:
             ret = np.nan
-        return ret, {"expected score": expected_score}
+        return ret, {'expected score': expected_score}
 
     def bert_score(self, prompt: str,
                    response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses BERT Score. A function that that measures
-        similarity to ground truth using bert embeddings. 
+        similarity to ground truth using bert embeddings.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback import GroundTruthAgreement
@@ -223,7 +222,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set)
 
-            feedback = Feedback(ground_truth_collection.bert_score).on_input_output() 
+            feedback = Feedback(ground_truth_collection.bert_score).on_input_output()
             ```
             The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
@@ -238,7 +237,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             - dict: with key 'ground_truth_response'
         """
         if self.bert_scorer is None:
-            self.bert_scorer = BERTScorer(lang="en", rescale_with_baseline=True)
+            self.bert_scorer = BERTScorer(lang='en', rescale_with_baseline=True)
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
             bert_score = self.bert_scorer.score(
@@ -257,10 +256,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
              response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses BLEU Score. A function that that measures
-        similarity to ground truth using token overlap. 
+        similarity to ground truth using token overlap.
 
         !!! example
-    
+
             ```python
             from trulens import Feedback
             from trulens.feedback import GroundTruthAgreement
@@ -270,12 +269,12 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set)
 
-            feedback = Feedback(ground_truth_collection.bleu).on_input_output() 
+            feedback = Feedback(ground_truth_collection.bleu).on_input_output()
             ```
             The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
 
         Args:
-            prompt (str): A text prompt to an agent. 
+            prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
 
         Returns:
@@ -302,10 +301,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
               response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses BLEU Score. A function that that measures
-        similarity to ground truth using token overlap. 
+        similarity to ground truth using token overlap.
 
         Args:
-            prompt (str): A text prompt to an agent. 
+            prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
 
         Returns:

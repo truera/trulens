@@ -9,14 +9,14 @@ import sys
 from unittest import main
 from unittest import TestCase
 
+from trulens.instruments import class_filter_matches
+from trulens.instruments import Instrument
+from trulens.utils.imports import Dummy
+
 from tests.unit.test import module_installed
 from tests.unit.test import optional_test
 from tests.unit.test import requiredonly_test
-
 import trulens_eval
-from trulens_eval.instruments import class_filter_matches
-from trulens_eval.instruments import Instrument
-from trulens_eval.utils.imports import Dummy
 
 # Importing any of these should throw ImportError (or its sublcass
 # ModuleNotFoundError) if optional packages are not installed. The key is the
@@ -27,36 +27,36 @@ from trulens_eval.utils.imports import Dummy
 # optional in which case it should no longer be considered optional.
 
 optional_mods = dict(
-    pinecone=["trulens_eval.Example_TruBot"],
-    ipywidgets=["trulens_eval.appui"],
+    pinecone=['trulens_eval.Example_TruBot'],
+    ipywidgets=['trulens_eval.appui'],
     llama_index=[
-        "trulens_eval.tru_llama", "trulens_eval.utils.llama",
-        "trulens_eval.guardrails.llama"
+        'trulens_eval.tru_llama', 'trulens_eval.utils.llama',
+        'trulens_eval.guardrails.llama'
     ],
     boto3=[
-        "trulens_eval.feedback.provider.bedrock",
-        "trulens_eval.feedback.provider.endpoint.bedrock"
+        'trulens_eval.feedback.provider.bedrock',
+        'trulens_eval.feedback.provider.endpoint.bedrock'
     ],
     litellm=[
-        "trulens_eval.feedback.provider.litellm",
-        "trulens_eval.feedback.provider.endpoint.litellm",
+        'trulens_eval.feedback.provider.litellm',
+        'trulens_eval.feedback.provider.endpoint.litellm',
     ],
     openai=[
-        "trulens_eval.feedback.provider.openai",
-        "trulens_eval.feedback.provider.endpoint.openai"
+        'trulens_eval.feedback.provider.openai',
+        'trulens_eval.feedback.provider.endpoint.openai'
     ],
-    nemoguardrails=["trulens_eval.tru_rails"]
+    nemoguardrails=['trulens_eval.tru_rails']
 )
 
 # snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
 if sys.version_info < (3, 12):
-    optional_mods["snowflake"] = [
-        "trulens_eval.feedback.provider.cortex",
-        "trulens_eval.feedback.provider.endpoint.cortex"
+    optional_mods['snowflake'] = [
+        'trulens_eval.feedback.provider.cortex',
+        'trulens_eval.feedback.provider.endpoint.cortex'
     ]
 else:
     assert not module_installed(
-        "snowflake-snowpark-python"
+        'snowflake-snowpark-python'
     ), "Snowflake should not be installed until it's available in Python 3.12."
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
@@ -75,32 +75,32 @@ def get_all_modules(path: Path, startswith=None):
         ret.append(modinfo.name)
         if modinfo.ispkg:
             for submod in get_all_modules(path / modinfo.name, startswith=None):
-                submodqualname = modinfo.name + "." + submod
+                submodqualname = modinfo.name + '.' + submod
 
                 if startswith is not None and not submodqualname.startswith(
                         startswith):
                     continue
 
-                ret.append(modinfo.name + "." + submod)
+                ret.append(modinfo.name + '.' + submod)
 
     return ret
 
 
 # Get all modules inside trulens_eval:
 all_trulens_mods = get_all_modules(
-    Path(trulens_eval.__file__).parent.parent, startswith="trulens_eval"
+    Path(trulens_eval.__file__).parent.parent, startswith='trulens_eval'
 )
 
 # Things which should not be imported at all.
 not_mods = [
-    "trulens_eval.database.migrations.env"  # can only be executed by alembic
+    'trulens_eval.database.migrations.env'  # can only be executed by alembic
 ]
 
 if sys.version_info >= (3, 12):
     not_mods.extend(
         [
-            "snowflake", "trulens_eval.feedback.provider.cortex",
-            "trulens_eval.feedback.provider.endpoint.cortex"
+            'snowflake', 'trulens_eval.feedback.provider.cortex',
+            'trulens_eval.feedback.provider.endpoint.cortex'
         ]
     )
 
@@ -128,7 +128,7 @@ class TestStatic(TestCase):
 
     def _test_instrumentation(self, i: Instrument):
         """Check that the instrumentation specification is good in these ways:
-        
+
         - (1) All classes mentioned are loaded/importable.
         - (2) All methods associated with a class are actually methods of that
           class.
@@ -142,7 +142,7 @@ class TestStatic(TestCase):
                 if isinstance(cls, Dummy):  # (1)
                     original_exception = cls.original_exception
                     self.fail(
-                        f"Instrumented class {cls.name} is dummy meaning it was not importable. Original expception={original_exception}"
+                        f'Instrumented class {cls.name} is dummy meaning it was not importable. Original expception={original_exception}'
                     )
 
                 # Disabled #2 test right now because of too many failures. We
@@ -159,13 +159,13 @@ class TestStatic(TestCase):
 
                 if not i.to_instrument_module(cls.__module__):  #(3)
                     self.fail(
-                        f"Instrumented class {cls} is in module {cls.__module__} which is not to be instrumented."
+                        f'Instrumented class {cls} is in module {cls.__module__} which is not to be instrumented.'
                     )
 
     def test_instrumentation_langchain(self):
         """Check that the langchain instrumentation is up to date."""
 
-        from trulens_eval.tru_chain import LangChainInstrument
+        from trulens.tru_chain import LangChainInstrument
 
         self._test_instrumentation(LangChainInstrument())
 
@@ -173,7 +173,7 @@ class TestStatic(TestCase):
     def test_instrumentation_llama_index(self):
         """Check that the llama_index instrumentation is up to date."""
 
-        from trulens_eval.tru_llama import LlamaInstrument
+        from trulens.tru_llama import LlamaInstrument
 
         self._test_instrumentation(LlamaInstrument())
 
@@ -181,7 +181,7 @@ class TestStatic(TestCase):
     def test_instrumentation_nemo(self):
         """Check that the nemo guardrails instrumentation is up to date."""
 
-        from trulens_eval.tru_rails import RailsInstrument
+        from trulens.tru_rails import RailsInstrument
 
         self._test_instrumentation(RailsInstrument())
 
@@ -199,7 +199,7 @@ class TestStatic(TestCase):
                 self.assertFalse(
                     module_installed(opt),
                     msg=
-                    f"Module {opt} was not supposed to be installed for this test."
+                    f'Module {opt} was not supposed to be installed for this test.'
                 )
 
                 for mod in mods:
@@ -212,10 +212,10 @@ class TestStatic(TestCase):
                         # produce as part of the optional imports scheme (see
                         # utils/imports.py:format_import_errors).
                         self.assertIn(
-                            "You should be able to install",
+                            'You should be able to install',
                             context.exception.args[0],
                             msg=
-                            "Exception message did not have the expected content."
+                            'Exception message did not have the expected content.'
                         )
 
     @optional_test
@@ -230,7 +230,7 @@ class TestStatic(TestCase):
                 # First make sure the optional package is installed.
                 self.assertTrue(
                     module_installed(opt),
-                    f"Module {opt} was supposed to be installed for this test."
+                    f'Module {opt} was supposed to be installed for this test.'
                 )
 
                 for mod in mods:

@@ -82,7 +82,7 @@ Several common default implementations are provided in this module as well.
 
 The *distribution of interest* (DoI) essentially specifies for which points surrounding each record the calculated attribution should be valid.
 The distribution can be specified via an implementation of the `DoI` class in the `trulens.nn.distributions` module, which is a function taking an input record and producing a list of sample input points to aggregate attribution over.
-A few common default distributions implementing the `DoI` class can be found in the `trulens.nn.distributions` module. 
+A few common default distributions implementing the `DoI` class can be found in the `trulens.nn.distributions` module.
 
 See [Attributions for Different Use Cases](https://trulens.org/attribution_parameterization/) for further explanations of the purpose of these parameters and examples of their usage.
 

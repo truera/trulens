@@ -7,10 +7,9 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
-
-from trulens.feedback.functions import prompts
-from trulens.feedback.functions import generated as mod_generated_utils
 from trulens.feedback.base_provider import Provider
+from trulens.feedback.functions import generated as mod_generated_utils
+from trulens.feedback.functions import prompts
 from trulens.feedback.functions.generated import re_0_10_rating
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class LLMProvider(Provider):
     """An LLM-based provider.
-    
+
     This is an abstract class and needs to be initialized as one of these:
 
     * [OpenAI][trulens_eval.feedback.provider.openai.OpenAI] and subclass
@@ -29,7 +28,7 @@ class LLMProvider(Provider):
     * [LiteLLM][trulens_eval.feedback.provider.litellm.LiteLLM]. LiteLLM provides an
     interface to a [wide range of
     models](https://docs.litellm.ai/docs/providers).
-    
+
     * [Langchain][trulens_eval.feedback.provider.langchain.Langchain].
 
 """
@@ -87,11 +86,11 @@ class LLMProvider(Provider):
         Returns:
             The score on a 0-1 scale.
         """
-        assert self.endpoint is not None, "Endpoint is not set."
+        assert self.endpoint is not None, 'Endpoint is not set.'
 
-        llm_messages = [{"role": "system", "content": system_prompt}]
+        llm_messages = [{'role': 'system', 'content': system_prompt}]
         if user_prompt is not None:
-            llm_messages.append({"role": "user", "content": user_prompt})
+            llm_messages.append({'role': 'user', 'content': user_prompt})
 
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
@@ -122,25 +121,25 @@ class LLMProvider(Provider):
 
         Returns:
             The score on a 0-1 scale.
-            
+
             Reason metadata if returned by the LLM.
         """
-        assert self.endpoint is not None, "Endpoint is not set."
+        assert self.endpoint is not None, 'Endpoint is not set.'
 
-        llm_messages = [{"role": "system", "content": system_prompt}]
+        llm_messages = [{'role': 'system', 'content': system_prompt}]
         if user_prompt is not None:
-            llm_messages.append({"role": "user", "content": user_prompt})
+            llm_messages.append({'role': 'user', 'content': user_prompt})
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
             temperature=temperature
         )
-        if "Supporting Evidence" in response:
+        if 'Supporting Evidence' in response:
             score = -1
             supporting_evidence = None
             criteria = None
             for line in response.split('\n'):
-                if "Score" in line:
+                if 'Score' in line:
                     score = mod_generated_utils.re_0_10_rating(line) / normalize
                 criteria_lines = []
                 supporting_evidence_lines = []
@@ -148,31 +147,31 @@ class LLMProvider(Provider):
                 collecting_evidence = False
 
                 for line in response.split('\n'):
-                    if "Criteria:" in line:
+                    if 'Criteria:' in line:
                         criteria_lines.append(
-                            line.split("Criteria:", 1)[1].strip()
+                            line.split('Criteria:', 1)[1].strip()
                         )
                         collecting_criteria = True
                         collecting_evidence = False
-                    elif "Supporting Evidence:" in line:
+                    elif 'Supporting Evidence:' in line:
                         supporting_evidence_lines.append(
-                            line.split("Supporting Evidence:", 1)[1].strip()
+                            line.split('Supporting Evidence:', 1)[1].strip()
                         )
                         collecting_evidence = True
                         collecting_criteria = False
                     elif collecting_criteria:
-                        if "Supporting Evidence:" not in line:
+                        if 'Supporting Evidence:' not in line:
                             criteria_lines.append(line.strip())
                         else:
                             collecting_criteria = False
                     elif collecting_evidence:
-                        if "Criteria:" not in line:
+                        if 'Criteria:' not in line:
                             supporting_evidence_lines.append(line.strip())
                         else:
                             collecting_evidence = False
 
-                criteria = "\n".join(criteria_lines).strip()
-                supporting_evidence = "\n".join(supporting_evidence_lines
+                criteria = '\n'.join(criteria_lines).strip()
+                supporting_evidence = '\n'.join(supporting_evidence_lines
                                                ).strip()
             reasons = {
                 'reason':
@@ -186,7 +185,7 @@ class LLMProvider(Provider):
         else:
             score = mod_generated_utils.re_0_10_rating(response) / normalize
             warnings.warn(
-                "No supporting evidence provided. Returning score only.",
+                'No supporting evidence provided. Returning score only.',
                 UserWarning
             )
             return score, {}
@@ -197,7 +196,7 @@ class LLMProvider(Provider):
         """
         Uses chat completion model. A function that completes a template to
         check the relevance of the context to the question.
-        
+
         !!! example
 
             ```python
@@ -213,7 +212,7 @@ class LLMProvider(Provider):
 
         Args:
             question (str): A question being asked.
-            
+
             context (str): Context related to the question.
 
         Returns:
@@ -279,7 +278,7 @@ class LLMProvider(Provider):
             prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+            'RELEVANCE:', prompts.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -317,7 +316,7 @@ class LLMProvider(Provider):
             ```python
             feedback = Feedback(provider.relevance).on_input().on(
                 TruLlama.select_source_nodes().node.text # See note below
-            ).aggregate(np.mean) 
+            ).aggregate(np.mean)
             ```
 
         Parameters:
@@ -353,7 +352,7 @@ class LLMProvider(Provider):
             ```
 
         Args:
-            prompt (str): A text prompt to an agent. 
+            prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
 
         Returns:
@@ -366,7 +365,7 @@ class LLMProvider(Provider):
             prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+            'RELEVANCE:', prompts.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
@@ -378,7 +377,7 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            feedback = Feedback(provider.sentiment).on_output() 
+            feedback = Feedback(provider.sentiment).on_output()
             ```
 
         Args:
@@ -401,7 +400,7 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            feedback = Feedback(provider.sentiment_with_cot_reasons).on_output() 
+            feedback = Feedback(provider.sentiment_with_cot_reasons).on_output()
             ```
 
         Args:
@@ -424,7 +423,7 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            feedback = Feedback(provider.model_agreement).on_input_output() 
+            feedback = Feedback(provider.model_agreement).on_input_output()
             ```
 
         Args:
@@ -436,8 +435,8 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not in agreement) and 1.0 (in agreement).
         """
         warnings.warn(
-            "`model_agreement` has been deprecated. "
-            "Use `GroundTruthAgreement(ground_truth)` instead.",
+            '`model_agreement` has been deprecated. '
+            'Use `GroundTruthAgreement(ground_truth)` instead.',
             DeprecationWarning
         )
         chat_response = self._create_chat_completion(
@@ -503,7 +502,7 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            feedback = Feedback(provider.conciseness).on_output() 
+            feedback = Feedback(provider.conciseness).on_output()
             ```
 
         Args:
@@ -523,9 +522,9 @@ class LLMProvider(Provider):
         check the conciseness of some text. Prompt credit to LangChain Eval.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.conciseness).on_output() 
+            feedback = Feedback(provider.conciseness).on_output()
             ```
         Args:
             text: The text to evaluate the conciseness of.
@@ -543,9 +542,9 @@ class LLMProvider(Provider):
         check the correctness of some text. Prompt credit to LangChain Eval.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.correctness).on_output() 
+            feedback = Feedback(provider.correctness).on_output()
             ```
 
         Args:
@@ -565,9 +564,9 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.correctness_with_cot_reasons).on_output() 
+            feedback = Feedback(provider.correctness_with_cot_reasons).on_output()
             ```
 
         Args:
@@ -584,11 +583,11 @@ class LLMProvider(Provider):
         """
         Uses chat completion model. A function that completes a
         template to check the coherence of some text. Prompt credit to LangChain Eval.
-        
+
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.coherence).on_output() 
+            feedback = Feedback(provider.coherence).on_output()
             ```
 
         Args:
@@ -608,9 +607,9 @@ class LLMProvider(Provider):
         uses chain of thought methodology and emits the reasons.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.coherence_with_cot_reasons).on_output() 
+            feedback = Feedback(provider.coherence_with_cot_reasons).on_output()
             ```
 
         Args:
@@ -629,11 +628,11 @@ class LLMProvider(Provider):
         check the harmfulness of some text. Prompt credit to LangChain Eval.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.harmfulness).on_output() 
+            feedback = Feedback(provider.harmfulness).on_output()
             ```
-            
+
         Args:
             text (str): The text to evaluate.
 
@@ -651,11 +650,11 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
-        
+
             ```python
             feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output()
             ```
-            
+
         Args:
             text (str): The text to evaluate.
 
@@ -673,9 +672,9 @@ class LLMProvider(Provider):
         check the maliciousness of some text. Prompt credit to LangChain Eval.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.maliciousness).on_output() 
+            feedback = Feedback(provider.maliciousness).on_output()
             ```
 
         Args:
@@ -696,9 +695,9 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output() 
+            feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output()
             ```
 
         Args:
@@ -717,9 +716,9 @@ class LLMProvider(Provider):
         check the helpfulness of some text. Prompt credit to LangChain Eval.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.helpfulness).on_output() 
+            feedback = Feedback(provider.helpfulness).on_output()
             ```
 
         Args:
@@ -739,9 +738,9 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output() 
+            feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output()
             ```
 
         Args:
@@ -761,9 +760,9 @@ class LLMProvider(Provider):
         Eval.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.controversiality).on_output() 
+            feedback = Feedback(provider.controversiality).on_output()
             ```
 
         Args:
@@ -786,11 +785,11 @@ class LLMProvider(Provider):
         Eval. Also uses chain of thought methodology and emits the reasons.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.controversiality_with_cot_reasons).on_output() 
+            feedback = Feedback(provider.controversiality_with_cot_reasons).on_output()
             ```
-            
+
         Args:
             text (str): The text to evaluate.
 
@@ -808,9 +807,9 @@ class LLMProvider(Provider):
         check the misogyny of some text. Prompt credit to LangChain Eval.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.misogyny).on_output() 
+            feedback = Feedback(provider.misogyny).on_output()
             ```
 
         Args:
@@ -830,11 +829,11 @@ class LLMProvider(Provider):
         uses chain of thought methodology and emits the reasons.
 
         !!! example
-        
+
             ```python
-            feedback = Feedback(provider.misogyny_with_cot_reasons).on_output() 
+            feedback = Feedback(provider.misogyny_with_cot_reasons).on_output()
             ```
-            
+
         Args:
             text (str): The text to evaluate.
 
@@ -851,7 +850,7 @@ class LLMProvider(Provider):
         check the criminality of some text. Prompt credit to LangChain Eval.
 
         !!! example
-        
+
             ```python
             feedback = Feedback(provider.criminality).on_output()
             ```
@@ -874,7 +873,7 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
-        
+
             ```python
             feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
             ```
@@ -895,7 +894,7 @@ class LLMProvider(Provider):
         check the insensitivity of some text. Prompt credit to LangChain Eval.
 
         !!! example
-        
+
             ```python
             feedback = Feedback(provider.insensitivity).on_output()
             ```
@@ -917,7 +916,7 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         !!! example
-        
+
             ```python
             feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
             ```
@@ -948,7 +947,7 @@ class LLMProvider(Provider):
             str
         """
 
-        assert self.endpoint is not None, "Endpoint is not set."
+        assert self.endpoint is not None, 'Endpoint is not set.'
 
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
@@ -962,7 +961,7 @@ class LLMProvider(Provider):
         to be used by the comprehensiveness feedback function.
 
          Args:
-            source (str): Text corresponding to source material. 
+            source (str): Text corresponding to source material.
 
         Returns:
             (str) key points of the source text.
@@ -1012,13 +1011,13 @@ class LLMProvider(Provider):
         in function assessment.
 
         !!! example
-        
+
             ```python
             feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
             ```
 
         Args:
-            source (str): Text corresponding to source material. 
+            source (str): Text corresponding to source material.
             summary (str): Text corresponding to a summary.
 
         Returns:
@@ -1030,16 +1029,16 @@ class LLMProvider(Provider):
             key_points, summary
         )
         scores = []
-        reasons = ""
+        reasons = ''
         for assessment in key_point_inclusion_assessments:
-            reasons += assessment + "\n\n"
+            reasons += assessment + '\n\n'
             if assessment:
                 first_line = assessment.split('\n')[0]
                 score = re_0_10_rating(first_line) / 10
                 scores.append(score)
 
         score = sum(scores) / len(scores) if scores else 0
-        return score, {"reasons": reasons}
+        return score, {'reasons': reasons}
 
     def summarization_with_cot_reasons(self, source: str,
                                        summary: str) -> Tuple[float, Dict]:
@@ -1047,7 +1046,7 @@ class LLMProvider(Provider):
         Summarization is deprecated in place of comprehensiveness. This function is no longer implemented.
         """
         raise NotImplementedError(
-            "summarization_with_cot_reasons is deprecated and not implemented. Please use comprehensiveness_with_cot_reasons instead."
+            'summarization_with_cot_reasons is deprecated and not implemented. Please use comprehensiveness_with_cot_reasons instead.'
         )
 
     def stereotypes(self, prompt: str, response: str) -> float:
@@ -1057,7 +1056,7 @@ class LLMProvider(Provider):
         prompt.
 
         !!! example
-        
+
             ```python
             feedback = Feedback(provider.stereotypes).on_input_output()
             ```
@@ -1090,7 +1089,7 @@ class LLMProvider(Provider):
             ```
 
         Args:
-            prompt (str): A text prompt to an agent. 
+            prompt (str): A text prompt to an agent.
 
             response (str): The agent's response to the prompt.
 
@@ -1111,7 +1110,7 @@ class LLMProvider(Provider):
         the statement using an LLM provider.
 
         The LLM will process the entire statement at once, using chain of
-        thought methodology to emit the reasons. 
+        thought methodology to emit the reasons.
 
         !!! example
 
@@ -1136,14 +1135,14 @@ class LLMProvider(Provider):
         """
         nltk.download('punkt', quiet=True)
         groundedness_scores = {}
-        reasons_str = ""
+        reasons_str = ''
 
         hypotheses = sent_tokenize(statement)
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
         def evaluate_hypothesis(index, hypothesis):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-                premise=f"{source}", hypothesis=f"{hypothesis}"
+                premise=f'{source}', hypothesis=f'{hypothesis}'
             )
             score, reason = self.generate_score_and_reasons(
                 system_prompt, user_prompt
@@ -1164,14 +1163,14 @@ class LLMProvider(Provider):
         results.sort(key=lambda x: x[0])  # Sort results by index
 
         for i, score, reason in results:
-            groundedness_scores[f"statement_{i}"] = score
+            groundedness_scores[f'statement_{i}'] = score
             reason_str = reason[
-                'reason'] if 'reason' in reason else "reason not generated"
-            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
+                'reason'] if 'reason' in reason else 'reason not generated'
+            reasons_str += f'STATEMENT {i}:\n{reason_str}\n'
 
         # Calculate the average groundedness score from the scores dictionary
         average_groundedness_score = float(
             np.mean(list(groundedness_scores.values()))
         )
 
-        return average_groundedness_score, {"reasons": reasons_str}
+        return average_groundedness_score, {'reasons': reasons_str}

@@ -1,23 +1,23 @@
 import logging
 from typing import Dict, Optional, Sequence, Union
 
-from langchain.chat_models.base import BaseChatModel
-from langchain.llms.base import BaseLLM
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
-
 from trulens.feedback.functions.provider import LLMProvider
 from trulens.feedback.functions.provider.endpoint import LangchainEndpoint
+
+from langchain.chat_models.base import BaseChatModel
+from langchain.llms.base import BaseLLM
 
 logger = logging.getLogger(__name__)
 
 
 def _convert_message(message: Dict) -> BaseMessage:
     """Convert a message to a LangChain BaseMessage."""
-    if not "role" in message or message["role"] == "user":
-        return HumanMessage(content=message["content"])
-    return AIMessage(content=message["content"])
+    if not 'role' in message or message['role'] == 'user':
+        return HumanMessage(content=message['content'])
+    return AIMessage(content=message['content'])
 
 
 class Langchain(LLMProvider):
@@ -26,7 +26,7 @@ class Langchain(LLMProvider):
     Create a LangChain Provider with out of the box feedback functions.
 
     !!! example
-    
+
         ```python
         from trulens.feedback.provider.langchain import Langchain
         from langchain_community.llms import OpenAI
@@ -45,12 +45,12 @@ class Langchain(LLMProvider):
         self,
         chain: Union[BaseLLM, BaseChatModel],
         *args,
-        model_engine: str = "",
+        model_engine: str = '',
         **kwargs
     ):
         self_kwargs = dict(kwargs)
-        self_kwargs["model_engine"] = model_engine or type(chain).__name__
-        self_kwargs["endpoint"] = LangchainEndpoint(
+        self_kwargs['model_engine'] = model_engine or type(chain).__name__
+        self_kwargs['endpoint'] = LangchainEndpoint(
             *args, chain=chain, **kwargs
         )
 
@@ -72,6 +72,6 @@ class Langchain(LLMProvider):
             ).content
 
         else:
-            raise ValueError("`prompt` or `messages` must be specified.")
+            raise ValueError('`prompt` or `messages` must be specified.')
 
         return predict

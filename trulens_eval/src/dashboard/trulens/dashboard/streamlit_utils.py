@@ -7,14 +7,14 @@ from trulens.tru import Tru
 
 def init_from_args():
     """Parse command line arguments and initialize Tru with them.
-    
+
     As Tru is a singleton, further Tru() uses will get the same configuration.
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--database-url", default=None)
+    parser.add_argument('--database-url', default=None)
     parser.add_argument(
-        "--database-prefix", default=mod_db.DEFAULT_DATABASE_PREFIX
+        '--database-prefix', default=mod_db.DEFAULT_DATABASE_PREFIX
     )
 
     try:

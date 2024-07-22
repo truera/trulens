@@ -15,7 +15,7 @@ in `__init__.py`:
 
 ```python
 with OptionalImports(messages=REQUIREMENT_LLAMA):
-    from trulens_eval.tru_llama import TruLlama
+    from trulens.tru_llama import TruLlama
 ```
 
 This makes it so that `TruLlama` gets defined subsequently even if the import
@@ -25,7 +25,7 @@ However, if the user imports TruLlama (via `__init__.py`) and tries to use it
 that `llama-index` is optional and how to install it:
 
 ```
-ModuleNotFoundError: 
+ModuleNotFoundError:
 llama-index package is required for instrumenting llama_index apps.
 You should be able to install it with pip:
 
@@ -67,6 +67,6 @@ opt.assert_installed[[package1, package2]]
 ### When to Fail
 
 As per above implied, imports from a general package that does not imply an
-optional package (like `from trulens_eval ...`) should not produce the error
+optional package (like `from trulens ...`) should not produce the error
 immediately but imports from packages that do imply the use of optional import
 (`tru_llama.py`) should.

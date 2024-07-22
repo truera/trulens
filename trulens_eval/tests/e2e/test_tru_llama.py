@@ -5,11 +5,11 @@ Tests for TruLlama.
 import unittest
 from unittest import main
 
+from trulens.keys import check_keys
+from trulens.utils.asynchro import sync
+
 from tests.unit.test import JSONTestCase
 from tests.unit.test import optional_test
-
-from trulens_eval.keys import check_keys
-from trulens_eval.utils.asynchro import sync
 
 
 # All tests require optional packages.
@@ -22,7 +22,7 @@ class TestLlamaIndex(JSONTestCase):
     # from unittest import IsolatedAsyncioTestCase
 
     def setUp(self):
-        check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
+        check_keys('OPENAI_API_KEY', 'HUGGINGFACE_API_KEY')
         import os
 
         from llama_index.core import SimpleDirectoryReader
@@ -31,13 +31,13 @@ class TestLlamaIndex(JSONTestCase):
             'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
         )
 
-        documents = SimpleDirectoryReader("data").load_data()
+        documents = SimpleDirectoryReader('data').load_data()
         self.index = VectorStoreIndex.from_documents(documents)
 
     def test_query_engine_async(self):
         # Check that the instrumented async aquery method produces the same result as the query method.
 
-        from trulens_eval.tru_llama import TruLlama
+        from trulens.tru_llama import TruLlama
 
         query_engine = self.index.as_query_engine()
 
@@ -47,13 +47,13 @@ class TestLlamaIndex(JSONTestCase):
         tru_query_engine_recorder = TruLlama(query_engine)
         llm_response_async, record_async = sync(
             tru_query_engine_recorder.awith_record, query_engine.aquery,
-            "What did the author do growing up?"
+            'What did the author do growing up?'
         )
 
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
         llm_response_sync, record_sync = tru_query_engine_recorder.with_record(
-            query_engine.query, "What did the author do growing up?"
+            query_engine.query, 'What did the author do growing up?'
         )
 
         # llm response is probabilistic, so just test if async response is also a string. not that it is same as sync response.
@@ -64,31 +64,31 @@ class TestLlamaIndex(JSONTestCase):
             record_async.model_dump(),
             skips=set(
                 [
-                    "calls",  # async/sync have different set of internal calls, so cannot easily compare
-                    "name",
-                    "app_id",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                    "cost",  # cost is not being correctly tracked in async
-                    "main_output"  # response is not deterministic, so cannot easily compare across runs
+                    'calls',  # async/sync have different set of internal calls, so cannot easily compare
+                    'name',
+                    'app_id',
+                    'ts',
+                    'start_time',
+                    'end_time',
+                    'record_id',
+                    'cost',  # cost is not being correctly tracked in async
+                    'main_output'  # response is not deterministic, so cannot easily compare across runs
                 ]
             )
         )
 
-    @unittest.skip("Streaming records not yet recorded properly.")
+    @unittest.skip('Streaming records not yet recorded properly.')
     def test_query_engine_stream(self):
         # Check that the instrumented query method produces the same result
         # regardless of streaming option.
 
-        from trulens_eval.tru_llama import TruLlama
+        from trulens.tru_llama import TruLlama
 
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
         with tru_query_engine_recorder as recording:
             llm_response = query_engine.query(
-                "What did the author do growing up?"
+                'What did the author do growing up?'
             )
         record = recording.get()
 
@@ -96,7 +96,7 @@ class TestLlamaIndex(JSONTestCase):
         tru_query_engine_recorder = TruLlama(query_engine)
         with tru_query_engine_recorder as stream_recording:
             llm_response_stream = query_engine.query(
-                "What did the author do growing up?"
+                'What did the author do growing up?'
             )
         record_stream = stream_recording.get()
 
@@ -112,12 +112,12 @@ class TestLlamaIndex(JSONTestCase):
             skips=set(
                 [
                     # "calls",
-                    "name",
-                    "app_id",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id"
+                    'name',
+                    'app_id',
+                    'ts',
+                    'start_time',
+                    'end_time',
+                    'record_id'
                 ]
             )
         )
@@ -125,13 +125,13 @@ class TestLlamaIndex(JSONTestCase):
     async def test_chat_engine_async(self):
         # Check that the instrumented async achat method produces the same result as the chat method.
 
-        from trulens_eval.tru_llama import TruLlama
+        from trulens.tru_llama import TruLlama
 
         chat_engine = self.index.as_chat_engine()
         tru_chat_engine_recorder = TruLlama(chat_engine)
         with tru_chat_engine_recorder as arecording:
             llm_response_async = await chat_engine.achat(
-                "What did the author do growing up?"
+                'What did the author do growing up?'
             )
         record_async = arecording.records[0]
 
@@ -139,7 +139,7 @@ class TestLlamaIndex(JSONTestCase):
         tru_chat_engine_recorder = TruLlama(chat_engine)
         with tru_chat_engine_recorder as recording:
             llm_response_sync = chat_engine.chat(
-                "What did the author do growing up?"
+                'What did the author do growing up?'
             )
         record_sync = recording.records[0]
 
@@ -154,13 +154,13 @@ class TestLlamaIndex(JSONTestCase):
             record_async.model_dump(),
             skips=set(
                 [
-                    "calls",  # async/sync have different set of internal calls, so cannot easily compare
-                    "name",
-                    "app_id",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id"
+                    'calls',  # async/sync have different set of internal calls, so cannot easily compare
+                    'name',
+                    'app_id',
+                    'ts',
+                    'start_time',
+                    'end_time',
+                    'record_id'
                 ]
             )
         )

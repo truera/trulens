@@ -21,7 +21,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
     """
     A VectorStoreRetriever that filters documents using a minimum threshold
     on a feedback function before returning them.
-    
+
     Args:
         feedback (Feedback): use this feedback function to score each document.
 
@@ -69,7 +69,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
 
         Args:
             query: str - the query string to search for relevant documents.
-            
+
             run_manager: RunManager - the run manager to handle document retrieval.
 
         Returns:
@@ -91,7 +91,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
                 result = future.result()
                 if not isinstance(result, float):
                     raise ValueError(
-                        "Guardrails can only be used with feedback functions that return a float."
+                        'Guardrails can only be used with feedback functions that return a float.'
                     )
                 if (self.feedback.higher_is_better and result > self.threshold) or \
                    (not self.feedback.higher_is_better and result < self.threshold):

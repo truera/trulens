@@ -32,14 +32,14 @@ def setup_widget_stdout_stderr():
         children=[
             widgets.VBox(
                 [
-                    widgets.VBox([widgets.Label("STDOUT"), out_stdout]),
-                    widgets.VBox([widgets.Label("STDERR"), out_stderr])
+                    widgets.VBox([widgets.Label('STDOUT'), out_stdout]),
+                    widgets.VBox([widgets.Label('STDERR'), out_stderr])
                 ]
             )
         ],
         open=True
     )
-    acc.set_title(0, "Dashboard log")
+    acc.set_title(0, 'Dashboard log')
 
     display(acc)
     return out_stdout, out_stderr

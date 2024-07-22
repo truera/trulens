@@ -142,7 +142,7 @@ react:
 clean:
 	git clean -fxd
 
-# Step: Packages trulens into .whl file 
+# Step: Packages trulens into .whl file
 build:
 	python setup.py bdist_wheel
 

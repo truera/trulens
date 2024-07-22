@@ -14,12 +14,11 @@ import queue
 import sys
 from types import ModuleType
 import typing
-from typing import (
-    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator,
-    List, Optional, Sequence, Type, TypeVar, Union
-)
+from typing import (Any, Awaitable, Callable, Dict, Generator, Generic,
+                    Hashable, Iterator, List, Optional, Sequence, Type,
+                    TypeVar, Union)
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
@@ -27,14 +26,14 @@ Thunk = Callable[[], T]
 if sys.version_info >= (3, 9):
     Future = futures.Future
     """Alias for [concurrent.futures.Future][].
-    
+
     In python < 3.9, a sublcass of [concurrent.futures.Future][] with
     `Generic[A]` is used instead.
     """
 
     Queue = queue.Queue
     """Alias for [queue.Queue][] .
-    
+
     In python < 3.9, a sublcass of [queue.Queue][] with
     `Generic[A]` is used instead.
     """
@@ -44,12 +43,12 @@ else:
     # classes imported above cannot have type args which is annoying for type
     # annotations. We use these fake ones instead.
 
-    A = TypeVar("A")
+    A = TypeVar('A')
 
     # HACK011
     class Future(Generic[A], futures.Future):
         """Alias for [concurrent.futures.Future][].
-    
+
         In python < 3.9, a sublcass of [concurrent.futures.Future][] with
         `Generic[A]` is used instead.
         """
@@ -57,7 +56,7 @@ else:
     # HACK012
     class Queue(Generic[A], queue.Queue):
         """Alias for [queue.Queue][] .
-    
+
         In python < 3.9, a sublcass of [queue.Queue][] with
         `Generic[A]` is used instead.
         """
@@ -67,7 +66,7 @@ class EmptyType(type):
     """A type that cannot be instantiated or subclassed."""
 
     def __new__(mcs, *args, **kwargs):
-        raise ValueError("EmptyType cannot be instantiated.")
+        raise ValueError('EmptyType cannot be instantiated.')
 
     def __instancecheck__(cls, __instance: Any) -> bool:
         return False
@@ -80,14 +79,14 @@ if sys.version_info >= (3, 10):
     import types
     NoneType = types.NoneType
     """Alias for [types.NoneType][] .
-    
+
     In python < 3.10, it is defined as `type(None)` instead.
     """
 
 else:
     NoneType = type(None)
     """Alias for [types.NoneType][] .
-    
+
     In python < 3.10, it is defined as `type(None)` instead.
     """
 
@@ -100,10 +99,10 @@ pp = PrettyPrinter()
 def class_name(obj: Union[Type, Any]) -> str:
     """Get the class name of the given object or instance."""
 
-    if hasattr(obj, "__name__"):
+    if hasattr(obj, '__name__'):
         return obj.__name__
 
-    if hasattr(obj, "__class__"):
+    if hasattr(obj, '__class__'):
         return obj.__class__.__name__
 
     return str(obj)
@@ -115,10 +114,10 @@ def module_name(obj: Union[ModuleType, Type, Any]) -> str:
     if isinstance(obj, ModuleType):
         return obj.__name__
 
-    if hasattr(obj, "__module__"):
+    if hasattr(obj, '__module__'):
         return obj.__module__  # already a string name
 
-    return "unknown module"
+    return 'unknown module'
 
 
 def callable_name(c: Callable):
@@ -126,13 +125,13 @@ def callable_name(c: Callable):
 
     if not isinstance(c, Callable):
         raise ValueError(
-            f"Expected a callable. Got {class_name(type(c))} instead."
+            f'Expected a callable. Got {class_name(type(c))} instead.'
         )
 
-    if safe_hasattr(c, "__name__"):
+    if safe_hasattr(c, '__name__'):
         return c.__name__
 
-    if safe_hasattr(c, "__call__"):
+    if safe_hasattr(c, '__call__'):
         return callable_name(c.__call__)
 
     return str(c)
@@ -141,13 +140,13 @@ def callable_name(c: Callable):
 def id_str(obj: Any) -> str:
     """Get the id of the given object as a string in hex."""
 
-    return f"0x{id(obj):x}"
+    return f'0x{id(obj):x}'
 
 
 def is_really_coroutinefunction(func) -> bool:
     """Determine whether the given function is a coroutine function.
 
-    Warning: 
+    Warning:
         Inspect checkers for async functions do not work on openai clients,
         perhaps because they use `@typing.overload`. Because of that, we detect
         them by checking `__wrapped__` attribute instead. Note that the inspect
@@ -161,7 +160,7 @@ def is_really_coroutinefunction(func) -> bool:
     if inspect.iscoroutinefunction(func):
         return True
 
-    if hasattr(func, "__wrapped__") and inspect.iscoroutinefunction(
+    if hasattr(func, '__wrapped__') and inspect.iscoroutinefunction(
             func.__wrapped__):
         return True
 
@@ -169,7 +168,7 @@ def is_really_coroutinefunction(func) -> bool:
 
 
 def safe_signature(func_or_obj: Any):
-    """Get the signature of the given function. 
+    """Get the signature of the given function.
 
     Sometimes signature fails for wrapped callables and in those cases we check
     for `__call__` attribute and use that instead.
@@ -177,12 +176,12 @@ def safe_signature(func_or_obj: Any):
     try:
         assert isinstance(
             func_or_obj, Callable
-        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
+        ), f'Expected a Callable. Got {type(func_or_obj)} instead.'
 
         return inspect.signature(func_or_obj)
 
     except Exception as e:
-        if safe_hasattr(func_or_obj, "__call__"):
+        if safe_hasattr(func_or_obj, '__call__'):
             # If given an obj that is callable (has __call__ defined), we want to
             # return signature of that call instead of letting inspect.signature
             # explore that object further. Doing so may produce exceptions due to
@@ -197,8 +196,8 @@ def safe_signature(func_or_obj: Any):
 
 def safe_hasattr(obj: Any, k: str) -> bool:
     """Check if the given object has the given attribute.
-    
-    Attempts to use static checks (see [inspect.getattr_static][]) to avoid any 
+
+    Attempts to use static checks (see [inspect.getattr_static][]) to avoid any
     side effects of attribute access (i.e. for properties).
     """
     try:
@@ -242,29 +241,29 @@ def code_line(func, show_source: bool = False) -> Optional[str]:
     `func`."""
 
     if isinstance(func, inspect.FrameInfo):
-        ret = f"{func.filename}:{func.lineno}"
+        ret = f'{func.filename}:{func.lineno}'
         if show_source:
-            ret += "\n"
+            ret += '\n'
             for line in func.code_context:
-                ret += "\t" + line
+                ret += '\t' + line
 
         return ret
 
     if inspect.isframe(func):
         code = func.f_code
-        ret = f"{func.f_code.co_filename}:{func.f_code.co_firstlineno}"
+        ret = f'{func.f_code.co_filename}:{func.f_code.co_firstlineno}'
 
-    elif safe_hasattr(func, "__code__"):
+    elif safe_hasattr(func, '__code__'):
         code = func.__code__
-        ret = f"{code.co_filename}:{code.co_firstlineno}"
+        ret = f'{code.co_filename}:{code.co_firstlineno}'
 
     else:
         return None
 
     if show_source:
-        ret += "\n"
+        ret += '\n'
         for line in inspect.getsourcelines(func)[0]:
-            ret += "\t" + str(line)
+            ret += '\t' + str(line)
 
     return ret
 
@@ -293,13 +292,13 @@ def for_all_methods(decorator, _except: Optional[List[str]] = None):
             if not inspect.isfunction(attr):
                 continue  # skips non-method attributes
 
-            if attr_name.startswith("_"):
+            if attr_name.startswith('_'):
                 continue  # skips private methods
 
             if _except is not None and attr_name in _except:
                 continue
 
-            logger.debug("Decorating %s", attr_name)
+            logger.debug('Decorating %s', attr_name)
             setattr(cls, attr_name, decorator(attr))
 
         return cls
@@ -326,7 +325,7 @@ def run_before(callback: Callable):
 # Python call stack utilities
 
 # Attribute name for storing a callstack in asyncio tasks.
-STACK = "__tru_stack"
+STACK = '__tru_stack'
 
 
 def caller_frame(offset=0) -> 'frame':
@@ -340,7 +339,7 @@ def caller_frame(offset=0) -> 'frame':
 
 def caller_frameinfo(
     offset: int = 0,
-    skip_module: Optional[str] = "trulens_eval"
+    skip_module: Optional[str] = 'trulens_eval'
 ) -> Optional[inspect.FrameInfo]:
     """
     Get the caller's (of this function) frameinfo. See
@@ -348,7 +347,7 @@ def caller_frameinfo(
 
     Args:
         offset: The number of frames to skip. Default is 0.
-        
+
         skip_module: Skip frames from the given module. Default is "trulens_eval".
     """
 
@@ -364,7 +363,7 @@ def caller_frameinfo(
 def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence['frame']:
     """
     A task factory that annotates created tasks with stacks of their parents.
-    
+
     All of such annotated stacks can be retrieved with
     [stack_with_tasks][trulens_eval.utils.python.stack_with_tasks] as one merged
     stack.
@@ -482,14 +481,14 @@ def get_all_local_in_call_stack(
     skip: Optional[Any] = None  # really frame
 ) -> Iterator[Any]:
     """Find locals in call stack by name.
-    
+
     Args:
         key: The name of the local variable to look for.
-        
+
         func: Recognizer of the function to find in the call stack.
-        
+
         offset: The number of top frames to skip.
-        
+
         skip: A frame to skip as well.
 
     Note:
@@ -526,7 +525,7 @@ def get_all_local_in_call_stack(
 
         if id(f.f_code) == id(_future_target_wrapper.__code__):
             locs = f.f_locals
-            assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
+            assert 'pre_start_stack' in locs, 'Pre thread start stack expected but not found.'
             for fi in locs['pre_start_stack']:
                 q.put(fi.frame)
 
@@ -537,9 +536,9 @@ def get_all_local_in_call_stack(
             continue
 
         if func(f.f_code):
-            logger.debug(f"Looking via {func.__name__}; found {f}")
+            logger.debug(f'Looking via {func.__name__}; found {f}')
             if skip is not None and f == skip:
-                logger.debug(f"Skipping.")
+                logger.debug(f'Skipping.')
                 continue
 
             locs = f.f_locals
@@ -581,7 +580,7 @@ def get_first_local_in_call_stack(
             )
         )
     except StopIteration:
-        logger.debug("no frames found")
+        logger.debug('no frames found')
         return None
 
 
@@ -613,7 +612,7 @@ class OpaqueWrapper(Generic[T]):
         raise self._e
 
     def __setattr__(self, name, value):
-        if name in ["_obj", "_e"]:
+        if name in ['_obj', '_e']:
             return super().__setattr__(name, value)
         raise self._e
 
@@ -637,7 +636,7 @@ def wrap_awaitable(
 
         on_await: The callback to call when the wrapper awaitable is awaited but
             before the wrapped awaitable is awaited.
-        
+
         on_done: The callback to call with the result of the wrapped awaitable
             once it is ready.
     """
@@ -694,7 +693,7 @@ def wrap_generator(
 
 # Class utilities
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 
 @dataclasses.dataclass
@@ -708,7 +707,7 @@ class SingletonInfo(Generic[T]):
 
     name: str
     """The name of the singleton instance.
-    
+
     This is used for the SingletonPerName mechanism to have a seperate singleton
     for each unique name (and class).
     """
@@ -718,7 +717,7 @@ class SingletonInfo(Generic[T]):
 
     frame: Any
     """The frame where the singleton was created.
-    
+
     This is used for showing "already created" warnings.
     """
 
@@ -733,8 +732,8 @@ class SingletonInfo(Generic[T]):
 
         logger.warning(
             (
-                "Singleton instance of type %s already created at:\n%s\n"
-                "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
+                'Singleton instance of type %s already created at:\n%s\n'
+                'You can delete the singleton by calling `<instance>.delete_singleton()` or \n'
                 f"""  ```python
   from trulens.utils.python import SingletonPerName
   SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
@@ -768,7 +767,7 @@ class SingletonPerName(Generic[T]):
             SingletonPerName._instances[k].warning()
         else:
             raise RuntimeError(
-                f"Instance of singleton type/name {k} does not exist."
+                f'Instance of singleton type/name {k} does not exist.'
             )
 
     def __new__(
@@ -785,7 +784,7 @@ class SingletonPerName(Generic[T]):
 
         if k not in cls._instances:
             logger.debug(
-                "*** Creating new %s singleton instance for name = %s ***",
+                '*** Creating new %s singleton instance for name = %s ***',
                 cls.__name__, name
             )
             # If exception happens here, the instance should not be added to
@@ -806,7 +805,7 @@ class SingletonPerName(Generic[T]):
     def delete_singleton_by_name(name: str, cls: Type[SingletonPerName] = None):
         """
         Delete the singleton instance with the given name.
-        
+
         This can be used for testing to create another singleton.
 
         Args:
@@ -835,4 +834,4 @@ class SingletonPerName(Generic[T]):
             del SingletonPerName._id_to_name_map[id_]
             del SingletonPerName._instances[(self.__class__.__name__, name)]
         else:
-            logger.warning("Instance %s not found in our records.", self)
+            logger.warning('Instance %s not found in our records.', self)

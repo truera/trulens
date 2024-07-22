@@ -13,10 +13,9 @@ from ast import parse
 from contextvars import ContextVar
 from copy import copy
 import logging
-from typing import (
-    Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable, List, Optional,
-    Sequence, Set, Sized, Tuple, TypeVar, Union
-)
+from typing import (Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable,
+                    List, Optional, Sequence, Set, Sized, Tuple, TypeVar,
+                    Union)
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
@@ -25,13 +24,12 @@ from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 from pydantic_core import CoreSchema
 import rich
-
 from trulens.utils.containers import iterable_peek
 from trulens.utils.python import class_name
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
+T = TypeVar('T')
 
 JSON_BASES: Tuple[type, ...] = (str, int, float, bytes, type(None))
 """
@@ -71,7 +69,7 @@ Python object that is directly mappable to JSON.
 
 class JSONized(dict, Generic[T]):  # really JSON_STRICT
     """JSON-encoded data the can be deserialized into a given type `T`.
-    
+
     This class is meant only for type annotations. Any
     serialization/deserialization logic is handled by different classes, usually
     subclasses of `pydantic.BaseModel`.
@@ -99,7 +97,7 @@ def model_dump(obj: Union[pydantic.BaseModel, pydantic.v1.BaseModel]) -> dict:
     elif isinstance(obj, pydantic.v1.BaseModel):
         return obj.dict()
     else:
-        raise ValueError("Not a pydantic.BaseModel.")
+        raise ValueError('Not a pydantic.BaseModel.')
 
 
 class SerialModel(pydantic.BaseModel):
@@ -109,7 +107,7 @@ class SerialModel(pydantic.BaseModel):
     """
 
     formatted_objects: ClassVar[ContextVar[Set[int]]
-                               ] = ContextVar("formatted_objects")
+                               ] = ContextVar('formatted_objects')
 
     def __rich_repr__(self) -> rich.repr.Result:
         """Requirement for pretty printing using the rich package."""
@@ -127,7 +125,7 @@ class SerialModel(pydantic.BaseModel):
             formatted_objects = set()
 
         if id(self) in formatted_objects:
-            yield f"{class_name(type(self))}@0x{id(self):x}"
+            yield f'{class_name(type(self))}@0x{id(self):x}'
 
             if tok is not None:
                 SerialModel.formatted_objects.reset(tok)
@@ -204,7 +202,7 @@ class Step(pydantic.BaseModel, Hashable):
     """
 
     def __hash__(self):
-        raise TypeError(f"Should never be called, self={self.model_dump()}")
+        raise TypeError(f'Should never be called, self={self.model_dump()}')
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
@@ -232,7 +230,7 @@ class Step(pydantic.BaseModel, Hashable):
                 return ATTRIBUTE_TYPE_MAP[a](**obj)
 
         raise RuntimeError(
-            f"Do not know how to interpret {obj} as a `Lens` `Step`."
+            f'Do not know how to interpret {obj} as a `Lens` `Step`.'
         )
 
     # @abc.abstractmethod # NOTE1
@@ -256,7 +254,7 @@ class Collect(Step):
 
     # Hashable requirement.
     def __hash__(self):
-        return hash("collect")
+        return hash('collect')
 
     # Step requirement.
     def get(self, obj: Any) -> Iterable[List[Any]]:
@@ -268,7 +266,7 @@ class Collect(Step):
         raise NotImplementedError()
 
     def __repr__(self):
-        return f".collect()"
+        return f'.collect()'
 
 
 class StepItemOrAttribute(Step):
@@ -294,7 +292,7 @@ class GetAttribute(StepItemOrAttribute):
             yield getattr(obj, self.attribute)
         else:
             raise ValueError(
-                f"Object {obj} does not have attribute: {self.attribute}"
+                f'Object {obj} does not have attribute: {self.attribute}'
             )
 
     # Step requirement
@@ -314,7 +312,7 @@ class GetAttribute(StepItemOrAttribute):
             return obj
 
     def __repr__(self):
-        return f".{self.attribute}"
+        return f'.{self.attribute}'
 
 
 class GetIndex(Step):
@@ -330,16 +328,16 @@ class GetIndex(Step):
             if len(obj) > self.index:
                 yield obj[self.index]
             else:
-                raise IndexError(f"Index out of bounds: {self.index}")
+                raise IndexError(f'Index out of bounds: {self.index}')
         else:
-            raise ValueError(f"Object {obj} is not a sequence.")
+            raise ValueError(f'Object {obj} is not a sequence.')
 
     # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = []
 
-        assert isinstance(obj, Sequence), "Sequence expected."
+        assert isinstance(obj, Sequence), 'Sequence expected.'
 
         # copy
         obj = list(obj)
@@ -352,7 +350,7 @@ class GetIndex(Step):
         return obj
 
     def __repr__(self):
-        return f"[{self.index}]"
+        return f'[{self.index}]'
 
 
 class GetItem(StepItemOrAttribute):
@@ -372,16 +370,16 @@ class GetItem(StepItemOrAttribute):
             if self.item in obj:
                 yield obj[self.item]
             else:
-                raise KeyError(f"Key not in dictionary: {self.item}")
+                raise KeyError(f'Key not in dictionary: {self.item}')
         else:
-            raise ValueError(f"Object {obj} is not a dictionary.")
+            raise ValueError(f'Object {obj} is not a dictionary.')
 
     # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = dict()
 
-        assert isinstance(obj, Dict), "Dictionary expected."
+        assert isinstance(obj, Dict), 'Dictionary expected.'
 
         # copy
         obj = {k: v for k, v in obj.items()}
@@ -390,7 +388,7 @@ class GetItem(StepItemOrAttribute):
         return obj
 
     def __repr__(self):
-        return f"[{repr(self.item)}]"
+        return f'[{repr(self.item)}]'
 
 
 class GetItemOrAttribute(StepItemOrAttribute):
@@ -422,13 +420,13 @@ class GetItemOrAttribute(StepItemOrAttribute):
                     yield r
             elif len(obj) == 0:
                 raise ValueError(
-                    f"Object not a dictionary or sequence of dictionaries: {obj}."
+                    f'Object not a dictionary or sequence of dictionaries: {obj}.'
                 )
             else:  # len(obj) > 1
                 logger.warning(
-                    "Object (of type %s is a sequence containing more than one dictionary. "
-                    "Lookup by item or attribute `%s` is ambiguous. "
-                    "Use a lookup by index(es) or slice first to disambiguate.",
+                    'Object (of type %s is a sequence containing more than one dictionary. '
+                    'Lookup by item or attribute `%s` is ambiguous. '
+                    'Use a lookup by index(es) or slice first to disambiguate.',
                     type(obj).__name__, self.item_or_attribute
                 )
                 for sub_obj in obj:
@@ -444,14 +442,14 @@ class GetItemOrAttribute(StepItemOrAttribute):
                 yield obj[self.item_or_attribute]
             else:
                 raise KeyError(
-                    f"Key not in dictionary: {self.item_or_attribute}"
+                    f'Key not in dictionary: {self.item_or_attribute}'
                 )
         else:
             if hasattr(obj, self.item_or_attribute):
                 yield getattr(obj, self.item_or_attribute)
             else:
                 raise ValueError(
-                    f"Object {repr(obj)} of type {type(obj)} does not have item or attribute {repr(self.item_or_attribute)}."
+                    f'Object {repr(obj)} of type {type(obj)} does not have item or attribute {repr(self.item_or_attribute)}.'
                 )
 
     # Step requirement
@@ -471,7 +469,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
         return obj
 
     def __repr__(self):
-        return f".{self.item_or_attribute}"
+        return f'.{self.item_or_attribute}'
 
 
 class GetSlice(Step):
@@ -491,14 +489,14 @@ class GetSlice(Step):
             for i in range(lower, upper, step):
                 yield obj[i]
         else:
-            raise ValueError("Object is not a sequence.")
+            raise ValueError('Object is not a sequence.')
 
     # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = []
 
-        assert isinstance(obj, Sequence), "Sequence expected."
+        assert isinstance(obj, Sequence), 'Sequence expected.'
 
         lower, upper, step = slice(self.start, self.stop,
                                    self.step).indices(len(obj))
@@ -512,16 +510,16 @@ class GetSlice(Step):
         return obj
 
     def __repr__(self):
-        pieces = ":".join(
+        pieces = ':'.join(
             [
-                "" if p is None else str(p)
+                '' if p is None else str(p)
                 for p in (self.start, self.stop, self.step)
             ]
         )
-        if pieces == "::":
-            pieces = ":"
+        if pieces == '::':
+            pieces = ':'
 
-        return f"[{pieces}]"
+        return f'[{pieces}]'
 
 
 class GetIndices(Step):
@@ -540,14 +538,14 @@ class GetIndices(Step):
             for i in self.indices:
                 yield obj[i]
         else:
-            raise ValueError("Object is not a sequence.")
+            raise ValueError('Object is not a sequence.')
 
     # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = []
 
-        assert isinstance(obj, Sequence), "Sequence expected."
+        assert isinstance(obj, Sequence), 'Sequence expected.'
 
         # copy
         obj = list(obj)
@@ -581,14 +579,14 @@ class GetItems(Step):
             for i in self.items:
                 yield obj[i]
         else:
-            raise ValueError("Object is not a dictionary.")
+            raise ValueError('Object is not a dictionary.')
 
     # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
         if obj is None:
             obj = dict()
 
-        assert isinstance(obj, Dict), "Dictionary expected."
+        assert isinstance(obj, Dict), 'Dictionary expected.'
 
         # copy
         obj = {k: v for k, v in obj.items()}
@@ -599,7 +597,7 @@ class GetItems(Step):
         return obj
 
     def __repr__(self):
-        return "[" + (','.join(f"'{i}'" for i in self.items)) + "]"
+        return '[' + (','.join(f"'{i}'" for i in self.items)) + ']'
 
 
 class ParseException(Exception):
@@ -610,7 +608,7 @@ class ParseException(Exception):
 
     def __str__(self):
         return (
-            f"Failed to parse expression `{self.exp_string}` as a `Lens`."
+            f'Failed to parse expression `{self.exp_string}` as a `Lens`.'
             f"\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
         )
 
@@ -622,7 +620,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     Lenses into python objects.
 
     !!! example
-    
+
         ```python
         path = Lens().record[5]['somekey']
 
@@ -726,7 +724,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         try:
             # NOTE: "eval" here means to parse an expression, not a statement.
             # exp = parse(f"PLACEHOLDER.{s}", mode="eval")
-            exp = parse(s, mode="eval")
+            exp = parse(s, mode='eval')
 
         except SyntaxError as e:
             raise ParseException(s, None)
@@ -835,7 +833,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
                 if len(exp.elts) == 0:
                     logger.warning(
-                        f"Path {s} is getting zero items/indices, it will not produce anything."
+                        f'Path {s} is getting zero items/indices, it will not produce anything.'
                     )
                     path.append(GetIndices(indices=()))
 
@@ -876,16 +874,16 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                     raise ParseException(s, exp)
 
                 funcname = exp.func.attr
-                if funcname == "collect":
+                if funcname == 'collect':
                     path.append(Collect())
 
                 else:
                     raise TypeError(
-                        f"`{funcname}` is not a handled call for paths."
+                        f'`{funcname}` is not a handled call for paths.'
                     )
 
                 if len(exp.args) + len(exp.keywords) != 0:
-                    logger.warning(f"args/kwargs for `{funcname}` are ignored")
+                    logger.warning(f'args/kwargs for `{funcname}` are ignored')
 
                 exp = exp.func.value
 
@@ -895,9 +893,9 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         return Lens(path=path[::-1])
 
     def __str__(self):
-        ret = ""
+        ret = ''
         for step in self.path:
-            if isinstance(step, StepItemOrAttribute) and ret == "":
+            if isinstance(step, StepItemOrAttribute) and ret == '':
                 ret = step.get_item_or_attribute()
             else:
                 ret += repr(step)
@@ -905,7 +903,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         return ret
 
     def __repr__(self):
-        return "Lens()" + ("".join(map(repr, self.path)))
+        return 'Lens()' + (''.join(map(repr, self.path)))
 
     # Hashable requirement
     def __hash__(self):
@@ -942,7 +940,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         containing only the given `val`. If it already exists as a sequence,
         appends `val` to that sequence as a list. If it is set but not a sequence,
         error is thrown.
-        
+
         """
         try:
             existing = self.get_sole_item(obj)
@@ -952,8 +950,8 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                 return self.set(obj, [val])
             else:
                 raise ValueError(
-                    f"Trying to append to object which is not a list; "
-                    f"is of type {type(existing).__name__} instead."
+                    f'Trying to append to object which is not a list; '
+                    f'is of type {type(existing).__name__} instead.'
                 )
 
         except Exception:
@@ -991,14 +989,14 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         assert len(
             all_objects
-        ) == 1, f"Lens {self} did not address exactly a single object."
+        ) == 1, f'Lens {self} did not address exactly a single object.'
 
         return all_objects[0]
 
     def __call__(self, *args, **kwargs):
         error_msg = (
-            "Only `collect` is a valid function name in python call syntax when building lenses. "
-            "Note that applying a selector/path/JSONPAth/Lens now requires to use the `get` method instead of `__call__`."
+            'Only `collect` is a valid function name in python call syntax when building lenses. '
+            'Note that applying a selector/path/JSONPAth/Lens now requires to use the `get` method instead of `__call__`.'
         )
 
         assert len(self.path) > 0, error_msg
@@ -1006,7 +1004,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         funcname = self.path[-1].get_item_or_attribute()
 
-        if funcname == "collect":
+        if funcname == 'collect':
             return Lens(path=self.path[0:-1] + (Collect(),))
 
         else:
@@ -1057,14 +1055,14 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                 return self._append(GetItems(items=item))
             else:
                 raise TypeError(
-                    f"Unhandled sequence item types: {list(map(type, item))}. "
-                    f"Note mixing int and str is not allowed."
+                    f'Unhandled sequence item types: {list(map(type, item))}. '
+                    f'Note mixing int and str is not allowed.'
                 )
 
-        raise TypeError(f"Unhandled item type {type(item)}.")
+        raise TypeError(f'Unhandled item type {type(item)}.')
 
     def __getattr__(self, attr: str) -> 'Lens':
-        if attr == "_ipython_canary_method_should_not_exist_":
+        if attr == '_ipython_canary_method_should_not_exist_':
             # NOTE(piotrm): when displaying objects, ipython checks whether they
             # have overwritten __getattr__ by looking up this attribute. If it
             # does not result in AttributeError or None, IPython knows it was
@@ -1182,11 +1180,11 @@ def all_objects(obj: Any, query: Lens = None) -> Iterable[Tuple[Lens, Any]]:
 
     elif isinstance(obj, Iterable):
         logger.debug(
-            f"Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first."
+            f'Cannot create query for Iterable types like {obj.__class__.__name__} at query {query}. Convert the iterable to a sequence first.'
         )
 
     else:
-        logger.debug(f"Unhandled object type {obj} {type(obj)}")
+        logger.debug(f'Unhandled object type {obj} {type(obj)}')
 
 
 def leafs(obj: Any) -> Iterable[Tuple[str, Any]]:

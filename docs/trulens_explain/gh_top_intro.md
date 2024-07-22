@@ -21,7 +21,7 @@ to your path.
 conda create -n "<my_name>" python=3  # Skip if using existing environment.
 conda activate <my_name>
 ```
- 
+
 1. Install dependencies.
 ```bash
 conda install tensorflow-gpu=1  # Or whatever backend you're using.

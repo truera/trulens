@@ -34,7 +34,6 @@ from threading import current_thread
 from typing import Awaitable, Callable, TypeVar, Union
 
 import nest_asyncio
-
 from trulens.utils import python as mod_python_utils
 from trulens.utils import threading as mod_threading_utils
 
@@ -42,9 +41,9 @@ nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
-A = TypeVar("A")
-B = TypeVar("B")
+T = TypeVar('T')
+A = TypeVar('A')
+B = TypeVar('B')
 
 MaybeAwaitable = Union[T, Awaitable[T]]
 """Awaitable or not.
@@ -64,7 +63,7 @@ CallableAwaitable = Callable[[A], Awaitable[B]]
 
 ThunkMaybeAwaitable = Union[mod_python_utils.Thunk[T],
                             mod_python_utils.Thunk[Awaitable[T]]]
-"""Thunk or coroutine thunk. 
+"""Thunk or coroutine thunk.
 
 May be checked with
 [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].

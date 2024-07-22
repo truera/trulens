@@ -31,7 +31,7 @@ class Prompt(app.Prompt, app.LlamaIndexComponent):
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name="llama_index.prompts.base", class_name="Prompt"
+            module_name='llama_index.prompts.base', class_name='Prompt'
         )
 
 
@@ -39,7 +39,7 @@ class Agent(app.Agent, app.LlamaIndexComponent):
 
     @property
     def agent_name(self) -> str:
-        return "agent name not supported in llama_index"
+        return 'agent name not supported in llama_index'
 
     def unsorted_parameters(self):
         return super().unsorted_parameters(skip=set())
@@ -47,7 +47,7 @@ class Agent(app.Agent, app.LlamaIndexComponent):
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name="llama_index.agent.types", class_name="BaseAgent"
+            module_name='llama_index.agent.types', class_name='BaseAgent'
         )
 
 
@@ -58,7 +58,7 @@ class Tool(app.Tool, app.LlamaIndexComponent):
         if 'metadata' in self.json:
             return self.json['metadata']['name']
         else:
-            return "no name given"
+            return 'no name given'
 
     def unsorted_parameters(self):
         return super().unsorted_parameters(skip=set(['model']))
@@ -66,7 +66,7 @@ class Tool(app.Tool, app.LlamaIndexComponent):
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name="llama_index.tools.types", class_name="BaseTool"
+            module_name='llama_index.tools.types', class_name='BaseTool'
         )
 
 
@@ -82,7 +82,7 @@ class LLM(app.LLM, app.LlamaIndexComponent):
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name="llama_index.llms.base", class_name="LLM"
+            module_name='llama_index.llms.base', class_name='LLM'
         )
 
 
@@ -99,7 +99,7 @@ def constructor_of_class(cls: Class) -> Type[app.LlamaIndexComponent]:
         if view.class_is(cls):
             return view
 
-    raise TypeError(f"Unknown llama_index component type with class {cls}")
+    raise TypeError(f'Unknown llama_index component type with class {cls}')
 
 
 def component_of_json(json: dict) -> app.LlamaIndexComponent:

@@ -10,7 +10,7 @@ Typical guardrails *only* allow decisions based on the output, and have no impac
 
 ## _TruLens_ guardrails for internal steps
 
-While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, _TruLens_ guardrails can also be leveraged to improve the internal processing of LLM apps. 
+While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, _TruLens_ guardrails can also be leveraged to improve the internal processing of LLM apps.
 
 If we consider a RAG, context filter guardrails can be used to evaluate the *context relevance* of each context chunk, and only pass relevant chunks to the LLM for generation. Doing so reduces the chance of hallucination and reduces token usage.
 
@@ -25,7 +25,7 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
     === "python"
 
         ```python
-        from trulens_eval.guardrails.base import context_filter
+        from trulens.guardrails.base import context_filter
 
         feedback = Feedback(provider.context_relevance)
 
@@ -38,12 +38,12 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
         )
         return [doc for sublist in results['documents'] for doc in sublist]
         ...
-        ```  
+        ```
 
     === "with _Langchain_"
 
         ```python
-        from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments
+        from trulens.guardrails.langchain import WithFeedbackFilterDocuments
 
         feedback = Feedback(provider.context_relevance)
 
@@ -54,18 +54,18 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
         )
 
         rag_chain = (
-            {"context": filtered_retriever 
+            {"context": filtered_retriever
             | format_docs, "question": RunnablePassthrough()}
             | prompt
             | llm
             | StrOutputParser()
         )
-        ```  
+        ```
 
     === "with _Llama-Index_"
 
         ```python
-        from trulens_eval.guardrails.llama import WithFeedbackFilterNodes
+        from trulens.guardrails.llama import WithFeedbackFilterNodes
 
         feedback = Feedback(provider.context_relevance)
 

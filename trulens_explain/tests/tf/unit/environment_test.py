@@ -4,17 +4,18 @@ from unittest import TestCase
 
 import tensorflow as tf
 
-if tf.__version__.startswith("1"):
+if tf.__version__.startswith('1'):
     from tensorflow import Graph
     from tensorflow import placeholder
 else:
     raise ImportError(
-        f"Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}"
+        f'Running Tensorflow 1 tests with incorrect version of Tensorflow. Expected 1.x, got {tf.__version__}'
     )
 
-from tests.unit.environment_test_base import EnvironmentTestBase
 from trulens.nn.backend import Backend
 from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
+
+from tests.unit.environment_test_base import EnvironmentTestBase
 
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):

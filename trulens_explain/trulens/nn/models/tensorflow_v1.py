@@ -60,9 +60,9 @@ class TensorflowModelWrapper(ModelWrapper):
             tensorflow.
         """
 
-        if "model" in kwargs:
+        if 'model' in kwargs:
             raise ValueError(
-                "TensorflowModelWrapper takes in a graph instead of a model."
+                'TensorflowModelWrapper takes in a graph instead of a model.'
             )
 
         super().__init__(None, **kwargs)
@@ -154,12 +154,12 @@ class TensorflowModelWrapper(ModelWrapper):
 
         if num_args + num_kwargs != num_expected:
             raise ValueError(
-                "Expected to get {num_expected} inputs but got {num_args} from args and {num_kwargs} from kwargs."
+                'Expected to get {num_expected} inputs but got {num_args} from args and {num_kwargs} from kwargs.'
             )
 
         if num_args > 0 and num_kwargs > 0:
             tru_logger.warning(
-                "Got both args and kwargs as inputs; we assume the args correspond to the first input tensors."
+                'Got both args and kwargs as inputs; we assume the args correspond to the first input tensors.'
             )
 
         # set the first few tensors from args
@@ -176,7 +176,7 @@ class TensorflowModelWrapper(ModelWrapper):
             elif k in self._internal_tensors:
                 return self._internal_tensors[k]
             else:
-                raise ValueError(f"do not know how to map {k} to a tensor")
+                raise ValueError(f'do not know how to map {k} to a tensor')
 
         # and the reset from kwargs
         if model_kwargs is not None:

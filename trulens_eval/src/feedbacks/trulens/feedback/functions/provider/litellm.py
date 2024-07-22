@@ -2,7 +2,6 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
-
 from trulens.feedback import Endpoint
 from trulens.feedback.functions.provider import LLMProvider
 from trulens.utils.imports import OptionalImports
@@ -11,7 +10,6 @@ from trulens.utils.imports import REQUIREMENT_LITELLM
 with OptionalImports(messages=REQUIREMENT_LITELLM) as opt:
     import litellm
     from litellm import completion
-
     from trulens.feedback.functions.provider.endpoint import LiteLLMEndpoint
 
 # check that the optional imports are not dummies:
@@ -26,14 +24,14 @@ class LiteLLM(LLMProvider):
     Create an LiteLLM Provider with out of the box feedback functions.
 
     !!! example
-    
+
         ```python
         from trulens.feedback.provider.litellm import LiteLLM
         litellm_provider = LiteLLM()
         ```
     """
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = 'gpt-3.5-turbo'
 
     model_engine: str
     """The LiteLLM completion model. Defaults to `gpt-3.5-turbo`."""
@@ -63,8 +61,8 @@ class LiteLLM(LLMProvider):
         if completion_kwargs is None:
             completion_kwargs = {}
 
-        if model_engine.startswith("azure/") and (completion_kwargs is None or
-                                                  "api_base"
+        if model_engine.startswith('azure/') and (completion_kwargs is None or
+                                                  'api_base'
                                                   not in completion_kwargs):
             raise ValueError(
                 "Azure model engine requires 'api_base' parameter to litellm completions. "
@@ -111,16 +109,16 @@ provider = LiteLLM(
         elif prompt is not None:
             completion_args['messages'] = [
                 {
-                    "role": "system",
-                    "content": prompt
+                    'role': 'system',
+                    'content': prompt
                 }
             ]
 
         else:
-            raise ValueError("`prompt` or `messages` must be specified.")
+            raise ValueError('`prompt` or `messages` must be specified.')
 
         comp = completion(**completion_args)
 
         assert isinstance(comp, object)
 
-        return comp["choices"][0]["message"]["content"]
+        return comp['choices'][0]['message']['content']

@@ -94,8 +94,8 @@ In this release, we re-aligned the groundedness feedback function with other LLM
 
 Before:
 ```python
-from trulens_eval.feedback.provider.openai import OpenAI
-from trulens_eval.feedback import Groundedness
+from trulens.feedback.provider.openai import OpenAI
+from trulens.feedback import Groundedness
 
 provider = OpenAI() # or any other LLM-based provider
 grounded = Groundedness(groundedness_provider=provider)
@@ -121,10 +121,10 @@ This change also applies to the NLI-based groundedness feedback function availab
 
 Before:
 ```python
-from trulens_eval.feedback.provider.openai import Huggingface
-from trulens_eval.feedback import Groundedness
+from trulens.feedback.provider.openai import Huggingface
+from trulens.feedback import Groundedness
 
-from trulens_eval.feedback.provider import Huggingface
+from trulens.feedback.provider import Huggingface
 huggingface_provider = Huggingface()
 grounded = Groundedness(groundedness_provider=huggingface_provider)
 
@@ -138,11 +138,11 @@ f_groundedness = (
 
 After:
 ```python
-from trulens_eval.feedback import Feedback
-from trulens_eval.feedback.provider.hugs = Huggingface
+from trulens.feedback import Feedback
+from trulens.feedback.provider.hugs = Huggingface
 
 huggingface_provider = Huggingface()
-    
+
 f_groundedness = (
     Feedback(huggingface_provider.groundedness_measure_with_nli, name = "Groundedness")
     .on(Select.RecordCalls.retrieve.rets.collect())

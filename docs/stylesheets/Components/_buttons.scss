@@ -6,7 +6,7 @@
     background-color: var(--color-accent);
     border: none;
     border-radius: 2px;
-    padding: 0.75rem 1.25rem;  
+    padding: 0.75rem 1.25rem;
     line-height: 1.25rem;
     transition:background-color .3s ease-in-out;
 
@@ -30,7 +30,7 @@
     &.hero__btn {
         margin-bottom: 4.8rem;
     }
-    
+
     &--text {
         border-left: 1px solid #5fa7a7;
         margin-left: 1rem;

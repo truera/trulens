@@ -9,7 +9,6 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from pydantic import Field
-
 from trulens import app as mod_app
 from trulens.instruments import ClassFilter
 from trulens.instruments import Instrument
@@ -31,7 +30,7 @@ pp = PrettyPrinter()
 with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
     import llama_index
 
-    version = get_package_version("llama_index")
+    version = get_package_version('llama_index')
 
     # If llama index is not installed, will get a dummy for llama_index. In that
     # case or if it is installed and sufficiently new version, continue with
@@ -43,7 +42,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
     if not legacy:
         # Check if llama_index is new enough.
 
-        if version < parse_version("0.10.0"):
+        if version < parse_version('0.10.0'):
             legacy = True
 
     if not legacy:
@@ -88,7 +87,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
 
         if version is not None:
             logger.warning(
-                "Using legacy llama_index version %s. Consider upgrading to 0.10.0 or later.",
+                'Using legacy llama_index version %s. Consider upgrading to 0.10.0 or later.',
                 version
             )
 
@@ -122,7 +121,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.tools.types import BaseTool
         from llama_index.tools.types import ToolMetadata
         from llama_index.vector_stores.types import VectorStore
-
         from trulens.utils.llama import WithFeedbackFilterNodes
 
 # Need to `from ... import ...` for the below as referring to some of these
@@ -142,10 +140,10 @@ class LlamaInstrument(Instrument):
     class Default:
         """Instrumentation specification for LlamaIndex apps."""
 
-        MODULES = {"llama_index.",
-                   "llama_hub."}.union(LangChainInstrument.Default.MODULES)
+        MODULES = {'llama_index.',
+                   'llama_hub.'}.union(LangChainInstrument.Default.MODULES)
         """Modules by prefix to instrument.
-         
+
         Note that llama_index uses langchain internally for some things.
         """
 
@@ -164,48 +162,48 @@ class LlamaInstrument(Instrument):
             {
                 # LLM:
                 (
-                    "complete", "stream_complete", "acomplete", "astream_complete"
+                    'complete', 'stream_complete', 'acomplete', 'astream_complete'
                 ):
                     BaseLLM,
 
                 # BaseTool/AsyncBaseTool:
-                ("__call__", "call"):
+                ('__call__', 'call'):
                     BaseTool,
-                ("acall"):
+                ('acall'):
                     AsyncBaseTool,
 
                 # Memory:
-                ("put"):
+                ('put'):
                     BaseMemory,
 
                 # Misc.:
-                ("get_response"):
+                ('get_response'):
                     Refine,
-                ("predict"):
+                ('predict'):
                     BaseLLMPredictor,
 
                 # BaseQueryEngine:
-                ("query", "aquery"):
+                ('query', 'aquery'):
                     BaseQueryEngine,
 
                 # BaseChatEngine/LLM:
-                ("chat", "achat", "stream_chat", "astream_achat"):
+                ('chat', 'achat', 'stream_chat', 'astream_achat'):
                     (BaseLLM, BaseChatEngine),
 
                 # BaseRetriever/BaseQueryEngine:
-                ("retrieve", "_retrieve", "_aretrieve"):
+                ('retrieve', '_retrieve', '_aretrieve'):
                     (BaseQueryEngine, BaseRetriever, WithFeedbackFilterNodes),
 
                 # BaseQueryEngine:
-                ("synthesize"):
+                ('synthesize'):
                     BaseQueryEngine,
 
                 # BaseNodePostProcessor
-                ("_postprocess_nodes"):
+                ('_postprocess_nodes'):
                     BaseNodePostprocessor,
 
                 # Components
-                ("_run_component"): (QueryEngineComponent, RetrieverComponent)
+                ('_run_component'): (QueryEngineComponent, RetrieverComponent)
             }
         )
         """Methods to instrument."""
@@ -381,16 +379,16 @@ class TruLlama(mod_app.App):
         """
 
         if isinstance(ret, Response):  # query, aquery
-            return "response"
+            return 'response'
 
         elif isinstance(ret, AgentChatResponse):  #  chat, achat
-            return "response"
+            return 'response'
 
         elif isinstance(ret, (StreamingResponse, StreamingAgentChatResponse)):
             raise NotImplementedError(
-                "App produced a streaming response. "
-                "Tracking content of streams in llama_index is not yet supported. "
-                "App main_output will be None."
+                'App produced a streaming response. '
+                'Tracking content of streams in llama_index is not yet supported. '
+                'App main_output will be None.'
             )
 
         return None
@@ -407,7 +405,7 @@ class TruLlama(mod_app.App):
             ret = self.app.chat(human)
         else:
             raise RuntimeError(
-                f"Do not know what the main method for app of type {type(self.app).__name__} is."
+                f'Do not know what the main method for app of type {type(self.app).__name__} is.'
             )
 
         try:
@@ -417,7 +415,7 @@ class TruLlama(mod_app.App):
 
         except Exception:
             raise NotImplementedError(
-                f"Do not know what in object of type {type(ret).__name__} is the main app output."
+                f'Do not know what in object of type {type(ret).__name__} is the main app output.'
             )
 
     async def main_acall(self, human: str):
@@ -429,7 +427,7 @@ class TruLlama(mod_app.App):
             ret = await self.app.achat(human)
         else:
             raise RuntimeError(
-                f"Do not know what the main async method for app of type {type(self.app).__name__} is."
+                f'Do not know what the main async method for app of type {type(self.app).__name__} is.'
             )
 
         try:
@@ -439,7 +437,7 @@ class TruLlama(mod_app.App):
 
         except Exception:
             raise NotImplementedError(
-                f"Do not know what in object of type {type(ret).__name__} is the main app output."
+                f'Do not know what in object of type {type(ret).__name__} is the main app output.'
             )
 
     # TOREMOVE
@@ -447,7 +445,7 @@ class TruLlama(mod_app.App):
     def chat(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="chat", is_async=False, with_record=False
+            method='chat', is_async=False, with_record=False
         )
 
     # TOREMOVE
@@ -455,7 +453,7 @@ class TruLlama(mod_app.App):
     async def achat(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="achat", is_async=True, with_record=False
+            method='achat', is_async=True, with_record=False
         )
 
     # TOREMOVE
@@ -463,7 +461,7 @@ class TruLlama(mod_app.App):
     def stream_chat(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="stream_chat", is_async=False, with_record=False
+            method='stream_chat', is_async=False, with_record=False
         )
 
     # TOREMOVE
@@ -471,7 +469,7 @@ class TruLlama(mod_app.App):
     async def astream_chat(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="astream_chat", is_async=True, with_record=False
+            method='astream_chat', is_async=True, with_record=False
         )
 
     # TOREMOVE
@@ -479,14 +477,14 @@ class TruLlama(mod_app.App):
     def query(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="query", is_async=False, with_record=False
+            method='query', is_async=False, with_record=False
         )
 
     # TOREMOVE
     # llama_index.indices.query.base.BaseQueryEngine
     async def aquery(self, *args, **kwargs) -> None:
         self._throw_dep_message(
-            method="aquery", is_async=True, with_record=False
+            method='aquery', is_async=True, with_record=False
         )
 
     # TOREMOVE
@@ -494,7 +492,7 @@ class TruLlama(mod_app.App):
     def query_with_record(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="query", is_async=False, with_record=True
+            method='query', is_async=False, with_record=True
         )
 
     # TOREMOVE
@@ -502,27 +500,27 @@ class TruLlama(mod_app.App):
     async def aquery_with_record(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="aquery", is_async=True, with_record=True
+            method='aquery', is_async=True, with_record=True
         )
 
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
     def chat_with_record(self, *args, **kwargs) -> None:
 
-        self._throw_dep_message(method="chat", is_async=False, with_record=True)
+        self._throw_dep_message(method='chat', is_async=False, with_record=True)
 
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
     async def achat_with_record(self, *args, **kwargs) -> None:
 
-        self._throw_dep_message(method="achat", is_async=True, with_record=True)
+        self._throw_dep_message(method='achat', is_async=True, with_record=True)
 
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
     def stream_chat_with_record(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="stream", is_async=False, with_record=True
+            method='stream', is_async=False, with_record=True
         )
 
     # TOREMOVE
@@ -530,7 +528,7 @@ class TruLlama(mod_app.App):
     async def astream_chat_with_record(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="astream_chat", is_async=True, with_record=True
+            method='astream_chat', is_async=True, with_record=True
         )
 
 

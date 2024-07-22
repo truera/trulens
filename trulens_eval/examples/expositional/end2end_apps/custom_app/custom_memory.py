@@ -1,7 +1,7 @@
 import sys
 import time
 
-from trulens_eval.tru_custom_app import instrument
+from trulens.tru_custom_app import instrument
 
 
 class CustomMemory:

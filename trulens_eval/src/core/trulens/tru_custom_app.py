@@ -12,7 +12,7 @@ This wrapper is the most flexible option for instrumenting an application, and c
 
     ```python
     from trulens.tru_custom_app import instrument
-    from custom_retriever import CustomRetriever 
+    from custom_retriever import CustomRetriever
 
 
     class CustomApp:
@@ -51,7 +51,7 @@ of two high-level concepts to usefully monitor the app: components and methods
 used by components. The `instrument` must decorate each method that the user wishes to track.
 
 The owner classes of any decorated method is then viewed as an app component. In this example, case `CustomApp` and
-`CustomRetriever` are components. 
+`CustomRetriever` are components.
 
     !!! example
 
@@ -66,7 +66,7 @@ The owner classes of any decorated method is then viewed as an app component. In
     # Normal app Usage:
     response = custom_app.respond_to_query("What is the capital of Indonesia?")
 
-    # Wrapping app with `TruCustomApp`: 
+    # Wrapping app with `TruCustomApp`:
     tru_recorder = TruCustomApp(ca)
 
     # Tracked usage:
@@ -195,7 +195,6 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
-
 from trulens import app as mod_app
 from trulens.instruments import Instrument
 from trulens.instruments import instrument as base_instrument
@@ -213,7 +212,7 @@ pp = PrettyPrinter()
 # Keys used in app_extra_json to indicate an automatically added structure for
 # places an instrumented method exists but no instrumented data exists
 # otherwise.
-PLACEHOLDER = "__tru_placeholder"
+PLACEHOLDER = '__tru_placeholder'
 
 
 class TruCustomApp(mod_app.App):
@@ -228,7 +227,7 @@ class TruCustomApp(mod_app.App):
 
         ```python
         from trulens import instrument
-        
+
         class CustomApp:
 
             def __init__(self):
@@ -249,7 +248,7 @@ class TruCustomApp(mod_app.App):
                 output = self.template.fill(question=input, answer=answer)
 
                 return output
-        
+
         ca = CustomApp()
         ```
 
@@ -257,7 +256,7 @@ class TruCustomApp(mod_app.App):
 
         ```python
         from trulens import instrument
-        
+
         class CustomApp:
 
             def __init__(self):
@@ -276,7 +275,7 @@ class TruCustomApp(mod_app.App):
                 output = self.template.fill(question=input, answer=answer)
 
                 return output
-        
+
         custom_app = CustomApp()
 
         instrument.method(CustomApp, "retrieve_chunks")
@@ -286,8 +285,8 @@ class TruCustomApp(mod_app.App):
     in feedback functions. This is done by using the `Select` class to select
     the arguments and returns of the method.
 
-    Doing so follows the structure: 
-    
+    Doing so follows the structure:
+
     - For args: `Select.RecordCalls.<method_name>.args.<arg_name>`
 
     - For returns: `Select.RecordCalls.<method_name>.rets.<ret_name>`
@@ -311,7 +310,7 @@ class TruCustomApp(mod_app.App):
         ```python
         from trulens import TruCustomApp
 
-        tru_recorder = TruCustomApp(custom_app, 
+        tru_recorder = TruCustomApp(custom_app,
             app_id="Custom Application v1",
             feedbacks=[f_context_relevance])
 
@@ -338,7 +337,7 @@ class TruCustomApp(mod_app.App):
 
     functions_to_instrument: ClassVar[Set[Callable]] = set([])
     """Methods marked as needing instrumentation.
-    
+
     These are checked to make sure the object walk finds them. If not, a message
     is shown to let user know how to let the TruCustomApp constructor know where
     these methods are.
@@ -378,9 +377,9 @@ class TruCustomApp(mod_app.App):
                 main_method_loaded = main_method
                 main_method = Function.of_function(main_method_loaded)
 
-                if not safe_hasattr(main_method_loaded, "__self__"):
+                if not safe_hasattr(main_method_loaded, '__self__'):
                     raise ValueError(
-                        "Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`)."
+                        'Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`).'
                     )
 
                 app_self = main_method_loaded.__self__
@@ -440,22 +439,22 @@ class TruCustomApp(mod_app.App):
                 next(full_path(json))
 
                 print(
-                    f"{UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
+                    f'{UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}'
                 )
 
             except Exception:
                 logger.warning(
-                    f"App has no component at path {full_path} . "
-                    f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
-                    f"Creating a placeholder there for now."
+                    f'App has no component at path {full_path} . '
+                    f'Specify the component with the `app_extra_json` argument to TruCustomApp constructor. '
+                    f'Creating a placeholder there for now.'
                 )
 
                 path.set(
                     self.app_extra_json, {
                         PLACEHOLDER:
-                            "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
+                            'I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.',
                         m.__name__:
-                            f"Placeholder for method {m.__name__}."
+                            f'Placeholder for method {m.__name__}.'
                     }
                 )
 
@@ -466,9 +465,9 @@ class TruCustomApp(mod_app.App):
 
             if len(obj_ids_methods_and_full_paths) == 0:
                 logger.warning(
-                    f"Function {f} was not found during instrumentation walk. "
-                    f"Make sure it is accessible by traversing app {app} "
-                    f"or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`."
+                    f'Function {f} was not found during instrumentation walk. '
+                    f'Make sure it is accessible by traversing app {app} '
+                    f'or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`.'
                 )
 
             else:
@@ -478,24 +477,24 @@ class TruCustomApp(mod_app.App):
 
                     except Exception as e:
                         logger.warning(
-                            f"App has no component owner of instrumented method {m} at path {full_path}. "
-                            f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
-                            f"Creating a placeholder there for now."
+                            f'App has no component owner of instrumented method {m} at path {full_path}. '
+                            f'Specify the component with the `app_extra_json` argument to TruCustomApp constructor. '
+                            f'Creating a placeholder there for now.'
                         )
 
                         path.set(
                             self.app_extra_json, {
                                 PLACEHOLDER:
-                                    "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
+                                    'I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.',
                                 m.__name__:
-                                    f"Placeholder for method {m.__name__}."
+                                    f'Placeholder for method {m.__name__}.'
                             }
                         )
 
     def main_call(self, human: str):
         if self.main_method_loaded is None:
             raise RuntimeError(
-                "`main_method` was not specified so we do not know how to run this app."
+                '`main_method` was not specified so we do not know how to run this app.'
             )
 
         sig = signature(self.main_method_loaded)

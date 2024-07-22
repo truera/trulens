@@ -18,16 +18,16 @@ def install_if_not_installed(packages):
             package_name = package
             package_package = package
 
-        print(f"{package_name} ... ", end='')
+        print(f'{package_name} ... ', end='')
 
         try:
             importlib.import_module(package_name)
-            print("already installed")
+            print('already installed')
 
         except:
-            print(f"installing from {package_package}")
+            print(f'installing from {package_package}')
             subprocess.check_call(
-                [sys.executable, "-m", "pip", "install", package_package]
+                [sys.executable, '-m', 'pip', 'install', package_package]
             )
 
 
@@ -40,21 +40,21 @@ def load_or_make(
     `saver`, and return it.
     """
 
-    print(f"loading {filename} ... ", end="")
+    print(f'loading {filename} ... ', end='')
 
     if filename.exists():
-        print("from file")
+        print('from file')
         return loader(filename)
 
     if maker is not None:
-        print("using maker")
+        print('using maker')
         thing = maker()
         saver(filename, thing)
         return thing
 
     if downloader is not None:
-        print("using downloader")
+        print('using downloader')
         downloader(filename)
         return loader(filename)
 
-    raise ValueError("provide a maker/saver or downloader.")
+    raise ValueError('provide a maker/saver or downloader.')

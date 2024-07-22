@@ -10,11 +10,10 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
-
 from trulens import app as mod_app
-from trulens.langchain.guardrails import WithFeedbackFilterDocuments
 from trulens.instruments import ClassFilter
 from trulens.instruments import Instrument
+from trulens.langchain.guardrails import WithFeedbackFilterDocuments
 from trulens.schema.feedback import Select
 from trulens.utils.containers import dict_set_with_multikey
 from trulens.utils.imports import OptionalImports
@@ -34,6 +33,10 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
     # import langchain
 
+    # from langchain.schema.language_model import BaseLanguageModel
+    from langchain_core.language_models.base import BaseLanguageModel
+    from langchain_core.runnables.base import RunnableSerializable
+
     from langchain.agents.agent import BaseMultiActionAgent
     from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
@@ -49,9 +52,6 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     from langchain.schema.document import Document
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
-    # from langchain.schema.language_model import BaseLanguageModel
-    from langchain_core.language_models.base import BaseLanguageModel
-    from langchain_core.runnables.base import RunnableSerializable
 
 
 class LangChainInstrument(Instrument):
@@ -60,7 +60,7 @@ class LangChainInstrument(Instrument):
     class Default:
         """Instrumentation specification for LangChain apps."""
 
-        MODULES = {"langchain"}
+        MODULES = {'langchain'}
         """Filter for module name prefix for modules to be instrumented."""
 
         CLASSES = lambda: {
@@ -89,28 +89,28 @@ class LangChainInstrument(Instrument):
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             {},
             {
-                ("invoke", "ainvoke"):
+                ('invoke', 'ainvoke'):
                     RunnableSerializable,
-                ("save_context", "clear"):
+                ('save_context', 'clear'):
                     BaseMemory,
-                ("run", "arun", "_call", "__call__", "_acall", "acall"):
+                ('run', 'arun', '_call', '__call__', '_acall', 'acall'):
                     Chain,
                 (
-                    "_get_relevant_documents", "get_relevant_documents", "aget_relevant_documents", "_aget_relevant_documents", "invoke", "ainvoke"
+                    '_get_relevant_documents', 'get_relevant_documents', 'aget_relevant_documents', '_aget_relevant_documents', 'invoke', 'ainvoke'
                 ):
                     RunnableSerializable,
 
                 # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # the prompt calls might be too small to be interesting
-                ("plan", "aplan"):
+                ('plan', 'aplan'):
                     (BaseSingleActionAgent, BaseMultiActionAgent),
-                ("_arun", "_run"):
+                ('_arun', '_run'):
                     BaseTool,
             }
         )
         """Methods to be instrumented.
-        
+
         Key is method name and value is filter for objects that need those
         methods instrumented"""
 
@@ -234,8 +234,8 @@ class TruChain(mod_app.App):
 
         if app is None:
             raise ValueError(
-                "langchain app/chain is required to determine context for langchain apps. "
-                "Pass it in as the `app` argument"
+                'langchain app/chain is required to determine context for langchain apps. '
+                'Pass it in as the `app` argument'
             )
 
         retrievers = []
@@ -251,23 +251,23 @@ class TruChain(mod_app.App):
                 pass
 
         if len(retrievers) == 0:
-            raise ValueError("Cannot find any `BaseRetriever` in app.")
+            raise ValueError('Cannot find any `BaseRetriever` in app.')
 
         if len(retrievers) > 1:
             if (isinstance(retrievers[0][1], MultiQueryRetriever)):
                 pass
             else:
                 raise ValueError(
-                "Found more than one `BaseRetriever` in app:\n\t" + \
-                ("\n\t".join(map(
-                    lambda lr: f"{type(lr[1])} at {lr[0]}",
+                'Found more than one `BaseRetriever` in app:\n\t' + \
+                ('\n\t'.join(map(
+                    lambda lr: f'{type(lr[1])} at {lr[0]}',
                     retrievers)))
                 )
 
         retriever = (Select.RecordCalls + retrievers[0][0])
-        if hasattr(retriever, "invoke"):
+        if hasattr(retriever, 'invoke'):
             return retriever.invoke.rets[:].page_content
-        if hasattr(retriever, "_get_relevant_documents"):
+        if hasattr(retriever, '_get_relevant_documents'):
             return retriever._get_relevant_documents.rets[:].page_content
 
     def main_input(
@@ -279,7 +279,7 @@ class TruChain(mod_app.App):
         `bindings`.
         """
 
-        if "input" in bindings.arguments:
+        if 'input' in bindings.arguments:
             temp = bindings.arguments['input']
             if isinstance(temp, str):
                 return temp
@@ -299,15 +299,15 @@ class TruChain(mod_app.App):
                 return vals[0]
 
         if 'inputs' in bindings.arguments \
-            and safe_hasattr(self.app, "input_keys") \
-            and safe_hasattr(self.app, "prep_inputs"):
+            and safe_hasattr(self.app, 'input_keys') \
+            and safe_hasattr(self.app, 'prep_inputs'):
 
             # langchain specific:
             ins = self.app.prep_inputs(bindings.arguments['inputs'])
 
             if len(self.app.input_keys) == 0:
                 logger.warning(
-                    "langchain app has no `input_keys`. `main_input` might not be detected."
+                    'langchain app has no `input_keys`. `main_input` might not be detected.'
                 )
                 return super().main_input(func, sig, bindings)
 
@@ -324,11 +324,11 @@ class TruChain(mod_app.App):
         returned `ret`.
         """
 
-        if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
+        if isinstance(ret, Dict) and safe_hasattr(self.app, 'output_keys'):
             # langchain specific:
             if len(self.app.output_keys) == 0:
                 logger.warning(
-                    "langchain app has no `output_keys`. `main_output` might not be detected."
+                    'langchain app has no `output_keys`. `main_output` might not be detected.'
                 )
                 return super().main_output(func, sig, bindings, ret)
 
@@ -340,11 +340,11 @@ class TruChain(mod_app.App):
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        if safe_hasattr(self.app, "output_keys"):
+        if safe_hasattr(self.app, 'output_keys'):
             out_key = self.app.output_keys[0]
             return self.app(human)[out_key]
         else:
-            logger.warning("Unsure what the main output string may be.")
+            logger.warning('Unsure what the main output string may be.')
             return str(self.app(human))
 
     async def main_acall(self, human: str):
@@ -352,11 +352,11 @@ class TruChain(mod_app.App):
 
         out = await self._acall(human)
 
-        if safe_hasattr(self.app, "output_keys"):
+        if safe_hasattr(self.app, 'output_keys'):
             out_key = self.app.output_keys[0]
             return out[out_key]
         else:
-            logger.warning("Unsure what the main output string may be.")
+            logger.warning('Unsure what the main output string may be.')
             return str(out)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
@@ -366,7 +366,7 @@ class TruChain(mod_app.App):
         DEPRECATED: Run the chain acall method and also return a record metadata object.
         """
 
-        self._throw_dep_message(method="acall", is_async=True, with_record=True)
+        self._throw_dep_message(method='acall', is_async=True, with_record=True)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     # TOREMOVE
@@ -376,7 +376,7 @@ class TruChain(mod_app.App):
         """
 
         self._throw_dep_message(
-            method="__call__", is_async=False, with_record=True
+            method='__call__', is_async=False, with_record=True
         )
 
     # TOREMOVE
@@ -384,10 +384,10 @@ class TruChain(mod_app.App):
     def __call__(self, *args, **kwargs) -> None:
         """
         DEPRECATED: Wrapped call to self.app._call with instrumentation. If you
-        need to get the record, use `call_with_record` instead. 
+        need to get the record, use `call_with_record` instead.
         """
         self._throw_dep_message(
-            method="__call__", is_async=False, with_record=False
+            method='__call__', is_async=False, with_record=False
         )
 
     # TOREMOVE
@@ -395,7 +395,7 @@ class TruChain(mod_app.App):
     def _call(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="_call", is_async=False, with_record=False
+            method='_call', is_async=False, with_record=False
         )
 
     # TOREMOVE
@@ -403,7 +403,7 @@ class TruChain(mod_app.App):
     async def _acall(self, *args, **kwargs) -> None:
 
         self._throw_dep_message(
-            method="_acall", is_async=True, with_record=False
+            method='_acall', is_async=True, with_record=False
         )
 
 

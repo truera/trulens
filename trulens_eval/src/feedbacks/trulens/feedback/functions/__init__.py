@@ -25,16 +25,15 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
 with OptionalImports(messages=REQUIREMENT_CORTEX):
     from trulens.feedback.functions.provider.cortex import Cortex
 
-
 __all__ = [
-    "Embeddings",
-    "GroundTruthAgreement",
-    "OpenAI",
-    "AzureOpenAI",
-    "Huggingface",
-    "HuggingfaceLocal",
-    "LiteLLM",
-    "Bedrock",
-    "Langchain",
-    "Cortex",
+    'Embeddings',
+    'GroundTruthAgreement',
+    'OpenAI',
+    'AzureOpenAI',
+    'Huggingface',
+    'HuggingfaceLocal',
+    'LiteLLM',
+    'Bedrock',
+    'Langchain',
+    'Cortex',
 ]
