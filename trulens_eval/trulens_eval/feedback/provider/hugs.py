@@ -1,5 +1,7 @@
 from abc import abstractmethod
 from concurrent.futures import wait
+import functools
+from inspect import signature
 import logging
 from typing import (
     Any, Dict, get_args, get_origin, List, Optional, Tuple, Union
@@ -33,9 +35,6 @@ HUGS_DOCNLI_MODEL_PATH = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-docnli-ling-2c
 HUGS_PII_DETECTION_API_URL = "https://api-inference.huggingface.co/models/bigcode/starpii"
 HUGS_CONTEXT_RELEVANCE_API_URL = "https://api-inference.huggingface.co/models/truera/context_relevance"
 HUGS_HALLUCINATION_API_URL = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
-
-import functools
-from inspect import signature
 
 
 # TODO: move this to a more general place and apply it to other feedbacks that need it.
@@ -469,7 +468,7 @@ class Huggingface(HuggingfaceBase):
 
     def __init__(
         self,
-        name: Optional[str] = None,
+        name: str = "huggingface",
         endpoint: Optional[Endpoint] = None,
         **kwargs
     ):
@@ -487,8 +486,6 @@ class Huggingface(HuggingfaceBase):
             ```
         """
 
-        kwargs['name'] = name
-
         self_kwargs = dict()
 
         # TODO: figure out why all of this logic is necessary:
@@ -500,7 +497,7 @@ class Huggingface(HuggingfaceBase):
             else:
                 self_kwargs['endpoint'] = HuggingfaceEndpoint(**endpoint)
 
-        self_kwargs['name'] = name or "huggingface"
+        self_kwargs['name'] = name
 
         super().__init__(
             **self_kwargs
@@ -744,7 +741,7 @@ class Dummy(Huggingface):
 
     def __init__(
         self,
-        name: Optional[str] = None,
+        name: str = "dummyhugs",
         error_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
         freeze_prob: float = 1 / 100,
@@ -754,7 +751,7 @@ class Dummy(Huggingface):
         delay: float = 1.0,
         **kwargs
     ):
-        kwargs['name'] = name or "dummyhugs"
+        kwargs['name'] = name
         kwargs['endpoint'] = DummyEndpoint(
             name="dummyendhugspoint", **locals_except("self", "name", "kwargs")
         )

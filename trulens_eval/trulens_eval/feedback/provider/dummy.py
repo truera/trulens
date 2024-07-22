@@ -17,7 +17,7 @@ class DummyProvider(LLMProvider):
 
     def __init__(
         self,
-        name: Optional[str] = None,
+        name: str = "dummyhugs",
         error_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
         freeze_prob: float = 1 / 100,
@@ -28,7 +28,7 @@ class DummyProvider(LLMProvider):
         seed: int = 0xdeadbeef,
         **kwargs
     ):
-        kwargs['name'] = name or "dummyhugs"
+        kwargs['name'] = name
         kwargs['endpoint'] = DummyEndpoint(
             name="dummyendpoint", **locals_except("self", "name", "kwargs")
         )
