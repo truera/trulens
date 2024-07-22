@@ -16,7 +16,6 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 import os
-from pprint import pformat
 import threading as th
 import traceback
 from typing import (
@@ -27,8 +26,8 @@ import weakref
 
 import pydantic
 
-from trulens.feedback import feedback as mod_feedback
-from trulens.feedback.provider import endpoint as mod_endpoint
+from trulens.feedback import base_feedback as mod_feedback
+from trulens.feedback import base_endpoint as mod_endpoint
 from trulens.schema import base as mod_base_schema
 from trulens.schema import record as mod_record_schema
 from trulens.schema import types as mod_types_schema

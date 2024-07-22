@@ -1,13 +1,10 @@
 import asyncio
 import json
 import pprint as pp
-from typing import Dict, Iterable, Tuple
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
-import pprint
-from pprint import pformat
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,32 +15,28 @@ from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_pills import pills
-from ux.page_config import set_page_config
-from ux.styles import CATEGORY
+from trulens.dashboard.ux.page_config import set_page_config
+from trulens.dashboard.ux.styles import CATEGORY
 
 from trulens import Tru
 from trulens.app import Agent
 from trulens.app import ComponentView
-from trulens.app import instrumented_component_views
 from trulens.app import LLM
 from trulens.app import Other
 from trulens.app import Prompt
 from trulens.app import Tool
 from trulens.database.base import MULTI_CALL_NAME_DELIMITER
-from trulens.react_components.record_viewer import record_viewer
+from trulens.dashboard.react_components.record_viewer import record_viewer
 from trulens.schema.feedback import Select
-from trulens.schema.record import Record
 from trulens.utils.json import jsonify_for_ui
 from trulens.utils.serial import Lens
-from trulens.utils.streamlit_utils import init_from_args
-from trulens.ux.components import draw_agent_info
-from trulens.ux.components import draw_call
-from trulens.ux.components import draw_llm_info
-from trulens.ux.components import draw_prompt_info
-from trulens.ux.components import draw_tool_info
-from trulens.ux.components import render_selector_markdown
-from trulens.ux.components import write_or_json
-from trulens.ux.styles import cellstyle_jscode
+from trulens.dashboard.streamlit_utils import init_from_args
+from trulens.dashboard.ux.components import draw_agent_info
+from trulens.dashboard.ux.components import draw_llm_info
+from trulens.dashboard.ux.components import draw_prompt_info
+from trulens.dashboard.ux.components import draw_tool_info
+from trulens.dashboard.ux.components import render_selector_markdown
+from trulens.dashboard.ux.styles import cellstyle_jscode
 
 set_page_config(page_title="Evaluations")
 st.title("Evaluations")

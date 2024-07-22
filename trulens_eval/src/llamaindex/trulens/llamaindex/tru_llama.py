@@ -80,7 +80,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         # These exist in the bridge but not here so define placeholders.
         RetrieverComponent = EmptyType
 
-        from trulens.guardrails.llama import WithFeedbackFilterNodes
+        from trulens.llamaindex.guardrails import WithFeedbackFilterNodes
 
     else:
         # Otherwise llama_index is installed but is old so we have to use older imports.

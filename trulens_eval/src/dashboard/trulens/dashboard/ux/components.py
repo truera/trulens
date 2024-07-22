@@ -1,6 +1,6 @@
 import json
 import random
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import pandas as pd
 import streamlit as st
@@ -17,7 +17,6 @@ from trulens.utils.json import jsonify
 from trulens.utils.pyschema import CLASS_INFO
 from trulens.utils.pyschema import is_noserio
 from trulens.utils.serial import GetItemOrAttribute
-from trulens.utils.serial import JSON_BASES
 from trulens.utils.serial import Lens
 
 

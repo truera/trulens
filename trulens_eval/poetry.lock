@@ -1173,13 +1173,13 @@ extended-testing = ["beautifulsoup4 (>=4.12.3,<5.0.0)", "lxml (>=4.9.3,<6.0)"]
 
 [[package]]
 name = "langsmith"
-version = "0.1.92"
+version = "0.1.93"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.92-py3-none-any.whl", hash = "sha256:8acb27844ff5263bde14b23425f83ee63996f4d5a8e9998cdeef07fd913137ff"},
-    {file = "langsmith-0.1.92.tar.gz", hash = "sha256:681a613a4dc8c8e57c8961c347a39ffcb64d6c697e8ddde1fd8458fcfaef6c13"},
+    {file = "langsmith-0.1.93-py3-none-any.whl", hash = "sha256:811210b9d5f108f36431bd7b997eb9476a9ecf5a2abd7ddbb606c1cdcf0f43ce"},
+    {file = "langsmith-0.1.93.tar.gz", hash = "sha256:285b6ad3a54f50fa8eb97b5f600acc57d0e37e139dd8cf2111a117d0435ba9b4"},
 ]
 
 [package.dependencies]
@@ -3194,26 +3194,26 @@ name = "trulens-dashboard"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
-python-versions = ">=3.9,<3.9.7 || >3.9.7,<4.0"
+python-versions = "!=3.9.7,<4.0,>=3.9"
 files = []
 develop = true
 
 [package.dependencies]
-humanize = "^4.6.0"
-millify = "^0.1.1"
-rich = "^13.6.0"
-streamlit = "^1.33.0"
-streamlit-aggrid = "==0.3.4"
-streamlit-extras = "^0.4.0"
-streamlit-pills = "^0.3.0"
-trulens-core = {path = "../core", develop = true}
+humanize = ">=4.6.0"
+millify = ">=0.1.1"
+rich = ">=13.6.0"
+streamlit = ">=1.33.0"
+streamlit-aggrid = "0.3.4"
+streamlit-extras = ">=0.4.0"
+streamlit-pills = ">=0.3.0"
+trulens-core = {path = "../core"}
 
 [package.source]
 type = "directory"
 url = "src/dashboard"
 
 [[package]]
-name = "trulens-feedback"
+name = "trulens-feedbacks"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
@@ -3231,7 +3231,7 @@ trulens-core = {path = "../core", develop = true}
 
 [package.source]
 type = "directory"
-url = "src/feedback"
+url = "src/feedbacks"
 
 [[package]]
 name = "trulens-langchain"
@@ -3520,4 +3520,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.9.7 || >3.9.7,<4.0"
-content-hash = "6b21baf7c022f8e808260ca4d8619be4a5c58f6599d098216208995cb1406ca7"
+content-hash = "eb05b24308dabc99deba0807826ce6a9c92cbf623a0f74af751376a411b1785d"

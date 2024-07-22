@@ -7,8 +7,8 @@ from trulens.tru import Tru
 from trulens.utils.json import jsonify_for_ui
 from trulens.utils.serial import JSON
 from trulens.utils.serial import Lens
-from trulens.utils.streamlit_utils import init_from_args
-from trulens.ux.apps import ChatRecord
+from trulens.dashoard.streamlit_utils import init_from_args
+from trulens.dashoard.ux.apps import ChatRecord
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())

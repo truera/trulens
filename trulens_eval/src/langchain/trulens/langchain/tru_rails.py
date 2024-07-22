@@ -17,7 +17,7 @@ from trulens.feedback import base_feedback
 from trulens.instruments import ClassFilter
 from trulens.instruments import Instrument
 from trulens.schema import feedback as mod_feedback_schema
-from trulens.tru_chain import LangChainInstrument
+from trulens.langchain.tru_chain import LangChainInstrument
 from trulens.utils.containers import dict_set_with_multikey
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_RAILS

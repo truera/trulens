@@ -13,7 +13,7 @@ python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "src/core", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }
-trulens-feedback = { path = "src/feedback", develop = true }
+trulens-feedbacks = { path = "src/feedbacks", develop = true }
 trulens-langchain = { path = "src/langchain", develop = true }
 trulens-llamaindex = { path = "src/llamaindex", develop = true }
 yapf = "^0.40.2"

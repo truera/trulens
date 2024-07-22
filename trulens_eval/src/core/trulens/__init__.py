@@ -15,16 +15,16 @@ check_imports()
 
 from trulens import tru as mod_tru
 from trulens import tru_basic_app as mod_tru_basic_app
-# from trulens import tru_chain as mod_tru_chain
 from trulens import tru_custom_app as mod_tru_custom_app
 from trulens import tru_virtual as mod_tru_virtual
+from trulens.utils import threading as mod_threading_utils
+# from trulens import tru_chain as mod_tru_chain
 # from trulens.feedback import feedback as mod_feedback
 # from trulens.feedback.provider import base as mod_provider
 # from trulens.feedback.provider import hugs as mod_hugs_provider
 # from trulens.feedback.provider import langchain as mod_langchain_provider
 # from trulens.schema import feedback as mod_feedback_schema
 # from trulens.utils import imports as mod_imports_utils
-from trulens.utils import threading as mod_threading_utils
 
 
 __version__ = importlib.metadata.version(__package__ or __name__)

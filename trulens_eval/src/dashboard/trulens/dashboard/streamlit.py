@@ -15,15 +15,15 @@ from streamlit_pills import pills
 
 from trulens import Tru
 from trulens.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens.react_components.record_viewer import record_viewer
+from trulens.dashboard.react_components.record_viewer import record_viewer
 from trulens.schema.app import AppDefinition
 from trulens.schema.feedback import FeedbackCall
 from trulens.schema.record import Record
 from trulens.dashboard import display
 from trulens.utils.json import json_str_of_obj
 from trulens.utils.python import Future
-from trulens.ux import styles
-from trulens.ux.components import draw_metadata
+from trulens.dashboard.ux import styles
+from trulens.dashboard.ux.components import draw_metadata
 
 
 class FeedbackDisplay(BaseModel):

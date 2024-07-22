@@ -13,17 +13,11 @@ import uuid
 import pydantic
 from tqdm import tqdm
 
-from trulens.feedback import feedback as mod_feedback
 from trulens.schema import app as mod_app_schema
 from trulens.schema import base as mod_base_schema
 from trulens.schema import feedback as mod_feedback_schema
 from trulens.schema import record as mod_record_schema
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import CLASS_INFO
 from trulens.utils.pyschema import FunctionOrMethod
-from trulens.utils.pyschema import Method
-from trulens.utils.pyschema import Module
-from trulens.utils.pyschema import Obj
 
 logger = logging.getLogger(__name__)
 '''

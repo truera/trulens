@@ -4,7 +4,7 @@ import pandas as pd
 
 from trulens.schema.feedback import FeedbackDefinition
 from trulens.schema.record import Record
-from trulens.ux.styles import CATEGORY
+from trulens.dashboard.ux.styles import CATEGORY
 
 
 def get_feedback_result(

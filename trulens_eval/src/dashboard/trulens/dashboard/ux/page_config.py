@@ -1,5 +1,3 @@
-import base64
-
 import streamlit as st
 
 from trulens import __package__

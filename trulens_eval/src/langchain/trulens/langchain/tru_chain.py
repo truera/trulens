@@ -12,7 +12,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 from pydantic import Field
 
 from trulens import app as mod_app
-from trulens.guardrails.langchain import WithFeedbackFilterDocuments
+from trulens.langchain.guardrails import WithFeedbackFilterDocuments
 from trulens.instruments import ClassFilter
 from trulens.instruments import Instrument
 from trulens.schema.feedback import Select

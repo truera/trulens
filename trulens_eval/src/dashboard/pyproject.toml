@@ -1,25 +1,30 @@
-[tool.poetry]
+[project]
 name = "trulens-dashboard"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
-authors = ["Truera Inc <all@truera.com>"]
-license = "MIT"
+authors = [
+    {name = "Truera Inc", email = "all@truera.com"}
+]
 readme = "README.md"
-packages = [
-    { include = "trulens" },
+license = {text = "MIT License"}
+requires-python = ">=3.9,!=3.9.7,<4.0"
+dependencies = [
+    "trulens-core >= 0.33.0",
+    "millify >= 0.1.1",
+    "humanize >= 4.6.0",
+    "streamlit >= 1.33.0",
+    "streamlit-aggrid == 0.3.4",
+    "streamlit-extras >= 0.4.0",
+    "streamlit-pills >= 0.3.0",
+    "rich >= 13.6.0",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
-trulens-core = {path = "../core", develop = true}
-millify = "^0.1.1"
-humanize = "^4.6.0"
-streamlit = "^1.33.0"
-streamlit-aggrid = "==0.3.4"
-streamlit-extras = "^0.4.0"
-streamlit-pills = "^0.3.0"
-rich = "^13.6.0"
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["trulens"]
+namespaces = true
+
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools"] # Using setuptools & setup.py to build react components
+build-backend = "setuptools.build_meta"
