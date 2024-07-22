@@ -20,10 +20,18 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["trulens"]
+include = [
+    "trulens",
+    "trulens.dashboard", 
+    "trulens.dashboard.*",
+]
 namespaces = true
 
+[tool.setuptools.package-data]
+trulens = ['dashboard', 'dashboard/react_components/**/*', 'dashboard/react_components/*/dist/*']
+
+[tool.setuptools.exclude-package-data]
+trulens = ['dashboard/react_components/*/node_modules/*']
 
 [build-system]
 requires = ["setuptools"] # Using setuptools & setup.py to build react components
