@@ -13,16 +13,27 @@ import inspect
 import logging
 import random
 import traceback
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type
+from typing import (
+    Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple,
+    Type, TypeAliasType, TypeVar, Union
+)
 import uuid
 
+from opentelemetry.sdk import trace as otsdk_trace
+from opentelemetry.trace import status as trace_status
+import opentelemetry.trace as ot_trace
+import opentelemetry.trace.span as ot_span
+from opentelemetry.util import types as ot_types
 import pydantic
 
+from trulens_eval.otel import flatten_lensed_attributes
+from trulens_eval.utils.python import NoneType
 # import trulens_eval.app as mod_app # circular import issues
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
-from trulens_eval.utils import pyschema as mod_pyschema
 from trulens_eval.utils import json as mod_json_utils
+from trulens_eval.utils import pyschema as mod_pyschema
+from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +163,78 @@ class Span(pydantic.BaseModel):
         return total
 
 
+class OTELExportable(Span):
+    """Methods for converting a span to an OTEL span.
+    
+    !!! Warning
+        This is an experimental feature. OTEL integration is ongoing.
+    """
+
+    @staticmethod
+    def otel_context_of_context(context: Context) -> ot_span.SpanContext:
+        return ot_span.SpanContext(
+            trace_id=hash(context.trace_id.int) & ot_span._TRACE_ID_MAX_VALUE,
+            span_id=hash(context.span_id) & ot_span._SPAN_ID_MAX_VALUE,
+            is_remote=False
+        )
+
+    def otel_name(self) -> str:
+        return "unnamed"
+
+    def otel_context(self) -> ot_types.SpanContext:
+        return self.otel_context_of_context(self.context)
+
+    def otel_parent_context(self) -> Optional[ot_types.SpanContext]:
+        if self.parent is None:
+            return None
+        return self.otel_context_of_context(self.parent)
+
+    def otel_attributes(self) -> ot_types.Attributes:
+        attributes = self.model_dump()
+
+        return flatten_lensed_attributes(attributes)
+
+    def otel_kind(self) -> ot_types.SpanKind:
+        return ot_trace.SpanKind.INTERNAL
+
+    def otel_status(self) -> trace_status.Status:
+        if self.error is not None:
+            return trace_status.Status(
+                status_code=trace_status.StatusCode.ERROR,
+                description=str(self.error)
+            )
+        
+        return trace_status.Status(status_code=trace_status.StatusCode.OK)
+
+    def otel_start_timestamp(self) -> int:
+        return 0
+    
+    def otel_end_timestamp(self) -> int:
+        return 0
+
+    def otel_freeze(self) -> otsdk_trace.ReadableSpan:
+        """Convert span to an OTEL compatible span for exporting to OTEL collectors.
+        
+        !!! Warning
+            This is an experimental feature. OTEL integration is ongoing.
+        """
+
+        return otsdk_trace.ReadableSpan(
+            name=self.otel_name(),
+            context=self.otel_context(),
+            parent=self.otel_parent_context(),
+            resource=None,
+            attributes=self.otel_attributes(),
+            events=[],
+            links=[],
+            kind=self.otel_kind(),
+            instrumentation_info=None,
+            status=self.otel_status(),
+            start_time=self.otel_start_timestamp(),
+            end_time=self.otel_end_timestamp(),
+            instrumentation_scope=None
+        )
+
 class PhantomSpan(Span):
     """A span type that indicates that it does not correspond to a
     computation to be recorded but instead is an element of the tracing system.
@@ -168,7 +251,7 @@ class LiveSpan(Span):
     """
 
 
-class PhantomSpanRecordingContext(PhantomSpan):
+class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
     """Tracks the context of an app used as a context manager."""
 
     # record: Optional[mod_record_schema.Record] = None
@@ -179,6 +262,8 @@ class PhantomSpanRecordingContext(PhantomSpan):
         return True
 
     def finish(self):
+        assert self.recording is not None
+        
         app = self.recording.app
 
         for span in self.iter_children(transitive=False):
@@ -186,8 +271,14 @@ class PhantomSpanRecordingContext(PhantomSpan):
                 continue
             app.on_new_root_span(recording=self.recording, root_span=span)
 
+    def otel_name(self) -> str:
+        if self.recording is None:
+            return "recording"
+        
+        return f"recording of app {self.recording.app.app_id}"
 
-class LiveSpanCall(LiveSpan):
+
+class LiveSpanCall(LiveSpan, OTELExportable):
     """Track a function call.
     
     WARNING:
@@ -261,8 +352,11 @@ class LiveSpanCall(LiveSpan):
     tid: Optional[int] = None
     """Thread id."""
 
+    def otel_name(self) -> str:
+        return self.func_name or "unnamed"
 
-class PhantomSpanCost(PhantomSpan):
+
+class PhantomSpanCost(PhantomSpan, OTELExportable):
     """Track costs of some computation."""
 
     cost: Optional[mod_base_schema.Cost
@@ -274,6 +368,9 @@ class PhantomSpanCost(PhantomSpan):
             cost = mod_base_schema.Cost()
 
         super().__init__(cost=cost, **kwargs)
+
+    def otel_name(self) -> str:
+        return "cost"
 
 
 class Tracer(pydantic.BaseModel):
@@ -463,7 +560,7 @@ class Tracer(pydantic.BaseModel):
 
     def phantom(self):
         return self._span(PhantomSpan)
-    
+
     async def arecording(self):
         return self._aspan(PhantomSpanRecordingContext)
 
@@ -501,7 +598,7 @@ class NullTracer(Tracer):
             self.context.reset(token)
             if error is not None:
                 raise error
-            
+
     @contextlib.asynccontextmanager
     async def _aspan(self, cls):
         context = Context(trace_id=self.trace_id, tracer=self)
