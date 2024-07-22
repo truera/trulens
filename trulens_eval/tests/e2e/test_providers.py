@@ -91,28 +91,28 @@ def get_llmprovider_tests(
 ) -> List[Tuple[Callable, Dict, float]]:
     return [
         (
-            provider.qs_relevance,
+            provider.context_relevance,
             dict(
                 question="What is the capital of Poland?",
                 statement="The capital of Germany is Berlin."
             ), 0.0
         ),
         (
-            provider.qs_relevance,
+            provider.context_relevance,
             dict(
                 question="What is the capital of Germany?",
                 statement="The capital of Germany is Berlin."
             ), 1.0
         ),
         (
-            provider.qs_relevance_with_cot_reasons,
+            provider.context_relevance_with_cot_reasons,
             dict(
                 question="What is the capital of Poland?",
                 statement="The capital of Germany is Berlin."
             ), 0.0
         ),
         (
-            provider.qs_relevance_with_cot_reasons,
+            provider.context_relevance_with_cot_reasons,
             dict(
                 question="What is the capital of Germany?",
                 statement="The capital of Germany is Berlin."

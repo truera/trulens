@@ -54,7 +54,7 @@ f_qa_relevance = Feedback(openai.relevance).on_input_output()
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/statement relevance between question and each context chunk.
-f_qs_relevance = feedback.Feedback(openai.qs_relevance).on_input().on(
+f_context_relevance = feedback.Feedback(openai.context_relevance).on_input().on(
     Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].
     page_content
 ).aggregate(np.min)
@@ -165,7 +165,7 @@ if user_input:
     feedbacks = tru.run_feedback_functions(
         app=app,
         record=record,
-        feedback_functions=[f_lang_match, f_qa_relevance, f_qs_relevance]
+        feedback_functions=[f_lang_match, f_qa_relevance, f_context_relevance]
     )
 
     # Add value to database

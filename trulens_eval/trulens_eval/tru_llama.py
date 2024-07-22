@@ -272,10 +272,10 @@ class TruLlama(mod_app.App):
 
         ```python
         from trulens_eval import TruLlama
-        # f_lang_match, f_qa_relevance, f_qs_relevance are feedback functions
+        # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruLlama(query_engine,
             app_id='LlamaIndex_App1',
-            feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance])
+            feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
 
         with tru_recorder as recording:
             query_engine.query("What is llama index?")
