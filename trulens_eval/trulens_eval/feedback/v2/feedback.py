@@ -171,8 +171,8 @@ class Groundedness(Semantics, WithPrompt):
 
 
 class ContextRelevance(Relevance, WithPrompt):
-    # openai.qs_relevance
-    # openai.qs_relevance_with_cot_reasons
+    # openai.context_relevance
+    # openai.context_relevance_with_cot_reasons
 
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
