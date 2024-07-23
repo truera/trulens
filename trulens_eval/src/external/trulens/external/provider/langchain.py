@@ -4,8 +4,8 @@ from typing import Dict, Optional, Sequence, Union
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
-from trulens.feedback.functions.provider import LLMProvider
-from trulens.feedback.functions.provider.endpoint import LangchainEndpoint
+from trulens.external.provider import LLMProvider
+from trulens.external.provider.endpoint import LangchainEndpoint
 
 from langchain.chat_models.base import BaseChatModel
 from langchain.llms.base import BaseLLM

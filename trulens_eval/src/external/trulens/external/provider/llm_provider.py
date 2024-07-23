@@ -7,10 +7,10 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
+from trulens.external import generated as mod_generated_utils
+from trulens.external import prompts
+from trulens.external.generated import re_0_10_rating
 from trulens.feedback.base_provider import Provider
-from trulens.feedback.functions import generated as mod_generated_utils
-from trulens.feedback.functions import prompts
-from trulens.feedback.functions.generated import re_0_10_rating
 
 logger = logging.getLogger(__name__)
 

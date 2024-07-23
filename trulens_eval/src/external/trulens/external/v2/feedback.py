@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import ClassVar, List, Optional
 
 import pydantic
-from trulens.feedback.functions.generated import re_0_10_rating
+from trulens.external.generated import re_0_10_rating
 from trulens.utils.python import safe_hasattr
 from trulens.utils.text import make_retab
 

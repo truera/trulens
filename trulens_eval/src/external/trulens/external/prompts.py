@@ -3,7 +3,7 @@
 # feedback reasons which can stay here for now as there is no good place for
 # those yet.
 
-from trulens.feedback.v2 import feedback as v2
+from trulens.external.v2 import feedback as v2
 
 COT_REASONS_TEMPLATE = \
 """

@@ -391,6 +391,17 @@ testing = ["astroid (>=2.0)", "coverage", "pylint (>=2.3.1,<2.4.0)", "pytest"]
 yaml = ["PyYAML (>=5.1.0)"]
 
 [[package]]
+name = "nest-asyncio"
+version = "1.6.0"
+description = "Patch asyncio to allow nested event loops"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "nest_asyncio-1.6.0-py3-none-any.whl", hash = "sha256:87af6efd6b5e897c81050477ef65c62e2b2f35d51703cae01aff2905b1852e1c"},
+    {file = "nest_asyncio-1.6.0.tar.gz", hash = "sha256:6f172d5449aca15afd6c646851f4e31e02c598d553a667e38cafa997cfec55fe"},
+]
+
+[[package]]
 name = "nltk"
 version = "3.8.1"
 description = "Natural Language Toolkit"
@@ -845,13 +856,14 @@ description = "Library to systematically track and evaluate LLM based applicatio
 optional = false
 python-versions = "^3.9"
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 alembic = "^1.11.2"
 dill = "^0.3.7"
 merkle-json = "^1.0.0"
 munch = "^3.0.0"
+nest-asyncio = "^1.5.8"
 numpy = "^1.23.5"
 psutil = "^5.9.8"
 pydantic = "^2"
@@ -894,4 +906,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "1cababa2c127de1072e47d3ad32a1c62cf03424532c204945f3beff997ec429c"
+content-hash = "90c8c2a5bfdd0ec61625d691953ae5c762cd868ad2b206a4247c7c50b9124d1b"

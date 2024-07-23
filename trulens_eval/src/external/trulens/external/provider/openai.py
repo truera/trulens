@@ -2,10 +2,10 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
+from trulens.external.provider import LLMProvider
+from trulens.external.provider.endpoint import OpenAIClient
+from trulens.external.provider.endpoint import OpenAIEndpoint
 from trulens.feedback import Endpoint
-from trulens.feedback.functions.provider import LLMProvider
-from trulens.feedback.functions.provider.endpoint import OpenAIClient
-from trulens.feedback.functions.provider.endpoint import OpenAIEndpoint
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_OPENAI
 from trulens.utils.pace import Pace

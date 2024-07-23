@@ -2,15 +2,15 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
+from trulens.external.provider import LLMProvider
 from trulens.feedback import Endpoint
-from trulens.feedback.functions.provider import LLMProvider
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LITELLM
 
 with OptionalImports(messages=REQUIREMENT_LITELLM) as opt:
     import litellm
     from litellm import completion
-    from trulens.feedback.functions.provider.endpoint import LiteLLMEndpoint
+    from trulens.external.provider.endpoint import LiteLLMEndpoint
 
 # check that the optional imports are not dummies:
 opt.assert_installed(litellm)

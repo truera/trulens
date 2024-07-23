@@ -9,11 +9,11 @@ from nltk.tokenize import sent_tokenize
 import numpy as np
 import requests
 from tqdm.auto import tqdm
+from trulens.external import prompts
+from trulens.external.provider.endpoint import HuggingfaceEndpoint
 from trulens.feedback import Endpoint
 from trulens.feedback import Provider
 from trulens.feedback.base_endpoint import DummyEndpoint
-from trulens.feedback.functions import prompts
-from trulens.feedback.functions.provider.endpoint import HuggingfaceEndpoint
 from trulens.utils.python import Future
 from trulens.utils.python import locals_except
 from trulens.utils.threading import ThreadPoolExecutor
