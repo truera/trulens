@@ -189,9 +189,10 @@ nav:
           - ☔ Feedback Functions: trulens_eval/getting_started/core_concepts/feedback_functions.md
           - ⟁ RAG Triad: trulens_eval/getting_started/core_concepts/rag_triad.md
           - 🏆 Honest, Harmless, Helpful Evals: trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals.md
-
       - 🎈Viewing Results:
           - trulens_eval/getting_started/dashboard/index.md
+
+  - 🎯 Evaluation:
       # PLACEHOLDER: - trulens_eval/evaluation/index.md
       - ☔ Feedback Functions:
           - trulens_eval/evaluation/feedback_functions/index.md

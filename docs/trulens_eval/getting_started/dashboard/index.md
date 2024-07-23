@@ -1,4 +1,8 @@
-# TruLens Dashboard
+# Viewing Results
+
+TruLens provides a broad set of capabilities for evaluating and tracking applications. In addition, TruLens ships with native tools for examining traces and evaluations in the form of a complete dashboard, and components that can be added to streamlit apps.
+
+## TruLens Dashboard
 
 To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by `tru.run_dashboard()`, and will run from a database url you specify with `Tru()`.
 
@@ -12,6 +16,8 @@ It can also be run in the CLI with the command below:
 ```bash
 trulens-eval
 ```
+
+## Streamlit Components
 
 In addition to the complete dashboard, several of the dashboard components can be used on their own and added to existing _Streamlit_ dashboards.
 
