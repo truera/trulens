@@ -714,7 +714,7 @@ class SingletonPerName(Generic[T]):
             # If exception happens here, the instance should not be added to
             # _instances.
             instance = super().__new__(cls)
-
+            
             SingletonPerName._id_to_name_map[id(instance)] = name
             info = SingletonInfo(name=name, val=instance)
             SingletonPerName._instances[k] = info

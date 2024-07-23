@@ -460,25 +460,25 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         return hash(id(self))
 
     def _tru_post_init(self):
-        """
-        Database-related initialization and additional data checks.
+        """Database-related initialization and additional data checks.
 
         DB:
             - Insert the app into the database.
+
             - Insert feedback function definitions into the database.
 
         Checks:
             - In deferred mode, try to serialize and deserialize feedback functions.
+
             - Check that feedback function selectors are likely to refer to expected
                 app or record components.
         
         """
 
         if self.tru is None:
-            if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
-                from trulens_eval.tru import Tru
-                logger.debug("Creating default tru.")
-                self.tru = Tru()
+            from trulens_eval.tru import Tru
+            logger.debug("Using default tru.")
+            self.tru = Tru()
 
         else:
             if self.feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
@@ -915,6 +915,16 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     ) -> 'Record':
         
         tracer = root_span.context.tracer
+
+        if self.tru.otel_exporter is not None:
+            # Export to otel exporter if exporter was set in workspace.
+            to_export = []
+            for span in root_span.iter_family(include_phantom=True):
+                e_span = span.otel_freeze()
+                to_export.append(e_span)
+
+            print(f"Exporting {len(to_export)} spans to {self.tru.otel_exporter}.")
+            self.tru.otel_exporter.export(to_export)
 
         record = tracer.record_of_root_span(root_span=root_span, recording=recording)
         recording.records.append(record)

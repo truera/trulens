@@ -37,6 +37,7 @@ from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import retab
 from trulens_eval.utils.wrap import CallableCallbacks
 from trulens_eval.utils.wrap import wrap_callable
+from trulens_eval.utils import containers as mod_container_utils
 
 T = TypeVar("T")
 
@@ -331,10 +332,7 @@ class Instrument(object):
                 )
 
             def __init__(
-                self,
-                func_name: str,
-                cls: type,
-                sig: inspect.Signature,
+                self, func_name: str, cls: type, sig: inspect.Signature,
                 **kwargs: Dict[str, Any]
             ):
                 super().__init__(**kwargs)
@@ -353,30 +351,44 @@ class Instrument(object):
 
             def on_callable_call(
                 self, bindings: BoundArguments, **kwargs: Dict[str, Any]
-            ) -> BoundArguments:
+            ) -> BoundArguments:    
+                temp = super().on_callable_call(bindings=bindings, **kwargs)
+                # fills in start_time
+            
                 if "self" in bindings.arguments:
                     self.obj = bindings.arguments["self"]
 
-                return super().on_callable_call(bindings=bindings, **kwargs)
+                span = self.span
+                span.pid = os.getpid()
+                span.tid = th.get_native_id()
+
+                span.start_timestamp = mod_container_utils.ns_timestamp_of_datetime(
+                    self.start_time
+                )
+
+                return temp
+
 
             def on_callable_end(self):
                 span = self.span
+
+                # SpanCall attributes
                 span.call_id = self.call_id
-                span.obj = self.obj
-                span.cls = self.cls
                 span.func_name = self.func_name
-                span.func = self.func
                 span.sig = self.sig
-                span.bindings = self.bindings
-                span.args = self.call_args
-                span.kwargs = self.call_kwargs
-                span.ret = self.ret
-                span.error = self.error
-                span.perf = mod_base_schema.Perf(
-                    start_time=self.start_time, end_time=self.end_time
+                span.end_timestamp = mod_container_utils.ns_timestamp_of_datetime(
+                    self.end_time
                 )
-                span.pid = os.getpid()
-                span.tid = th.get_native_id()
+
+                # LiveSpanCall attributes
+                span.live_obj = self.obj
+                span.live_cls = self.cls
+                span.live_func = self.func
+                span.live_args = self.call_args
+                span.live_kwargs = self.call_kwargs
+                span.live_bindings = self.bindings
+                span.live_ret = self.ret
+                span.live_error = self.error
 
                 if self.error is not None:
                     self.span_context.__exit__(

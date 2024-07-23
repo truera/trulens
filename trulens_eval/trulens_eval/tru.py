@@ -19,6 +19,7 @@ from typing import (
 )
 
 import humanize
+from opentelemetry import sdk as otel_sdk
 import pandas
 from tqdm.auto import tqdm
 from typing_extensions import Annotated
@@ -38,6 +39,7 @@ from trulens_eval.utils import serial
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.imports import static_resource
 from trulens_eval.utils.python import Future  # code style exception
+from trulens_eval.utils.text import UNICODE_CHECK
 from trulens_eval.utils.wrap import OpaqueWrapper
 
 pp = PrettyPrinter()
@@ -79,17 +81,18 @@ class Tru(python.SingletonPerName):
             Basic apps defined solely using a function from `str` to `str`.
 
         [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp]:
-            Custom apps containing custom structures and methods. Requres annotation
-            of methods to instrument.
+            Custom apps containing custom structures and methods. Requres
+            annotation of methods to instrument.
 
         [TruVirtual][trulens_eval.tru_virtual.TruVirtual]: Virtual
-            apps that do not have a real app to instrument but have a virtual            structure and can log existing captured data as if they were trulens
+            apps that do not have a real app to instrument but have a virtual
+            structure and can log existing captured data as if they were trulens
             records.
 
     Args:
         database: Database to use. If not provided, an
-            [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] database
-            will be initialized based on the other arguments.
+            [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB]
+            database will be initialized based on the other arguments.
 
         database_url: Database URL. Defaults to a local SQLite
             database file at `"default.sqlite"` See [this
@@ -108,6 +111,9 @@ class Tru(python.SingletonPerName):
             written to database (defaults to `False`)
 
         database_args: Additional arguments to pass to the database constructor.
+
+        otel_exporter: EXPERIMENTAL: OpenTelemetry exporter to export spans
+            with.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -160,12 +166,26 @@ class Tru(python.SingletonPerName):
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
+        otel_exporter: Optional[otel_sdk.trace.export.SpanExporter] = None
     ):
         """
         Args:
             database_check_revision: Whether to check the database revision on
                 init. This prompt determine whether database migration is required.
         """
+
+        if hasattr(self, "db"):
+            return # singletone already created
+
+        if otel_exporter is not None:
+            assert isinstance(
+                otel_exporter, otel_sdk.trace.export.SpanExporter
+            ), "otel_exporter must be an OpenTelemetry SpanExporter."
+            print(
+                f"{UNICODE_CHECK} OpenTelemetry exporter set: {otel_exporter}"
+            )
+
+        self.otel_exporter = otel_exporter
 
         if database_args is None:
             database_args = {}
@@ -906,7 +926,9 @@ class Tru(python.SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {name: count for name, count in runs_stats.items()}
+                    {
+                        name: count for name, count in runs_stats.items()
+                    }
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()

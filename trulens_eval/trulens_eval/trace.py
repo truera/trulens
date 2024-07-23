@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
+import datetime
 import inspect
 import logging
 import random
+import time
 import traceback
 from typing import (
     Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple,
@@ -20,6 +22,8 @@ from typing import (
 import uuid
 
 from opentelemetry.sdk import trace as otsdk_trace
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.semconv.resource import ResourceAttributes
 from opentelemetry.trace import status as trace_status
 import opentelemetry.trace as ot_trace
 import opentelemetry.trace.span as ot_span
@@ -27,13 +31,12 @@ from opentelemetry.util import types as ot_types
 import pydantic
 
 from trulens_eval.otel import flatten_lensed_attributes
-from trulens_eval.utils.python import NoneType
 # import trulens_eval.app as mod_app # circular import issues
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.utils import containers as mod_container_utils
 from trulens_eval.utils import json as mod_json_utils
 from trulens_eval.utils import pyschema as mod_pyschema
-from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -77,14 +80,22 @@ class Span(pydantic.BaseModel):
 
     model_config = {'arbitrary_types_allowed': True}
 
-    context: Context
+    context: Context = pydantic.Field(exclude=True)
     """Identifiers."""
 
-    parent: Optional[Context] = None
+    parent: Optional[Context] = pydantic.Field(None, exclude=True)
     """Optional parent identifier."""
 
-    error: Optional[Exception] = None
+    error: Optional[Exception] = pydantic.Field(None, exclude=True)
     """Optional error if the observed computation raised an exception."""
+
+    start_timestamp: int = pydantic.Field(default_factory=time.time_ns, exclude=True)
+    """Start time in nanoseconds since epoch."""
+
+    end_timestamp: Optional[int] = pydantic.Field(None, exclude=True)
+    """End time in nanoseconds since epoch.
+    
+    None if not yet finished."""
 
     def __str__(self):
         return f"{type(self).__name__} {self.context} -> {self.parent}"
@@ -94,7 +105,7 @@ class Span(pydantic.BaseModel):
         return self.context.tracer
 
     def finish(self):
-        pass
+        self.end_timestamp = time.time_ns()
 
     async def afinish(self):
         return self.finish()
@@ -141,16 +152,6 @@ class Span(pydantic.BaseModel):
             include_phantom=include_phantom, transitive=True
         )
 
-    def is_root(self) -> bool:
-        """Check if this span is a "root" span here meaning that it is either a
-        SpanRecord or its parent is a SpanRecord."""
-
-        if self.parent is None:
-            return True
-
-        parent = self.context.tracer.spans.get(self.parent)
-        return parent.is_root()
-
     def total_cost(self) -> mod_base_schema.Cost:
         """Total costs of this span and all its transitive children."""
 
@@ -189,10 +190,11 @@ class OTELExportable(Span):
             return None
         return self.otel_context_of_context(self.parent)
 
-    def otel_attributes(self) -> ot_types.Attributes:
-        attributes = self.model_dump()
+    def attributes(self):
+        return self.model_dump()
 
-        return flatten_lensed_attributes(attributes)
+    def otel_attributes(self) -> ot_types.Attributes:
+        return flatten_lensed_attributes(self.attributes())
 
     def otel_kind(self) -> ot_types.SpanKind:
         return ot_trace.SpanKind.INTERNAL
@@ -203,14 +205,20 @@ class OTELExportable(Span):
                 status_code=trace_status.StatusCode.ERROR,
                 description=str(self.error)
             )
-        
+
         return trace_status.Status(status_code=trace_status.StatusCode.OK)
 
     def otel_start_timestamp(self) -> int:
-        return 0
-    
-    def otel_end_timestamp(self) -> int:
-        return 0
+        return self.start_timestamp
+
+    def otel_end_timestamp(self) -> Optional[int]:
+        return self.end_timestamp
+
+    def otel_resource_attributes(self) -> Dict[str, Any]:
+        return {}
+
+    def otel_resource(self) -> Resource:
+        return Resource(attributes=self.otel_resource_attributes())
 
     def otel_freeze(self) -> otsdk_trace.ReadableSpan:
         """Convert span to an OTEL compatible span for exporting to OTEL collectors.
@@ -223,7 +231,7 @@ class OTELExportable(Span):
             name=self.otel_name(),
             context=self.otel_context(),
             parent=self.otel_parent_context(),
-            resource=None,
+            resource=self.otel_resource(),
             attributes=self.otel_attributes(),
             events=[],
             links=[],
@@ -234,6 +242,7 @@ class OTELExportable(Span):
             end_time=self.otel_end_timestamp(),
             instrumentation_scope=None
         )
+
 
 class PhantomSpan(Span):
     """A span type that indicates that it does not correspond to a
@@ -254,16 +263,34 @@ class LiveSpan(Span):
 class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
     """Tracks the context of an app used as a context manager."""
 
-    # record: Optional[mod_record_schema.Record] = None
-    recording: Optional[
-        Any] = None  # TODO: app.RecordingContext # circular import issues
+    recording: Optional[Any] = pydantic.Field(None, exclude=True)
 
-    def is_root(self) -> bool:
-        return True
+    # TODO: app.RecordingContext # circular import issues
+
+    def otel_resource_attributes(self) -> Dict[str, Any]:
+        ret = super().otel_resource_attributes()
+        ret[ResourceAttributes.SERVICE_NAME
+           ] = self.recording.app.app_id if self.recording is not None else None
+
+        return ret
 
     def finish(self):
+        super().finish()
+
         assert self.recording is not None
-        
+
+        app = self.recording.app
+
+        for span in self.iter_children(transitive=False):
+            if not isinstance(span, LiveSpanCall):
+                continue
+            app.on_new_root_span(recording=self.recording, root_span=span)
+
+    async def afinish(self):
+        await super().afinish()
+
+        assert self.recording is not None
+
         app = self.recording.app
 
         for span in self.iter_children(transitive=False):
@@ -272,96 +299,117 @@ class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
             app.on_new_root_span(recording=self.recording, root_span=span)
 
     def otel_name(self) -> str:
-        if self.recording is None:
-            return "recording"
-        
-        return f"recording of app {self.recording.app.app_id}"
+        return f"PhantomSpanRecordingContext({self.recording.app.app_id if self.recording is not None else None})"
 
 
-class LiveSpanCall(LiveSpan, OTELExportable):
-    """Track a function call.
-    
-    WARNING:
-        This span contains references to live objects. These may change after
-        this span is created but before it is dumped or exported.
-    """
+class SpanCall(OTELExportable):
+    """Non-live fields of a function call span."""
 
     model_config = {'arbitrary_types_allowed': True}
 
-    call_id: Optional[uuid.UUID] = None
+    call_id: Optional[uuid.UUID] = pydantic.Field(None, exclude=True)
+    """Unique identifier for the call."""
 
-    stack: Optional[List[mod_record_schema.RecordAppCallMethod]] = None
+    stack: Optional[List[mod_record_schema.RecordAppCallMethod]
+                   ] = pydantic.Field(
+                       None, exclude=True
+                   )
+    """Call stack of instrumented methods only."""
 
-    # call: Optional[mod_record_schema.RecordAppCall] = None
-    obj: Optional[Any] = None
-    """Self object if method call.
-    
-    WARNING: This is a live object.
-    """
-
-    cls: Optional[Type] = None
-    """Class if method/static/class method call."""
-
-    func: Optional[Callable] = None
-    """Function object.
-    
-    WARNING: This is a live object.
-    """
-
-    sig: Optional[inspect.Signature] = None
+    sig: Optional[inspect.Signature] = pydantic.Field(None, exclude=True)
     """Signature of the function."""
 
     func_name: Optional[str] = None
     """Function name."""
 
-    args: Optional[Tuple[Any, ...]] = None
-    """Positional arguments to the function call.
-    
-    WARNING: Contains references to live objects.
-    """
-
-    kwargs: Optional[Dict[str, Any]] = None
-    """Keyword arguments to the function call.
-
-    WARNING: Contains references to live objects.
-    """
-
-    bindings: Optional[inspect.BoundArguments] = None
-    """Bound arguments to the function call if can be bound."""
-
-    ret: Optional[Any] = None
-    """Return value of the function call.
-    
-    Excluisve with `error`.
-
-    WARNING: This is a live object.
-    """
-
-    error: Optional[Any] = None
-    """Error raised by the function call.
-    
-    Exclusive with `ret`.
-    """
-
-    perf: Optional[mod_base_schema.Perf] = None
-    """Performance metrics."""
-
-    pid: Optional[int] = None
+    pid: Optional[int] = pydantic.Field(None, exclude=True)
     """Process id."""
 
     tid: Optional[int] = None
     """Thread id."""
 
+    def attributes(self):
+        ret = super().attributes()
+
+        ret['sig'] = str(self.sig)
+        ret['call_id'] = str(self.call_id)
+        ret['stack'] = mod_json_utils.jsonify(self.stack)
+
+        return ret
+
+    def otel_attributes(self) -> ot_types.Attributes:
+        temp = {f"trulens_eval@{k}": v for k, v in self.attributes().items()}
+        return flatten_lensed_attributes(temp)
+
+    def otel_resource_attributes(self) -> Dict[str, Any]:
+        ret = super().otel_resource_attributes()
+
+        ret[ResourceAttributes.PROCESS_PID] = self.pid
+        ret["thread.id"] = self.tid  # TODO: semconv
+
+        return ret
+
     def otel_name(self) -> str:
-        return self.func_name or "unnamed"
+        return f"{self.__class__.__name__}({self.func_name})"
 
 
-class PhantomSpanCost(PhantomSpan, OTELExportable):
+class LiveSpanCall(LiveSpan, SpanCall):
+    """Track a function call.
+    
+    WARNING:
+        This span contains references to live objects. These may change after
+        this span is created but before it is dumped or exported. Attributes
+        that store live objects begin with `live_`.
+    """
+
+    model_config = {'arbitrary_types_allowed': True}
+
+    # call: Optional[mod_record_schema.RecordAppCall] = None
+    live_obj: Optional[Any] = pydantic.Field(None, exclude=True)
+    """Self object if method call."""
+
+    live_cls: Optional[Type] = pydantic.Field(None, exclude=True)
+    """Class if method/static/class method call."""
+
+    live_func: Optional[Callable] = pydantic.Field(None, exclude=True)
+    """Function object."""
+
+    live_args: Optional[Tuple[Any, ...]] = pydantic.Field(None, exclude=True)
+    """Positional arguments to the function call."""
+
+    live_kwargs: Optional[Dict[str, Any]] = pydantic.Field(None, exclude=True)
+    """Keyword arguments to the function call."""
+
+    live_bindings: Optional[inspect.BoundArguments] = pydantic.Field(
+        None, exclude=True
+    )
+    """Bound arguments to the function call if can be bound."""
+
+    live_ret: Optional[Any] = pydantic.Field(None, exclude=True)
+    """Return value of the function call.
+    
+    Excluisve with `error`.
+    """
+
+    live_error: Optional[Any] = pydantic.Field(None, exclude=True)
+    """Error raised by the function call.
+    
+    Exclusive with `ret`.
+    """
+
+
+class PhantomSpanCost(PhantomSpan, LiveSpan, OTELExportable):
     """Track costs of some computation."""
 
-    cost: Optional[mod_base_schema.Cost
-                  ] = pydantic.Field(default_factory=mod_base_schema.Cost)
-    endpoint: Optional[Any] = None  # TODO: Type
+    cost: Optional[mod_base_schema.Cost] = pydantic.Field(
+        default_factory=mod_base_schema.Cost, exclude=True
+    )
+    """Cost of the computation spanned."""
+
+    live_endpoint: Optional[Any] = pydantic.Field(None, exclude=True)
+    """Endpoint handling cost extraction for this span/call."""
+
+    # TODO: Type
 
     def __init__(self, cost: Optional[mod_base_schema.Cost] = None, **kwargs):
         if cost is None:
@@ -370,7 +418,7 @@ class PhantomSpanCost(PhantomSpan, OTELExportable):
         super().__init__(cost=cost, **kwargs)
 
     def otel_name(self) -> str:
-        return "cost"
+        return "PhantomSpanCost"
 
 
 class Tracer(pydantic.BaseModel):
@@ -401,12 +449,12 @@ class Tracer(pydantic.BaseModel):
     ):
         # TODO: what if it is not a method call?
 
-        path = get_method_path(obj=span.obj, func=span.func)
+        path = get_method_path(obj=span.live_obj, func=span.live_func)
 
         frame_ident = mod_record_schema.RecordAppCallMethod(
             path=path,
             method=mod_pyschema.Method.of_method(
-                span.func, obj=span.obj, cls=span.cls
+                span.live_func, obj=span.live_obj, cls=span.live_cls
             )
         )
 
@@ -427,8 +475,8 @@ class Tracer(pydantic.BaseModel):
         """Convert a SpanCall to a RecordAppCall."""
 
         args = dict(
-            span.bindings.arguments
-        ) if span.bindings is not None else None
+            span.live_bindings.arguments
+        ) if span.live_bindings is not None else None
         if args is not None:
             if "self" in args:
                 del args["self"]  # remove self
@@ -437,9 +485,9 @@ class Tracer(pydantic.BaseModel):
             call_id=str(span.call_id),
             stack=span.stack,
             args=args,
-            rets=span.ret,
-            error=str(span.error),
-            perf=span.perf,
+            rets=span.live_ret,
+            error=str(span.live_error),
+            perf=mod_base_schema.Perf.of_ns_timestamps(span.start_timestamp, span.end_timestamp),
             pid=span.pid,
             tid=span.tid
         )
@@ -453,7 +501,14 @@ class Tracer(pydantic.BaseModel):
 
         self._fill_stacks(root_span, get_method_path=app.get_method_path)
 
-        root_perf = root_span.perf
+        root_perf = mod_base_schema.Perf(
+            start_time=mod_container_utils.datetime_of_ns_timestamp(
+                root_span.start_timestamp
+            ),
+            end_time=mod_container_utils.datetime_of_ns_timestamp(
+                root_span.end_timestamp
+            ) if root_span.end_timestamp is not None else None
+        )
         root_cost = root_span.total_cost()
 
         calls = [self._call_of_spancall(root_span)]
@@ -462,21 +517,21 @@ class Tracer(pydantic.BaseModel):
                 continue
             calls.append(self._call_of_spancall(span))
 
-        bindings = root_span.bindings
-        main_error = root_span.error
+        bindings = root_span.live_bindings
+        main_error = root_span.live_error
 
         if bindings is not None:
             main_input = app.main_input(
-                func=root_span.func,
+                func=root_span.live_func,
                 sig=root_span.sig,
-                bindings=root_span.bindings
+                bindings=root_span.live_bindings
             )
             if main_error is None:
                 main_output = app.main_output(
-                    func=root_span.func,
+                    func=root_span.live_func,
                     sig=root_span.sig,
-                    bindings=root_span.bindings,
-                    ret=root_span.ret
+                    bindings=root_span.live_bindings,
+                    ret=root_span.live_ret
                 )
             else:
                 main_output = None
