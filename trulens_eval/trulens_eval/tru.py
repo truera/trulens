@@ -174,18 +174,8 @@ class Tru(python.SingletonPerName):
                 init. This prompt determine whether database migration is required.
         """
 
-        if hasattr(self, "db"):
-            return # singletone already created
-
-        if otel_exporter is not None:
-            assert isinstance(
-                otel_exporter, otel_sdk.trace.export.SpanExporter
-            ), "otel_exporter must be an OpenTelemetry SpanExporter."
-            print(
-                f"{UNICODE_CHECK} OpenTelemetry exporter set: {otel_exporter}"
-            )
-
-        self.otel_exporter = otel_exporter
+        # WARNING: Do not set any attributes of self before the
+        # python.safe_hasattr line. Doing so will break the singleton mechanism.
 
         if database_args is None:
             database_args = {}
@@ -205,14 +195,23 @@ class Tru(python.SingletonPerName):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
             if sum((1 if v is not None else 0 for v in database_args.values())
-                  ) > 0:
+                  ) > 0 or otel_exporter is not None:
                 logger.warning(
                     "Tru was already initialized. "
-                    "Cannot change database configuration after initialization."
+                    "Cannot change configuration after initialization."
                 )
                 self.warning()
 
             return
+
+        if otel_exporter is not None:
+            assert isinstance(
+                otel_exporter, otel_sdk.trace.export.SpanExporter
+            ), "otel_exporter must be an OpenTelemetry SpanExporter."
+            print(
+                f"{UNICODE_CHECK} OpenTelemetry exporter set: {otel_exporter}"
+            )
+        self.otel_exporter = otel_exporter
 
         if database is not None:
             if not isinstance(database, DB):
