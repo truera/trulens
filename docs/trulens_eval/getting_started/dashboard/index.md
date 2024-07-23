@@ -15,59 +15,69 @@ trulens-eval
 
 In addition to the complete dashboard, several of the dashboard components can be used on their own and added to existing _Streamlit_ dashboards.
 
-_Streamlit_ is an easy way to create python scripts into shareable web applications, and has become a popular way to interact with generative AI technology.
+_Streamlit_ is an easy way to create python scripts into shareable web applications, and has become a popular way to interact with generative AI technology. Several _TruLens_ UI components are now accessible for adding to Streamlit dashboards.
 
 Consider the below `app.py` which consists of a simple RAG application that is already logged and evaluated with _TruLens_. Notice in particular, that we are getting both the application's `response` and `record`.
 
-```python
+!!! example "Simple Streamlit app with TruLens"
 
-import streamlit as st
-from trulens_eval import Tru
+    ```python
 
-from base import rag # a rag app with a query method
-from base import tru_rag # a rag app wrapped by trulens
+    import streamlit as st
+    from trulens_eval import Tru
 
-tru = Tru()
+    from base import rag # a rag app with a query method
+    from base import tru_rag # a rag app wrapped by trulens
 
-def generate_and_log_response(input_text):
-    with tru_rag as recording:
-        response = rag.query(input_text)
-    record = recording.get()
-    return record, response
+    tru = Tru()
 
-with st.form("my_form"):
-    text = st.text_area("Enter text:", "How do I launch a streamlit app?")
-    submitted = st.form_submit_button("Submit")
-    if submitted:
-        record, response = generate_and_log_response(text)
-        st.info(response)
+    def generate_and_log_response(input_text):
+        with tru_rag as recording:
+            response = rag.query(input_text)
+        record = recording.get()
+        return record, response
 
-```
+    with st.form("my_form"):
+        text = st.text_area("Enter text:", "How do I launch a streamlit app?")
+        submitted = st.form_submit_button("Submit")
+        if submitted:
+            record, response = generate_and_log_response(text)
+            st.info(response)
+
+    ```
 
 With the `record` in hand, we can easily add TruLens components to display the evaluation results of the provided record using the `trulens_feedback` from the _TruLens_ streamlit module. This will display the _TruLens_ feedback result clickable pills as the feedback is available.
 
-```python
-from trulens_eval import streamlit as trulens_st
+!!! example "Display feedback results"
 
-if submitted:
-    trulens_st.trulens_feedback(record=record)
-```
+    ```python
+    from trulens_eval import streamlit as trulens_st
+
+    if submitted:
+        trulens_st.trulens_feedback(record=record)
+    ```
 
 In addition to the feedback results, we can also display the record's trace to help with debugging using the `trulens_trace` from the _TruLens_ streamlit module.
 
-```python
-from trulens_eval import streamlit as trulens_st
+!!! example "Display the trace"
 
-if submitted:
-    trulens_st.trulens_trace(record=record)
-```
+    ```python
+    from trulens_eval import streamlit as trulens_st
+
+    if submitted:
+        trulens_st.trulens_trace(record=record)
+    ```
 
 Last, we can also display the TruLens leaderboard using the `trulens_leaderboard` from the _TruLens_ streamlit module to understand the aggregate performance across application versions.
 
-```python
-from trulens_eval import streamlit as trulens_st
+!!! example "Display the application leaderboard"
 
-trulens_st.trulens_leaderboard(record=record)
-```
+    ```python
+    from trulens_eval import streamlit as trulens_st
+
+    trulens_st.trulens_leaderboard(record=record)
+    ```
 
 In combination, the streamlit components allow you to make evaluation front-and-center in your app. This is particularly useful for developer playground use cases, or to ensure users of app reliability.
+
+Read more in the [Streamlit Module API Reference](https://www.trulens.org/trulens_eval/api/streamlit/).
