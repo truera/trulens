@@ -1,6 +1,6 @@
 import streamlit as st
-from trulens import __package__
-from trulens import __version__
+from trulens.core import __package__
+from trulens.core import __version__
 from trulens.utils.imports import static_resource
 
 
@@ -12,7 +12,7 @@ def set_page_config(page_title='TruLens'):
         layout='wide'
     )
 
-    logo = static_resource('ux/trulens_logo.svg')
+    logo = static_resource('dashboard', 'ux/trulens_logo.svg')
 
     st.logo(str(logo), link='https://www.trulens.org/')
 

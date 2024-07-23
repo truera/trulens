@@ -6,11 +6,11 @@ from unittest import main
 from unittest import TestCase
 
 import numpy as np
-from trulens import Feedback
-from trulens.schema.feedback import FeedbackMode
-from trulens.schema.feedback import FeedbackResultStatus
-from trulens.schema.feedback import Select
-from trulens.tru_basic_app import TruBasicApp
+from trulens.core import Feedback
+from trulens.core.schema.feedback import FeedbackMode
+from trulens.core.schema.feedback import FeedbackResultStatus
+from trulens.core.schema.feedback import Select
+from trulens.core.tru_basic_app import TruBasicApp
 
 # Get the "globally importable" feedback implementations.
 from tests.unit.feedbacks import custom_feedback_function

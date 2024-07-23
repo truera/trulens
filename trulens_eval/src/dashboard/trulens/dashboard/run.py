@@ -10,7 +10,7 @@ import threading
 from threading import Thread
 from typing import Optional
 
-from trulens import Tru
+from trulens.core import Tru
 from trulens.utils import notebook_utils
 from trulens.utils.imports import static_resource
 
@@ -96,7 +96,7 @@ def run_dashboard(
         print('Credentials file already exists. Skipping writing process.')
 
     #run leaderboard with subprocess
-    leaderboard_path = static_resource('Leaderboard.py')
+    leaderboard_path = static_resource('dashboard', 'Leaderboard.py')
 
     if Tru._dashboard_proc is not None:
         print('Dashboard already running at path:', Tru._dashboard_urls)

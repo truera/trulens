@@ -9,11 +9,11 @@ from nltk.tokenize import sent_tokenize
 import numpy as np
 import requests
 from tqdm.auto import tqdm
+from trulens.core.feedback import Endpoint
+from trulens.core.feedback import Provider
+from trulens.core.feedback.base_endpoint import DummyEndpoint
 from trulens.external import prompts
 from trulens.external.provider.endpoint import HuggingfaceEndpoint
-from trulens.feedback import Endpoint
-from trulens.feedback import Provider
-from trulens.feedback.base_endpoint import DummyEndpoint
 from trulens.utils.python import Future
 from trulens.utils.python import locals_except
 from trulens.utils.threading import ThreadPoolExecutor
@@ -142,8 +142,8 @@ class HuggingfaceBase(Provider):
         !!! example
 
             ```python
-            from trulens import Feedback
-            from trulens.feedback.provider.hugs import Huggingface
+            from trulens.core import Feedback
+            from trulens.core.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             feedback = Feedback(huggingface_provider.language_match).on_input_output()
@@ -192,8 +192,8 @@ class HuggingfaceBase(Provider):
         !!! example
 
             ```
-            from trulens.feedback import Feedback
-            from trulens.feedback.provider.hugs = Huggingface
+            from trulens.core.feedback import Feedback
+            from trulens.core.feedback.provider.hugs = Huggingface
 
             huggingface_provider = Huggingface()
 
@@ -244,8 +244,8 @@ class HuggingfaceBase(Provider):
         !!! example
 
             ```python
-            from trulens import Feedback
-            from trulens.feedback.provider.hugs import Huggingface
+            from trulens.core import Feedback
+            from trulens.core.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             feedback = (
@@ -279,8 +279,8 @@ class HuggingfaceBase(Provider):
         !!! example
 
             ```python
-            from trulens import Feedback
-            from trulens.feedback.provider.hugs import Huggingface
+            from trulens.core import Feedback
+            from trulens.core.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             feedback = Feedback(huggingface_provider.positive_sentiment).on_output()
@@ -306,8 +306,8 @@ class HuggingfaceBase(Provider):
         !!! example
 
             ```python
-            from trulens import Feedback
-            from trulens.feedback.provider.hugs import Huggingface
+            from trulens.core import Feedback
+            from trulens.core.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             feedback = Feedback(huggingface_provider.toxic).on_output()
@@ -440,7 +440,7 @@ class HuggingfaceBase(Provider):
         !!! example
 
             ```python
-            from trulens.feedback.provider.hugs import Huggingface
+            from trulens.core.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")
@@ -480,7 +480,7 @@ class Huggingface(HuggingfaceBase):
         !!! example
 
             ```python
-            from trulens.feedback.provider.hugs import Huggingface
+            from trulens.core.feedback.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
             ```
         """

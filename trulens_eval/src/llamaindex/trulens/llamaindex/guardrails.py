@@ -2,7 +2,7 @@ from concurrent.futures import as_completed
 from concurrent.futures import wait
 from typing import List
 
-from trulens.feedback import Feedback
+from trulens.core.feedback import Feedback
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LLAMA
 from trulens.utils.threading import ThreadPoolExecutor

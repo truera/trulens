@@ -7,7 +7,7 @@ from unittest import TestCase
 
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import read
-from trulens.database.legacy import migration
+from trulens.core.database.legacy import migration
 
 
 class DocsNotebookTests(TestCase):
@@ -52,8 +52,8 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
         if 'Tru()' in cell['source']:
             cell['source'] = cell[
                 'source'
-            ] + f'\nfrom trulens import Tru\ntru=Tru()\ntru.migrate_database()\n' \
-            + f'\nfrom trulens.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n'
+            ] + f'\nfrom trulens.core import Tru\ntru=Tru()\ntru.migrate_database()\n' \
+            + f'\nfrom trulens.core.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n'
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 
         return ret

@@ -12,15 +12,15 @@ from millify import millify
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
-from trulens import Tru
+from trulens.core import Tru
+from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens.core.schema.app import AppDefinition
+from trulens.core.schema.feedback import FeedbackCall
+from trulens.core.schema.record import Record
 from trulens.dashboard import display
 from trulens.dashboard.react_components.record_viewer import record_viewer
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata
-from trulens.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens.schema.app import AppDefinition
-from trulens.schema.feedback import FeedbackCall
-from trulens.schema.record import Record
 from trulens.utils.json import json_str_of_obj
 from trulens.utils.python import Future
 
@@ -42,7 +42,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
     !!! example
 
         ```python
-        from trulens import streamlit as trulens_st
+        from trulens.core import streamlit as trulens_st
 
         trulens_st.trulens_leaderboard()
         ```
@@ -159,7 +159,7 @@ def trulens_feedback(record: Record):
     !!! example
 
         ```python
-        from trulens import streamlit as trulens_st
+        from trulens.core import streamlit as trulens_st
 
         with tru_llm as recording:
             response = llm.invoke(input_text)
@@ -220,7 +220,7 @@ def trulens_trace(record: Record):
     !!! example
 
         ```python
-        from trulens import streamlit as trulens_st
+        from trulens.core import streamlit as trulens_st
 
         with tru_llm as recording:
             response = llm.invoke(input_text)

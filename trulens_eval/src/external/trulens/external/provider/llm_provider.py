@@ -7,10 +7,10 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
+from trulens.core.feedback.base_provider import Provider
 from trulens.external import generated as mod_generated_utils
 from trulens.external import prompts
 from trulens.external.generated import re_0_10_rating
-from trulens.feedback.base_provider import Provider
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +200,7 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            from trulens.app import App
+            from trulens.core.app import App
             context = App.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
@@ -243,7 +243,7 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            from trulens.app import App
+            from trulens.core.app import App
             context = App.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
@@ -1089,8 +1089,8 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            from trulens import Feedback
-            from trulens.feedback.provider.openai import OpenAI
+            from trulens.core import Feedback
+            from trulens.core.feedback.provider.openai import OpenAI
 
             provider = OpenAI()
 

@@ -3,8 +3,8 @@ from pprint import PrettyPrinter
 from threading import Thread
 from typing import Callable, List, Mapping, Optional, Sequence, Union
 
-from trulens import app as mod_app
-from trulens.instruments import Instrument
+from trulens.core import app as mod_app
+from trulens.core.instruments import Instrument
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_NOTEBOOK
 from trulens.utils.json import JSON_BASES

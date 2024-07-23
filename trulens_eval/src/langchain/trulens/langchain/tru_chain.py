@@ -10,11 +10,11 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
-from trulens import app as mod_app
-from trulens.instruments import ClassFilter
-from trulens.instruments import Instrument
+from trulens.core import app as mod_app
+from trulens.core.instruments import ClassFilter
+from trulens.core.instruments import Instrument
+from trulens.core.schema.feedback import Select
 from trulens.langchain.guardrails import WithFeedbackFilterDocuments
-from trulens.schema.feedback import Select
 from trulens.utils.containers import dict_set_with_multikey
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LANGCHAIN
@@ -162,12 +162,12 @@ class TruChain(mod_app.App):
     !!! example "Defining a feedback function"
 
         ```python
-        from trulens.feedback.provider import OpenAI
-        from trulens import Feedback
+        from trulens.core.feedback.provider import OpenAI
+        from trulens.core import Feedback
         import numpy as np
 
         # Select context to be used in feedback.
-        from trulens.app import App
+        from trulens.core.app import App
         context = App.select_context(rag_chain)
 
         # Use feedback
@@ -185,7 +185,7 @@ class TruChain(mod_app.App):
     !!! example "Using the `TruChain` recorder"
 
         ```python
-        from trulens import TruChain
+        from trulens.core import TruChain
 
         # Wrap application
         tru_recorder = TruChain(

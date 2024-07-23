@@ -11,12 +11,12 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 from langchain_core.language_models.base import BaseLanguageModel
 from pydantic import Field
-from trulens import app as mod_app
-from trulens.feedback import base_feedback
-from trulens.instruments import ClassFilter
-from trulens.instruments import Instrument
+from trulens.core import app as mod_app
+from trulens.core.feedback import base_feedback
+from trulens.core.instruments import ClassFilter
+from trulens.core.instruments import Instrument
+from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.langchain.tru_chain import LangChainInstrument
-from trulens.schema import feedback as mod_feedback_schema
 from trulens.utils.containers import dict_set_with_multikey
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_RAILS

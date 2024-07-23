@@ -1,5 +1,5 @@
-from trulens.feedback.base_feedback import SkipEval
-from trulens.feedback.base_provider import Provider
+from trulens.core.feedback.base_feedback import SkipEval
+from trulens.core.feedback.base_provider import Provider
 
 # Globally importable classes/functions to be used for testing feedback
 # functions.

@@ -28,7 +28,7 @@ class Langchain(LLMProvider):
     !!! example
 
         ```python
-        from trulens.feedback.provider.langchain import Langchain
+        from trulens.core.feedback.provider.langchain import Langchain
         from langchain_community.llms import OpenAI
 
         gpt3_llm = OpenAI(model="gpt-3.5-turbo-instruct")

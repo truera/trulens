@@ -5,8 +5,8 @@ import pprint
 import sys
 from typing import Any, Callable, ClassVar, Optional
 
-from trulens.feedback import Endpoint
-from trulens.feedback import EndpointCallback
+from trulens.core.feedback import Endpoint
+from trulens.core.feedback import EndpointCallback
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_CORTEX
 

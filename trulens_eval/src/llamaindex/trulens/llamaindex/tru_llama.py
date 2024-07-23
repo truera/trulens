@@ -9,9 +9,9 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from pydantic import Field
-from trulens import app as mod_app
-from trulens.instruments import ClassFilter
-from trulens.instruments import Instrument
+from trulens.core import app as mod_app
+from trulens.core.instruments import ClassFilter
+from trulens.core.instruments import Instrument
 from trulens.utils.containers import dict_set_with_multikey
 from trulens.utils.imports import Dummy
 from trulens.utils.imports import get_package_version
@@ -131,7 +131,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
 # to be a dummy which will cause failures if used.
 opt.assert_installed(llama_index)
 
-from trulens.tru_chain import LangChainInstrument
+from trulens.core.tru_chain import LangChainInstrument
 
 
 class LlamaInstrument(Instrument):
@@ -246,12 +246,12 @@ class TruLlama(mod_app.App):
     !!! example "Defining a feedback function"
 
         ```python
-        from trulens.feedback.provider import OpenAI
-        from trulens import Feedback
+        from trulens.core.feedback.provider import OpenAI
+        from trulens.core import Feedback
         import numpy as np
 
         # Select context to be used in feedback.
-        from trulens.app import App
+        from trulens.core.app import App
         context = App.select_context(rag_chain)
 
         # Use feedback
@@ -269,7 +269,7 @@ class TruLlama(mod_app.App):
     !!! example "Using the `TruLlama` recorder"
 
         ```python
-        from trulens import TruLlama
+        from trulens.core import TruLlama
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruLlama(query_engine,
             app_id='LlamaIndex_App1',

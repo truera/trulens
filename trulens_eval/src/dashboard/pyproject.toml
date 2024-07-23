@@ -18,6 +18,13 @@ dependencies = [
     "streamlit-pills >= 0.3.0",
     "rich >= 13.6.0",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License"
+]
+
 
 [project.optional-dependencies]
 dev = [

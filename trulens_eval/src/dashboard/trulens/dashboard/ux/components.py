@@ -4,11 +4,11 @@ from typing import Dict, List
 
 import pandas as pd
 import streamlit as st
-from trulens.app import ComponentView
-from trulens.schema.feedback import Select
-from trulens.schema.record import Record
-from trulens.schema.record import RecordAppCall
-from trulens.schema.types import Metadata
+from trulens.core.app import ComponentView
+from trulens.core.schema.feedback import Select
+from trulens.core.schema.record import Record
+from trulens.core.schema.record import RecordAppCall
+from trulens.core.schema.types import Metadata
 from trulens.utils.containers import is_empty
 from trulens.utils.json import jsonify
 from trulens.utils.keys import REDACTED_VALUE

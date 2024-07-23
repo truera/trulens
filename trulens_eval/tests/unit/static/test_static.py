@@ -9,8 +9,7 @@ import sys
 from unittest import main
 from unittest import TestCase
 
-import trulens
-from trulens.instruments import Instrument
+from trulens.core.instruments import Instrument
 from trulens.utils.imports import Dummy
 
 from tests.unit.test import module_installed

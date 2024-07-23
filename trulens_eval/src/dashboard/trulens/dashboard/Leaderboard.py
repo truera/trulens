@@ -8,14 +8,14 @@ asyncio.set_event_loop(asyncio.new_event_loop())
 from millify import millify
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from trulens import Tru
+from trulens.core import Tru
+from trulens.core.database import base as mod_db
+from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.dashboard.streamlit_utils import init_from_args
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata
 from trulens.dashboard.ux.page_config import set_page_config
 from trulens.dashboard.ux.styles import CATEGORY
-from trulens.database import base as mod_db
-from trulens.database.legacy.migration import MIGRATION_UNKNOWN_STR
 
 if __name__ == '__main__':
     # If not imported, gets args from command line and creates Tru singleton

@@ -2,8 +2,8 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
+from trulens.core.feedback import Endpoint
 from trulens.external.provider import LLMProvider
-from trulens.feedback import Endpoint
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LITELLM
 
@@ -26,7 +26,7 @@ class LiteLLM(LLMProvider):
     !!! example
 
         ```python
-        from trulens.feedback.provider.litellm import LiteLLM
+        from trulens.core.feedback.provider.litellm import LiteLLM
         litellm_provider = LiteLLM()
         ```
     """

@@ -5,10 +5,10 @@ Tests for TruChain. Some of the tests are outdated.
 import unittest
 from unittest import main
 
-from trulens import Tru
-from trulens.feedback.base_endpoint import Endpoint
-from trulens.schema.feedback import FeedbackMode
-from trulens.schema.record import Record
+from trulens.core import Tru
+from trulens.core.feedback.base_endpoint import Endpoint
+from trulens.core.schema.feedback import FeedbackMode
+from trulens.core.schema.record import Record
 from trulens.utils.asynchro import sync
 from trulens.utils.keys import check_keys
 

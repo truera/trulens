@@ -1,7 +1,7 @@
 from concurrent.futures import as_completed
 from typing import List
 
-from trulens.feedback import Feedback
+from trulens.core.feedback import Feedback
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens.utils.serial import model_dump

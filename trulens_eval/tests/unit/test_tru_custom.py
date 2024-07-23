@@ -4,9 +4,9 @@ Tests for TruCustomApp.
 
 from unittest import main
 
-from trulens import Tru
-from trulens import TruCustomApp
-from trulens.tru_custom_app import TruCustomApp
+from trulens.core import Tru
+from trulens.core import TruCustomApp
+from trulens.core.tru_custom_app import TruCustomApp
 
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
 from tests.unit.test import JSONTestCase

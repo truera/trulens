@@ -3,8 +3,8 @@ import os
 import sys
 from typing import ClassVar, Dict, Optional, Sequence
 
-from trulens.feedback.provider.base import LLMProvider
-from trulens.feedback.provider.endpoint.cortex import CortexEndpoint
+from trulens.core.feedback.provider.base import LLMProvider
+from trulens.core.feedback.provider.endpoint.cortex import CortexEndpoint
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_CORTEX
 

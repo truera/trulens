@@ -31,21 +31,21 @@ from unittest import TestCase
 
 import pandas as pd
 from sqlalchemy import Engine
-from trulens import Tru
-from trulens import TruBasicApp
-from trulens.database.base import DB
-from trulens.database.exceptions import DatabaseVersionException
-from trulens.database.migrations import DbRevisions
-from trulens.database.migrations import downgrade_db
-from trulens.database.migrations import get_revision_history
-from trulens.database.migrations import upgrade_db
-from trulens.database.sqlalchemy import SQLAlchemyDB
-from trulens.database.utils import copy_database
-from trulens.database.utils import is_legacy_sqlite
-from trulens.feedback import Feedback
-from trulens.feedback import Provider
-from trulens.schema.feedback import FeedbackMode
-from trulens.schema.feedback import Select
+from trulens.core import Tru
+from trulens.core import TruBasicApp
+from trulens.core.database.base import DB
+from trulens.core.database.exceptions import DatabaseVersionException
+from trulens.core.database.migrations import DbRevisions
+from trulens.core.database.migrations import downgrade_db
+from trulens.core.database.migrations import get_revision_history
+from trulens.core.database.migrations import upgrade_db
+from trulens.core.database.sqlalchemy import SQLAlchemyDB
+from trulens.core.database.utils import copy_database
+from trulens.core.database.utils import is_legacy_sqlite
+from trulens.core.feedback import Feedback
+from trulens.core.feedback import Provider
+from trulens.core.schema.feedback import FeedbackMode
+from trulens.core.schema.feedback import Select
 
 
 class TestDBSpecifications(TestCase):

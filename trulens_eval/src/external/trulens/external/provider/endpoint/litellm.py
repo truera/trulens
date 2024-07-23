@@ -4,8 +4,8 @@ import pprint
 from typing import Any, Callable, ClassVar, Optional
 
 import pydantic
-from trulens.feedback import Endpoint
-from trulens.feedback import EndpointCallback
+from trulens.core.feedback import Endpoint
+from trulens.core.feedback import EndpointCallback
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LITELLM
 

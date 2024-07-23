@@ -3,8 +3,8 @@ from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
+from trulens.core.feedback.base_provider import Provider
 from trulens.external.generated import re_0_10_rating
-from trulens.feedback.base_provider import Provider
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_BERT_SCORE
 from trulens.utils.imports import REQUIREMENT_EVALUATE
@@ -52,7 +52,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         Usage 1:
         ```
-        from trulens.feedback import GroundTruthAgreement
+        from trulens.core.feedback import GroundTruthAgreement
         golden_set = [
             {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
             {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
@@ -62,7 +62,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         Usage 2:
         ```
-        from trulens.feedback import GroundTruthAgreement
+        from trulens.core.feedback import GroundTruthAgreement
         ground_truth_imp = llm_app
         response = llm_app(prompt)
         ground_truth_collection = GroundTruthAgreement(ground_truth_imp)
@@ -139,8 +139,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         !!! example
 
             ```python
-            from trulens import Feedback
-            from trulens.feedback import GroundTruthAgreement
+            from trulens.core import Feedback
+            from trulens.core.feedback import GroundTruthAgreement
             golden_set = [
                 {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
                 {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
@@ -182,8 +182,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         !!! example
 
             ```python
-            from trulens import Feedback
-            from trulens.feedback import GroundTruthAgreement
+            from trulens.core import Feedback
+            from trulens.core.feedback import GroundTruthAgreement
 
             golden_set =
             {"query": "How many stomachs does a cow have?", "response": "Cows' diet relies primarily on grazing.", "expected_score": 0.4},
@@ -214,8 +214,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         !!! example
 
             ```python
-            from trulens import Feedback
-            from trulens.feedback import GroundTruthAgreement
+            from trulens.core import Feedback
+            from trulens.core.feedback import GroundTruthAgreement
             golden_set = [
                 {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
                 {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
@@ -261,8 +261,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         !!! example
 
             ```python
-            from trulens import Feedback
-            from trulens.feedback import GroundTruthAgreement
+            from trulens.core import Feedback
+            from trulens.core.feedback import GroundTruthAgreement
             golden_set = [
                 {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
                 {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}

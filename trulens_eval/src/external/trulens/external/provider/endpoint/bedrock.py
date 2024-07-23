@@ -4,9 +4,9 @@ import pprint
 from typing import Any, Callable, ClassVar, Iterable, Optional
 
 import pydantic
-from trulens.feedback import Endpoint
-from trulens.feedback import EndpointCallback
-from trulens.feedback.base_endpoint import INSTRUMENT
+from trulens.core.feedback import Endpoint
+from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback.base_endpoint import INSTRUMENT
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_BEDROCK
 from trulens.utils.python import safe_hasattr

@@ -3,8 +3,8 @@ import json
 from typing import Callable, Dict, Hashable, Optional
 
 import requests
-from trulens.feedback import Endpoint
-from trulens.feedback import EndpointCallback
+from trulens.core.feedback import Endpoint
+from trulens.core.feedback import EndpointCallback
 from trulens.utils.keys import _check_key
 from trulens.utils.keys import get_huggingface_headers
 from trulens.utils.pyschema import WithClassInfo
