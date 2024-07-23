@@ -76,7 +76,7 @@ f_qa_relevance = Feedback(openai.relevance).on_input_output()
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/statement relevance between question and each context chunk.
-f_qs_relevance = Feedback(openai.qs_relevance).on_input().on(
+f_context_relevance = Feedback(openai.context_relevance).on_input().on(
     Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].
     page_content
 ).aggregate(np.min)
@@ -119,7 +119,7 @@ def get_or_make_app(
     if 'filtered' in app_id:
         # Better contexts fix, filter contexts with relevance:
         retriever = WithFeedbackFilterDocuments.of_retriever(
-            retriever=retriever, feedback=f_qs_relevance, threshold=0.5
+            retriever=retriever, feedback=f_context_relevance, threshold=0.5
         )
 
     # LLM for completing prompts, and other tasks.
@@ -185,7 +185,7 @@ def get_or_make_app(
     tc = tru.Chain(
         chain=app,
         app_id=app_id,
-        feedbacks=[f_lang_match, f_qa_relevance, f_qs_relevance],
+        feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance],
         feedback_mode=feedback_mode
     )
 

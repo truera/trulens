@@ -2,24 +2,31 @@ import os
 
 os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
-from langchain_community.callbacks import get_openai_callback
-from langchain_community.llms import OpenAI
-from langchain_community.vectorstores import Pinecone
 import numpy as np
-import pinecone
 import streamlit as st
-from trulens import feedback
-from trulens import Select
-from trulens import tru
-from trulens import tru_chain_recorder
-from trulens.feedback import Feedback
-from trulens.keys import check_keys
 
 from langchain.chains import ConversationalRetrievalChain
-from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.memory import ConversationSummaryBufferMemory
+from trulens_eval import feedback
+from trulens_eval import Select
+from trulens_eval import tru
+from trulens_eval import tru_chain
+from trulens_eval.feedback import Feedback
+from trulens_eval.keys import check_keys
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import REQUIREMENT_PINECONE
 
-check_keys('PINECONE_API_KEY', 'PINECONE_ENV', 'OPENAI_API_KEY')
+with OptionalImports(messages=REQUIREMENT_PINECONE) as opt:
+    import langchain_community
+    from langchain_community.callbacks import get_openai_callback
+    from langchain_community.llms import OpenAI
+    import pinecone
+
+    from langchain.embeddings.openai import OpenAIEmbeddings
+
+opt.assert_installed(mods=[pinecone, langchain_community, OpenAIEmbeddings])
+
+check_keys('OPENAI_API_KEY', 'PINECONE_API_KEY', 'PINECONE_ENV')
 
 # Set up GPT-3 model
 model_name = 'gpt-3.5-turbo'
@@ -29,7 +36,7 @@ app_id = 'TruBot'
 # app_id = "TruBot_relevance"
 
 # Pinecone configuration.
-pinecone.init(
+pinecone_client = pinecone.Pinecone(
     api_key=os.environ.get('PINECONE_API_KEY'),  # find at app.pinecone.io
     environment=os.environ.get('PINECONE_ENV')  # next to api key in console
 )
@@ -39,26 +46,31 @@ identity = lambda h: h
 hugs = feedback.Huggingface()
 openai = feedback.OpenAI()
 
-f_lang_match = Feedback(hugs.language_match).on(
-    text1=Select.RecordInput, text2=Select.RecordOutput
-)
+# Language match between question/answer.
+f_lang_match = Feedback(hugs.language_match).on_input_output()
+# By default this will evaluate feedback on main app input and main app output.
 
-f_qa_relevance = Feedback(openai.relevance).on(
-    prompt=Select.RecordInput, response=Select.RecordOutput
-)
+# Question/answer relevance between overall question and answer.
+f_qa_relevance = Feedback(openai.relevance).on_input_output()
+# By default this will evaluate feedback on main app input and main app output.
 
-f_context_relevance = Feedback(openai.context_relevance).on(
-    question=Select.RecordInput,
-    statement=Select.Record.chain.combine_docs_chain._call.args.inputs.
-    input_documents[:].page_content
+# Question/statement relevance between question and each context chunk.
+f_context_relevance = feedback.Feedback(openai.context_relevance).on_input().on(
+    Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].
+    page_content
 ).aggregate(np.min)
+
+# First feedback argument is set to main app input, and the second is taken from
+# the context sources as passed to an internal `combine_docs_chain._call`.
 
 
 # @st.cache_data
 def generate_response(prompt):
     # Embedding needed for Pinecone vector db.
     embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
-    docsearch = Pinecone.from_existing_index(
+
+    # TODO: Check updated usage here.
+    docsearch = pinecone_client.from_existing_index(
         index_name='llmdemo', embedding=embedding
     )
     retriever = docsearch.as_retriever()
@@ -114,9 +126,11 @@ def generate_response(prompt):
         chain.combine_docs_chain.document_prompt.template = '\tContext: {page_content}'
 
     # Trulens instrumentation.
-    tc = tru_chain_recorder.TruChain(chain, app_id=app_id)
-
-    return tc, tc.with_record(dict(question=prompt))
+    tc_recorder = tru_chain.TruChain(chain, app_id=app_id)
+    with tc_recorder as recording:
+        resp = chain(dict(question=prompt))
+    tru_record = recording.records[0]
+    return tc_recorder, (resp, tru_record)
 
 
 # Set up Streamlit app

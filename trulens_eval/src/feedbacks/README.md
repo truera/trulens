@@ -15,7 +15,7 @@ f_lang_match = Feedback(hugs.language_match)
 The components of this specifications are:
 
 - **Provider classes** -- `feedback.OpenAI` contains feedback function
-  implementations like `qs_relevance`. Other classes subtyping
+  implementations like `context_relevance`. Other classes subtyping
   `feedback.Provider` include `Huggingface` and `Cohere`.
 
 - **Feedback implementations** -- `provider.context_relevance` is a feedback function
@@ -95,7 +95,7 @@ f_context_relevance = Feedback(openai.context_relevance)
     .aggregate(numpy.min)
 
 # Implementation signature:
-# def qs_relevance(self, question: str, statement: str) -> float:
+# def context_relevance(self, question: str, statement: str) -> float:
 ```
 
 - **Argument Selection specification ** -- Where we previously set,
@@ -113,7 +113,7 @@ f_context_relevance = Feedback(openai.context_relevance)
   of feedback function evaluations to produce a single float. The default is
   `numpy.mean`.
 
-The result of these lines is that `f_qs_relevance` can be now be run on
+The result of these lines is that `f_context_relevance` can be now be run on
 app/records and will automatically select the specified components of those
 apps/records:
 
@@ -121,13 +121,13 @@ apps/records:
 record: Record = ...
 app: App = ...
 
-feedback_result: FeedbackResult = f_qs_relevance.run(app=app, record=record)
+feedback_result: FeedbackResult = f_context_relevance.run(app=app, record=record)
 ```
 
 The object can also be provided to an app wrapper for automatic evaluation:
 
 ```python
-app: App = tru.Chain(...., feedbacks=[f_qs_relevance])
+app: App = tru.Chain(...., feedbacks=[f_context_relevance])
 ```
 
 ## Specifying Implementation Function and Aggregate
@@ -299,7 +299,7 @@ The full set of Query aliases are as follows:
 
 ## Multiple Inputs Per Argument
 
-As in the `f_qs_relevance` example, a selector for a _single_ argument may point
+As in the `f_context_relevance` example, a selector for a _single_ argument may point
 to more than one aspect of a record/app. These are specified using the slice or
 lists in key/index poisitions. In that case, the feedback function is evaluated
 multiple times, its outputs collected, and finally aggregated into a main

@@ -129,8 +129,8 @@ def rag_triad(
         provider, 'relevance'
     ), 'Need a provider with the `relevance` feedback function.'
     assert hasattr(
-        provider, 'qs_relevance'
-    ), 'Need a provider with the `qs_relevance` feedback function.'
+        provider, 'context_relevance'
+    ), 'Need a provider with the `context_relevance` feedback function.'
 
     are_complete: bool = True
 
