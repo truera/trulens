@@ -19,6 +19,12 @@ dependencies = [
     "rich >= 13.6.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "build >= 1.2.1",
+]
+
+
 [tool.setuptools.packages.find]
 include = [
     "trulens",
