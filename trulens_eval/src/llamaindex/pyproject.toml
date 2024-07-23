@@ -12,8 +12,9 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens-core = {path = "../core", develop = true}
+trulens-core = {path = "../core"}
 pydantic = "^2"
+llama-index = "^0.10.57"
 
 [build-system]
 requires = ["poetry-core"]
