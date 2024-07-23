@@ -745,8 +745,9 @@ class Tru(python.SingletonPerName):
 
         if group_by_metadata_key is not None:
             df['meta'] = [
-            json.loads(df["record_json"][i])["meta"] for i in range(len(df))
-        ]
+                json.loads(df["record_json"][i])["meta"]
+                for i in range(len(df))
+            ]
 
             df[str(group_by_metadata_key)] = [
                 item.get(group_by_metadata_key, None)
