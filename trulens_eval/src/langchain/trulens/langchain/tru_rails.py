@@ -449,6 +449,6 @@ class TruRails(mod_app.App):
             raise AttributeError(f'TruRails has no attribute named {name}')
 
 
-import trulens_eval  # for App class annotations
+import trulens  # for App class annotations
 
 TruRails.model_rebuild()

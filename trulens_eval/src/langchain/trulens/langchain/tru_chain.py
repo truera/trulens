@@ -407,6 +407,6 @@ class TruChain(mod_app.App):
         )
 
 
-import trulens_eval  # for App class annotations
+import trulens  # for App class annotations
 
 TruChain.model_rebuild()
