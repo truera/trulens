@@ -4,8 +4,8 @@ pattern matching of feedback scores from LLM responses.
 """
 
 import pytest
-from trulens.feedback.functions.generated import ParseError
-from trulens.feedback.functions.generated import re_0_10_rating
+from trulens.external.generated import ParseError
+from trulens.external.generated import re_0_10_rating
 
 test_data = [
     ('The relevance score is 7.', 7),

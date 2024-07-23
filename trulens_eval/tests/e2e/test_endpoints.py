@@ -10,9 +10,8 @@ from pprint import PrettyPrinter
 from unittest import main
 from unittest import TestCase
 
-from trulens.feedback.provider.endpoint import Endpoint
-from trulens.keys import check_keys
-from trulens.utils.asynchro import sync
+from trulens.feedback.base_endpoint import Endpoint
+from trulens.utils.keys import check_keys
 
 from tests.unit.test import optional_test
 

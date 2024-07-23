@@ -9,7 +9,6 @@ import sys
 from unittest import main
 from unittest import TestCase
 
-from trulens.instruments import class_filter_matches
 from trulens.instruments import Instrument
 from trulens.utils.imports import Dummy
 

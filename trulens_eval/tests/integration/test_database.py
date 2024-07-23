@@ -22,7 +22,6 @@ running.
 """
 
 from contextlib import contextmanager
-import json
 from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
@@ -32,10 +31,6 @@ from unittest import TestCase
 
 import pandas as pd
 from sqlalchemy import Engine
-from trulens import Feedback
-from trulens import FeedbackMode
-from trulens import Provider
-from trulens import Select
 from trulens import Tru
 from trulens import TruBasicApp
 from trulens.database.base import DB
@@ -48,6 +43,10 @@ from trulens.database.sqlalchemy import AppsExtractor
 from trulens.database.sqlalchemy import SQLAlchemyDB
 from trulens.database.utils import copy_database
 from trulens.database.utils import is_legacy_sqlite
+from trulens.feedback import Feedback
+from trulens.feedback import Provider
+from trulens.schema.feedback import FeedbackMode
+from trulens.schema.feedback import Select
 
 
 class TestDBSpecifications(TestCase):

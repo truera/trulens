@@ -6,8 +6,8 @@ from unittest import main
 
 from trulens import Tru
 from trulens import TruBasicApp
-from trulens.keys import check_keys
 from trulens.schema.feedback import FeedbackMode
+from trulens.utils.keys import check_keys
 
 from tests.unit.test import JSONTestCase
 

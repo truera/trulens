@@ -8,8 +8,8 @@ import unittest
 from unittest import main
 from unittest import TestCase
 
-from trulens.feedback.provider.base import LLMProvider
-from trulens.keys import check_keys
+from trulens.external.provider import LLMProvider
+from trulens.utils.keys import check_keys
 
 from tests.unit.test import optional_test
 

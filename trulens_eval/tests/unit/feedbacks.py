@@ -1,5 +1,3 @@
-from typing import Optional
-
 from trulens.feedback.base_feedback import SkipEval
 from trulens.feedback.base_provider import Provider
 

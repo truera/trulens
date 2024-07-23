@@ -8,13 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
 
-from trulens import Feedback
 from trulens import Tru
 from trulens import TruCustomApp
-from trulens.feedback.provider.hugs import Dummy
-from trulens.keys import check_keys
+from trulens.external.provider.hugs import Dummy
+from trulens.feedback import Feedback
 from trulens.schema import feedback as mod_feedback_schema
 from trulens.tru_custom_app import TruCustomApp
+from trulens.utils.keys import check_keys
 
 from tests.unit.test import optional_test
 
