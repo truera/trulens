@@ -6,16 +6,35 @@ TruLens provides a broad set of capabilities for evaluating and tracking applica
 
 To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by `tru.run_dashboard()`, and will run from a database url you specify with `Tru()`.
 
-```python
-tru = Tru(database_url = ...) # or default.sqlite by default
-tru.run_dashboard()
-```
+!!! example "Launch the TruLens dashboard"
+
+    ```python
+    tru = Tru(database_url = ...) # or default.sqlite by default
+    tru.run_dashboard()
+    ```
+
+By default, the dashboard will find and run on an unused port number. You can also specify a port number for the dashboard to run on. The function will output a link where the dashboard is running.
+
+!!! example "Specify a port"
+
+    ```python
+    tru = Tru()
+    tru.run_dashboard(port=8502)
+    ```
+
+!!! note
+
+    If you are running in Google Colab, `run_dashboard()` will output a tunnel website and IP address that can be entered into the tunnel website.
+
+Read more about `run_dashboard` in the [API Reference](https://www.trulens.org/trulens_eval/api/tru/#trulens_eval.tru.Tru.run_dashboard).
 
 It can also be run in the CLI with the command below:
 
-```bash
-trulens-eval
-```
+!!! example "Lanch the TruLens dashboard in the CLI"
+
+    ```bash
+    trulens-eval
+    ```
 
 ## Streamlit Components
 
