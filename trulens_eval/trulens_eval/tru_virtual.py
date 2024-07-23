@@ -137,7 +137,7 @@ in the same manner as with non-virtual applications, using the newly added
     context = context_call.rets[:]
 
     # Creating a feedback function for context relevance
-    f_context_relevance = Feedback(openai.qs_relevance).on_input().on(context)
+    f_context_relevance = Feedback(openai.context_relevance).on_input().on(context)
     ```
 
 These feedback functions are then integrated into `TruVirtual` to construct

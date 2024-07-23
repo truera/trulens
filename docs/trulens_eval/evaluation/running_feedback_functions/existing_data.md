@@ -144,7 +144,7 @@ context = context_call.rets[:]
 
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(openai.qs_relevance)
+    Feedback(openai.context_relevance)
     .on_input()
     .on(context)
 )
