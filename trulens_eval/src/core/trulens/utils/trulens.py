@@ -5,7 +5,7 @@ Currently organizes all such components as "Other".
 
 from typing import Type
 
-from trulens import app
+from trulens.core import app
 from trulens.utils.pyschema import Class
 
 

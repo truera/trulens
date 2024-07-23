@@ -15,7 +15,7 @@ from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
 
 from pydantic import Field
 import requests
-from trulens.schema import base as mod_base_schema
+from trulens.core.schema import base as mod_base_schema
 from trulens.utils import asynchro as mod_asynchro_utils
 from trulens.utils import pace as mod_pace
 from trulens.utils.pyschema import safe_getattr

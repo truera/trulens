@@ -16,14 +16,14 @@ from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
 import humanize
 import pandas
 from tqdm.auto import tqdm
-from trulens.database import sqlalchemy
-from trulens.database.base import DB
-from trulens.database.exceptions import DatabaseVersionException
-from trulens.feedback import base_feedback
-from trulens.schema import app as mod_app_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import record as mod_record_schema
-from trulens.schema import types as mod_types_schema
+from trulens.core.database import sqlalchemy
+from trulens.core.database.base import DB
+from trulens.core.database.exceptions import DatabaseVersionException
+from trulens.core.feedback import base_feedback
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import types as mod_types_schema
 from trulens.utils import python
 from trulens.utils import serial
 from trulens.utils import threading as tru_threading
@@ -215,7 +215,7 @@ class Tru(python.SingletonPerName):
                 [TruChain][trulens_eval.tru_chain.TruChain].
         """
 
-        from trulens.tru_chain import TruChain
+        from trulens.core.tru_chain import TruChain
 
         return TruChain(tru=self, app=chain, **kwargs)
 
@@ -234,7 +234,7 @@ class Tru(python.SingletonPerName):
                 [TruLlama][trulens_eval.tru_llama.TruLlama].
         """
 
-        from trulens.tru_llama import TruLlama
+        from trulens.core.tru_llama import TruLlama
 
         return TruLlama(tru=self, app=engine, **kwargs)
 
@@ -252,7 +252,7 @@ class Tru(python.SingletonPerName):
                 [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp].
         """
 
-        from trulens.tru_basic_app import TruBasicApp
+        from trulens.core.tru_basic_app import TruBasicApp
 
         return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
 
@@ -268,7 +268,7 @@ class Tru(python.SingletonPerName):
                 [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp].
         """
 
-        from trulens.tru_custom_app import TruCustomApp
+        from trulens.core.tru_custom_app import TruCustomApp
 
         return TruCustomApp(tru=self, app=app, **kwargs)
 
@@ -288,7 +288,7 @@ class Tru(python.SingletonPerName):
                 [TruVirtual][trulens_eval.tru_virtual.TruVirtual].
         """
 
-        from trulens.tru_virtual import TruVirtual
+        from trulens.core.tru_virtual import TruVirtual
 
         return TruVirtual(tru=self, app=app, **kwargs)
 
@@ -647,7 +647,7 @@ class Tru(python.SingletonPerName):
 
         Example:
             ```python
-            from trulens.schema import app
+            from trulens.core.schema import app
             app_json = tru.get_app(app_id="Custom Application v1")
             app = app.AppDefinition.model_validate(app_json)
             ```

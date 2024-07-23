@@ -23,11 +23,11 @@ from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
 import weakref
 
 import pydantic
-from trulens.feedback import base_endpoint as mod_endpoint
-from trulens.feedback import base_feedback as mod_feedback
-from trulens.schema import base as mod_base_schema
-from trulens.schema import record as mod_record_schema
-from trulens.schema import types as mod_types_schema
+from trulens.core.feedback import base_endpoint as mod_endpoint
+from trulens.core.feedback import base_feedback as mod_feedback
+from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import types as mod_types_schema
 from trulens.utils import python
 from trulens.utils.containers import dict_merge_with
 from trulens.utils.imports import Dummy

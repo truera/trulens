@@ -10,9 +10,9 @@ from pprint import PrettyPrinter
 from typing import Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
-from trulens import app as mod_app
-from trulens.instruments import ClassFilter
-from trulens.instruments import Instrument
+from trulens.core import app as mod_app
+from trulens.core.instruments import ClassFilter
+from trulens.core.instruments import Instrument
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import FunctionOrMethod
 
@@ -74,7 +74,7 @@ class TruBasicApp(mod_app.App):
         def custom_application(prompt: str) -> str:
             return "a response"
 
-        from trulens import TruBasicApp
+        from trulens.core import TruBasicApp
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruBasicApp(custom_application,
             app_id="Custom Application v1",

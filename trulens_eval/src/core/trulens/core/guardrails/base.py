@@ -1,6 +1,6 @@
 from concurrent.futures import as_completed
 
-from trulens.feedback import Feedback
+from trulens.core.feedback import Feedback
 from trulens.utils.threading import ThreadPoolExecutor
 
 

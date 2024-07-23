@@ -16,14 +16,15 @@ from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
                     TypeVar, Union)
 
 import pydantic
-from trulens import app as mod_app
-from trulens import feedback as mod_feedback
-from trulens import instruments as mod_instruments
-from trulens.schema import app as mod_app_schema
-from trulens.schema import base as mod_base_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import record as mod_record_schema
-from trulens.schema import types as mod_types_schema
+from trulens import core
+from trulens.core import app as mod_app
+import trulens.core.feedback as mod_feedback
+import trulens.core.instruments as mod_instruments
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import types as mod_types_schema
 from trulens.utils import pyschema
 from trulens.utils.asynchro import CallableMaybeAwaitable
 from trulens.utils.asynchro import desync
@@ -445,18 +446,18 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     """Base app recorder type.
 
     Non-serialized fields here while the serialized ones are defined in
-    [AppDefinition][trulens_eval.schema.app.AppDefinition].
+    [AppDefinition][trulens.schema.app.AppDefinition].
 
     This class is abstract. Use one of these concrete subclasses as appropriate:
-    - [TruLlama][trulens_eval.tru_llama.TruLlama] for _LlamaIndex_ apps.
-    - [TruChain][trulens_eval.tru_chain.TruChain] for _LangChain_ apps.
-    - [TruRails][trulens_eval.tru_rails.TruRails] for _NeMo Guardrails_
+    - [TruLlama][trulens.tru_llama.TruLlama] for _LlamaIndex_ apps.
+    - [TruChain][trulens.tru_chain.TruChain] for _LangChain_ apps.
+    - [TruRails][trulens.tru_rails.TruRails] for _NeMo Guardrails_
         apps.
-    - [TruVirtual][trulens_eval.tru_virtual.TruVirtual] for recording
+    - [TruVirtual][trulens.tru_virtual.TruVirtual] for recording
         information about invocations of apps without access to those apps.
-    - [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp] for custom
+    - [TruCustomApp][trulens.tru_custom_app.TruCustomApp] for custom
         apps. These need to be decorated to have appropriate data recorded.
-    - [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp] for apps defined
+    - [TruBasicApp][trulens.tru_basic_app.TruBasicApp] for apps defined
         solely by a string-to-string method.
     """
 
@@ -470,7 +471,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     )
     """Feedback functions to evaluate on each record."""
 
-    tru: Optional[trulens_eval.tru.Tru] = pydantic.Field(
+    tru: Optional[core.tru.Tru] = pydantic.Field(
         default=None, exclude=True
     )
     """Workspace manager.
@@ -479,13 +480,13 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     (if not already) and used.
     """
 
-    db: Optional[trulens_eval.database.base.DB] = pydantic.Field(
+    db: Optional[core.database.base.DB] = pydantic.Field(
         default=None, exclude=True
     )
     """Database interface.
 
     If this is not provided, a singleton
-    [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] will be
+    [SQLAlchemyDB][trulens.database.sqlalchemy.SQLAlchemyDB] will be
     made (if not already) and used.
     """
 
@@ -654,15 +655,15 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         # Checking by module name so we don't have to try to import either
         # langchain or llama_index beforehand.
         if type(app).__module__.startswith('langchain'):
-            from trulens.tru_chain import TruChain
+            from trulens.core.tru_chain import TruChain
             return TruChain.select_context(app)
 
         if type(app).__module__.startswith('llama_index'):
-            from trulens.tru_llama import TruLlama
+            from trulens.core.tru_llama import TruLlama
             return TruLlama.select_context(app)
 
         elif type(app).__module__.startswith('nemoguardrails'):
-            from trulens.tru_rails import TruRails
+            from trulens.core.tru_rails import TruRails
             return TruRails.select_context(app)
 
         else:
@@ -690,7 +691,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         if self.tru is None:
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
-                from trulens.tru import Tru
+                from trulens.core.tru import Tru
                 logger.debug('Creating default tru.')
                 self.tru = Tru()
 

@@ -11,7 +11,7 @@ This wrapper is the most flexible option for instrumenting an application, and c
     ### `custom_app.py`
 
     ```python
-    from trulens.tru_custom_app import instrument
+    from trulens.core.tru_custom_app import instrument
     from custom_retriever import CustomRetriever
 
 
@@ -34,7 +34,7 @@ This wrapper is the most flexible option for instrumenting an application, and c
     ### `custom_retriever.py`
 
     ```python
-    from trulens.tru_custom_app import instrument
+    from trulens.core.tru_custom_app import instrument
 
     class CustomRetriever:
         # NOTE: No restriction on this class either.
@@ -58,7 +58,7 @@ The owner classes of any decorated method is then viewed as an app component. In
     ### `example.py`
 
     ```python
-    from custom_app import CustomApp from trulens.tru_custom_app
+    from custom_app import CustomApp from trulens.core.tru_custom_app
     import TruCustomApp
 
     custom_app = CustomApp()
@@ -87,7 +87,7 @@ is via:
 ```python
 # custom_app.py`:
 
-from trulens.tru_custom_app import instrument
+from trulens.core.tru_custom_app import instrument
 from somepackage.from custom_retriever import CustomRetriever
 
 instrument.method(CustomRetriever, "retrieve_chunks")
@@ -195,9 +195,9 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
-from trulens import app as mod_app
-from trulens.instruments import Instrument
-from trulens.instruments import instrument as base_instrument
+from trulens.core import app as mod_app
+from trulens.core.instruments import Instrument
+from trulens.core.instruments import instrument as base_instrument
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import Function
 from trulens.utils.pyschema import FunctionOrMethod
@@ -226,7 +226,7 @@ class TruCustomApp(mod_app.App):
     !!! example "Using the `@instrument` decorator"
 
         ```python
-        from trulens import instrument
+        from trulens.core import instrument
 
         class CustomApp:
 
@@ -255,7 +255,7 @@ class TruCustomApp(mod_app.App):
     !!! example "Using `instrument.method`"
 
         ```python
-        from trulens import instrument
+        from trulens.core import instrument
 
         class CustomApp:
 
@@ -308,7 +308,7 @@ class TruCustomApp(mod_app.App):
     !!! example "Using the `TruCustomApp` recorder"
 
         ```python
-        from trulens import TruCustomApp
+        from trulens.core import TruCustomApp
 
         tru_recorder = TruCustomApp(custom_app,
             app_id="Custom Application v1",

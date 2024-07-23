@@ -20,8 +20,8 @@ information relevant for feedback evaluation.
         'debug': 'optional fields for additional debugging information'
     }
     # Converting the dictionary to a VirtualApp instance
-    from trulens import Select
-    from trulens.tru_virtual import VirtualApp
+    from trulens.core import Select
+    from trulens.core.tru_virtual import VirtualApp
 
     virtual_app = VirtualApp(virtual_app)
     virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -35,7 +35,7 @@ when defining feedback functions.
 
     ```python
     # Setting up a virtual app with a retriever component
-    from trulens import Select
+    from trulens.core import Select
     retriever_component = Select.RecordCalls.retriever
     virtual_app[retriever_component] = 'this is the retriever component'
     ```
@@ -52,7 +52,7 @@ be provided.
 !!! example "Adding Records for a Context Retrieval Component"
 
     ```python
-    from trulens.tru_virtual import VirtualRecord
+    from trulens.core.tru_virtual import VirtualRecord
 
     # Selector for the context retrieval component's `get_context` call
     context_call = retriever_component.get_context
@@ -127,8 +127,8 @@ in the same manner as with non-virtual applications, using the newly added
 !!! example "Developing Feedback Functions"
 
     ```python
-    from trulens.feedback.provider import OpenAI
-    from trulens.feedback.feedback import Feedback
+    from trulens.core.feedback.provider import OpenAI
+    from trulens.core.feedback.feedback import Feedback
 
     # Initializing the feedback provider
     openai = OpenAI()
@@ -147,7 +147,7 @@ apps.
 !!! example "Integrating Feedback Functions into TruVirtual"
 
     ```python
-    from trulens.tru_virtual import TruVirtual
+    from trulens.core.tru_virtual import TruVirtual
 
     # Setting up the virtual recorder
     virtual_recorder = TruVirtual(
@@ -182,8 +182,8 @@ about the components of an LLM app.
         'debug': 'optional debugging information'
     }
 
-    from trulens.schema.feedback import Select
-    from trulens.tru_virtual import VirtualApp
+    from trulens.core.schema.feedback import Select
+    from trulens.core.tru_virtual import VirtualApp
 
     virtual_app = VirtualApp(virtual_app)
     virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -207,12 +207,12 @@ from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, Optional, Sequence, Union
 
 from pydantic import Field
-from trulens import app as mod_app
-from trulens.instruments import Instrument
-from trulens.schema import app as mod_app_schema
-from trulens.schema import base as mod_base_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import record as mod_record_schema
+from trulens.core import app as mod_app
+from trulens.core.instruments import Instrument
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.utils import serial
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import FunctionOrMethod

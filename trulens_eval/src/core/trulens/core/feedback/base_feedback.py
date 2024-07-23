@@ -20,13 +20,13 @@ import pydantic
 from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
-import trulens.feedback.base_endpoint as mod_base_endpoint
-import trulens.feedback.base_provider as mod_base_provider
-from trulens.schema import app as mod_app_schema
-from trulens.schema import base as mod_base_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import record as mod_record_schema
-from trulens.schema import types as mod_types_schema
+import trulens.core.feedback.base_endpoint as mod_base_endpoint
+import trulens.core.feedback.base_provider as mod_base_provider
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import types as mod_types_schema
 from trulens.utils import json as mod_json_utils
 from trulens.utils import pyschema as mod_pyschema
 from trulens.utils import python as mod_python_utils
@@ -36,8 +36,8 @@ from trulens.utils import threading as mod_threading_utils
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
-# from trulens import schema # breaks pydantic
-# from trulens import schema as tru_schema # also breaks pydantic
+# from trulens.core import schema # breaks pydantic
+# from trulens.core import schema as tru_schema # also breaks pydantic
 
 logger = logging.getLogger(__name__)
 A = TypeVar('A')
@@ -175,8 +175,8 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
     Example:
         ```python
-        from trulens import Feedback
-        from trulens import Huggingface
+        from trulens.core import Feedback
+        from trulens.core import Huggingface
         hugs = Huggingface()
 
         # Create a feedback function from a provider:
@@ -672,7 +672,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             ValueError: If a selector is invalid and warning is not set.
         """
 
-        from trulens.app import App
+        from trulens.core.app import App
 
         if source_data is None:
             source_data = {}

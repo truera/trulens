@@ -6,14 +6,14 @@ from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from trulens.database.base import DB
-from trulens.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens.database.legacy.migration import VersionException
-from trulens.database.migrations import DbRevisions
-from trulens.schema import app as mod_app_schema
-from trulens.schema import base as mod_base_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import record as mod_record_schema
+from trulens.core.database.base import DB
+from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens.core.database.legacy.migration import VersionException
+from trulens.core.database.migrations import DbRevisions
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.utils.pyschema import FunctionOrMethod
 
 sql_alchemy_migration_versions: List[str] = ['1']
@@ -65,7 +65,7 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
 
     import inspect
 
-    #from trulens.database import orm
+    #from trulens.core.database import orm
     # Dynamically check the orm classes since these could change version to version
     for _, orm_obj in inspect.getmembers(db.orm):
 

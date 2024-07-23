@@ -7,10 +7,10 @@ from typing import Any, Callable, ClassVar, Optional, Sequence, Type
 
 import dill
 import humanize
-from trulens import app as mod_app
-from trulens.schema import base as mod_base_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import types as mod_types_schema
+from trulens.core import app as mod_app
+from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import types as mod_types_schema
 from trulens.utils import pyschema
 from trulens.utils import serial
 from trulens.utils.json import jsonify
@@ -231,7 +231,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         rets = []
 
-        from trulens import Tru
+        from trulens.core import Tru
 
         tru = Tru()
 

@@ -7,10 +7,10 @@ import pandas as pd
 import sqlalchemy
 from sqlalchemy import Engine
 from sqlalchemy import inspect as sql_inspect
-from trulens.database import base as mod_db
-from trulens.database.exceptions import DatabaseVersionException
-from trulens.database.migrations import DbRevisions
-from trulens.database.migrations import upgrade_db
+from trulens.core.database import base as mod_db
+from trulens.core.database.exceptions import DatabaseVersionException
+from trulens.core.database.migrations import DbRevisions
+from trulens.core.database.migrations import upgrade_db
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +191,7 @@ def copy_database(
     """
 
     # Avoids circular imports.
-    from trulens.database.sqlalchemy import SQLAlchemyDB
+    from trulens.core.database.sqlalchemy import SQLAlchemyDB
 
     src = SQLAlchemyDB.from_db_url(src_url, table_prefix=src_prefix)
     check_db_revision(src.engine, prefix=src_prefix)

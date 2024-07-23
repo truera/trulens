@@ -4,8 +4,8 @@ import os
 from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from trulens.database import base as mod_db
-from trulens.database.orm import make_orm_for_prefix
+from trulens.core.database import base as mod_db
+from trulens.core.database.orm import make_orm_for_prefix
 
 # Gives access to the values within the alembic.ini file
 config = context.config

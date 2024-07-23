@@ -188,7 +188,7 @@ def jsonify(
     if isinstance(obj, SerialModel):
         skip_excluded = True
 
-    from trulens.instruments import Instrument
+    from trulens.core.instruments import Instrument
 
     if instrument is None:
         instrument = Instrument()

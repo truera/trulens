@@ -17,24 +17,24 @@ import sqlalchemy as sa
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
-from trulens import app as mod_app
-from trulens.database import base as mod_db
-from trulens.database import orm as mod_orm
-from trulens.database.base import DB
-from trulens.database.exceptions import DatabaseVersionException
-from trulens.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens.database.migrations import DbRevisions
-from trulens.database.migrations import upgrade_db
-from trulens.database.migrations.data import data_migrate
-from trulens.database.utils import \
+from trulens.core import app as mod_app
+from trulens.core.database import base as mod_db
+from trulens.core.database import orm as mod_orm
+from trulens.core.database.base import DB
+from trulens.core.database.exceptions import DatabaseVersionException
+from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens.core.database.migrations import DbRevisions
+from trulens.core.database.migrations import upgrade_db
+from trulens.core.database.migrations.data import data_migrate
+from trulens.core.database.utils import \
     check_db_revision as alembic_check_db_revision
-from trulens.database.utils import is_legacy_sqlite
-from trulens.database.utils import is_memory_sqlite
-from trulens.schema import app as mod_app_schema
-from trulens.schema import base as mod_base_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import record as mod_record_schema
-from trulens.schema import types as mod_types_schema
+from trulens.core.database.utils import is_legacy_sqlite
+from trulens.core.database.utils import is_memory_sqlite
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import types as mod_types_schema
 from trulens.utils import text
 from trulens.utils.pyschema import Class
 from trulens.utils.python import locals_except

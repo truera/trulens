@@ -17,10 +17,10 @@ from sqlalchemy.orm import configure_mappers
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
-from trulens.database.base import DEFAULT_DATABASE_PREFIX
-from trulens.schema import app as mod_app_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import record as mod_record_schema
+from trulens.core.database.base import DEFAULT_DATABASE_PREFIX
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.utils.json import json_str_of_obj
 
 TYPE_JSON = Text

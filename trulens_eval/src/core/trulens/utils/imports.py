@@ -18,7 +18,6 @@ from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union
 from packaging import requirements
 from packaging import version
 from pip._internal.req import parse_requirements
-from trulens import __name__ as trulens_name
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -39,14 +38,7 @@ def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
     return mapping
 
 
-if sys.version_info >= (3, 9):
-    # This does not exist in 3.8 .
-    from importlib.abc import Traversable
-    _trulens_eval_resources: Traversable = resources.files('trulens')
-    """Traversable for resources in the trulens package."""
-
-
-def static_resource(filepath: Union[Path, str]) -> Path:
+def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
     """Get the path to a static resource file in the trulens package.
 
     By static here we mean something that exists in the filesystem already and
@@ -60,6 +52,9 @@ def static_resource(filepath: Union[Path, str]) -> Path:
 
     if sys.version_info >= (3, 9):
         # This does not exist in 3.8
+        from importlib.abc import Traversable
+
+        _trulens_eval_resources: Traversable = resources.files(f'trulens.{namespace}')
         with resources.as_file(_trulens_eval_resources / filepath) as _path:
             return _path
     else:
@@ -73,12 +68,12 @@ def static_resource(filepath: Union[Path, str]) -> Path:
 
 
 required_packages: Dict[str, requirements.Requirement] = \
-    requirements_of_file(static_resource('requirements.txt'))
+    requirements_of_file(static_resource('utils', 'requirements.txt'))
 """Mapping of required package names to the requirement object with info
 about that requirement including version constraints."""
 
 optional_packages: Dict[str, requirements.Requirement] = \
-    requirements_of_file(static_resource('requirements.optional.txt'))
+    requirements_of_file(static_resource('utils', 'requirements.optional.txt'))
 """Mapping of optional package names to the requirement object with info
 about that requirement including version constraints."""
 
@@ -579,7 +574,7 @@ class OptionalImports(object):
 
         module_name = frame.f_globals['__name__']
 
-        if not module_name.startswith(trulens_name):
+        if not module_name.startswith('trulens'):
             return self.imp(name, globals, locals, fromlist, level)
 
         try:

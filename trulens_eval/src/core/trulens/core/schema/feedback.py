@@ -10,9 +10,9 @@ from typing import (Any, ClassVar, Dict, Hashable, List, Optional, Tuple,
                     TypeVar, Union)
 
 import pydantic
-from trulens import app as mod_app
-from trulens.schema import base as mod_base_schema
-from trulens.schema import types as mod_types_schema
+from trulens.core import app as mod_app
+from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import types as mod_types_schema
 from trulens.utils import pyschema
 from trulens.utils import serial
 from trulens.utils.json import obj_id_of_obj

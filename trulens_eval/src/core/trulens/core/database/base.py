@@ -5,13 +5,11 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
 import pandas as pd
-from trulens import __version__
-from trulens import app as mod_app
-from trulens.database.legacy import migration
-from trulens.schema import app as mod_app_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import record as mod_record_schema
-from trulens.schema import types as mod_types_schema
+from trulens.core import app as mod_app
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import types as mod_types_schema
 from trulens.utils.json import json_str_of_obj
 from trulens.utils.serial import JSON
 from trulens.utils.serial import JSONized

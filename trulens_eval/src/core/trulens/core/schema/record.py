@@ -8,9 +8,9 @@ from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
 
 from munch import Munch as Bunch
 import pydantic
-from trulens.schema import base as mod_base_schema
-from trulens.schema import feedback as mod_feedback_schema
-from trulens.schema import types as mod_types_schema
+from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import types as mod_types_schema
 from trulens.utils import pyschema
 from trulens.utils import serial
 from trulens.utils import threading as mod_threading_utils

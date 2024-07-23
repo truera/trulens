@@ -11,7 +11,7 @@ from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from pydantic import BaseModel
 from sqlalchemy import Engine
-from trulens.database import base as mod_db
+from trulens.core.database import base as mod_db
 
 logger = logging.getLogger(__name__)
 
