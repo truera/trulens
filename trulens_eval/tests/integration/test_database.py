@@ -39,7 +39,6 @@ from trulens.database.migrations import DbRevisions
 from trulens.database.migrations import downgrade_db
 from trulens.database.migrations import get_revision_history
 from trulens.database.migrations import upgrade_db
-from trulens.database.sqlalchemy import AppsExtractor
 from trulens.database.sqlalchemy import SQLAlchemyDB
 from trulens.database.utils import copy_database
 from trulens.database.utils import is_legacy_sqlite

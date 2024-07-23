@@ -9,13 +9,13 @@ import sys
 from unittest import main
 from unittest import TestCase
 
+import trulens
 from trulens.instruments import Instrument
 from trulens.utils.imports import Dummy
 
 from tests.unit.test import module_installed
 from tests.unit.test import optional_test
 from tests.unit.test import requiredonly_test
-import trulens_eval
 
 # Importing any of these should throw ImportError (or its sublcass
 # ModuleNotFoundError) if optional packages are not installed. The key is the

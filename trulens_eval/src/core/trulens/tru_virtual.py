@@ -562,6 +562,6 @@ class TruVirtual(mod_app.App):
         return record
 
 
-import trulens_eval  # for App class annotations
+import trulens  # for App class annotations
 
 TruVirtual.model_rebuild()

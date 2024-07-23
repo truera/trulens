@@ -1,0 +1,74 @@
+# Unsorted requirements
+protobuf >= 4.23.2  # no direct uses
+watchdog >= 3.0.0  # no direct uses
+
+# Metrics
+scikit-learn >= 1.3.1
+bert-score   >= 0.3.13  # groundtruth.py
+evaluate     >= 0.4.0  # same
+
+# Apps: LangChain (optional parts)
+langchainhub        >= 0.1.14  # example notebooks
+langchain_community >= 0.0.17  # example notebooks, openai endpoint, now required for Pinecone, others
+langchain_openai    >= 0.0.5  # unit tests, sample apps
+
+# Apps: LlamaIndex
+llama-index >= 0.9.26 # versions before 0.10 allowed
+nbconvert   >= 7.14.2  # for llama_index example using SimlpleDirectoryReader
+llama-index-readers-file >= 0.1.5 # tests and notebooks
+llama-index-readers-web  >= 0.1.6 # tests and notebooks
+
+# Apps: NeMo Guardrails
+nemoguardrails >= 0.7.1
+
+# Models: OpenAI
+openai >= 1.1.1, <2
+httpx  >= 0.23.3  # for openai client serialization
+
+# Models: Bedrock
+boto3    >= 1.33.6
+botocore >= 1.33.6
+
+# Models API
+litellm     >= 1.25.2
+
+# Cortex
+snowflake-snowpark-python >= 1.18.0; python_version < "3.12" # not available for 3.12
+snowflake-connector-python >= 3.11.0
+
+# Local models
+transformers  >= 4.10.0
+accelerate    >= 0.19.0
+torch         >= 2.3.1
+
+# Local vector DBs
+hnswlib      >= 0.7.0
+docarray     >= 0.39.1  # for hnswlib
+faiss-cpu    >= 1.7.4
+unstructured >= 0.7.1  # for faiss
+
+# Vector DBs
+pinecone-client >= 2.2.1
+chromadb        >= 0.4.18
+
+# Slack bot example
+slack-bolt >= 1.18.0
+slack-sdk  >= 3.21.3
+
+# UI
+ipython    >= 8.12.0  # for notebooks
+ipywidgets >= 8.0.6  # for some example notebooks
+ipytree    >= 0.2.2 # for some example notebooks
+
+
+# Chunking/parsing
+sentencepiece  >= 0.1.97
+tiktoken       >= 0.4.0  # pinecone_evals_build_better_rags.ipynb
+pypdf          >= 3.9.0
+beautifulsoup4 >= 4.12.2  # no direct uses
+pdfminer.six   >= 20221105 #  no direct uses
+tokenizers     >= 0.13.3  # no direct uses
+
+# Datasets
+datasets >= 2.12.0
+kaggle   >= 1.5.13

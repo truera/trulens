@@ -532,6 +532,6 @@ class TruLlama(mod_app.App):
         )
 
 
-import trulens_eval  # for App class annotations
+import trulens  # for App class annotations
 
 TruLlama.model_rebuild()

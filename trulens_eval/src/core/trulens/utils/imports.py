@@ -72,20 +72,20 @@ def static_resource(filepath: Union[Path, str]) -> Path:
             return _path
 
 
-# required_packages: Dict[str, requirements.Requirement] = \
-#     requirements_of_file(static_resource('requirements.txt'))
-# """Mapping of required package names to the requirement object with info
-# about that requirement including version constraints."""
+required_packages: Dict[str, requirements.Requirement] = \
+    requirements_of_file(static_resource('requirements.txt'))
+"""Mapping of required package names to the requirement object with info
+about that requirement including version constraints."""
 
-# optional_packages: Dict[str, requirements.Requirement] = \
-#     requirements_of_file(static_resource('requirements.optional.txt'))
-# """Mapping of optional package names to the requirement object with info
-# about that requirement including version constraints."""
+optional_packages: Dict[str, requirements.Requirement] = \
+    requirements_of_file(static_resource('requirements.optional.txt'))
+"""Mapping of optional package names to the requirement object with info
+about that requirement including version constraints."""
 
-# all_packages: Dict[str, requirements.Requirement] = {
-#     **required_packages,
-#     **optional_packages
-# }
+all_packages: Dict[str, requirements.Requirement] = {
+    **required_packages,
+    **optional_packages
+}
 """Mapping of optional and required package names to the requirement object
 with info about that requirement including version constraints."""
 
@@ -614,6 +614,18 @@ class OptionalImports(object):
                 importer=self,
                 original_exception=e,
                 exception_class=ModuleNotFoundError
+            )
+
+        except AttributeError as e:
+            if self.fail:
+                raise e
+
+            return Dummy(
+                name=name,
+                message=self.messages.module_not_found,
+                importer=self,
+                original_exception=e,
+                exception_class=AttributeError
             )
 
         except ImportError as e:

@@ -10,8 +10,8 @@ from pprint import PrettyPrinter
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Generic, Iterable, List, Optional,
-                    Sequence, Tuple, TypeVar, Union)
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
+                    Tuple, Union)
 
 import humanize
 import pandas
