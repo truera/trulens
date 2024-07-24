@@ -1,16 +1,25 @@
 [tool.poetry]
-name = "trulens-monorepo"
+name = "trulens"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = ["Truera Inc <all@truera.com>"]
 license = "MIT"
 readme = "README.md"
-package-mode = false
+packages = [
+    {from = "_trulens", include = "trulens"},
+    {from = "_trulens", include = "trulens_eval"} # compatibility with older versions
+]
+
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
-
-[tool.poetry.group.dev.dependencies]
+# trulens-core = "^0.33.0"
+# trulens-external = "^0.33.0"
+# trulens-dashboard = "^0.33.0"
+# trulens-langchain = "^0.33.0"
+# trulens-llamaindex = "^0.33.0"
+# trulens-nemo = "^0.33.0"
+# trulens-testing = "^0.33.0"
 trulens-core = { path = "src/core", develop = true }
 trulens-external = { path = "src/external", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }
@@ -18,15 +27,38 @@ trulens-langchain = { path = "src/langchain", develop = true }
 trulens-llamaindex = { path = "src/llamaindex", develop = true }
 trulens-nemo = { path = "src/nemo", develop = true }
 trulens-testing = { path = "src/testing", develop = true }
+
+
+[tool.poetry.group.dev.dependencies]
 yapf = "^0.40.2"
 isort = "^5.13.2"
 pre-commit = "^3.7.1"
 toml = "^0.10.2"
 
+
 [tool.poetry.group.tests.dependencies]
 pytest = "^8.3.1"
 nbconvert = "^7.16.4"
 nbformat = "^5.10.4"
+pytest-subtests = "^0.13.1"
+pytest-azurepipelines = "^1.0.5"
+
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.6.0"
+mkdocstrings-python = "^1.10.5"
+mkdocstrings = "^0.25.1"
+mkdocs-material = "^9.5.30"
+mkdocs-material-extensions = "^1.3.1"
+mkdocs-autorefs = "^1.0.1"
+mkdocs-redirects = "^1.2.1"
+mkdocs-jupyter = "^0.24.8"
+mkdocs-include-markdown-plugin = "^6.2.1"
+python-markdown-math = "^0.8"
+markdown-include = "^0.8.1"
+jupyter-contrib-nbextensions = "^0.7.0"
+notebook = "^7.2.1"
+black = "^24.4.2"
 
 [build-system]
 requires = ["poetry-core"]
