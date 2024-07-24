@@ -98,7 +98,7 @@ Last, we can also display the TruLens leaderboard using the `trulens_leaderboard
     ```python
     from trulens_eval import streamlit as trulens_st
 
-    trulens_st.trulens_leaderboard(record=record)
+    trulens_st.trulens_leaderboard()
     ```
 
 In combination, the streamlit components allow you to make evaluation front-and-center in your app. This is particularly useful for developer playground use cases, or to ensure users of app reliability.
