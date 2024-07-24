@@ -411,7 +411,12 @@ class WithCost(LiveSpan):
     endpoint: Optional[Any] = pydantic.Field(None, exclude=True)
     """Endpoint handling cost extraction for this span/call."""
 
-    # TODO: Type
+    def attributes(self):
+        ret = super().attributes()
+
+        ret['cost'] = self.cost.model_dump()
+
+        return ret
 
     def __init__(self, cost: Optional[base_schema.Cost] = None, **kwargs):
         if cost is None:
