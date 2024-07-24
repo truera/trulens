@@ -170,6 +170,7 @@ class Groundedness(Semantics, WithPrompt):
         """
     )
 
+
 class Answerability(Semantics, WithPrompt):
 
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
@@ -185,6 +186,7 @@ class Answerability(Semantics, WithPrompt):
         ANSWERABILITY:"""
     )
 
+
 class Abstention(Semantics, WithPrompt):
 
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
@@ -198,6 +200,7 @@ class Abstention(Semantics, WithPrompt):
 
         ABSTENTION:"""
     )
+
 
 class ContextRelevance(Relevance, WithPrompt):
     # openai.context_relevance

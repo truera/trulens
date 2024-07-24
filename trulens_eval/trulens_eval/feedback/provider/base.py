@@ -1178,7 +1178,7 @@ class LLMProvider(Provider):
         nltk.download('punkt', quiet=True)
         groundedness_scores = {}
         reasons_str = ""
-    
+
         hypotheses = sent_tokenize(statement)
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
@@ -1217,7 +1217,7 @@ class LLMProvider(Provider):
         )
 
         return average_groundedness_score, {"reasons": reasons_str}
-    
+
     def groundedness_measure_with_cot_reasons_consider_answerability(
         self, source: str, statement: str, question: str
     ) -> Tuple[float, dict]:
@@ -1271,11 +1271,11 @@ class LLMProvider(Provider):
             user_prompt = prompts.LLM_ANSWERABILITY_USER.format(
                 question=question, source=source
             )
-            score= self.generate_score(
+            score = self.generate_score(
                 prompts.LLM_ANSWERABILITY_SYSTEM, user_prompt
             )
             return score
-    
+
         hypotheses = sent_tokenize(statement)
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
@@ -1327,4 +1327,3 @@ class LLMProvider(Provider):
         )
 
         return average_groundedness_score, {"reasons": reasons_str}
-
