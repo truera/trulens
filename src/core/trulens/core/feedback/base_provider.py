@@ -41,7 +41,7 @@ class Provider(WithClassInfo, SerialModel):
         huggingface_provider.language_match(prompt, response)
         ```
 
-    Providers for LLM models should subclass `LLMProvider`, which itself subclasses `Provider`.
+    Providers for LLM models should subclass `trulens.external.providers.LLMProvider`, which itself subclasses `Provider`.
     Providers for LLM-generated feedback are more of a plug-and-play variety. This means that the
     base model of your choice can be combined with feedback-specific prompting to generate feedback.
 

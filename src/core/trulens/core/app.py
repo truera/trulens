@@ -16,8 +16,8 @@ from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
                     TypeVar, Union)
 
 import pydantic
-from trulens import core
 from trulens.core import app as mod_app
+from trulens.core.database.base import DB
 import trulens.core.feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
 from trulens.core.schema import app as mod_app_schema
@@ -25,6 +25,7 @@ from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.tru import Tru
 from trulens.utils import pyschema
 from trulens.utils.asynchro import CallableMaybeAwaitable
 from trulens.utils.asynchro import desync
@@ -471,7 +472,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     )
     """Feedback functions to evaluate on each record."""
 
-    tru: Optional[core.tru.Tru] = pydantic.Field(
+    tru: Optional[Tru] = pydantic.Field(
         default=None, exclude=True
     )
     """Workspace manager.
@@ -480,7 +481,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     (if not already) and used.
     """
 
-    db: Optional[core.database.base.DB] = pydantic.Field(
+    db: Optional[DB] = pydantic.Field(
         default=None, exclude=True
     )
     """Database interface.
@@ -655,15 +656,15 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         # Checking by module name so we don't have to try to import either
         # langchain or llama_index beforehand.
         if type(app).__module__.startswith('langchain'):
-            from trulens.core.tru_chain import TruChain
+            from trulens.langchain import TruChain
             return TruChain.select_context(app)
 
         if type(app).__module__.startswith('llama_index'):
-            from trulens.core.tru_llama import TruLlama
+            from trulens.llamaindex import TruLlama
             return TruLlama.select_context(app)
 
         elif type(app).__module__.startswith('nemoguardrails'):
-            from trulens.core.tru_rails import TruRails
+            from trulens.nemo import TruRails
             return TruRails.select_context(app)
 
         else:

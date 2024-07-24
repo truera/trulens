@@ -7,7 +7,7 @@ from typing import Any, Callable, ClassVar, Optional, Sequence, Type
 
 import dill
 import humanize
-from trulens.core import app as mod_app
+from trulens.core.app import App
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import types as mod_types_schema
@@ -206,7 +206,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_definition_json['app'] = app
         app_definition_json['initial_app_loader_dump'] = serial_bytes_json
 
-        cls: Type[mod_app.App
+        cls: Type[App
                  ] = pyschema.WithClassInfo.get_class(app_definition_json)
 
         return cls.model_validate_json(app_definition_json)
@@ -248,7 +248,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         # it is considered an `AppDefinition` and is thus using this definition
         # of `dict` instead of the one in `app.App`.
 
-        if isinstance(self, mod_app.App):
+        if isinstance(self, App):
             return jsonify(self, instrument=self.instrument)
         else:
             return jsonify(self)

@@ -15,7 +15,7 @@ from typing import (Any, Awaitable, Callable, ClassVar, Dict, List, Optional,
 
 from pydantic import Field
 import requests
-from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema.base import Cost
 from trulens.utils import asynchro as mod_asynchro_utils
 from trulens.utils import pace as mod_pace
 from trulens.utils.pyschema import safe_getattr
@@ -57,7 +57,7 @@ class EndpointCallback(SerialModel):
     endpoint: Endpoint = Field(exclude=True)
     """Thhe endpoint owning this callback."""
 
-    cost: mod_base_schema.Cost = Field(default_factory=mod_base_schema.Cost)
+    cost: Cost = Field(default_factory=Cost)
     """Costs tracked by this callback."""
 
     def handle(self, response: Any) -> None:
@@ -491,7 +491,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_bedrock: bool = True,
         with_cortex: bool = True,
         **kwargs
-    ) -> Tuple[T, mod_base_schema.Cost]:
+    ) -> Tuple[T, Cost]:
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
@@ -510,7 +510,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         if len(cbs) == 0:
             # Otherwise sum returns "0" below.
-            costs = mod_base_schema.Cost()
+            costs = Cost()
         else:
             costs = sum(cb.cost for cb in cbs)
 
