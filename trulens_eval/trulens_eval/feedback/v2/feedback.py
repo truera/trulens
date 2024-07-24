@@ -154,6 +154,7 @@ class Groundedness(Semantics, WithPrompt):
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         """You are a INFORMATION OVERLAP classifier; providing the overlap of information between the source and statement.
         Respond only as a number from 0 to 10 where 0 is no information overlap and 10 is all information is overlapping.
+        Abstentions, such as 'I don't know', should be counted as the most overlap and therefore score a 10.
         Never elaborate."""
     )
     user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
@@ -163,12 +164,40 @@ class Groundedness(Semantics, WithPrompt):
         
         Please answer with the template below for all statement sentences:
 
-        Criteria: <Statement Sentence>, 
-        Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND>
+        Criteria: <Statement Sentence>
+        Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
         Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
         """
     )
 
+class Answerability(Semantics, WithPrompt):
+
+    system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
+        """You are a ANSWERABILITY classifier; providing a score of 0 if the answer to the QUESTION does not exist in the SOURCE, and a 10 if the answer does exist in the SOURCE.
+        Do not consider the quality of the answer, only if it exists or not.
+        Never elaborate."""
+    )
+    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
+        """QUESTION: {question}
+        
+        SOURCE: {source}
+
+        ANSWERABILITY:"""
+    )
+
+class Abstention(Semantics, WithPrompt):
+
+    system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
+        """You are a ABSTENTION classifier; classifying the STATEMENT as an abstention or not.
+        Examples of an abstention include statement similar to 'I don't know' or 'I can't answer that'.
+        Respond only as a number from 0 to 10 where 0 is not an abstention and 10 is an abstention.
+        Never elaborate."""
+    )
+    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
+        """STATEMENT: {statement}
+
+        ABSTENTION:"""
+    )
 
 class ContextRelevance(Relevance, WithPrompt):
     # openai.context_relevance

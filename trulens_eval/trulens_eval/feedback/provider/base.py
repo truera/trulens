@@ -1150,7 +1150,9 @@ class LLMProvider(Provider):
         the statement using an LLM provider.
 
         The LLM will process the entire statement at once, using chain of
-        thought methodology to emit the reasons. 
+        thought methodology to emit the reasons.
+
+        Abstentions will be considered as grounded.
 
         !!! example
 
@@ -1176,8 +1178,9 @@ class LLMProvider(Provider):
         nltk.download('punkt', quiet=True)
         groundedness_scores = {}
         reasons_str = ""
-
+    
         hypotheses = sent_tokenize(statement)
+
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
         def evaluate_hypothesis(index, hypothesis):
@@ -1214,3 +1217,114 @@ class LLMProvider(Provider):
         )
 
         return average_groundedness_score, {"reasons": reasons_str}
+    
+    def groundedness_measure_with_cot_reasons_consider_answerability(
+        self, source: str, statement: str, question: str
+    ) -> Tuple[float, dict]:
+        """A measure to track if the source material supports each sentence in
+        the statement using an LLM provider.
+
+        The LLM will process the entire statement at once, using chain of
+        thought methodology to emit the reasons.
+
+        In the case of abstentions, the LLM will be asked to consider the answerability of the question given the source material.
+
+        If the quesiton is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
+
+        !!! example
+
+            ```python
+            from trulens_eval import Feedback
+            from trulens_eval.feedback.provider.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_groundedness = (
+                Feedback(provider.groundedness_measure_with_cot_reasons)
+                .on(context.collect()
+                .on_output()
+                .on_input()
+                )
+            ```
+        Args:
+            source: The source that should support the statement.
+            statement: The statement to check groundedness.
+            question: The question to check answerability.
+
+        Returns:
+            Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
+        """
+        nltk.download('punkt', quiet=True)
+        groundedness_scores = {}
+        reasons_str = ""
+
+        def evaluate_abstention(statement):
+            user_prompt = prompts.LLM_ABSTENTION_USER.format(
+                statement=statement
+            )
+            score = self.generate_score(
+                prompts.LLM_ABSTENTION_SYSTEM, user_prompt
+            )
+            return score
+
+        def evaluate_answerability(question, source):
+            user_prompt = prompts.LLM_ANSWERABILITY_USER.format(
+                question=question, source=source
+            )
+            score= self.generate_score(
+                prompts.LLM_ANSWERABILITY_SYSTEM, user_prompt
+            )
+            return score
+    
+        hypotheses = sent_tokenize(statement)
+
+        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+
+        def evaluate_hypothesis(index, hypothesis):
+            print("hypothesis", hypothesis)
+            abstention_score = evaluate_abstention(hypothesis)
+            print("abstention_score", abstention_score)
+            if abstention_score > 0.5:
+                print("Abstention detected")
+                answerability_score = evaluate_answerability(question, source)
+                if answerability_score > 0.5:
+                    print("answerable abstention detected")
+                    return index, 0.0, {"reason": "Answerable abstention"}
+                else:
+                    print("unanswerable abstention detected")
+                    return index, 1.0, {"reason": "Unanswerable abstention"}
+            else:
+                user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+                    premise=f"{source}", hypothesis=f"{hypothesis}"
+                )
+                score, reason = self.generate_score_and_reasons(
+                    system_prompt, user_prompt
+                )
+                return index, score, reason
+
+        results = []
+
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(evaluate_hypothesis, i, hypothesis)
+                for i, hypothesis in enumerate(hypotheses)
+            ]
+
+            for future in as_completed(futures):
+                results.append(future.result())
+
+        results.sort(key=lambda x: x[0])  # Sort results by index
+
+        for i, score, reason in results:
+            groundedness_scores[f"statement_{i}"] = score
+            reason_str = reason[
+                'reason'] if 'reason' in reason else "reason not generated"
+            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
+
+        # Calculate the average groundedness score from the scores dictionary
+        average_groundedness_score = float(
+            np.mean(list(groundedness_scores.values()))
+        )
+
+        return average_groundedness_score, {"reasons": reasons_str}
+
