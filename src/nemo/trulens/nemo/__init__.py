@@ -6,8 +6,4 @@ from trulens.nemo.tru_rails import TruRails
 
 __version__ = importlib.metadata.version(__package__ or __name__)
 
-__all__ = [
-    'TruRails',
-    'RailsInstrument',
-    'RailsActionSelect'
-]
+__all__ = ["TruRails", "RailsInstrument", "RailsActionSelect"]

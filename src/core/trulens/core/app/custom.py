@@ -140,26 +140,26 @@ app.print_instrumented()
 
 ### output example:
 Components:
-	TruCustomApp (Other) at 0x171bd3380 with path *.__app__
-	CustomApp (Custom) at 0x12114b820 with path *.__app__.app
-	CustomLLM (Custom) at 0x12114be50 with path *.__app__.app.llm
-	CustomMemory (Custom) at 0x12114bf40 with path *.__app__.app.memory
-	CustomRetriever (Custom) at 0x12114bd60 with path *.__app__.app.retriever
-	CustomTemplate (Custom) at 0x12114bf10 with path *.__app__.app.template
+        TruCustomApp (Other) at 0x171bd3380 with path *.__app__
+        CustomApp (Custom) at 0x12114b820 with path *.__app__.app
+        CustomLLM (Custom) at 0x12114be50 with path *.__app__.app.llm
+        CustomMemory (Custom) at 0x12114bf40 with path *.__app__.app.memory
+        CustomRetriever (Custom) at 0x12114bd60 with path *.__app__.app.retriever
+        CustomTemplate (Custom) at 0x12114bf10 with path *.__app__.app.template
 
 Methods:
 Object at 0x12114b820:
-	<function CustomApp.retrieve_chunks at 0x299132ca0> with path *.__app__.app
-	<function CustomApp.respond_to_query at 0x299132d30> with path *.__app__.app
-	<function CustomApp.arespond_to_query at 0x299132dc0> with path *.__app__.app
+        <function CustomApp.retrieve_chunks at 0x299132ca0> with path *.__app__.app
+        <function CustomApp.respond_to_query at 0x299132d30> with path *.__app__.app
+        <function CustomApp.arespond_to_query at 0x299132dc0> with path *.__app__.app
 Object at 0x12114be50:
-	<function CustomLLM.generate at 0x299106b80> with path *.__app__.app.llm
+        <function CustomLLM.generate at 0x299106b80> with path *.__app__.app.llm
 Object at 0x12114bf40:
-	<function CustomMemory.remember at 0x299132670> with path *.__app__.app.memory
+        <function CustomMemory.remember at 0x299132670> with path *.__app__.app.memory
 Object at 0x12114bd60:
-	<function CustomRetriever.retrieve_chunks at 0x299132790> with path *.__app__.app.retriever
+        <function CustomRetriever.retrieve_chunks at 0x299132790> with path *.__app__.app.retriever
 Object at 0x12114bf10:
-	<function CustomTemplate.fill at 0x299132a60> with path *.__app__.app.template
+        <function CustomTemplate.fill at 0x299132a60> with path *.__app__.app.template
 ```
 
 - If an instrumented / decorated method's owner object cannot be found when
@@ -212,7 +212,7 @@ pp = PrettyPrinter()
 # Keys used in app_extra_json to indicate an automatically added structure for
 # places an instrumented method exists but no instrumented data exists
 # otherwise.
-PLACEHOLDER = '__tru_placeholder'
+PLACEHOLDER = "__tru_placeholder"
 
 
 class TruCustomApp(App):
@@ -350,16 +350,16 @@ class TruCustomApp(App):
     """Serialized version of the main method."""
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs: dict):
-        kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app)
+        kwargs["app"] = app
+        kwargs["root_class"] = Class.of_object(app)
 
         instrument = Instrument(
             app=self  # App mixes in WithInstrumentCallbacks
         )
-        kwargs['instrument'] = instrument
+        kwargs["instrument"] = instrument
 
-        if 'main_method' in kwargs:
-            main_method = kwargs['main_method']
+        if "main_method" in kwargs:
+            main_method = kwargs["main_method"]
 
             # TODO: ARGPARSE
             if isinstance(main_method, dict):
@@ -377,20 +377,22 @@ class TruCustomApp(App):
                 main_method_loaded = main_method
                 main_method = Function.of_function(main_method_loaded)
 
-                if not safe_hasattr(main_method_loaded, '__self__'):
+                if not safe_hasattr(main_method_loaded, "__self__"):
                     raise ValueError(
-                        'Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`).'
+                        "Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`)."
                     )
 
                 app_self = main_method_loaded.__self__
 
-                assert app_self == app, "`main_method`'s bound self must be the same as `app`."
+                assert (
+                    app_self == app
+                ), "`main_method`'s bound self must be the same as `app`."
 
                 cls = app_self.__class__
                 mod = cls.__module__
 
-            kwargs['main_method'] = main_method
-            kwargs['main_method_loaded'] = main_method_loaded
+            kwargs["main_method"] = main_method
+            kwargs["main_method_loaded"] = main_method_loaded
 
             instrument.include_modules.add(mod)
             instrument.include_classes.add(cls)
@@ -401,7 +403,7 @@ class TruCustomApp(App):
 
         # Needed to split this part to after the instrumentation so that the
         # getattr below gets the instrumented version of main method.
-        if 'main_method' in kwargs:
+        if "main_method" in kwargs:
             # Set main_method to the unbound version. Will be passing in app for
             # "self" manually when needed.
             main_method_loaded = getattr(cls, main_name)
@@ -439,23 +441,22 @@ class TruCustomApp(App):
                 next(full_path(json))
 
                 print(
-                    f'{UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}'
+                    f"{UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
                 )
 
             except Exception:
                 logger.warning(
-                    f'App has no component at path {full_path} . '
-                    f'Specify the component with the `app_extra_json` argument to TruCustomApp constructor. '
-                    f'Creating a placeholder there for now.'
+                    f"App has no component at path {full_path} . "
+                    f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
+                    f"Creating a placeholder there for now."
                 )
 
                 path.set(
-                    self.app_extra_json, {
-                        PLACEHOLDER:
-                            'I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.',
-                        m.__name__:
-                            f'Placeholder for method {m.__name__}.'
-                    }
+                    self.app_extra_json,
+                    {
+                        PLACEHOLDER: "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
+                        m.__name__: f"Placeholder for method {m.__name__}.",
+                    },
                 )
 
         # Check that any functions marked with `TruCustomApp.instrument` has been
@@ -465,9 +466,9 @@ class TruCustomApp(App):
 
             if len(obj_ids_methods_and_full_paths) == 0:
                 logger.warning(
-                    f'Function {f} was not found during instrumentation walk. '
-                    f'Make sure it is accessible by traversing app {app} '
-                    f'or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`.'
+                    f"Function {f} was not found during instrumentation walk. "
+                    f"Make sure it is accessible by traversing app {app} "
+                    f"or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`."
                 )
 
             else:
@@ -477,24 +478,23 @@ class TruCustomApp(App):
 
                     except Exception as e:
                         logger.warning(
-                            f'App has no component owner of instrumented method {m} at path {full_path}. '
-                            f'Specify the component with the `app_extra_json` argument to TruCustomApp constructor. '
-                            f'Creating a placeholder there for now.'
+                            f"App has no component owner of instrumented method {m} at path {full_path}. "
+                            f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
+                            f"Creating a placeholder there for now."
                         )
 
                         path.set(
-                            self.app_extra_json, {
-                                PLACEHOLDER:
-                                    'I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.',
-                                m.__name__:
-                                    f'Placeholder for method {m.__name__}.'
-                            }
+                            self.app_extra_json,
+                            {
+                                PLACEHOLDER: "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
+                                m.__name__: f"Placeholder for method {m.__name__}.",
+                            },
                         )
 
     def main_call(self, human: str):
         if self.main_method_loaded is None:
             raise RuntimeError(
-                '`main_method` was not specified so we do not know how to run this app.'
+                "`main_method` was not specified so we do not know how to run this app."
             )
 
         sig = signature(self.main_method_loaded)

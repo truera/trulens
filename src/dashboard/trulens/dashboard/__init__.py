@@ -7,6 +7,6 @@ __version__ = importlib.metadata.version(__package__ or __name__)
 
 
 __all__ = [
-    'run_dashboard',
-    'stop_dashboard',
+    "run_dashboard",
+    "stop_dashboard",
 ]

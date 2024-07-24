@@ -6,10 +6,10 @@ from trulens.core.app.virtual import TruVirtual
 from trulens.core.app.virtual import VirtualApp
 
 __all__ = [
-    'App',
-    'TruBasicApp',
-    'TruWrapperApp',
-    'TruCustomApp',
-    'TruVirtual',
-    'VirtualApp',
+    "App",
+    "TruBasicApp",
+    "TruWrapperApp",
+    "TruCustomApp",
+    "TruVirtual",
+    "VirtualApp",
 ]

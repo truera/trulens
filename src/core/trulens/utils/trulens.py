@@ -25,7 +25,7 @@ def constructor_of_class(cls: Class) -> Type[base.TrulensComponent]:
         if view.class_is(cls):
             return view
 
-    raise TypeError(f'Unknown trulens component type with class {cls}')
+    raise TypeError(f"Unknown trulens component type with class {cls}")
 
 
 def component_of_json(json: dict) -> base.TrulensComponent:
@@ -57,10 +57,10 @@ def get_feedback_result(
         feedback_calls = next(
             (
                 future_result.result()
-                for feedback_definition, future_result in
-                tru_record.feedback_and_future_results
+                for feedback_definition, future_result in tru_record.feedback_and_future_results
                 if feedback_definition.name == feedback_name
-            ), None
+            ),
+            None,
         )
         if feedback_calls is not None:
             break
@@ -72,12 +72,11 @@ def get_feedback_result(
         )
 
     # Ensure feedback_calls is iterable
-    if not hasattr(feedback_calls, '__iter__'):
-        raise ValueError('feedback_calls is not iterable')
+    if not hasattr(feedback_calls, "__iter__"):
+        raise ValueError("feedback_calls is not iterable")
 
     feedback_result = [
-        {
-            **call.model_dump()['args'], 'ret': call.model_dump()['ret']
-        } for call in feedback_calls.calls
+        {**call.model_dump()["args"], "ret": call.model_dump()["ret"]}
+        for call in feedback_calls.calls
     ]
     return pd.DataFrame(feedback_result)

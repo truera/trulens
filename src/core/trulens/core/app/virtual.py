@@ -233,9 +233,7 @@ class VirtualApp(dict):
     under `VirtualApp.root`
     """
 
-    def __setitem__(
-        self, __name: Union[str, serial.Lens], __value: Any
-    ) -> None:
+    def __setitem__(self, __name: Union[str, serial.Lens], __value: Any) -> None:
         """
         Allow setitem to work on Lenses instead of just strings. Uses `Lens.set`
         if a lens is given.
@@ -248,8 +246,10 @@ class VirtualApp(dict):
         __name = mod_feedback_schema.Select.dequalify(__name)
 
         # Chop off "app" prefix if there.
-        if isinstance(__name.path[0], GetItemOrAttribute) \
-            and __name.path[0].get_item_or_attribute() == 'app':
+        if (
+            isinstance(__name.path[0], GetItemOrAttribute)
+            and __name.path[0].get_item_or_attribute() == "app"
+        ):
             __name = serial.Lens(path=__name.path[1:])
 
         # Does not mutate so need to use dict.update .
@@ -263,15 +263,13 @@ class VirtualApp(dict):
         pass
 
 
-virtual_module = Module(
-    package_name='trulens', module_name='trulens.core.app.virtual'
-)
+virtual_module = Module(package_name="trulens", module_name="trulens.core.app.virtual")
 """Module to represent the module of virtual apps.
 
 Virtual apps will record this as their module.
 """
 
-virtual_class = Class(module=virtual_module, name='VirtualApp')
+virtual_class = Class(module=virtual_module, name="VirtualApp")
 """Class to represent the class of virtual apps.
 
 Virtual apps will record this as their class.
@@ -283,14 +281,14 @@ virtual_object = Obj(cls=virtual_class, id=0)
 Virtual apps will record this as their instance.
 """
 
-virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name='root')
+virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name="root")
 """Method call to represent the root call of virtual apps.
 
 Virtual apps will record this as their root call.
 """
 
 virtual_method_call = Method(
-    cls=virtual_class, obj=virtual_object, name='method_name_not_set'
+    cls=virtual_class, obj=virtual_object, name="method_name_not_set"
 )
 """Method call to represent virtual app calls that do not provide this
 information.
@@ -338,9 +336,8 @@ class VirtualRecord(mod_record_schema.Record):
         calls: Dict[serial.Lens, Union[Dict, Sequence[Dict]]],
         cost: Optional[mod_base_schema.Cost] = None,
         perf: Optional[mod_base_schema.Perf] = None,
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ):
-
         root_call = mod_record_schema.RecordAppCallMethod(
             path=serial.Lens(), method=virtual_method_root
         )
@@ -350,7 +347,6 @@ class VirtualRecord(mod_record_schema.Record):
         start_time = datetime.datetime.now()
 
         for lens, call_or_calls in calls.items():
-
             if isinstance(call_or_calls, Sequence):
                 calls_list = call_or_calls
             else:
@@ -359,27 +355,25 @@ class VirtualRecord(mod_record_schema.Record):
             for call in calls_list:
                 substart_time = datetime.datetime.now()
 
-                if 'stack' not in call:
+                if "stack" not in call:
                     path, method_name = mod_feedback_schema.Select.path_and_method(
                         mod_feedback_schema.Select.dequalify(lens)
                     )
                     method = virtual_method_call.replace(name=method_name)
 
-                    call['stack'] = [
+                    call["stack"] = [
                         root_call,
-                        mod_record_schema.RecordAppCallMethod(
-                            path=path, method=method
-                        )
+                        mod_record_schema.RecordAppCallMethod(path=path, method=method),
                     ]
 
-                if 'args' not in call:
-                    call['args'] = []
-                if 'rets' not in call:
-                    call['rets'] = []
-                if 'pid' not in call:
-                    call['pid'] = 0
-                if 'tid' not in call:
-                    call['tid'] = 0
+                if "args" not in call:
+                    call["args"] = []
+                if "rets" not in call:
+                    call["rets"] = []
+                if "pid" not in call:
+                    call["pid"] = 0
+                if "tid" not in call:
+                    call["tid"] = 0
 
                 subend_time = datetime.datetime.now()
 
@@ -389,8 +383,8 @@ class VirtualRecord(mod_record_schema.Record):
                 if (subend_time - substart_time).total_seconds() == 0.0:
                     subend_time += datetime.timedelta(microseconds=1)
 
-                if 'perf' not in call:
-                    call['perf'] = mod_base_schema.Perf(
+                if "perf" not in call:
+                    call["perf"] = mod_base_schema.Perf(
                         start_time=substart_time, end_time=subend_time
                     )
 
@@ -405,33 +399,33 @@ class VirtualRecord(mod_record_schema.Record):
         if (end_time - start_time).total_seconds() == 0.0:
             end_time += datetime.timedelta(microseconds=1)
 
-        kwargs['cost'] = cost or mod_base_schema.Cost()
-        kwargs['perf'] = perf or mod_base_schema.Perf(
+        kwargs["cost"] = cost or mod_base_schema.Cost()
+        kwargs["perf"] = perf or mod_base_schema.Perf(
             start_time=start_time, end_time=end_time
         )
 
-        if 'main_input' not in kwargs:
-            kwargs['main_input'] = 'No main_input provided.'
-        if 'main_output' not in kwargs:
-            kwargs['main_output'] = 'No main_output provided.'
+        if "main_input" not in kwargs:
+            kwargs["main_input"] = "No main_input provided."
+        if "main_output" not in kwargs:
+            kwargs["main_output"] = "No main_output provided."
 
         # append root call
         record_calls.append(
             mod_record_schema.RecordAppCall(
                 stack=[root_call],
-                args=[kwargs['main_input']],
-                rets=[kwargs['main_output']],
-                perf=kwargs['perf'],
-                cost=kwargs['cost'],
+                args=[kwargs["main_input"]],
+                rets=[kwargs["main_output"]],
+                perf=kwargs["perf"],
+                cost=kwargs["cost"],
                 tid=0,
-                pid=0
+                pid=0,
             )
         )
 
-        if 'app_id' not in kwargs:
-            kwargs[
-                'app_id'
-            ] = 'No app_id provided.'  # this gets replaced by TruVirtual.add_record .
+        if "app_id" not in kwargs:
+            kwargs["app_id"] = (
+                "No app_id provided."  # this gets replaced by TruVirtual.add_record .
+            )
 
         super().__init__(calls=record_calls, **kwargs)
 
@@ -501,10 +495,8 @@ class TruVirtual(App):
     creating virtual records.
     """
 
-    def __init__(
-        self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: dict
-    ):
-        """Virtual app for logging existing app results. """
+    def __init__(self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: dict):
+        """Virtual app for logging existing app results."""
 
         if app is None:
             app = VirtualApp()
@@ -513,15 +505,17 @@ class TruVirtual(App):
                 app = VirtualApp(app)
             else:
                 raise ValueError(
-                    'Unknown type for `app`. '
-                    'Either dict or `trulens.core.app.virtual.VirtualApp` expected.'
+                    "Unknown type for `app`. "
+                    "Either dict or `trulens.core.app.virtual.VirtualApp` expected."
                 )
 
-        if kwargs.get('selector_nocheck') is False or kwargs.get(
-                'selector_check_warning') is True:
+        if (
+            kwargs.get("selector_nocheck") is False
+            or kwargs.get("selector_check_warning") is True
+        ):
             raise ValueError(
-                'Selector prechecking does not work with virtual apps. '
-                'The settings `selector_nocheck=True` and `selector_check_warning=False` are required.'
+                "Selector prechecking does not work with virtual apps. "
+                "The settings `selector_nocheck=True` and `selector_check_warning=False` are required."
             )
 
         super().__init__(app=app, **kwargs)
@@ -529,7 +523,7 @@ class TruVirtual(App):
     def add_record(
         self,
         record: mod_record_schema.Record,
-        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None
+        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
     ) -> mod_record_schema.Record:
         """Add the given record to the database and evaluate any pre-specified
         feedbacks on it.
@@ -554,7 +548,10 @@ class TruVirtual(App):
             ]
 
         # Wait for results if mode is WITH_APP.
-        if feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP and record.feedback_results is not None:
+        if (
+            feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP
+            and record.feedback_results is not None
+        ):
             futs = record.feedback_results
             futures.wait(futs)
 

@@ -30,23 +30,22 @@ class context_filter:
         ```
     """
 
-    def __init__(
-        self, feedback: Feedback, threshold: float, keyword_for_prompt: str
-    ):
+    def __init__(self, feedback: Feedback, threshold: float, keyword_for_prompt: str):
         self.feedback = feedback
         self.threshold = threshold
         self.keyword_for_prompt = keyword_for_prompt
 
     def __call__(self, func):
-
         def wrapper(*args, **kwargs):
             contexts = func(*args, **kwargs)
             with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
                 future_to_context = {
                     ex.submit(
-                        lambda context=context: self.
-                        feedback(kwargs[self.keyword_for_prompt], context)
-                    ): context for context in contexts
+                        lambda context=context: self.feedback(
+                            kwargs[self.keyword_for_prompt], context
+                        )
+                    ): context
+                    for context in contexts
                 }
                 filtered = []
                 for future in as_completed(future_to_context):
@@ -54,10 +53,11 @@ class context_filter:
                     result = future.result()
                     if not isinstance(result, float):
                         raise ValueError(
-                            'Guardrails can only be used with feedback functions that return a float.'
+                            "Guardrails can only be used with feedback functions that return a float."
                         )
-                    if (self.feedback.higher_is_better and result > self.threshold) or \
-                       (not self.feedback.higher_is_better and result < self.threshold):
+                    if (self.feedback.higher_is_better and result > self.threshold) or (
+                        not self.feedback.higher_is_better and result < self.threshold
+                    ):
                         filtered.append(context)
                 return filtered
 

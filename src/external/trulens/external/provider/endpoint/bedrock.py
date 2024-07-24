@@ -25,7 +25,6 @@ pp = pprint.PrettyPrinter()
 
 
 class BedrockCallback(EndpointCallback):
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_generation_chunk(self, response: Any) -> None:
@@ -47,29 +46,30 @@ class BedrockCallback(EndpointCallback):
                 }}'''}}
         """
 
-        chunk = response.get('chunk')
+        chunk = response.get("chunk")
         if chunk is None:
             return
 
-        data = chunk.get('bytes')
+        data = chunk.get("bytes")
         if data is None:
             return
 
         import json
+
         data = json.loads(data.decode())
 
-        metrics = data.get('amazon-bedrock-invocationMetrics')
+        metrics = data.get("amazon-bedrock-invocationMetrics")
         # Hopefully metrics are given only once at the last chunk so the below
         # adds are correct.
         if metrics is None:
             return
 
-        output_tokens = metrics.get('outputTokenCount')
+        output_tokens = metrics.get("outputTokenCount")
         if output_tokens is not None:
             self.cost.n_completion_tokens += int(output_tokens)
             self.cost.n_tokens += int(output_tokens)
 
-        input_tokens = metrics.get('inputTokenCount')
+        input_tokens = metrics.get("inputTokenCount")
         if input_tokens is not None:
             self.cost.n_prompt_tokens += int(input_tokens)
             self.cost.n_tokens += int(input_tokens)
@@ -99,24 +99,20 @@ class BedrockCallback(EndpointCallback):
         was_success = False
 
         if response is not None:
-            metadata = response.get('ResponseMetadata')
+            metadata = response.get("ResponseMetadata")
             if metadata is not None:
-                status = metadata.get('HTTPStatusCode')
+                status = metadata.get("HTTPStatusCode")
                 if status is not None and status == 200:
                     was_success = True
 
-                    headers = metadata.get('HTTPHeaders')
+                    headers = metadata.get("HTTPHeaders")
                     if headers is not None:
-                        output_tokens = headers.get(
-                            'x-amzn-bedrock-output-token-count'
-                        )
+                        output_tokens = headers.get("x-amzn-bedrock-output-token-count")
                         if output_tokens is not None:
                             self.cost.n_completion_tokens += int(output_tokens)
                             self.cost.n_tokens += int(output_tokens)
 
-                        input_tokens = headers.get(
-                            'x-amzn-bedrock-input-token-count'
-                        )
+                        input_tokens = headers.get("x-amzn-bedrock-input-token-count")
                         if input_tokens is not None:
                             self.cost.n_prompt_tokens += int(input_tokens)
                             self.cost.n_tokens += int(input_tokens)
@@ -126,8 +122,8 @@ class BedrockCallback(EndpointCallback):
 
         else:
             logger.warning(
-                f'Could not parse bedrock response outcome to track usage.\n'
-                f'{pp.pformat(response)}'
+                f"Could not parse bedrock response outcome to track usage.\n"
+                f"{pp.pformat(response)}"
             )
 
 
@@ -150,35 +146,30 @@ class BedrockEndpoint(Endpoint):
     client: Any = pydantic.Field(None, exclude=True)
 
     def __new__(cls, *args, **kwargs):
-        return super().__new__(cls, *args, name='bedrock', **kwargs)
+        return super().__new__(cls, *args, name="bedrock", **kwargs)
 
     def __str__(self) -> str:
-        return f'BedrockEndpoint(region_name={self.region_name})'
+        return f"BedrockEndpoint(region_name={self.region_name})"
 
     def __repr__(self) -> str:
-        return f'BedrockEndpoint(region_name={self.region_name})'
+        return f"BedrockEndpoint(region_name={self.region_name})"
 
     def __init__(
-        self,
-        *args,
-        name: str = 'bedrock',
-        region_name: str = 'us-east-1',
-        **kwargs
+        self, *args, name: str = "bedrock", region_name: str = "us-east-1", **kwargs
     ):
-
         # SingletonPerName behaviour but only if client not provided.
-        if hasattr(self, 'region_name') and 'client' not in kwargs:
+        if hasattr(self, "region_name") and "client" not in kwargs:
             return
 
         # For constructing BedrockClient below:
         client_kwargs = {k: v for k, v in kwargs.items()}  # copy
-        client_kwargs['region_name'] = region_name
+        client_kwargs["region_name"] = region_name
 
-        kwargs['region_name'] = region_name
+        kwargs["region_name"] = region_name
 
         # for Endpoint, SingletonPerName:
-        kwargs['name'] = name
-        kwargs['callback_class'] = BedrockCallback
+        kwargs["name"] = name
+        kwargs["callback_class"] = BedrockCallback
 
         super().__init__(*args, **kwargs)
 
@@ -187,46 +178,46 @@ class BedrockEndpoint(Endpoint):
         if not safe_hasattr(ClientCreator._create_api_method, INSTRUMENT):
             self._instrument_class_wrapper(
                 ClientCreator,
-                wrapper_method_name='_create_api_method',
-                wrapped_method_filter=lambda f: f.__name__ in
-                ['invoke_model', 'invoke_model_with_response_stream']
+                wrapper_method_name="_create_api_method",
+                wrapped_method_filter=lambda f: f.__name__
+                in ["invoke_model", "invoke_model_with_response_stream"],
             )
 
-        if 'client' in kwargs:
+        if "client" in kwargs:
             # `self.client` should be already set by super().__init__.
 
             if not safe_hasattr(self.client.invoke_model, INSTRUMENT):
                 # If they user instantiated the client before creating our
                 # endpoint, the above instrumentation will not have attached our
                 # instruments. Do it here instead:
-                self._instrument_class(type(self.client), 'invoke_model')
+                self._instrument_class(type(self.client), "invoke_model")
                 self._instrument_class(
-                    type(self.client), 'invoke_model_with_response_stream'
+                    type(self.client), "invoke_model_with_response_stream"
                 )
 
         else:
             # This one will be instrumented by our hacks onto _create_api_method above:
 
-            self.client = boto3.client(
-                service_name='bedrock-runtime', **client_kwargs
-            )
+            self.client = boto3.client(service_name="bedrock-runtime", **client_kwargs)
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
-        callback: Optional[EndpointCallback]
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: Any,
+        callback: Optional[EndpointCallback],
     ) -> None:
-
-        if func.__name__ == 'invoke_model':
+        if func.__name__ == "invoke_model":
             self.global_callback.handle_generation(response=response)
             if callback is not None:
                 callback.handle_generation(response=response)
 
-        elif func.__name__ == 'invoke_model_with_response_stream':
+        elif func.__name__ == "invoke_model_with_response_stream":
             self.global_callback.handle_generation(response=response)
             if callback is not None:
                 callback.handle_generation(response=response)
 
-            body = response.get('body')
+            body = response.get("body")
             if body is not None and isinstance(body, Iterable):
                 for chunk in body:
                     self.global_callback.handle_generation_chunk(response=chunk)
@@ -235,9 +226,8 @@ class BedrockEndpoint(Endpoint):
 
             else:
                 logger.warning(
-                    'No iterable body found in `invoke_model_with_response_stream` response.'
+                    "No iterable body found in `invoke_model_with_response_stream` response."
                 )
 
         else:
-
-            logger.warning(f'Unhandled wrapped call to %s.', func.__name__)
+            logger.warning(f"Unhandled wrapped call to %s.", func.__name__)

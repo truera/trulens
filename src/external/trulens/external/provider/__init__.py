@@ -22,13 +22,13 @@ with OptionalImports(messages=REQUIREMENT_CORTEX):
     from trulens.external.provider.cortex import Cortex
 
 __all__ = [
-    'LLMProvider',
-    'OpenAI',
-    'AzureOpenAI',
-    'Huggingface',
-    'HuggingfaceLocal',
-    'LiteLLM',
-    'Bedrock',
-    'Langchain',
-    'Cortex',
+    "LLMProvider",
+    "OpenAI",
+    "AzureOpenAI",
+    "Huggingface",
+    "HuggingfaceLocal",
+    "LiteLLM",
+    "Bedrock",
+    "Langchain",
+    "Cortex",
 ]

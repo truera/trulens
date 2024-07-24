@@ -4,17 +4,16 @@ from trulens.core import __version__
 from trulens.utils.imports import static_resource
 
 
-def set_page_config(page_title='TruLens'):
-
+def set_page_config(page_title="TruLens"):
     st.set_page_config(
         page_title=page_title,
-        page_icon='https://www.trulens.org/img/favicon.ico',
-        layout='wide'
+        page_icon="https://www.trulens.org/img/favicon.ico",
+        layout="wide",
     )
 
-    logo = static_resource('dashboard', 'ux/trulens_logo.svg')
+    logo = static_resource("dashboard", "ux/trulens_logo.svg")
 
-    st.logo(str(logo), link='https://www.trulens.org/')
+    st.logo(str(logo), link="https://www.trulens.org/")
 
     st.markdown(
         f"""
@@ -62,10 +61,10 @@ def set_page_config(page_title='TruLens'):
     with st.sidebar:
         version_col, user_feedback_col = st.columns(2)
         with version_col:
-            st.text(f'{__package__}\nv{__version__}')
+            st.text(f"{__package__}\nv{__version__}")
         with user_feedback_col:
             st.link_button(
-                'Share Feedback',
-                'https://forms.gle/HAc4HBk5nZRpgw7C6',
-                help='Help us improve TruLens!'
+                "Share Feedback",
+                "https://forms.gle/HAc4HBk5nZRpgw7C6",
+                help="Help us improve TruLens!",
             )

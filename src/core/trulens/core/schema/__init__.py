@@ -29,10 +29,10 @@ from trulens.core.schema.record import Record
 from trulens.core.schema.select import Select
 
 __all__ = [
-    'AppDefinition',
-    'Select',
-    'FeedbackDefinition',
-    'FeedbackResult',
-    'FeedbackMode',
-    'Record',
+    "AppDefinition",
+    "Select",
+    "FeedbackDefinition",
+    "FeedbackResult",
+    "FeedbackMode",
+    "Record",
 ]

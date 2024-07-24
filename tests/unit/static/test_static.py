@@ -25,36 +25,37 @@ from tests.unit.test import requiredonly_test
 # optional in which case it should no longer be considered optional.
 
 optional_mods = dict(
-    pinecone=['trulens_eval.Example_TruBot'],
-    ipywidgets=['trulens_eval.appui'],
+    pinecone=["trulens_eval.Example_TruBot"],
+    ipywidgets=["trulens_eval.appui"],
     llama_index=[
-        'trulens_eval.tru_llama', 'trulens_eval.utils.llama',
-        'trulens_eval.guardrails.llama'
+        "trulens_eval.tru_llama",
+        "trulens_eval.utils.llama",
+        "trulens_eval.guardrails.llama",
     ],
     boto3=[
-        'trulens_eval.feedback.provider.bedrock',
-        'trulens_eval.feedback.provider.endpoint.bedrock'
+        "trulens_eval.feedback.provider.bedrock",
+        "trulens_eval.feedback.provider.endpoint.bedrock",
     ],
     litellm=[
-        'trulens_eval.feedback.provider.litellm',
-        'trulens_eval.feedback.provider.endpoint.litellm',
+        "trulens_eval.feedback.provider.litellm",
+        "trulens_eval.feedback.provider.endpoint.litellm",
     ],
     openai=[
-        'trulens_eval.feedback.provider.openai',
-        'trulens_eval.feedback.provider.endpoint.openai'
+        "trulens_eval.feedback.provider.openai",
+        "trulens_eval.feedback.provider.endpoint.openai",
     ],
-    nemoguardrails=['trulens_eval.tru_rails']
+    nemoguardrails=["trulens_eval.tru_rails"],
 )
 
 # snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
 if sys.version_info < (3, 12):
-    optional_mods['snowflake'] = [
-        'trulens_eval.feedback.provider.cortex',
-        'trulens_eval.feedback.provider.endpoint.cortex'
+    optional_mods["snowflake"] = [
+        "trulens_eval.feedback.provider.cortex",
+        "trulens_eval.feedback.provider.endpoint.cortex",
     ]
 else:
     assert not module_installed(
-        'snowflake-snowpark-python'
+        "snowflake-snowpark-python"
     ), "Snowflake should not be installed until it's available in Python 3.12."
 
 optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
@@ -66,52 +67,51 @@ optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 def get_all_modules(path: Path, startswith=None):
     ret = []
     for modinfo in pkgutil.iter_modules([str(path)]):
-
         if startswith is not None and not modinfo.name.startswith(startswith):
             continue
 
         ret.append(modinfo.name)
         if modinfo.ispkg:
             for submod in get_all_modules(path / modinfo.name, startswith=None):
-                submodqualname = modinfo.name + '.' + submod
+                submodqualname = modinfo.name + "." + submod
 
-                if startswith is not None and not submodqualname.startswith(
-                        startswith):
+                if startswith is not None and not submodqualname.startswith(startswith):
                     continue
 
-                ret.append(modinfo.name + '.' + submod)
+                ret.append(modinfo.name + "." + submod)
 
     return ret
 
 
 # Get all modules inside trulens_eval:
 all_trulens_mods = get_all_modules(
-    Path(trulens_eval.__file__).parent.parent, startswith='trulens_eval'
+    Path(trulens_eval.__file__).parent.parent, startswith="trulens_eval"
 )
 
 # Things which should not be imported at all.
 not_mods = [
-    'trulens_eval.database.migrations.env'  # can only be executed by alembic
+    "trulens_eval.database.migrations.env"  # can only be executed by alembic
 ]
 
 if sys.version_info >= (3, 12):
     not_mods.extend(
         [
-            'snowflake', 'trulens_eval.feedback.provider.cortex',
-            'trulens_eval.feedback.provider.endpoint.cortex'
+            "snowflake",
+            "trulens_eval.feedback.provider.cortex",
+            "trulens_eval.feedback.provider.endpoint.cortex",
         ]
     )
 
 # Importing any of these should be ok regardless of optional packages. These are
 # all modules not mentioned in optional modules above.
 base_mods = [
-    mod for mod in all_trulens_mods
+    mod
+    for mod in all_trulens_mods
     if mod not in optional_mods_flat and mod not in not_mods
 ]
 
 
 class TestStatic(TestCase):
-
     def setUp(self):
         pass
 
@@ -140,7 +140,7 @@ class TestStatic(TestCase):
                 if isinstance(cls, Dummy):  # (1)
                     original_exception = cls.original_exception
                     self.fail(
-                        f'Instrumented class {cls.name} is dummy meaning it was not importable. Original expception={original_exception}'
+                        f"Instrumented class {cls.name} is dummy meaning it was not importable. Original expception={original_exception}"
                     )
 
                 # Disabled #2 test right now because of too many failures. We
@@ -155,9 +155,9 @@ class TestStatic(TestCase):
                             )
                 """
 
-                if not i.to_instrument_module(cls.__module__):  #(3)
+                if not i.to_instrument_module(cls.__module__):  # (3)
                     self.fail(
-                        f'Instrumented class {cls} is in module {cls.__module__} which is not to be instrumented.'
+                        f"Instrumented class {cls} is in module {cls.__module__} which is not to be instrumented."
                     )
 
     def test_instrumentation_langchain(self):
@@ -196,8 +196,7 @@ class TestStatic(TestCase):
                 # First make sure the optional package is not installed.
                 self.assertFalse(
                     module_installed(opt),
-                    msg=
-                    f'Module {opt} was not supposed to be installed for this test.'
+                    msg=f"Module {opt} was not supposed to be installed for this test.",
                 )
 
                 for mod in mods:
@@ -210,10 +209,9 @@ class TestStatic(TestCase):
                         # produce as part of the optional imports scheme (see
                         # utils/imports.py:format_import_errors).
                         self.assertIn(
-                            'You should be able to install',
+                            "You should be able to install",
                             context.exception.args[0],
-                            msg=
-                            'Exception message did not have the expected content.'
+                            msg="Exception message did not have the expected content.",
                         )
 
     @optional_test
@@ -228,7 +226,7 @@ class TestStatic(TestCase):
                 # First make sure the optional package is installed.
                 self.assertTrue(
                     module_installed(opt),
-                    f'Module {opt} was supposed to be installed for this test.'
+                    f"Module {opt} was supposed to be installed for this test.",
                 )
 
                 for mod in mods:
@@ -237,5 +235,5 @@ class TestStatic(TestCase):
                         __import__(mod)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

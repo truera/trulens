@@ -2,6 +2,7 @@
 Utilities for langchain apps. Includes component categories that organize
 various langchain classes and example classes:
 """
+
 from typing import Type
 
 from trulens.core.app import base
@@ -15,38 +16,35 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
 
 
 class Prompt(base.Prompt, base.LangChainComponent):
-
     @property
     def template(self) -> str:
-        return self.json['template']
+        return self.json["template"]
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['template']))
+        return super().unsorted_parameters(skip=set(["template"]))
 
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name='langchain.prompts.base',
-            class_name='BasePromptTemplate'
+            module_name="langchain.prompts.base", class_name="BasePromptTemplate"
         ) or cls.noserio_issubclass(
-            module_name='langchain.schema.prompt_template',
-            class_name='BasePromptTemplate'
+            module_name="langchain.schema.prompt_template",
+            class_name="BasePromptTemplate",
         )  # langchain >= 0.230
 
 
 class LLM(base.LLM, base.LangChainComponent):
-
     @property
     def model_name(self) -> str:
-        return self.json['model_name']
+        return self.json["model_name"]
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['model_name']))
+        return super().unsorted_parameters(skip=set(["model_name"]))
 
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name='langchain.llms.base', class_name='BaseLLM'
+            module_name="langchain.llms.base", class_name="BaseLLM"
         )
 
 
@@ -63,7 +61,7 @@ def constructor_of_class(cls: Class) -> Type[base.LangChainComponent]:
         if view.class_is(cls):
             return view
 
-    raise TypeError(f'Unknown llama_index component type with class {cls}')
+    raise TypeError(f"Unknown llama_index component type with class {cls}")
 
 
 def component_of_json(json: JSON) -> base.LangChainComponent:

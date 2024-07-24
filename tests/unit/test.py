@@ -13,7 +13,7 @@ from trulens.utils.serial import Lens
 
 # Env var that were to evaluate to true indicates that optional tests are to be
 # run.
-OPTIONAL_ENV_VAR = 'TEST_OPTIONAL'
+OPTIONAL_ENV_VAR = "TEST_OPTIONAL"
 
 
 def optional_test(testmethodorclass):
@@ -23,9 +23,9 @@ def optional_test(testmethodorclass):
     optional packages have been installed.
     """
 
-    return unittest.skipIf(
-        not os.environ.get(OPTIONAL_ENV_VAR), 'optional test'
-    )(testmethodorclass)
+    return unittest.skipIf(not os.environ.get(OPTIONAL_ENV_VAR), "optional test")(
+        testmethodorclass
+    )
 
 
 def requiredonly_test(testmethodorclass):
@@ -35,9 +35,9 @@ def requiredonly_test(testmethodorclass):
     specifically when optional imports are not installed.
     """
 
-    return unittest.skipIf(
-        os.environ.get(OPTIONAL_ENV_VAR), 'not an optional test'
-    )(testmethodorclass)
+    return unittest.skipIf(os.environ.get(OPTIONAL_ENV_VAR), "not an optional test")(
+        testmethodorclass
+    )
 
 
 def module_installed(module: str) -> bool:
@@ -49,14 +49,8 @@ def module_installed(module: str) -> bool:
 
 
 class JSONTestCase(TestCase):
-
     def assertJSONEqual(
-        self,
-        j1,
-        j2,
-        path: Lens = None,
-        skips=None,
-        numeric_places: int = 7
+        self, j1, j2, path: Lens = None, skips=None, numeric_places: int = 7
     ) -> None:
         skips = skips or set([])
         path = path or Lens()
@@ -77,7 +71,6 @@ class JSONTestCase(TestCase):
                 self.assertEqual(j1, j2, ps)
 
         elif isinstance(j1, Dict):
-
             ks1 = set(j1.keys())
             ks2 = set(j2.keys())
 

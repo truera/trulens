@@ -14,11 +14,24 @@ import queue
 import sys
 from types import ModuleType
 import typing
-from typing import (Any, Awaitable, Callable, Dict, Generator, Generic,
-                    Hashable, Iterator, List, Optional, Sequence, Type,
-                    TypeVar, Union)
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Generator,
+    Generic,
+    Hashable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    TypeVar,
+    Union,
+)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
@@ -43,7 +56,7 @@ else:
     # classes imported above cannot have type args which is annoying for type
     # annotations. We use these fake ones instead.
 
-    A = TypeVar('A')
+    A = TypeVar("A")
 
     # HACK011
     class Future(Generic[A], futures.Future):
@@ -66,7 +79,7 @@ class EmptyType(type):
     """A type that cannot be instantiated or subclassed."""
 
     def __new__(mcs, *args, **kwargs):
-        raise ValueError('EmptyType cannot be instantiated.')
+        raise ValueError("EmptyType cannot be instantiated.")
 
     def __instancecheck__(cls, __instance: Any) -> bool:
         return False
@@ -77,6 +90,7 @@ class EmptyType(type):
 
 if sys.version_info >= (3, 10):
     import types
+
     NoneType = types.NoneType
     """Alias for [types.NoneType][] .
 
@@ -99,10 +113,10 @@ pp = PrettyPrinter()
 def class_name(obj: Union[Type, Any]) -> str:
     """Get the class name of the given object or instance."""
 
-    if hasattr(obj, '__name__'):
+    if hasattr(obj, "__name__"):
         return obj.__name__
 
-    if hasattr(obj, '__class__'):
+    if hasattr(obj, "__class__"):
         return obj.__class__.__name__
 
     return str(obj)
@@ -114,24 +128,22 @@ def module_name(obj: Union[ModuleType, Type, Any]) -> str:
     if isinstance(obj, ModuleType):
         return obj.__name__
 
-    if hasattr(obj, '__module__'):
+    if hasattr(obj, "__module__"):
         return obj.__module__  # already a string name
 
-    return 'unknown module'
+    return "unknown module"
 
 
 def callable_name(c: Callable):
     """Get the name of the given callable."""
 
     if not isinstance(c, Callable):
-        raise ValueError(
-            f'Expected a callable. Got {class_name(type(c))} instead.'
-        )
+        raise ValueError(f"Expected a callable. Got {class_name(type(c))} instead.")
 
-    if safe_hasattr(c, '__name__'):
+    if safe_hasattr(c, "__name__"):
         return c.__name__
 
-    if safe_hasattr(c, '__call__'):
+    if safe_hasattr(c, "__call__"):
         return callable_name(c.__call__)
 
     return str(c)
@@ -140,7 +152,7 @@ def callable_name(c: Callable):
 def id_str(obj: Any) -> str:
     """Get the id of the given object as a string in hex."""
 
-    return f'0x{id(obj):x}'
+    return f"0x{id(obj):x}"
 
 
 def is_really_coroutinefunction(func) -> bool:
@@ -160,8 +172,7 @@ def is_really_coroutinefunction(func) -> bool:
     if inspect.iscoroutinefunction(func):
         return True
 
-    if hasattr(func, '__wrapped__') and inspect.iscoroutinefunction(
-            func.__wrapped__):
+    if hasattr(func, "__wrapped__") and inspect.iscoroutinefunction(func.__wrapped__):
         return True
 
     return False
@@ -176,12 +187,12 @@ def safe_signature(func_or_obj: Any):
     try:
         assert isinstance(
             func_or_obj, Callable
-        ), f'Expected a Callable. Got {type(func_or_obj)} instead.'
+        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
 
         return inspect.signature(func_or_obj)
 
     except Exception as e:
-        if safe_hasattr(func_or_obj, '__call__'):
+        if safe_hasattr(func_or_obj, "__call__"):
             # If given an obj that is callable (has __call__ defined), we want to
             # return signature of that call instead of letting inspect.signature
             # explore that object further. Doing so may produce exceptions due to
@@ -241,29 +252,29 @@ def code_line(func, show_source: bool = False) -> Optional[str]:
     `func`."""
 
     if isinstance(func, inspect.FrameInfo):
-        ret = f'{func.filename}:{func.lineno}'
+        ret = f"{func.filename}:{func.lineno}"
         if show_source:
-            ret += '\n'
+            ret += "\n"
             for line in func.code_context:
-                ret += '\t' + line
+                ret += "\t" + line
 
         return ret
 
     if inspect.isframe(func):
         code = func.f_code
-        ret = f'{func.f_code.co_filename}:{func.f_code.co_firstlineno}'
+        ret = f"{func.f_code.co_filename}:{func.f_code.co_firstlineno}"
 
-    elif safe_hasattr(func, '__code__'):
+    elif safe_hasattr(func, "__code__"):
         code = func.__code__
-        ret = f'{code.co_filename}:{code.co_firstlineno}'
+        ret = f"{code.co_filename}:{code.co_firstlineno}"
 
     else:
         return None
 
     if show_source:
-        ret += '\n'
+        ret += "\n"
         for line in inspect.getsourcelines(func)[0]:
-            ret += '\t' + str(line)
+            ret += "\t" + str(line)
 
     return ret
 
@@ -285,20 +296,17 @@ def for_all_methods(decorator, _except: Optional[List[str]] = None):
     """
 
     def decorate(cls):
-
-        for attr_name, attr in cls.__dict__.items(
-        ):  # does not include classmethods
-
+        for attr_name, attr in cls.__dict__.items():  # does not include classmethods
             if not inspect.isfunction(attr):
                 continue  # skips non-method attributes
 
-            if attr_name.startswith('_'):
+            if attr_name.startswith("_"):
                 continue  # skips private methods
 
             if _except is not None and attr_name in _except:
                 continue
 
-            logger.debug('Decorating %s', attr_name)
+            logger.debug("Decorating %s", attr_name)
             setattr(cls, attr_name, decorator(attr))
 
         return cls
@@ -312,7 +320,6 @@ def run_before(callback: Callable):
     """
 
     def decorator(func):
-
         def wrapper(*args, **kwargs):
             callback(*args, **kwargs)
             return func(*args, **kwargs)
@@ -325,10 +332,10 @@ def run_before(callback: Callable):
 # Python call stack utilities
 
 # Attribute name for storing a callstack in asyncio tasks.
-STACK = '__tru_stack'
+STACK = "__tru_stack"
 
 
-def caller_frame(offset=0) -> 'frame':
+def caller_frame(offset=0) -> "frame":
     """
     Get the caller's (of this function) frame. See
     https://docs.python.org/3/reference/datamodel.html#frame-objects .
@@ -338,8 +345,7 @@ def caller_frame(offset=0) -> 'frame':
 
 
 def caller_frameinfo(
-    offset: int = 0,
-    skip_module: Optional[str] = 'trulens'
+    offset: int = 0, skip_module: Optional[str] = "trulens"
 ) -> Optional[inspect.FrameInfo]:
     """
     Get the caller's (of this function) frameinfo. See
@@ -351,16 +357,16 @@ def caller_frameinfo(
         skip_module: Skip frames from the given module. Default is "trulens".
     """
 
-    for finfo in inspect.stack()[offset + 1:]:
+    for finfo in inspect.stack()[offset + 1 :]:
         if skip_module is None:
             return finfo
-        if not finfo.frame.f_globals['__name__'].startswith(skip_module):
+        if not finfo.frame.f_globals["__name__"].startswith(skip_module):
             return finfo
 
     return None
 
 
-def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence['frame']:
+def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence["frame"]:
     """
     A task factory that annotates created tasks with stacks of their parents.
 
@@ -401,7 +407,7 @@ def tru_new_event_loop():
 asyncio.new_event_loop = tru_new_event_loop
 
 
-def get_task_stack(task: asyncio.Task) -> Sequence['frame']:
+def get_task_stack(task: asyncio.Task) -> Sequence["frame"]:
     """
     Get the annotated stack (if available) on the given task.
     """
@@ -412,8 +418,7 @@ def get_task_stack(task: asyncio.Task) -> Sequence['frame']:
         return task.get_stack()[::-1]
 
 
-def merge_stacks(s1: Sequence['frame'],
-                 s2: Sequence['frame']) -> Sequence['frame']:
+def merge_stacks(s1: Sequence["frame"], s2: Sequence["frame"]) -> Sequence["frame"]:
     """
     Assuming `s1` is a subset of `s2`, combine the two stacks in presumed call
     order.
@@ -438,7 +443,7 @@ def merge_stacks(s1: Sequence['frame'],
     return ret
 
 
-def stack_with_tasks() -> Sequence['frame']:
+def stack_with_tasks() -> Sequence["frame"]:
     """
     Get the current stack (not including this function) with frames reaching
     across Tasks.
@@ -478,7 +483,7 @@ def get_all_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
     offset: Optional[int] = 1,
-    skip: Optional[Any] = None  # really frame
+    skip: Optional[Any] = None,  # really frame
 ) -> Iterator[Any]:
     """Find locals in call stack by name.
 
@@ -525,8 +530,10 @@ def get_all_local_in_call_stack(
 
         if id(f.f_code) == id(_future_target_wrapper.__code__):
             locs = f.f_locals
-            assert 'pre_start_stack' in locs, 'Pre thread start stack expected but not found.'
-            for fi in locs['pre_start_stack']:
+            assert (
+                "pre_start_stack" in locs
+            ), "Pre thread start stack expected but not found."
+            for fi in locs["pre_start_stack"]:
                 q.put(fi.frame)
 
             continue
@@ -536,9 +543,9 @@ def get_all_local_in_call_stack(
             continue
 
         if func(f.f_code):
-            logger.debug(f'Looking via {func.__name__}; found {f}')
+            logger.debug(f"Looking via {func.__name__}; found {f}")
             if skip is not None and f == skip:
-                logger.debug(f'Skipping.')
+                logger.debug(f"Skipping.")
                 continue
 
             locs = f.f_locals
@@ -554,7 +561,7 @@ def get_first_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
     offset: Optional[int] = 1,
-    skip: Optional[Any] = None  # actually frame
+    skip: Optional[Any] = None,  # actually frame
 ) -> Optional[Any]:
     """
     Get the value of the local variable named `key` in the stack at the nearest
@@ -573,14 +580,10 @@ def get_first_local_in_call_stack(
 
     try:
         return next(
-            iter(
-                get_all_local_in_call_stack(
-                    key, func, offset=offset + 1, skip=skip
-                )
-            )
+            iter(get_all_local_in_call_stack(key, func, offset=offset + 1, skip=skip))
         )
     except StopIteration:
-        logger.debug('no frames found')
+        logger.debug("no frames found")
         return None
 
 
@@ -612,7 +615,7 @@ class OpaqueWrapper(Generic[T]):
         raise self._e
 
     def __setattr__(self, name, value):
-        if name in ['_obj', '_e']:
+        if name in ["_obj", "_e"]:
             return super().__setattr__(name, value)
         raise self._e
 
@@ -623,7 +626,7 @@ class OpaqueWrapper(Generic[T]):
 def wrap_awaitable(
     awaitable: Awaitable[T],
     on_await: Optional[Callable[[], Any]] = None,
-    on_done: Optional[Callable[[T], Any]] = None
+    on_done: Optional[Callable[[T], Any]] = None,
 ) -> Awaitable[T]:
     """Wrap an awaitable in another awaitable that will call callbacks before
     and after the given awaitable finishes.
@@ -659,7 +662,7 @@ def wrap_generator(
     gen: Generator[T, None, None],
     on_iter: Optional[Callable[[], Any]] = None,
     on_next: Optional[Callable[[T], Any]] = None,
-    on_done: Optional[Callable[[], Any]] = None
+    on_done: Optional[Callable[[], Any]] = None,
 ) -> Generator[T, None, None]:
     """Wrap a generator in another generator that will call callbacks at various
     points in the generation process.
@@ -693,7 +696,7 @@ def wrap_generator(
 
 # Class utilities
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclasses.dataclass
@@ -732,14 +735,16 @@ class SingletonInfo(Generic[T]):
 
         logger.warning(
             (
-                'Singleton instance of type %s already created at:\n%s\n'
-                'You can delete the singleton by calling `<instance>.delete_singleton()` or \n'
+                "Singleton instance of type %s already created at:\n%s\n"
+                "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
                 f"""  ```python
   from trulens.utils.python import SingletonPerName
   SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
   ```
             """
-            ), self.cls.__name__, code_line(self.frameinfo, show_source=True)
+            ),
+            self.cls.__name__,
+            code_line(self.frameinfo, show_source=True),
         )
 
 
@@ -766,15 +771,10 @@ class SingletonPerName(Generic[T]):
         if k in SingletonPerName._instances:
             SingletonPerName._instances[k].warning()
         else:
-            raise RuntimeError(
-                f'Instance of singleton type/name {k} does not exist.'
-            )
+            raise RuntimeError(f"Instance of singleton type/name {k} does not exist.")
 
     def __new__(
-        cls: Type[SingletonPerName[T]],
-        *args,
-        name: Optional[str] = None,
-        **kwargs
+        cls: Type[SingletonPerName[T]], *args, name: Optional[str] = None, **kwargs
     ) -> SingletonPerName[T]:
         """
         Create the singleton instance if it doesn't already exist and return it.
@@ -784,8 +784,9 @@ class SingletonPerName(Generic[T]):
 
         if k not in cls._instances:
             logger.debug(
-                '*** Creating new %s singleton instance for name = %s ***',
-                cls.__name__, name
+                "*** Creating new %s singleton instance for name = %s ***",
+                cls.__name__,
+                name,
             )
             # If exception happens here, the instance should not be added to
             # _instances.
@@ -834,4 +835,4 @@ class SingletonPerName(Generic[T]):
             del SingletonPerName._id_to_name_map[id_]
             del SingletonPerName._instances[(self.__class__.__name__, name)]
         else:
-            logger.warning('Instance %s not found in our records.', self)
+            logger.warning("Instance %s not found in our records.", self)

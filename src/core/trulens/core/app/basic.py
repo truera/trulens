@@ -53,14 +53,14 @@ class TruBasicCallableInstrument(Instrument):
         CLASSES = lambda: {TruWrapperApp}
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, ClassFilter] = {'_call': TruWrapperApp}
+        METHODS: Dict[str, ClassFilter] = {"_call": TruWrapperApp}
 
     def __init__(self, *args, **kwargs):
         super().__init__(
             include_classes=TruBasicCallableInstrument.Default.CLASSES(),
             include_methods=TruBasicCallableInstrument.Default.METHODS,
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -108,8 +108,7 @@ class TruBasicApp(App):
     """The app to be instrumented."""
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.
-        of_callable(TruWrapperApp._call)
+        default_factory=lambda: FunctionOrMethod.of_callable(TruWrapperApp._call)
     )
     """The root callable to be instrumented.
 
@@ -119,16 +118,18 @@ class TruBasicApp(App):
         self,
         text_to_text: Optional[Callable[[str], str]] = None,
         app: Optional[TruWrapperApp] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
         else:
-            assert app is not None, 'Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`.'
+            assert (
+                app is not None
+            ), "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
 
-        kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app)
-        kwargs['instrument'] = TruBasicCallableInstrument(app=self)
+        kwargs["app"] = app
+        kwargs["root_class"] = Class.of_object(app)
+        kwargs["instrument"] = TruBasicCallableInstrument(app=self)
 
         super().__init__(**kwargs)
 
@@ -140,7 +141,6 @@ class TruBasicApp(App):
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
-
         if func == getattr(TruWrapperApp._call, Instrument.INSTRUMENT):
             # If func is the wrapper app _call, replace the signature and
             # bindings based on the actual containing callable instead of
@@ -160,8 +160,7 @@ class TruBasicApp(App):
         return super().main_input(func, sig, bindings)
 
     def call_with_record(self, *args, **kwargs) -> None:
-
-        self._throw_dep_message(method='call', is_async=False, with_record=True)
+        self._throw_dep_message(method="call", is_async=False, with_record=True)
 
 
 import trulens  # for App class annotations

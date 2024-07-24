@@ -7,19 +7,19 @@ repos:
       - id: check-yaml
       - id: debug-statements
       - id: check-merge-conflict
-      - id: double-quote-string-fixer
       - id: end-of-file-fixer
 -   repo: https://github.com/fastai/nbdev
     rev: 2.3.25
     hooks:
       - id: nbdev_clean
--   repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.5.4
     hooks:
-      - id: isort
-        args: [--profile, google]
--   repo: https://github.com/google/yapf
-    rev: v0.40.2
-    hooks:
-    -   id: yapf
-        args: [--style, .style.yapf, -r, -i, --verbose, --parallel]
+      # Run the linter.
+      # - id: ruff
+      #   types_or: [ python, pyi, jupyter ]
+      #   args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
+        types_or: [ python, pyi, jupyter ]

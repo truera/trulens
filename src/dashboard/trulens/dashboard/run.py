@@ -18,7 +18,7 @@ from trulens.utils.imports import static_resource
 def find_unused_port() -> int:
     """Find an unused port."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
+        s.bind(("", 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
 
@@ -28,7 +28,7 @@ def run_dashboard(
     port: Optional[int] = None,
     address: Optional[str] = None,
     force: bool = False,
-    _dev: Optional[Path] = None
+    _dev: Optional[Path] = None,
 ) -> Process:
     """Run a streamlit dashboard to view logged results and apps.
 
@@ -56,78 +56,77 @@ def run_dashboard(
 
     """
 
-    IN_COLAB = 'google.colab' in sys.modules
+    IN_COLAB = "google.colab" in sys.modules
     if IN_COLAB and address is not None:
-        raise ValueError('`address` argument cannot be used in colab.')
+        raise ValueError("`address` argument cannot be used in colab.")
 
     if force:
         stop_dashboard(force=force)
 
-    print('Starting dashboard ...')
+    print("Starting dashboard ...")
 
     # Create .streamlit directory if it doesn't exist
-    streamlit_dir = os.path.join(os.getcwd(), '.streamlit')
+    streamlit_dir = os.path.join(os.getcwd(), ".streamlit")
     os.makedirs(streamlit_dir, exist_ok=True)
 
     # Create config.toml file path
-    config_path = os.path.join(streamlit_dir, 'config.toml')
+    config_path = os.path.join(streamlit_dir, "config.toml")
 
     # Check if the file already exists
     if not os.path.exists(config_path):
-        with open(config_path, 'w') as f:
-            f.write('[theme]\n')
+        with open(config_path, "w") as f:
+            f.write("[theme]\n")
             f.write('primaryColor="#0A2C37"\n')
             f.write('backgroundColor="#FFFFFF"\n')
             f.write('secondaryBackgroundColor="F5F5F5"\n')
             f.write('textColor="#0A2C37"\n')
             f.write('font="sans serif"\n')
     else:
-        print('Config file already exists. Skipping writing process.')
+        print("Config file already exists. Skipping writing process.")
 
     # Create credentials.toml file path
-    cred_path = os.path.join(streamlit_dir, 'credentials.toml')
+    cred_path = os.path.join(streamlit_dir, "credentials.toml")
 
     # Check if the file already exists
     if not os.path.exists(cred_path):
-        with open(cred_path, 'w') as f:
-            f.write('[general]\n')
+        with open(cred_path, "w") as f:
+            f.write("[general]\n")
             f.write('email=""\n')
     else:
-        print('Credentials file already exists. Skipping writing process.')
+        print("Credentials file already exists. Skipping writing process.")
 
-    #run leaderboard with subprocess
-    leaderboard_path = static_resource('dashboard', 'Leaderboard.py')
+    # run leaderboard with subprocess
+    leaderboard_path = static_resource("dashboard", "Leaderboard.py")
 
     if Tru._dashboard_proc is not None:
-        print('Dashboard already running at path:', Tru._dashboard_urls)
+        print("Dashboard already running at path:", Tru._dashboard_urls)
         return Tru._dashboard_proc
 
     env_opts = {}
     if _dev is not None:
-        env_opts['env'] = os.environ
-        env_opts['env']['PYTHONPATH'] = str(_dev)
+        env_opts["env"] = os.environ
+        env_opts["env"]["PYTHONPATH"] = str(_dev)
 
     if port is None:
         port = find_unused_port()
 
-    args = ['streamlit', 'run', '--server.headless=True']
+    args = ["streamlit", "run", "--server.headless=True"]
     if port is not None:
-        args.append(f'--server.port={port}')
+        args.append(f"--server.port={port}")
     if address is not None:
-        args.append(f'--server.address={address}')
+        args.append(f"--server.address={address}")
 
     args += [
-        leaderboard_path, '--', '--database-url',
+        leaderboard_path,
+        "--",
+        "--database-url",
         tru.db.engine.url.render_as_string(hide_password=False),
-        '--database-prefix', tru.db.table_prefix
+        "--database-prefix",
+        tru.db.table_prefix,
     ]
 
     proc = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        **env_opts
+        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, **env_opts
     )
 
     started = threading.Event()
@@ -140,21 +139,19 @@ def run_dashboard(
 
     if IN_COLAB:
         tunnel_proc = subprocess.Popen(
-            ['npx', 'localtunnel', '--port',
-             str(port)],
+            ["npx", "localtunnel", "--port", str(port)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            **env_opts
+            **env_opts,
         )
 
         def listen_to_tunnel(proc: subprocess.Popen, pipe, out, started):
             while proc.poll() is None:
-
                 line = pipe.readline()
-                if 'url' in line:
+                if "url" in line:
                     started.set()
-                    line = 'Go to this url and submit the ip given here. ' + line
+                    line = "Go to this url and submit the ip given here. " + line
 
                 if out is not None:
                     out.append_stdout(line)
@@ -164,58 +161,61 @@ def run_dashboard(
 
         Tru.tunnel_listener_stdout = Thread(
             target=listen_to_tunnel,
-            args=(tunnel_proc, tunnel_proc.stdout, out_stdout, tunnel_started)
+            args=(tunnel_proc, tunnel_proc.stdout, out_stdout, tunnel_started),
         )
         Tru.tunnel_listener_stderr = Thread(
             target=listen_to_tunnel,
-            args=(tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started)
+            args=(tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started),
         )
         Tru.tunnel_listener_stdout.daemon = True
         Tru.tunnel_listener_stderr.daemon = True
         Tru.tunnel_listener_stdout.start()
         Tru.tunnel_listener_stderr.start()
-        if not tunnel_started.wait(timeout=DASHBOARD_START_TIMEOUT
-                                  ):  # This might not work on windows.
-            raise RuntimeError('Tunnel failed to start in time. ')
+        if not tunnel_started.wait(
+            timeout=DASHBOARD_START_TIMEOUT
+        ):  # This might not work on windows.
+            raise RuntimeError("Tunnel failed to start in time. ")
 
     def listen_to_dashboard(proc: subprocess.Popen, pipe, out, started):
         while proc.poll() is None:
             line = pipe.readline()
             if IN_COLAB:
-                if 'External URL: ' in line:
+                if "External URL: " in line:
                     started.set()
                     line = line.replace(
-                        'External URL: http://', 'Submit this IP Address: '
+                        "External URL: http://", "Submit this IP Address: "
                     )
-                    line = line.replace(f':{port}', '')
+                    line = line.replace(f":{port}", "")
                     if out is not None:
                         out.append_stdout(line)
                     else:
                         print(line)
-                    Tru._dashboard_urls = line  # store the url when dashboard is started
+                    Tru._dashboard_urls = (
+                        line  # store the url when dashboard is started
+                    )
             else:
-                if 'Network URL: ' in line:
-                    url = line.split(': ')[1]
+                if "Network URL: " in line:
+                    url = line.split(": ")[1]
                     url = url.rstrip()
-                    print(f'Dashboard started at {url} .')
+                    print(f"Dashboard started at {url} .")
                     started.set()
-                    Tru._dashboard_urls = line  # store the url when dashboard is started
+                    Tru._dashboard_urls = (
+                        line  # store the url when dashboard is started
+                    )
                 if out is not None:
                     out.append_stdout(line)
                 else:
                     print(line)
         if out is not None:
-            out.append_stdout('Dashboard closed.')
+            out.append_stdout("Dashboard closed.")
         else:
-            print('Dashboard closed.')
+            print("Dashboard closed.")
 
     Tru.dashboard_listener_stdout = Thread(
-        target=listen_to_dashboard,
-        args=(proc, proc.stdout, out_stdout, started)
+        target=listen_to_dashboard, args=(proc, proc.stdout, out_stdout, started)
     )
     Tru.dashboard_listener_stderr = Thread(
-        target=listen_to_dashboard,
-        args=(proc, proc.stderr, out_stderr, started)
+        target=listen_to_dashboard, args=(proc, proc.stderr, out_stderr, started)
     )
 
     # Purposely block main process from ending and wait for dashboard.
@@ -236,8 +236,8 @@ def run_dashboard(
     if not started.wait(timeout=wait_period):
         Tru._dashboard_proc = None
         raise RuntimeError(
-            'Dashboard failed to start in time. '
-            'Please inspect dashboard logs for additional information.'
+            "Dashboard failed to start in time. "
+            "Please inspect dashboard logs for additional information."
         )
 
     return proc
@@ -259,28 +259,30 @@ def stop_dashboard(force: bool = False) -> None:
     if Tru._dashboard_proc is None:
         if not force:
             raise RuntimeError(
-                'Dashboard not running in this workspace. '
-                'You may be able to shut other instances by setting the `force` flag.'
+                "Dashboard not running in this workspace. "
+                "You may be able to shut other instances by setting the `force` flag."
             )
 
         else:
-            if sys.platform.startswith('win'):
-                raise RuntimeError(
-                    'Force stop option is not supported on windows.'
-                )
+            if sys.platform.startswith("win"):
+                raise RuntimeError("Force stop option is not supported on windows.")
 
-            print('Force stopping dashboard ...')
+            print("Force stopping dashboard ...")
             import os
             import pwd  # PROBLEM: does not exist on windows
 
             import psutil
+
             username = pwd.getpwuid(os.getuid())[0]
             for p in psutil.process_iter():
                 try:
-                    cmd = ' '.join(p.cmdline())
-                    if 'streamlit' in cmd and 'Leaderboard.py' in cmd and p.username(
-                    ) == username:
-                        print(f'killing {p}')
+                    cmd = " ".join(p.cmdline())
+                    if (
+                        "streamlit" in cmd
+                        and "Leaderboard.py" in cmd
+                        and p.username() == username
+                    ):
+                        print(f"killing {p}")
                         p.kill()
                 except Exception as e:
                     continue

@@ -18,49 +18,40 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def alembic_config(
-    engine: Engine,
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
 ) -> Iterator[Config]:
-
     alembic_dir = os.path.dirname(os.path.abspath(__file__))
-    db_url = str(engine.url).replace('%', '%%')  # Escape any '%' in db_url
-    config = Config(os.path.join(alembic_dir, 'alembic.ini'))
-    config.set_main_option('script_location', alembic_dir)
-    config.set_main_option(
-        'calling_context', 'PYTHON'
-    )  # skips CLI-specific setup
-    config.set_main_option('sqlalchemy.url', db_url)
-    config.set_main_option('trulens.table_prefix', prefix)
-    config.attributes['engine'] = engine
+    db_url = str(engine.url).replace("%", "%%")  # Escape any '%' in db_url
+    config = Config(os.path.join(alembic_dir, "alembic.ini"))
+    config.set_main_option("script_location", alembic_dir)
+    config.set_main_option("calling_context", "PYTHON")  # skips CLI-specific setup
+    config.set_main_option("sqlalchemy.url", db_url)
+    config.set_main_option("trulens.table_prefix", prefix)
+    config.attributes["engine"] = engine
 
     yield config
 
 
 def upgrade_db(
-    engine: Engine,
-    revision: str = 'head',
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine, revision: str = "head", prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
 ):
     with alembic_config(engine, prefix=prefix) as config:
         command.upgrade(config, revision)
 
 
 def downgrade_db(
-    engine: Engine,
-    revision: str = 'base',
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine, revision: str = "base", prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
 ):
     with alembic_config(engine, prefix=prefix) as config:
         command.downgrade(config, revision)
 
 
 def get_current_db_revision(
-    engine: Engine,
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
 ) -> Optional[str]:
     with engine.connect() as conn:
         return MigrationContext.configure(
-            conn, opts=dict(version_table=prefix + 'alembic_version')
+            conn, opts=dict(version_table=prefix + "alembic_version")
         ).get_current_revision()
 
 
@@ -76,8 +67,8 @@ def get_revision_history(
         return list(
             reversed(
                 [
-                    rev.revision for rev in
-                    scripts.iterate_revisions(lower='base', upper='head')
+                    rev.revision
+                    for rev in scripts.iterate_revisions(lower="base", upper="head")
                 ]
             )
         )
@@ -88,7 +79,7 @@ class DbRevisions(BaseModel):
     history: List[str]  # all past revisions, including `latest`
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}({super().__str__()})'
+        return f"{self.__class__.__name__}({super().__str__()})"
 
     @property
     def latest(self) -> str:
@@ -97,9 +88,7 @@ class DbRevisions(BaseModel):
 
     @classmethod
     def load(
-        cls,
-        engine: Engine,
-        prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+        cls, engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
     ) -> DbRevisions:
         return cls(
             current=get_current_db_revision(engine, prefix=prefix),

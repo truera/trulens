@@ -12,10 +12,8 @@ def init_from_args():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--database-url', default=None)
-    parser.add_argument(
-        '--database-prefix', default=mod_db.DEFAULT_DATABASE_PREFIX
-    )
+    parser.add_argument("--database-url", default=None)
+    parser.add_argument("--database-prefix", default=mod_db.DEFAULT_DATABASE_PREFIX)
 
     try:
         args = parser.parse_args()

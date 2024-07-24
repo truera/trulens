@@ -11,8 +11,7 @@ from pprint import PrettyPrinter
 import threading
 from threading import Thread
 from time import sleep
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
-                    Tuple, Union)
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import humanize
 import pandas
@@ -37,8 +36,9 @@ pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
 
-DASHBOARD_START_TIMEOUT: Annotated[int, Doc('Seconds to wait for dashboard to start')] \
-    = 30
+DASHBOARD_START_TIMEOUT: Annotated[
+    int, Doc("Seconds to wait for dashboard to start")
+] = 30
 
 
 def humanize_seconds(seconds: float):
@@ -165,23 +165,24 @@ class Tru(python.SingletonPerName):
 
         database_args.update(
             {
-                k: v for k, v in {
-                    'database_url': database_url,
-                    'database_file': database_file,
-                    'database_redact_keys': database_redact_keys,
-                    'database_prefix': database_prefix
-                }.items() if v is not None
+                k: v
+                for k, v in {
+                    "database_url": database_url,
+                    "database_file": database_file,
+                    "database_redact_keys": database_redact_keys,
+                    "database_prefix": database_prefix,
+                }.items()
+                if v is not None
             }
         )
 
-        if python.safe_hasattr(self, 'db'):
+        if python.safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
-            if sum((1 if v is not None else 0 for v in database_args.values())
-                  ) > 0:
+            if sum((1 if v is not None else 0 for v in database_args.values())) > 0:
                 logger.warning(
-                    'Tru was already initialized. '
-                    'Cannot change database configuration after initialization.'
+                    "Tru was already initialized. "
+                    "Cannot change database configuration after initialization."
                 )
                 self.warning()
 
@@ -190,7 +191,7 @@ class Tru(python.SingletonPerName):
         if database is not None:
             if not isinstance(database, DB):
                 raise ValueError(
-                    '`database` must be a `trulens.core.database.base.DB` instance.'
+                    "`database` must be a `trulens.core.database.base.DB` instance."
                 )
 
             self.db = database
@@ -221,9 +222,12 @@ class Tru(python.SingletonPerName):
         return TruChain(tru=self, app=chain, **kwargs)
 
     def Llama(
-        self, engine: Union[llama_index.indices.query.base.BaseQueryEngine,
-                            llama_index.chat_engine.types.BaseChatEngine],
-        **kwargs: dict
+        self,
+        engine: Union[
+            llama_index.indices.query.base.BaseQueryEngine,
+            llama_index.chat_engine.types.BaseChatEngine,
+        ],
+        **kwargs: dict,
     ) -> trulens.llamaindex.TruLlama:
         """Create a llama-index app recorder with database managed by self.
 
@@ -257,9 +261,7 @@ class Tru(python.SingletonPerName):
 
         return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
 
-    def Custom(
-        self, app: Any, **kwargs: dict
-    ) -> trulens.core.TruCustomApp:
+    def Custom(self, app: Any, **kwargs: dict) -> trulens.core.TruCustomApp:
         """Create a custom app recorder with database managed by self.
 
         Args:
@@ -274,8 +276,7 @@ class Tru(python.SingletonPerName):
         return TruCustomApp(tru=self, app=app, **kwargs)
 
     def Virtual(
-        self, app: Union[trulens.core.app.virtual.VirtualApp, Dict],
-        **kwargs: dict
+        self, app: Union[trulens.core.app.virtual.VirtualApp, Dict], **kwargs: dict
     ) -> trulens.core.app.virtual.TruVirtual:
         """Create a virtual app recorder with database managed by self.
 
@@ -304,7 +305,7 @@ class Tru(python.SingletonPerName):
         elif isinstance(self.db, DB):
             db = self.db
         else:
-            raise RuntimeError('Unhandled database type.')
+            raise RuntimeError("Unhandled database type.")
 
         db.reset_database()
         self.db = db
@@ -328,15 +329,13 @@ class Tru(python.SingletonPerName):
         elif isinstance(self.db, DB):
             db = self.db
         else:
-            raise RuntimeError('Unhandled database type.')
+            raise RuntimeError("Unhandled database type.")
 
         db.migrate_database(**kwargs)
         self.db = db
 
     def add_record(
-        self,
-        record: Optional[mod_record_schema.Record] = None,
-        **kwargs: dict
+        self, record: Optional[mod_record_schema.Record] = None, **kwargs: dict
     ) -> mod_types_schema.RecordID:
         """Add a record to the database.
 
@@ -367,12 +366,20 @@ class Tru(python.SingletonPerName):
         record: mod_record_schema.Record,
         feedback_functions: Sequence[base_feedback.Feedback],
         app: Optional[mod_app_schema.AppDefinition] = None,
-        on_done: Optional[Callable[[
-            Union[mod_feedback_schema.FeedbackResult,
-                  Future[mod_feedback_schema.FeedbackResult]], None
-        ]]] = None
-    ) -> List[Tuple[base_feedback.Feedback,
-                    Future[mod_feedback_schema.FeedbackResult]]]:
+        on_done: Optional[
+            Callable[
+                [
+                    Union[
+                        mod_feedback_schema.FeedbackResult,
+                        Future[mod_feedback_schema.FeedbackResult],
+                    ],
+                    None,
+                ]
+            ]
+        ] = None,
+    ) -> List[
+        Tuple[base_feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]
+    ]:
         """Schedules to run the given feedback functions.
 
         Args:
@@ -403,17 +410,15 @@ class Tru(python.SingletonPerName):
             )
             if app is None:
                 raise RuntimeError(
-                    f'App {app_id} not present in db. '
-                    'Either add it with `tru.add_app` or provide `app_json` to `tru.run_feedback_functions`.'
+                    f"App {app_id} not present in db. "
+                    "Either add it with `tru.add_app` or provide `app_json` to `tru.run_feedback_functions`."
                 )
 
         else:
-            assert app_id == app.app_id, 'Record was produced by a different app.'
+            assert app_id == app.app_id, "Record was produced by a different app."
 
             if self.db.get_app(app_id=app.app_id) is None:
-                logger.warning(
-                    f'App {app_id} was not present in database. Adding it.'
-                )
+                logger.warning(f"App {app_id} was not present in database. Adding it.")
                 self.add_app(app=app)
 
         feedbacks_and_futures = []
@@ -433,9 +438,9 @@ class Tru(python.SingletonPerName):
 
                 return temp
 
-
-            fut: Future[mod_feedback_schema.FeedbackResult] = \
-                tp.submit(run_and_call_callback, ffunc=ffunc, app=app, record=record)
+            fut: Future[mod_feedback_schema.FeedbackResult] = tp.submit(
+                run_and_call_callback, ffunc=ffunc, app=app, record=record
+            )
 
             # Have to roll the on_done callback into the submitted function
             # because the result() is returned before callback runs otherwise.
@@ -453,9 +458,11 @@ class Tru(python.SingletonPerName):
         record: mod_record_schema.Record,
         feedback_functions: Sequence[base_feedback.Feedback],
         app: Optional[mod_app_schema.AppDefinition] = None,
-        wait: bool = True
-    ) -> Union[Iterable[mod_feedback_schema.FeedbackResult],
-               Iterable[Future[mod_feedback_schema.FeedbackResult]]]:
+        wait: bool = True,
+    ) -> Union[
+        Iterable[mod_feedback_schema.FeedbackResult],
+        Iterable[Future[mod_feedback_schema.FeedbackResult]],
+    ]:
         """Run a collection of feedback functions and report their result.
 
         Args:
@@ -481,35 +488,35 @@ class Tru(python.SingletonPerName):
 
         if not isinstance(record, mod_record_schema.Record):
             raise ValueError(
-                '`record` must be a `trulens.core.schema.record.Record` instance.'
+                "`record` must be a `trulens.core.schema.record.Record` instance."
             )
 
         if not isinstance(feedback_functions, Sequence):
-            raise ValueError('`feedback_functions` must be a sequence.')
+            raise ValueError("`feedback_functions` must be a sequence.")
 
-        if not all(isinstance(ffunc, base_feedback.Feedback)
-                   for ffunc in feedback_functions):
+        if not all(
+            isinstance(ffunc, base_feedback.Feedback) for ffunc in feedback_functions
+        ):
             raise ValueError(
-                '`feedback_functions` must be a sequence of `trulens.core.Feedback` instances.'
+                "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
             )
 
         if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
             raise ValueError(
-                '`app` must be a `trulens.core.schema.app.AppDefinition` instance.'
+                "`app` must be a `trulens.core.schema.app.AppDefinition` instance."
             )
 
         if not isinstance(wait, bool):
-            raise ValueError('`wait` must be a bool.')
+            raise ValueError("`wait` must be a bool.")
 
-        future_feedback_map: Dict[Future[mod_feedback_schema.FeedbackResult],
-                                  base_feedback.Feedback] = {
-                                      p[1]: p[0]
-                                      for p in self._submit_feedback_functions(
-                                          record=record,
-                                          feedback_functions=feedback_functions,
-                                          app=app
-                                      )
-                                  }
+        future_feedback_map: Dict[
+            Future[mod_feedback_schema.FeedbackResult], base_feedback.Feedback
+        ] = {
+            p[1]: p[0]
+            for p in self._submit_feedback_functions(
+                record=record, feedback_functions=feedback_functions, app=app
+            )
+        }
 
         if wait:
             # In blocking mode, wait for futures to complete.
@@ -530,9 +537,7 @@ class Tru(python.SingletonPerName):
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(
-        self, app: mod_app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
+    def add_app(self, app: mod_app_schema.AppDefinition) -> mod_types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -554,14 +559,17 @@ class Tru(python.SingletonPerName):
             app_id (schema.AppID): The unique identifier of the app to be deleted.
         """
         self.db.delete_app(app_id=app_id)
-        logger.info(f'App with ID {app_id} has been successfully deleted.')
+        logger.info(f"App with ID {app_id} has been successfully deleted.")
 
     def add_feedback(
         self,
         feedback_result_or_future: Optional[
-            Union[mod_feedback_schema.FeedbackResult,
-                  Future[mod_feedback_schema.FeedbackResult]]] = None,
-        **kwargs: dict
+            Union[
+                mod_feedback_schema.FeedbackResult,
+                Future[mod_feedback_schema.FeedbackResult],
+            ]
+        ] = None,
+        **kwargs: dict,
     ) -> mod_types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
 
@@ -584,38 +592,40 @@ class Tru(python.SingletonPerName):
         """
 
         if feedback_result_or_future is None:
-            if 'result' in kwargs and 'status' not in kwargs:
+            if "result" in kwargs and "status" not in kwargs:
                 # If result already present, set status to done.
-                kwargs['status'] = mod_feedback_schema.FeedbackResultStatus.DONE
+                kwargs["status"] = mod_feedback_schema.FeedbackResultStatus.DONE
 
-            feedback_result_or_future = mod_feedback_schema.FeedbackResult(
-                **kwargs
-            )
+            feedback_result_or_future = mod_feedback_schema.FeedbackResult(**kwargs)
 
         else:
             if isinstance(feedback_result_or_future, Future):
                 futures.wait([feedback_result_or_future])
-                feedback_result_or_future: mod_feedback_schema.FeedbackResult = feedback_result_or_future.result(
+                feedback_result_or_future: mod_feedback_schema.FeedbackResult = (
+                    feedback_result_or_future.result()
                 )
 
-            elif isinstance(feedback_result_or_future,
-                            mod_feedback_schema.FeedbackResult):
+            elif isinstance(
+                feedback_result_or_future, mod_feedback_schema.FeedbackResult
+            ):
                 pass
             else:
                 raise ValueError(
-                    f'Unknown type {type(feedback_result_or_future)} in feedback_results.'
+                    f"Unknown type {type(feedback_result_or_future)} in feedback_results."
                 )
 
             feedback_result_or_future.update(**kwargs)
 
-        return self.db.insert_feedback(
-            feedback_result=feedback_result_or_future
-        )
+        return self.db.insert_feedback(feedback_result=feedback_result_or_future)
 
     def add_feedbacks(
-        self, feedback_results: Iterable[
-            Union[mod_feedback_schema.FeedbackResult,
-                  Future[mod_feedback_schema.FeedbackResult]]]
+        self,
+        feedback_results: Iterable[
+            Union[
+                mod_feedback_schema.FeedbackResult,
+                Future[mod_feedback_schema.FeedbackResult],
+            ]
+        ],
     ) -> List[schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
 
@@ -632,9 +642,7 @@ class Tru(python.SingletonPerName):
 
         for feedback_result_or_future in feedback_results:
             ids.append(
-                self.add_feedback(
-                    feedback_result_or_future=feedback_result_or_future
-                )
+                self.add_feedback(feedback_result_or_future=feedback_result_or_future)
             )
 
         return ids
@@ -682,7 +690,7 @@ class Tru(python.SingletonPerName):
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
         """Get records, their feeback results, and feedback names.
 
@@ -712,7 +720,7 @@ class Tru(python.SingletonPerName):
     def get_leaderboard(
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
-        group_by_metadata_key: Optional[str] = None
+        group_by_metadata_key: Optional[str] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
@@ -731,32 +739,33 @@ class Tru(python.SingletonPerName):
 
         df, feedback_cols = self.db.get_records_and_feedback(app_ids)
 
-        col_agg_list = feedback_cols + ['latency', 'total_cost']
+        col_agg_list = feedback_cols + ["latency", "total_cost"]
 
         if group_by_metadata_key is not None:
-            df['meta'] = [
-                json.loads(df['record_json'][i])['meta']
-                for i in range(len(df))
+            df["meta"] = [
+                json.loads(df["record_json"][i])["meta"] for i in range(len(df))
             ]
 
             df[str(group_by_metadata_key)] = [
                 item.get(group_by_metadata_key, None)
-                if isinstance(item, dict) else None for item in df['meta']
+                if isinstance(item, dict)
+                else None
+                for item in df["meta"]
             ]
-            return df.groupby(['app_id', str(group_by_metadata_key)]
-                             )[col_agg_list].mean().sort_values(
-                                 by=feedback_cols, ascending=False
-                             )
+            return (
+                df.groupby(["app_id", str(group_by_metadata_key)])[col_agg_list]
+                .mean()
+                .sort_values(by=feedback_cols, ascending=False)
+            )
         else:
-            return df.groupby('app_id')[col_agg_list].mean().sort_values(
-                by=feedback_cols, ascending=False
+            return (
+                df.groupby("app_id")[col_agg_list]
+                .mean()
+                .sort_values(by=feedback_cols, ascending=False)
             )
 
     def start_evaluator(
-        self,
-        restart: bool = False,
-        fork: bool = False,
-        disable_tqdm: bool = False
+        self, restart: bool = False, fork: bool = False, disable_tqdm: bool = False
     ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread or process.
@@ -784,15 +793,13 @@ class Tru(python.SingletonPerName):
             [MAX_THREADS][trulens.core.utils.threading.TP.MAX_THREADS]
         """
 
-        assert not fork, 'Fork mode not yet implemented.'
+        assert not fork, "Fork mode not yet implemented."
 
         if self._evaluator_proc is not None:
             if restart:
                 self.stop_evaluator()
             else:
-                raise RuntimeError(
-                    'Evaluator is already running in this process.'
-                )
+                raise RuntimeError("Evaluator is already running in this process.")
 
         if not fork:
             self._evaluator_stop = threading.Event()
@@ -800,21 +807,18 @@ class Tru(python.SingletonPerName):
         def runloop():
             assert self._evaluator_stop is not None
 
+            print(f"Will keep max of " f"{self.DEFERRED_NUM_RUNS} feedback(s) running.")
             print(
-                f'Will keep max of '
-                f'{self.DEFERRED_NUM_RUNS} feedback(s) running.'
+                f"Tasks are spread among max of "
+                f"{tru_threading.TP.MAX_THREADS} thread(s)."
             )
             print(
-                f'Tasks are spread among max of '
-                f'{tru_threading.TP.MAX_THREADS} thread(s).'
+                f"Will rerun running feedbacks after "
+                f"{humanize_seconds(self.RETRY_RUNNING_SECONDS)}."
             )
             print(
-                f'Will rerun running feedbacks after '
-                f'{humanize_seconds(self.RETRY_RUNNING_SECONDS)}.'
-            )
-            print(
-                f'Will rerun failed feedbacks after '
-                f'{humanize_seconds(self.RETRY_FAILED_SECONDS)}.'
+                f"Will rerun failed feedbacks after "
+                f"{humanize_seconds(self.RETRY_FAILED_SECONDS)}."
             )
 
             total = 0
@@ -823,56 +827,51 @@ class Tru(python.SingletonPerName):
             # progress bar initial values so that they offer accurate
             # predictions initially after restarting the process.
             queue_stats = self.db.get_feedback_count_by_status()
-            queue_done = queue_stats.get(
-                mod_feedback_schema.FeedbackResultStatus.DONE
-            ) or 0
+            queue_done = (
+                queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE) or 0
+            )
             queue_total = sum(queue_stats.values())
 
             # Show the overall counts from the database, not just what has been
             # looked at so far.
             tqdm_status = tqdm(
-                desc='Feedback Status',
+                desc="Feedback Status",
                 initial=queue_done,
-                unit='feedbacks',
+                unit="feedbacks",
                 total=queue_total,
-                postfix={
-                    status.name: count for status, count in queue_stats.items()
-                },
-                disable=disable_tqdm
+                postfix={status.name: count for status, count in queue_stats.items()},
+                disable=disable_tqdm,
             )
 
             # Show the status of the results so far.
             tqdm_total = tqdm(
-                desc='Done Runs', initial=0, unit='runs', disable=disable_tqdm
+                desc="Done Runs", initial=0, unit="runs", disable=disable_tqdm
             )
 
             # Show what is being waited for right now.
             tqdm_waiting = tqdm(
-                desc='Waiting for Runs',
-                initial=0,
-                unit='runs',
-                disable=disable_tqdm
+                desc="Waiting for Runs", initial=0, unit="runs", disable=disable_tqdm
             )
 
             runs_stats = defaultdict(int)
 
-            futures_map: Dict[Future[mod_feedback_schema.FeedbackResult],
-                              pandas.Series] = dict()
+            futures_map: Dict[
+                Future[mod_feedback_schema.FeedbackResult], pandas.Series
+            ] = dict()
 
             while fork or not self._evaluator_stop.is_set():
-
                 if len(futures_map) < self.DEFERRED_NUM_RUNS:
                     # Get some new evals to run if some already completed by now.
-                    new_futures: List[Tuple[pandas.Series, Future[mod_feedback_schema.FeedbackResult]]] = \
-                        base_feedback.Feedback.evaluate_deferred(
-                            tru=self,
-                            limit=self.DEFERRED_NUM_RUNS-len(futures_map),
-                            shuffle=True
-                        )
+                    new_futures: List[
+                        Tuple[pandas.Series, Future[mod_feedback_schema.FeedbackResult]]
+                    ] = base_feedback.Feedback.evaluate_deferred(
+                        tru=self,
+                        limit=self.DEFERRED_NUM_RUNS - len(futures_map),
+                        shuffle=True,
+                    )
 
                     # Will likely get some of the same ones that already have running.
                     for row, fut in new_futures:
-
                         if fut in futures_map:
                             # If the future is already in our set, check whether
                             # its status has changed and if so, note it in the
@@ -901,8 +900,7 @@ class Tru(python.SingletonPerName):
                     futures_copy = list(futures_map.keys())
 
                     try:
-                        for fut in futures.as_completed(futures_copy,
-                                                        timeout=10):
+                        for fut in futures.as_completed(futures_copy, timeout=10):
                             del futures_map[fut]
 
                             tqdm_waiting.update(-1)
@@ -919,18 +917,15 @@ class Tru(python.SingletonPerName):
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()
-                queue_done = queue_stats.get(
-                    mod_feedback_schema.FeedbackResultStatus.DONE
-                ) or 0
+                queue_done = (
+                    queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE) or 0
+                )
                 queue_total = sum(queue_stats.values())
 
                 tqdm_status.n = queue_done
                 tqdm_status.total = queue_total
                 tqdm_status.set_postfix(
-                    {
-                        status.name: count
-                        for status, count in queue_stats.items()
-                    }
+                    {status.name: count for status, count in queue_stats.items()}
                 )
 
                 # Check if any of the running futures should be stopped.
@@ -949,7 +944,7 @@ class Tru(python.SingletonPerName):
 
                             # Not an actual status, but would be nice to
                             # indicate cancellations in run stats:
-                            runs_stats['CANCELLED'] += 1
+                            runs_stats["CANCELLED"] += 1
 
                             del futures_map[fut]
 
@@ -960,7 +955,7 @@ class Tru(python.SingletonPerName):
                     else:
                         self._evaluator_stop.wait(10)
 
-            print('Evaluator stopped.')
+            print("Evaluator stopped.")
 
         if fork:
             proc = Process(target=runloop)
@@ -983,7 +978,7 @@ class Tru(python.SingletonPerName):
         """
 
         if self._evaluator_proc is None:
-            raise RuntimeError('Evaluator not running this process.')
+            raise RuntimeError("Evaluator not running this process.")
 
         if isinstance(self._evaluator_proc, Process):
             self._evaluator_proc.terminate()

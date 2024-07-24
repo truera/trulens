@@ -52,14 +52,11 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
     """
 
     def __init__(self, feedback: Feedback, threshold: float, *args, **kwargs):
-        super().__init__(
-            *args, feedback=feedback, threshold=threshold, **kwargs
-        )
+        super().__init__(*args, feedback=feedback, threshold=threshold, **kwargs)
 
     # Signature must match
     # langchain.schema.retriever.BaseRetriever._get_relevant_documents .
-    def _get_relevant_documents(self, query: str, *,
-                                run_manager) -> List[Document]:
+    def _get_relevant_documents(self, query: str, *, run_manager) -> List[Document]:
         """
         An internal method to accomplish three tasks:
 
@@ -81,9 +78,8 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         # Evaluate the filter on each, in parallel.
         with ThreadPoolExecutor(max_workers=max(1, len(docs))) as ex:
             future_to_doc = {
-                ex.
-                submit(lambda doc=doc: self.feedback(query, doc.page_content)):
-                doc for doc in docs
+                ex.submit(lambda doc=doc: self.feedback(query, doc.page_content)): doc
+                for doc in docs
             }
             filtered = []
             for future in as_completed(future_to_doc):
@@ -91,10 +87,11 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
                 result = future.result()
                 if not isinstance(result, float):
                     raise ValueError(
-                        'Guardrails can only be used with feedback functions that return a float.'
+                        "Guardrails can only be used with feedback functions that return a float."
                     )
-                if (self.feedback.higher_is_better and result > self.threshold) or \
-                   (not self.feedback.higher_is_better and result < self.threshold):
+                if (self.feedback.higher_is_better and result > self.threshold) or (
+                    not self.feedback.higher_is_better and result < self.threshold
+                ):
                     filtered.append(doc)
 
         # Return only the filtered ones.

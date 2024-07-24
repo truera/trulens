@@ -34,7 +34,7 @@ from trulens.utils.serial import SerialModel
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 mj = MerkleJson()
 
@@ -43,6 +43,7 @@ mj = MerkleJson()
 with OptionalImports(messages=REQUIREMENT_OPENAI):
     # httpx.URL needed for openai client.
     import httpx
+
     # Another thing we need for openai client.
     from openai import Timeout
 
@@ -57,25 +58,22 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
 
 
-def obj_id_of_obj(obj: dict, prefix='obj'):
+def obj_id_of_obj(obj: dict, prefix="obj"):
     """
     Create an id from a json-able structure/definition. Should produce the same
     name if definition stays the same.
     """
 
-    return f'{prefix}_hash_{mj.hash(obj)}'
+    return f"{prefix}_hash_{mj.hash(obj)}"
 
 
-def json_str_of_obj(
-    obj: Any, *args, redact_keys: bool = False, **kwargs
-) -> str:
+def json_str_of_obj(obj: Any, *args, redact_keys: bool = False, **kwargs) -> str:
     """
     Encode the given json object as a string.
     """
 
     return json.dumps(
-        jsonify(obj, *args, redact_keys=redact_keys, **kwargs),
-        default=json_default
+        jsonify(obj, *args, redact_keys=redact_keys, **kwargs), default=json_default
     )
 
 
@@ -109,47 +107,47 @@ def jsonify_for_ui(*args, **kwargs):
 def jsonify(
     obj: Any,
     dicted: Optional[Dict[int, JSON]] = None,
-    instrument: Optional['Instrument'] = None,
+    instrument: Optional["Instrument"] = None,
     skip_specials: bool = False,
     redact_keys: bool = False,
     include_excluded: bool = True,
     depth: int = 0,
-    max_depth: int = 256
+    max_depth: int = 256,
 ) -> JSON:
     """Convert the given object into types that can be serialized in json.
 
-    Args:
-        obj: the object to jsonify.
+        Args:
+            obj: the object to jsonify.
 
-        dicted: the mapping from addresses of already jsonifed objects (via id)
-            to their json.
+            dicted: the mapping from addresses of already jsonifed objects (via id)
+                to their json.
 
-        instrument: instrumentation functions for checking whether to recur into
-            components of `obj`.
+            instrument: instrumentation functions for checking whether to recur into
+                components of `obj`.
 
-        skip_specials: remove specially keyed structures from the json. These
-            have keys that start with "__tru_".
+            skip_specials: remove specially keyed structures from the json. These
+                have keys that start with "__tru_".
 
-        redact_keys: redact secrets from the output. Secrets are detremined by
-            `keys.py:redact_value` .
+            redact_keys: redact secrets from the output. Secrets are detremined by
+                `keys.py:redact_value` .
 
-        include_excluded: include fields that are annotated to be excluded by
-            pydantic.
+            include_excluded: include fields that are annotated to be excluded by
+                pydantic.
 
-        depth: the depth of the serialization of the given object relative to
-            the serialization of its container.
-`
-        max_depth: the maximum depth of the serialization of the given object.
-            Objects to be serialized beyond this will be serialized as
-            "non-serialized object" as per `noserio`. Note that this may happen
-            for some data layouts like linked lists. This value should be no
-            larger than half the value set by
-            [sys.setrecursionlimit][sys.setrecursionlimit].
+            depth: the depth of the serialization of the given object relative to
+                the serialization of its container.
+    `
+            max_depth: the maximum depth of the serialization of the given object.
+                Objects to be serialized beyond this will be serialized as
+                "non-serialized object" as per `noserio`. Note that this may happen
+                for some data layouts like linked lists. This value should be no
+                larger than half the value set by
+                [sys.setrecursionlimit][sys.setrecursionlimit].
 
-    Returns:
-        The jsonified version of the given object. Jsonified means that the the
-        object is either a JSON base type, a list, or a dict with the containing
-        elements of the same.
+        Returns:
+            The jsonified version of the given object. Jsonified means that the the
+            object is either a JSON base type, a list, or a dict with the containing
+            elements of the same.
     """
 
     # NOTE(piotrm): We might need to do something special for the below types as
@@ -238,7 +236,7 @@ def jsonify(
             redact_keys=redact_keys,
             include_excluded=include_excluded,
             depth=depth + 1,
-            max_depth=max_depth
+            max_depth=max_depth,
         )
 
     content = None
@@ -249,9 +247,7 @@ def jsonify(
     elif isinstance(obj, Dict):
         forward_value = {}
         new_dicted[id(obj)] = forward_value
-        forward_value.update(
-            {k: recur(v) for k, v in obj.items() if recur_key(k)}
-        )
+        forward_value.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -310,8 +306,7 @@ def jsonify(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
-                if (not skip_excluded or not v.field_info.exclude) and
-                recur_key(k)
+                if (not skip_excluded or not v.field_info.exclude) and recur_key(k)
             }
         )
 
@@ -345,7 +340,6 @@ def jsonify(
         content = forward_value
 
     elif instrument.to_instrument_object(obj):
-
         forward_value = {}
         new_dicted[id(obj)] = forward_value
 
@@ -354,10 +348,14 @@ def jsonify(
         # TODO(piotrm): object walks redo
         forward_value.update(
             {
-                k: recur(v) for k, v in kvs.items() if recur_key(k) and (
-                    isinstance(v, JSON_BASES) or isinstance(v, Dict) or
-                    isinstance(v, Sequence) or
-                    instrument.to_instrument_object(v)
+                k: recur(v)
+                for k, v in kvs.items()
+                if recur_key(k)
+                and (
+                    isinstance(v, JSON_BASES)
+                    or isinstance(v, Dict)
+                    or isinstance(v, Sequence)
+                    or instrument.to_instrument_object(v)
                 )
             }
         )
@@ -373,15 +371,17 @@ def jsonify(
 
     # Add class information for objects that are to be instrumented, known as
     # "components".
-    if not skip_specials and isinstance(content, dict) and not isinstance(
-            obj, dict) and (instrument.to_instrument_object(obj) or
-                            isinstance(obj, WithClassInfo)):
-
+    if (
+        not skip_specials
+        and isinstance(content, dict)
+        and not isinstance(obj, dict)
+        and (instrument.to_instrument_object(obj) or isinstance(obj, WithClassInfo))
+    ):
         content[CLASS_INFO] = Class.of_class(
             cls=obj.__class__, with_bases=True
         ).model_dump()
 
-    if not isinstance(obj, Lens) and safe_hasattr(obj, 'jsonify_extra'):
+    if not isinstance(obj, Lens) and safe_hasattr(obj, "jsonify_extra"):
         # Problem with Lens and similar objects: they always say they have every attribute.
 
         content = obj.jsonify_extra(content)

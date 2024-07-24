@@ -21,15 +21,15 @@ NoneType = type(None)
 
 logger = logging.getLogger(__name__)
 
-MULTI_CALL_NAME_DELIMITER = ':::'
+MULTI_CALL_NAME_DELIMITER = ":::"
 
-DEFAULT_DATABASE_PREFIX: str = 'trulens_'
+DEFAULT_DATABASE_PREFIX: str = "trulens_"
 """Default prefix for table names for trulens to use.
 
 This includes alembic's version table.
 """
 
-DEFAULT_DATABASE_FILE: str = 'default.sqlite'
+DEFAULT_DATABASE_FILE: str = "default.sqlite"
 """Filename for default sqlite database.
 
 The sqlalchemy url for this default local sqlite database is `sqlite:///default.sqlite`.
@@ -104,9 +104,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_app(
-        self, app: AppDefinition
-    ) -> mod_types_schema.AppID:
+    def insert_app(self, app: AppDefinition) -> mod_types_schema.AppID:
         """
         Upsert an `app` into the database.
 
@@ -143,8 +141,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_feedback_defs(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
     ) -> pd.DataFrame:
         """Retrieve feedback definitions from the database.
 
@@ -180,15 +177,14 @@ class DB(SerialModel, abc.ABC):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
         status: Optional[
-            Union[FeedbackResultStatus,
-                  Sequence[FeedbackResultStatus]]] = None,
+            Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]
+        ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-        shuffle: Optional[bool] = None
+        shuffle: Optional[bool] = None,
     ) -> pd.DataFrame:
         """Get feedback results matching a set of optional criteria:
 
@@ -222,15 +218,14 @@ class DB(SerialModel, abc.ABC):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
         status: Optional[
-            Union[FeedbackResultStatus,
-                  Sequence[FeedbackResultStatus]]] = None,
+            Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]
+        ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-        shuffle: bool = False
+        shuffle: bool = False,
     ) -> Dict[FeedbackResultStatus, int]:
         """Get count of feedback results matching a set of optional criteria grouped by
         their status.
@@ -246,9 +241,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_app(
-        self, app_id: mod_types_schema.AppID
-    ) -> Optional[JSONized]:
+    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
         """Get the app with the given id from the database.
 
         Returns:
@@ -270,7 +263,7 @@ class DB(SerialModel, abc.ABC):
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Get records fom the database.
 

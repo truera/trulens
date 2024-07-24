@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 def _convert_message(message: Dict) -> BaseMessage:
     """Convert a message to a LangChain BaseMessage."""
-    if not 'role' in message or message['role'] == 'user':
-        return HumanMessage(content=message['content'])
-    return AIMessage(content=message['content'])
+    if not "role" in message or message["role"] == "user":
+        return HumanMessage(content=message["content"])
+    return AIMessage(content=message["content"])
 
 
 class Langchain(LLMProvider):
@@ -45,14 +45,12 @@ class Langchain(LLMProvider):
         self,
         chain: Union[BaseLLM, BaseChatModel],
         *args,
-        model_engine: str = '',
-        **kwargs
+        model_engine: str = "",
+        **kwargs,
     ):
         self_kwargs = dict(kwargs)
-        self_kwargs['model_engine'] = model_engine or type(chain).__name__
-        self_kwargs['endpoint'] = LangchainEndpoint(
-            *args, chain=chain, **kwargs
-        )
+        self_kwargs["model_engine"] = model_engine or type(chain).__name__
+        self_kwargs["endpoint"] = LangchainEndpoint(*args, chain=chain, **kwargs)
 
         super().__init__(**self_kwargs)
 
@@ -60,18 +58,16 @@ class Langchain(LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         if prompt is not None:
             predict = self.endpoint.chain.predict(prompt, **kwargs)
 
         elif messages is not None:
             messages = [_convert_message(message) for message in messages]
-            predict = self.endpoint.chain.predict_messages(
-                messages, **kwargs
-            ).content
+            predict = self.endpoint.chain.predict_messages(messages, **kwargs).content
 
         else:
-            raise ValueError('`prompt` or `messages` must be specified.')
+            raise ValueError("`prompt` or `messages` must be specified.")
 
         return predict

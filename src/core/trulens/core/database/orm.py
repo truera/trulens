@@ -36,8 +36,7 @@ TYPE_ID = VARCHAR(256)
 """Database type for unique IDs."""
 
 
-class BaseWithTablePrefix(
-):  # to be mixed into DeclarativeBase or new_declarative_base()
+class BaseWithTablePrefix:  # to be mixed into DeclarativeBase or new_declarative_base()
     # Only for type hints or isinstance, issubclass checks.
     """ORM base class except with `__tablename__` defined in terms
     of a base name and a prefix.
@@ -53,14 +52,14 @@ class BaseWithTablePrefix(
     # before the two following attributes are set which we do in subclasses later.
     __abstract__ = True
 
-    _table_base_name: str = 'not set'
+    _table_base_name: str = "not set"
     """Base name for the table.
 
     Will be prefixed by the prefix to create table names. This should be set by
     subclasses.
     """
 
-    _table_prefix: str = ''
+    _table_prefix: str = ""
     """Prefix for the table name.
 
     This should be set by subclasses of subclasses of this class.
@@ -71,7 +70,7 @@ class BaseWithTablePrefix(
         return cls._table_prefix + cls._table_base_name
 
 
-T = TypeVar('T', bound=BaseWithTablePrefix)
+T = TypeVar("T", bound=BaseWithTablePrefix)
 
 
 # NOTE: lru_cache is important here as we don't want to create multiple classes
@@ -92,13 +91,12 @@ def new_base(prefix: str) -> Type[T]:
 
     base = declarative_base()
     return type(
-        f'BaseWithTablePrefix{prefix}',
+        f"BaseWithTablePrefix{prefix}",
         (base, BaseWithTablePrefix),
         {
-            '_table_prefix': prefix,
-            '__abstract__':
-                True  # stay abstract until _table_base_name is set in a subclass
-        }
+            "_table_prefix": prefix,
+            "__abstract__": True,  # stay abstract until _table_base_name is set in a subclass
+        },
     )
 
 
@@ -129,8 +127,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             relationships in another.
         """
 
-        registry: Dict[str, base] = \
-            base.registry._class_registry
+        registry: Dict[str, base] = base.registry._class_registry
         """Table name to ORM class mapping for tables used by trulens.
 
         This can be used to iterate through all classes/tables.
@@ -147,7 +144,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            _table_base_name: ClassVar[str] = 'apps'
+            _table_base_name: ClassVar[str] = "apps"
 
             app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
             app_json = Column(TYPE_JSON, nullable=False)
@@ -157,13 +154,11 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             @classmethod
             def parse(
-                cls,
-                obj: mod_app_schema.AppDefinition,
-                redact_keys: bool = False
+                cls, obj: mod_app_schema.AppDefinition, redact_keys: bool = False
             ) -> ORM.AppDefinition:
                 return cls(
                     app_id=obj.app_id,
-                    app_json=obj.model_dump_json(redact_keys=redact_keys)
+                    app_json=obj.model_dump_json(redact_keys=redact_keys),
                 )
 
         class FeedbackDefinition(base):
@@ -174,11 +169,9 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            _table_base_name = 'feedback_defs'
+            _table_base_name = "feedback_defs"
 
-            feedback_definition_id = Column(
-                TYPE_ID, nullable=False, primary_key=True
-            )
+            feedback_definition_id = Column(TYPE_ID, nullable=False, primary_key=True)
             feedback_json = Column(TYPE_JSON, nullable=False)
 
             # feedback_results via one-to-many on FeedbackResult.feedback_definition_id
@@ -187,11 +180,11 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             def parse(
                 cls,
                 obj: mod_feedback_schema.FeedbackDefinition,
-                redact_keys: bool = False
+                redact_keys: bool = False,
             ) -> ORM.FeedbackDefinition:
                 return cls(
                     feedback_definition_id=obj.feedback_definition_id,
-                    feedback_json=json_str_of_obj(obj, redact_keys=redact_keys)
+                    feedback_json=json_str_of_obj(obj, redact_keys=redact_keys),
                 )
 
         class Record(base):
@@ -202,7 +195,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            _table_base_name = 'records'
+            _table_base_name = "records"
 
             record_id = Column(TYPE_ID, nullable=False, primary_key=True)
             app_id = Column(TYPE_ID, nullable=False)  # foreign key
@@ -216,37 +209,27 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             perf_json = Column(TYPE_JSON, nullable=False)
 
             app = relationship(
-                'AppDefinition',
-                backref=backref('records', cascade='all,delete'),
-                primaryjoin='AppDefinition.app_id == Record.app_id',
+                "AppDefinition",
+                backref=backref("records", cascade="all,delete"),
+                primaryjoin="AppDefinition.app_id == Record.app_id",
                 foreign_keys=app_id,
-                order_by='(Record.ts,Record.record_id)'
+                order_by="(Record.ts,Record.record_id)",
             )
 
             @classmethod
             def parse(
-                cls,
-                obj: mod_record_schema.Record,
-                redact_keys: bool = False
+                cls, obj: mod_record_schema.Record, redact_keys: bool = False
             ) -> ORM.Record:
                 return cls(
                     record_id=obj.record_id,
                     app_id=obj.app_id,
-                    input=json_str_of_obj(
-                        obj.main_input, redact_keys=redact_keys
-                    ),
-                    output=json_str_of_obj(
-                        obj.main_output, redact_keys=redact_keys
-                    ),
+                    input=json_str_of_obj(obj.main_input, redact_keys=redact_keys),
+                    output=json_str_of_obj(obj.main_output, redact_keys=redact_keys),
                     record_json=json_str_of_obj(obj, redact_keys=redact_keys),
                     tags=obj.tags,
                     ts=obj.ts.timestamp(),
-                    cost_json=json_str_of_obj(
-                        obj.cost, redact_keys=redact_keys
-                    ),
-                    perf_json=json_str_of_obj(
-                        obj.perf, redact_keys=redact_keys
-                    ),
+                    cost_json=json_str_of_obj(obj.cost, redact_keys=redact_keys),
+                    perf_json=json_str_of_obj(obj.perf, redact_keys=redact_keys),
                 )
 
         class FeedbackResult(base):
@@ -258,15 +241,11 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            _table_base_name = 'feedbacks'
+            _table_base_name = "feedbacks"
 
-            feedback_result_id = Column(
-                TYPE_ID, nullable=False, primary_key=True
-            )
+            feedback_result_id = Column(TYPE_ID, nullable=False, primary_key=True)
             record_id = Column(TYPE_ID, nullable=False)  # foreign key
-            feedback_definition_id = Column(
-                TYPE_ID, nullable=False
-            )  # foreign key
+            feedback_definition_id = Column(TYPE_ID, nullable=False)  # foreign key
             last_ts = Column(TYPE_TIMESTAMP, nullable=False)
             status = Column(TYPE_ENUM, nullable=False)
             error = Column(Text)
@@ -277,29 +256,24 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             multi_result = Column(TYPE_JSON)
 
             record = relationship(
-                'Record',
-                backref=backref('feedback_results', cascade='all,delete'),
-                primaryjoin='Record.record_id == FeedbackResult.record_id',
+                "Record",
+                backref=backref("feedback_results", cascade="all,delete"),
+                primaryjoin="Record.record_id == FeedbackResult.record_id",
                 foreign_keys=record_id,
-                order_by=
-                '(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)'
+                order_by="(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)",
             )
 
             feedback_definition = relationship(
-                'FeedbackDefinition',
-                backref=backref('feedback_results', cascade='all,delete'),
-                primaryjoin=
-                'FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id',
+                "FeedbackDefinition",
+                backref=backref("feedback_results", cascade="all,delete"),
+                primaryjoin="FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
                 foreign_keys=feedback_definition_id,
-                order_by=
-                '(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)'
+                order_by="(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)",
             )
 
             @classmethod
             def parse(
-                cls,
-                obj: mod_feedback_schema.FeedbackResult,
-                redact_keys: bool = False
+                cls, obj: mod_feedback_schema.FeedbackResult, redact_keys: bool = False
             ) -> ORM.FeedbackResult:
                 return cls(
                     feedback_result_id=obj.feedback_result_id,
@@ -313,10 +287,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     ),
                     result=obj.result,
                     name=obj.name,
-                    cost_json=json_str_of_obj(
-                        obj.cost, redact_keys=redact_keys
-                    ),
-                    multi_result=obj.multi_result
+                    cost_json=json_str_of_obj(obj.cost, redact_keys=redact_keys),
+                    multi_result=obj.multi_result,
                 )
 
     configure_mappers()  # IMPORTANT
@@ -348,23 +320,19 @@ def make_base_for_prefix(
         A class that extends `base_type` and sets the table prefix to `table_prefix`.
     """
 
-    if not hasattr(base, '_table_base_name'):
-        raise ValueError(
-            'Expected `base` to be a subclass of `BaseWithTablePrefix`.'
-        )
+    if not hasattr(base, "_table_base_name"):
+        raise ValueError("Expected `base` to be a subclass of `BaseWithTablePrefix`.")
 
     # sqlalchemy stores a mapping of class names to the classes we defined in
     # the ORM above. Here we want to create a class with the specific name
     # matching base_type hence use `type` instead of `class SomeName: ...`.
-    return type(base.__name__, (base,), {'_table_prefix': table_prefix})
+    return type(base.__name__, (base,), {"_table_prefix": table_prefix})
 
 
 # NOTE: lru_cache is important here as we don't want to create multiple classes for
 # the same table name as sqlalchemy will complain.
 @functools.lru_cache
-def make_orm_for_prefix(
-    table_prefix: str = DEFAULT_DATABASE_PREFIX
-) -> Type[ORM[T]]:
+def make_orm_for_prefix(table_prefix: str = DEFAULT_DATABASE_PREFIX) -> Type[ORM[T]]:
     """
     Make a container for ORM classes.
 
@@ -380,9 +348,9 @@ def make_orm_for_prefix(
     return new_orm(base)
 
 
-@event.listens_for(Engine, 'connect')
+@event.listens_for(Engine, "connect")
 def _set_sqlite_pragma(dbapi_connection, _):
     if isinstance(dbapi_connection, SQLite3Connection):
         cursor = dbapi_connection.cursor()
-        cursor.execute('PRAGMA foreign_keys=ON;')
+        cursor.execute("PRAGMA foreign_keys=ON;")
         cursor.close()

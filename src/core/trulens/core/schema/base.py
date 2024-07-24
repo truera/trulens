@@ -39,13 +39,13 @@ class Cost(serial.SerialModel, pydantic.BaseModel):
     cost: float = 0.0
     """Cost in USD."""
 
-    def __add__(self, other: 'Cost') -> 'Cost':
+    def __add__(self, other: "Cost") -> "Cost":
         kwargs = {}
         for k in self.model_fields.keys():
             kwargs[k] = getattr(self, k) + getattr(other, k)
         return Cost(**kwargs)
 
-    def __radd__(self, other: 'Cost') -> 'Cost':
+    def __radd__(self, other: "Cost") -> "Cost":
         # Makes sum work on lists of Cost.
 
         if other == 0:
@@ -70,9 +70,7 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
     def min():
         """Zero-length span with start and end times at the minimum datetime."""
 
-        return Perf(
-            start_time=datetime.datetime.min, end_time=datetime.datetime.min
-        )
+        return Perf(start_time=datetime.datetime.min, end_time=datetime.datetime.min)
 
     @staticmethod
     def now(latency: Optional[datetime.timedelta] = None) -> Perf:

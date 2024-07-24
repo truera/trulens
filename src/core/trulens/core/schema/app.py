@@ -28,13 +28,17 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     tags: mod_types_schema.Tags  # str
     """Tags for the app."""
 
-    metadata: mod_types_schema.Metadata  # dict  # TODO: rename to meta for consistency with other metas
+    metadata: (
+        mod_types_schema.Metadata
+    )  # dict  # TODO: rename to meta for consistency with other metas
     """Metadata for the app."""
 
     feedback_definitions: Sequence[mod_feedback_schema.FeedbackDefinition] = []
     """Feedback functions to evaluate on each record."""
 
-    feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+    feedback_mode: mod_feedback_schema.FeedbackMode = (
+        mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+    )
     """How to evaluate feedback functions upon producing a record."""
 
     root_class: pyschema.Class
@@ -78,28 +82,26 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_id: Optional[mod_types_schema.AppID] = None,
         tags: Optional[mod_types_schema.Tags] = None,
         metadata: Optional[mod_types_schema.Metadata] = None,
-        feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.
-        FeedbackMode.WITH_APP_THREAD,
+        feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
         app_extra_json: serial.JSON = None,
-        **kwargs
+        **kwargs,
     ):
-
         # for us:
-        kwargs['app_id'] = 'temporary'  # will be adjusted below
-        kwargs['feedback_mode'] = feedback_mode
-        kwargs['tags'] = ''
-        kwargs['metadata'] = {}
-        kwargs['app_extra_json'] = app_extra_json or dict()
+        kwargs["app_id"] = "temporary"  # will be adjusted below
+        kwargs["feedback_mode"] = feedback_mode
+        kwargs["tags"] = ""
+        kwargs["metadata"] = {}
+        kwargs["app_extra_json"] = app_extra_json or dict()
 
         super().__init__(**kwargs)
 
         if app_id is None:
-            app_id = obj_id_of_obj(obj=self.model_dump(), prefix='app')
+            app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
 
         self.app_id = app_id
 
         if tags is None:
-            tags = '-'  # Set tags to a "-" if None is provided
+            tags = "-"  # Set tags to a "-" if None is provided
         self.tags = tags
 
         if metadata is None:
@@ -107,16 +109,16 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         self.metadata = metadata
 
         # EXPERIMENTAL
-        if 'initial_app_loader' in kwargs:
+        if "initial_app_loader" in kwargs:
             try:
-                dump = dill.dumps(kwargs['initial_app_loader'], recurse=True)
+                dump = dill.dumps(kwargs["initial_app_loader"], recurse=True)
 
                 if len(dump) > mod_base_schema.MAX_DILL_SIZE:
                     logger.warning(
-                        '`initial_app_loader` dump is too big (%s) > %s bytes). '
-                        'If you are loading large objects, include the loading logic inside `initial_app_loader`.',
+                        "`initial_app_loader` dump is too big (%s) > %s bytes). "
+                        "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
                         humanize.naturalsize(len(dump)),
-                        humanize.naturalsize(mod_base_schema.MAX_DILL_SIZE)
+                        humanize.naturalsize(mod_base_schema.MAX_DILL_SIZE),
                     )
                 else:
                     self.initial_app_loader_dump = serial.SerialBytes(data=dump)
@@ -140,14 +142,13 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
             except Exception as e:
                 logger.warning(
-                    'Could not serialize app loader. '
-                    'Some trulens features may not be available: %s', e
+                    "Could not serialize app loader. "
+                    "Some trulens features may not be available: %s",
+                    e,
                 )
 
     @staticmethod
-    def continue_session(
-        app_definition_json: serial.JSON, app: Any
-    ) -> AppDefinition:
+    def continue_session(app_definition_json: serial.JSON, app: Any) -> AppDefinition:
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
         """Instantiate the given `app` with the given state
         `app_definition_json`.
@@ -165,7 +166,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                 `app_definition_json` state.
         """
 
-        app_definition_json['app'] = app
+        app_definition_json["app"] = app
 
         cls = pyschema.WithClassInfo.get_class(app_definition_json)
 
@@ -173,8 +174,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def new_session(
-        app_definition_json: serial.JSON,
-        initial_app_loader: Optional[Callable] = None
+        app_definition_json: serial.JSON, initial_app_loader: Optional[Callable] = None
     ) -> AppDefinition:
         """Create an app instance at the start of a session.
 
@@ -186,11 +186,14 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         blank memory).
         """
 
-        serial_bytes_json: Optional[
-            serial.JSON] = app_definition_json['initial_app_loader_dump']
+        serial_bytes_json: Optional[serial.JSON] = app_definition_json[
+            "initial_app_loader_dump"
+        ]
 
         if initial_app_loader is None:
-            assert serial_bytes_json is not None, 'Cannot create new session without `initial_app_loader`.'
+            assert (
+                serial_bytes_json is not None
+            ), "Cannot create new session without `initial_app_loader`."
 
             serial_bytes = serial.SerialBytes.model_validate(serial_bytes_json)
 
@@ -202,8 +205,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             serial_bytes = serial.SerialBytes(data=data)
             serial_bytes_json = serial_bytes.model_dump()
 
-        app_definition_json['app'] = app
-        app_definition_json['initial_app_loader_dump'] = serial_bytes_json
+        app_definition_json["app"] = app
+        app_definition_json["initial_app_loader_dump"] = serial_bytes_json
 
         cls = pyschema.WithClassInfo.get_class(app_definition_json)
 
@@ -213,7 +216,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         # Called by jsonify for us to add any data we might want to add to the
         # serialization of `app`.
         if self.app_extra_json is not None:
-            content['app'].update(self.app_extra_json)
+            content["app"].update(self.app_extra_json)
 
         return content
 
@@ -235,7 +238,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         apps = tru.get_apps()
         for app in apps:
-            dump = app.get('initial_app_loader_dump')
+            dump = app.get("initial_app_loader_dump")
             if dump is not None:
                 rets.append(app)
 
@@ -257,7 +260,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         return getattr(
             mod_feedback_schema.Select.RecordCalls,
-            cls.root_callable.default_factory().name
+            cls.root_callable.default_factory().name,
         ).args
 
     @classmethod
@@ -266,7 +269,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         return getattr(
             mod_feedback_schema.Select.RecordCalls,
-            cls.root_callable.default_factory().name
+            cls.root_callable.default_factory().name,
         ).rets
 
 

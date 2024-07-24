@@ -13,7 +13,7 @@ def skip_if_odd(val: float):
     """
 
     if int(val) % 2 == 1:
-        raise SkipEval(reason=f'Because input value {val} was odd.')
+        raise SkipEval(reason=f"Because input value {val} was odd.")
 
     return float(val)
 
@@ -40,7 +40,7 @@ class CustomProvider(Provider):
         return 0.4 + self.attr
 
 
-class CustomClassNoArgs():
+class CustomClassNoArgs:
     # This one is ok as it has no init arguments so we can deserialize it just
     # from its module and name.
 
@@ -56,7 +56,7 @@ class CustomClassNoArgs():
         return 0.7
 
 
-class CustomClassWithArgs():
+class CustomClassWithArgs:
     # These should fail as we don't know how to initialize this class during
     # deserialization.
 
@@ -84,7 +84,6 @@ def make_nonglobal_feedbacks():
     # incorrectly.
 
     class NG:  # "non-global"
-
         @staticmethod
         def NGcustom_feedback_function(t1: str) -> float:
             return 0.1
@@ -106,7 +105,7 @@ def make_nonglobal_feedbacks():
             def method(self, t1: str) -> float:
                 return 0.4 + self.attr
 
-        class NGCustomClassNoArgs():
+        class NGCustomClassNoArgs:
             # This one is ok as it has no init arguments so we can deserialize it just
             # from its module and name.
 
@@ -121,7 +120,7 @@ def make_nonglobal_feedbacks():
             def method(self, t1: str) -> float:
                 return 0.7
 
-        class NGCustomClassWithArgs():
+        class NGCustomClassWithArgs:
             # These should fail as we don't know how to initialize this class during
             # deserialization.
 

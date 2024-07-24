@@ -20,26 +20,24 @@ opt.assert_installed(llama_index)
 
 
 class Prompt(base.Prompt, base.LlamaIndexComponent):
-
     @property
     def template(self) -> str:
-        return self.json['template']
+        return self.json["template"]
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['template']))
+        return super().unsorted_parameters(skip=set(["template"]))
 
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name='llama_index.prompts.base', class_name='Prompt'
+            module_name="llama_index.prompts.base", class_name="Prompt"
         )
 
 
 class Agent(base.Agent, base.LlamaIndexComponent):
-
     @property
     def agent_name(self) -> str:
-        return 'agent name not supported in llama_index'
+        return "agent name not supported in llama_index"
 
     def unsorted_parameters(self):
         return super().unsorted_parameters(skip=set())
@@ -47,42 +45,40 @@ class Agent(base.Agent, base.LlamaIndexComponent):
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name='llama_index.agent.types', class_name='BaseAgent'
+            module_name="llama_index.agent.types", class_name="BaseAgent"
         )
 
 
 class Tool(base.Tool, base.LlamaIndexComponent):
-
     @property
     def tool_name(self) -> str:
-        if 'metadata' in self.json:
-            return self.json['metadata']['name']
+        if "metadata" in self.json:
+            return self.json["metadata"]["name"]
         else:
-            return 'no name given'
+            return "no name given"
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['model']))
+        return super().unsorted_parameters(skip=set(["model"]))
 
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name='llama_index.tools.types', class_name='BaseTool'
+            module_name="llama_index.tools.types", class_name="BaseTool"
         )
 
 
 class LLM(base.LLM, base.LlamaIndexComponent):
-
     @property
     def model_name(self) -> str:
-        return self.json['model']
+        return self.json["model"]
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['model']))
+        return super().unsorted_parameters(skip=set(["model"]))
 
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name='llama_index.llms.base', class_name='LLM'
+            module_name="llama_index.llms.base", class_name="LLM"
         )
 
 
@@ -99,7 +95,7 @@ def constructor_of_class(cls: Class) -> Type[base.LlamaIndexComponent]:
         if view.class_is(cls):
             return view
 
-    raise TypeError(f'Unknown llama_index component type with class {cls}')
+    raise TypeError(f"Unknown llama_index component type with class {cls}")
 
 
 def component_of_json(json: dict) -> base.LlamaIndexComponent:

@@ -2,6 +2,7 @@
 # Main class holding and running feedback functions:
 from trulens.external.embeddings import Embeddings
 from trulens.external.groundtruth import GroundTruthAgreement
+
 # Providers of feedback functions evaluation:
 from trulens.external.provider.hugs import Huggingface
 from trulens.external.provider.hugs import HuggingfaceLocal
@@ -31,14 +32,14 @@ __version__ = importlib.metadata.version(__package__ or __name__)
 
 
 __all__ = [
-    'Embeddings',
-    'GroundTruthAgreement',
-    'OpenAI',
-    'AzureOpenAI',
-    'Huggingface',
-    'HuggingfaceLocal',
-    'LiteLLM',
-    'Bedrock',
-    'Langchain',
-    'Cortex',
+    "Embeddings",
+    "GroundTruthAgreement",
+    "OpenAI",
+    "AzureOpenAI",
+    "Huggingface",
+    "HuggingfaceLocal",
+    "LiteLLM",
+    "Bedrock",
+    "Langchain",
+    "Cortex",
 ]

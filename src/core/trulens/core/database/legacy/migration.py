@@ -19,7 +19,7 @@ from trulens.core.schema import record as mod_record_schema
 from trulens.utils.pyschema import FunctionOrMethod
 
 logger = logging.getLogger(__name__)
-'''
+"""
 How to make a db migrations:
 
 1. Create a compatibility DB (checkout the last pypi rc branch https://github.com/truera/trulens/tree/releases/rc-trulens-eval-X.x.x/):
@@ -52,15 +52,15 @@ How to make a db migrations:
 
 4. Add a DB file for testing new breaking changes (Same as step 1: but with your new version)
   * Do a sys.path.insert(0,TRULENS_PATH) to run with your version
-'''
+"""
 
 
 class VersionException(Exception):
     pass
 
 
-MIGRATION_UNKNOWN_STR = 'unknown[db_migration]'
-migration_versions: List[str] = ['0.19.0']
+MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
+migration_versions: List[str] = ["0.19.0"]
 
 
 def _update_db_json_col(
@@ -113,10 +113,9 @@ def jsonlike_map(fval=None, fkey=None, fkeyval=None):
 
 
 def jsonlike_rename_key(old_key, new_key) -> Callable:
-
     def fkey(k):
         if k == old_key:
-            logger.debug(f'key {old_key} -> {new_key}')
+            logger.debug(f"key {old_key} -> {new_key}")
             return new_key
         else:
             return k
@@ -125,10 +124,9 @@ def jsonlike_rename_key(old_key, new_key) -> Callable:
 
 
 def jsonlike_rename_value(old_val, new_val) -> Callable:
-
     def fval(v):
         if v == old_val:
-            logger.debug(f'value {old_val} -> {new_val}')
+            logger.debug(f"value {old_val} -> {new_val}")
             return new_val
         else:
             return v
@@ -137,7 +135,6 @@ def jsonlike_rename_value(old_val, new_val) -> Callable:
 
 
 class UnknownClass(pydantic.BaseModel):
-
     def unknown_method(self):
         """
         This is a placeholder put into the database in place of methods whose
@@ -161,7 +158,7 @@ def _parse_version(version_str: str) -> List[str]:
     Returns:
         list: [major, minor, patch] strings
     """
-    return version_str.split('.')
+    return version_str.split(".")
 
 
 def _get_compatibility_version(version: str) -> str:
@@ -179,12 +176,11 @@ def _get_compatibility_version(version: str) -> str:
 
     for m_version_str in migration_versions:
         for i, m_version_split in enumerate(_parse_version(m_version_str)):
-
             if int(version_split[i]) > int(m_version_split):
                 return m_version_str
 
             elif int(version_split[i]) == int(m_version_split):
-                if i == 2:  #patch version
+                if i == 2:  # patch version
                     return m_version_str
                 # Can't make a choice here, move to next endian.
                 continue
@@ -221,10 +217,10 @@ def commit_migrated_version(db, version: str) -> None:
     conn, c = db._connect()
 
     c.execute(
-        f'''UPDATE {db.TABLE_META}
+        f"""UPDATE {db.TABLE_META}
                 SET value = '{version}'
                 WHERE key='trulens_version';
-            '''
+            """
     )
     conn.commit()
 
@@ -258,20 +254,19 @@ def _check_needs_migration(version: str, warn=False) -> None:
     compat_version = _get_compatibility_version(version)
 
     if migration_versions.index(compat_version) > 0:
-
         if _upgrade_possible(compat_version):
             msg = (
-                f'Detected that your db version {version} is from an older release that is incompatible with this release. '
-                f'You can either reset your db with `tru.reset_database()`, '
-                f'or you can initiate a db migration with `tru.migrate_database()`'
+                f"Detected that your db version {version} is from an older release that is incompatible with this release. "
+                f"You can either reset your db with `tru.reset_database()`, "
+                f"or you can initiate a db migration with `tru.migrate_database()`"
             )
         else:
             msg = (
-                f'Detected that your db version {version} is from an older release that is incompatible with this release and cannot be migrated. '
-                f'Reset your db with `tru.reset_database()`'
+                f"Detected that your db version {version} is from an older release that is incompatible with this release and cannot be migrated. "
+                f"Reset your db with `tru.reset_database()`"
             )
         if warn:
-            print(f'Warning! {msg}')
+            print(f"Warning! {msg}")
         else:
             raise VersionException(msg)
 
@@ -291,9 +286,9 @@ def _serialization_asserts(db) -> None:
     conn, c = db._connect()
     SAVED_DB_FILE_LOC = saved_db_locations[db.filename]
     validation_fail_advice = (
-        f'Please open a ticket on trulens github page including details on the old and new trulens versions. '
-        f'The migration completed so you can still proceed; but stability is not guaranteed. '
-        f'Your original DB file is saved here: {SAVED_DB_FILE_LOC} and can be used with the previous version, or you can `tru.reset_database()`'
+        f"Please open a ticket on trulens github page including details on the old and new trulens versions. "
+        f"The migration completed so you can still proceed; but stability is not guaranteed. "
+        f"Your original DB file is saved here: {SAVED_DB_FILE_LOC} and can be used with the previous version, or you can `tru.reset_database()`"
     )
 
     for table in db.TABLES:
@@ -301,12 +296,12 @@ def _serialization_asserts(db) -> None:
                 """)
         columns = c.fetchall()
         for col_idx, col in tqdm(
-                enumerate(columns),
-                desc=f'Validating clean migration of table {table}'):
+            enumerate(columns), desc=f"Validating clean migration of table {table}"
+        ):
             col_name_idx = 1
             col_name = col[col_name_idx]
             # This is naive for now...
-            if 'json' in col_name:
+            if "json" in col_name:
                 c.execute(f"""SELECT * FROM {table}""")
                 rows = c.fetchall()
                 for row in rows:
@@ -316,46 +311,44 @@ def _serialization_asserts(db) -> None:
 
                         test_json = json.loads(row[col_idx])
                         # special implementation checks for serialized classes
-                        if 'implementation' in test_json:
+                        if "implementation" in test_json:
                             try:
                                 FunctionOrMethod.model_validate(
-                                    test_json['implementation']
+                                    test_json["implementation"]
                                 ).load()
                             except ImportError:
                                 # Import error is not a migration problem.
                                 # It signals that the function cannot be used for deferred evaluation.
                                 pass
 
-                        if col_name == 'record_json':
+                        if col_name == "record_json":
                             mod_record_schema.Record.model_validate(test_json)
-                        elif col_name == 'cost_json':
+                        elif col_name == "cost_json":
                             mod_base_schema.Cost.model_validate(test_json)
-                        elif col_name == 'perf_json':
+                        elif col_name == "perf_json":
                             mod_base_schema.Perf.model_validate(test_json)
-                        elif col_name == 'calls_json':
-                            for record_app_call_json in test_json['calls']:
+                        elif col_name == "calls_json":
+                            for record_app_call_json in test_json["calls"]:
                                 mod_feedback_schema.FeedbackCall.model_validate(
                                     record_app_call_json
                                 )
-                        elif col_name == 'feedback_json':
+                        elif col_name == "feedback_json":
                             mod_feedback_schema.FeedbackDefinition.model_validate(
                                 test_json
                             )
-                        elif col_name == 'app_json':
-                            mod_app_schema.AppDefinition.model_validate(
-                                test_json
-                            )
+                        elif col_name == "app_json":
+                            mod_app_schema.AppDefinition.model_validate(test_json)
                         else:
                             # If this happens, trulens needs to add a migration
 
                             raise VersionException(
-                                f'serialized column migration not implemented: {col_name}. {validation_fail_advice}'
+                                f"serialized column migration not implemented: {col_name}. {validation_fail_advice}"
                             )
                     except Exception as e:
                         tb = traceback.format_exc()
 
                         raise VersionException(
-                            f'Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}\n\n{validation_fail_advice}'
+                            f"Migration failed on {table} {col_name} {row[col_idx]}.\n\n{tb}\n\n{validation_fail_advice}"
                         ) from e
 
 
@@ -379,11 +372,13 @@ def migrate(db) -> None:
     original_db_file = db.filename
     global saved_db_locations
 
-    saved_db_file = original_db_file.parent / f'{original_db_file.name}_saved_{uuid.uuid1()}'
+    saved_db_file = (
+        original_db_file.parent / f"{original_db_file.name}_saved_{uuid.uuid1()}"
+    )
     saved_db_locations[original_db_file] = saved_db_file
     shutil.copy(original_db_file, saved_db_file)
     print(
-        f'Saved original db file: `{original_db_file}` to new file: `{saved_db_file}`'
+        f"Saved original db file: `{original_db_file}` to new file: `{saved_db_file}`"
     )
 
     version = db.get_meta().trulens_version
@@ -394,6 +389,6 @@ def migrate(db) -> None:
         commit_migrated_version(db=db, version=to_compat_version)
         from_compat_version = to_compat_version
 
-    print('DB Migration complete!')
+    print("DB Migration complete!")
     _serialization_asserts(db)
-    print('DB Validation complete!')
+    print("DB Validation complete!")

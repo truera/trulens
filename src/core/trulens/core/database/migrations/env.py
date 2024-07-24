@@ -11,7 +11,7 @@ from trulens.core.database.orm import make_orm_for_prefix
 config = context.config
 
 # Run this block only if Alembic was called from the command-line
-#if config.get_main_option("calling_context", default="CLI") == "CLI":
+# if config.get_main_option("calling_context", default="CLI") == "CLI":
 # NOTE(piotrm): making this run always so users can configure alembic.ini as
 # they see fit.
 
@@ -19,28 +19,26 @@ config = context.config
 if config.config_file_name is not None:
     if not os.path.exists(config.config_file_name):
         raise FileNotFoundError(
-            f'Alembic config file not found: {config.config_file_name}.'
+            f"Alembic config file not found: {config.config_file_name}."
         )
 
     fileConfig(config.config_file_name)
 
 # Get `sqlalchemy.url` from the environment.
-if config.get_main_option('sqlalchemy.url', None) is None:
-    config.set_main_option(
-        'sqlalchemy.url', os.environ.get('SQLALCHEMY_URL', '')
-    )
+if config.get_main_option("sqlalchemy.url", None) is None:
+    config.set_main_option("sqlalchemy.url", os.environ.get("SQLALCHEMY_URL", ""))
 
 # Get `trulens.table_prefix` from the environment.
-prefix = config.get_main_option(
-    'trulens.table_prefix'
-) or mod_db.DEFAULT_DATABASE_PREFIX
+prefix = (
+    config.get_main_option("trulens.table_prefix") or mod_db.DEFAULT_DATABASE_PREFIX
+)
 
 orm = make_orm_for_prefix(table_prefix=prefix)
 
 # Database schema information
 target_metadata = orm.metadata
 
-url = config.get_main_option('sqlalchemy.url')
+url = config.get_main_option("sqlalchemy.url")
 
 
 def run_migrations_offline() -> None:
@@ -59,8 +57,8 @@ def run_migrations_offline() -> None:
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={'paramstyle': 'named'},
-        version_table=prefix + 'alembic_version'
+        dialect_opts={"paramstyle": "named"},
+        version_table=prefix + "alembic_version",
     )
 
     with context.begin_transaction():
@@ -74,10 +72,10 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    if not (engine := config.attributes.get('engine')):
+    if not (engine := config.attributes.get("engine")):
         engine = engine_from_config(
             config.get_section(config.config_ini_section),
-            prefix='sqlalchemy.',
+            prefix="sqlalchemy.",
             poolclass=pool.NullPool,
         )
 
@@ -85,7 +83,7 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            version_table=prefix + 'alembic_version'
+            version_table=prefix + "alembic_version",
         )
 
         with context.begin_transaction():

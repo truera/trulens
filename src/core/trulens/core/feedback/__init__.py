@@ -4,8 +4,8 @@ from trulens.core.feedback.base_feedback import Feedback
 from trulens.core.feedback.base_provider import Provider
 
 __all__ = [
-    'Feedback',
-    'Provider',
-    'Endpoint',
-    'EndpointCallback',
+    "Feedback",
+    "Provider",
+    "Endpoint",
+    "EndpointCallback",
 ]

@@ -67,20 +67,19 @@ class Pace(BaseModel):
         *args,
         marks_per_second: Optional[float] = None,
         rpm: Optional[float] = None,
-        **kwargs
+        **kwargs,
     ):
-
         if marks_per_second is None:
-            assert rpm is not None, 'Either `marks_per_second` or `rpm` must be given.'
+            assert rpm is not None, "Either `marks_per_second` or `rpm` must be given."
             marks_per_second = rpm / 60.0
         else:
-            assert rpm is None, 'Only one of `marks_per_second` or `rpm` can be given.'
+            assert rpm is None, "Only one of `marks_per_second` or `rpm` can be given."
 
         max_marks = int(seconds_per_period * marks_per_second)
         if max_marks == 0:
             raise ValueError(
-                'Period is too short for the give rate. '
-                'Increase `seconds_per_period` or `returns_per_second` (or both).'
+                "Period is too short for the give rate. "
+                "Increase `seconds_per_period` or `returns_per_second` (or both)."
             )
 
         super().__init__(
@@ -89,7 +88,7 @@ class Pace(BaseModel):
             seconds_per_period_timedelta=timedelta(seconds=seconds_per_period),
             marks_per_second=marks_per_second,
             max_marks=max_marks,
-            **kwargs
+            **kwargs,
         )
 
     def mark(self) -> float:
@@ -99,10 +98,8 @@ class Pace(BaseModel):
         """
 
         with self.lock:
-
             while len(self.mark_expirations) >= self.max_marks:
-                delay = (self.mark_expirations[0] -
-                         datetime.now()).total_seconds()
+                delay = (self.mark_expirations[0] - datetime.now()).total_seconds()
 
                 if delay >= self.seconds_per_period * 0.5:
                     logger.warning(
@@ -127,8 +124,6 @@ per second in that period.
 
             # Add to marks the point at which the mark can be removed (after
             # `period` seconds).
-            self.mark_expirations.append(
-                now + self.seconds_per_period_timedelta
-            )
+            self.mark_expirations.append(now + self.seconds_per_period_timedelta)
 
             return (now - prior_last_mark).total_seconds()

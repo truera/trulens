@@ -33,9 +33,9 @@ class DatabaseVersionException(Exception):
         """Create an ahead variant of this exception."""
 
         return cls(
-            'Database schema is ahead of the expected revision. '
-            'Please update to a later release of `trulens`.',
-            cls.Reason.AHEAD
+            "Database schema is ahead of the expected revision. "
+            "Please update to a later release of `trulens`.",
+            cls.Reason.AHEAD,
         )
 
     @classmethod
@@ -43,9 +43,10 @@ class DatabaseVersionException(Exception):
         """Create a behind variant of this exception."""
 
         return cls(
-            'Database schema is behind the expected revision. '
-            'Please upgrade it by running `tru.migrate_database()` '
-            'or reset it by running `tru.reset_database()`.', cls.Reason.BEHIND
+            "Database schema is behind the expected revision. "
+            "Please upgrade it by running `tru.migrate_database()` "
+            "or reset it by running `tru.reset_database()`.",
+            cls.Reason.BEHIND,
         )
 
     @classmethod
@@ -57,9 +58,9 @@ class DatabaseVersionException(Exception):
         message.
         """
         return cls(
-            'Database has been reconfigured. '
-            f"Please update it by running `tru.migrate_database(prior_prefix=\"{prior_prefix}\")`"
-            ' or reset it by running `tru.reset_database()`.',
+            "Database has been reconfigured. "
+            f'Please update it by running `tru.migrate_database(prior_prefix="{prior_prefix}")`'
+            " or reset it by running `tru.reset_database()`.",
             cls.Reason.RECONFIGURED,
-            prior_prefix=prior_prefix
+            prior_prefix=prior_prefix,
         )

@@ -9,30 +9,38 @@ import logging
 from pprint import PrettyPrinter
 from threading import Event
 from threading import RLock
-from typing import (Callable, Dict, Generic, Iterable, Optional, Sequence, Set,
-                    Tuple, TypeVar, Union)
+from typing import (
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
-T = TypeVar('T')
-A = TypeVar('A')
-B = TypeVar('B')
+T = TypeVar("T")
+A = TypeVar("A")
+B = TypeVar("B")
 
 
 class BlockingSet(set, Generic[T]):
     """A set with max size that has blocking peek/get/add ."""
 
-    def __init__(
-        self, items: Optional[Iterable[T]] = None, max_size: int = 1024
-    ):
+    def __init__(self, items: Optional[Iterable[T]] = None, max_size: int = 1024):
         if items is not None:
             items = list(items)
         else:
             items = []
 
         if len(items) > max_size:
-            raise ValueError('Initial items exceed max size.')
+            raise ValueError("Initial items exceed max size.")
 
         self.content: Set[T] = set(items)
         self.max_size = max_size

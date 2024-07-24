@@ -44,7 +44,7 @@ class OpenAI(LLMProvider):
             and finally to the OpenAI client.
     """
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = 'gpt-3.5-turbo'
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
@@ -57,7 +57,7 @@ class OpenAI(LLMProvider):
         pace: Optional[Pace] = None,
         rpm: Optional[int] = None,
         model_engine: Optional[str] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -70,31 +70,27 @@ class OpenAI(LLMProvider):
         # endpoint below.
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
-        self_kwargs['model_engine'] = model_engine
+        self_kwargs["model_engine"] = model_engine
 
-        self_kwargs['endpoint'] = OpenAIEndpoint(
-            *args, pace=pace, rpm=rpm, **kwargs
-        )
+        self_kwargs["endpoint"] = OpenAIEndpoint(*args, pace=pace, rpm=rpm, **kwargs)
 
-        super().__init__(
-            **self_kwargs
-        )  # need to include pydantic.BaseModel.__init__
+        super().__init__(**self_kwargs)  # need to include pydantic.BaseModel.__init__
 
     # LLMProvider requirement
     def _create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
-        if 'model' not in kwargs:
-            kwargs['model'] = self.model_engine
+        if "model" not in kwargs:
+            kwargs["model"] = self.model_engine
 
-        if 'temperature' not in kwargs:
-            kwargs['temperature'] = 0.0
+        if "temperature" not in kwargs:
+            kwargs["temperature"] = 0.0
 
-        if 'seed' not in kwargs:
-            kwargs['seed'] = 123
+        if "seed" not in kwargs:
+            kwargs["seed"] = 123
 
         if messages is not None:
             completion = self.endpoint.client.chat.completions.create(
@@ -103,14 +99,11 @@ class OpenAI(LLMProvider):
 
         elif prompt is not None:
             completion = self.endpoint.client.chat.completions.create(
-                messages=[{
-                    'role': 'system',
-                    'content': prompt
-                }], **kwargs
+                messages=[{"role": "system", "content": prompt}], **kwargs
             )
 
         else:
-            raise ValueError('`prompt` or `messages` must be specified.')
+            raise ValueError("`prompt` or `messages` must be specified.")
 
         return completion.choices[0].message.content
 
@@ -404,13 +397,10 @@ class AzureOpenAI(OpenAI):
 
     # Sent to our openai client wrapper but need to keep here as well so that it
     # gets dumped when jsonifying.
-    deployment_name: str = pydantic.Field(alias='model_engine')
+    deployment_name: str = pydantic.Field(alias="model_engine")
 
     def __init__(
-        self,
-        deployment_name: str,
-        endpoint: Optional[Endpoint] = None,
-        **kwargs: dict
+        self, deployment_name: str, endpoint: Optional[Endpoint] = None, **kwargs: dict
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -424,14 +414,14 @@ class AzureOpenAI(OpenAI):
         if CLASS_INFO in client_kwargs:
             del client_kwargs[CLASS_INFO]
 
-        if 'model_engine' in client_kwargs:
+        if "model_engine" in client_kwargs:
             # delete from client args
-            del client_kwargs['model_engine']
+            del client_kwargs["model_engine"]
         else:
             # but include in provider args
-            kwargs['model_engine'] = deployment_name
+            kwargs["model_engine"] = deployment_name
 
-        kwargs['client'] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
+        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
 
         super().__init__(
             endpoint=None, **kwargs

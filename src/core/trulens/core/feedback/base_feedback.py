@@ -9,8 +9,7 @@ import json
 import logging
 from pprint import pformat
 import traceback
-from typing import (Any, Callable, Dict, Iterable, List, Optional, Tuple,
-                    TypeVar, Union)
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, TypeVar, Union
 import warnings
 
 import munch
@@ -39,7 +38,7 @@ from trulens.utils import threading as mod_threading_utils
 # from trulens.core import schema as tru_schema # also breaks pydantic
 
 logger = logging.getLogger(__name__)
-A = TypeVar('A')
+A = TypeVar("A")
 
 ImpCallable = Callable[[A], Union[float, Tuple[float, Dict[str, Any]]]]
 """Signature of feedback implementations.
@@ -74,12 +73,12 @@ class SkipEval(Exception):
         self.ins = ins
 
     def __str__(self):
-        return 'Feedback evaluation skipped' + (
-            (' because ' + self.reason) if self.reason else ''
+        return "Feedback evaluation skipped" + (
+            (" because " + self.reason) if self.reason else ""
         )
 
     def __repr__(self):
-        return f'SkipEval(reason={self.reason})'
+        return f"SkipEval(reason={self.reason})"
 
 
 class InvalidSelector(Exception):
@@ -88,17 +87,16 @@ class InvalidSelector(Exception):
     def __init__(
         self,
         selector: mod_serial_utils.Lens,
-        source_data: Optional[Dict[str, Any]] = None
+        source_data: Optional[Dict[str, Any]] = None,
     ):
         self.selector = selector
         self.source_data = source_data
 
     def __str__(self):
-        return f'Selector {self.selector} does not exist in source data.'
+        return f"Selector {self.selector} does not exist in source data."
 
     def __repr__(self):
-        return f'InvalidSelector({self.selector})'
-
+        return f"InvalidSelector({self.selector})"
 
 
 class Feedback(mod_feedback_schema.FeedbackDefinition):
@@ -137,69 +135,68 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
     """
 
     def __init__(
-        self,
-        imp: Optional[Callable] = None,
-        agg: Optional[Callable] = None,
-        **kwargs
+        self, imp: Optional[Callable] = None, agg: Optional[Callable] = None, **kwargs
     ):
-
         # imp is the python function/method while implementation is a serialized
         # json structure. Create the one that is missing based on the one that
         # is provided:
         if imp is not None:
             # These are for serialization to/from json and for db storage.
-            if 'implementation' not in kwargs:
+            if "implementation" not in kwargs:
                 try:
-                    kwargs['implementation'
-                          ] = mod_pyschema.FunctionOrMethod.of_callable(
-                              imp, loadable=True
-                          )
+                    kwargs["implementation"] = (
+                        mod_pyschema.FunctionOrMethod.of_callable(imp, loadable=True)
+                    )
 
                 except Exception as e:
                     logger.warning(
-                        'Feedback implementation %s cannot be serialized: %s '
-                        'This may be ok unless you are using the deferred feedback mode.',
-                        imp, e
+                        "Feedback implementation %s cannot be serialized: %s "
+                        "This may be ok unless you are using the deferred feedback mode.",
+                        imp,
+                        e,
                     )
 
-                    kwargs['implementation'
-                          ] = mod_pyschema.FunctionOrMethod.of_callable(
-                              imp, loadable=False
-                          )
+                    kwargs["implementation"] = (
+                        mod_pyschema.FunctionOrMethod.of_callable(imp, loadable=False)
+                    )
 
         else:
-            if 'implementation' in kwargs:
-                imp: ImpCallable = mod_pyschema.FunctionOrMethod.model_validate(
-                    kwargs['implementation']
-                ).load() if kwargs['implementation'] is not None else None
+            if "implementation" in kwargs:
+                imp: ImpCallable = (
+                    mod_pyschema.FunctionOrMethod.model_validate(
+                        kwargs["implementation"]
+                    ).load()
+                    if kwargs["implementation"] is not None
+                    else None
+                )
 
         # Similarly with agg and aggregator.
         if agg is not None:
-            if kwargs.get('aggregator') is None:
+            if kwargs.get("aggregator") is None:
                 try:
                     # These are for serialization to/from json and for db storage.
-                    kwargs['aggregator'
-                          ] = mod_pyschema.FunctionOrMethod.of_callable(
-                              agg, loadable=True
-                          )
+                    kwargs["aggregator"] = mod_pyschema.FunctionOrMethod.of_callable(
+                        agg, loadable=True
+                    )
                 except Exception as e:
                     # User defined functions in script do not have a module so cannot be serialized
                     logger.warning(
-                        'Cannot serialize aggregator %s. '
-                        'Deferred mode will default to `np.mean` as aggregator. '
-                        'If you are not using `FeedbackMode.DEFERRED`, you can safely ignore this warning. '
-                        '%s', agg, e
+                        "Cannot serialize aggregator %s. "
+                        "Deferred mode will default to `np.mean` as aggregator. "
+                        "If you are not using `FeedbackMode.DEFERRED`, you can safely ignore this warning. "
+                        "%s",
+                        agg,
+                        e,
                     )
                     # These are for serialization to/from json and for db storage.
-                    kwargs['aggregator'
-                          ] = mod_pyschema.FunctionOrMethod.of_callable(
-                              agg, loadable=False
-                          )
+                    kwargs["aggregator"] = mod_pyschema.FunctionOrMethod.of_callable(
+                        agg, loadable=False
+                    )
 
         else:
-            if kwargs.get('aggregator') is not None:
+            if kwargs.get("aggregator") is not None:
                 agg: AggCallable = mod_pyschema.FunctionOrMethod.model_validate(
-                    kwargs['aggregator']
+                    kwargs["aggregator"]
                 ).load()
             else:
                 # Default aggregator if neither serialized `aggregator` or
@@ -216,8 +213,8 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             sig: Signature = signature(self.imp)
             for argname in self.selectors.keys():
                 assert argname in sig.parameters, (
-                    f'{argname} is not an argument to {self.imp.__name__}. '
-                    f'Its arguments are {list(sig.parameters.keys())}.'
+                    f"{argname} is not an argument to {self.imp.__name__}. "
+                    f"Its arguments are {list(sig.parameters.keys())}."
                 )
 
     def on_input_output(self) -> Feedback:
@@ -246,17 +243,17 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
     def _print_guessed_selector(self, par_name, par_path):
         if par_path == mod_feedback_schema.Select.RecordCalls:
-            alias_info = ' or `Select.RecordCalls`'
+            alias_info = " or `Select.RecordCalls`"
         elif par_path == mod_feedback_schema.Select.RecordInput:
-            alias_info = ' or `Select.RecordInput`'
+            alias_info = " or `Select.RecordInput`"
         elif par_path == mod_feedback_schema.Select.RecordOutput:
-            alias_info = ' or `Select.RecordOutput`'
+            alias_info = " or `Select.RecordOutput`"
         else:
-            alias_info = ''
+            alias_info = ""
 
         print(
-            f'{mod_text_utils.UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, '
-            f'input {par_name} will be set to {par_path}{alias_info} .'
+            f"{mod_text_utils.UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, "
+            f"input {par_name} will be set to {par_path}{alias_info} ."
         )
 
     def _default_selectors(self):
@@ -264,12 +261,12 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         Fill in default selectors for any remaining feedback function arguments.
         """
 
-        assert self.imp is not None, 'Feedback function implementation is required to determine default argument names.'
+        assert (
+            self.imp is not None
+        ), "Feedback function implementation is required to determine default argument names."
 
         sig: Signature = signature(self.imp)
-        par_names = list(
-            k for k in sig.parameters.keys() if k not in self.selectors
-        )
+        par_names = list(k for k in sig.parameters.keys() if k not in self.selectors)
 
         if len(par_names) == 1:
             # A single argument remaining. Assume it is record output.
@@ -285,7 +282,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             # respectively.
             selectors = {
                 par_names[0]: mod_feedback_schema.Select.RecordInput,
-                par_names[1]: mod_feedback_schema.Select.RecordOutput
+                par_names[1]: mod_feedback_schema.Select.RecordOutput,
             }
             self._print_guessed_selector(
                 par_names[0], mod_feedback_schema.Select.RecordInput
@@ -299,19 +296,20 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             # Otherwise give up.
 
             raise RuntimeError(
-                f'Cannot determine default paths for feedback function arguments. '
-                f'The feedback function has signature {sig}.'
+                f"Cannot determine default paths for feedback function arguments. "
+                f"The feedback function has signature {sig}."
             )
 
         self.selectors = selectors
 
     @staticmethod
     def evaluate_deferred(
-        tru: Tru,
-        limit: Optional[int] = None,
-        shuffle: bool = False
-    ) -> List[Tuple[pandas.Series, mod_python_utils.Future[mod_feedback_schema.
-                                                           FeedbackResult]]]:
+        tru: Tru, limit: Optional[int] = None, shuffle: bool = False
+    ) -> List[
+        Tuple[
+            pandas.Series, mod_python_utils.Future[mod_feedback_schema.FeedbackResult]
+        ]
+    ]:
         """Evaluates feedback functions that were specified to be deferred.
 
         Returns a list of tuples with the DB row containing the Feedback and
@@ -334,18 +332,17 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
         db = tru.db
 
-        def prepare_feedback(
-            row
-        ) -> Optional[mod_feedback_schema.FeedbackResultStatus]:
+        def prepare_feedback(row) -> Optional[mod_feedback_schema.FeedbackResultStatus]:
             record_json = row.record_json
             record = mod_record_schema.Record.model_validate(record_json)
 
             app_json = row.app_json
 
-            if row.get('feedback_json') is None:
+            if row.get("feedback_json") is None:
                 logger.warning(
-                    'Cannot evaluate feedback without `feedback_json`. '
-                    'This might have come from an old database. \n%s', row
+                    "Cannot evaluate feedback without `feedback_json`. "
+                    "This might have come from an old database. \n%s",
+                    row,
                 )
                 return None
 
@@ -355,7 +352,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
                 record=record,
                 app=app_json,
                 tru=tru,
-                feedback_result_id=row.feedback_result_id
+                feedback_result_id=row.feedback_result_id,
             )
 
         # Get the different status feedbacks except those marked DONE.
@@ -363,7 +360,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             status=[
                 mod_feedback_schema.FeedbackResultStatus.NONE,
                 mod_feedback_schema.FeedbackResultStatus.FAILED,
-                mod_feedback_schema.FeedbackResultStatus.RUNNING
+                mod_feedback_schema.FeedbackResultStatus.RUNNING,
             ],
             limit=limit,
             shuffle=shuffle,
@@ -371,9 +368,12 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
         tp = mod_threading_utils.TP()
 
-        futures: List[Tuple[
-            pandas.Series,
-            mod_python_utils.Future[mod_feedback_schema.FeedbackResult]]] = []
+        futures: List[
+            Tuple[
+                pandas.Series,
+                mod_python_utils.Future[mod_feedback_schema.FeedbackResult],
+            ]
+        ] = []
 
         for _, row in feedbacks_not_done.iterrows():
             now = datetime.now().timestamp()
@@ -389,7 +389,6 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
                 futures.append((row, tp.submit(prepare_feedback, row)))
 
             elif row.status == mod_feedback_schema.FeedbackResultStatus.RUNNING:
-
                 if elapsed > tru.RETRY_RUNNING_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
 
@@ -397,7 +396,6 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
                     pass
 
             elif row.status == mod_feedback_schema.FeedbackResultStatus.FAILED:
-
                 if elapsed > tru.RETRY_FAILED_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
 
@@ -407,13 +405,15 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         return futures
 
     def __call__(self, *args, **kwargs) -> Any:
-        assert self.imp is not None, 'Feedback definition needs an implementation to call.'
+        assert (
+            self.imp is not None
+        ), "Feedback definition needs an implementation to call."
         return self.imp(*args, **kwargs)
 
     def aggregate(
         self,
         func: Optional[AggCallable] = None,
-        combinations: Optional[mod_feedback_schema.FeedbackCombinations] = None
+        combinations: Optional[mod_feedback_schema.FeedbackCombinations] = None,
     ) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
@@ -426,14 +426,14 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
         if func is None and combinations is None:
             raise ValueError(
-                'At least one of `func` or `combinations` must be provided.'
+                "At least one of `func` or `combinations` must be provided."
             )
 
         updates = {}
         if func is not None:
-            updates['agg'] = func
+            updates["agg"] = func
         if combinations is not None:
-            updates['combinations'] = combinations
+            updates["combinations"] = combinations
 
         return Feedback.model_copy(self, update=updates)
 
@@ -446,12 +446,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         agg_func = aggregator.load()
 
         return Feedback.model_validate(
-            dict(
-                imp=imp_func,
-                agg=agg_func,
-                name=supplied_name,
-                **f.model_dump()
-            )
+            dict(imp=imp_func, agg=agg_func, name=supplied_name, **f.model_dump())
         )
 
     def _next_unselected_arg_name(self):
@@ -460,22 +455,22 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             par_names = list(
                 k for k in sig.parameters.keys() if k not in self.selectors
             )
-            if 'self' in par_names:
+            if "self" in par_names:
                 logger.warning(
-                    'Feedback function `%s` has `self` as argument. '
-                    'Perhaps it is static method or its Provider class was not initialized?',
-                    mod_python_utils.callable_name(self.imp)
+                    "Feedback function `%s` has `self` as argument. "
+                    "Perhaps it is static method or its Provider class was not initialized?",
+                    mod_python_utils.callable_name(self.imp),
                 )
             if len(par_names) == 0:
                 raise TypeError(
-                    f'Feedback implementation {self.imp} with signature {sig} has no more inputs. '
-                    'Perhaps you meant to evalute it on App output only instead of app input and output?'
+                    f"Feedback implementation {self.imp} with signature {sig} has no more inputs. "
+                    "Perhaps you meant to evalute it on App output only instead of app input and output?"
                 )
 
             return par_names[0]
         else:
             raise RuntimeError(
-                'Cannot determine name of feedback function parameter without its definition.'
+                "Cannot determine name of feedback function parameter without its definition."
             )
 
     def on_prompt(self, arg: Optional[str] = None) -> Feedback:
@@ -488,9 +483,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
         if arg is None:
             arg = self._next_unselected_arg_name()
-            self._print_guessed_selector(
-                arg, mod_feedback_schema.Select.RecordInput
-            )
+            self._print_guessed_selector(arg, mod_feedback_schema.Select.RecordInput)
 
         new_selectors[arg] = mod_feedback_schema.Select.RecordInput
 
@@ -513,9 +506,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
         if arg is None:
             arg = self._next_unselected_arg_name()
-            self._print_guessed_selector(
-                arg, mod_feedback_schema.Select.RecordOutput
-            )
+            self._print_guessed_selector(arg, mod_feedback_schema.Select.RecordOutput)
 
         new_selectors[arg] = mod_feedback_schema.Select.RecordOutput
 
@@ -541,7 +532,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         for k, v in kwargs.items():
             if not isinstance(v, mod_serial_utils.Lens):
                 raise ValueError(
-                    f'Expected a Lens but got `{v}` of type `{mod_python_utils.class_name(type(v))}`.'
+                    f"Expected a Lens but got `{v}` of type `{mod_python_utils.class_name(type(v))}`."
                 )
             new_selectors[k] = v
 
@@ -550,7 +541,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         for path in args:
             if not isinstance(path, mod_serial_utils.Lens):
                 raise ValueError(
-                    f'Expected a Lens but got `{path}` of type `{mod_python_utils.class_name(type(path))}`.'
+                    f"Expected a Lens but got `{path}` of type `{mod_python_utils.class_name(type(path))}`."
                 )
 
             argname = self._next_unselected_arg_name()
@@ -569,7 +560,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
         if self.imp is None:
             raise RuntimeError(
-                'Cannot determine signature of feedback function without its definition.'
+                "Cannot determine signature of feedback function without its definition."
             )
 
         return signature(self.imp)
@@ -579,7 +570,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON],
         record: mod_record_schema.Record,
         source_data: Optional[Dict[str, Any]] = None,
-        warning: bool = False
+        warning: bool = False,
     ) -> bool:
         """Check that the selectors are valid for the given app and record.
 
@@ -612,28 +603,23 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         if source_data is None:
             source_data = {}
 
-        app_type: str = 'trulens recorder (`TruChain`, `TruLlama`, etc)'
+        app_type: str = "trulens recorder (`TruChain`, `TruLlama`, etc)"
 
         if isinstance(app, App):
-            app_type = f'`{type(app).__name__}`'
+            app_type = f"`{type(app).__name__}`"
             app = mod_json_utils.jsonify(
-                app,
-                instrument=app.instrument,
-                skip_specials=True,
-                redact_keys=True
+                app, instrument=app.instrument, skip_specials=True, redact_keys=True
             )
 
         elif isinstance(app, mod_app_schema.AppDefinition):
-            app = mod_json_utils.jsonify(
-                app, skip_specials=True, redact_keys=True
-            )
+            app = mod_json_utils.jsonify(app, skip_specials=True, redact_keys=True)
 
         source_data = self._construct_source_data(
             app=app, record=record, source_data=source_data
         )
 
         # Build the hint message here.
-        msg = ''
+        msg = ""
 
         # Keep track whether any selectors failed to validate.
         check_good: bool = True
@@ -674,18 +660,22 @@ Feedback function signature:
             if prefix is None:
                 continue
 
-            if len(prefix.path) >= 2 and isinstance(
-                    prefix.path[-1], mod_serial_utils.GetItemOrAttribute
-            ) and prefix.path[-1].get_item_or_attribute() == 'rets':
+            if (
+                len(prefix.path) >= 2
+                and isinstance(prefix.path[-1], mod_serial_utils.GetItemOrAttribute)
+                and prefix.path[-1].get_item_or_attribute() == "rets"
+            ):
                 # If the selector check failed because the selector was pointing
                 # to something beyond the rets of a record call, we have to
                 # ignore it as we cannot tell what will be in the rets ahead of
                 # invoking app.
                 continue
 
-            if len(prefix.path) >= 3 and isinstance(
-                    prefix.path[-2], mod_serial_utils.GetItemOrAttribute
-            ) and prefix.path[-2].get_item_or_attribute() == 'args':
+            if (
+                len(prefix.path) >= 3
+                and isinstance(prefix.path[-2], mod_serial_utils.GetItemOrAttribute)
+                and prefix.path[-2].get_item_or_attribute() == "args"
+            ):
                 # Likewise if failure was because the selector was pointing to
                 # method args beyond their parameter names, we also cannot tell
                 # their contents so skip.
@@ -693,21 +683,25 @@ Feedback function signature:
 
             check_good = False
 
-            msg += f'The prefix `{prefix}` selects this data that exists in your app or typical records:\n\n'
+            msg += f"The prefix `{prefix}` selects this data that exists in your app or typical records:\n\n"
 
             try:
                 for prefix_obj in prefix.get(source_data):
                     if isinstance(prefix_obj, munch.Munch):
                         prefix_obj = prefix_obj.toDict()
 
-                    msg += f'- Object of type `{mod_python_utils.class_name(type(prefix_obj))}` starting with:\n'
-                    msg += '```python\n' + mod_text_utils.retab(
-                        tab='\t  ',
-                        s=pretty_repr(prefix_obj, max_depth=2, indent_size=2)
-                    ) + '\n```\n'
+                    msg += f"- Object of type `{mod_python_utils.class_name(type(prefix_obj))}` starting with:\n"
+                    msg += (
+                        "```python\n"
+                        + mod_text_utils.retab(
+                            tab="\t  ",
+                            s=pretty_repr(prefix_obj, max_depth=2, indent_size=2),
+                        )
+                        + "\n```\n"
+                    )
 
             except Exception as e:
-                msg += f'Some non-existant object because: {pretty_repr(e)}'
+                msg += f"Some non-existant object because: {pretty_repr(e)}"
 
         if check_good:
             return True
@@ -719,17 +713,16 @@ Feedback function signature:
             return False
 
         else:
-            raise ValueError(
-                'Some selectors do not exist in the app or record.'
-            )
+            raise ValueError("Some selectors do not exist in the app or record.")
 
     def run(
         self,
-        app: Optional[Union[mod_app_schema.AppDefinition,
-                            mod_serial_utils.JSON]] = None,
+        app: Optional[
+            Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]
+        ] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ) -> mod_feedback_schema.FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
@@ -763,9 +756,8 @@ Feedback function signature:
 
         feedback_result = mod_feedback_schema.FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
-            record_id=record.record_id if record is not None else 'no record',
-            name=self.supplied_name
-            if self.supplied_name is not None else self.name
+            record_id=record.record_id if record is not None else "no record",
+            name=self.supplied_name if self.supplied_name is not None else self.name,
         )
 
         source_data = self._construct_source_data(
@@ -775,10 +767,13 @@ Feedback function signature:
         if self.if_exists is not None:
             if not self.if_exists.exists(source_data):
                 logger.warning(
-                    'Feedback %s skipped as %s does not exist.', self.name,
-                    self.if_exists
+                    "Feedback %s skipped as %s does not exist.",
+                    self.name,
+                    self.if_exists,
                 )
-                feedback_result.status = mod_feedback_schema.FeedbackResultStatus.SKIPPED
+                feedback_result.status = (
+                    mod_feedback_schema.FeedbackResultStatus.SKIPPED
+                )
                 return feedback_result
 
         # Separate try block for extracting inputs from records/apps in case a
@@ -787,9 +782,7 @@ Feedback function signature:
         try:
             input_combinations = list(
                 self._extract_selection(
-                    source_data=source_data,
-                    combinations=self.combinations,
-                    **kwargs
+                    source_data=source_data, combinations=self.combinations, **kwargs
                 )
             )
 
@@ -802,20 +795,28 @@ Feedback function signature:
                 raise e
 
             if self.if_missing == mod_feedback_schema.FeedbackOnMissingParameters.WARN:
-                feedback_result.status = mod_feedback_schema.FeedbackResultStatus.SKIPPED
+                feedback_result.status = (
+                    mod_feedback_schema.FeedbackResultStatus.SKIPPED
+                )
                 logger.warning(
-                    'Feedback %s cannot run as %s does not exist in record or app.',
-                    self.name, e.selector
+                    "Feedback %s cannot run as %s does not exist in record or app.",
+                    self.name,
+                    e.selector,
                 )
                 return feedback_result
 
-            if self.if_missing == mod_feedback_schema.FeedbackOnMissingParameters.IGNORE:
-                feedback_result.status = mod_feedback_schema.FeedbackResultStatus.SKIPPED
+            if (
+                self.if_missing
+                == mod_feedback_schema.FeedbackOnMissingParameters.IGNORE
+            ):
+                feedback_result.status = (
+                    mod_feedback_schema.FeedbackResultStatus.SKIPPED
+                )
                 return feedback_result
 
             feedback_result.status = mod_feedback_schema.FeedbackResultStatus.FAILED
             raise ValueError(
-                f'Unknown value for `if_missing` {self.if_missing}.'
+                f"Unknown value for `if_missing` {self.if_missing}."
             ) from e
 
         try:
@@ -828,8 +829,10 @@ Feedback function signature:
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost = mod_base_endpoint.Endpoint.track_all_costs_tally(
-                        self.imp, **ins
+                    result_and_meta, part_cost = (
+                        mod_base_endpoint.Endpoint.track_all_costs_tally(
+                            self.imp, **ins
+                        )
                     )
 
                     cost += part_cost
@@ -843,20 +846,20 @@ Feedback function signature:
 
                 except Exception as e:
                     raise RuntimeError(
-                        f'Evaluation of {self.name} failed on inputs: \n{pformat(ins)[0:128]}.'
+                        f"Evaluation of {self.name} failed on inputs: \n{pformat(ins)[0:128]}."
                     ) from e
 
                 if isinstance(result_and_meta, Tuple):
                     # If output is a tuple of two, we assume it is the float/multifloat and the metadata.
                     assert len(result_and_meta) == 2, (
-                        'Feedback functions must return either a single float, '
-                        'a float-valued dict, or these in combination with a dictionary as a tuple.'
+                        "Feedback functions must return either a single float, "
+                        "a float-valued dict, or these in combination with a dictionary as a tuple."
                     )
                     result_val, meta = result_and_meta
 
                     assert isinstance(
                         meta, dict
-                    ), f'Feedback metadata output must be a dictionary but was {type(meta)}.'
+                    ), f"Feedback metadata output must be a dictionary but was {type(meta)}."
                 else:
                     # Otherwise it is just the float. We create empty metadata dict.
                     result_val = result_and_meta
@@ -865,19 +868,17 @@ Feedback function signature:
                 if isinstance(result_val, dict):
                     for val in result_val.values():
                         assert isinstance(val, float), (
-                            f'Feedback function output with multivalue must be '
-                            f'a dict with float values but encountered {type(val)}.'
+                            f"Feedback function output with multivalue must be "
+                            f"a dict with float values but encountered {type(val)}."
                         )
                     feedback_call = mod_feedback_schema.FeedbackCall(
-                        args=ins,
-                        ret=np.mean(list(result_val.values())),
-                        meta=meta
+                        args=ins, ret=np.mean(list(result_val.values())), meta=meta
                     )
 
                 else:
                     assert isinstance(
                         result_val, float
-                    ), f'Feedback function output must be a float or dict but was {type(result_val)}.'
+                    ), f"Feedback function output must be a float or dict but was {type(result_val)}."
                     feedback_call = mod_feedback_schema.FeedbackCall(
                         args=ins, ret=result_val, meta=meta
                     )
@@ -892,19 +893,19 @@ Feedback function signature:
                 num_total = num_skipped + num_evaled
                 warnings.warn(
                     (
-                        f'{num_skipped}/{num_total}={100.0*num_skipped/num_total:0.1f}'
-                        '% evaluation(s) were skipped because they raised SkipEval '
-                        '(see earlier warnings for listing).'
+                        f"{num_skipped}/{num_total}={100.0*num_skipped/num_total:0.1f}"
+                        "% evaluation(s) were skipped because they raised SkipEval "
+                        "(see earlier warnings for listing)."
                     ),
                     UserWarning,
-                    stacklevel=1
+                    stacklevel=1,
                 )
 
             if len(result_vals) == 0:
                 warnings.warn(
-                    f'Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs.',
+                    f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs.",
                     UserWarning,
-                    stacklevel=1
+                    stacklevel=1,
                 )
 
                 result = np.nan
@@ -938,31 +939,29 @@ Feedback function signature:
                 status=mod_feedback_schema.FeedbackResultStatus.DONE,
                 cost=cost,
                 calls=feedback_calls,
-                multi_result=json.dumps(multi_result)
+                multi_result=json.dumps(multi_result),
             )
 
             return feedback_result
 
         except:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
-            exc_tb = traceback.format_exc().encode(
-                'utf-8', errors='replace'
-            ).decode('utf-8')
-            logger.warning(f'Feedback Function exception caught: %s', exc_tb)
+            exc_tb = (
+                traceback.format_exc().encode("utf-8", errors="replace").decode("utf-8")
+            )
+            logger.warning(f"Feedback Function exception caught: %s", exc_tb)
             feedback_result.update(
-                error=exc_tb,
-                status=mod_feedback_schema.FeedbackResultStatus.FAILED
+                error=exc_tb, status=mod_feedback_schema.FeedbackResultStatus.FAILED
             )
             return feedback_result
 
     def run_and_log(
         self,
         record: mod_record_schema.Record,
-        tru: 'Tru',
+        tru: "Tru",
         app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None
+        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
     ) -> Optional[mod_feedback_schema.FeedbackResult]:
-
         record_id = record.record_id
         app_id = record.app_id
 
@@ -973,8 +972,7 @@ Feedback function signature:
             feedback_definition_id=self.feedback_definition_id,
             feedback_result_id=feedback_result_id,
             record_id=record_id,
-            name=self.supplied_name
-            if self.supplied_name is not None else self.name
+            name=self.supplied_name if self.supplied_name is not None else self.name,
         )
 
         if feedback_result_id is None:
@@ -983,24 +981,22 @@ Feedback function signature:
         try:
             db.insert_feedback(
                 feedback_result.update(
-                    status=mod_feedback_schema.FeedbackResultStatus.
-                    RUNNING  # in progress
+                    status=mod_feedback_schema.FeedbackResultStatus.RUNNING  # in progress
                 )
             )
 
-            feedback_result = self.run(
-                app=app, record=record
-            ).update(feedback_result_id=feedback_result_id)
+            feedback_result = self.run(app=app, record=record).update(
+                feedback_result_id=feedback_result_id
+            )
 
         except Exception:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
-            exc_tb = traceback.format_exc().encode(
-                'utf-8', errors='replace'
-            ).decode('utf-8')
+            exc_tb = (
+                traceback.format_exc().encode("utf-8", errors="replace").decode("utf-8")
+            )
             db.insert_feedback(
                 feedback_result.update(
-                    error=exc_tb,
-                    status=mod_feedback_schema.FeedbackResultStatus.FAILED
+                    error=exc_tb, status=mod_feedback_schema.FeedbackResultStatus.FAILED
                 )
             )
             return
@@ -1030,9 +1026,8 @@ Feedback function signature:
     def _extract_selection(
         self,
         source_data: Dict,
-        combinations: mod_feedback_schema.
-        FeedbackCombinations = mod_feedback_schema.FeedbackCombinations.PRODUCT,
-        **kwargs: Dict[str, Any]
+        combinations: mod_feedback_schema.FeedbackCombinations = mod_feedback_schema.FeedbackCombinations.PRODUCT,
+        **kwargs: Dict[str, Any],
     ) -> Iterable[Dict[str, Any]]:
         """
         Create parameter assignments to self.imp from t he given data source or
@@ -1058,18 +1053,14 @@ Feedback function signature:
                 if k in kwargs:
                     arg_vals[k] = [kwargs[k]]
                 else:
-                    logger.debug(
-                        f'Calling q.get with source_data: {source_data}'
-                    )
+                    logger.debug(f"Calling q.get with source_data: {source_data}")
                     result = q.get(source_data)
                     logger.debug(
                         f"Result of q.get(source_data) for key '{k}': {result}"
                     )
                     arg_vals[k] = list(result)
             except Exception as e:
-                raise InvalidSelector(
-                    selector=q, source_data=source_data
-                ) from e
+                raise InvalidSelector(selector=q, source_data=source_data) from e
 
         # For anything specified in kwargs that did not have a selector, set the
         # assignment here as the above loop will have missed it.
@@ -1086,8 +1077,8 @@ Feedback function signature:
             assignments = zip(*vals)
         else:
             raise ValueError(
-                f'Unknown combination mode {combinations}. '
-                'Expected `product` or `zip`.'
+                f"Unknown combination mode {combinations}. "
+                "Expected `product` or `zip`."
             )
 
         for assignment in assignments:
@@ -1095,11 +1086,12 @@ Feedback function signature:
 
     def _construct_source_data(
         self,
-        app: Optional[Union[mod_app_schema.AppDefinition,
-                            mod_serial_utils.JSON]] = None,
+        app: Optional[
+            Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]
+        ] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ) -> Dict:
         """Combine sources of data to be selected over for feedback function inputs.
 
@@ -1126,19 +1118,20 @@ Feedback function signature:
         source_data.update(kwargs)
 
         if app is not None:
-            source_data['__app__'] = app
+            source_data["__app__"] = app
 
         if record is not None:
-            source_data['__record__'] = record.layout_calls_as_app()
+            source_data["__record__"] = record.layout_calls_as_app()
 
         return source_data
 
     def extract_selection(
         self,
-        app: Optional[Union[mod_app_schema.AppDefinition,
-                            mod_serial_utils.JSON]] = None,
+        app: Optional[
+            Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]
+        ] = None,
         record: Optional[mod_record_schema.Record] = None,
-        source_data: Optional[Dict] = None
+        source_data: Optional[Dict] = None,
     ) -> Iterable[Dict[str, Any]]:
         """
         Given the `app` that produced the given `record`, extract from `record`

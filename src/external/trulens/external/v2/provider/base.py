@@ -15,7 +15,6 @@ from trulens.utils.serial import SerialModel
 
 
 class Provider(WithClassInfo, SerialModel):
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint]
@@ -68,7 +67,7 @@ class Provider(WithClassInfo, SerialModel):
 
 
 class OpenAIProvider(Provider):
-    default_completion_model: str = ''
+    default_completion_model: str = ""
 
     def supported_models(self) -> Iterable[Model]:
         return super().supported_models()
@@ -80,13 +79,13 @@ class OpenAIProvider(Provider):
         self.models = set(Hate, HateThreatening)
 
     def classify(self, model: ClassificationModel, *args, **kwargs) -> int:
-        prompt = ''
+        prompt = ""
 
         if isinstance(model, WithPrompt):
             prompt = model.prompt
         else:
             raise ValueError(
-                'Cannot classify for model {model} without at least a prompt.'
+                "Cannot classify for model {model} without at least a prompt."
             )
 
         if isinstance(model, WithExamples):

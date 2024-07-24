@@ -41,8 +41,9 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
     from langchain.llms.base import BaseLLM
-    from langchain.load.serializable import \
-        Serializable  # this seems to be work in progress over at langchain
+    from langchain.load.serializable import (
+        Serializable,
+    )  # this seems to be work in progress over at langchain
     from langchain.memory.chat_memory import BaseChatMemory
     from langchain.prompts.base import BasePromptTemplate
     from langchain.retrievers.multi_query import MultiQueryRetriever
@@ -50,6 +51,7 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     from langchain.schema import BaseMemory  # no methods instrumented
     from langchain.schema import BaseRetriever
     from langchain.schema.document import Document
+
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
 
@@ -60,7 +62,7 @@ class LangChainInstrument(Instrument):
     class Default:
         """Instrumentation specification for LangChain apps."""
 
-        MODULES = {'langchain'}
+        MODULES = {"langchain"}
         """Filter for module name prefix for modules to be instrumented."""
 
         CLASSES = lambda: {
@@ -81,7 +83,7 @@ class LangChainInstrument(Instrument):
             # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
             # langchain.adapters.openai.ChatCompletion, # no bases
             BaseTool,
-            WithFeedbackFilterDocuments
+            WithFeedbackFilterDocuments,
         }
         """Filter for classes to be instrumented."""
 
@@ -89,25 +91,23 @@ class LangChainInstrument(Instrument):
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             {},
             {
-                ('invoke', 'ainvoke'):
-                    RunnableSerializable,
-                ('save_context', 'clear'):
-                    BaseMemory,
-                ('run', 'arun', '_call', '__call__', '_acall', 'acall'):
-                    Chain,
+                ("invoke", "ainvoke"): RunnableSerializable,
+                ("save_context", "clear"): BaseMemory,
+                ("run", "arun", "_call", "__call__", "_acall", "acall"): Chain,
                 (
-                    '_get_relevant_documents', 'get_relevant_documents', 'aget_relevant_documents', '_aget_relevant_documents', 'invoke', 'ainvoke'
-                ):
-                    RunnableSerializable,
-
+                    "_get_relevant_documents",
+                    "get_relevant_documents",
+                    "aget_relevant_documents",
+                    "_aget_relevant_documents",
+                    "invoke",
+                    "ainvoke",
+                ): RunnableSerializable,
                 # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # the prompt calls might be too small to be interesting
-                ('plan', 'aplan'):
-                    (BaseSingleActionAgent, BaseMultiActionAgent),
-                ('_arun', '_run'):
-                    BaseTool,
-            }
+                ("plan", "aplan"): (BaseSingleActionAgent, BaseMultiActionAgent),
+                ("_arun", "_run"): BaseTool,
+            },
         )
         """Methods to be instrumented.
 
@@ -120,7 +120,7 @@ class LangChainInstrument(Instrument):
             include_classes=LangChainInstrument.Default.CLASSES(),
             include_methods=LangChainInstrument.Default.METHODS,
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -222,9 +222,9 @@ class TruChain(mod_app.App):
     # important enough to make an exception.
     def __init__(self, app: Chain, **kwargs: dict):
         # TruChain specific:
-        kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app)
-        kwargs['instrument'] = LangChainInstrument(app=self)
+        kwargs["app"] = app
+        kwargs["root_class"] = Class.of_object(app)
+        kwargs["instrument"] = LangChainInstrument(app=self)
 
         super().__init__(**kwargs)
 
@@ -234,8 +234,8 @@ class TruChain(mod_app.App):
 
         if app is None:
             raise ValueError(
-                'langchain app/chain is required to determine context for langchain apps. '
-                'Pass it in as the `app` argument'
+                "langchain app/chain is required to determine context for langchain apps. "
+                "Pass it in as the `app` argument"
             )
 
         retrievers = []
@@ -251,23 +251,25 @@ class TruChain(mod_app.App):
                 pass
 
         if len(retrievers) == 0:
-            raise ValueError('Cannot find any `BaseRetriever` in app.')
+            raise ValueError("Cannot find any `BaseRetriever` in app.")
 
         if len(retrievers) > 1:
-            if (isinstance(retrievers[0][1], MultiQueryRetriever)):
+            if isinstance(retrievers[0][1], MultiQueryRetriever):
                 pass
             else:
                 raise ValueError(
-                'Found more than one `BaseRetriever` in app:\n\t' + \
-                ('\n\t'.join(map(
-                    lambda lr: f'{type(lr[1])} at {lr[0]}',
-                    retrievers)))
+                    "Found more than one `BaseRetriever` in app:\n\t"
+                    + (
+                        "\n\t".join(
+                            map(lambda lr: f"{type(lr[1])} at {lr[0]}", retrievers)
+                        )
+                    )
                 )
 
-        retriever = (Select.RecordCalls + retrievers[0][0])
-        if hasattr(retriever, 'invoke'):
+        retriever = Select.RecordCalls + retrievers[0][0]
+        if hasattr(retriever, "invoke"):
             return retriever.invoke.rets[:].page_content
-        if hasattr(retriever, '_get_relevant_documents'):
+        if hasattr(retriever, "_get_relevant_documents"):
             return retriever._get_relevant_documents.rets[:].page_content
 
     def main_input(
@@ -279,8 +281,8 @@ class TruChain(mod_app.App):
         `bindings`.
         """
 
-        if 'input' in bindings.arguments:
-            temp = bindings.arguments['input']
+        if "input" in bindings.arguments:
+            temp = bindings.arguments["input"]
             if isinstance(temp, str):
                 return temp
 
@@ -298,16 +300,17 @@ class TruChain(mod_app.App):
             if len(vals) > 1:
                 return vals[0]
 
-        if 'inputs' in bindings.arguments \
-            and safe_hasattr(self.app, 'input_keys') \
-            and safe_hasattr(self.app, 'prep_inputs'):
-
+        if (
+            "inputs" in bindings.arguments
+            and safe_hasattr(self.app, "input_keys")
+            and safe_hasattr(self.app, "prep_inputs")
+        ):
             # langchain specific:
-            ins = self.app.prep_inputs(bindings.arguments['inputs'])
+            ins = self.app.prep_inputs(bindings.arguments["inputs"])
 
             if len(self.app.input_keys) == 0:
                 logger.warning(
-                    'langchain app has no `input_keys`. `main_input` might not be detected.'
+                    "langchain app has no `input_keys`. `main_input` might not be detected."
                 )
                 return super().main_input(func, sig, bindings)
 
@@ -324,11 +327,11 @@ class TruChain(mod_app.App):
         returned `ret`.
         """
 
-        if isinstance(ret, Dict) and safe_hasattr(self.app, 'output_keys'):
+        if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
             # langchain specific:
             if len(self.app.output_keys) == 0:
                 logger.warning(
-                    'langchain app has no `output_keys`. `main_output` might not be detected.'
+                    "langchain app has no `output_keys`. `main_output` might not be detected."
                 )
                 return super().main_output(func, sig, bindings, ret)
 
@@ -340,11 +343,11 @@ class TruChain(mod_app.App):
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        if safe_hasattr(self.app, 'output_keys'):
+        if safe_hasattr(self.app, "output_keys"):
             out_key = self.app.output_keys[0]
             return self.app(human)[out_key]
         else:
-            logger.warning('Unsure what the main output string may be.')
+            logger.warning("Unsure what the main output string may be.")
             return str(self.app(human))
 
     async def main_acall(self, human: str):
@@ -352,11 +355,11 @@ class TruChain(mod_app.App):
 
         out = await self._acall(human)
 
-        if safe_hasattr(self.app, 'output_keys'):
+        if safe_hasattr(self.app, "output_keys"):
             out_key = self.app.output_keys[0]
             return out[out_key]
         else:
-            logger.warning('Unsure what the main output string may be.')
+            logger.warning("Unsure what the main output string may be.")
             return str(out)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.acall
@@ -366,7 +369,7 @@ class TruChain(mod_app.App):
         DEPRECATED: Run the chain acall method and also return a record metadata object.
         """
 
-        self._throw_dep_message(method='acall', is_async=True, with_record=True)
+        self._throw_dep_message(method="acall", is_async=True, with_record=True)
 
     # NOTE: Input signature compatible with langchain.chains.base.Chain.__call__
     # TOREMOVE
@@ -375,9 +378,7 @@ class TruChain(mod_app.App):
         DEPRECATED: Run the chain call method and also return a record metadata object.
         """
 
-        self._throw_dep_message(
-            method='__call__', is_async=False, with_record=True
-        )
+        self._throw_dep_message(method="__call__", is_async=False, with_record=True)
 
     # TOREMOVE
     # Mimics Chain
@@ -386,25 +387,17 @@ class TruChain(mod_app.App):
         DEPRECATED: Wrapped call to self.app._call with instrumentation. If you
         need to get the record, use `call_with_record` instead.
         """
-        self._throw_dep_message(
-            method='__call__', is_async=False, with_record=False
-        )
+        self._throw_dep_message(method="__call__", is_async=False, with_record=False)
 
     # TOREMOVE
     # Chain requirement
     def _call(self, *args, **kwargs) -> None:
-
-        self._throw_dep_message(
-            method='_call', is_async=False, with_record=False
-        )
+        self._throw_dep_message(method="_call", is_async=False, with_record=False)
 
     # TOREMOVE
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> None:
-
-        self._throw_dep_message(
-            method='_acall', is_async=True, with_record=False
-        )
+        self._throw_dep_message(method="_acall", is_async=True, with_record=False)
 
 
 import trulens  # for App class annotations

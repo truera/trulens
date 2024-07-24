@@ -21,18 +21,15 @@ check_imports()
 __version__ = importlib.metadata.version(__package__ or __name__)
 
 __all__ = [
-    'Tru',  # main interface
-
+    "Tru",  # main interface
     # app types
-    'TruBasicApp',
-    'TruCustomApp',
-    'TruVirtual',
-
+    "TruBasicApp",
+    "TruCustomApp",
+    "TruVirtual",
     # app setup
-    'FeedbackMode',
-
+    "FeedbackMode",
     # feedback setup
-    'Feedback',
-    'Select',
-    'Provider'
+    "Feedback",
+    "Select",
+    "Provider",
 ]

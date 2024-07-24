@@ -30,6 +30,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     """
     Measures Agreement against a Ground Truth.
     """
+
     ground_truth: Union[List[Dict], FunctionOrMethod]
     provider: Provider
 
@@ -45,8 +46,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         self,
         ground_truth: Union[List, Callable, FunctionOrMethod],
         provider: Optional[Provider] = None,
-        bert_scorer: Optional['BERTScorer'] = None,
-        **kwargs
+        bert_scorer: Optional["BERTScorer"] = None,
+        **kwargs,
     ):
         """Measures Agreement against a Ground Truth.
 
@@ -88,16 +89,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ground_truth = FunctionOrMethod.model_validate(ground_truth)
             ground_truth_imp = ground_truth.load()
         else:
-            raise RuntimeError(
-                f'Unhandled ground_truth type: {type(ground_truth)}.'
-            )
+            raise RuntimeError(f"Unhandled ground_truth type: {type(ground_truth)}.")
 
         super().__init__(
             ground_truth=ground_truth,
             ground_truth_imp=ground_truth_imp,
             provider=provider,
             bert_scorer=bert_scorer,
-            **kwargs
+            **kwargs,
         )
 
     def _find_response(self, prompt: str) -> Optional[str]:
@@ -105,7 +104,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             return self.ground_truth_imp(prompt)
 
         responses = [
-            qr['response'] for qr in self.ground_truth if qr['query'] == prompt
+            qr["response"] for qr in self.ground_truth if qr["query"] == prompt
         ]
         if responses:
             return responses[0]
@@ -117,9 +116,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             return self.ground_truth_imp(prompt)
 
         responses = [
-            qr['expected_score']
+            qr["expected_score"]
             for qr in self.ground_truth
-            if qr['query'] == prompt and qr['response'] == response
+            if qr["query"] == prompt and qr["response"] == response
         ]
         if responses:
             return responses[0]
@@ -165,8 +164,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             agreement_txt = self.provider._get_answer_agreement(
                 prompt, response, ground_truth_response
             )
-            ret = re_0_10_rating(agreement_txt) / 10, dict(
-                ground_truth_response=ground_truth_response
+            ret = (
+                re_0_10_rating(agreement_txt) / 10,
+                dict(ground_truth_response=ground_truth_response),
             )
         else:
             ret = np.nan
@@ -199,14 +199,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         expected_score = self._find_score(prompt, response)
         if expected_score:
             ret = abs(float(score) - expected_score)
-            expected_score = '{:.2f}'.format(expected_score
-                                            ).rstrip('0').rstrip('.')
+            expected_score = "{:.2f}".format(expected_score).rstrip("0").rstrip(".")
         else:
             ret = np.nan
-        return ret, {'expected score': expected_score}
+        return ret, {"expected score": expected_score}
 
-    def bert_score(self, prompt: str,
-                   response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
+    def bert_score(
+        self, prompt: str, response: str
+    ) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses BERT Score. A function that that measures
         similarity to ground truth using bert embeddings.
@@ -237,14 +237,13 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             - dict: with key 'ground_truth_response'
         """
         if self.bert_scorer is None:
-            self.bert_scorer = BERTScorer(lang='en', rescale_with_baseline=True)
+            self.bert_scorer = BERTScorer(lang="en", rescale_with_baseline=True)
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
-            bert_score = self.bert_scorer.score(
-                [response], [ground_truth_response]
-            )
-            ret = bert_score[0].item(), dict(
-                ground_truth_response=ground_truth_response
+            bert_score = self.bert_scorer.score([response], [ground_truth_response])
+            ret = (
+                bert_score[0].item(),
+                dict(ground_truth_response=ground_truth_response),
             )
         else:
             ret = np.nan
@@ -252,8 +251,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         return ret
 
     # TODEP
-    def bleu(self, prompt: str,
-             response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
+    def bleu(
+        self, prompt: str, response: str
+    ) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap.
@@ -282,23 +282,22 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 being "in agreement".
             - dict: with key 'ground_truth_response'
         """
-        bleu = evaluate.load('bleu')
+        bleu = evaluate.load("bleu")
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
             bleu_score = bleu.compute(
                 predictions=[response], references=[ground_truth_response]
             )
-            ret = bleu_score['bleu'], dict(
-                ground_truth_response=ground_truth_response
-            )
+            ret = bleu_score["bleu"], dict(ground_truth_response=ground_truth_response)
         else:
             ret = np.nan
 
         return ret
 
     # TODEP
-    def rouge(self, prompt: str,
-              response: str) -> Union[float, Tuple[float, Dict[str, str]]]:
+    def rouge(
+        self, prompt: str, response: str
+    ) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap.
@@ -312,14 +311,15 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 being "in agreement".
             - dict: with key 'ground_truth_response'
         """
-        rouge = evaluate.load('rouge')
+        rouge = evaluate.load("rouge")
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
             rouge_score = rouge.compute(
                 predictions=[response], references=[ground_truth_response]
             )
-            ret = rouge_score['rouge1'], dict(
-                ground_truth_response=ground_truth_response
+            ret = (
+                rouge_score["rouge1"],
+                dict(ground_truth_response=ground_truth_response),
             )
         else:
             ret = np.nan

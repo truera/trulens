@@ -28,7 +28,7 @@ class CortexCallback(EndpointCallback):
 
     def handle_generation(self, response: dict) -> None:
         """Get the usage information from Cortex LLM function response's usage field."""
-        usage = response['usage']
+        usage = response["usage"]
 
         # Increment number of requests.
         super().handle_generation(response)
@@ -40,13 +40,14 @@ class CortexCallback(EndpointCallback):
         self.cost.n_successful_requests += 1
 
         for cost_field, cortex_field in [
-            ('n_tokens', 'total_tokens'),
-            ('n_prompt_tokens', 'prompt_tokens'),
-            ('n_completion_tokens', 'completion_tokens'),
+            ("n_tokens", "total_tokens"),
+            ("n_prompt_tokens", "prompt_tokens"),
+            ("n_completion_tokens", "completion_tokens"),
         ]:
             setattr(
-                self.cost, cost_field,
-                getattr(self.cost, cost_field, 0) + usage.get(cortex_field, 0)
+                self.cost,
+                cost_field,
+                getattr(self.cost, cost_field, 0) + usage.get(cortex_field, 0),
             )
 
 
@@ -54,37 +55,41 @@ class CortexEndpoint(Endpoint):
     """Snowflake Cortex endpoint."""
 
     def __init__(self, *args, **kwargs):
-        if hasattr(self, 'name'):
+        if hasattr(self, "name"):
             # singleton already made
             if len(kwargs) > 0:
                 logger.warning(
-                    'Ignoring additional kwargs for singleton endpoint %s: %s',
-                    self.name, pp.pformat(kwargs)
+                    "Ignoring additional kwargs for singleton endpoint %s: %s",
+                    self.name,
+                    pp.pformat(kwargs),
                 )
                 self.warning()
             return
 
-        kwargs['name'] = 'cortex'
-        kwargs['callback_class'] = CortexCallback
+        kwargs["name"] = "cortex"
+        kwargs["callback_class"] = CortexCallback
 
         super().__init__(*args, **kwargs)
-        self._instrument_class(Session, 'sql')
+        self._instrument_class(Session, "sql")
 
     def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name='cortex')
+        return super(Endpoint, cls).__new__(cls, name="cortex")
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
-        callback: Optional[EndpointCallback]
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: Any,
+        callback: Optional[EndpointCallback],
     ) -> None:
-
         counted_something = False
 
-        if isinstance(response,
-                      DataFrame):  # response is a snowflake dataframe instance
+        if isinstance(
+            response, DataFrame
+        ):  # response is a snowflake dataframe instance
             response: dict = json.loads(response.collect()[0][0])
 
-            if 'usage' in response:
+            if "usage" in response:
                 counted_something = True
 
                 self.global_callback.handle_generation(response=response)
@@ -94,6 +99,6 @@ class CortexEndpoint(Endpoint):
 
             if not counted_something:
                 logger.warning(
-                    'Unrecognized Cortex response format. It did not have usage information:\n%s',
-                    pp.pformat(response)
+                    "Unrecognized Cortex response format. It did not have usage information:\n%s",
+                    pp.pformat(response),
                 )

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
-A = TypeVar('A')
+A = TypeVar("A")
 
 
 class Thread(fThread):
@@ -34,13 +34,7 @@ class Thread(fThread):
     tracked."""
 
     def __init__(
-        self,
-        name=None,
-        group=None,
-        target=None,
-        args=(),
-        kwargs={},
-        daemon=None
+        self, name=None, group=None, target=None, args=(), kwargs={}, daemon=None
     ):
         present_stack = stack()
         present_context = contextvars.copy_context()
@@ -52,7 +46,7 @@ class Thread(fThread):
             target=_future_target_wrapper,
             args=(present_stack, present_context, target, *args),
             kwargs=kwargs,
-            daemon=daemon
+            daemon=daemon,
         )
 
 
@@ -76,8 +70,7 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         present_stack = stack()
         present_context = contextvars.copy_context()
         return super().submit(
-            _future_target_wrapper, present_stack, present_context, fn, *args,
-            **kwargs
+            _future_target_wrapper, present_stack, present_context, fn, *args, **kwargs
         )
 
 
@@ -92,6 +85,7 @@ concurrent.futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 # seem to do the trick.
 try:
     import langchain_core
+
     langchain_core.runnables.config.ThreadPoolExecutor = ThreadPoolExecutor
 
     # Newer langchain_core uses ContextThreadPoolExecutor extending
@@ -99,6 +93,7 @@ try:
     # concurrent.futures.ThreadPoolExecutor before langchain_core is loaded so
     # lets just retrofit the base class afterwards:
     from langchain_core.runnables.config import ContextThreadPoolExecutor
+
     ContextThreadPoolExecutor.__bases__ = (ThreadPoolExecutor,)
 
     # TODO: ContextThreadPoolExecutor already maintains context so we no longer
@@ -121,13 +116,13 @@ class TP(SingletonPerName):  # "thread processing"
     """How long to wait (seconds) for any task before restarting it."""
 
     def __init__(self):
-        if safe_hasattr(self, 'thread_pool'):
+        if safe_hasattr(self, "thread_pool"):
             # Already initialized as per SingletonPerName mechanism.
             return
 
         # Run tasks started with this class using this pool.
         self.thread_pool = fThreadPoolExecutor(
-            max_workers=TP.MAX_THREADS, thread_name_prefix='TP.submit'
+            max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit"
         )
 
         # Keep a seperate pool for threads whose function is only to wait for
@@ -136,7 +131,7 @@ class TP(SingletonPerName):  # "thread processing"
         # never be run because the thread pool is filled with wait threads.
         self.thread_pool_debug_tasks = ThreadPoolExecutor(
             max_workers=TP.MAX_THREADS,
-            thread_name_prefix='TP.submit with debug timeout'
+            thread_name_prefix="TP.submit with debug timeout",
         )
 
         self.completed_tasks = 0
@@ -144,11 +139,7 @@ class TP(SingletonPerName):  # "thread processing"
         self.failed_tasks = 0
 
     def _run_with_timeout(
-        self,
-        func: Callable[[A], T],
-        *args,
-        timeout: Optional[float] = None,
-        **kwargs
+        self, func: Callable[[A], T], *args, timeout: Optional[float] = None, **kwargs
     ) -> T:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
@@ -161,24 +152,20 @@ class TP(SingletonPerName):  # "thread processing"
 
         except TimeoutError as e:
             logger.error(
-                f'Run of {func.__name__} in {threading.current_thread()} timed out after {TP.DEBUG_TIMEOUT} second(s).\n'
-                f'{code_line(func)}'
+                f"Run of {func.__name__} in {threading.current_thread()} timed out after {TP.DEBUG_TIMEOUT} second(s).\n"
+                f"{code_line(func)}"
             )
 
             raise e
 
         except Exception as e:
             logger.warning(
-                f'Run of {func.__name__} in {threading.current_thread()} failed with: {e}'
+                f"Run of {func.__name__} in {threading.current_thread()} failed with: {e}"
             )
             raise e
 
     def submit(
-        self,
-        func: Callable[[A], T],
-        *args,
-        timeout: Optional[float] = None,
-        **kwargs
+        self, func: Callable[[A], T], *args, timeout: Optional[float] = None, **kwargs
     ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
@@ -192,11 +179,7 @@ class TP(SingletonPerName):  # "thread processing"
         return self._submit(func, *args, timeout=timeout, **kwargs)
 
     def _submit(
-        self,
-        func: Callable[[A], T],
-        *args,
-        timeout: Optional[float] = None,
-        **kwargs
+        self, func: Callable[[A], T], *args, timeout: Optional[float] = None, **kwargs
     ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT

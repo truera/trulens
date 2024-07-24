@@ -18,8 +18,19 @@ import logging
 import os
 import threading as th
 import traceback
-from typing import (Any, Awaitable, Callable, Dict, Iterable, Optional,
-                    Sequence, Set, Tuple, Type, Union)
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Iterable,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 import weakref
 
 import pydantic
@@ -121,7 +132,7 @@ class WithInstrumentCallbacks:
     # Called during invocation.
     def on_add_record(
         self,
-        ctx: 'RecordingContext',
+        ctx: "RecordingContext",
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
@@ -129,7 +140,7 @@ class WithInstrumentCallbacks:
         error: Any,
         perf: mod_base_schema.Perf,
         cost: mod_base_schema.Cost,
-        existing_record: Optional[mod_record_schema.Record] = None
+        existing_record: Optional[mod_record_schema.Record] = None,
     ):
         """
         Called by instrumented methods if they are root calls (first instrumned
@@ -205,16 +216,16 @@ def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
     if isinstance(f, Tuple):
         return any(class_filter_matches(f, obj) for f in f)
 
-    raise ValueError(f'Invalid filter {f}. Type, or a Tuple of Types expected.')
+    raise ValueError(f"Invalid filter {f}. Type, or a Tuple of Types expected.")
 
 
 class Instrument(object):
     """Instrumentation tools."""
 
-    INSTRUMENT = '__tru_instrumented'
+    INSTRUMENT = "__tru_instrumented"
     """Attribute name to be used to flag instrumented objects/methods/others."""
 
-    APPS = '__tru_apps'
+    APPS = "__tru_apps"
     """Attribute name for storing apps that expect to be notified of calls."""
 
     class Default:
@@ -223,13 +234,13 @@ class Instrument(object):
         Additional components are included in subclasses of
         [Instrument][trulens.core.instruments.Instrument]."""
 
-        MODULES = {'trulens.'}
+        MODULES = {"trulens."}
         """Modules (by full name prefix) to instrument."""
 
         CLASSES = set([mod_feedback.Feedback])
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = {'__call__': mod_feedback.Feedback}
+        METHODS: Dict[str, ClassFilter] = {"__call__": mod_feedback.Feedback}
         """Methods to instrument.
 
         Methods matching name have to pass the filter to be instrumented.
@@ -239,31 +250,32 @@ class Instrument(object):
         """Print out description of the modules, classes, methods this class
         will instrument."""
 
-        t = '  '
+        t = "  "
 
         for mod in sorted(self.include_modules):
-            print(f'Module {mod}*')
+            print(f"Module {mod}*")
 
-            for cls in sorted(self.include_classes, key=lambda c:
-                              (c.__module__, c.__qualname__)):
+            for cls in sorted(
+                self.include_classes, key=lambda c: (c.__module__, c.__qualname__)
+            ):
                 if not cls.__module__.startswith(mod):
                     continue
 
                 if isinstance(cls, Dummy):
                     print(
-                        f'{t*1}Class {cls.__module__}.{cls.__qualname__}\n{t*2}WARNING: this class could not be imported. It may have been (re)moved. Error:'
+                        f"{t*1}Class {cls.__module__}.{cls.__qualname__}\n{t*2}WARNING: this class could not be imported. It may have been (re)moved. Error:"
                     )
-                    print(retab(tab=f'{t*3}> ', s=str(cls.original_exception)))
+                    print(retab(tab=f"{t*3}> ", s=str(cls.original_exception)))
                     continue
 
-                print(f'{t*1}Class {cls.__module__}.{cls.__qualname__}')
+                print(f"{t*1}Class {cls.__module__}.{cls.__qualname__}")
 
                 for method, class_filter in self.include_methods.items():
-                    if class_filter_matches(f=class_filter,
-                                            obj=cls) and safe_hasattr(cls,
-                                                                      method):
+                    if class_filter_matches(f=class_filter, obj=cls) and safe_hasattr(
+                        cls, method
+                    ):
                         f = getattr(cls, method)
-                        print(f'{t*2}Method {method}: {inspect.signature(f)}')
+                        print(f"{t*2}Method {method}: {inspect.signature(f)}")
 
             print()
 
@@ -282,25 +294,21 @@ class Instrument(object):
         # sure we instrument that thing.
 
         try:
-            return any(
-                issubclass(cls, parent) for parent in self.include_classes
-            )
+            return any(issubclass(cls, parent) for parent in self.include_classes)
         except Exception:
             return True
 
     def to_instrument_module(self, module_name: str) -> bool:
         """Determine whether a module with the given (full) name should be instrumented."""
 
-        return any(
-            module_name.startswith(mod2) for mod2 in self.include_modules
-        )
+        return any(module_name.startswith(mod2) for mod2 in self.include_modules)
 
     def __init__(
         self,
         include_modules: Optional[Iterable[str]] = None,
         include_classes: Optional[Iterable[type]] = None,
         include_methods: Optional[Dict[str, ClassFilter]] = None,
-        app: Optional[WithInstrumentCallbacks] = None
+        app: Optional[WithInstrumentCallbacks] = None,
     ):
         if include_modules is None:
             include_modules = []
@@ -309,36 +317,31 @@ class Instrument(object):
         if include_methods is None:
             include_methods = {}
 
-        self.include_modules = Instrument.Default.MODULES.union(
-            set(include_modules)
-        )
+        self.include_modules = Instrument.Default.MODULES.union(set(include_modules))
 
-        self.include_classes = Instrument.Default.CLASSES.union(
-            set(include_classes)
-        )
+        self.include_classes = Instrument.Default.CLASSES.union(set(include_classes))
 
         self.include_methods = dict_merge_with(
             dict1=Instrument.Default.METHODS,
             dict2=include_methods,
-            merge=class_filter_disjunction
+            merge=class_filter_disjunction,
         )
 
         self.app = app
 
     def tracked_method_wrapper(
-        self, query: Lens, func: Callable, method_name: str, cls: type,
-        obj: object
+        self, query: Lens, func: Callable, method_name: str, cls: type, obj: object
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
         if self.app is None:
-            raise ValueError('Instrumentation requires an app but is None.')
+            raise ValueError("Instrumentation requires an app but is None.")
 
-        if safe_hasattr(func, '__func__'):
-            raise ValueError('Function expected but method received.')
+        if safe_hasattr(func, "__func__"):
+            raise ValueError("Function expected but method received.")
 
         if safe_hasattr(func, Instrument.INSTRUMENT):
-            logger.debug('\t\t\t%s: %s is already instrumented', query, func)
+            logger.debug("\t\t\t%s: %s is already instrumented", query, func)
 
             # Notify the app instrumenting this method where it is located. Note
             # we store the method being instrumented in the attribute
@@ -358,7 +361,7 @@ class Instrument(object):
         # Notify the app instrumenting this method where it is located:
         self.app.on_method_instrumented(obj, func, path=query)
 
-        logger.debug('\t\t\t%s: instrumenting %s=%s', query, method_name, func)
+        logger.debug("\t\t\t%s: instrumenting %s=%s", query, method_name, func)
 
         sig = safe_signature(func)
 
@@ -372,11 +375,14 @@ class Instrument(object):
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
             logger.debug(
-                '%s: calling instrumented sync method %s of type %s, '
-                'iscoroutinefunction=%s, '
-                'isasyncgeneratorfunction=%s', query, func, type(func),
+                "%s: calling instrumented sync method %s of type %s, "
+                "iscoroutinefunction=%s, "
+                "isasyncgeneratorfunction=%s",
+                query,
+                func,
+                type(func),
                 is_really_coroutinefunction(func),
-                inspect.isasyncgenfunction(func)
+                inspect.isasyncgenfunction(func),
             )
 
             apps = getattr(tru_wrapper, Instrument.APPS)
@@ -386,10 +392,10 @@ class Instrument(object):
 
             # Get any contexts already known from higher in the call stack.
             contexts = get_first_local_in_call_stack(
-                key='contexts',
+                key="contexts",
                 func=find_instrumented,
                 offset=1,
-                skip=python.caller_frame()
+                skip=python.caller_frame(),
             )
             # Note: are empty sets false?
             if contexts is None:
@@ -408,9 +414,7 @@ class Instrument(object):
             if len(contexts) == 0:
                 # If no app wants this call recorded, run and return without
                 # instrumentation.
-                logger.debug(
-                    '%s: no record found or requested, not recording.', query
-                )
+                logger.debug("%s: no record found or requested, not recording.", query)
 
                 return func(*args, **kwargs)
 
@@ -420,10 +424,7 @@ class Instrument(object):
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
             ctx_stacks = get_first_local_in_call_stack(
-                key='stacks',
-                func=find_instrumented,
-                offset=1,
-                skip=caller_frame()
+                key="stacks", func=find_instrumented, offset=1, skip=caller_frame()
             )
             # Note: Empty dicts are false.
             if ctx_stacks is None:
@@ -464,10 +465,11 @@ class Instrument(object):
 
                 if path is None:
                     logger.warning(
-                        'App of type %s no longer knows about object %s method %s. '
-                        'Something might be going wrong.',
-                        class_name(type(app)), id_str(args[0]),
-                        callable_name(func)
+                        "App of type %s no longer knows about object %s method %s. "
+                        "Something might be going wrong.",
+                        class_name(type(app)),
+                        id_str(args[0]),
+                        callable_name(func),
                     )
                     continue
 
@@ -512,9 +514,7 @@ class Instrument(object):
                 error = e
                 error_str = str(e)
 
-                logger.error(
-                    'Error calling wrapped function %s.', callable_name(func)
-                )
+                logger.error("Error calling wrapped function %s.", callable_name(func))
                 logger.error(traceback.format_exc())
 
             # Done running the wrapped function. Lets collect the results.
@@ -523,9 +523,8 @@ class Instrument(object):
             # Don't include self in the recorded arguments.
             nonself = {
                 k: jsonify(v)
-                for k, v in
-                (bindings.arguments.items() if bindings is not None else {})
-                if k != 'self'
+                for k, v in (bindings.arguments.items() if bindings is not None else {})
+                if k != "self"
             }
 
             records = {}
@@ -538,13 +537,11 @@ class Instrument(object):
                 record_app_args = dict(
                     call_id=call_id,
                     args=nonself,
-                    perf=mod_base_schema.Perf(
-                        start_time=start_time, end_time=end_time
-                    ),
+                    perf=mod_base_schema.Perf(start_time=start_time, end_time=end_time),
                     pid=os.getpid(),
                     tid=th.get_native_id(),
                     rets=jsonify(rets),
-                    error=error_str if error is not None else None
+                    error=error_str if error is not None else None,
                 )
                 # End of run wrapped block.
 
@@ -553,7 +550,7 @@ class Instrument(object):
                     stack = stacks[ctx]
 
                     # Note that only the stack differs between each of the records in this loop.
-                    record_app_args['stack'] = stack
+                    record_app_args["stack"] = stack
                     call = mod_record_schema.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
@@ -574,7 +571,7 @@ class Instrument(object):
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,
-                            existing_record=records.get(ctx)
+                            existing_record=records.get(ctx),
                         )
 
                 if error is not None:
@@ -614,27 +611,27 @@ class Instrument(object):
 
         cls = type(obj)
 
-        logger.debug('%s: instrumenting %s on obj %s', query, method_name, obj)
+        logger.debug("%s: instrumenting %s on obj %s", query, method_name, obj)
 
         for base in list(cls.__mro__):
-            logger.debug('\t%s: instrumenting base %s', query, class_name(base))
+            logger.debug("\t%s: instrumenting base %s", query, class_name(base))
 
             if safe_hasattr(base, method_name):
                 original_fun = getattr(base, method_name)
 
                 logger.debug(
-                    '\t\t%s: instrumenting %s.%s', query, class_name(base),
-                    method_name
+                    "\t\t%s: instrumenting %s.%s", query, class_name(base), method_name
                 )
                 setattr(
-                    base, method_name,
+                    base,
+                    method_name,
                     self.tracked_method_wrapper(
                         query=query,
                         func=original_fun,
                         method_name=method_name,
                         cls=base,
-                        obj=obj
-                    )
+                        obj=obj,
+                    ),
                 )
 
     def instrument_class(self, cls):
@@ -651,16 +648,13 @@ class Instrument(object):
         func = cls.__new__
 
         if safe_hasattr(func, Instrument.INSTRUMENT):
-            logger.debug(
-                'Class %s __new__ is already instrumented.', class_name(cls)
-            )
+            logger.debug("Class %s __new__ is already instrumented.", class_name(cls))
             return
 
         # @functools.wraps(func)
         def wrapped_new(cls, *args, **kwargs):
             logger.debug(
-                'Creating a new instance of instrumented class %s.',
-                class_name(cls)
+                "Creating a new instance of instrumented class %s.", class_name(cls)
             )
             # get deepest wrapped method here
             # get its self
@@ -672,9 +666,7 @@ class Instrument(object):
 
         cls.__new__ = wrapped_new
 
-    def instrument_object(
-        self, obj, query: Lens, done: Optional[Set[int]] = None
-    ):
+    def instrument_object(self, obj, query: Lens, done: Optional[Set[int]] = None):
         """Instrument the given object `obj` and its components."""
 
         done = done or set([])
@@ -685,12 +677,14 @@ class Instrument(object):
         # Warning: cls.__mro__ sometimes returns an object that can be iterated through only once.
 
         logger.debug(
-            '%s: instrumenting object at %s of class %s', query, id_str(obj),
-            class_name(cls)
+            "%s: instrumenting object at %s of class %s",
+            query,
+            id_str(obj),
+            class_name(cls),
         )
 
         if id(obj) in done:
-            logger.debug('\t%s: already instrumented', query)
+            logger.debug("\t%s: already instrumented", query)
             return
 
         done.add(id(obj))
@@ -702,10 +696,9 @@ class Instrument(object):
         # .
 
         # Recursively instrument inner components
-        if hasattr(obj, '__dict__'):
+        if hasattr(obj, "__dict__"):
             for attr_name, attr_value in obj.__dict__.items():
-                if any(isinstance(attr_value, cls)
-                       for cls in self.include_classes):
+                if any(isinstance(attr_value, cls) for cls in self.include_classes):
                     inner_query = query[attr_name]
                     self.instrument_object(attr_value, inner_query, done)
 
@@ -724,8 +717,9 @@ class Instrument(object):
             except Exception as e:
                 # subclass check may raise exception
                 logger.debug(
-                    '\t\tWarning: checking whether %s should be instrumented resulted in an error: %s',
-                    python.module_name(base), e
+                    "\t\tWarning: checking whether %s should be instrumented resulted in an error: %s",
+                    python.module_name(base),
+                    e,
                 )
                 # NOTE: Proceeding to instrument here as we don't want to miss
                 # anything. Unsure why some llama_index subclass checks fail.
@@ -733,7 +727,6 @@ class Instrument(object):
                 # continue
 
             for method_name, class_filter in self.include_methods.items():
-
                 if safe_hasattr(base, method_name):
                     if not class_filter_matches(f=class_filter, obj=obj):
                         continue
@@ -744,36 +737,37 @@ class Instrument(object):
                     # their methods, the wrapper will capture an uninstrumented
                     # version of the inner method which we may fail to
                     # instrument.
-                    if hasattr(original_fun, '__wrapped__'):
+                    if hasattr(original_fun, "__wrapped__"):
                         original_fun = original_fun.__wrapped__
 
                     # Sometimes the base class may be in some module but when a
                     # method is looked up from it, it actually comes from some
                     # other, even baser class which might come from builtins
                     # which we want to skip instrumenting.
-                    if safe_hasattr(original_fun, '__self__'):
+                    if safe_hasattr(original_fun, "__self__"):
                         if not self.to_instrument_module(
-                                original_fun.__self__.__class__.__module__):
+                            original_fun.__self__.__class__.__module__
+                        ):
                             continue
                     else:
                         # Determine module here somehow.
                         pass
 
-                    logger.debug('\t\t%s: instrumenting %s', query, method_name)
+                    logger.debug("\t\t%s: instrumenting %s", query, method_name)
 
                     setattr(
-                        base, method_name,
+                        base,
+                        method_name,
                         self.tracked_method_wrapper(
                             query=query,
                             func=original_fun,
                             method_name=method_name,
                             cls=base,
-                            obj=obj
-                        )
+                            obj=obj,
+                        ),
                     )
 
-        if self.to_instrument_object(obj) or isinstance(obj,
-                                                        (dict, list, tuple)):
+        if self.to_instrument_object(obj) or isinstance(obj, (dict, list, tuple)):
             vals = None
             if isinstance(obj, dict):
                 attrs = obj.keys()
@@ -802,7 +796,6 @@ class Instrument(object):
                 vals = [safe_getattr(obj, k, get_prop=True) for k in attrs]
 
             for k, v in zip(attrs, vals):
-
                 if isinstance(v, (str, bool, int, float)):
                     pass
 
@@ -812,9 +805,7 @@ class Instrument(object):
                 elif isinstance(v, Sequence):
                     for i, sv in enumerate(v):
                         if self.to_instrument_class(type(sv)):
-                            self.instrument_object(
-                                obj=sv, query=query[k][i], done=done
-                            )
+                            self.instrument_object(obj=sv, query=query[k][i], done=done)
 
                 elif isinstance(v, Dict):
                     for k2, sv in v.items():
@@ -867,9 +858,7 @@ class Instrument(object):
 
                         """
                         if self.to_instrument_class(type(sv)):
-                            self.instrument_object(
-                                obj=sv, query=subquery, done=done
-                            )
+                            self.instrument_object(obj=sv, query=subquery, done=done)
 
                 else:
                     pass
@@ -879,8 +868,9 @@ class Instrument(object):
 
         else:
             logger.debug(
-                '%s: Do not know how to instrument object of type %s.', query,
-                class_name(cls)
+                "%s: Do not know how to instrument object of type %s.",
+                query,
+                class_name(cls),
             )
 
         # Check whether bound methods are instrumented properly.
@@ -900,22 +890,20 @@ class Instrument(object):
                 pass
             else:
                 method = safe_getattr(obj, method_name)
-                print(f'\t{query}Looking at {method}')
+                print(f"\t{query}Looking at {method}")
 
-                if safe_hasattr(method, '__func__'):
-                    func = safe_getattr(method, '__func__')
+                if safe_hasattr(method, "__func__"):
+                    func = safe_getattr(method, "__func__")
                     print(
-                        f'\t\t{query}: Looking at bound method {method_name} with func {func}'
+                        f"\t\t{query}: Looking at bound method {method_name} with func {func}"
                     )
 
                     if safe_hasattr(func, Instrument.INSTRUMENT):
-                        print(
-                            f'\t\t\t{query} Bound method {func} is instrumented.'
-                        )
+                        print(f"\t\t\t{query} Bound method {func} is instrumented.")
 
                     else:
                         print(
-                            f'\t\t\t{query} Bound method {func} is not instrumented. Trying to instrument it'
+                            f"\t\t\t{query} Bound method {func} is not instrumented. Trying to instrument it"
                         )
 
                         try:
@@ -924,7 +912,7 @@ class Instrument(object):
                                 func=func,
                                 method_name=method_name,
                                 cls=type(obj),
-                                obj=obj
+                                obj=obj,
                             )
                             if inspect.iscoroutinefunction(func):
 
@@ -938,21 +926,17 @@ class Instrument(object):
                             setattr(obj, method_name, bound)
                         except Exception as e:
                             logger.debug(
-                                f'\t\t\t{query}: cound not instrument because {e}'
+                                f"\t\t\t{query}: cound not instrument because {e}"
                             )
 
                 else:
                     if safe_hasattr(method, Instrument.INSTRUMENT):
-                        print(
-                            f'\t\t{query} Bound method {method} is instrumented.'
-                        )
+                        print(f"\t\t{query} Bound method {method} is instrumented.")
                     else:
-                        print(
-                            f'\t\t{query} Bound method {method} is NOT instrumented.'
-                        )
+                        print(f"\t\t{query} Bound method {method} is NOT instrumented.")
 
 
-class AddInstruments():
+class AddInstruments:
     """Utilities for adding more things to default instrumentation filters."""
 
     @classmethod
@@ -964,9 +948,7 @@ class AddInstruments():
         Instrument.Default.CLASSES.add(of_cls)
 
         check_o: ClassFilter = Instrument.Default.METHODS.get(name, ())
-        Instrument.Default.METHODS[name] = class_filter_disjunction(
-            check_o, of_cls
-        )
+        Instrument.Default.METHODS[name] = class_filter_disjunction(check_o, of_cls)
 
     @classmethod
     def methods(cls, of_cls: type, names: Iterable[str]) -> None:

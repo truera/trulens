@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class LangchainCallback(EndpointCallback):
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: Dict) -> None:
@@ -33,7 +32,7 @@ class LangchainEndpoint(Endpoint):
     chain: Any  # Union[BaseLLM, BaseChatModel]
 
     def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name='langchain')
+        return super(Endpoint, cls).__new__(cls, name="langchain")
 
     def handle_wrapped_call(
         self,
@@ -49,16 +48,16 @@ class LangchainEndpoint(Endpoint):
 
     def __init__(self, chain: Union[BaseLLM, BaseChatModel], *args, **kwargs):
         if chain is None:
-            raise ValueError('`chain` must be specified.')
+            raise ValueError("`chain` must be specified.")
 
         if not (isinstance(chain, BaseLLM) or isinstance(chain, BaseChatModel)):
             raise ValueError(
-                f'`chain` must be of type {BaseLLM.__name__} or {BaseChatModel.__name__}. '
-                f'If you are using DEFERRED mode, this may be due to our inability to serialize `chain`.'
+                f"`chain` must be of type {BaseLLM.__name__} or {BaseChatModel.__name__}. "
+                f"If you are using DEFERRED mode, this may be due to our inability to serialize `chain`."
             )
 
-        kwargs['chain'] = chain
-        kwargs['name'] = 'langchain'
-        kwargs['callback_class'] = LangchainCallback
+        kwargs["chain"] = chain
+        kwargs["name"] = "langchain"
+        kwargs["callback_class"] = LangchainCallback
 
         super().__init__(*args, **kwargs)

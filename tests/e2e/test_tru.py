@@ -19,15 +19,13 @@ from tests.unit.test import optional_test
 
 
 class TestTru(TestCase):
-
     @staticmethod
     def setUpClass():
         pass
 
     def setUp(self):
         check_keys(
-            'OPENAI_API_KEY', 'HUGGINGFACE_API_KEY', 'PINECONE_API_KEY',
-            'PINECONE_ENV'
+            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
         )
 
     def test_init(self):
@@ -38,23 +36,23 @@ class TestTru(TestCase):
 
         # Try all combinations of arguments to Tru constructor.
         test_args = dict()
-        test_args['database_url'] = [None, 'sqlite:///default_url.db']
-        test_args['database_file'] = [None, 'default_file.db']
-        test_args['database_redact_keys'] = [None, True, False]
+        test_args["database_url"] = [None, "sqlite:///default_url.db"]
+        test_args["database_file"] = [None, "default_file.db"]
+        test_args["database_redact_keys"] = [None, True, False]
 
         tru = None
 
-        for url in test_args['database_url']:
-            for file in test_args['database_file']:
-                for redact in test_args['database_redact_keys']:
+        for url in test_args["database_url"]:
+            for file in test_args["database_file"]:
+                for redact in test_args["database_redact_keys"]:
                     with self.subTest(url=url, file=file, redact=redact):
                         args = dict()
                         if url is not None:
-                            args['database_url'] = url
+                            args["database_url"] = url
                         if file is not None:
-                            args['database_file'] = file
+                            args["database_file"] = file
                         if redact is not None:
-                            args['database_redact_keys'] = redact
+                            args["database_redact_keys"] = redact
 
                         if url is not None and file is not None:
                             # Specifying both url and file should throw exception.
@@ -79,27 +77,23 @@ class TestTru(TestCase):
 
                             # Check that the expected files were created.
                             if url is not None:
-                                self.assertTrue(Path('default_url.db').exists())
+                                self.assertTrue(Path("default_url.db").exists())
                             elif file is not None:
-                                self.assertTrue(
-                                    Path('default_file.db').exists()
-                                )
+                                self.assertTrue(Path("default_file.db").exists())
                             else:
-                                self.assertTrue(Path('default.sqlite').exists())
+                                self.assertTrue(Path("default.sqlite").exists())
 
                         # Need to delete singleton after test as otherwise we
                         # cannot change the arguments in next test.
 
     def _create_custom(self):
-        from examples.expositional.end2end_apps.custom_app.custom_app import \
-            CustomApp
+        from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
 
         return CustomApp()
 
     def _create_basic(self):
-
         def custom_application(prompt: str) -> str:
-            return 'a response'
+            return "a response"
 
         return custom_application
 
@@ -129,15 +123,15 @@ class TestTru(TestCase):
         )
 
         f_dummy1 = Feedback(
-            provider.language_match, name='language match'
+            provider.language_match, name="language match"
         ).on_input_output()
 
         f_dummy2 = Feedback(
-            provider.positive_sentiment, name='output sentiment'
+            provider.positive_sentiment, name="output sentiment"
         ).on_output()
 
         f_dummy3 = Feedback(
-            provider.positive_sentiment, name='input sentiment'
+            provider.positive_sentiment, name="input sentiment"
         ).on_input()
 
         return [f_dummy1, f_dummy2, f_dummy3]
@@ -150,11 +144,12 @@ class TestTru(TestCase):
 
         from llama_index.core import SimpleDirectoryReader
         from llama_index.core import VectorStoreIndex
+
         os.system(
-            'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
+            "wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/"
         )
 
-        documents = SimpleDirectoryReader('data').load_data()
+        documents = SimpleDirectoryReader("data").load_data()
         index = VectorStoreIndex.from_documents(documents)
         query_engine = index.as_query_engine()
 
@@ -168,13 +163,13 @@ class TestTru(TestCase):
         """
         tru = Tru()
 
-        with self.subTest(type='TruBasicApp'):
+        with self.subTest(type="TruBasicApp"):
             app = self._create_basic()
 
             with self.subTest(argname=None):
                 tru.Basic(app)
 
-            with self.subTest(argname='text_to_text'):
+            with self.subTest(argname="text_to_text"):
                 tru.Basic(text_to_text=app)
 
             # Not specifying callable should be an error.
@@ -185,14 +180,14 @@ class TestTru(TestCase):
 
             # Specifying custom basic app using any of these other argument
             # names should be an error.
-            wrong_args = ['app', 'chain', 'engine']
+            wrong_args = ["app", "chain", "engine"]
 
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
                         tru.Basic(**{arg: app})
 
-        with self.subTest(type='TruCustomApp'):
+        with self.subTest(type="TruCustomApp"):
             app = self._create_custom()
 
             tru.Custom(app)
@@ -206,13 +201,13 @@ class TestTru(TestCase):
 
             # Specifying custom app using any of these other argument names
             # should be an error.
-            wrong_args = ['chain', 'engine', 'text_to_text']
+            wrong_args = ["chain", "engine", "text_to_text"]
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
                         tru.Custom(**{arg: app})
 
-        with self.subTest(type='TruVirtual'):
+        with self.subTest(type="TruVirtual"):
             tru.Virtual(None)
 
     @optional_test
@@ -222,13 +217,13 @@ class TestTru(TestCase):
         """
         tru = Tru()
 
-        with self.subTest(type='TruChain'):
+        with self.subTest(type="TruChain"):
             app = self._create_chain()
 
             with self.subTest(argname=None):
                 tru.Chain(app)
 
-            with self.subTest(argname='chain'):
+            with self.subTest(argname="chain"):
                 tru.Chain(chain=app)
 
             # Not specifying chain should be an error.
@@ -239,13 +234,13 @@ class TestTru(TestCase):
 
             # Specifying the chain using any of these other argument names
             # should be an error.
-            wrong_args = ['app', 'engine', 'text_to_text']
+            wrong_args = ["app", "engine", "text_to_text"]
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
                         tru.Chain(**{arg: app})
 
-        with self.subTest(type='TruLlama'):
+        with self.subTest(type="TruLlama"):
             app = self._create_llama()
 
             tru.Llama(app)
@@ -261,7 +256,7 @@ class TestTru(TestCase):
 
             # Specifying engine using any of these other argument names
             # should be an error.
-            wrong_args = ['chain', 'app', 'text_to_text']
+            wrong_args = ["chain", "app", "text_to_text"]
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
@@ -284,16 +279,13 @@ class TestTru(TestCase):
         tru_app = TruCustomApp(app)
 
         with tru_app as recording:
-            response = app.respond_to_query('hello')
+            response = app.respond_to_query("hello")
 
         record = recording.get()
 
         feedback_results = list(
             tru.run_feedback_functions(
-                record=record,
-                feedback_functions=feedbacks,
-                app=tru_app,
-                wait=True
+                record=record, feedback_functions=feedbacks, app=tru_app, wait=True
             )
         )
 
@@ -304,7 +296,7 @@ class TestTru(TestCase):
         self.assertEqual(
             set(expected_feedback_names),
             set(res.name for res in feedback_results),
-            'feedback result names do not match requested feedback names'
+            "feedback result names do not match requested feedback names",
         )
 
         # Check that the structure of returned tuples is correct.
@@ -340,7 +332,7 @@ class TestTru(TestCase):
         tru_app = TruCustomApp(app)
 
         with tru_app as recording:
-            response = app.respond_to_query('hello')
+            response = app.respond_to_query("hello")
 
         record = recording.get()
 
@@ -348,10 +340,7 @@ class TestTru(TestCase):
 
         future_feedback_results = list(
             tru.run_feedback_functions(
-                record=record,
-                feedback_functions=feedbacks,
-                app=tru_app,
-                wait=False
+                record=record, feedback_functions=feedbacks, app=tru_app, wait=False
             )
         )
 
@@ -361,7 +350,7 @@ class TestTru(TestCase):
         self.assertLess(
             (end_time - start_time).total_seconds(),
             2.0,  # TODO: get it to return faster
-            'Non-blocking run_feedback_functions did not return fast enough.'
+            "Non-blocking run_feedback_functions did not return fast enough.",
         )
 
         # Check we get the right number of results.

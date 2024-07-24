@@ -5,12 +5,8 @@ from trulens.core.app.custom import instrument
 
 
 class CustomLLM:
-
     def __init__(
-        self,
-        model: str = 'derp',
-        delay: float = 0.01,
-        alloc: int = 1024 * 1024
+        self, model: str = "derp", delay: float = 0.01, alloc: int = 1024 * 1024
     ):
         self.model = model
         self.delay = delay
@@ -23,5 +19,4 @@ class CustomLLM:
 
         temporary = [0x42] * self.alloc
 
-        return 'herp ' + prompt[::-1
-                               ] + f' derp and {sys.getsizeof(temporary)} bytes'
+        return "herp " + prompt[::-1] + f" derp and {sys.getsizeof(temporary)} bytes"

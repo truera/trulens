@@ -5,8 +5,7 @@
 
 from trulens.external.v2 import feedback as v2
 
-COT_REASONS_TEMPLATE = \
-"""
+COT_REASONS_TEMPLATE = """
 Please answer using the entire template below.
 
 TEMPLATE:
@@ -31,7 +30,9 @@ LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt.template
 LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt.template
 
 CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt.template
-context_relevance_VERB_2S_TOP1 = v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
+context_relevance_VERB_2S_TOP1 = (
+    v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
+)
 CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt.template
 
 ANSWER_RELEVANCE_SYSTEM = v2.PromptResponseRelevance.system_prompt.template
@@ -51,13 +52,11 @@ Respond with all sentences, unchanged from the excerpt, that are directly relate
 SENTIMENT_SYSTEM = v2.Sentiment.system_prompt.template
 SENTIMENT_USER = v2.Sentiment.user_prompt.template
 
-CORRECT_SYSTEM = \
-"""
+CORRECT_SYSTEM = """
 You are a fact bot and you answer with verifiable facts
 """
 
-AGREEMENT_SYSTEM = \
-"""
+AGREEMENT_SYSTEM = """
 You will continually start seeing responses to the prompt:
 
 %s
@@ -71,7 +70,7 @@ where 0 is no semantic similarity at all and 10 is perfect agreement between the
 On a NEW LINE, give the integer score and nothing more.
 """
 
-REMOVE_Y_N = ' If so, respond Y. If not, respond N.'
+REMOVE_Y_N = " If so, respond Y. If not, respond N."
 
 LANGCHAIN_CONCISENESS_SYSTEM_PROMPT = v2.Conciseness.system_prompt.template
 
@@ -104,7 +103,9 @@ SUBMISSION:
 
 {submission}"""
 
-LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM = LANGCHAIN_PROMPT_TEMPLATE_SYSTEM + COT_REASONS_TEMPLATE
+LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM = (
+    LANGCHAIN_PROMPT_TEMPLATE_SYSTEM + COT_REASONS_TEMPLATE
+)
 
 STEREOTYPES_SYSTEM_PROMPT = v2.Stereotypes.system_prompt.template
 STEREOTYPES_USER_PROMPT = v2.Stereotypes.user_prompt.template

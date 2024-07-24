@@ -26,14 +26,14 @@ from langchain.prompts.chat import HumanMessagePromptTemplate
 
 dev_path = str(Path(__file__).resolve().parent.parent)
 sys.path.insert(0, dev_path)
-os.environ['OPENAI_API_KEY'] = '...'
+os.environ["OPENAI_API_KEY"] = "..."
 
 from trulens.core import Tru
 from trulens.dashboard import run_dashboard
 from trulens.langchain import TruChain
 
 # Set up GPT-3 model
-model_name = 'gpt-3.5-turbo'
+model_name = "gpt-3.5-turbo"
 tru = Tru()
 
 
@@ -42,9 +42,8 @@ tru = Tru()
 def setup_chain():
     full_prompt = HumanMessagePromptTemplate(
         prompt=PromptTemplate(
-            template=
-            'Provide a helpful response with relevant background information for the following: {prompt}',
-            input_variables=['prompt'],
+            template="Provide a helpful response with relevant background information for the following: {prompt}",
+            input_variables=["prompt"],
         )
     )
     chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
@@ -53,7 +52,7 @@ def setup_chain():
 
     chain = LLMChain(llm=chat, prompt=chat_prompt_template)
 
-    tc = TruChain(chain, app_id='Streamlit App')
+    tc = TruChain(chain, app_id="Streamlit App")
     tru.add_app(app=tc)
     run_dashboard(tru, _dev=dev_path)
     return tc
@@ -66,8 +65,8 @@ def generate_response(prompt, tc):
 tc = setup_chain()
 
 # Set up Streamlit app
-st.title('Get Help from ChatGPT')
-user_input = st.text_input('What do you need help with?')
+st.title("Get Help from ChatGPT")
+user_input = st.text_input("What do you need help with?")
 
 if user_input:
     # Generate GPT-3 response
@@ -77,14 +76,14 @@ if user_input:
 
     # Display response
     st.write("Here's some help for you:")
-    st.write(gpt3_response['text'])
+    st.write(gpt3_response["text"])
 
     # Allow user to rate the response with emojis
     col1, col2 = st.columns(2)
     with col1:
-        thumbs_up = st.button('👍')
+        thumbs_up = st.button("👍")
     with col2:
-        thumbs_down = st.button('👎')
+        thumbs_down = st.button("👎")
 
     thumb_result = None
     if thumbs_up:
@@ -98,8 +97,8 @@ if user_input:
         thumb_result = False
     if thumb_result is not None:
         tru.add_feedback(
-            name='👍 (1) or 👎 (0)',
+            name="👍 (1) or 👎 (0)",
             record_id=record.record_id,
             app_id=tc.app_id,
-            result=thumb_result
+            result=thumb_result,
         )

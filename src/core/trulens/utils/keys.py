@@ -112,24 +112,23 @@ values_to_redact: Set[str] = set()
 
 # Regex of keys (into dict/json) that should be redacted.
 RE_KEY_TO_REDACT: re.Pattern = re.compile(
-    '|'.join(
+    "|".join(
         [
-            r'api_key',
+            r"api_key",
             # Covers OpenAI, Cohere, Anthropic class key 'api_key'
-            r'.+_api_key',
+            r".+_api_key",
             # Covers langchain llm attributes for keys such as 'openai_api_key'.
-
             # r'token',
             # Would cover bard unofficial api field "token" but this is a
             # bit too general of a key; TODO: need another solution to redact.
-            r'.+_API_KEY',
-            r'.+_API_TOKEN',
+            r".+_API_KEY",
+            r".+_API_TOKEN",
             # Covers env vars ending in "_API_KEY", including openai, cohere, anthropic,
             # bard
-            r'KAGGLE_KEY',
-            r'SLACK_(TOKEN|SIGNING_SECRET)',
+            r"KAGGLE_KEY",
+            r"SLACK_(TOKEN|SIGNING_SECRET)",
             # Covers slack-related keys.
-            r'.*PASSWORD.*',
+            r".*PASSWORD.*",
             # Cover user credentials for i.e. Snowflake connection session
         ]
     )
@@ -146,11 +145,11 @@ RE_KEY_TO_REDACT: re.Pattern = re.compile(
 # TODO: Some method for letting users add more things to redact.
 
 # The replacement value for redacted values.
-REDACTED_VALUE = '__tru_redacted'
+REDACTED_VALUE = "__tru_redacted"
 
 # Treat these value as not valid keys. Use any as a templates to suggest a user
 # fills in the key.
-TEMPLATE_VALUES = set(['to fill in'])
+TEMPLATE_VALUES = set(["to fill in"])
 
 global cohere_agent
 cohere_agent = None
@@ -164,8 +163,7 @@ def should_redact_value(v: Union[Any, str]) -> bool:
     return isinstance(v, str) and v in values_to_redact
 
 
-def redact_value(v: Union[str, Any],
-                 k: Optional[str] = None) -> Union[str, Any]:
+def redact_value(v: Union[str, Any], k: Optional[str] = None) -> Union[str, Any]:
     """
     Determine whether the given value `v` should be redacted and redact it if
     so. If its key `k` (in a dict/json-like) is given, uses the key name to
@@ -186,7 +184,7 @@ def get_config_file() -> Path:
     found .env or None if not found.
     """
     for path in [Path().cwd(), *Path.cwd().parents]:
-        file = path / '.env'
+        file = path / ".env"
         if file.exists():
             return file
 
@@ -197,8 +195,8 @@ def get_config() -> Tuple[Path, dict]:
     config_file = get_config_file()
     if config_file is None:
         logger.warning(
-            f'No .env found in {Path.cwd()} or its parents. '
-            'You may need to specify secret keys in another manner.'
+            f"No .env found in {Path.cwd()} or its parents. "
+            "You may need to specify secret keys in another manner."
         )
         return None, None
     else:
@@ -207,26 +205,23 @@ def get_config() -> Tuple[Path, dict]:
 
 def get_huggingface_headers() -> Dict[str, str]:
     HUGGINGFACE_HEADERS = {
-        'Authorization': f"Bearer {os.environ['HUGGINGFACE_API_KEY']}"
+        "Authorization": f"Bearer {os.environ['HUGGINGFACE_API_KEY']}"
     }
     return HUGGINGFACE_HEADERS
 
 
 def _value_is_set(v: str) -> bool:
-    return not (v is None or v in TEMPLATE_VALUES or v == '')
+    return not (v is None or v in TEMPLATE_VALUES or v == "")
 
 
 class ApiKeyError(RuntimeError):
-
-    def __init__(self, *args, key: str, msg: str = ''):
+    def __init__(self, *args, key: str, msg: str = ""):
         super().__init__(msg, *args)
         self.key = key
         self.msg = msg
 
 
-def _check_key(
-    k: str, v: str = None, silent: bool = False, warn: bool = False
-) -> bool:
+def _check_key(k: str, v: str = None, silent: bool = False, warn: bool = False) -> bool:
     """
     Check that the given `k` is an env var with a value that indicates a valid
     api key or secret.  If `v` is provided, checks that instead. If value
@@ -251,7 +246,7 @@ def _check_key(
 For the last two options, the name of the argument may differ from {k} (i.e. `OpenAI(api_key=)` for `OPENAI_API_KEY`).
 """
         if not silent:
-            print(f'{UNICODE_STOP} {msg}')
+            print(f"{UNICODE_STOP} {msg}")
             if warn:
                 logger.warning(msg)
         else:
@@ -274,15 +269,13 @@ def _relative_path(path: Path, relative_to: Path) -> str:
 
     while True:
         try:
-            return ''.join(['../'] * parents
-                          ) + str(path.relative_to(relative_to))
+            return "".join(["../"] * parents) + str(path.relative_to(relative_to))
         except Exception:
             parents += 1
             relative_to = relative_to.parent
 
 
-def _collect_keys(*args: Tuple[str], **kwargs: Dict[str,
-                                                    str]) -> Dict[str, str]:
+def _collect_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> Dict[str, str]:
     """
     Collect values for keys from all of the currently supported sources. This includes:
 
@@ -311,51 +304,53 @@ def _collect_keys(*args: Tuple[str], **kwargs: Dict[str,
         # classes (or provided explicitly to them) to var env.
         temp_v = os.environ.get(k)
         if _value_is_set(temp_v):
-            valid_sources[temp_v].append('environment')
+            valid_sources[temp_v].append("environment")
             valid_values.add(temp_v)
 
         # Explicit.
         temp_v = kwargs.get(k)
         if _value_is_set(temp_v):
-            valid_sources[temp_v].append(
-                f'explicit value to `check_or_set_keys`'
-            )
+            valid_sources[temp_v].append(f"explicit value to `check_or_set_keys`")
             valid_values.add(temp_v)
 
         # .env vars.
         if config is not None:
             temp_v = config.get(k)
             if _value_is_set(temp_v):
-                valid_sources[temp_v].append(f'.env file at {config_file}')
+                valid_sources[temp_v].append(f".env file at {config_file}")
                 valid_values.add(temp_v)
 
         # Globals of caller.
         temp_v = globs.get(k)
         if _value_is_set(temp_v):
-            valid_sources[temp_v].append(f'python variable')
+            valid_sources[temp_v].append(f"python variable")
             valid_values.add(temp_v)
 
         if len(valid_values) == 0:
             ret[k] = None
 
         elif len(valid_values) > 1:
-            warning = f'More than one different value for key {k} has been found:\n\t'
-            warning += '\n\t'.join(
+            warning = f"More than one different value for key {k} has been found:\n\t"
+            warning += "\n\t".join(
                 f"""value ending in {v[-1]} in {' and '.join(valid_sources[v])}"""
                 for v in valid_values
             )
-            warning += f'\nUsing one arbitrarily.'
+            warning += f"\nUsing one arbitrarily."
             logger.warning(warning)
 
             ret[k] = list(valid_values)[0]
         else:
             v = list(valid_values)[0]
             print(
-                f'{UNICODE_CHECK} Key {k} set from {valid_sources[v][0]}' + (
-                    ' (same value found in ' +
-                    (' and '.join(valid_sources[v][1:])) +
-                    ')' if len(valid_sources[v]) > 1 else ''
-                ) + '.'
+                f"{UNICODE_CHECK} Key {k} set from {valid_sources[v][0]}"
+                + (
+                    " (same value found in "
+                    + (" and ".join(valid_sources[v][1:]))
+                    + ")"
+                    if len(valid_sources[v]) > 1
+                    else ""
+                )
+                + "."
             )
 
             ret[k] = v

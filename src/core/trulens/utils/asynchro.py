@@ -41,9 +41,9 @@ nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
-A = TypeVar('A')
-B = TypeVar('B')
+T = TypeVar("T")
+A = TypeVar("A")
+B = TypeVar("B")
 
 MaybeAwaitable = Union[T, Awaitable[T]]
 """Awaitable or not.
@@ -61,8 +61,9 @@ May be checked with
 CallableAwaitable = Callable[[A], Awaitable[B]]
 """Function that produces an awaitable / coroutine function."""
 
-ThunkMaybeAwaitable = Union[mod_python_utils.Thunk[T],
-                            mod_python_utils.Thunk[Awaitable[T]]]
+ThunkMaybeAwaitable = Union[
+    mod_python_utils.Thunk[T], mod_python_utils.Thunk[Awaitable[T]]
+]
 """Thunk or coroutine thunk.
 
 May be checked with
@@ -121,6 +122,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         try:
             # If have nest_asyncio, can run in current thread.
             import nest_asyncio
+
             return loop.run_until_complete(awaitable)
         except:
             pass
@@ -128,6 +130,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         try:
             # If have nest_asyncio, can run in current thread.
             import nest_asyncio
+
             return loop.run_until_complete(awaitable)
         except:
             pass

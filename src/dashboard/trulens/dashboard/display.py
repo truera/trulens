@@ -23,6 +23,7 @@ def get_icon(fdef: FeedbackDefinition, result: float) -> str:
     cat = CATEGORY.of_score(
         result or 0,
         higher_is_better=fdef.higher_is_better
-        if fdef.higher_is_better is not None else True
+        if fdef.higher_is_better is not None
+        else True,
     )
     return cat.icon

@@ -24,6 +24,7 @@ from tests.unit.test import optional_test
 
 class TestTruChain(JSONTestCase):
     """Test TruChain class."""
+
     # TODO: See problem in TestTruLlama.
     # USE IsolatedAsyncioTestCase
 
@@ -33,10 +34,8 @@ class TestTruChain(JSONTestCase):
         Tru().reset_database()
 
     def setUp(self):
-
         check_keys(
-            'OPENAI_API_KEY', 'HUGGINGFACE_API_KEY', 'PINECONE_API_KEY',
-            'PINECONE_ENV'
+            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
         )
 
     @optional_test
@@ -52,14 +51,13 @@ class TestTruChain(JSONTestCase):
         chain1 = LLMChain(llm=llm, prompt=prompt)
 
         memory = ConversationSummaryBufferMemory(
-            memory_key='chat_history',
-            input_key='question',
+            memory_key="chat_history",
+            input_key="question",
             llm=llm,  # same llm now appears in a different spot
         )
         chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
 
     def _create_basic_chain(self, app_id: str = None):
-
         from langchain_openai import ChatOpenAI
 
         # Create simple QA chain.
@@ -74,9 +72,7 @@ class TestTruChain(JSONTestCase):
 
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
-        tc = tru.Chain(
-            chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP
-        )
+        tc = tru.Chain(chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP)
 
         return tc
 
@@ -86,10 +82,10 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tc = self._create_basic_chain(app_id='metaplain')
+        tc = self._create_basic_chain(app_id="metaplain")
 
-        message = 'What is 1+2?'
-        meta = 'this is plain metadata'
+        message = "What is 1+2?"
+        meta = "this is plain metadata"
 
         _, rec = tc.with_record(tc.app, message, record_metadata=meta)
 
@@ -103,7 +99,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check updating the record metadata in the db.
-        new_meta = 'this is new meta'
+        new_meta = "this is new meta"
         rec.meta = new_meta
         Tru().update_record(rec)
         recs, _ = Tru().get_records_and_feedback([tc.app_id])
@@ -135,10 +131,10 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tc = self._create_basic_chain(app_id='metajson')
+        tc = self._create_basic_chain(app_id="metajson")
 
-        message = 'What is 1+2?'
-        meta = dict(field1='hello', field2='there')
+        message = "What is 1+2?"
+        meta = dict(field1="hello", field2="there")
 
         _, rec = tc.with_record(tc.app, message, record_metadata=meta)
 
@@ -152,7 +148,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check updating the record metadata in the db.
-        new_meta = dict(hello='this is new meta')
+        new_meta = dict(hello="this is new meta")
         rec.meta = new_meta
         Tru().update_record(rec)
 
@@ -171,7 +167,7 @@ class TestTruChain(JSONTestCase):
 
         from langchain_openai import ChatOpenAI
 
-        msg = HumanMessage(content='Hello there')
+        msg = HumanMessage(content="Hello there")
 
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
@@ -188,7 +184,7 @@ class TestTruChain(JSONTestCase):
 
         async def test2():
             # Creates a task internally via asyncio.gather:
-            result = await chain.acall(inputs=dict(question='hello there'))
+            result = await chain.acall(inputs=dict(question="hello there"))
             return result
 
         res2, costs2 = Endpoint.track_all_costs(lambda: sync(test2))
@@ -196,7 +192,7 @@ class TestTruChain(JSONTestCase):
         # Results are not the same as they involve different prompts but should
         # not be empty at least:
         self.assertGreater(len(res1.generations[0].text), 5)
-        self.assertGreater(len(res2['text']), 5)
+        self.assertGreater(len(res2["text"]), 5)
 
         # And cost tracking should have counted some number of tokens.
         # TODO: broken
@@ -221,15 +217,13 @@ class TestTruChain(JSONTestCase):
             """Honestly answer this question: {question}."""
         )
 
-        message = 'What is 1+2?'
+        message = "What is 1+2?"
 
         # Get sync results.
         llm = ChatOpenAI(temperature=0.0)
         chain = LLMChain(llm=llm, prompt=prompt)
         tc = tru.Chain(chain)
-        sync_res, sync_record = tc.with_record(
-            tc.app, inputs=dict(question=message)
-        )
+        sync_res, sync_record = tc.with_record(tc.app, inputs=dict(question=message))
 
         # Get async results.
         llm = ChatOpenAI(temperature=0.0)
@@ -248,22 +242,22 @@ class TestTruChain(JSONTestCase):
             sync_record.model_dump(),
             skips=set(
                 [
-                    'id',
-                    'name',
-                    'ts',
-                    'start_time',
-                    'end_time',
-                    'record_id',
-                    'tid',
-                    'pid',
-                    'app_id',
-                    'cost'  # TODO(piotrm): cost tracking not working with async
+                    "id",
+                    "name",
+                    "ts",
+                    "start_time",
+                    "end_time",
+                    "record_id",
+                    "tid",
+                    "pid",
+                    "app_id",
+                    "cost",  # TODO(piotrm): cost tracking not working with async
                 ]
-            )
+            ),
         )
 
     @optional_test
-    @unittest.skip('bug in langchain')
+    @unittest.skip("bug in langchain")
     def test_async_token_gen(self):
         # Test of chain acall methods as requested in https://github.com/truera/trulens/issues/309 .
 
@@ -277,13 +271,11 @@ class TestTruChain(JSONTestCase):
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
-        llm = ChatOpenAI(
-            temperature=0.0, streaming=True, callbacks=[async_callback]
-        )
+        llm = ChatOpenAI(temperature=0.0, streaming=True, callbacks=[async_callback])
         agent = LLMChain(llm=llm, prompt=prompt)
-        agent_recorder = tru.Chain(agent)  #, feedbacks=[f_lang_match])
+        agent_recorder = tru.Chain(agent)  # , feedbacks=[f_lang_match])
 
-        message = 'What is 1+2? Explain your answer.'
+        message = "What is 1+2? Explain your answer."
         with agent_recorder as recording:
             async_res = sync(agent.acall, inputs=dict(question=message))
 
@@ -301,23 +293,23 @@ class TestTruChain(JSONTestCase):
             sync_record.model_dump(),
             skips=set(
                 [
-                    'id',
-                    'cost',  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
-                    'name',
-                    'ts',
-                    'start_time',
-                    'end_time',
-                    'record_id',
-                    'tid',
-                    'pid',
-                    'run_id'
+                    "id",
+                    "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
+                    "name",
+                    "ts",
+                    "start_time",
+                    "end_time",
+                    "record_id",
+                    "tid",
+                    "pid",
+                    "run_id",
                 ]
-            )
+            ),
         )
 
         # Check that we counted the number of chunks at least.
         self.assertGreater(async_record.cost.n_stream_chunks, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

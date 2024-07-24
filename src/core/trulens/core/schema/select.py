@@ -7,7 +7,7 @@ from typing import Tuple, TypeVar
 
 from trulens.utils import serial
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
@@ -59,16 +59,14 @@ class Select:
         """
 
         if len(select.path) == 0:
-            raise ValueError(
-                'Given selector is empty so does not name a method.'
-            )
+            raise ValueError("Given selector is empty so does not name a method.")
 
         firsts = select.path[:-1]
         last = select.path[-1]
 
         if not isinstance(last, serial.StepItemOrAttribute):
             raise ValueError(
-                'Last part of selector is not an attribute so does not name a method.'
+                "Last part of selector is not an attribute so does not name a method."
             )
 
         method_name = last.get_item_or_attribute()
@@ -83,8 +81,10 @@ class Select:
         if len(select.path) == 0:
             return select
 
-        if select.path[0] == Select.Record.path[0] or \
-            select.path[0] == Select.App.path[0]:
+        if (
+            select.path[0] == Select.Record.path[0]
+            or select.path[0] == Select.App.path[0]
+        ):
             return Select.Query(path=select.path[1:])
 
         return select
@@ -102,38 +102,38 @@ class Select:
         """Render the given query for use in dashboard to help user specify feedback functions."""
 
         if len(query) == 0:
-            return 'Select.Query()'
+            return "Select.Query()"
 
-        ret = ''
+        ret = ""
         rest = None
 
         if query.path[0:2] == Select.RecordInput.path:
-            ret = 'Select.RecordInput'
+            ret = "Select.RecordInput"
             rest = query.path[2:]
         elif query.path[0:2] == Select.RecordOutput.path:
-            ret = 'Select.RecordOutput'
+            ret = "Select.RecordOutput"
             rest = query.path[2:]
 
         elif query.path[0:4] == Select.RecordArgs.path:
-            ret = 'Select.RecordArgs'
+            ret = "Select.RecordArgs"
             rest = query.path[4:]
         elif query.path[0:4] == Select.RecordRets.path:
-            ret = 'Select.RecordRets'
+            ret = "Select.RecordRets"
             rest = query.path[4:]
 
         elif query.path[0:2] == Select.RecordCalls.path:
-            ret = 'Select.RecordCalls'
+            ret = "Select.RecordCalls"
             rest = query.path[2:]
 
         elif query.path[0:3] == Select.RecordCall.path:
-            ret = 'Select.RecordCall'
+            ret = "Select.RecordCall"
             rest = query.path[3:]
 
         elif query.path[0] == Select.Record.path[0]:
-            ret = 'Select.Record'
+            ret = "Select.Record"
             rest = query.path[1:]
         elif query.path[0] == Select.App.path[0]:
-            ret = 'Select.App'
+            ret = "Select.App"
             rest = query.path[1:]
         else:
             rest = query.path
@@ -141,4 +141,4 @@ class Select:
         for step in rest:
             ret += repr(step)
 
-        return f'{ret}'
+        return f"{ret}"

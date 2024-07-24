@@ -36,14 +36,14 @@ class CATEGORY:
     # support both directions by default
     # TODO: make this configurable (per feedback definition & per app?)
     directions = [
-        FeedbackDirection('HIGHER_IS_BETTER', False, [0, 0.6, 0.8]),
-        FeedbackDirection('LOWER_IS_BETTER', True, [0.2, 0.4, 1]),
+        FeedbackDirection("HIGHER_IS_BETTER", False, [0, 0.6, 0.8]),
+        FeedbackDirection("LOWER_IS_BETTER", True, [0.2, 0.4, 1]),
     ]
 
     styling = {
-        'PASS': dict(color='#aaffaa', icon='✅'),
-        'WARNING': dict(color='#ffffaa', icon='⚠️'),
-        'FAIL': dict(color='#ffaaaa', icon='🛑'),
+        "PASS": dict(color="#aaffaa", icon="✅"),
+        "WARNING": dict(color="#ffffaa", icon="⚠️"),
+        "FAIL": dict(color="#ffaaaa", icon="🛑"),
     }
 
     for category_name in ResultCategoryType._member_names_:
@@ -51,7 +51,7 @@ class CATEGORY:
 
     for direction in directions:
         a = sorted(
-            zip(['low', 'medium', 'high'], sorted(direction.thresholds)),
+            zip(["low", "medium", "high"], sorted(direction.thresholds)),
             key=operator.itemgetter(1),
             reverse=not direction.ascending,
         )
@@ -64,16 +64,13 @@ class CATEGORY:
                 threshold=threshold,
                 direction=direction.name,
                 compare=operator.ge
-                if direction.name == 'HIGHER_IS_BETTER' else operator.le,
+                if direction.name == "HIGHER_IS_BETTER"
+                else operator.le,
                 **styling[category_name],
             )
 
     UNKNOWN = Category(
-        name='unknown',
-        adjective='unknown',
-        threshold=np.nan,
-        color='#aaaaaa',
-        icon='?'
+        name="unknown", adjective="unknown", threshold=np.nan, color="#aaaaaa", icon="?"
     )
 
     # order matters here because `of_score` returns the first best category
@@ -81,7 +78,7 @@ class CATEGORY:
 
     @staticmethod
     def of_score(score: float, higher_is_better: bool = True) -> Category:
-        direction_key = 'HIGHER_IS_BETTER' if higher_is_better else 'LOWER_IS_BETTER'
+        direction_key = "HIGHER_IS_BETTER" if higher_is_better else "LOWER_IS_BETTER"
 
         for cat in map(operator.itemgetter(direction_key), CATEGORY.ALL):
             if cat.compare(score, cat.threshold):
@@ -90,7 +87,7 @@ class CATEGORY:
         return CATEGORY.UNKNOWN
 
 
-default_direction = 'HIGHER_IS_BETTER'
+default_direction = "HIGHER_IS_BETTER"
 
 # These would be useful to include in our pages but don't yet see a way to do
 # this in streamlit.
@@ -111,12 +108,13 @@ stmetricdelta_hidearrow = """
     <style> [data-testid="stMetricDelta"] svg { display: none; } </style>
     """
 
-valid_directions = ['HIGHER_IS_BETTER', 'LOWER_IS_BETTER']
+valid_directions = ["HIGHER_IS_BETTER", "LOWER_IS_BETTER"]
 
 cellstyle_jscode = {
     k: f"""function(params) {{
         let v = parseFloat(params.value);
-        """ + '\n'.join(
+        """
+    + "\n".join(
         f"""
         if (v {'>=' if k == "HIGHER_IS_BETTER" else '<='} {cat.threshold}) {{
             return {{
@@ -124,14 +122,17 @@ cellstyle_jscode = {
                 'backgroundColor': '{cat.color}'
             }};
         }}
-    """ for cat in map(operator.itemgetter(k), CATEGORY.ALL)
-    ) + f"""
+    """
+        for cat in map(operator.itemgetter(k), CATEGORY.ALL)
+    )
+    + f"""
         // i.e. not a number
         return {{
             'color': 'black',
             'backgroundColor': '{CATEGORY.UNKNOWN.color}'
         }};
-    }}""" for k in valid_directions
+    }}"""
+    for k in valid_directions
 }
 
 hide_table_row_index = """

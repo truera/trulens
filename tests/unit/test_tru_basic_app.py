@@ -11,15 +11,13 @@ from trulens.utils.keys import check_keys
 
 from tests.unit.test import JSONTestCase
 
-check_keys('OPENAI_API_KEY', 'HUGGINGFACE_API_KEY')
+check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
 
 class TestTruBasicApp(JSONTestCase):
-
     def setUp(self):
-
         def custom_application(prompt: str) -> str:
-            return 'a response'
+            return "a response"
 
         self.tru = Tru()
 
@@ -33,14 +31,14 @@ class TestTruBasicApp(JSONTestCase):
 
         self.tru_basic_app_recorder = TruBasicApp(
             self.basic_app,
-            app_id='Custom Application v1',
-            feedback_mode=FeedbackMode.WITH_APP
+            app_id="Custom Application v1",
+            feedback_mode=FeedbackMode.WITH_APP,
         )
 
     def test_no_fail(self):
         # Most naive test to make sure the basic app runs at all.
 
-        msg = 'What is the phone number for HR?'
+        msg = "What is the phone number for HR?"
 
         res1 = self.basic_app(msg)
         with self.tru_basic_app_recorder as recording:
@@ -57,5 +55,5 @@ class TestTruBasicApp(JSONTestCase):
         self.assertEqual(len(records), 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

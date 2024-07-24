@@ -6,8 +6,7 @@ import datetime
 from enum import Enum
 import logging
 from pprint import pformat
-from typing import (Any, ClassVar, Dict, Hashable, List, Optional, TypeVar,
-                    Union)
+from typing import Any, ClassVar, Dict, Hashable, List, Optional, TypeVar, Union
 
 import pydantic
 from trulens.core.schema import base as mod_base_schema
@@ -17,10 +16,9 @@ from trulens.utils import serial
 from trulens.utils.json import obj_id_of_obj
 from trulens.utils.text import retab
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
-
 
 
 class FeedbackMode(str, Enum):
@@ -29,18 +27,18 @@ class FeedbackMode(str, Enum):
     Specify this using the `feedback_mode` to [App][trulens.core.app.App] constructors.
     """
 
-    NONE = 'none'
+    NONE = "none"
     """No evaluation will happen even if feedback functions are specified."""
 
-    WITH_APP = 'with_app'
+    WITH_APP = "with_app"
     """Try to run feedback functions immediately and before app returns a
     record."""
 
-    WITH_APP_THREAD = 'with_app_thread'
+    WITH_APP_THREAD = "with_app_thread"
     """Try to run feedback functions in the same process as the app but after
     it produces a record."""
 
-    DEFERRED = 'deferred'
+    DEFERRED = "deferred"
     """Evaluate later via the process started by
     `tru.start_deferred_feedback_evaluator`."""
 
@@ -48,19 +46,19 @@ class FeedbackMode(str, Enum):
 class FeedbackResultStatus(Enum):
     """For deferred feedback evaluation, these values indicate status of evaluation."""
 
-    NONE = 'none'
+    NONE = "none"
     """Initial value is none."""
 
-    RUNNING = 'running'
+    RUNNING = "running"
     """Once queued/started, status is updated to "running"."""
 
-    FAILED = 'failed'
+    FAILED = "failed"
     """Run failed."""
 
-    DONE = 'done'
+    DONE = "done"
     """Run completed successfully."""
 
-    SKIPPED = 'skipped'
+    SKIPPED = "skipped"
     """This feedback was skipped.
 
     This can be because because it had an `if_exists` selector and did not
@@ -76,21 +74,21 @@ class FeedbackOnMissingParameters(str, Enum):
     that selects something that does not exist in a record/app.
     """
 
-    ERROR = 'error'
+    ERROR = "error"
     """Raise an error if a parameter is missing.
 
     The result status will be set to
     [FAILED][trulens.core.schema.feedback.FeedbackResultStatus.FAILED].
     """
 
-    WARN = 'warn'
+    WARN = "warn"
     """Warn if a parameter is missing.
 
     The result status will be set to
     [SKIPPED][trulens.core.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
 
-    IGNORE = 'ignore'
+    IGNORE = "ignore"
     """Do nothing.
 
     No warning or error message will be shown. The result status will be set to
@@ -114,13 +112,13 @@ class FeedbackCall(serial.SerialModel):
     """Any additional data a feedback function returns to display alongside its float result."""
 
     def __str__(self) -> str:
-        out = ''
-        tab = '  '
+        out = ""
+        tab = "  "
         for k, v in self.args.items():
-            out += f'{tab}{k} = {v}\n'
-        out += f'{tab}ret = {self.ret}\n'
+            out += f"{tab}{k} = {v}\n"
+        out += f"{tab}ret = {self.ret}\n"
         if self.meta:
-            out += f'{tab}meta = \n{retab(tab=tab*2, s=pformat(self.meta))}\n'
+            out += f"{tab}meta = \n{retab(tab=tab*2, s=pformat(self.meta))}\n"
 
         return out
 
@@ -169,20 +167,15 @@ class FeedbackResult(serial.SerialModel):
 
     # The `Feedback` / `FeedbackDefinition` which was evaluated to get this
     # result.
-    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                    ] = None
+    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None
 
     # Last timestamp involved in the evaluation.
-    last_ts: datetime.datetime = pydantic.Field(
-        default_factory=datetime.datetime.now
-    )
+    last_ts: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
 
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
     """For deferred feedback evaluation, the status of the evaluation."""
 
-    cost: mod_base_schema.Cost = pydantic.Field(
-        default_factory=mod_base_schema.Cost
-    )
+    cost: mod_base_schema.Cost = pydantic.Field(default_factory=mod_base_schema.Cost)
 
     # Given name of the feedback.
     name: str
@@ -202,19 +195,19 @@ class FeedbackResult(serial.SerialModel):
     def __init__(
         self,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        **kwargs
+        **kwargs,
     ):
-        super().__init__(feedback_result_id='temporary', **kwargs)
+        super().__init__(feedback_result_id="temporary", **kwargs)
 
         if feedback_result_id is None:
             feedback_result_id = obj_id_of_obj(
-                self.model_dump(), prefix='feedback_result'
+                self.model_dump(), prefix="feedback_result"
             )
 
         self.feedback_result_id = feedback_result_id
 
     def __str__(self):
-        out = f'{self.name} ({self.status}) = {self.result}\n'
+        out = f"{self.name} ({self.status}) = {self.result}\n"
         for call in self.calls:
             out += pformat(call)
 
@@ -235,7 +228,7 @@ class FeedbackCombinations(str, Enum):
     [Feedback.aggregate][trulens.core.Feedback.aggregate].
     """
 
-    ZIP = 'zip'
+    ZIP = "zip"
     """Match argument values per position in produced values.
 
     Example:
@@ -256,7 +249,7 @@ class FeedbackCombinations(str, Enum):
     value instead of multiple values.
     """
 
-    PRODUCT = 'product'
+    PRODUCT = "product"
     """Evaluate feedback on all combinations of feedback function arguments.
 
     Example:
@@ -323,32 +316,29 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
     def __init__(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
-        implementation: Optional[Union[pyschema.Function,
-                                       pyschema.Method]] = None,
+        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
+        implementation: Optional[Union[pyschema.Function, pyschema.Method]] = None,
         aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
         if_exists: Optional[serial.Lens] = None,
-        if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.
-        ERROR,
+        if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,
         selectors: Optional[Dict[str, serial.Lens]] = None,
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
-        **kwargs
+        **kwargs,
     ):
         selectors = selectors or {}
 
         if name is not None:
-            kwargs['supplied_name'] = name
+            kwargs["supplied_name"] = name
 
         super().__init__(
-            feedback_definition_id='temporary',
+            feedback_definition_id="temporary",
             implementation=implementation,
             aggregator=aggregator,
             selectors=selectors,
             if_exists=if_exists,
             if_missing=if_missing,
-            **kwargs
+            **kwargs,
         )
 
         # By default, higher score is better
@@ -360,15 +350,15 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
         if feedback_definition_id is None:
             if implementation is not None:
                 feedback_definition_id = obj_id_of_obj(
-                    self.model_dump(), prefix='feedback_definition'
+                    self.model_dump(), prefix="feedback_definition"
                 )
             else:
-                feedback_definition_id = 'anonymous_feedback_definition'
+                feedback_definition_id = "anonymous_feedback_definition"
 
         self.feedback_definition_id = feedback_definition_id
 
     def __repr__(self):
-        return f'FeedbackDefinition({self.name},\n\tselectors={self.selectors},\n\tif_exists={self.if_exists}\n)'
+        return f"FeedbackDefinition({self.name},\n\tselectors={self.selectors},\n\tif_exists={self.if_exists}\n)"
 
     def __str__(self):
         return repr(self)
@@ -388,7 +378,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             return self.supplied_name
 
         if self.implementation is None:
-            raise RuntimeError('This feedback function has no implementation.')
+            raise RuntimeError("This feedback function has no implementation.")
 
         return self.implementation.name
 

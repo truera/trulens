@@ -13,7 +13,7 @@ def rag_triad(
     provider: LLMProvider,
     question: Optional[mod_serial_utils.Lens] = None,
     answer: Optional[mod_serial_utils.Lens] = None,
-    context: Optional[mod_serial_utils.Lens] = None
+    context: Optional[mod_serial_utils.Lens] = None,
 ) -> Dict[str, Feedback]:
     """Create a triad of feedback functions for evaluating context retrieval
     generation steps.
@@ -34,23 +34,44 @@ def rag_triad(
     """
 
     assert hasattr(
-        provider, 'relevance'
-    ), 'Need a provider with the `relevance` feedback function.'
+        provider, "relevance"
+    ), "Need a provider with the `relevance` feedback function."
     assert hasattr(
-        provider, 'context_relevance'
-    ), 'Need a provider with the `context_relevance` feedback function.'
+        provider, "context_relevance"
+    ), "Need a provider with the `context_relevance` feedback function."
 
     are_complete: bool = True
 
     ret = {}
 
     for f_imp, f_agg, arg1name, arg1lens, arg2name, arg2lens, f_name in [
-        (provider.groundedness_measure_with_cot_reasons, np.mean, 'source',
-         context and context.collect(), 'statement', answer, 'Groundedness'),
-        (provider.relevance_with_cot_reasons, np.mean, 'prompt', question,
-         'response', answer, 'Answer Relevance'),
-        (provider.context_relevance_with_cot_reasons, np.mean, 'question',
-         question, 'context', context, 'Context Relevance')
+        (
+            provider.groundedness_measure_with_cot_reasons,
+            np.mean,
+            "source",
+            context and context.collect(),
+            "statement",
+            answer,
+            "Groundedness",
+        ),
+        (
+            provider.relevance_with_cot_reasons,
+            np.mean,
+            "prompt",
+            question,
+            "response",
+            answer,
+            "Answer Relevance",
+        ),
+        (
+            provider.context_relevance_with_cot_reasons,
+            np.mean,
+            "question",
+            question,
+            "context",
+            context,
+            "Context Relevance",
+        ),
     ]:
         f = Feedback(f_imp, if_exists=context, name=f_name).aggregate(f_agg)
         if arg1lens is not None:
@@ -67,8 +88,8 @@ def rag_triad(
 
     if not are_complete:
         logger.warning(
-            'Some or all RAG triad feedback functions do not have all their selectors set. '
-            'This may be ok if they are to be used for colang actions.'
+            "Some or all RAG triad feedback functions do not have all their selectors set. "
+            "This may be ok if they are to be used for colang actions."
         )
 
     return ret

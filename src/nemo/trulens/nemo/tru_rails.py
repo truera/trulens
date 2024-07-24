@@ -104,7 +104,7 @@ class RailsActionSelect(mod_feedback_schema.Select):
 registered_feedback_functions = {}
 
 
-class FeedbackActions():
+class FeedbackActions:
     """Feedback action action for _NeMo Guardrails_ apps.
 
     See docstring of method `feedback`.
@@ -113,7 +113,7 @@ class FeedbackActions():
     @staticmethod
     def register_feedback_functions(
         *args: Tuple[base_feedback.Feedback, ...],
-        **kwargs: Dict[str, base_feedback.Feedback]
+        **kwargs: Dict[str, base_feedback.Feedback],
     ):
         """Register one or more feedback functions to use in rails `feedback`
         action.
@@ -125,28 +125,24 @@ class FeedbackActions():
         for name, feedback_instance in kwargs.items():
             if not isinstance(feedback_instance, base_feedback.Feedback):
                 raise ValueError(
-                    f'Invalid feedback function: {feedback_instance}; '
-                    f'expected a Feedback class instance.'
+                    f"Invalid feedback function: {feedback_instance}; "
+                    f"expected a Feedback class instance."
                 )
-            print(f'registered feedback function under name {name}')
+            print(f"registered feedback function under name {name}")
             registered_feedback_functions[name] = feedback_instance
 
         for feedback_instance in args:
             if not isinstance(feedback_instance, base_feedback.Feedback):
                 raise ValueError(
-                    f'Invalid feedback function: {feedback_instance}; '
-                    f'expected a Feedback class instance.'
+                    f"Invalid feedback function: {feedback_instance}; "
+                    f"expected a Feedback class instance."
                 )
-            print(
-                f'registered feedback function under name {feedback_instance.name}'
-            )
-            registered_feedback_functions[feedback_instance.name
-                                         ] = base_feedback
+            print(f"registered feedback function under name {feedback_instance.name}")
+            registered_feedback_functions[feedback_instance.name] = base_feedback
 
     @staticmethod
     def action_of_feedback(
-        feedback_instance: base_feedback.Feedback,
-        verbose: bool = False
+        feedback_instance: base_feedback.Feedback, verbose: bool = False
     ) -> Callable:
         """Create a custom rails action for the given feedback function.
 
@@ -162,42 +158,38 @@ class FeedbackActions():
 
         if not isinstance(feedback_instance, base_feedback.Feedback):
             raise ValueError(
-                f'Invalid feedback function: {feedback_instance}; '
-                f'expected a Feedback class instance.'
+                f"Invalid feedback function: {feedback_instance}; "
+                f"expected a Feedback class instance."
             )
 
         @action(name=feedback_instance.name)
         async def run_feedback(*args, **kwargs):
             if verbose:
-                print(
-                    f'Running feedback function {feedback_instance.name} with:'
-                )
-                print(f'  args = {args}')
-                print(f'  kwargs = {kwargs}')
+                print(f"Running feedback function {feedback_instance.name} with:")
+                print(f"  args = {args}")
+                print(f"  kwargs = {kwargs}")
 
             res = feedback_instance.run(*args, **kwargs).result
 
             if verbose:
-                print(f'  result = {res}')
+                print(f"  result = {res}")
 
             return res
 
         return run_feedback
 
-    @action(name='feedback')
+    @action(name="feedback")
     @staticmethod
     async def feedback_action(
-
         # Default action arguments:
         events: Optional[List[Dict]] = None,
         context: Optional[Dict] = None,
         llm: Optional[BaseLanguageModel] = None,
         config: Optional[RailsConfig] = None,
-
         # Rest of arguments are specific to this action.
         function: Optional[str] = None,
         selectors: Optional[Dict[str, Union[str, Lens]]] = None,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> ActionResult:
         """Run the specified feedback function from trulens.
 
@@ -264,22 +256,22 @@ class FeedbackActions():
 
         if feedback_function is None:
             raise ValueError(
-                f'Invalid feedback function: {function}; '
-                f'there is/are {len(registered_feedback_functions)} registered function(s):\n\t'
-                + '\n\t'.join(registered_feedback_functions.keys()) + '\n'
+                f"Invalid feedback function: {function}; "
+                f"there is/are {len(registered_feedback_functions)} registered function(s):\n\t"
+                + "\n\t".join(registered_feedback_functions.keys())
+                + "\n"
             )
 
         fname = feedback_function.name
 
         if selectors is None:
             raise ValueError(
-                f'Need selectors for feedback function: {fname} '
-                f'with signature {inspect.signature(feedback_function.imp)}'
+                f"Need selectors for feedback function: {fname} "
+                f"with signature {inspect.signature(feedback_function.imp)}"
             )
 
         selectors = {
-            argname:
-            (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
+            argname: (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
             for argname, arglens in selectors.items()
         }
 
@@ -292,33 +284,29 @@ class FeedbackActions():
         if verbose:
             print(fname)
             for argname, lens in feedback_function.selectors.items():
-                print(f'  {argname} = ', end=None)
+                print(f"  {argname} = ", end=None)
                 # use pretty print for the potentially big thing here:
-                print(
-                    retab(
-                        tab='    ', s=pformat(lens.get_sole_item(source_data))
-                    )
-                )
+                print(retab(tab="    ", s=pformat(lens.get_sole_item(source_data))))
 
         context_updates = {}
 
         try:
             result = feedback_function.run(source_data=source_data)
-            context_updates['result'] = result.result
+            context_updates["result"] = result.result
 
             if verbose:
-                print(f'  {fname} result = {result.result}')
+                print(f"  {fname} result = {result.result}")
 
         except Exception:
-            context_updates['result'] = None
+            context_updates["result"] = None
 
             return ActionResult(
-                return_value=context_updates['result'],
+                return_value=context_updates["result"],
                 context_updates=context_updates,
             )
 
         return ActionResult(
-            return_value=context_updates['result'],
+            return_value=context_updates["result"],
             context_updates=context_updates,
         )
 
@@ -329,38 +317,45 @@ class RailsInstrument(Instrument):
     class Default:
         """Default instrumentation specification."""
 
-        MODULES = {'nemoguardrails'}.union(LangChainInstrument.Default.MODULES)
+        MODULES = {"nemoguardrails"}.union(LangChainInstrument.Default.MODULES)
         """Modules to instrument by name prefix.
 
         Note that _NeMo Guardrails_ uses _LangChain_ internally for some things.
         """
 
         CLASSES = lambda: {
-            LLMRails, KnowledgeBase, LLMGenerationActions, ActionDispatcher,
-            FeedbackActions
+            LLMRails,
+            KnowledgeBase,
+            LLMGenerationActions,
+            ActionDispatcher,
+            FeedbackActions,
         }.union(LangChainInstrument.Default.CLASSES())
         """Instrument only these classes."""
 
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             dict(LangChainInstrument.Default.METHODS),  # copy
             {
-                ('execute_action'):
-                    ActionDispatcher,
+                ("execute_action"): ActionDispatcher,
                 (
-                    'generate', 'generate_async', 'stream_async', 'generate_events', 'generate_events_async', '_get_events_for_messages'
-                ):
-                    LLMRails,
-                'search_relevant_chunks':
-                    KnowledgeBase,
+                    "generate",
+                    "generate_async",
+                    "stream_async",
+                    "generate_events",
+                    "generate_events_async",
+                    "_get_events_for_messages",
+                ): LLMRails,
+                "search_relevant_chunks": KnowledgeBase,
                 (
-                    'generate_user_intent', 'generate_next_step', 'generate_bot_message', 'generate_value', 'generate_intent_steps_message'
-                ):
-                    LLMGenerationActions,
+                    "generate_user_intent",
+                    "generate_next_step",
+                    "generate_bot_message",
+                    "generate_value",
+                    "generate_intent_steps_message",
+                ): LLMGenerationActions,
                 # TODO: Include feedback method in FeedbackActions, currently
                 # bugged and will not be logged.
-                'feedback':
-                    FeedbackActions,
-            }
+                "feedback": FeedbackActions,
+            },
         )
         """Instrument only methods with these names and of these classes."""
 
@@ -370,7 +365,7 @@ class RailsInstrument(Instrument):
             include_classes=RailsInstrument.Default.CLASSES(),
             include_methods=RailsInstrument.Default.METHODS,
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -381,7 +376,7 @@ class TruRails(mod_app.App):
         app: A _NeMo Guardrails_ application.
     """
 
-    model_config: ClassVar[dict] = {'arbitrary_types_allowed': True}
+    model_config: ClassVar[dict] = {"arbitrary_types_allowed": True}
 
     app: LLMRails
 
@@ -391,9 +386,9 @@ class TruRails(mod_app.App):
 
     def __init__(self, app: LLMRails, **kwargs):
         # TruLlama specific:
-        kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
-        kwargs['instrument'] = RailsInstrument(app=self)
+        kwargs["app"] = app
+        kwargs["root_class"] = Class.of_object(app)  # TODO: make class property
+        kwargs["instrument"] = RailsInstrument(app=self)
 
         super().__init__(**kwargs)
 
@@ -407,8 +402,8 @@ class TruRails(mod_app.App):
         """
 
         if isinstance(ret, dict):
-            if 'content' in ret:
-                return ret['content']
+            if "content" in ret:
+                return ret["content"]
 
         return jsonify(ret)
 
@@ -421,12 +416,12 @@ class TruRails(mod_app.App):
         returned `ret`.
         """
 
-        if 'messages' in bindings.arguments:
-            messages = bindings.arguments['messages']
+        if "messages" in bindings.arguments:
+            messages = bindings.arguments["messages"]
             if len(messages) == 1:
                 message = messages[0]
-                if 'content' in message:
-                    return message['content']
+                if "content" in message:
+                    return message["content"]
 
         return jsonify(bindings.arguments)
 
@@ -435,18 +430,19 @@ class TruRails(mod_app.App):
         """
         Get the path to the context in the query output.
         """
-        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:
-                                                                                    ].body
+        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[
+            :
+        ].body
 
     def __getattr__(self, name):
-        if name == '__name__':
+        if name == "__name__":
             return self.__class__.__name__  # Return the class name of TruRails
         elif safe_hasattr(self.app, name):
             return getattr(
                 self.app, name
             )  # Delegate to the wrapped app if it has the attribute
         else:
-            raise AttributeError(f'TruRails has no attribute named {name}')
+            raise AttributeError(f"TruRails has no attribute named {name}")
 
 
 import trulens  # for App class annotations

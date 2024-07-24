@@ -31,7 +31,7 @@ class LLMProvider(Provider):
 
     * [Langchain][trulens.external.provider.langchain.Langchain].
 
-"""
+    """
 
     # NOTE(piotrm): "model_" prefix for attributes is "protected" by pydantic v2
     # by default. Need the below adjustment but this means we don't get any
@@ -44,16 +44,14 @@ class LLMProvider(Provider):
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict(kwargs)
 
-        super().__init__(
-            **self_kwargs
-        )  # need to include pydantic.BaseModel.__init__
+        super().__init__(**self_kwargs)  # need to include pydantic.BaseModel.__init__
 
-    #@abstractmethod
+    # @abstractmethod
     def _create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Chat Completion Model
@@ -86,16 +84,16 @@ class LLMProvider(Provider):
         Returns:
             The score on a 0-1 scale.
         """
-        assert self.endpoint is not None, 'Endpoint is not set.'
+        assert self.endpoint is not None, "Endpoint is not set."
 
-        llm_messages = [{'role': 'system', 'content': system_prompt}]
+        llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
-            llm_messages.append({'role': 'user', 'content': user_prompt})
+            llm_messages.append({"role": "user", "content": user_prompt})
 
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature
+            temperature=temperature,
         )
 
         return mod_generated_utils.re_0_10_rating(response) / normalize
@@ -105,7 +103,7 @@ class LLMProvider(Provider):
         system_prompt: str,
         user_prompt: Optional[str] = None,
         normalize: float = 10.0,
-        temperature: float = 0.0
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Base method to generate a score and reason, used for evaluation.
@@ -124,69 +122,64 @@ class LLMProvider(Provider):
 
             Reason metadata if returned by the LLM.
         """
-        assert self.endpoint is not None, 'Endpoint is not set.'
+        assert self.endpoint is not None, "Endpoint is not set."
 
-        llm_messages = [{'role': 'system', 'content': system_prompt}]
+        llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
-            llm_messages.append({'role': 'user', 'content': user_prompt})
+            llm_messages.append({"role": "user", "content": user_prompt})
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature
+            temperature=temperature,
         )
-        if 'Supporting Evidence' in response:
+        if "Supporting Evidence" in response:
             score = -1
             supporting_evidence = None
             criteria = None
-            for line in response.split('\n'):
-                if 'Score' in line:
+            for line in response.split("\n"):
+                if "Score" in line:
                     score = mod_generated_utils.re_0_10_rating(line) / normalize
                 criteria_lines = []
                 supporting_evidence_lines = []
                 collecting_criteria = False
                 collecting_evidence = False
 
-                for line in response.split('\n'):
-                    if 'Criteria:' in line:
-                        criteria_lines.append(
-                            line.split('Criteria:', 1)[1].strip()
-                        )
+                for line in response.split("\n"):
+                    if "Criteria:" in line:
+                        criteria_lines.append(line.split("Criteria:", 1)[1].strip())
                         collecting_criteria = True
                         collecting_evidence = False
-                    elif 'Supporting Evidence:' in line:
+                    elif "Supporting Evidence:" in line:
                         supporting_evidence_lines.append(
-                            line.split('Supporting Evidence:', 1)[1].strip()
+                            line.split("Supporting Evidence:", 1)[1].strip()
                         )
                         collecting_evidence = True
                         collecting_criteria = False
                     elif collecting_criteria:
-                        if 'Supporting Evidence:' not in line:
+                        if "Supporting Evidence:" not in line:
                             criteria_lines.append(line.strip())
                         else:
                             collecting_criteria = False
                     elif collecting_evidence:
-                        if 'Criteria:' not in line:
+                        if "Criteria:" not in line:
                             supporting_evidence_lines.append(line.strip())
                         else:
                             collecting_evidence = False
 
-                criteria = '\n'.join(criteria_lines).strip()
-                supporting_evidence = '\n'.join(supporting_evidence_lines
-                                               ).strip()
+                criteria = "\n".join(criteria_lines).strip()
+                supporting_evidence = "\n".join(supporting_evidence_lines).strip()
             reasons = {
-                'reason':
-                    (
-                        f"{'Criteria: ' + str(criteria)}\n"
-                        f"{'Supporting Evidence: ' + str(supporting_evidence)}"
-                    )
+                "reason": (
+                    f"{'Criteria: ' + str(criteria)}\n"
+                    f"{'Supporting Evidence: ' + str(supporting_evidence)}"
+                )
             }
             return score, reasons
 
         else:
             score = mod_generated_utils.re_0_10_rating(response) / normalize
             warnings.warn(
-                'No supporting evidence provided. Returning score only.',
-                UserWarning
+                "No supporting evidence provided. Returning score only.", UserWarning
             )
             return score, {}
 
@@ -222,18 +215,13 @@ class LLMProvider(Provider):
         return self.generate_score(
             system_prompt=prompts.CONTEXT_RELEVANCE_SYSTEM,
             user_prompt=str.format(
-                prompts.CONTEXT_RELEVANCE_USER,
-                question=question,
-                context=context
+                prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
             ),
-            temperature=temperature
+            temperature=temperature,
         )
 
     def context_relevance_with_cot_reasons(
-        self,
-        question: str,
-        context: str,
-        temperature: float = 0.0
+        self, question: str, context: str, temperature: float = 0.0
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
@@ -265,14 +253,12 @@ class LLMProvider(Provider):
         user_prompt = str.format(
             prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
         )
-        user_prompt = user_prompt.replace(
-            'RELEVANCE:', prompts.COT_REASONS_TEMPLATE
-        )
+        user_prompt = user_prompt.replace("RELEVANCE:", prompts.COT_REASONS_TEMPLATE)
 
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            temperature=temperature
+            temperature=temperature,
         )
 
     def relevance(self, prompt: str, response: str) -> float:
@@ -306,11 +292,12 @@ class LLMProvider(Provider):
             system_prompt=prompts.ANSWER_RELEVANCE_SYSTEM,
             user_prompt=str.format(
                 prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
-            )
+            ),
         )
 
-    def relevance_with_cot_reasons(self, prompt: str,
-                                   response: str) -> Tuple[float, Dict]:
+    def relevance_with_cot_reasons(
+        self, prompt: str, response: str
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion Model. A function that completes a template to
         check the relevance of the response to a prompt. Also uses chain of
@@ -338,9 +325,7 @@ class LLMProvider(Provider):
         user_prompt = str.format(
             prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
         )
-        user_prompt = user_prompt.replace(
-            'RELEVANCE:', prompts.COT_REASONS_TEMPLATE
-        )
+        user_prompt = user_prompt.replace("RELEVANCE:", prompts.COT_REASONS_TEMPLATE)
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def sentiment(self, text: str) -> float:
@@ -409,16 +394,12 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not in agreement) and 1.0 (in agreement).
         """
         warnings.warn(
-            '`model_agreement` has been deprecated. '
-            'Use `GroundTruthAgreement(ground_truth)` instead.',
-            DeprecationWarning
+            "`model_agreement` has been deprecated. "
+            "Use `GroundTruthAgreement(ground_truth)` instead.",
+            DeprecationWarning,
         )
-        chat_response = self._create_chat_completion(
-            prompt=prompts.CORRECT_SYSTEM
-        )
-        agreement_txt = self._get_answer_agreement(
-            prompt, response, chat_response
-        )
+        chat_response = self._create_chat_completion(prompt=prompts.CORRECT_SYSTEM)
+        agreement_txt = self._get_answer_agreement(prompt, response, chat_response)
         return mod_generated_utils.re_0_10_rating(agreement_txt) / 10.0
 
     def _langchain_evaluate(self, text: str, criteria: str) -> float:
@@ -460,8 +441,7 @@ class LLMProvider(Provider):
         """
 
         system_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
-            criteria=criteria
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM, criteria=criteria
         )
         user_prompt = str.format(
             prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
@@ -747,12 +727,10 @@ class LLMProvider(Provider):
                 (controversial).
         """
         return self._langchain_evaluate(
-            text=text,
-            criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
         )
 
-    def controversiality_with_cot_reasons(self,
-                                          text: str) -> Tuple[float, Dict]:
+    def controversiality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the controversiality of some text. Prompt credit to Langchain
@@ -771,8 +749,7 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not controversial) and 1.0 (controversial) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text,
-            criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
         )
 
     def misogyny(self, text: str) -> float:
@@ -921,12 +898,11 @@ class LLMProvider(Provider):
             str
         """
 
-        assert self.endpoint is not None, 'Endpoint is not set.'
+        assert self.endpoint is not None, "Endpoint is not set."
 
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response)) +
-            response
+            prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response)) + response,
         )
 
     def _generate_key_points(self, source: str):
@@ -942,13 +918,11 @@ class LLMProvider(Provider):
         """
 
         return self._create_chat_completion(
-            prompt=prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT +
-            str.format(prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source)
+            prompt=prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT
+            + str.format(prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source)
         )
 
-    def _assess_key_point_inclusion(
-        self, key_points: str, summary: str
-    ) -> List:
+    def _assess_key_point_inclusion(self, key_points: str, summary: str) -> List:
         """
         Splits key points by newlines and assesses if each one is included in the summary.
 
@@ -959,7 +933,7 @@ class LLMProvider(Provider):
         Returns:
             List[str]: A list of strings indicating whether each key point is included in the summary.
         """
-        key_points_list = key_points.split('\n')
+        key_points_list = key_points.split("\n")
 
         system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
         inclusion_assessments = []
@@ -967,7 +941,7 @@ class LLMProvider(Provider):
             user_prompt = str.format(
                 prompts.COMPOREHENSIVENESS_USER_PROMPT,
                 key_point=key_point,
-                summary=summary
+                summary=summary,
             )
             inclusion_assessment = self._create_chat_completion(
                 prompt=system_prompt + user_prompt
@@ -976,8 +950,9 @@ class LLMProvider(Provider):
 
         return inclusion_assessments
 
-    def comprehensiveness_with_cot_reasons(self, source: str,
-                                           summary: str) -> Tuple[float, Dict]:
+    def comprehensiveness_with_cot_reasons(
+        self, source: str, summary: str
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
         and compares a summary against those main points. This feedback function
@@ -1003,24 +978,25 @@ class LLMProvider(Provider):
             key_points, summary
         )
         scores = []
-        reasons = ''
+        reasons = ""
         for assessment in key_point_inclusion_assessments:
-            reasons += assessment + '\n\n'
+            reasons += assessment + "\n\n"
             if assessment:
-                first_line = assessment.split('\n')[0]
+                first_line = assessment.split("\n")[0]
                 score = re_0_10_rating(first_line) / 10
                 scores.append(score)
 
         score = sum(scores) / len(scores) if scores else 0
-        return score, {'reasons': reasons}
+        return score, {"reasons": reasons}
 
-    def summarization_with_cot_reasons(self, source: str,
-                                       summary: str) -> Tuple[float, Dict]:
+    def summarization_with_cot_reasons(
+        self, source: str, summary: str
+    ) -> Tuple[float, Dict]:
         """
         Summarization is deprecated in place of comprehensiveness. This function is no longer implemented.
         """
         raise NotImplementedError(
-            'summarization_with_cot_reasons is deprecated and not implemented. Please use comprehensiveness_with_cot_reasons instead.'
+            "summarization_with_cot_reasons is deprecated and not implemented. Please use comprehensiveness_with_cot_reasons instead."
         )
 
     def stereotypes(self, prompt: str, response: str) -> float:
@@ -1049,8 +1025,9 @@ class LLMProvider(Provider):
         )
         return self.generate_score(system_prompt, user_prompt)
 
-    def stereotypes_with_cot_reasons(self, prompt: str,
-                                     response: str) -> Tuple[float, Dict]:
+    def stereotypes_with_cot_reasons(
+        self, prompt: str, response: str
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check adding assumed stereotypes in the response when not present in the
@@ -1107,20 +1084,18 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download('punkt', quiet=True)
+        nltk.download("punkt", quiet=True)
         groundedness_scores = {}
-        reasons_str = ''
+        reasons_str = ""
 
         hypotheses = sent_tokenize(statement)
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
         def evaluate_hypothesis(index, hypothesis):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-                premise=f'{source}', hypothesis=f'{hypothesis}'
+                premise=f"{source}", hypothesis=f"{hypothesis}"
             )
-            score, reason = self.generate_score_and_reasons(
-                system_prompt, user_prompt
-            )
+            score, reason = self.generate_score_and_reasons(system_prompt, user_prompt)
             return index, score, reason
 
         results = []
@@ -1137,14 +1112,13 @@ class LLMProvider(Provider):
         results.sort(key=lambda x: x[0])  # Sort results by index
 
         for i, score, reason in results:
-            groundedness_scores[f'statement_{i}'] = score
-            reason_str = reason[
-                'reason'] if 'reason' in reason else 'reason not generated'
-            reasons_str += f'STATEMENT {i}:\n{reason_str}\n'
+            groundedness_scores[f"statement_{i}"] = score
+            reason_str = (
+                reason["reason"] if "reason" in reason else "reason not generated"
+            )
+            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
 
         # Calculate the average groundedness score from the scores dictionary
-        average_groundedness_score = float(
-            np.mean(list(groundedness_scores.values()))
-        )
+        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
 
-        return average_groundedness_score, {'reasons': reasons_str}
+        return average_groundedness_score, {"reasons": reasons_str}

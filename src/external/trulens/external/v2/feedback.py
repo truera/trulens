@@ -28,14 +28,12 @@ class Feedback(pydantic.BaseModel):
     def str_help(cls):
         typ = cls
 
-        ret = typ.__name__ + '\n'
+        ret = typ.__name__ + "\n"
 
-        fields = list(
-            f for f in cls.model_fields if f not in ['examples', 'prompt']
-        )
+        fields = list(f for f in cls.model_fields if f not in ["examples", "prompt"])
 
-        onetab = make_retab('   ')
-        twotab = make_retab('      ')
+        onetab = make_retab("   ")
+        twotab = make_retab("      ")
 
         # feedback hierarchy location
         for parent in typ.__mro__[::-1]:
@@ -45,23 +43,23 @@ class Feedback(pydantic.BaseModel):
             if not issubclass(parent, Feedback):
                 continue
 
-            ret += onetab(f'Subtype of {parent.__name__}.') + '\n'
+            ret += onetab(f"Subtype of {parent.__name__}.") + "\n"
 
             for f in list(fields):
                 if f in parent.model_fields:
                     fields.remove(f)
                     if safe_hasattr(cls, f):
-                        ret += twotab(f'{f} = {getattr(cls, f)}') + '\n'
+                        ret += twotab(f"{f} = {getattr(cls, f)}") + "\n"
                     else:
-                        ret += twotab(f'{f} = instance specific') + '\n'
+                        ret += twotab(f"{f} = instance specific") + "\n"
 
-        if safe_hasattr(typ, '__doc__') and typ.__doc__ is not None:
-            ret += '\nDocstring\n'
-            ret += onetab(typ.__doc__) + '\n'
+        if safe_hasattr(typ, "__doc__") and typ.__doc__ is not None:
+            ret += "\nDocstring\n"
+            ret += onetab(typ.__doc__) + "\n"
 
         if issubclass(cls, WithPrompt):
-            ret += f'\nPrompt: of {cls.prompt.input_variables}\n'
-            ret += onetab(cls.prompt.template) + '\n'
+            ret += f"\nPrompt: of {cls.prompt.input_variables}\n"
+            ret += onetab(cls.prompt.template) + "\n"
 
         return ret
 
@@ -98,10 +96,13 @@ class GroundTruth(Semantics):
 
 supported_criteria = {
     # NOTE: typo in "response" below is intentional. Still in langchain as of Sept 26, 2023.
-    key.value: value.replace(' If so, response Y. If not, respond N.', ''
-                            )  # older version of langchain had this typo
-    .replace(' If so, respond Y. If not, respond N.', '')  # new one is fixed
-    if isinstance(value, str) else value
+    key.value: value.replace(
+        " If so, response Y. If not, respond N.", ""
+    ).replace(  # older version of langchain had this typo
+        " If so, respond Y. If not, respond N.", ""
+    )  # new one is fixed
+    if isinstance(value, str)
+    else value
     for key, value in _SUPPORTED_CRITERIA.items()
 }
 
@@ -136,12 +137,13 @@ class Coherence(Semantics):
 
 class Relevance(Semantics):
     """
-This evaluates the *relevance* of the LLM response to the given text by LLM
-prompting.
+    This evaluates the *relevance* of the LLM response to the given text by LLM
+    prompting.
 
-Relevance is available for any LLM provider.
+    Relevance is available for any LLM provider.
 
     """
+
     # openai.relevance
     # openai.relevance_with_cot_reasons
     pass
@@ -299,6 +301,7 @@ class Sentiment(Semantics, WithPrompt):
     small set of examples stored in `feedback_prompts.py` to return either a 0 or
     a 1.
     """
+
     # openai.sentiment
     # openai.sentiment_with_cot_reasons
     # hugs.positive_sentiment
@@ -371,6 +374,7 @@ class Harmfulness(Moderation, WithPrompt):
     """
     Examples of Harmfulness:
     """
+
     # langchain Criteria.HARMFULNESS
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         f"""{supported_criteria['harmfulness']} Respond only as a number from 0 (least harmful) to 10 (most harmful)."""
@@ -416,6 +420,7 @@ class Hate(Moderation):
 
     - `openai` package: `openai.moderation` category `hate`.
     """
+
     # openai.moderation_not_hate
 
 
@@ -435,6 +440,7 @@ class HateThreatening(Hate):
 
     - `openai` package: `openai.moderation` category `hate/threatening`.
     """
+
     # openai.not_hatethreatening
 
 
@@ -507,6 +513,7 @@ class FeedbackOutput(pydantic.BaseModel):
     """
     Feedback functions produce at least a floating score.
     """
+
     feedback: float
     typ: FeedbackOutputType
 
@@ -516,7 +523,6 @@ class OutputWithExplanation(FeedbackOutput):
 
 
 class Explained(Feedback):
-
     @staticmethod
     def of_feedback(feedback: WithPrompt):
         # Create the explained version of a feedback that is based on a prompt.
@@ -529,8 +535,7 @@ class OutputWithCOTExplanation(pydantic.BaseModel):
 
 
 class COTExplained(Feedback):
-    COT_REASONS_TEMPLATE: str = \
-    """
+    COT_REASONS_TEMPLATE: str = """
     Please answer with this template:
 
     TEMPLATE:
@@ -556,15 +561,13 @@ class COTExplained(Feedback):
 
             # TODO: things related to extracting score and reasons
 
-            def extract_cot_explanation_of_response(
-                self, response: str, normalize=10
-            ):
-                if 'Supporting Evidence' in response:
+            def extract_cot_explanation_of_response(self, response: str, normalize=10):
+                if "Supporting Evidence" in response:
                     score = 0
-                    for line in response.split('\n'):
-                        if 'Score' in line:
+                    for line in response.split("\n"):
+                        if "Score" in line:
                             score = re_0_10_rating(line) / normalize
-                    return score, {'reason': response}
+                    return score, {"reason": response}
                 else:
                     return re_0_10_rating(response) / normalize
 
@@ -584,7 +587,6 @@ class Model(pydantic.BaseModel):
 
 
 class CompletionModel(Model):
-
     max_output_tokens: int
     max_prompt_tokens: int
 
@@ -595,7 +597,6 @@ class CompletionModel(Model):
 
 
 class ClassificationModel(Model):
-
     @staticmethod
     def of_prompt(model: CompletionModel, prompt: str):
         # OpenAI completion with examples
@@ -611,7 +612,7 @@ class ClassificationModel(Model):
 
 class BinarySentimentModel(ClassificationModel):
     output_type: FeedbackOutputType = BinaryOutputType(
-        min_interpretation='negative', max_interpretation='positive'
+        min_interpretation="negative", max_interpretation="positive"
     )
 
     # def classify()

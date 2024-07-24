@@ -21,7 +21,7 @@ class Cortex(LLMProvider):
     # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = 'snowflake-arctic'
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
     model_engine: str
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
@@ -31,39 +31,34 @@ class Cortex(LLMProvider):
     endpoint: CortexEndpoint
     snowflake_conn: SnowflakeConnection
 
-    def __init__(
-        self, model_engine: Optional[str] = None, *args, **kwargs: Dict
-    ):
+    def __init__(self, model_engine: Optional[str] = None, *args, **kwargs: Dict):
         self_kwargs = dict(kwargs)
 
-        self_kwargs[
-            'model_engine'
-        ] = self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
-        self_kwargs['endpoint'] = CortexEndpoint(*args, **kwargs)
+        self_kwargs["model_engine"] = (
+            self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
+        )
+        self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
         # Create a Snowflake connector
-        self_kwargs['snowflake_conn'] = snowflake.connector.connect(
-            account=os.environ['SNOWFLAKE_ACCOUNT'],
-            user=os.environ['SNOWFLAKE_USER'],
-            password=os.environ['SNOWFLAKE_USER_PASSWORD'],
-            database=os.environ['SNOWFLAKE_DATABASE'],
-            schema=os.environ['SNOWFLAKE_SCHEMA'],
-            warehouse=os.environ['SNOWFLAKE_WAREHOUSE']
+        self_kwargs["snowflake_conn"] = snowflake.connector.connect(
+            account=os.environ["SNOWFLAKE_ACCOUNT"],
+            user=os.environ["SNOWFLAKE_USER"],
+            password=os.environ["SNOWFLAKE_USER_PASSWORD"],
+            database=os.environ["SNOWFLAKE_DATABASE"],
+            schema=os.environ["SNOWFLAKE_SCHEMA"],
+            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
         )
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(
-        self,
-        model: str,
-        temperature: float,
-        messages: Optional[Sequence[Dict]] = None
+        self, model: str, temperature: float, messages: Optional[Sequence[Dict]] = None
     ):
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
         messages_json_str = json.dumps(messages)
 
-        options = {'temperature': temperature}
+        options = {"temperature": temperature}
         options_json_str = json.dumps(options)
 
         completion_input_str = """
@@ -78,8 +73,7 @@ class Cortex(LLMProvider):
         cursor = self.snowflake_conn.cursor()
         try:
             cursor.execute(
-                completion_input_str,
-                (model, messages_json_str, options_json_str)
+                completion_input_str, (model, messages_json_str, options_json_str)
             )
             result = cursor.fetchall()
         finally:
@@ -91,23 +85,23 @@ class Cortex(LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
-        if 'model' not in kwargs:
-            kwargs['model'] = self.model_engine
-        if 'temperature' not in kwargs:
-            kwargs['temperature'] = 0.0
+        if "model" not in kwargs:
+            kwargs["model"] = self.model_engine
+        if "temperature" not in kwargs:
+            kwargs["temperature"] = 0.0
 
         if messages is not None:
-            kwargs['messages'] = messages
+            kwargs["messages"] = messages
 
         elif prompt is not None:
-            kwargs['messages'] = [{'role': 'system', 'content': prompt}]
+            kwargs["messages"] = [{"role": "system", "content": prompt}]
         else:
-            raise ValueError('`prompt` or `messages` must be specified.')
+            raise ValueError("`prompt` or `messages` must be specified.")
 
         res = self._exec_snowsql_complete_command(**kwargs)
 
-        completion = json.loads(res[0][0])['choices'][0]['messages']
+        completion = json.loads(res[0][0])["choices"][0]["messages"]
 
         return completion

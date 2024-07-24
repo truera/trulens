@@ -18,7 +18,7 @@ from trulens.utils.json import jsonify
 from trulens.utils.json import obj_id_of_obj
 from trulens.utils.python import Future
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ class Record(serial.SerialModel, Hashable):
 
     model_config: ClassVar[dict] = {
         # for `Future[FeedbackResult]`
-        'arbitrary_types_allowed': True
+        "arbitrary_types_allowed": True
     }
 
     record_id: mod_types_schema.RecordID
@@ -109,14 +109,12 @@ class Record(serial.SerialModel, Hashable):
     perf: Optional[mod_base_schema.Perf] = None
     """Performance information."""
 
-    ts: datetime.datetime = pydantic.Field(
-        default_factory=datetime.datetime.now
-    )
+    ts: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
     """Timestamp of last update.
 
     This is usually set whenever a record is changed in any way."""
 
-    tags: Optional[str] = ''
+    tags: Optional[str] = ""
     """Tags for the record."""
 
     meta: Optional[serial.JSON] = None
@@ -138,11 +136,14 @@ class Record(serial.SerialModel, Hashable):
     as the app that generated this record via `layout_calls_as_app`.
     """
 
-    feedback_and_future_results: Optional[List[
-        Tuple[mod_feedback_schema.FeedbackDefinition,
-              Future[mod_feedback_schema.FeedbackResult]]]] = pydantic.Field(
-                  None, exclude=True
-              )
+    feedback_and_future_results: Optional[
+        List[
+            Tuple[
+                mod_feedback_schema.FeedbackDefinition,
+                Future[mod_feedback_schema.FeedbackResult],
+            ]
+        ]
+    ] = pydantic.Field(None, exclude=True)
     """Map of feedbacks to the futures for of their results.
 
     These are only filled for records that were just produced. This will not
@@ -150,17 +151,16 @@ class Record(serial.SerialModel, Hashable):
     `FeedbackMode.DEFERRED`.
     """
 
-    feedback_results: Optional[List[Future[mod_feedback_schema.FeedbackResult]]] = \
+    feedback_results: Optional[List[Future[mod_feedback_schema.FeedbackResult]]] = (
         pydantic.Field(None, exclude=True)
+    )
     """Only the futures part of the above for backwards compatibility."""
 
-    def __init__(
-        self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs
-    ):
-        super().__init__(record_id='temporary', **kwargs)
+    def __init__(self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs):
+        super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
-            record_id = obj_id_of_obj(jsonify(self), prefix='record')
+            record_id = obj_id_of_obj(jsonify(self), prefix="record")
 
         self.record_id = record_id
 
@@ -168,10 +168,10 @@ class Record(serial.SerialModel, Hashable):
         return hash(self.record_id)
 
     def wait_for_feedback_results(
-        self,
-        feedback_timeout: Optional[float] = None
-    ) -> Dict[mod_feedback_schema.FeedbackDefinition,
-              mod_feedback_schema.FeedbackResult]:
+        self, feedback_timeout: Optional[float] = None
+    ) -> Dict[
+        mod_feedback_schema.FeedbackDefinition, mod_feedback_schema.FeedbackResult
+    ]:
         """Wait for feedback results to finish.
 
         Args:
@@ -197,8 +197,7 @@ class Record(serial.SerialModel, Hashable):
                 ret[feedback_def] = feedback_result
             except TimeoutError:
                 logger.error(
-                    'Timeout waiting for feedback result for %s.',
-                    feedback_def.name
+                    "Timeout waiting for feedback result for %s.", feedback_def.name
                 )
 
         return ret
@@ -230,9 +229,7 @@ class Record(serial.SerialModel, Hashable):
 
             # Adds another attribute to path, from method name:
             path = frame_info.path._append(
-                serial.GetItemOrAttribute(
-                    item_or_attribute=frame_info.method.name
-                )
+                serial.GetItemOrAttribute(item_or_attribute=frame_info.method.name)
             )
 
             if path.exists(obj=ret):
