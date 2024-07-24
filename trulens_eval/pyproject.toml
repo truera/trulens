@@ -11,11 +11,12 @@ package-mode = false
 python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
 
 [tool.poetry.group.dev.dependencies]
-trulens-core = { path = "src/core" }
-trulens-external = { path = "src/external" }
-trulens-dashboard = { path = "src/dashboard" }
-trulens-langchain = { path = "src/langchain" }
-trulens-llamaindex = { path = "src/llamaindex" }
+trulens-core = { path = "src/core", develop = true }
+trulens-external = { path = "src/external", develop = true }
+trulens-dashboard = { path = "src/dashboard", develop = true }
+trulens-langchain = { path = "src/langchain", develop = true }
+trulens-llamaindex = { path = "src/llamaindex", develop = true }
+trulens-nemo = { path = "src/nemo", develop = true }
 yapf = "^0.40.2"
 isort = "^5.13.2"
 pre-commit = "^3.7.1"

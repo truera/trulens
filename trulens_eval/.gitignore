@@ -1,1 +1,2 @@
 dist
+.mypy_cache/
