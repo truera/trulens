@@ -4107,7 +4107,7 @@
         <span class="n">st</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 </code></pre></div>
 </div>
-<p>With the <code>record</code> in hand, we can easily add TruLens components to display the evaluation results of the provided record using the <code>trulens_feedback</code>. This will display the <em>TruLens</em> feedback result clickable pills as the feedback is available.</p>
+<p>With the <code>record</code> in hand, we can easily add TruLens components to display the evaluation results of the provided record using the <a class="autorefs autorefs-internal" href="../../api/streamlit/#trulens_eval.streamlit.trulens_feedback">trulens_feedback</a>. This will display the <em>TruLens</em> feedback result clickable pills as the feedback is available.</p>
 <div class="admonition example">
 <p class="admonition-title">Display feedback results</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">streamlit</span> <span class="k">as</span> <span class="n">trulens_st</span>
@@ -4116,7 +4116,7 @@
     <span class="n">trulens_st</span><span class="o">.</span><span class="n">trulens_feedback</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span>
 </code></pre></div>
 </div>
-<p>In addition to the feedback results, we can also display the record's trace to help with debugging using the <code>trulens_trace</code> from the <em>TruLens</em> streamlit module.</p>
+<p>In addition to the feedback results, we can also display the record's trace to help with debugging using the <a class="autorefs autorefs-internal" href="../../api/streamlit/#trulens_eval.streamlit.trulens_trace">trulens_trace</a> from the <em>TruLens</em> streamlit module.</p>
 <div class="admonition example">
 <p class="admonition-title">Display the trace</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">streamlit</span> <span class="k">as</span> <span class="n">trulens_st</span>
@@ -4125,12 +4125,12 @@
     <span class="n">trulens_st</span><span class="o">.</span><span class="n">trulens_trace</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span>
 </code></pre></div>
 </div>
-<p>Last, we can also display the TruLens leaderboard using the <code>trulens_leaderboard</code> from the <em>TruLens</em> streamlit module to understand the aggregate performance across application versions.</p>
+<p>Last, we can also display the TruLens leaderboard using the <a class="autorefs autorefs-internal" href="../../api/streamlit/#trulens_eval.streamlit.trulens_leaderboard">trulens_leaderboard</a> from the <em>TruLens</em> streamlit module to understand the aggregate performance across application versions.</p>
 <div class="admonition example">
 <p class="admonition-title">Display the application leaderboard</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens_eval</span> <span class="kn">import</span> <span class="n">streamlit</span> <span class="k">as</span> <span class="n">trulens_st</span>
 
-<span class="n">trulens_st</span><span class="o">.</span><span class="n">trulens_leaderboard</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">record</span><span class="p">)</span>
+<span class="n">trulens_st</span><span class="o">.</span><span class="n">trulens_leaderboard</span><span class="p">()</span>
 </code></pre></div>
 </div>
 <p>In combination, the streamlit components allow you to make evaluation front-and-center in your app. This is particularly useful for developer playground use cases, or to ensure users of app reliability.</p>
