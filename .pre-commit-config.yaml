@@ -22,5 +22,4 @@ repos:
     rev: v0.40.2
     hooks:
     -   id: yapf
-        args: [--style, .style.yapf, --parallel]
-        additional_dependencies: ["toml"]
+        args: [--style, .style.yapf, -r, -i, --verbose, --parallel]
