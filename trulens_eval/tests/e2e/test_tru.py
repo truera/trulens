@@ -12,8 +12,8 @@ from trulens.core import Tru
 from trulens.core import TruCustomApp
 from trulens.core.feedback import Feedback
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.tru_custom_app import TruCustomApp
 from trulens.external.provider.hugs import Dummy
-from trulens.tru_custom_app import TruCustomApp
 from trulens.utils.keys import check_keys
 
 from tests.unit.test import optional_test

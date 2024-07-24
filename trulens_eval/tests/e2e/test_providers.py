@@ -8,7 +8,9 @@ import unittest
 from unittest import main
 from unittest import TestCase
 
+from trulens.external.provider import Huggingface
 from trulens.external.provider import LLMProvider
+from trulens.external.provider import OpenAI
 from trulens.utils.keys import check_keys
 
 from tests.unit.test import optional_test
@@ -16,7 +18,7 @@ from tests.unit.test import optional_test
 pp = PrettyPrinter()
 
 
-def get_openai_tests(o: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
+def get_openai_tests(o: OpenAI) -> List[Tuple[Callable, Dict, float]]:
     return [
         (
             o.moderation_hate,
@@ -410,7 +412,7 @@ def get_llmprovider_tests(
     ]
 
 
-def get_huggingface_tests(h: LLMProvider) -> List[Tuple[Callable, Dict, float]]:
+def get_huggingface_tests(h: Huggingface) -> List[Tuple[Callable, Dict, float]]:
     return [
         (
             h.language_match,
@@ -500,7 +502,7 @@ class TestProviders(TestCase):
         Check that OpenAI moderation feedback functions produce a value in the
         0-1 range only. Only checks each feedback function once.
         """
-        from trulens.core.feedback.provider.openai import OpenAI
+        from trulens.external.provider.openai import OpenAI
         o = OpenAI()
 
         tests = get_openai_tests(o)
@@ -527,7 +529,7 @@ class TestProviders(TestCase):
         produce criteria and supporting evidence. Only checks each feedback function
         once for each model.
         """
-        from trulens.core.feedback.provider.openai import OpenAI
+        from trulens.external.provider.openai import OpenAI
         models = ['gpt-3.5-turbo']
         provider_models = [
             (OpenAI(model_engine=model), model) for model in models
@@ -623,7 +625,7 @@ class TestProviders(TestCase):
         Check that OpenAI moderation feedback functions produce reasonable
         values.
         """
-        from trulens.core.feedback.provider.openai import OpenAI
+        from trulens.external.provider.openai import OpenAI
         o = OpenAI()
 
         tests = get_openai_tests(o)
@@ -638,7 +640,7 @@ class TestProviders(TestCase):
         """
         Check that LLMProvider feedback functions produce reasonable values.
         """
-        from trulens.core.feedback.provider.openai import OpenAI
+        from trulens.external.provider.openai import OpenAI
         provider_models = [
             (OpenAI(model_engine=model), model)
             for model in ['gpt-3.5-turbo', 'gpt-4']
@@ -691,7 +693,7 @@ class TestProviders(TestCase):
         Only checks each feedback function once.
         """
 
-        from trulens.core.feedback.provider.hugs import Huggingface
+        from trulens.external.provider.hugs import Huggingface
         h = Huggingface()
 
         tests = get_huggingface_tests(h)
@@ -749,7 +751,7 @@ class TestProviders(TestCase):
         Check that Huggingface moderation feedback functions produce reasonable
         values.
         """
-        from trulens.core.feedback.provider.hugs import Huggingface
+        from trulens.external.provider.hugs import Huggingface
         h = Huggingface()
 
         tests = get_huggingface_tests(h)
@@ -793,7 +795,7 @@ class TestProviders(TestCase):
         Check that LangChain feedback functions produce values within the expected range
         and adhere to the expected format.
         """
-        from trulens.core.feedback.provider.langchain import LangChain
+        from trulens.external.provider.langchain import LangChain
         lc = LangChain()
 
         tests = get_langchain_tests(lc)

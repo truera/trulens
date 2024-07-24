@@ -81,7 +81,7 @@ class TestEndpoints(TestCase):
     def test_hugs(self):
         """Check that cost tracking works for the huggingface endpoint."""
 
-        from trulens.core.feedback.provider import Huggingface
+        from trulens.external.provider import Huggingface
 
         hugs = Huggingface()
 
@@ -121,7 +121,7 @@ class TestEndpoints(TestCase):
         os.environ['OPENAI_API_VERSION'] = '2023-07-01-preview'
         os.environ['OPENAI_API_TYPE'] = 'openai'
 
-        from trulens.core.feedback.provider.openai import OpenAI
+        from trulens.external.provider.openai import OpenAI
 
         provider = OpenAI(model_engine=OpenAI.DEFAULT_MODEL_ENGINE)
 
@@ -134,8 +134,8 @@ class TestEndpoints(TestCase):
         os.environ['OPENAI_API_VERSION'] = '2023-07-01-preview'
         os.environ['OPENAI_API_TYPE'] = 'openai'
 
-        from trulens.core.feedback.provider import LiteLLM
-        from trulens.core.feedback.provider.openai import OpenAI
+        from trulens.external.provider import LiteLLM
+        from trulens.external.provider.openai import OpenAI
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
@@ -152,7 +152,7 @@ class TestEndpoints(TestCase):
         os.environ['OPENAI_API_VERSION'] = '2023-07-01-preview'
         os.environ['OPENAI_API_TYPE'] = 'azure'
 
-        from trulens.core.feedback.provider.openai import AzureOpenAI
+        from trulens.external.provider.openai import AzureOpenAI
 
         provider = AzureOpenAI(
             model_engine=AzureOpenAI.DEFAULT_MODEL_ENGINE,
@@ -172,7 +172,7 @@ class TestEndpoints(TestCase):
         # with the wrong underlying litellm provider in a prior test.
         Endpoint.delete_singleton_by_name('litellm')
 
-        from trulens.core.feedback.provider import LiteLLM
+        from trulens.external.provider import LiteLLM
 
         provider = LiteLLM(
             f"azure/{os.environ['AZURE_OPENAI_DEPLOYMENT_NAME']}",
@@ -187,7 +187,7 @@ class TestEndpoints(TestCase):
     def test_bedrock(self):
         """Check that cost tracking works for bedrock models."""
 
-        from trulens.core.feedback.provider.bedrock import Bedrock
+        from trulens.external.provider.bedrock import Bedrock
 
         provider = Bedrock(model_id=Bedrock.DEFAULT_MODEL_ID)
 
@@ -198,8 +198,8 @@ class TestEndpoints(TestCase):
     def test_litellm_bedrock(self):
         """Check that cost tracking works for bedrock models through litellm."""
 
-        from trulens.core.feedback.provider import LiteLLM
-        from trulens.core.feedback.provider.bedrock import Bedrock
+        from trulens.external.provider import LiteLLM
+        from trulens.external.provider.bedrock import Bedrock
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
@@ -213,7 +213,7 @@ class TestEndpoints(TestCase):
     @optional_test
     def test_cortex(self):
         """Check that cost (token) tracking works for Cortex LLM Functions"""
-        from trulens.core.feedback.provider.cortex import Cortex
+        from trulens.external.provider.cortex import Cortex
 
         provider = Cortex(model_engine='snowflake-arctic')
 

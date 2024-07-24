@@ -171,7 +171,7 @@ class TestStatic(TestCase):
     def test_instrumentation_llama_index(self):
         """Check that the llama_index instrumentation is up to date."""
 
-        from trulens.tru_llama import LlamaInstrument
+        from trulens.llamaindex import LlamaInstrument
 
         self._test_instrumentation(LlamaInstrument())
 
