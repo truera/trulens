@@ -4,6 +4,7 @@ from collections import defaultdict
 from concurrent import futures
 from datetime import datetime
 from datetime import timedelta
+import json
 import logging
 from multiprocessing import Process
 from pprint import PrettyPrinter
@@ -710,16 +711,19 @@ class Tru(python.SingletonPerName):
 
     def get_leaderboard(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None
+        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        group_by_metadata_key: Optional[str] = None
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps will be included in leaderboard.
+            group_by_metadata_key: A key included in record metadata that you want to group results by.
 
         Returns:
             Dataframe of apps with their feedback results aggregated.
+            If group_by_metadata_key is provided, the dataframe will be grouped by the specified key.
         """
 
         if app_ids is None:
@@ -729,11 +733,24 @@ class Tru(python.SingletonPerName):
 
         col_agg_list = feedback_cols + ['latency', 'total_cost']
 
-        leaderboard = df.groupby('app_id')[col_agg_list].mean().sort_values(
-            by=feedback_cols, ascending=False
-        )
+        if group_by_metadata_key is not None:
+            df['meta'] = [
+                json.loads(df["record_json"][i])["meta"]
+                for i in range(len(df))
+            ]
 
-        return leaderboard
+            df[str(group_by_metadata_key)] = [
+                item.get(group_by_metadata_key, None)
+                if isinstance(item, dict) else None for item in df['meta']
+            ]
+            return df.groupby(['app_id', str(group_by_metadata_key)]
+                             )[col_agg_list].mean().sort_values(
+                                 by=feedback_cols, ascending=False
+                             )
+        else:
+            return df.groupby('app_id')[col_agg_list].mean().sort_values(
+                by=feedback_cols, ascending=False
+            )
 
     def start_evaluator(
         self,
