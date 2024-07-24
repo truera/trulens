@@ -25,6 +25,11 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
 with OptionalImports(messages=REQUIREMENT_CORTEX):
     from trulens.external.provider.cortex import Cortex
 
+import importlib.metadata
+
+__version__ = importlib.metadata.version(__package__ or __name__)
+
+
 __all__ = [
     'Embeddings',
     'GroundTruthAgreement',

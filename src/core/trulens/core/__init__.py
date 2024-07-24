@@ -6,8 +6,6 @@ This top-level import includes everything to get started.
 
 import importlib.metadata
 
-__version__ = importlib.metadata.version(__package__ or __name__)
-
 from trulens.core.app import TruBasicApp
 from trulens.core.app import TruCustomApp
 from trulens.core.app import TruVirtual
@@ -20,6 +18,7 @@ from trulens.utils.imports import check_imports
 
 check_imports()
 
+__version__ = importlib.metadata.version(__package__ or __name__)
 
 __all__ = [
     'Tru',  # main interface
