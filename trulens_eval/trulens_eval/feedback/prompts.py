@@ -31,7 +31,7 @@ LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt.template
 LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt.template
 
 CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt.template
-QS_RELEVANCE_VERB_2S_TOP1 = v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
+context_relevance_VERB_2S_TOP1 = v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
 CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt.template
 
 ANSWER_RELEVANCE_SYSTEM = v2.PromptResponseRelevance.system_prompt.template
