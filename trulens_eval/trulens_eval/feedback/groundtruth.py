@@ -116,14 +116,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     def _find_score(self, prompt: str, response: str) -> Optional[float]:
         if self.ground_truth_imp is not None:
             return self.ground_truth_imp(prompt)
-
+        
         responses = [
             qr["expected_score"]
             for qr in self.ground_truth
             if qr["query"] == prompt and qr["response"] == response
         ]
         if responses:
-            return responses[0]
+            return float(responses[0])
         else:
             return None
 
@@ -198,10 +198,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         """
 
         expected_score = self._find_score(prompt, response)
-        if expected_score:
-            ret = abs(float(score) - expected_score)
-            expected_score = "{:.2f}".format(expected_score
-                                            ).rstrip('0').rstrip('.')
+        if expected_score is not None:
+            ret = abs(float(score) - float(expected_score))
+            expected_score = "{:.2f}".format(expected_score).rstrip('0').rstrip('.')
         else:
             ret = np.nan
         return ret, {"expected score": expected_score}
