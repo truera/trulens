@@ -2,7 +2,7 @@ import asyncio
 from concurrent.futures import wait
 import time
 
-from trulens.core.tru_custom_app import instrument
+from trulens.core.app.custom import instrument
 from trulens.utils.threading import ThreadPoolExecutor
 
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
