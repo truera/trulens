@@ -69,7 +69,7 @@ Consider the below `app.py` which consists of a simple RAG application that is a
 
     ```
 
-With the `record` in hand, we can easily add TruLens components to display the evaluation results of the provided record using the [trulens_feedback][trulens_eval.streamlit.trulens_feedback]. This will display the _TruLens_ feedback result clickable pills as the feedback is available.
+With the `record` in hand, we can easily add TruLens components to display the evaluation results of the provided record using [trulens_feedback][trulens_eval.streamlit.trulens_feedback]. This will display the _TruLens_ feedback result clickable pills as the feedback is available.
 
 !!! example "Display feedback results"
 
@@ -80,7 +80,7 @@ With the `record` in hand, we can easily add TruLens components to display the e
         trulens_st.trulens_feedback(record=record)
     ```
 
-In addition to the feedback results, we can also display the record's trace to help with debugging using the [trulens_trace][trulens_eval.streamlit.trulens_trace] from the _TruLens_ streamlit module.
+In addition to the feedback results, we can also display the record's trace to help with debugging using [trulens_trace][trulens_eval.streamlit.trulens_trace] from the _TruLens_ streamlit module.
 
 !!! example "Display the trace"
 
@@ -91,7 +91,7 @@ In addition to the feedback results, we can also display the record's trace to h
         trulens_st.trulens_trace(record=record)
     ```
 
-Last, we can also display the TruLens leaderboard using the [trulens_leaderboard][trulens_eval.streamlit.trulens_leaderboard] from the _TruLens_ streamlit module to understand the aggregate performance across application versions.
+Last, we can also display the TruLens leaderboard using [trulens_leaderboard][trulens_eval.streamlit.trulens_leaderboard] from the _TruLens_ streamlit module to understand the aggregate performance across application versions.
 
 !!! example "Display the application leaderboard"
 
