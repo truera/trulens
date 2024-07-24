@@ -208,7 +208,7 @@ class Tru(python_utils.SingletonPerName):
                 otel_exporter, otel_sdk.trace.export.SpanExporter
             ), "otel_exporter must be an OpenTelemetry SpanExporter."
             print(
-                f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {otel_exporter}"
+                f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {otel_exporter.__class__.__name__}"
             )
         self.otel_exporter = otel_exporter
 

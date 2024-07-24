@@ -62,10 +62,10 @@ class DummyAPI(pydantic.BaseModel):
 
     def __init__(
         self,
-        error_prob: float = 1 / 100,
-        freeze_prob: float = 1 / 100,
-        overloaded_prob: float = 1 / 100,
-        loading_prob: float = 1 / 100,
+        error_prob: float = 0 / 100,
+        freeze_prob: float = 0 / 100,
+        overloaded_prob: float = 0 / 100,
+        loading_prob: float = 0 / 100,
         alloc: int = 64,
         delay: float = 0.0,
         **kwargs

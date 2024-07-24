@@ -9,10 +9,8 @@ import logging
 from pprint import PrettyPrinter
 import threading
 import time
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
-    Optional, Sequence, Tuple, TypeVar, Union
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
+                    Iterable, List, Optional, Sequence, Tuple, TypeVar, Union)
 
 import pydantic
 
@@ -26,9 +24,10 @@ from trulens_eval.schema import record as record_schema
 from trulens_eval.utils import asynchro as asynchro_utils
 from trulens_eval.utils import containers as container_utils
 from trulens_eval.utils import json as json_utils
+from trulens_eval.utils import pyschema as pyschema_utils
+from trulens_eval.utils import python as python_utils
 from trulens_eval.utils import serial as serial_utils
-import trulens_eval.utils.pyschema as pyschema_utils
-import trulens_eval.utils.python as python_utils
+from trulens_eval.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
@@ -788,10 +787,10 @@ class App(app_schema.AppDefinition, mod_trace.WithInstrumentCallbacks,
             for span in root_span.iter_family(include_phantom=True):
                 e_span = span.otel_freeze()
                 to_export.append(e_span)
-                print(e_span.name)
+                # print(e_span.name, "->", e_span.__class__.__name__)
 
             print(
-                f"Exporting {len(to_export)} spans to {self.tru.otel_exporter}."
+                f"{text_utils.UNICODE_CHECK} Exporting {len(to_export)} spans to {self.tru.otel_exporter.__class__.__name__}."
             )
             self.tru.otel_exporter.export(to_export)
 
