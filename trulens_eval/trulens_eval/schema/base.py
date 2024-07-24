@@ -7,7 +7,7 @@ from typing import Optional
 
 import pydantic
 
-from trulens_eval.utils import containers as mod_container_utils
+from trulens_eval.utils import containers as container_utils
 from trulens_eval.utils import serial
 
 MAX_DILL_SIZE: int = 1024 * 1024  # 1MB
@@ -117,9 +117,9 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
         since the epoch."""
 
         return Perf(
-            start_time=mod_container_utils.
+            start_time=container_utils.
             datetime_of_ns_timestamp(start_ns_timestamp),
-            end_time=mod_container_utils.
+            end_time=container_utils.
             datetime_of_ns_timestamp(end_ns_timestamp)
             if end_ns_timestamp is not None else datetime.datetime.max,
         )
@@ -128,13 +128,13 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
     def start_ns_timestamp(self) -> int:
         """Start time in number of nanoseconds since the epoch."""
 
-        return mod_container_utils.ns_timestamp_of_datetime(self.start_time)
+        return container_utils.ns_timestamp_of_datetime(self.start_time)
 
     @property
     def end_ns_timestamp(self) -> int:
         """End time in number of nanoseconds since the epoch."""
 
-        return mod_container_utils.ns_timestamp_of_datetime(self.end_time)
+        return container_utils.ns_timestamp_of_datetime(self.end_time)
 
 
 # HACK013: Need these if using __future__.annotations .

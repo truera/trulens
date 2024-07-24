@@ -9,16 +9,14 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
-import datetime
 import inspect
 import logging
+import os
 import random
+from threading import Lock
+import threading as th
 import time
-import traceback
-from typing import (
-    Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple,
-    Type, TypeAliasType, TypeVar, Union
-)
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 import uuid
 
 from opentelemetry.sdk import trace as otsdk_trace
@@ -32,11 +30,15 @@ import pydantic
 
 from trulens_eval.otel import flatten_lensed_attributes
 # import trulens_eval.app as mod_app # circular import issues
-from trulens_eval.schema import base as mod_base_schema
-from trulens_eval.schema import record as mod_record_schema
-from trulens_eval.utils import containers as mod_container_utils
-from trulens_eval.utils import json as mod_json_utils
-from trulens_eval.utils import pyschema as mod_pyschema
+from trulens_eval.schema import base as base_schema
+from trulens_eval.schema import record as record_schema
+from trulens_eval.schema import types as types_schema
+from trulens_eval.utils import containers as container_utils
+from trulens_eval.utils import json as json_utils
+from trulens_eval.utils import pyschema as pyschema_utils
+from trulens_eval.utils import python as python_utils
+from trulens_eval.utils import wrap as wrap_utils
+from trulens_eval.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +91,7 @@ class Span(pydantic.BaseModel):
     error: Optional[Exception] = pydantic.Field(None, exclude=True)
     """Optional error if the observed computation raised an exception."""
 
-    start_timestamp: int = pydantic.Field(default_factory=time.time_ns, exclude=True)
+    start_timestamp: Optional[int] = pydantic.Field(None, exclude=True)
     """Start time in nanoseconds since epoch."""
 
     end_timestamp: Optional[int] = pydantic.Field(None, exclude=True)
@@ -108,7 +110,7 @@ class Span(pydantic.BaseModel):
         self.end_timestamp = time.time_ns()
 
     async def afinish(self):
-        return self.finish()
+        self.finish()
 
     def iter_children(
         self,
@@ -152,13 +154,13 @@ class Span(pydantic.BaseModel):
             include_phantom=include_phantom, transitive=True
         )
 
-    def total_cost(self) -> mod_base_schema.Cost:
+    def total_cost(self) -> base_schema.Cost:
         """Total costs of this span and all its transitive children."""
 
-        total = mod_base_schema.Cost()
+        total = base_schema.Cost()
 
         for span in self.iter_family(include_phantom=True):
-            if isinstance(span, PhantomSpanCost) and span.cost is not None:
+            if isinstance(span, WithCost) and span.cost is not None:
                 total += span.cost
 
         return total
@@ -208,12 +210,6 @@ class OTELExportable(Span):
 
         return trace_status.Status(status_code=trace_status.StatusCode.OK)
 
-    def otel_start_timestamp(self) -> int:
-        return self.start_timestamp
-
-    def otel_end_timestamp(self) -> Optional[int]:
-        return self.end_timestamp
-
     def otel_resource_attributes(self) -> Dict[str, Any]:
         return {}
 
@@ -238,8 +234,8 @@ class OTELExportable(Span):
             kind=self.otel_kind(),
             instrumentation_info=None,
             status=self.otel_status(),
-            start_time=self.otel_start_timestamp(),
-            end_time=self.otel_end_timestamp(),
+            start_time=self.start_timestamp,
+            end_time=self.end_timestamp,
             instrumentation_scope=None
         )
 
@@ -310,10 +306,9 @@ class SpanCall(OTELExportable):
     call_id: Optional[uuid.UUID] = pydantic.Field(None, exclude=True)
     """Unique identifier for the call."""
 
-    stack: Optional[List[mod_record_schema.RecordAppCallMethod]
-                   ] = pydantic.Field(
-                       None, exclude=True
-                   )
+    stack: Optional[List[record_schema.RecordAppCallMethod]] = pydantic.Field(
+        None, exclude=True
+    )
     """Call stack of instrumented methods only."""
 
     sig: Optional[inspect.Signature] = pydantic.Field(None, exclude=True)
@@ -333,7 +328,7 @@ class SpanCall(OTELExportable):
 
         ret['sig'] = str(self.sig)
         ret['call_id'] = str(self.call_id)
-        ret['stack'] = mod_json_utils.jsonify(self.stack)
+        ret['stack'] = json_utils.jsonify(self.stack)
 
         return ret
 
@@ -398,27 +393,28 @@ class LiveSpanCall(LiveSpan, SpanCall):
     """
 
 
-class PhantomSpanCost(PhantomSpan, LiveSpan, OTELExportable):
-    """Track costs of some computation."""
+class WithCost(LiveSpan):
+    """Mixin to indicate the span has costs tracked."""
 
-    cost: Optional[mod_base_schema.Cost] = pydantic.Field(
-        default_factory=mod_base_schema.Cost, exclude=True
+    cost: base_schema.Cost = pydantic.Field(
+        default_factory=base_schema.Cost, exclude=True
     )
     """Cost of the computation spanned."""
 
-    live_endpoint: Optional[Any] = pydantic.Field(None, exclude=True)
+    endpoint: Optional[Any] = pydantic.Field(None, exclude=True)
     """Endpoint handling cost extraction for this span/call."""
 
     # TODO: Type
 
-    def __init__(self, cost: Optional[mod_base_schema.Cost] = None, **kwargs):
+    def __init__(self, cost: Optional[base_schema.Cost] = None, **kwargs):
         if cost is None:
-            cost = mod_base_schema.Cost()
+            cost = base_schema.Cost()
 
         super().__init__(cost=cost, **kwargs)
 
-    def otel_name(self) -> str:
-        return "PhantomSpanCost"
+
+class LiveSpanCallWithCost(LiveSpanCall, WithCost):
+    pass
 
 
 class Tracer(pydantic.BaseModel):
@@ -445,15 +441,16 @@ class Tracer(pydantic.BaseModel):
     def _fill_stacks(
         span: LiveSpanCall,
         get_method_path: Callable,
-        stack: List[mod_record_schema.RecordAppCallMethod] = []
+        stack: List[record_schema.RecordAppCallMethod] = []
     ):
         # TODO: what if it is not a method call?
 
         path = get_method_path(obj=span.live_obj, func=span.live_func)
 
-        frame_ident = mod_record_schema.RecordAppCallMethod(
-            path=path,
-            method=mod_pyschema.Method.of_method(
+        frame_ident = record_schema.RecordAppCallMethod(
+            path=path if path is not None else
+            serial_utils.Lens().static,  # placeholder path for functions
+            method=pyschema_utils.Method.of_method(
                 span.live_func, obj=span.live_obj, cls=span.live_cls
             )
         )
@@ -471,7 +468,7 @@ class Tracer(pydantic.BaseModel):
 
     def _call_of_spancall(
         self, span: LiveSpanCall
-    ) -> mod_record_schema.RecordAppCall:
+    ) -> record_schema.RecordAppCall:
         """Convert a SpanCall to a RecordAppCall."""
 
         args = dict(
@@ -481,13 +478,19 @@ class Tracer(pydantic.BaseModel):
             if "self" in args:
                 del args["self"]  # remove self
 
-        return mod_record_schema.RecordAppCall(
+        assert span.start_timestamp is not None
+        assert span.end_timestamp is not None
+
+        return record_schema.RecordAppCall(
             call_id=str(span.call_id),
             stack=span.stack,
             args=args,
             rets=span.live_ret,
             error=str(span.live_error),
-            perf=mod_base_schema.Perf.of_ns_timestamps(span.start_timestamp, span.end_timestamp),
+            perf=base_schema.Perf.of_ns_timestamps(
+                start_ns_timestamp=span.start_timestamp,
+                end_ns_timestamp=span.end_timestamp
+            ),
             pid=span.pid,
             tid=span.tid
         )
@@ -501,14 +504,11 @@ class Tracer(pydantic.BaseModel):
 
         self._fill_stacks(root_span, get_method_path=app.get_method_path)
 
-        root_perf = mod_base_schema.Perf(
-            start_time=mod_container_utils.datetime_of_ns_timestamp(
-                root_span.start_timestamp
-            ),
-            end_time=mod_container_utils.datetime_of_ns_timestamp(
-                root_span.end_timestamp
-            ) if root_span.end_timestamp is not None else None
-        )
+        root_perf = base_schema.Perf.of_ns_timestamps(
+            start_ns_timestamp=root_span.start_timestamp,
+            end_ns_timestamp=root_span.end_timestamp
+        ) if root_span.end_timestamp is not None else None
+
         root_cost = root_span.total_cost()
 
         calls = [self._call_of_spancall(root_span)]
@@ -539,25 +539,25 @@ class Tracer(pydantic.BaseModel):
             main_input = None
             main_output = None
 
-        record = mod_record_schema.Record(
+        record = record_schema.Record(
             record_id="placeholder",
             app_id=app.app_id,
-            main_input=mod_json_utils.jsonify(main_input),
-            main_output=mod_json_utils.jsonify(main_output),
-            main_error=mod_json_utils.jsonify(main_error),
+            main_input=json_utils.jsonify(main_input),
+            main_output=json_utils.jsonify(main_output),
+            main_error=json_utils.jsonify(main_error),
             calls=calls,
             perf=root_perf,
             cost=root_cost
         )
 
         # record_id determinism
-        record.record_id = mod_json_utils.obj_id_of_obj(record, prefix="record")
+        record.record_id = json_utils.obj_id_of_obj(record, prefix="record")
 
         return record
 
     def records_of_recording(
         self, recording: PhantomSpanRecordingContext
-    ) -> Iterable[mod_record_schema.Record]:
+    ) -> Iterable[record_schema.Record]:
         """Convert a recording based on spans to a list of records."""
 
         for root_span in recording.iter_children(transitive=False):
@@ -610,8 +610,8 @@ class Tracer(pydantic.BaseModel):
     def method(self):
         return self._span(LiveSpanCall)
 
-    def cost(self, cost: Optional[mod_base_schema.Cost] = None):
-        return self._span(PhantomSpanCost, cost=cost)
+    def cost(self, cost: Optional[base_schema.Cost] = None):
+        return self._span(LiveSpanCallWithCost, cost=cost)
 
     def phantom(self):
         return self._span(PhantomSpan)
@@ -622,8 +622,8 @@ class Tracer(pydantic.BaseModel):
     async def amethod(self):
         return self._aspan(LiveSpanCall)
 
-    async def acost(self, cost: Optional[mod_base_schema.Cost] = None):
-        return self._aspan(PhantomSpanCost, cost=cost)
+    async def acost(self, cost: Optional[base_schema.Cost] = None):
+        return self._aspan(LiveSpanCallWithCost, cost=cost)
 
     async def aphantom(self):
         return self._aspan(PhantomSpan)
@@ -711,3 +711,341 @@ All traces are mady by this provider.
 
 def get_tracer():
     return tracer_provider.get_tracer()
+
+
+T = TypeVar("T")
+
+
+class TracingCallbacks(wrap_utils.CallableCallbacks[T]):
+    """Extension of CallableCallbacks that adds tracing to the wrapped callable
+    as implemented using tracer and spans."""
+
+    @classmethod
+    def on_callable_wrapped(
+        cls, wrapper: Callable[..., Any], **kwargs: Dict[str, Any]
+    ):
+        return super().on_callable_wrapped(wrapper=wrapper, **kwargs)
+
+    def __init__(
+        self,
+        func_name: str,
+        span_type: Type[LiveSpanCall] = LiveSpanCall,
+        **kwargs: Dict[str, Any]
+    ):
+        super().__init__(**kwargs)
+
+        self.func_name: str = func_name
+
+        self.obj: Optional[object] = None
+        self.obj_cls: Optional[Type] = None
+        self.obj_id: Optional[int] = None
+
+        tracer = get_tracer()
+
+        if not issubclass(span_type, LiveSpanCall):
+            raise ValueError("span_type must be a subclass of LiveSpanCall.")
+
+        self.span_context = tracer._span(span_type)
+        self.span = self.span_context.__enter__()
+
+    def on_callable_call(
+        self, bindings: inspect.BoundArguments, **kwargs: Dict[str, Any]
+    ) -> inspect.BoundArguments:
+        temp = super().on_callable_call(bindings=bindings, **kwargs)
+
+        if "self" in bindings.arguments:
+            self.obj = bindings.arguments["self"]
+            self.obj_cls = type(self.obj)
+            self.obj_id = id(self.obj)
+
+        span = self.span
+        span.pid = os.getpid()
+        span.tid = th.get_native_id()
+
+        span.start_timestamp = time.time_ns()
+
+        return temp
+
+    def on_callable_end(self):
+        span = self.span
+
+        # SpanCall attributes
+        span.call_id = self.call_id
+        span.func_name = self.func_name
+        span.sig = self.sig
+
+        span.end_timestamp = time.time_ns()
+
+        # LiveSpanCall attributes
+        span.live_obj = self.obj
+        span.live_cls = self.obj_cls
+        span.live_func = self.func
+        span.live_args = self.call_args
+        span.live_kwargs = self.call_kwargs
+        span.live_bindings = self.bindings
+        span.live_ret = self.ret
+        span.live_error = self.error
+
+        if self.error is not None:
+            self.span_context.__exit__(
+                type(self.error), self.error, self.error.__traceback__
+            )
+        else:
+            self.span_context.__exit__(None, None, None)
+
+
+class RecordingContext():
+    """Manager of the creation of records from record calls.
+    
+    An instance of this class is produced when using an
+    [App][trulens_eval.app.App] as a context mananger, i.e.:
+
+    Example:
+        ```python
+        app = ...  # your app
+        truapp: TruChain = TruChain(app, ...) # recorder for LangChain apps
+
+        with truapp as recorder:
+            app.invoke(...) # use your app
+
+        recorder: RecordingContext
+        ```
+    
+    Each instance of this class produces a record for every "root" instrumented
+    method called. Root method here means the first instrumented method in a
+    call stack. Note that there may be more than one of these contexts in play
+    at the same time due to:
+
+    - More than one wrapper of the same app.
+    - More than one context manager ("with" statement) surrounding calls to the
+      same app.
+    - Calls to "with_record" on methods that themselves contain recording.
+    - Calls to apps that use trulens internally to track records in any of the
+      supported ways.
+    - Combinations of the above.
+    """
+
+    def __init__(
+        self,
+        app: WithInstrumentCallbacks,
+        record_metadata: serial_utils.JSON = None,
+        tracer: Optional[Tracer] = None,
+        span: Optional[PhantomSpanRecordingContext] = None,
+        span_ctx: Optional[Context] = None
+    ):
+        self.records: List[record_schema.Record] = []
+        """Completed records.
+        
+        !!! NOTE
+            Since migration to span-based tracing, these records are produced by
+            converting spans.
+        """
+
+        self.lock: Lock = Lock()
+        """Lock blocking access to `records` when adding calls or
+        finishing a record."""
+
+        self.token: Optional[contextvars.Token] = None
+        """Token for context management."""
+
+        self.app: WithInstrumentCallbacks = app
+        """App for which we are recording."""
+
+        self.record_metadata = record_metadata
+        """Metadata to attach to all records produced in this context."""
+
+        self.tracer: Optional[Tracer] = tracer
+        """OTEL-like tracer for recording.
+        
+        !!! Warning
+            This is transitional alternate recording mechanism to aid in the
+            otel-compatibility work.
+        """
+
+        self.span: Optional[PhantomSpanRecordingContext] = span
+
+        self.span_ctx = span_ctx
+
+    @property
+    def spans(self) -> Dict[Context, Span]:
+        """Get the spans of the tracer in this context."""
+
+        if self.tracer is None:
+            return {}
+
+        return self.tracer.spans
+
+    def __iter__(self):
+        return iter(self.records)
+
+    def get(self) -> record_schema.Record:
+        """
+        Get the single record only if there was exactly one. Otherwise throw an error.
+        """
+
+        if len(self.records) == 0:
+            raise RuntimeError("Recording context did not record any records.")
+
+        if len(self.records) > 1:
+            raise RuntimeError(
+                "Recording context recorded more than 1 record. "
+                "You can get them with ctx.records, ctx[i], or `for r in ctx: ...`."
+            )
+
+        return self.records[0]
+
+    def __getitem__(self, idx: int) -> record_schema.Record:
+        return self.records[idx]
+
+    def __len__(self):
+        return len(self.records)
+
+    def __hash__(self) -> int:
+        # The same app can have multiple recording contexts.
+        return hash(id(self.app)) + hash(id(self.records))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+        # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
+
+    def finish_record(
+        self,
+        calls_to_record: Callable[[
+            List[record_schema.RecordAppCall], types_schema.
+            Metadata, Optional[record_schema.Record]
+        ], record_schema.Record],
+        existing_record: Optional[record_schema.Record] = None
+    ):
+        """
+        Run the given function to build a record from the tracked calls and any
+        pre-specified metadata.
+        """
+
+        with self.lock:
+            record = calls_to_record(
+                list(self.calls.values()), self.record_metadata, existing_record
+            )
+            self.calls = {}
+
+            if existing_record is None:
+                # If existing record was given, we assume it was already
+                # inserted into this list.
+                self.records.append(record)
+
+        return record
+
+
+class WithInstrumentCallbacks:
+    """Abstract definition of callbacks invoked by Instrument during
+    instrumentation or when instrumented methods are called.
+    
+    Needs to be mixed into [App][trulens_eval.app.App].
+    """
+
+    # Called during instrumentation.
+    def on_method_instrumented(
+        self, obj: object, func: Callable, path: serial_utils.Lens
+    ):
+        """Callback to be called by instrumentation system for every function
+        requested to be instrumented.
+        
+        Given are the object of the class in which `func` belongs
+        (i.e. the "self" for that function), the `func` itsels, and the `path`
+        of the owner object in the app hierarchy.
+
+        Args:
+            obj: The object of the class in which `func` belongs (i.e. the
+                "self" for that method).
+
+            func: The function that was instrumented. Expects the unbound
+                version (self not yet bound).
+
+            path: The path of the owner object in the app hierarchy.
+        """
+
+        raise NotImplementedError
+
+    # Called during invocation.
+    def get_method_path(self, obj: object, func: Callable) -> serial_utils.Lens:
+        """
+        Get the path of the instrumented function `func`, a member of the class
+        of `obj` relative to this app.
+
+        Args:
+            obj: The object of the class in which `func` belongs (i.e. the
+                "self" for that method).
+
+            func: The function that was instrumented. Expects the unbound
+                version (self not yet bound).
+        """
+
+        raise NotImplementedError
+
+    # WithInstrumentCallbacks requirement
+    def get_methods_for_func(
+        self, func: Callable
+    ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
+        """
+        Get the methods (rather the inner functions) matching the given `func`
+        and the path of each.
+
+        Args:
+            func: The function to match.
+        """
+
+        raise NotImplementedError
+
+    # Called after recording of an invocation.
+    def on_new_root_span(
+        self,
+        ctx: RecordingContext,
+        root_span: Span,
+    ) -> record_schema.Record:
+        """Called by instrumented methods if they are root calls (first instrumned
+        methods in a call stack).
+
+        Args:
+            ctx: The context of the recording.
+
+            root_span: The root span that was recorded.
+        """
+
+        raise NotImplementedError
+
+
+INSTRUMENT = "__tru_instrumented"
+"""Attribute name to be used to flag instrumented objects/methods/others."""
+
+APPS = "__tru_apps"
+"""Attribute name for storing apps that expect to be notified of calls."""
+
+
+class AppTracingCallbacks(TracingCallbacks[T]):
+    """Extension to TracingCallbacks that keep track of apps that are
+    instrumenting their constituent calls."""
+
+    @classmethod
+    def on_callable_wrapped(
+        cls, wrapper: Callable[..., Any], app: WithInstrumentCallbacks,
+        **kwargs: Dict[str, Any]
+    ):
+        if not python_utils.safe_hasattr(wrapper, APPS):
+            apps = set()
+            setattr(wrapper, APPS, apps)
+        else:
+            apps = getattr(wrapper, APPS)
+
+        apps.add(app)
+
+        return super().on_callable_wrapped(wrapper, **kwargs)
+
+    def __init__(
+        self,
+        app: WithInstrumentCallbacks,
+        span_type: Type[Span] = LiveSpanCall,
+        **kwargs: Dict[str, Any]
+    ):
+        super().__init__(span_type=span_type, **kwargs)
+
+        self.app = app
+        self.apps = pyschema_utils.getattr_serial(self.wrapper, APPS)

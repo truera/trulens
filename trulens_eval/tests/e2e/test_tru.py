@@ -15,7 +15,7 @@ from trulens_eval import Tru
 from trulens_eval import TruCustomApp
 from trulens_eval.feedback.provider.hugs import Dummy
 from trulens_eval.keys import check_keys
-from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import feedback as feedback_schema
 from trulens_eval.tru_custom_app import TruCustomApp
 
 
@@ -310,7 +310,7 @@ class TestTru(TestCase):
 
         # Check that the structure of returned tuples is correct.
         for result in feedback_results:
-            self.assertIsInstance(result, mod_feedback_schema.FeedbackResult)
+            self.assertIsInstance(result, feedback_schema.FeedbackResult)
             self.assertIsInstance(result.result, float)
 
         # TODO: move tests to test_add_feedbacks.
@@ -377,7 +377,7 @@ class TestTru(TestCase):
             wait([future_result])
 
             result = future_result.result()
-            self.assertIsInstance(result, mod_feedback_schema.FeedbackResult)
+            self.assertIsInstance(result, feedback_schema.FeedbackResult)
             self.assertIsInstance(result.result, float)
 
             feedback_results.append(result)

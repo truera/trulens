@@ -32,11 +32,11 @@ from trulens_eval.database.utils import \
     check_db_revision as alembic_check_db_revision
 from trulens_eval.database.utils import is_legacy_sqlite
 from trulens_eval.database.utils import is_memory_sqlite
-from trulens_eval.schema import app as mod_app_schema
-from trulens_eval.schema import base as mod_base_schema
-from trulens_eval.schema import feedback as mod_feedback_schema
-from trulens_eval.schema import record as mod_record_schema
-from trulens_eval.schema import types as mod_types_schema
+from trulens_eval.schema import app as app_schema
+from trulens_eval.schema import base as base_schema
+from trulens_eval.schema import feedback as feedback_schema
+from trulens_eval.schema import record as record_schema
+from trulens_eval.schema import types as types_schema
 from trulens_eval.utils import text
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.python import locals_except
@@ -307,8 +307,8 @@ class SQLAlchemyDB(DB):
         self.migrate_database()
 
     def insert_record(
-        self, record: mod_record_schema.Record
-    ) -> mod_types_schema.RecordID:
+        self, record: record_schema.Record
+    ) -> types_schema.RecordID:
         """See [DB.insert_record][trulens_eval.database.base.DB.insert_record]."""
         # TODO: thread safety
 
@@ -325,7 +325,7 @@ class SQLAlchemyDB(DB):
             return _rec.record_id
 
     def get_app(
-        self, app_id: mod_types_schema.AppID
+        self, app_id: types_schema.AppID
     ) -> Optional[JSONized[mod_app.App]]:
         """See [DB.get_app][trulens_eval.database.base.DB.get_app]."""
 
@@ -342,8 +342,8 @@ class SQLAlchemyDB(DB):
                 yield json.loads(_app.app_json)
 
     def insert_app(
-        self, app: mod_app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
+        self, app: app_schema.AppDefinition
+    ) -> types_schema.AppID:
         """See [DB.insert_app][trulens_eval.database.base.DB.insert_app]."""
 
         # TODO: thread safety
@@ -363,7 +363,7 @@ class SQLAlchemyDB(DB):
 
             return _app.app_id
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app(self, app_id: types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
 
@@ -380,8 +380,8 @@ class SQLAlchemyDB(DB):
                 logger.warning(f"App {app_id} not found for deletion.")
 
     def insert_feedback_definition(
-        self, feedback_definition: mod_feedback_schema.FeedbackDefinition
-    ) -> mod_types_schema.FeedbackDefinitionID:
+        self, feedback_definition: feedback_schema.FeedbackDefinition
+    ) -> types_schema.FeedbackDefinitionID:
         """See [DB.insert_feedback_definition][trulens_eval.database.base.DB.insert_feedback_definition]."""
 
         # TODO: thread safety
@@ -406,7 +406,7 @@ class SQLAlchemyDB(DB):
 
     def get_feedback_defs(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+        feedback_definition_id: Optional[types_schema.FeedbackDefinitionID
                                         ] = None
     ) -> pd.DataFrame:
         """See [DB.get_feedback_defs][trulens_eval.database.base.DB.get_feedback_defs]."""
@@ -425,8 +425,8 @@ class SQLAlchemyDB(DB):
             )
 
     def insert_feedback(
-        self, feedback_result: mod_feedback_schema.FeedbackResult
-    ) -> mod_types_schema.FeedbackResultID:
+        self, feedback_result: feedback_schema.FeedbackResult
+    ) -> types_schema.FeedbackResultID:
         """See [DB.insert_feedback][trulens_eval.database.base.DB.insert_feedback]."""
 
         # TODO: thread safety
@@ -443,17 +443,17 @@ class SQLAlchemyDB(DB):
                     _feedback_result
                 )  # insert new result # .add was not thread safe
 
-            status = mod_feedback_schema.FeedbackResultStatus(
+            status = feedback_schema.FeedbackResultStatus(
                 _feedback_result.status
             )
 
-            if status == mod_feedback_schema.FeedbackResultStatus.DONE:
+            if status == feedback_schema.FeedbackResultStatus.DONE:
                 icon = UNICODE_CHECK
-            elif status == mod_feedback_schema.FeedbackResultStatus.RUNNING:
+            elif status == feedback_schema.FeedbackResultStatus.RUNNING:
                 icon = UNICODE_HOURGLASS
-            elif status == mod_feedback_schema.FeedbackResultStatus.NONE:
+            elif status == feedback_schema.FeedbackResultStatus.NONE:
                 icon = UNICODE_CLOCK
-            elif status == mod_feedback_schema.FeedbackResultStatus.FAILED:
+            elif status == feedback_schema.FeedbackResultStatus.FAILED:
                 icon = UNICODE_STOP
             else:
                 icon = "???"
@@ -469,13 +469,13 @@ class SQLAlchemyDB(DB):
         self,
         count: bool = False,
         shuffle: bool = False,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+        record_id: Optional[types_schema.RecordID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
+        feedback_definition_id: Optional[types_schema.FeedbackDefinitionID
                                         ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[feedback_schema.FeedbackResultStatus,
+                  Sequence[feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None
@@ -495,7 +495,7 @@ class SQLAlchemyDB(DB):
             q = q.filter_by(feedback_definition_id=feedback_definition_id)
 
         if status:
-            if isinstance(status, mod_feedback_schema.FeedbackResultStatus):
+            if isinstance(status, feedback_schema.FeedbackResultStatus):
                 status = [status.value]
             q = q.filter(
                 self.orm.FeedbackResult.status.in_([s.value for s in status])
@@ -518,18 +518,18 @@ class SQLAlchemyDB(DB):
 
     def get_feedback_count_by_status(
         self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+        record_id: Optional[types_schema.RecordID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
+        feedback_definition_id: Optional[types_schema.FeedbackDefinitionID
                                         ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[feedback_schema.FeedbackResultStatus,
+                  Sequence[feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: bool = False
-    ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
+    ) -> Dict[feedback_schema.FeedbackResultStatus, int]:
         """See [DB.get_feedback_count_by_status][trulens_eval.database.base.DB.get_feedback_count_by_status]."""
 
         with self.session.begin() as session:
@@ -541,19 +541,19 @@ class SQLAlchemyDB(DB):
                                     q).group_by(self.orm.FeedbackResult.status)
 
             return {
-                mod_feedback_schema.FeedbackResultStatus(row[0]): row[1]
+                feedback_schema.FeedbackResultStatus(row[0]): row[1]
                 for row in results
             }
 
     def get_feedback(
         self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+        record_id: Optional[types_schema.RecordID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
+        feedback_definition_id: Optional[types_schema.FeedbackDefinitionID
                                         ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[feedback_schema.FeedbackResultStatus,
+                  Sequence[feedback_schema.FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -621,7 +621,7 @@ class SQLAlchemyDB(DB):
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
-no_perf = mod_base_schema.Perf.min().model_dump()
+no_perf = base_schema.Perf.min().model_dump()
 
 
 def _extract_feedback_results(
@@ -630,14 +630,14 @@ def _extract_feedback_results(
 
     def _extract(_result: self.orm.FeedbackResult):
         app_json = json.loads(_result.record.app.app_json)
-        _type = mod_app_schema.AppDefinition.model_validate(app_json).root_class
+        _type = app_schema.AppDefinition.model_validate(app_json).root_class
 
         return (
             _result.record_id,
             _result.feedback_result_id,
             _result.feedback_definition_id,
             _result.last_ts,
-            mod_feedback_schema.FeedbackResultStatus(_result.status),
+            feedback_schema.FeedbackResultStatus(_result.status),
             _result.error,
             _result.name,
             _result.result,
@@ -680,10 +680,10 @@ def _extract_feedback_results(
 
 
 def _extract_latency(
-    series: Iterable[Union[str, dict, mod_base_schema.Perf]]
+    series: Iterable[Union[str, dict, base_schema.Perf]]
 ) -> pd.Series:
 
-    def _extract(perf_json: Union[str, dict, mod_base_schema.Perf]) -> int:
+    def _extract(perf_json: Union[str, dict, base_schema.Perf]) -> int:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
 
@@ -691,9 +691,9 @@ def _extract_latency(
             perf_json = json.loads(perf_json)
 
         if isinstance(perf_json, dict):
-            perf_json = mod_base_schema.Perf.model_validate(perf_json)
+            perf_json = base_schema.Perf.model_validate(perf_json)
 
-        if isinstance(perf_json, mod_base_schema.Perf):
+        if isinstance(perf_json, base_schema.Perf):
             return perf_json.latency.seconds
 
         if perf_json is None:
@@ -710,9 +710,9 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
         if _cost_json is not None:
-            cost = mod_base_schema.Cost(**_cost_json)
+            cost = base_schema.Cost(**_cost_json)
         else:
-            cost = mod_base_schema.Cost()
+            cost = base_schema.Cost()
         return cost.n_tokens, cost.cost
 
     return pd.DataFrame(

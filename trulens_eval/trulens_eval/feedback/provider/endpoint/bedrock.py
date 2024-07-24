@@ -8,7 +8,7 @@ import pydantic
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
 from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT
-from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.schema import base as base_schema
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
 from trulens_eval.utils.python import safe_hasattr
@@ -215,7 +215,7 @@ class BedrockEndpoint(Endpoint):
     def handle_wrapped_call(
         self, func: Callable, bindings: inspect.BoundArguments, response: Any,
         callback: Optional[EndpointCallback]
-    ) -> Optional[mod_base_schema.Cost]:
+    ) -> Optional[base_schema.Cost]:
 
         cost = None
 

@@ -13,7 +13,8 @@ from pydantic import Field
 
 from trulens_eval import app as mod_app
 from trulens_eval.instruments import ClassFilter
-from trulens_eval.instruments import Instrument
+from trulens_eval import instruments as mod_instruments
+from trulens_eval import trace as mod_trace
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 
@@ -45,7 +46,7 @@ class TruWrapperApp(object):
         self._call_fn = call_fn
 
 
-class TruBasicCallableInstrument(Instrument):
+class TruBasicCallableInstrument(mod_instruments.Instrument):
     """Basic app instrumentation."""
 
     class Default:
@@ -142,13 +143,13 @@ class TruBasicApp(mod_app.App):
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
 
-        if func == getattr(TruWrapperApp._call, Instrument.INSTRUMENT):
+        if func == getattr(TruWrapperApp._call, mod_trace.INSTRUMENT):
             # If func is the wrapper app _call, replace the signature and
             # bindings based on the actual containing callable instead of
             # self.app._call . This needs to be done since the a TruWrapperApp
             # may be wrapping apps with different signatures on their callables
             # so TruWrapperApp._call cannot have a consistent signature
-            # statically. Note also we are looking up the Instrument.INSTRUMENT
+            # statically. Note also we are looking up the trace.INSTRUMENT
             # attribute here since the method is instrumented and overridden by
             # another wrapper in the process with the original accessible at
             # this attribute.

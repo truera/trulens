@@ -21,10 +21,10 @@ import pydantic
 
 from trulens_eval.utils.python import NoneType
 # import trulens_eval.app as mod_app # circular import issues
-from trulens_eval.schema import base as mod_base_schema
-from trulens_eval.schema import record as mod_record_schema
-from trulens_eval.utils import json as mod_json_utils
-from trulens_eval.utils import pyschema as mod_pyschema
+from trulens_eval.schema import base as base_schema
+from trulens_eval.schema import record as record_schema
+from trulens_eval.utils import json as json_utils
+from trulens_eval.utils import pyschema as pyschema_utils
 from trulens_eval.utils.serial import Lens
 
 logger = logging.getLogger(__name__)

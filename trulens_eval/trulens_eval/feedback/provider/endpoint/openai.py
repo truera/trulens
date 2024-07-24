@@ -31,13 +31,13 @@ import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.schema import base as base_schema
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
 from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils.pyschema import getattr_serial
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import SerialModel
 
@@ -138,7 +138,7 @@ class OpenAIClient(SerialModel):
                     continue
 
                 if safe_hasattr(client, k):
-                    client_kwargs[k] = safe_getattr(client, k)
+                    client_kwargs[k] = getattr_serial(client, k)
 
             # Create serializable class description.
             client_cls = Class.of_class(client_class)
@@ -151,7 +151,7 @@ class OpenAIClient(SerialModel):
         # Pass through attribute lookups to `self.client`, the openai.OpenAI
         # instance.
         if safe_hasattr(self.client, k):
-            return safe_getattr(self.client, k)
+            return getattr_serial(self.client, k)
 
         raise AttributeError(
             f"No attribute {k} in wrapper OpenAiClient nor the wrapped OpenAI client."
@@ -289,7 +289,7 @@ class OpenAICallback(EndpointCallback[T]):
 
         assert self.cost is not None
 
-        self.cost += mod_base_schema.Cost(
+        self.cost += base_schema.Cost(
             **{
                 cost_field: getattr(self.langchain_handler, langchain_field, 0)
                 for cost_field, langchain_field in [

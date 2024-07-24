@@ -14,10 +14,10 @@ import pydantic
 from tqdm import tqdm
 
 from trulens_eval.feedback import feedback as mod_feedback
-from trulens_eval.schema import app as mod_app_schema
-from trulens_eval.schema import base as mod_base_schema
-from trulens_eval.schema import feedback as mod_feedback_schema
-from trulens_eval.schema import record as mod_record_schema
+from trulens_eval.schema import app as app_schema
+from trulens_eval.schema import base as base_schema
+from trulens_eval.schema import feedback as feedback_schema
+from trulens_eval.schema import record as record_schema
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import FunctionOrMethod
@@ -334,22 +334,22 @@ def _serialization_asserts(db) -> None:
                                 pass
 
                         if col_name == "record_json":
-                            mod_record_schema.Record.model_validate(test_json)
+                            record_schema.Record.model_validate(test_json)
                         elif col_name == "cost_json":
-                            mod_base_schema.Cost.model_validate(test_json)
+                            base_schema.Cost.model_validate(test_json)
                         elif col_name == "perf_json":
-                            mod_base_schema.Perf.model_validate(test_json)
+                            base_schema.Perf.model_validate(test_json)
                         elif col_name == "calls_json":
                             for record_app_call_json in test_json['calls']:
-                                mod_feedback_schema.FeedbackCall.model_validate(
+                                feedback_schema.FeedbackCall.model_validate(
                                     record_app_call_json
                                 )
                         elif col_name == "feedback_json":
-                            mod_feedback_schema.FeedbackDefinition.model_validate(
+                            feedback_schema.FeedbackDefinition.model_validate(
                                 test_json
                             )
                         elif col_name == "app_json":
-                            mod_app_schema.AppDefinition.model_validate(
+                            app_schema.AppDefinition.model_validate(
                                 test_json
                             )
                         else:

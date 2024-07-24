@@ -10,10 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 import inspect
-from inspect import BoundArguments
 import logging
-import os
-import threading as th
 from typing import (
     Any, Callable, Dict, Iterable, Optional, Sequence, Set, Tuple, Type,
     TypeVar, Union
@@ -23,102 +20,21 @@ import pydantic
 
 from trulens_eval import trace as mod_trace
 from trulens_eval.feedback import feedback as mod_feedback
-from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.utils import python
 from trulens_eval.utils.containers import dict_merge_with
 from trulens_eval.utils.imports import Dummy
 from trulens_eval.utils.pyschema import clean_attributes
-from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils.pyschema import getattr_serial
 from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import id_str
 from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.python import safe_signature
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.text import retab
-from trulens_eval.utils.wrap import CallableCallbacks
 from trulens_eval.utils.wrap import wrap_callable
-from trulens_eval.utils import containers as mod_container_utils
 
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
-
-
-class WithInstrumentCallbacks:
-    """Abstract definition of callbacks invoked by Instrument during
-    instrumentation or when instrumented methods are called.
-    
-    Needs to be mixed into [App][trulens_eval.app.App].
-    """
-
-    # Called during instrumentation.
-    def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
-        """Callback to be called by instrumentation system for every function
-        requested to be instrumented.
-        
-        Given are the object of the class in which `func` belongs
-        (i.e. the "self" for that function), the `func` itsels, and the `path`
-        of the owner object in the app hierarchy.
-
-        Args:
-            obj: The object of the class in which `func` belongs (i.e. the
-                "self" for that method).
-
-            func: The function that was instrumented. Expects the unbound
-                version (self not yet bound).
-
-            path: The path of the owner object in the app hierarchy.
-        """
-
-        raise NotImplementedError
-
-    # Called during invocation.
-    def get_method_path(self, obj: object, func: Callable) -> Lens:
-        """
-        Get the path of the instrumented function `func`, a member of the class
-        of `obj` relative to this app.
-
-        Args:
-            obj: The object of the class in which `func` belongs (i.e. the
-                "self" for that method).
-
-            func: The function that was instrumented. Expects the unbound
-                version (self not yet bound).
-        """
-
-        raise NotImplementedError
-
-    # WithInstrumentCallbacks requirement
-    def get_methods_for_func(
-        self, func: Callable
-    ) -> Iterable[Tuple[int, Callable, Lens]]:
-        """
-        Get the methods (rather the inner functions) matching the given `func`
-        and the path of each.
-
-        Args:
-            func: The function to match.
-        """
-
-        raise NotImplementedError
-
-    # Called after recording of an invocation.
-    def on_new_root_span(
-        self,
-        ctx: 'RecordingContext',
-        root_span: 'Span',
-    ) -> 'Record':
-        """Called by instrumented methods if they are root calls (first instrumned
-        methods in a call stack).
-
-        Args:
-            ctx: The context of the recording.
-
-            root_span: The root span that was recorded.
-        """
-
-        raise NotImplementedError
-
 
 ClassFilter = Union[Type, Tuple[Type, ...]]
 
@@ -170,12 +86,6 @@ def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
 
 class Instrument(object):
     """Instrumentation tools."""
-
-    INSTRUMENT = "__tru_instrumented"
-    """Attribute name to be used to flag instrumented objects/methods/others."""
-
-    APPS = "__tru_apps"
-    """Attribute name for storing apps that expect to be notified of calls."""
 
     class Default:
         """Default instrumentation configuration.
@@ -260,7 +170,7 @@ class Instrument(object):
         include_modules: Optional[Iterable[str]] = None,
         include_classes: Optional[Iterable[type]] = None,
         include_methods: Optional[Dict[str, ClassFilter]] = None,
-        app: Optional[WithInstrumentCallbacks] = None
+        app: Optional[mod_trace.WithInstrumentCallbacks] = None
     ):
         if include_modules is None:
             include_modules = []
@@ -297,7 +207,7 @@ class Instrument(object):
         if safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
 
-        if safe_hasattr(func, Instrument.INSTRUMENT):
+        if safe_hasattr(func, mod_trace.INSTRUMENT):
             logger.debug("\t\t\t%s: %s is already instrumented", query, func)
 
         # Notify the app instrumenting this method where it is located:
@@ -305,104 +215,11 @@ class Instrument(object):
 
         logger.debug("\t\t\t%s: instrumenting %s=%s", query, method_name, func)
 
-        class InstrumentationCallbacks(CallableCallbacks):
-            # Adjust our name so make it clear that this is a callbacks class
-            # made for a particular func, if we ever print this class.
-            __name__ = f"InstrumentationCallbacks({func.__name__})"
-
-            @staticmethod
-            def on_callable_wrapped(
-                func: Callable[..., Any], wrapper: Callable[..., Any],
-                **kwargs: Dict[str, Any]
-            ):
-                # Store all of the apps that have instrumented this method in
-                # the wrapper.
-                # TODO: Change to weakrefs.
-
-                if not safe_hasattr(wrapper, Instrument.APPS):
-                    apps = set()
-                    setattr(wrapper, Instrument.APPS, apps)
-                else:
-                    apps = getattr(wrapper, Instrument.APPS)
-
-                apps.add(self.app)
-
-                return CallableCallbacks.on_callable_wrapped(
-                    func, wrapper, **kwargs
-                )
-
-            def __init__(
-                self, func_name: str, cls: type, sig: inspect.Signature,
-                **kwargs: Dict[str, Any]
-            ):
-                super().__init__(**kwargs)
-
-                self.func_name: str = func_name
-                self.cls: Type = cls
-                self.sig: inspect.Signature = sig
-                self.obj_id: Optional[int] = None
-                self.obj: Optional[object] = None
-
-                tracer = mod_trace.get_tracer()
-                self.span_context = tracer.method()
-                self.span = self.span_context.__enter__()
-
-                self.apps = safe_getattr(self.wrapper, Instrument.APPS)
-
-            def on_callable_call(
-                self, bindings: BoundArguments, **kwargs: Dict[str, Any]
-            ) -> BoundArguments:    
-                temp = super().on_callable_call(bindings=bindings, **kwargs)
-                # fills in start_time
-            
-                if "self" in bindings.arguments:
-                    self.obj = bindings.arguments["self"]
-
-                span = self.span
-                span.pid = os.getpid()
-                span.tid = th.get_native_id()
-
-                span.start_timestamp = mod_container_utils.ns_timestamp_of_datetime(
-                    self.start_time
-                )
-
-                return temp
-
-
-            def on_callable_end(self):
-                span = self.span
-
-                # SpanCall attributes
-                span.call_id = self.call_id
-                span.func_name = self.func_name
-                span.sig = self.sig
-                span.end_timestamp = mod_container_utils.ns_timestamp_of_datetime(
-                    self.end_time
-                )
-
-                # LiveSpanCall attributes
-                span.live_obj = self.obj
-                span.live_cls = self.cls
-                span.live_func = self.func
-                span.live_args = self.call_args
-                span.live_kwargs = self.call_kwargs
-                span.live_bindings = self.bindings
-                span.live_ret = self.ret
-                span.live_error = self.error
-
-                if self.error is not None:
-                    self.span_context.__exit__(
-                        type(self.error), self.error, self.error.__traceback__
-                    )
-                else:
-                    self.span_context.__exit__(None, None, None)
-
         return wrap_callable(
             func=func,
-            callback_class=InstrumentationCallbacks,
+            callback_class=mod_trace.AppTracingCallbacks,
             func_name=method_name,
-            cls=cls,
-            sig=safe_signature(func)
+            app=self.app
         )
 
     def instrument_method(self, method_name: str, obj: Any, query: Lens):
@@ -446,7 +263,7 @@ class Instrument(object):
 
         func = cls.__new__
 
-        if safe_hasattr(func, Instrument.INSTRUMENT):
+        if safe_hasattr(func, mod_trace.INSTRUMENT):
             logger.debug(
                 "Class %s __new__ is already instrumented.", class_name(cls)
             )
@@ -595,7 +412,7 @@ class Instrument(object):
                 attrs = clean_attributes(obj, include_props=True).keys()
 
             if vals is None:
-                vals = [safe_getattr(obj, k, get_prop=True) for k in attrs]
+                vals = [getattr_serial(obj, k, get_prop=True) for k in attrs]
 
             for k, v in zip(attrs, vals):
 
@@ -645,16 +462,16 @@ class Instrument(object):
             if not safe_hasattr(obj, method_name):
                 pass
             else:
-                method = safe_getattr(obj, method_name)
+                method = getattr_serial(obj, method_name)
                 print(f"\t{query}Looking at {method}")
 
                 if safe_hasattr(method, "__func__"):
-                    func = safe_getattr(method, "__func__")
+                    func = getattr_serial(method, "__func__")
                     print(
                         f"\t\t{query}: Looking at bound method {method_name} with func {func}"
                     )
 
-                    if safe_hasattr(func, Instrument.INSTRUMENT):
+                    if safe_hasattr(func, mod_trace.INSTRUMENT):
                         print(
                             f"\t\t\t{query} Bound method {func} is instrumented."
                         )
@@ -688,7 +505,7 @@ class Instrument(object):
                             )
 
                 else:
-                    if safe_hasattr(method, Instrument.INSTRUMENT):
+                    if safe_hasattr(method, mod_trace.INSTRUMENT):
                         print(
                             f"\t\t{query} Bound method {method} is instrumented."
                         )

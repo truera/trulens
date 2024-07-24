@@ -6,27 +6,22 @@ import logging
 from pprint import PrettyPrinter
 from time import sleep
 from types import ModuleType
-from typing import (Any, Callable, ClassVar, Dict, List, Optional, Sequence,
-                    Tuple, Type, TypeVar)
+from typing import (
+    Any, Callable, ClassVar, Dict, List, Optional, Sequence, Tuple, Type,
+    TypeVar
+)
 
 from pydantic import Field
 import requests
 
 from trulens_eval import trace as mod_trace
-from trulens_eval.schema import base as mod_base_schema
-from trulens_eval.utils import pace as mod_pace
-from trulens_eval.utils import wrap as mod_wrap_utils
-from trulens_eval.utils.pyschema import safe_getattr
-from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.python import callable_name
-from trulens_eval.utils.python import class_name
-from trulens_eval.utils.python import module_name
-from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.python import SingletonPerName
-from trulens_eval.utils.python import Thunk
-from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import SerialModel
-from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
+from trulens_eval.schema import base as base_schema
+from trulens_eval.utils import pace as pace_utils
+from trulens_eval.utils import pyschema as pyschema_utils
+from trulens_eval.utils import python as python_utils
+from trulens_eval.utils import serial as serial_utils
+from trulens_eval.utils import threading as threading_utils
+from trulens_eval.utils import wrap as wrap_utils
 
 logger = logging.getLogger(__name__)
 
@@ -42,37 +37,18 @@ DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
 
 
-class EndpointCallback(mod_wrap_utils.CallableCallbacks[T]):
-    """Callbacks to be invoked after various API requests and track various metrics
-    like token usage.
-    """
+class EndpointCallback(mod_trace.TracingCallbacks[T]):
+    """Extension to TracingCallbacks that tracks costs."""
 
     # overriding CallableCallbacks
-    def __init__(self, *args, endpoint: Endpoint, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, endpoint: Endpoint, **kwargs):
+        super().__init__(**kwargs, span_type=mod_trace.LiveSpanCallWithCost)
 
-        self.cost: Optional[mod_base_schema.Cost] = None
         self.endpoint: Endpoint = endpoint
+        self.span.endpoint = endpoint
 
-        self.cost_span_context = None
-        self.cost_span: Optional[mod_trace.PhantomSpanCost] = None
-
-        self.cost_span_context = mod_trace.get_tracer().cost()
-        self.cost_span = self.cost_span_context.__enter__()
-        self.cost = self.cost_span.cost
+        self.cost: base_schema.Cost = self.span.cost
         self.cost.n_requests += 1
-
-    # overriding CallableCallbacks
-    def on_callable_end(self):
-        assert self.cost_span_context is not None
-
-        if self.error is not None:
-            self.cost_span_context.__exit__(
-                type(self.error), self.error, self.error.__traceback__
-            )
-        else:
-            self.cost += self.cost_span.cost
-            self.cost_span_context.__exit__(None, None, None)
 
     # overriding CallableCallbacks
     def on_callable_return(self, ret: T, **kwargs) -> T:
@@ -81,6 +57,8 @@ class EndpointCallback(mod_wrap_utils.CallableCallbacks[T]):
         self.cost.n_responses += 1
 
         ret = super().on_callable_return(ret=ret, **kwargs)
+        # Fills in some general attributes from kwargs before the next callback
+        # is called.
 
         self.on_endpoint_response(response=ret)
 
@@ -92,11 +70,13 @@ class EndpointCallback(mod_wrap_utils.CallableCallbacks[T]):
 
         logger.warning("No on_response method defined for %s.", self)
 
+
 #    def on_chunk(self, response: Any) -> None:
 #        """Called after receiving a chunk from a request."""
 #        self.cost.n_stream_chunks += 1
 
-    # our optional
+# our optional
+
     def on_endpoint_generation(self, response: Any) -> None:
         """Called after each completion request."""
 
@@ -121,7 +101,8 @@ class EndpointCallback(mod_wrap_utils.CallableCallbacks[T]):
         # logger.warning("No on_classification method defined for %s.", self)
 
 
-class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
+class Endpoint(pyschema_utils.WithClassInfo, serial_utils.SerialModel,
+               python_utils.SingletonPerName):
     """API usage, pacing, and utilities for API endpoints."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -154,8 +135,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     post_headers: Dict[str, str] = Field(default_factory=dict, exclude=True)
     """Optional post headers for post requests if done by this class."""
 
-    pace: mod_pace.Pace = Field(
-        default_factory=lambda: mod_pace.
+    pace: pace_utils.Pace = Field(
+        default_factory=lambda: pace_utils.
         Pace(marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0),
         exclude=True
     )
@@ -187,7 +168,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         callback_class: Optional[Any] = None,
         **kwargs
     ):
-        if safe_hasattr(self, "rpm"):
+        if python_utils.safe_hasattr(self, "rpm"):
             # already initialized via the SingletonPerName mechanism
             return
 
@@ -202,7 +183,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         kwargs['name'] = name
         kwargs['callback_class'] = callback_class
         kwargs['callback_name'] = f"callback_{name}"
-        kwargs['pace'] = mod_pace.Pace(
+        kwargs['pace'] = pace_utils.Pace(
             seconds_per_period=60.0,  # 1 minute
             marks_per_second=rpm / 60.0
         )
@@ -225,7 +206,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def track_all_costs_tally(func: Callable[..., T], *args,
-                              **kwargs) -> Tuple[T, mod_base_schema.Cost]:
+                              **kwargs) -> Tuple[T, base_schema.Cost]:
         """Track the costs of all instrumented methods in the given thunk.
 
         Args:
@@ -250,8 +231,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def post(
         self,
         url: str,
-        payload: JSON,
-        timeout: float = DEFAULT_NETWORK_TIMEOUT
+        payload: serial_utils.JSON,
+        timeout: float = threading_utils.DEFAULT_NETWORK_TIMEOUT
     ) -> Any:
         self.pace_me()
         ret = requests.post(
@@ -322,7 +303,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             + ("\n\t".join(map(str, errors)))
         )
 
-    def run_me(self, thunk: Thunk[T]) -> T:
+    def run_me(self, thunk: python_utils.Thunk[T]) -> T:
         """
         DEPRECTED: Run the given thunk, returning itse output, on pace with the api.
         Retries request multiple times if self.retries > 0.
@@ -335,10 +316,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         )
 
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
-        if safe_hasattr(mod, method_name):
+        if python_utils.safe_hasattr(mod, method_name):
             logger.debug(
-                "Instrumenting %s.%s for %s", module_name(mod), method_name,
-                self.name
+                "Instrumenting %s.%s for %s", python_utils.module_name(mod),
+                method_name, self.name
             )
             func = getattr(mod, method_name)
             w = self.wrap_function(func)
@@ -356,10 +337,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             method_name: The method by name.
         """
 
-        if safe_hasattr(cls, method_name):
+        if python_utils.safe_hasattr(cls, method_name):
             logger.debug(
-                "Instrumenting %s.%s for %s", class_name(cls), method_name,
-                self.name
+                "Instrumenting %s.%s for %s", python_utils.class_name(cls),
+                method_name, self.name
             )
             func = getattr(cls, method_name)
             w = self.wrap_function(func)
@@ -395,7 +376,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         that the produced method gets instrumented. Only instruments the
         produced methods if they are matched by named `wrapped_method_filter`.
         """
-        if safe_hasattr(cls, wrapper_method_name):
+        if python_utils.safe_hasattr(cls, wrapper_method_name):
             logger.debug(
                 "Instrumenting method creator %s.%s for %s", cls.__name__,
                 wrapper_method_name, self.name
@@ -409,7 +390,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 if wrapped_method_filter(produced_func):
 
                     logger.debug(
-                        "Instrumenting %s", callable_name(produced_func)
+                        "Instrumenting %s",
+                        python_utils.callable_name(produced_func)
                     )
 
                     instrumented_produced_func = self.wrap_function(
@@ -439,10 +421,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             contain it).
         """
 
-        if not safe_hasattr(mod, INSTRUMENT):
+        if not python_utils.safe_hasattr(mod, INSTRUMENT):
             setattr(mod, INSTRUMENT, set())
 
-        already_instrumented = safe_getattr(mod, INSTRUMENT)
+        already_instrumented = pyschema_utils.getattr_serial(mod, INSTRUMENT)
 
         if method_name in already_instrumented:
             logger.debug(
@@ -455,8 +437,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 "instrumenting module %s member %s for method %s", mod, m,
                 method_name
             )
-            if safe_hasattr(mod, m):
-                obj = safe_getattr(mod, m)
+            if python_utils.safe_hasattr(mod, m):
+                obj = pyschema_utils.getattr_serial(mod, m)
                 if inspect.isclass(obj):
                     self._instrument_class(obj, method_name=method_name)
 
@@ -469,8 +451,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             func: The function to wrap.
         """
 
-        return mod_wrap_utils.wrap_callable(
-            func=func, callback_class=self.callback_class, endpoint=self
+        return wrap_utils.wrap_callable(
+            func=func,
+            func_name=python_utils.callable_name(func),
+            callback_class=self.callback_class,
+            endpoint=self
         )
 
 

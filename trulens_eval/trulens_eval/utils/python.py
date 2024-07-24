@@ -14,10 +14,9 @@ import queue
 import sys
 from types import ModuleType
 import typing
-from typing import (
-    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterable,
-    Iterator, List, Optional, Protocol, Sequence, Type, TypeVar, Union
-)
+from typing import (Any, Awaitable, Callable, Dict, Generator, Generic,
+                    Hashable, Iterable, Iterator, List, Optional, Protocol,
+                    Sequence, Type, TypeVar, Union)
 
 T = TypeVar("T")
 
@@ -224,6 +223,38 @@ def safe_signature(func_or_obj: Any):
         else:
             raise e
 
+
+def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
+    """Try to get the attribute `k` of the given object.
+    
+    This may evaluate some code if the attribute is a property and may fail. If
+    `get_prop` is False, will not return contents of properties (will raise
+    `ValueException`).
+    """
+
+    v = inspect.getattr_static(obj, k)
+
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception as e:
+        raise RuntimeError(f"Failed to check if {k} is a property.") from e
+       
+    if is_prop:
+        if not get_prop:
+            raise ValueError(f"{k} is a property")
+
+        try:
+            v = v.fget(obj)
+            return v
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to get property {k}.") from e
+
+    else:
+        return v
 
 def safe_hasattr(obj: Any, k: str) -> bool:
     """Check if the given object has the given attribute.
@@ -714,7 +745,7 @@ class SingletonPerName(Generic[T]):
             # If exception happens here, the instance should not be added to
             # _instances.
             instance = super().__new__(cls)
-            
+
             SingletonPerName._id_to_name_map[id(instance)] = name
             info = SingletonInfo(name=name, val=instance)
             SingletonPerName._instances[k] = info

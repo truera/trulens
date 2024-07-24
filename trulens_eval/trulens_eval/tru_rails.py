@@ -16,7 +16,7 @@ from trulens_eval import app as mod_app
 from trulens_eval.feedback import feedback
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
-from trulens_eval.schema import feedback as mod_feedback_schema
+from trulens_eval.schema import feedback as feedback_schema
 from trulens_eval.tru_chain import LangChainInstrument
 from trulens_eval.utils.containers import dict_set_with_multikey
 from trulens_eval.utils.imports import OptionalImports
@@ -45,7 +45,7 @@ with OptionalImports(messages=REQUIREMENT_RAILS) as opt:
 opt.assert_installed(nemoguardrails)
 
 
-class RailsActionSelect(mod_feedback_schema.Select):
+class RailsActionSelect(feedback_schema.Select):
     """Selector shorthands for _NeMo Guardrails_ apps when used for evaluating
     feedback in actions.
     
@@ -435,7 +435,7 @@ class TruRails(mod_app.App):
         """
         Get the path to the context in the query output.
         """
-        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:
+        return feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[:
                                                                                     ].body
 
     def __getattr__(self, name):

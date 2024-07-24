@@ -9,16 +9,15 @@ from nltk.tokenize import sent_tokenize
 import numpy as np
 
 from trulens_eval.feedback import prompts
-from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
-from trulens_eval.utils import generated as mod_generated_utils
-from trulens_eval.utils.generated import re_0_10_rating
-from trulens_eval.utils.pyschema import WithClassInfo
-from trulens_eval.utils.serial import SerialModel
+from trulens_eval.feedback.provider.endpoint import base as base_endpoint
+from trulens_eval.utils import generated as generated_utils
+from trulens_eval.utils import pyschema as pyschema_utils
+from trulens_eval.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
 
 
-class Provider(WithClassInfo, SerialModel):
+class Provider(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     """Base Provider class.
     
     TruLens makes use of *Feedback Providers* to generate evaluations of large
@@ -78,7 +77,7 @@ class Provider(WithClassInfo, SerialModel):
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    endpoint: Optional[mod_endpoint.Endpoint] = None
+    endpoint: Optional[base_endpoint.Endpoint] = None
     """Endpoint supporting this provider.
     
     Remote API invocations are handled by the endpoint.
@@ -171,7 +170,7 @@ class LLMProvider(Provider):
             temperature=temperature
         )
 
-        return mod_generated_utils.re_0_10_rating(response) / normalize
+        return generated_utils.re_0_10_rating(response) / normalize
 
     def generate_score_and_reasons(
         self,
@@ -213,7 +212,7 @@ class LLMProvider(Provider):
             criteria = None
             for line in response.split('\n'):
                 if "Score" in line:
-                    score = mod_generated_utils.re_0_10_rating(line) / normalize
+                    score = generated_utils.re_0_10_rating(line) / normalize
                 criteria_lines = []
                 supporting_evidence_lines = []
                 collecting_criteria = False
@@ -256,7 +255,7 @@ class LLMProvider(Provider):
             return score, reasons
 
         else:
-            score = mod_generated_utils.re_0_10_rating(response) / normalize
+            score = generated_utils.re_0_10_rating(response) / normalize
             warnings.warn(
                 "No supporting evidence provided. Returning score only.",
                 UserWarning
@@ -518,7 +517,7 @@ class LLMProvider(Provider):
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
         )
-        return mod_generated_utils.re_0_10_rating(agreement_txt) / 10.0
+        return generated_utils.re_0_10_rating(agreement_txt) / 10.0
 
     def _langchain_evaluate(self, text: str, criteria: str) -> float:
         """
@@ -1107,7 +1106,7 @@ class LLMProvider(Provider):
             reasons += assessment + "\n\n"
             if assessment:
                 first_line = assessment.split('\n')[0]
-                score = re_0_10_rating(first_line) / 10
+                score = generated_utils.re_0_10_rating(first_line) / 10
                 scores.append(score)
 
         score = sum(scores) / len(scores) if scores else 0

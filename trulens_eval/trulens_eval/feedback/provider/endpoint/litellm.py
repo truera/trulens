@@ -7,7 +7,7 @@ import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.schema import base as mod_base_schema
+from trulens_eval.schema import base as base_schema
 from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
 
@@ -67,7 +67,7 @@ class LiteLLMCallback(EndpointCallback[T]):
 
         assert self.cost is not None
 
-        self.cost += mod_base_schema.Cost(
+        self.cost += base_schema.Cost(
             **{
                 cost_field: response.get(litellm_field, 0)
                 for cost_field, litellm_field in [

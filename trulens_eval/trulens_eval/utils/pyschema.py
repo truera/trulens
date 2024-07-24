@@ -27,9 +27,8 @@ import warnings
 
 import pydantic
 
-from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.python import safe_issubclass
-from trulens_eval.utils.serial import SerialModel
+from trulens_eval.utils import python as python_utils
+from trulens_eval.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -69,38 +68,18 @@ def noserio(obj, **extra: Dict) -> dict:
 
 
 # TODO: rename as functionality optionally produces JSONLike .
-def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
-    """
-    Try to get the attribute `k` of the given object. This may evaluate some
-    code if the attribute is a property and may fail. In that case, an dict
-    indicating so is returned.
-
-    If `get_prop` is False, will not return contents of properties (will raise
-    `ValueException`).
+def getattr_serial(obj: Any, k: str, get_prop: bool = True) -> Any:
+    """Try to get the attribute `k` of the given object. 
+    
+    This may evaluate some code if the attribute is a property and may fail. In
+    that case, an dict indicating so is returned.  If `get_prop` is False, will
+    not return contents of properties (will raise `ValueException`).
     """
 
-    v = inspect.getattr_static(obj, k)
-
-    is_prop = False
     try:
-        # OpenAI version 1 classes may cause this isinstance test to raise an
-        # exception.
-        is_prop = isinstance(v, property)
-    except Exception as e:
+        return python_utils.safe_getattr(obj=obj, k=k, get_prop=get_prop)
+    except RuntimeError as e:
         return {ERROR: Obj.of_object(e)}
-
-    if is_prop:
-        if not get_prop:
-            raise ValueError(f"{k} is a property")
-
-        try:
-            v = v.fget(obj)
-            return v
-
-        except Exception as e:
-            return {ERROR: Obj.of_object(e)}
-    else:
-        return v
 
 
 def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
@@ -134,7 +113,7 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
             continue
 
         try:
-            v = safe_getattr(obj, k, get_prop=include_props)
+            v = getattr_serial(obj, k, get_prop=include_props)
             ret[k] = v
         except Exception as e:
             logger.debug(str(e))
@@ -142,7 +121,7 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
     return ret
 
 
-class Module(SerialModel):
+class Module(serial_utils.SerialModel):
     package_name: Optional[str] = None  # some modules are not in a package
     module_name: str
 
@@ -172,7 +151,7 @@ class Module(SerialModel):
         )
 
 
-class Class(SerialModel):
+class Class(serial_utils.SerialModel):
     """
     A python class. Should be enough to deserialize the constructor. Also
     includes bases so that we can query subtyping relationships without
@@ -295,7 +274,7 @@ def _safe_init_sig(cls):
         return builtin_init_sig
 
 
-class Obj(SerialModel):
+class Obj(serial_utils.SerialModel):
     # TODO: refactor this into something like WithClassInfo, perhaps
     # WithObjectInfo, and store required constructor inputs as attributes with
     # potentially a placeholder for additional arguments that are not
@@ -412,7 +391,7 @@ class Obj(SerialModel):
             return cls(*bindings.args, **bindings.kwargs)
 
 
-class Bindings(SerialModel):
+class Bindings(serial_utils.SerialModel):
     args: Tuple
     kwargs: Dict[str, Any]
 
@@ -449,7 +428,7 @@ class Bindings(SerialModel):
         )
 
 
-class FunctionOrMethod(SerialModel):
+class FunctionOrMethod(serial_utils.SerialModel):
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
@@ -526,7 +505,7 @@ class Method(FunctionOrMethod):
 
 
 def object_module(obj):
-    if safe_hasattr(obj, "__module__"):
+    if python_utils.safe_hasattr(obj, "__module__"):
         return getattr(obj, "__module__")
     else:
         return "builtins"
@@ -642,7 +621,7 @@ class WithClassInfo(pydantic.BaseModel):
 
             try:
                 if (isinstance(val, dict)) and (CLASS_INFO in val) \
-                and inspect.isclass(typ) and safe_issubclass(typ, WithClassInfo):
+                and inspect.isclass(typ) and python_utils.safe_issubclass(typ, WithClassInfo):
                     subcls = Class.model_validate(val[CLASS_INFO]).load()
 
                     val = subcls.model_validate(val)

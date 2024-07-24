@@ -35,7 +35,7 @@ from typing import Awaitable, Callable, TypeVar, Union
 
 import nest_asyncio
 
-from trulens_eval.utils import python as mod_python_utils
+from trulens_eval.utils import python as python_utils
 from trulens_eval.utils import threading as mod_threading_utils
 
 nest_asyncio.apply()
@@ -62,8 +62,8 @@ May be checked with
 CallableAwaitable = Callable[[A], Awaitable[B]]
 """Function that produces an awaitable / coroutine function."""
 
-ThunkMaybeAwaitable = Union[mod_python_utils.Thunk[T],
-                            mod_python_utils.Thunk[Awaitable[T]]]
+ThunkMaybeAwaitable = Union[python_utils.Thunk[T],
+                            python_utils.Thunk[Awaitable[T]]]
 """Thunk or coroutine thunk. 
 
 May be checked with
@@ -82,7 +82,7 @@ async def desync(
     run asynchronously.
     """
 
-    if mod_python_utils.is_really_coroutinefunction(func):
+    if python_utils.is_really_coroutinefunction(func):
         return await func(*args, **kwargs)
 
     else:
@@ -101,7 +101,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
     block until it is finished. Runs in a new thread in such cases.
     """
 
-    if mod_python_utils.is_really_coroutinefunction(func):
+    if python_utils.is_really_coroutinefunction(func):
         func: Callable[[A], Awaitable[T]]
         awaitable: Awaitable[T] = func(*args, **kwargs)
 

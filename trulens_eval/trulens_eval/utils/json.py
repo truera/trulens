@@ -25,7 +25,7 @@ from trulens_eval.utils.pyschema import clean_attributes
 from trulens_eval.utils.pyschema import ERROR
 from trulens_eval.utils.pyschema import NOSERIO
 from trulens_eval.utils.pyschema import noserio
-from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils.pyschema import getattr_serial
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSON
@@ -289,7 +289,7 @@ def jsonify(
         new_dicted[id(obj)] = forward_value
         forward_value.update(
             {
-                k: recur(safe_getattr(obj, k))
+                k: recur(getattr_serial(obj, k))
                 for k, v in obj.model_fields.items()
                 if (not skip_excluded or not v.exclude) and recur_key(k)
             }
@@ -311,7 +311,7 @@ def jsonify(
         new_dicted[id(obj)] = forward_value
         forward_value.update(
             {
-                k: recur(safe_getattr(obj, k))
+                k: recur(getattr_serial(obj, k))
                 for k, v in obj.__fields__.items()
                 if (not skip_excluded or not v.field_info.exclude) and
                 recur_key(k)
@@ -334,7 +334,7 @@ def jsonify(
 
         forward_value.update(
             {
-                f.name: recur(safe_getattr(obj, f.name))
+                f.name: recur(getattr_serial(obj, f.name))
                 for f in dataclasses.fields(obj)
                 if recur_key(f.name)
             }

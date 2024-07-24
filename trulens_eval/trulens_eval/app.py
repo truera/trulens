@@ -8,7 +8,7 @@ from inspect import Signature
 import logging
 from pprint import PrettyPrinter
 import threading
-from threading import Lock
+import time
 from typing import (
     Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
     Optional, Sequence, Tuple, TypeVar, Union
@@ -16,27 +16,19 @@ from typing import (
 
 import pydantic
 
-import trulens_eval.feedback as mod_feedback
-import trulens_eval.instruments as mod_instruments
-import trulens_eval.schema.app as mod_app_schema
-import trulens_eval.schema.base as mod_base_schema
-import trulens_eval.schema.feedback as mod_feedback_schema
-import trulens_eval.schema.record as mod_record_schema
-import trulens_eval.schema.types as mod_types_schema
-import trulens_eval.trace as mod_trace
-from trulens_eval.utils.asynchro import CallableMaybeAwaitable
-from trulens_eval.utils.asynchro import desync
-from trulens_eval.utils.asynchro import sync
-from trulens_eval.utils.containers import BlockingSet
-from trulens_eval.utils.json import json_str_of_obj
-from trulens_eval.utils.json import jsonify
-import trulens_eval.utils.pyschema as pyschema
-import trulens_eval.utils.python as mod_python_utils
-from trulens_eval.utils.serial import all_objects
-from trulens_eval.utils.serial import GetItemOrAttribute
-from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.serial import JSON_BASES
-from trulens_eval.utils.serial import Lens
+from trulens_eval import feedback as mod_feedback
+from trulens_eval import instruments as mod_instruments
+from trulens_eval import trace as mod_trace
+from trulens_eval.schema import app as app_schema
+from trulens_eval.schema import base as base_schema
+from trulens_eval.schema import feedback as feedback_schema
+from trulens_eval.schema import record as record_schema
+from trulens_eval.utils import asynchro as asynchro_utils
+from trulens_eval.utils import containers as container_utils
+from trulens_eval.utils import json as json_utils
+from trulens_eval.utils import serial as serial_utils
+import trulens_eval.utils.pyschema as pyschema_utils
+import trulens_eval.utils.python as python_utils
 
 logger = logging.getLogger(__name__)
 
@@ -68,165 +60,25 @@ manager as in this example:
 """
 
 
-def instrumented_component_views(obj: object) -> Iterable[Tuple[Lens, JSON]]:
+def instrumented_component_views(
+    obj: object
+) -> Iterable[Tuple[serial_utils.Lens, serial_utils.JSON]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
     attribute/key. Returns tuples with the accessor/selector and the annotated
     object itself.
     """
 
-    for q, o in all_objects(obj):
-        if isinstance(
-                o,
-                pydantic.BaseModel) and pyschema.CLASS_INFO in o.model_fields:
+    for q, o in serial_utils.all_objects(obj):
+        if isinstance(o, pydantic.BaseModel
+                     ) and pyschema_utils.CLASS_INFO in o.model_fields:
             yield q, o.model_dump()
 
-        if isinstance(o, Dict) and pyschema.CLASS_INFO in o:
+        if isinstance(o, Dict) and pyschema_utils.CLASS_INFO in o:
             yield q, o
 
 
-class RecordingContext():
-    """Manager of the creation of records from record calls.
-    
-    An instance of this class is produced when using an
-    [App][trulens_eval.app.App] as a context mananger, i.e.:
-
-    Example:
-        ```python
-        app = ...  # your app
-        truapp: TruChain = TruChain(app, ...) # recorder for LangChain apps
-
-        with truapp as recorder:
-            app.invoke(...) # use your app
-
-        recorder: RecordingContext
-        ```
-    
-    Each instance of this class produces a record for every "root" instrumented
-    method called. Root method here means the first instrumented method in a
-    call stack. Note that there may be more than one of these contexts in play
-    at the same time due to:
-
-    - More than one wrapper of the same app.
-    - More than one context manager ("with" statement) surrounding calls to the
-      same app.
-    - Calls to "with_record" on methods that themselves contain recording.
-    - Calls to apps that use trulens internally to track records in any of the
-      supported ways.
-    - Combinations of the above.
-    """
-
-    def __init__(
-        self,
-        app: App,
-        record_metadata: JSON = None,
-        tracer: Optional[mod_trace.Tracer] = None,
-        span: Optional[mod_trace.PhantomSpanRecordingContext] = None,
-        span_ctx: Optional[mod_trace.Context] = None
-    ):
-        self.records: List[mod_record_schema.Record] = []
-        """Completed records.
-        
-        !!! NOTE
-            Since migration to span-based tracing, these records are produced by
-            converting spans.
-        """
-
-        self.lock: Lock = Lock()
-        """Lock blocking access to `records` when adding calls or
-        finishing a record."""
-
-        self.token: Optional[contextvars.Token] = None
-        """Token for context management."""
-
-        self.app: mod_instruments.WithInstrumentCallbacks = app
-        """App for which we are recording."""
-
-        self.record_metadata = record_metadata
-        """Metadata to attach to all records produced in this context."""
-
-        self.tracer: Optional[mod_trace.Tracer] = tracer
-        """OTEL-like tracer for recording.
-        
-        !!! Warning
-            This is transitional alternate recording mechanism to aid in the
-            otel-compatibility work.
-        """
-
-        self.span: Optional[mod_trace.PhantomSpanRecordingContext] = span
-
-        self.span_ctx = span_ctx
-
-    @property
-    def spans(self) -> Dict[mod_trace.Context, mod_trace.Span]:
-        """Get the spans of the tracer in this context."""
-
-        if self.tracer is None:
-            return {}
-
-        return self.tracer.spans
-
-    def __iter__(self):
-        return iter(self.records)
-
-    def get(self) -> mod_record_schema.Record:
-        """
-        Get the single record only if there was exactly one. Otherwise throw an error.
-        """
-
-        if len(self.records) == 0:
-            raise RuntimeError("Recording context did not record any records.")
-
-        if len(self.records) > 1:
-            raise RuntimeError(
-                "Recording context recorded more than 1 record. "
-                "You can get them with ctx.records, ctx[i], or `for r in ctx: ...`."
-            )
-
-        return self.records[0]
-
-    def __getitem__(self, idx: int) -> mod_record_schema.Record:
-        return self.records[idx]
-
-    def __len__(self):
-        return len(self.records)
-
-    def __hash__(self) -> int:
-        # The same app can have multiple recording contexts.
-        return hash(id(self.app)) + hash(id(self.records))
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-        # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
-
-    def finish_record(
-        self,
-        calls_to_record: Callable[[
-            List[mod_record_schema.RecordAppCall], mod_types_schema.
-            Metadata, Optional[mod_record_schema.Record]
-        ], mod_record_schema.Record],
-        existing_record: Optional[mod_record_schema.Record] = None
-    ):
-        """
-        Run the given function to build a record from the tracked calls and any
-        pre-specified metadata.
-        """
-
-        with self.lock:
-            record = calls_to_record(
-                list(self.calls.values()), self.record_metadata, existing_record
-            )
-            self.calls = {}
-
-            if existing_record is None:
-                # If existing record was given, we assume it was already
-                # inserted into this list.
-                self.records.append(record)
-
-        return record
-
-
-class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
+class App(app_schema.AppDefinition, mod_trace.WithInstrumentCallbacks,
           Hashable):
     """Base app recorder type.
 
@@ -287,7 +139,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     included in the json representation of this app.
     """
 
-    recording_contexts: contextvars.ContextVar[RecordingContext] \
+    recording_contexts: contextvars.ContextVar[mod_trace.RecordingContext] \
         = pydantic.Field(None, exclude=True)
     """Sequnces of records produced by the this class used as a context manager
     are stored in a RecordingContext.
@@ -295,13 +147,13 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     Using a context var so that context managers can be nested.
     """
 
-    instrumented_methods: Dict[int, Dict[Callable, Lens]] = \
+    instrumented_methods: Dict[int, Dict[Callable, serial_utils.Lens]] = \
         pydantic.Field(exclude=True, default_factory=dict)
     """Mapping of instrumented methods (by id(.) of owner object and the
     function) to their path in this app."""
 
-    records_with_pending_feedback_results: BlockingSet[mod_record_schema.Record] = \
-        pydantic.Field(exclude=True, default_factory=BlockingSet)
+    records_with_pending_feedback_results: container_utils.BlockingSet[record_schema.Record] = \
+        pydantic.Field(exclude=True, default_factory=container_utils.BlockingSet)
     """Records produced by this app which might have yet to finish
     feedback runs."""
 
@@ -350,12 +202,12 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         if self.instrument is not None:
             self.instrument.instrument_object(
-                obj=self.app, query=mod_feedback_schema.Select.Query().app
+                obj=self.app, query=feedback_schema.Select.Query().app
             )
         else:
             pass
 
-        if self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD:
+        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
             self._start_manage_pending_feedback_results()
 
         self._tru_post_init()
@@ -398,7 +250,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     def wait_for_feedback_results(
         self,
         feedback_timeout: Optional[float] = None
-    ) -> List[mod_record_schema.Record]:
+    ) -> List[record_schema.Record]:
         """Wait for all feedbacks functions to complete.
          
         Args:
@@ -481,7 +333,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             self.tru = Tru()
 
         else:
-            if self.feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
+            if self.feedback_mode == feedback_schema.FeedbackMode.NONE:
                 logger.warning(
                     "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
                     "No feedback evaluation and logging will occur."
@@ -492,7 +344,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             self.db.insert_app(app=self)
 
-            if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
+            if self.feedback_mode != feedback_schema.FeedbackMode.NONE:
                 logger.debug("Inserting feedback function definitions to db.")
 
                 for f in self.feedbacks:
@@ -504,7 +356,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                     "Feedback logging requires `tru` to be specified."
                 )
 
-        if self.feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
+        if self.feedback_mode == feedback_schema.FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
@@ -533,7 +385,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         if self.__class__.main_acall is not App.main_acall:
             # Use the async version if available.
-            return sync(self.main_acall, human)
+            return asynchro_utils.sync(self.main_acall, human)
 
         raise NotImplementedError()
 
@@ -543,7 +395,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         if self.__class__.main_call is not App.main_call:
             logger.warning("Using synchronous version of main call.")
             # Use the sync version if available.
-            return await desync(self.main_call, human)
+            return await asynchro_utils.desync(self.main_call, human)
 
         raise NotImplementedError()
 
@@ -610,7 +462,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> JSON:
+    ) -> serial_utils.JSON:
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
@@ -626,7 +478,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         # if have only containers of length 1, find the innermost non-container
         focus = all_args
 
-        while not isinstance(focus, JSON_BASES) and len(focus) == 1:
+        while not isinstance(focus,
+                             serial_utils.JSON_BASES) and len(focus) == 1:
             focus = focus[0]
             focus = self._extract_content(
                 focus, content_keys=['content', 'input']
@@ -636,19 +489,20 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                 logger.warning("Focus %s is not a sequence.", focus)
                 break
 
-        if isinstance(focus, JSON_BASES):
+        if isinstance(focus, serial_utils.JSON_BASES):
             return str(focus)
 
         # Otherwise we are not sure.
         logger.warning(
             "Unsure what the main input string is for the call to %s with args %s.",
-            mod_python_utils.callable_name(func), all_args
+            python_utils.callable_name(func), all_args
         )
 
         # After warning, just take the first item in each container until a
         # non-container is reached.
         focus = all_args
-        while not isinstance(focus, JSON_BASES) and len(focus) >= 1:
+        while not isinstance(focus,
+                             serial_utils.JSON_BASES) and len(focus) >= 1:
             focus = focus[0]
             focus = self._extract_content(focus)
 
@@ -656,7 +510,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                 logger.warning("Focus %s is not a sequence.", focus)
                 break
 
-        if isinstance(focus, JSON_BASES):
+        if isinstance(focus, serial_utils.JSON_BASES):
             return str(focus)
 
         logger.warning(
@@ -667,7 +521,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> JSON:
+    ) -> serial_utils.JSON:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -701,7 +555,9 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             )
 
     # WithInstrumentCallbacks requirement
-    def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
+    def on_method_instrumented(
+        self, obj: object, func: Callable, path: serial_utils.Lens
+    ):
         """
         Called by instrumentation system for every function requested to be
         instrumented by this app.
@@ -734,7 +590,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     # WithInstrumentCallbacks requirement
     def get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[int, Callable, Lens]]:
+    ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -748,12 +604,16 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                     yield (_id, f, path)
 
     # WithInstrumentCallbacks requirement
-    def get_method_path(self, obj: object, func: Callable) -> Lens:
+    def get_method_path(self, obj: object, func: Callable) -> serial_utils.Lens:
         """
         Get the path of the instrumented function `method` relative to this app.
         """
 
         # TODO: cleanup and/or figure out why references to objects change when executing langchain chains.
+
+        assert isinstance(
+            func, Callable
+        ), f"Callable expected but got {python_utils.class_name(type(func))}."
 
         funcs = self.instrumented_methods.get(id(obj))
 
@@ -761,9 +621,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             logger.warning(
                 "A new object of type %s at %s is calling an instrumented method %s. "
                 "The path of this call may be incorrect.",
-                mod_python_utils.class_name(type(obj)),
-                mod_python_utils.id_str(obj),
-                mod_python_utils.callable_name(func)
+                python_utils.class_name(type(obj)), python_utils.id_str(obj),
+                python_utils.callable_name(func)
             )
             try:
                 _id, _, path = next(iter(self.get_methods_for_func(func)))
@@ -776,7 +635,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
             logger.warning(
                 "Guessing path of new object is %s based on other object (%s) using this function.",
-                path, mod_python_utils.id_str(_id)
+                path, python_utils.id_str(_id)
             )
 
             funcs = {func: path}
@@ -790,9 +649,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                 logger.warning(
                     "A new object of type %s at %s is calling an instrumented method %s. "
                     "The path of this call may be incorrect.",
-                    mod_python_utils.class_name(type(obj)),
-                    mod_python_utils.id_str(obj),
-                    mod_python_utils.callable_name(func)
+                    python_utils.class_name(type(obj)),
+                    python_utils.id_str(obj), python_utils.callable_name(func)
                 )
 
                 try:
@@ -805,7 +663,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
                 logger.warning(
                     "Guessing path of new object is %s based on other object (%s) using this function.",
-                    path, mod_python_utils.id_str(_id)
+                    path, python_utils.id_str(_id)
                 )
 
                 return path
@@ -819,13 +677,13 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
-        return json_str_of_obj(
+        return json_utils.json_str_of_obj(
             self, *args, instrument=self.instrument, **kwargs
         )
 
     def model_dump(self, *args, redact_keys: bool = False, **kwargs):
         # Same problem as in json.
-        return jsonify(
+        return json_utils.jsonify(
             self,
             instrument=self.instrument,
             redact_keys=redact_keys,
@@ -839,15 +697,17 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         # recording = tracer.__enter__()
 
         recording_span_ctx = await tracer.arecording()
-        recording_span: mod_trace.PhantomSpanRecordingContext = await recording_span_ctx.__aenter__()
-        recording: RecordingContext = RecordingContext(
+        recording_span: mod_trace.PhantomSpanRecordingContext = await recording_span_ctx.__aenter__(
+        )
+        recording: mod_trace.RecordingContext = mod_trace.RecordingContext(
             app=self,
             tracer=tracer,
             span=recording_span,
             span_ctx=recording_span_ctx
         )
         recording_span.recording = recording
-        
+        recording_span.start_timestamp = time.time_ns()
+
         # recording.ctx = ctx
 
         token = self.recording_contexts.set(recording)
@@ -861,15 +721,17 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         # recording = tracer.__enter__()
 
         recording_span_ctx = tracer.recording()
-        recording_span: mod_trace.PhantomSpanRecordingContext = recording_span_ctx.__enter__()
-        recording: RecordingContext = RecordingContext(
+        recording_span: mod_trace.PhantomSpanRecordingContext = recording_span_ctx.__enter__(
+        )
+        recording: mod_trace.RecordingContext = mod_trace.RecordingContext(
             app=self,
             tracer=tracer,
             span=recording_span,
             span_ctx=recording_span_ctx
         )
         recording_span.recording = recording
-        
+        recording_span.start_timestamp = time.time_ns()
+
         # recording.ctx = ctx
 
         token = self.recording_contexts.set(recording)
@@ -879,26 +741,30 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
     # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
-        recording: RecordingContext = self.recording_contexts.get()
+        recording: mod_trace.RecordingContext = self.recording_contexts.get()
 
         assert recording is not None, "Not in a tracing context."
         assert recording.tracer is not None, "Not in a tracing context."
+
+        recording.span.end_timestamp = time.time_ns()
 
         self.recording_contexts.reset(recording.token)
         return recording.span_ctx.__exit__(exc_type, exc_value, exc_tb)
-    
+
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        recording: RecordingContext = self.recording_contexts.get()
+        recording: mod_trace.RecordingContext = self.recording_contexts.get()
 
         assert recording is not None, "Not in a tracing context."
         assert recording.tracer is not None, "Not in a tracing context."
+
+        recording.span.end_timestamp = time.time_ns()
 
         self.recording_contexts.reset(recording.token)
         return await recording.span_ctx.__aexit__(exc_type, exc_value, exc_tb)
 
     # WithInstrumentCallbacks requirement
-    def get_active_contexts(self) -> Iterable[RecordingContext]:
+    def get_active_contexts(self) -> Iterable[mod_trace.RecordingContext]:
         """Get all active recording contexts."""
 
         recording = self.recording_contexts.get(contextvars.Token.MISSING)
@@ -910,10 +776,10 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     # WithInstrumentCallbacks requirement
     def on_new_root_span(
         self,
-        recording: RecordingContext,
+        recording: mod_trace.RecordingContext,
         root_span: mod_trace.Span,
-    ) -> 'Record':
-        
+    ) -> record_schema.Record:
+
         tracer = root_span.context.tracer
 
         if self.tru.otel_exporter is not None:
@@ -922,11 +788,16 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
             for span in root_span.iter_family(include_phantom=True):
                 e_span = span.otel_freeze()
                 to_export.append(e_span)
+                print(e_span.name)
 
-            print(f"Exporting {len(to_export)} spans to {self.tru.otel_exporter}.")
+            print(
+                f"Exporting {len(to_export)} spans to {self.tru.otel_exporter}."
+            )
             self.tru.otel_exporter.export(to_export)
 
-        record = tracer.record_of_root_span(root_span=root_span, recording=recording)
+        record = tracer.record_of_root_span(
+            root_span=root_span, recording=recording
+        )
         recording.records.append(record)
         # need to jsonify?
 
@@ -948,12 +819,12 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         if record.feedback_and_future_results is None:
             return record
 
-        if self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD:
+        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
             # Add the record to ones with pending feedback.
 
             self.records_with_pending_feedback_results.add(record)
 
-        elif self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP:
+        elif self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP:
             # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
             # evaluating before returning the record.
 
@@ -969,7 +840,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
 
         if not isinstance(func, Callable):
             raise TypeError(
-                f"Expected `func` to be a callable, but got {mod_python_utils.class_name(type(func))}."
+                f"Expected `func` to be a callable, but got {python_utils.class_name(type(func))}."
             )
 
         # If func is actually an object that implements __call__, check __call__
@@ -977,9 +848,8 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         if not (inspect.isfunction(func) or inspect.ismethod(func)):
             func = func.__call__
 
-        if not mod_python_utils.safe_hasattr(
-                func, mod_instruments.Instrument.INSTRUMENT):
-            if mod_instruments.Instrument.INSTRUMENT in dir(func):
+        if not python_utils.safe_hasattr(func, mod_trace.INSTRUMENT):
+            if mod_trace.INSTRUMENT in dir(func):
                 # HACK009: Need to figure out the __call__ accesses by class
                 # name/object name with relation to this check for
                 # instrumentation because we keep hitting spurious warnings
@@ -993,13 +863,12 @@ that has been instrumented exactly once. Otherwise unexpected results may
 follow. You can use `AddInstruments.method` of `trulens_eval.instruments` before
 you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 `print_instrumented` may be used to see methods that have been instrumented.
-""", func, mod_python_utils.class_name(self),
-                mod_python_utils.callable_name(func),
-                mod_python_utils.class_name(self)
+""", func, python_utils.class_name(self), python_utils.callable_name(func),
+                python_utils.class_name(self)
             )
 
     async def awith_(
-        self, func: CallableMaybeAwaitable[A, T], *args, **kwargs
+        self, func: asynchro_utils.CallableMaybeAwaitable[A, T], *args, **kwargs
     ) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
@@ -1013,7 +882,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         if not isinstance(awaitable, Awaitable):
             raise TypeError(
-                f"Expected `func` to be an async function or return an awaitable, but got {mod_python_utils.class_name(type(awaitable))}."
+                f"Expected `func` to be an async function or return an awaitable, but got {python_utils.class_name(type(awaitable))}."
             )
 
         return await awaitable
@@ -1037,7 +906,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         *args,
         record_metadata: JSON = None,
         **kwargs
-    ) -> Tuple[T, mod_record_schema.Record]:
+    ) -> Tuple[T, record_schema.Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
@@ -1060,9 +929,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         func: Callable[[A], Awaitable[T]],
         *args,
-        record_metadata: JSON = None,
+        record_metadata: Optional[serial_utils.JSON] = None,
         **kwargs
-    ) -> Tuple[T, mod_record_schema.Record]:
+    ) -> Tuple[T, record_schema.Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
@@ -1073,7 +942,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         )
         if not isinstance(awaitable, Awaitable):
             raise TypeError(
-                f"Expected `func` to be an async function or return an awaitable, but got {mod_python_utils.class_name(type(awaitable))}."
+                f"Expected `func` to be an async function or return an awaitable, but got {python_utils.class_name(type(awaitable))}."
             )
 
         return await awaitable, record
@@ -1119,8 +988,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     def _add_future_feedback(
         self, future_or_result: Union[
-            mod_feedback_schema.FeedbackResult,
-            mod_python_utils.Future[mod_feedback_schema.FeedbackResult]]
+            feedback_schema.FeedbackResult,
+            python_utils.Future[feedback_schema.FeedbackResult]]
     ) -> None:
         """
         Callback used to add feedback results to the database once they are
@@ -1129,7 +998,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         See [_handle_record][trulens_eval.app.App._handle_record].
         """
 
-        if isinstance(future_or_result, mod_python_utils.Future):
+        if isinstance(future_or_result, python_utils.Future):
             res = future_or_result.result()
         else:
             res = future_or_result
@@ -1138,10 +1007,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     def _handle_record(
         self,
-        record: mod_record_schema.Record,
-        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None
-    ) -> Optional[List[Tuple[mod_feedback.Feedback, mod_python_utils.
-                             Future[mod_feedback_schema.FeedbackResult]]]]:
+        record: record_schema.Record,
+        feedback_mode: Optional[feedback_schema.FeedbackMode] = None
+    ) -> Optional[List[Tuple[mod_feedback.Feedback, python_utils.
+                             Future[feedback_schema.FeedbackResult]]]]:
         """
         Write out record-related info to database if set and schedule feedback
         functions to be evaluated. If feedback_mode is provided, will use that
@@ -1164,10 +1033,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return []
 
         # Add empty (to run) feedback to db.
-        if feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
+        if feedback_mode == feedback_schema.FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 self.db.insert_feedback(
-                    mod_feedback_schema.FeedbackResult(
+                    feedback_schema.FeedbackResult(
                         name=f.name,
                         record_id=record_id,
                         feedback_definition_id=f.feedback_definition_id
@@ -1176,9 +1045,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
             return None
 
-        elif feedback_mode in [mod_feedback_schema.FeedbackMode.WITH_APP,
-                               mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
-                              ]:
+        elif feedback_mode in [feedback_schema.FeedbackMode.WITH_APP,
+                               feedback_schema.FeedbackMode.WITH_APP_THREAD]:
 
             return self.tru._submit_feedback_functions(
                 record=record,
@@ -1187,7 +1055,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 on_done=self._add_future_feedback
             )
 
-    def _handle_error(self, record: mod_record_schema.Record, error: Exception):
+    def _handle_error(self, record: record_schema.Record, error: Exception):
         if self.db is None:
             return
 
@@ -1195,7 +1063,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         # A message for cases where a user calls something that the wrapped app
         # contains. We do not support this form of pass-through calls anymore.
 
-        if mod_python_utils.safe_hasattr(self.app, __name):
+        if python_utils.safe_hasattr(self.app, __name):
             msg = ATTRIBUTE_ERROR_MESSAGE.format(
                 attribute_name=__name,
                 class_name=type(self).__name__,
@@ -1210,15 +1078,15 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     def dummy_record(
         self,
-        cost: mod_base_schema.Cost = mod_base_schema.Cost(),
-        perf: mod_base_schema.Perf = mod_base_schema.Perf.now(),
+        cost: base_schema.Cost = base_schema.Cost(),
+        perf: base_schema.Perf = base_schema.Perf.now(),
         ts: datetime.datetime = datetime.datetime.now(),
         main_input: str = "main_input are strings.",
         main_output: str = "main_output are strings.",
         main_error: str = "main_error are strings.",
         meta: Dict = {'metakey': 'meta are dicts'},
         tags: str = 'tags are strings'
-    ) -> mod_record_schema.Record:
+    ) -> record_schema.Record:
         """Create a dummy record with some of the expected structure without
         actually invoking the app.
 
@@ -1245,7 +1113,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
                 sig = inspect.signature(method)
 
-                method_serial = pyschema.FunctionOrMethod.of_callable(method)
+                method_serial = pyschema_utils.FunctionOrMethod.of_callable(
+                    method
+                )
 
                 sample_args = {}
                 for p in sig.parameters.values():
@@ -1254,9 +1124,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                     else:
                         sample_args[p.name] = p.default
 
-                sample_call = mod_record_schema.RecordAppCall(
+                sample_call = record_schema.RecordAppCall(
                     stack=[
-                        mod_record_schema.RecordAppCallMethod(
+                        record_schema.RecordAppCallMethod(
                             path=lens, method=method_serial
                         )
                     ],
@@ -1268,7 +1138,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
                 calls.append(sample_call)
 
-        return mod_record_schema.Record(
+        return record_schema.Record(
             app_id=self.app_id,
             calls=calls,
             cost=cost,
@@ -1281,7 +1151,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             tags=tags
         )
 
-    def instrumented(self) -> Iterable[Tuple[Lens, JSON]]:
+    def instrumented(
+        self
+    ) -> Iterable[Tuple[serial_utils.Lens, serial_utils.JSON]]:
         """
         Iteration over instrumented components and their categories.
         """
@@ -1289,8 +1161,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         for q, c in instrumented_component_views(self.model_dump()):
             # Add the chain indicator so the resulting paths can be specified
             # for feedback selectors.
-            q = Lens(
-                path=(GetItemOrAttribute(item_or_attribute="__app__"),) + q.path
+            q = serial_utils.Lens(
+                path=(
+                    serial_utils.
+                    GetItemOrAttribute(item_or_attribute="__app__"),
+                ) + q.path
             )
             yield q, c
 
@@ -1307,7 +1182,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         return "\n".join(
             f"Object at 0x{obj:x}:\n\t" + "\n\t".join(
-                f"{m} with path {mod_feedback_schema.Select.App + path}"
+                f"{m} with path {feedback_schema.Select.App + path}"
                 for m, path in p.items()
             )
             for obj, p in self.instrumented_methods.items()
@@ -1324,8 +1199,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         object_strings = []
 
         for t in self.instrumented():
-            t: Tuple[Lens, JSON]
-            path = Lens(t[0].path[1:])
+            t: Tuple[serial_utils.Lens, serial_utils.JSON]
+            path = serial_utils.Lens(t[0].path[1:])
             obj = next(iter(path.get(self)))
             object_strings.append(
                 f"\t{type(obj).__name__} ({obj.__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
