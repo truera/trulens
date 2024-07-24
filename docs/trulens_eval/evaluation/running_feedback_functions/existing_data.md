@@ -131,8 +131,8 @@ for record in data_dict:
 Now that we've ingested constructed the virtual records, we can build our feedback functions. This is done just the same as normal, except the context selector will instead refer to the new `context_call` we added to the virtual record.
 
 ```python
-from trulens.feedback.provider import OpenAI
-from trulens.feedback.feedback import Feedback
+from trulens.external.provider import OpenAI
+from trulens.core import Feedback
 
 # Initialize provider class
 openai = OpenAI()
@@ -180,7 +180,7 @@ virtual_app = dict(
     debug="all of these fields are completely optional"
 )
 
-from trulens.schema import Select
+from trulens.core.schema import Select
 from trulens.tru_virtual import VirtualApp
 
 virtual_app = VirtualApp(virtual_app)

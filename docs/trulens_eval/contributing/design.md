@@ -7,7 +7,7 @@
 Currently to get going, a user needs to add  4 lines of python:
 
 ```python
-from trulens import Tru # line 1
+from trulens.core import Tru # line 1
 tru = Tru() # line 2
 with tru.Chain(app): # 3
     app.invoke("some question") # doesn't count since they already had this

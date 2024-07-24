@@ -7,7 +7,7 @@ See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-
 
 For example, for Postgres database `trulens` running on `localhost` with username `trulensuser` and password `password` set up a connection like so.
 ```
-from trulens import Tru
+from trulens.core import Tru
 tru = Tru(database_url="postgresql://trulensuser:password@localhost/trulens")
 ```
 After which you should receive the following message:

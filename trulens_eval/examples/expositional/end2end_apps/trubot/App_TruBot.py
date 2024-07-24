@@ -8,12 +8,12 @@ from langchain_community.vectorstores import Pinecone
 import numpy as np
 import pinecone
 import streamlit as st
-from trulens import feedback
-from trulens import Select
-from trulens import tru
-from trulens import tru_chain_recorder
-from trulens.feedback import Feedback
-from trulens.keys import check_keys
+from trulens.core import Select
+from trulens.core.feedback import Feedback
+from trulens.external import Huggingface
+from trulens.external import OpenAI
+from trulens.langchain import TruChain
+from trulens.utils.keys import check_keys
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -36,8 +36,8 @@ pinecone.init(
 
 identity = lambda h: h
 
-hugs = feedback.Huggingface()
-openai = feedback.OpenAI()
+hugs = Huggingface()
+openai = OpenAI()
 
 f_lang_match = Feedback(hugs.language_match).on(
     text1=Select.RecordInput, text2=Select.RecordOutput
@@ -114,7 +114,7 @@ def generate_response(prompt):
         chain.combine_docs_chain.document_prompt.template = '\tContext: {page_content}'
 
     # Trulens instrumentation.
-    tc = tru_chain_recorder.TruChain(chain, app_id=app_id)
+    tc = TruChain(chain, app_id=app_id)
 
     return tc, tc.with_record(dict(question=prompt))
 

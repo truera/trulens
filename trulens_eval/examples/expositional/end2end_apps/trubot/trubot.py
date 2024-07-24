@@ -10,14 +10,15 @@ import openai
 import pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
-from trulens import feedback
-from trulens import Select
-from trulens import Tru
-from trulens.feedback import Feedback
-from trulens.keys import check_keys
-from trulens.schema.feedback import FeedbackMode
-from trulens.tru_chain import TruChain
-from trulens.utils.langchain import WithFeedbackFilterDocuments
+from trulens.core import Feedback
+from trulens.core import Select
+from trulens.core import Tru
+from trulens.core.schema.feedback import FeedbackMode
+from trulens.langchain import TruChain
+from trulens.langchain.guardrails import WithFeedbackFilterDocuments
+from trulens.utils.keys import check_keys
+from turlens.external import Huggingface
+from turlens.external import OpenAI as fOpenAI
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -64,8 +65,8 @@ app_ids = {
 }
 
 # Construct feedback functions.
-hugs = feedback.Huggingface()
-openai = feedback.OpenAI(client=openai.OpenAI())
+hugs = Huggingface()
+openai = fOpenAI(client=openai.OpenAI())
 
 # Language match between question/answer.
 f_lang_match = Feedback(hugs.language_match).on_input_output()

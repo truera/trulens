@@ -1,7 +1,7 @@
 import sys
 import time
 
-from trulens.tru_custom_app import instrument
+from trulens.core.tru_custom_app import instrument
 
 
 class CustomLLM:

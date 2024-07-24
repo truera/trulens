@@ -4,11 +4,11 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import OpenAI
 import streamlit as st
-from trulens import Feedback
-from trulens import streamlit as trulens_st
-from trulens import Tru
-from trulens import TruChain
-from trulens.feedback.provider import OpenAI as fOpenAI
+from trulens.core import Feedback
+from trulens.core import Tru
+import trulens.dashboard.streamlit as trulens_st
+from trulens.external.provider import OpenAI as fOpenAI
+from trulens.langchain import TruChain
 
 load_dotenv()
 
