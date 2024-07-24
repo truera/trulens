@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "trulens-tests"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = ["Truera Inc <all@truera.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "trulens" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License"
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
