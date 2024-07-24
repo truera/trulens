@@ -29,7 +29,7 @@ class OpenAI(LLMProvider):
     !!! example
 
         ```python
-        from trulens.core.feedback.provider.openai import OpenAI
+        from trulens.external.provider.openai import OpenAI
         openai_provider = OpenAI()
         ```
 
@@ -131,7 +131,7 @@ class OpenAI(LLMProvider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.openai import OpenAI
+            from trulens.external.provider.openai import OpenAI
             openai_provider = OpenAI()
 
             feedback = Feedback(
@@ -158,7 +158,7 @@ class OpenAI(LLMProvider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.openai import OpenAI
+            from trulens.external.provider.openai import OpenAI
             openai_provider = OpenAI()
 
             feedback = Feedback(
@@ -186,7 +186,7 @@ class OpenAI(LLMProvider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.openai import OpenAI
+            from trulens.external.provider.openai import OpenAI
             openai_provider = OpenAI()
 
             feedback = Feedback(
@@ -214,7 +214,7 @@ class OpenAI(LLMProvider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.openai import OpenAI
+            from trulens.external.provider.openai import OpenAI
             openai_provider = OpenAI()
 
             feedback = Feedback(
@@ -242,7 +242,7 @@ class OpenAI(LLMProvider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.openai import OpenAI
+            from trulens.external.provider.openai import OpenAI
             openai_provider = OpenAI()
 
             feedback = Feedback(
@@ -271,7 +271,7 @@ class OpenAI(LLMProvider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.openai import OpenAI
+            from trulens.external.provider.openai import OpenAI
             openai_provider = OpenAI()
 
             feedback = Feedback(
@@ -299,7 +299,7 @@ class OpenAI(LLMProvider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.openai import OpenAI
+            from trulens.external.provider.openai import OpenAI
             openai_provider = OpenAI()
 
             feedback = Feedback(
@@ -327,7 +327,7 @@ class OpenAI(LLMProvider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.openai import OpenAI
+            from trulens.external.provider.openai import OpenAI
             openai_provider = OpenAI()
 
             feedback = Feedback(
@@ -354,7 +354,7 @@ class OpenAI(LLMProvider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.openai import OpenAI
+            from trulens.external.provider.openai import OpenAI
             openai_provider = OpenAI()
 
             feedback = Feedback(
@@ -389,7 +389,7 @@ class AzureOpenAI(OpenAI):
 
     Example:
         ```python
-        from trulens.core.feedback.provider.openai import AzureOpenAI
+        from trulens.external.provider.openai import AzureOpenAI
         openai_provider = AzureOpenAI(deployment_name="...")
 
         openai_provider.relevance(

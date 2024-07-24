@@ -2,8 +2,8 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 
 from trulens.external.generated import re_0_10_rating
+from trulens.external.provider import LLMProvider
 from trulens.external.provider.endpoint import BedrockEndpoint
-from trulens.external.provider.llm_provider import LLMProvider
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_BEDROCK
 from trulens.utils.python import NoneType

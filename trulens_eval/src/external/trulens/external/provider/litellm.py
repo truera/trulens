@@ -26,7 +26,7 @@ class LiteLLM(LLMProvider):
     !!! example
 
         ```python
-        from trulens.core.feedback.provider.litellm import LiteLLM
+        from trulens.external.provider.litellm import LiteLLM
         litellm_provider = LiteLLM()
         ```
     """

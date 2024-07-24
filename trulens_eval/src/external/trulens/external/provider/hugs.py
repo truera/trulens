@@ -143,7 +143,7 @@ class HuggingfaceBase(Provider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.hugs import Huggingface
+            from trulens.external.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             feedback = Feedback(huggingface_provider.language_match).on_input_output()
@@ -193,7 +193,7 @@ class HuggingfaceBase(Provider):
 
             ```
             from trulens.core.feedback import Feedback
-            from trulens.core.feedback.provider.hugs = Huggingface
+            from trulens.external.provider.hugs = Huggingface
 
             huggingface_provider = Huggingface()
 
@@ -245,7 +245,7 @@ class HuggingfaceBase(Provider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.hugs import Huggingface
+            from trulens.external.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             feedback = (
@@ -280,7 +280,7 @@ class HuggingfaceBase(Provider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.hugs import Huggingface
+            from trulens.external.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             feedback = Feedback(huggingface_provider.positive_sentiment).on_output()
@@ -307,7 +307,7 @@ class HuggingfaceBase(Provider):
 
             ```python
             from trulens.core import Feedback
-            from trulens.core.feedback.provider.hugs import Huggingface
+            from trulens.external.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             feedback = Feedback(huggingface_provider.toxic).on_output()
@@ -440,7 +440,7 @@ class HuggingfaceBase(Provider):
         !!! example
 
             ```python
-            from trulens.core.feedback.provider.hugs import Huggingface
+            from trulens.external.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
 
             score = huggingface_provider.hallucination_evaluator("The sky is blue. [SEP] Apples are red , the grass is green.")
@@ -480,7 +480,7 @@ class Huggingface(HuggingfaceBase):
         !!! example
 
             ```python
-            from trulens.core.feedback.provider.hugs import Huggingface
+            from trulens.external.provider.hugs import Huggingface
             huggingface_provider = Huggingface()
             ```
         """

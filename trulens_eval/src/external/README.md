@@ -4,7 +4,7 @@ The `Feedback` class contains the starting point for feedback function
 specification and evaluation. A typical use-case looks like this:
 
 ```python
-from trulens import feedback, Select, Feedback
+from trulens.core import Feedback, Select, Feedback
 
 hugs = feedback.Huggingface()
 
@@ -79,7 +79,7 @@ The components of this specifications are:
 For ease of switching between frameworks, the select_context shortcut is also available from the trulens_eval.app.App.
 
 ```python
-from trulens.app import App
+from trulens.core.app import App
 context = App.select_context(rag_chain) # can be langchain, llama-index or nemo app.
 ```
 
