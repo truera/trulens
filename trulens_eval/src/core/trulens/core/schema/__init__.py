@@ -20,3 +20,19 @@ feature information about the encoded object types in the dictionary under the
 `util.py:CLASS_INFO` key.
 
 """
+
+from trulens.core.schema.app import AppDefinition
+from trulens.core.schema.feedback import FeedbackDefinition
+from trulens.core.schema.feedback import FeedbackMode
+from trulens.core.schema.feedback import FeedbackResult
+from trulens.core.schema.feedback import Select
+from trulens.core.schema.record import Record
+
+__all__ = [
+    'AppDefinition',
+    'Select',
+    'FeedbackDefinition',
+    'FeedbackResult',
+    'FeedbackMode',
+    'Record',
+]

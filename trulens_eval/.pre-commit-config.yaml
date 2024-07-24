@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
       - id: check-added-large-files
@@ -9,13 +9,17 @@ repos:
       - id: check-merge-conflict
       - id: double-quote-string-fixer
       - id: end-of-file-fixer
+-   repo: https://github.com/fastai/nbdev
+    rev: 2.3.25
+    hooks:
+      - id: nbdev_clean
 -   repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
         args: [--profile, google]
 -   repo: https://github.com/google/yapf
-    rev: v0.32.0
+    rev: v0.40.2
     hooks:
     -   id: yapf
         args: [--style, .style.yapf, --parallel]

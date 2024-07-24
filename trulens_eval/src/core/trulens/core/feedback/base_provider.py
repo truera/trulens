@@ -36,7 +36,7 @@ class Provider(WithClassInfo, SerialModel):
     !!! example
 
         ```python
-        from trulens.core.feedback.provider.hugs import Huggingface
+        from trulens.external.provider.hugs import Huggingface
         huggingface_provider = Huggingface()
         huggingface_provider.language_match(prompt, response)
         ```
@@ -53,7 +53,7 @@ class Provider(WithClassInfo, SerialModel):
     !!! example
 
         ```python
-        from trulens.core.feedback.provider.openai import OpenAI
+        from trulens.external.provider.openai import OpenAI
         provider = OpenAI(model_engine="gpt-3.5-turbo")
         provider.relevance(prompt, response)
         ```
