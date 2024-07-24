@@ -30,7 +30,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
     !!! example "Using TruLens guardrail context filters with Langchain"
 
         ```python
-        from trulens.guardrails.langchain import WithFeedbackFilterDocuments
+        from trulens.langchain.guardrails import WithFeedbackFilterDocuments
 
         # note: feedback function used for guardrail must only return a score, not also reasons
         feedback = Feedback(provider.context_relevance).on_input().on(context)

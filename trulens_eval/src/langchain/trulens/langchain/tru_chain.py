@@ -162,7 +162,7 @@ class TruChain(mod_app.App):
     !!! example "Defining a feedback function"
 
         ```python
-        from trulens.core.feedback.provider import OpenAI
+        from trulens.external.provider import OpenAI
         from trulens.core import Feedback
         import numpy as np
 
@@ -185,7 +185,7 @@ class TruChain(mod_app.App):
     !!! example "Using the `TruChain` recorder"
 
         ```python
-        from trulens.core import TruChain
+        from trulens.langchain import TruChain
 
         # Wrap application
         tru_recorder = TruChain(
