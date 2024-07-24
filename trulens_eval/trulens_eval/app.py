@@ -773,18 +773,14 @@ class App(app_schema.AppDefinition, mod_trace.WithInstrumentCallbacks,
             recording = recording.token.old_value
 
     # WithInstrumentCallbacks requirement
-    def on_new_root_span(
+    def on_new_recording_span(
         self,
-        recording: mod_trace.RecordingContext,
-        root_span: mod_trace.Span,
-    ) -> record_schema.Record:
-
-        tracer = root_span.context.tracer
-
+        recording_span: mod_trace.Span,
+    ):
         if self.tru.otel_exporter is not None:
             # Export to otel exporter if exporter was set in workspace.
             to_export = []
-            for span in root_span.iter_family(include_phantom=True):
+            for span in recording_span.iter_family(include_phantom=True):
                 e_span = span.otel_freeze()
                 to_export.append(e_span)
                 # print(e_span.name, "->", e_span.__class__.__name__)
@@ -793,6 +789,15 @@ class App(app_schema.AppDefinition, mod_trace.WithInstrumentCallbacks,
                 f"{text_utils.UNICODE_CHECK} Exporting {len(to_export)} spans to {self.tru.otel_exporter.__class__.__name__}."
             )
             self.tru.otel_exporter.export(to_export)
+
+    # WithInstrumentCallbacks requirement
+    def on_new_root_span(
+        self,
+        recording: mod_trace.RecordingContext,
+        root_span: mod_trace.Span,
+    ) -> record_schema.Record:
+
+        tracer = root_span.context.tracer
 
         record = tracer.record_of_root_span(
             root_span=root_span, recording=recording

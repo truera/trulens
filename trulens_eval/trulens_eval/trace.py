@@ -211,7 +211,9 @@ class OTELExportable(Span):
         return trace_status.Status(status_code=trace_status.StatusCode.OK)
 
     def otel_resource_attributes(self) -> Dict[str, Any]:
-        return {}
+        return {
+            'service.namespace': 'trulens',
+        }
 
     def otel_resource(self) -> Resource:
         return Resource(attributes=self.otel_resource_attributes())
@@ -265,6 +267,7 @@ class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
 
     def otel_resource_attributes(self) -> Dict[str, Any]:
         ret = super().otel_resource_attributes()
+
         ret[ResourceAttributes.SERVICE_NAME
            ] = self.recording.app.app_id if self.recording is not None else None
 
@@ -282,6 +285,8 @@ class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
                 continue
             app.on_new_root_span(recording=self.recording, root_span=span)
 
+        app.on_new_recording_span(recording_span=self)
+
     async def afinish(self):
         await super().afinish()
 
@@ -293,6 +298,8 @@ class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
             if not isinstance(span, LiveSpanCall):
                 continue
             app.on_new_root_span(recording=self.recording, root_span=span)
+
+        app.on_new_recording_span(recording_span=self)
 
     def otel_name(self) -> str:
         return f"PhantomSpanRecordingContext({self.recording.app.app_id if self.recording is not None else None})"
@@ -333,8 +340,8 @@ class SpanCall(OTELExportable):
         return ret
 
     def otel_attributes(self) -> ot_types.Attributes:
-        temp = {f"trulens_eval@{k}": v for k, v in self.attributes().items()}
-        return flatten_lensed_attributes(temp)
+        #temp = {f"trulens_eval@{k}": v for k, v in self.attributes().items()}
+        return flatten_lensed_attributes(self.attributes())
 
     def otel_resource_attributes(self) -> Dict[str, Any]:
         ret = super().otel_resource_attributes()

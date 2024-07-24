@@ -123,7 +123,7 @@ def flatten_value(
 def flatten_lensed_attributes(
     m: TLensedAttributes,
     path: Optional[Lens] = None,
-    prefix: str = "trulens_eval@"
+    prefix: str = ""
 ) -> ot_types.Attributes:
     """Flatten lensed attributes into OpenTelemetry attributes."""
 
