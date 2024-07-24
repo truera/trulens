@@ -123,7 +123,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             if qr["query"] == prompt and qr["response"] == response
         ]
         if responses:
-            return float(responses[0])
+            return responses[0]
         else:
             return None
 
