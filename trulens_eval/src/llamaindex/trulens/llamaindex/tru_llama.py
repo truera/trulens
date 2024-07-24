@@ -12,6 +12,8 @@ from pydantic import Field
 from trulens.core import app as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
+from trulens.langchain.tru_chain import \
+    LangChainInstrument  # TODO: Do we need to depend on this?
 from trulens.utils.containers import dict_set_with_multikey
 from trulens.utils.imports import Dummy
 from trulens.utils.imports import get_package_version
@@ -121,7 +123,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.tools.types import BaseTool
         from llama_index.tools.types import ToolMetadata
         from llama_index.vector_stores.types import VectorStore
-        from trulens.utils.llama import WithFeedbackFilterNodes
+        from trulens.llamaindex.llama import WithFeedbackFilterNodes
 
 # Need to `from ... import ...` for the below as referring to some of these
 # later in this file by full path does not work due to lack of intermediate
@@ -131,7 +133,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
 # to be a dummy which will cause failures if used.
 opt.assert_installed(llama_index)
 
-from trulens.core.tru_chain import LangChainInstrument
 
 
 class LlamaInstrument(Instrument):
@@ -246,7 +247,7 @@ class TruLlama(mod_app.App):
     !!! example "Defining a feedback function"
 
         ```python
-        from trulens.core.feedback.provider import OpenAI
+        from trulens.external.provider import OpenAI
         from trulens.core import Feedback
         import numpy as np
 
@@ -269,7 +270,7 @@ class TruLlama(mod_app.App):
     !!! example "Using the `TruLlama` recorder"
 
         ```python
-        from trulens.core import TruLlama
+        from trulens.llamaindex import TruLlama
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruLlama(query_engine,
             app_id='LlamaIndex_App1',

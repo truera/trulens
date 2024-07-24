@@ -19,6 +19,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9"
 trulens-core = {path = "../core"}
+trulens-langchain = {path = "../langchain"}
 pydantic = "^2"
 llama-index = "^0.10.57"
 
