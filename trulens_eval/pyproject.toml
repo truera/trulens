@@ -17,6 +17,7 @@ trulens-dashboard = { path = "src/dashboard", develop = true }
 trulens-langchain = { path = "src/langchain", develop = true }
 trulens-llamaindex = { path = "src/llamaindex", develop = true }
 trulens-nemo = { path = "src/nemo", develop = true }
+trulens-testing = { path = "src/testing", develop = true }
 yapf = "^0.40.2"
 isort = "^5.13.2"
 pre-commit = "^3.7.1"
