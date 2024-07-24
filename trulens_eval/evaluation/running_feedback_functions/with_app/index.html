@@ -495,6 +495,8 @@
       
         
       
+        
+      
     
     
       
@@ -893,6 +895,65 @@
     </li>
   
 
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../getting_started/dashboard/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    🎈Viewing Results
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            🎈Viewing Results
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
             
           </ul>
@@ -3984,13 +4045,13 @@ your app.</p>
 <p>To do so, you first need to define the wrap the specified feedback
 implementation with <code>Feedback</code> and select what components of your app to
 evaluate. Optionally, you can also select an aggregation method.</p>
-<div class="highlight"><pre><span></span><code><span class="n">f_context_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">f_context_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">min</span><span class="p">)</span>
 
 <span class="c1"># Implementation signature:</span>
-<span class="c1"># def qs_relevance(self, question: str, statement: str) -&gt; float:</span>
+<span class="c1"># def context_relevance(self, question: str, statement: str) -&gt; float:</span>
 </code></pre></div>
 <p>Once you've defined the feedback functions to run with your application, you can
 then pass them as a list to the instrumentation class of your choice, along with

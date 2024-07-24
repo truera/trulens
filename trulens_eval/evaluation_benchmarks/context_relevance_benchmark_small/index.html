@@ -498,6 +498,8 @@
       
         
       
+        
+      
     
     
       
@@ -896,6 +898,65 @@
     </li>
   
 
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting_started/dashboard/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    🎈Viewing Results
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            🎈Viewing Results
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
             
           </ul>
@@ -4531,63 +4592,63 @@ os.environ["TOGETHERAI_API_KEY"] = "..."</div>
 <span class="n">turbo</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"gpt-3.5-turbo"</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">wrapped_relevance_turbo</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">turbo</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">turbo</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
 <span class="c1"># GPT 4</span>
 <span class="n">gpt4</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"gpt-4"</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">wrapped_relevance_gpt4</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">gpt4</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gpt4</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
 <span class="c1"># Cohere</span>
 <span class="n">command_nightly</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"command-nightly"</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">wrapped_relevance_command_nightly</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">command_nightly</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">command_nightly</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
 <span class="c1"># Anthropic</span>
 <span class="n">claude_1</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"claude-instant-1"</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">wrapped_relevance_claude1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">claude_1</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">claude_1</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
 <span class="n">claude_2</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"claude-2"</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">wrapped_relevance_claude2</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">claude_2</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">claude_2</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 
 <span class="c1"># Meta</span>
 <span class="n">llama_2_13b</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"together_ai/togethercomputer/Llama-2-7B-32K-Instruct"</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">wrapped_relevance_llama2</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">llama_2_13b</span><span class="o">.</span><span class="n">qs_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">llama_2_13b</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-3"># GPT 3.5
 turbo = OpenAI(model_engine="gpt-3.5-turbo")
 
 def wrapped_relevance_turbo(input, output):
-    return turbo.qs_relevance(input, output)
+    return turbo.context_relevance(input, output)
 
 # GPT 4
 gpt4 = OpenAI(model_engine="gpt-4")
 
 def wrapped_relevance_gpt4(input, output):
-    return gpt4.qs_relevance(input, output)
+    return gpt4.context_relevance(input, output)
 
 # Cohere
 command_nightly = LiteLLM(model_engine="command-nightly")
 def wrapped_relevance_command_nightly(input, output):
-    return command_nightly.qs_relevance(input, output)
+    return command_nightly.context_relevance(input, output)
 
 # Anthropic
 claude_1 = LiteLLM(model_engine="claude-instant-1")
 def wrapped_relevance_claude1(input, output):
-    return claude_1.qs_relevance(input, output)
+    return claude_1.context_relevance(input, output)
 
 claude_2 = LiteLLM(model_engine="claude-2")
 def wrapped_relevance_claude2(input, output):
-    return claude_2.qs_relevance(input, output)
+    return claude_2.context_relevance(input, output)
 
 # Meta
 llama_2_13b = LiteLLM(model_engine="together_ai/togethercomputer/Llama-2-7B-32K-Instruct")
 def wrapped_relevance_llama2(input, output):
-    return llama_2_13b.qs_relevance(input, output)</div>
+    return llama_2_13b.context_relevance(input, output)</div>
 </div>
 </div>
 </div>

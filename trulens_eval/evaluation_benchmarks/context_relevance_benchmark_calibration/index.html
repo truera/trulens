@@ -492,6 +492,8 @@
       
         
       
+        
+      
     
     
       
@@ -890,6 +892,65 @@
     </li>
   
 
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting_started/dashboard/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    🎈Viewing Results
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            🎈Viewing Results
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
             
           </ul>
@@ -4798,21 +4859,21 @@ print(len(df.groupby("query_id").count()))</div>
 <span class="n">turbo</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"gpt-3.5-turbo"</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">wrapped_relevance_turbo_t</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">turbo</span><span class="o">.</span><span class="n">qs_relevance_confidence_verb_2s_top1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">turbo</span><span class="o">.</span><span class="n">context_relevance_confidence_verb_2s_top1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">)</span>
  
 <span class="c1"># # GPT 4 turbo</span>
 <span class="n">gpt4</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"gpt-4-1106-preview"</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">wrapped_relevance_gpt4_t</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">):</span>
-    <span class="k">return</span>  <span class="n">gpt4</span><span class="o">.</span><span class="n">qs_relevance_confidence_verb_2s_top1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">)</span>
+    <span class="k">return</span>  <span class="n">gpt4</span><span class="o">.</span><span class="n">context_relevance_confidence_verb_2s_top1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">)</span>
 
 <span class="n">claude_1</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"claude-instant-1"</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">wrapped_relevance_claude1_t</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">):</span>
-     <span class="n">claude_1</span><span class="o">.</span><span class="n">qs_relevance_confidence_verb_2s_top1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">)</span>
+     <span class="n">claude_1</span><span class="o">.</span><span class="n">context_relevance_confidence_verb_2s_top1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">)</span>
 
 <span class="n">claude_2</span> <span class="o">=</span> <span class="n">LiteLLM</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"claude-2"</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">wrapped_relevance_claude2_t</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">):</span>
-    <span class="n">claude_2</span><span class="o">.</span><span class="n">qs_relevance_confidence_verb_2s_top1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">)</span>
+    <span class="n">claude_2</span><span class="o">.</span><span class="n">context_relevance_confidence_verb_2s_top1</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">temperature</span><span class="p">)</span>
 
 <span class="n">feedback_functions</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">'GPT-3.5-Turbo'</span><span class="p">:</span> <span class="n">wrapped_relevance_turbo_t</span><span class="p">,</span>
@@ -4835,21 +4896,21 @@ temperatures = [0, 0.3, 0.7, 1]
 turbo = OpenAI(model_engine="gpt-3.5-turbo")
 
 def wrapped_relevance_turbo_t(input, output, temperature):
-    return turbo.qs_relevance_confidence_verb_2s_top1(input, output, temperature)
+    return turbo.context_relevance_confidence_verb_2s_top1(input, output, temperature)
  
 # # GPT 4 turbo
 gpt4 = OpenAI(model_engine="gpt-4-1106-preview")
 
 def wrapped_relevance_gpt4_t(input, output, temperature):
-    return  gpt4.qs_relevance_confidence_verb_2s_top1(input, output, temperature)
+    return  gpt4.context_relevance_confidence_verb_2s_top1(input, output, temperature)
 
 claude_1 = LiteLLM(model_engine="claude-instant-1")
 def wrapped_relevance_claude1_t(input, output, temperature):
-     claude_1.qs_relevance_confidence_verb_2s_top1(input, output, temperature)
+     claude_1.context_relevance_confidence_verb_2s_top1(input, output, temperature)
 
 claude_2 = LiteLLM(model_engine="claude-2")
 def wrapped_relevance_claude2_t(input, output, temperature):
-    claude_2.qs_relevance_confidence_verb_2s_top1(input, output, temperature)
+    claude_2.context_relevance_confidence_verb_2s_top1(input, output, temperature)
 
 feedback_functions = {
     'GPT-3.5-Turbo': wrapped_relevance_turbo_t,
