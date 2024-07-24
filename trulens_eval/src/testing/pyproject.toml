@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "trulens-tests"
+name = "trulens-testing"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = ["Truera Inc <all@truera.com>"]
