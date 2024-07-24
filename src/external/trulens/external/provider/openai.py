@@ -38,9 +38,9 @@ class OpenAI(LLMProvider):
             `gpt-3.5-turbo`
 
         **kwargs: Additional arguments to pass to the
-            [OpenAIEndpoint][trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint]
+            [OpenAIEndpoint][trulens.external.provider.endpoint.openai.OpenAIEndpoint]
             which are then passed to
-            [OpenAIClient][trulens_eval.feedback.provider.endpoint.openai.OpenAIClient]
+            [OpenAIClient][trulens.external.provider.endpoint.openai.OpenAIClient]
             and finally to the OpenAI client.
     """
 

@@ -5,11 +5,12 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from merkle_json import MerkleJson
 import pandas as pd
-from trulens.core import app as mod_app
-from trulens.core.schema import app as mod_app_schema
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema.app import AppDefinition
+from trulens.core.schema.feedback import FeedbackDefinition
+from trulens.core.schema.feedback import FeedbackResult
+from trulens.core.schema.feedback import FeedbackResultStatus
+from trulens.core.schema.record import Record
 from trulens.utils.json import json_str_of_obj
 from trulens.utils.serial import JSON
 from trulens.utils.serial import JSONized
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 MULTI_CALL_NAME_DELIMITER = ':::'
 
 DEFAULT_DATABASE_PREFIX: str = 'trulens_'
-"""Default prefix for table names for trulens_eval to use.
+"""Default prefix for table names for trulens to use.
 
 This includes alembic's version table.
 """
@@ -39,9 +40,9 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 
 
 class DB(SerialModel, abc.ABC):
-    """Abstract definition of databases used by trulens_eval.
+    """Abstract definition of databases used by trulens.
 
-    [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] is the main
+    [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] is the main
     and default implementation of this interface.
     """
 
@@ -49,7 +50,7 @@ class DB(SerialModel, abc.ABC):
     """Redact secrets before writing out data."""
 
     table_prefix: str = DEFAULT_DATABASE_PREFIX
-    """Prefix for table names for trulens_eval to use.
+    """Prefix for table names for trulens to use.
 
     May be useful in some databases where trulens is not the only app.
     """
@@ -77,7 +78,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def check_db_revision(self):
-        """Check that the database is up to date with the current trulens_eval
+        """Check that the database is up to date with the current trulens
         version.
 
         Raises:
@@ -88,7 +89,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_record(
         self,
-        record: mod_record_schema.Record,
+        record: Record,
     ) -> mod_types_schema.RecordID:
         """
         Upsert a `record` into the database.
@@ -104,14 +105,14 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def insert_app(
-        self, app: mod_app_schema.AppDefinition
+        self, app: AppDefinition
     ) -> mod_types_schema.AppID:
         """
         Upsert an `app` into the database.
 
         Args:
             app: The app to insert or update. Note that only the
-                [AppDefinition][trulens_eval.schema.app.AppDefinition] parts are serialized
+                [AppDefinition][trulens.core.schema.app.AppDefinition] parts are serialized
                 hence the type hint.
 
         Returns:
@@ -122,7 +123,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def insert_feedback_definition(
-        self, feedback_definition: mod_feedback_schema.FeedbackDefinition
+        self, feedback_definition: FeedbackDefinition
     ) -> mod_types_schema.FeedbackDefinitionID:
         """
         Upsert a `feedback_definition` into the databaase.
@@ -130,7 +131,7 @@ class DB(SerialModel, abc.ABC):
         Args:
             feedback_definition: The feedback definition to insert or update.
                 Note that only the
-                [FeedbackDefinition][trulens_eval.schema.feedback.FeedbackDefinition]
+                [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition]
                 parts are serialized hence the type hint.
 
         Returns:
@@ -161,7 +162,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_feedback(
         self,
-        feedback_result: mod_feedback_schema.FeedbackResult,
+        feedback_result: FeedbackResult,
     ) -> mod_types_schema.FeedbackResultID:
         """Upsert a `feedback_result` into the the database.
 
@@ -182,8 +183,8 @@ class DB(SerialModel, abc.ABC):
         feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
                                         ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[FeedbackResultStatus,
+                  Sequence[FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -224,17 +225,17 @@ class DB(SerialModel, abc.ABC):
         feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
                                         ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[FeedbackResultStatus,
+                  Sequence[FeedbackResultStatus]]] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: bool = False
-    ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
+    ) -> Dict[FeedbackResultStatus, int]:
         """Get count of feedback results matching a set of optional criteria grouped by
         their status.
 
-        See [get_feedback][trulens_eval.database.base.DB.get_feedback] for the meaning of
+        See [get_feedback][trulens.core.database.base.DB.get_feedback] for the meaning of
         the the arguments.
 
         Returns:
@@ -247,13 +248,13 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_app(
         self, app_id: mod_types_schema.AppID
-    ) -> Optional[JSONized[mod_app.App]]:
+    ) -> Optional[JSONized]:
         """Get the app with the given id from the database.
 
         Returns:
             The jsonized version of the app with the given id. Deserialization
                 can be done with
-                [App.model_validate][trulens_eval.app.App.model_validate].
+                [App.model_validate][trulens.core.app.App.model_validate].
 
         """
         raise NotImplementedError()

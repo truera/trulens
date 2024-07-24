@@ -7,7 +7,6 @@ from typing import Any, Callable, ClassVar, Optional, Sequence, Type
 
 import dill
 import humanize
-from trulens.core.app import App
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import types as mod_types_schema
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
-    """Serialized fields of an app here whereas [App][trulens_eval.app.App]
+    """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
 
     app_id: mod_types_schema.AppID  # str
@@ -43,7 +42,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     Ideally this would be a [ClassVar][typing.ClassVar] but since we want to check this without
     instantiating the subclass of
-    [AppDefinition][trulens_eval.schema.app.AppDefinition] that would define it, we
+    [AppDefinition][trulens.core.schema.app.AppDefinition] that would define it, we
     cannot use [ClassVar][typing.ClassVar].
     """
 
@@ -206,8 +205,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_definition_json['app'] = app
         app_definition_json['initial_app_loader_dump'] = serial_bytes_json
 
-        cls: Type[App
-                 ] = pyschema.WithClassInfo.get_class(app_definition_json)
+        cls = pyschema.WithClassInfo.get_class(app_definition_json)
 
         return cls.model_validate_json(app_definition_json)
 

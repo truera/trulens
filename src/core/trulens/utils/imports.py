@@ -54,8 +54,8 @@ def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
         # This does not exist in 3.8
         from importlib.abc import Traversable
 
-        _trulens_eval_resources: Traversable = resources.files(f'trulens.{namespace}')
-        with resources.as_file(_trulens_eval_resources / filepath) as _path:
+        _trulens_resources: Traversable = resources.files(f'trulens.{namespace}')
+        with resources.as_file(_trulens_resources / filepath) as _path:
             return _path
     else:
         # This is deprecated starting 3.11
@@ -117,11 +117,11 @@ MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND = \
     ```
 
 If your distribution is in a bad place beyond this package, you may need to
-reinstall trulens_eval so that all of the dependencies get installed:
+reinstall trulens so that all of the dependencies get installed:
 
     ```bash
-    pip uninstall -y trulens_eval
-    pip install trulens_eval
+    pip uninstall -y trulens
+    pip install trulens
     ```
 """
 
@@ -132,13 +132,13 @@ MESSAGE_FRAGMENT_VERSION_MISMATCH = \
 """
 
 MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL = \
-    """This package is optional for trulens_eval so this may not be a problem but if
+    """This package is optional for trulens so this may not be a problem but if
 you need to use the related optional features and find there are errors, you
 will need to resolve the conflict:
 """
 
 MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED = \
-    """This package is required for trulens_eval. Please resolve the conflict by
+    """This package is required for trulens. Please resolve the conflict by
 installing a compatible version with:
 """
 
@@ -148,14 +148,14 @@ MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP = \
     pip install '{req}'
     ```
 
-If you are running trulens_eval in a notebook, you may need to restart the
+If you are running trulens in a notebook, you may need to restart the
 kernel after resolving the conflict. If your distribution is in a bad place
-beyond this package, you may need to reinstall trulens_eval so that all of the
+beyond this package, you may need to reinstall trulens so that all of the
 dependencies get installed and hopefully corrected:
 
     ```bash
-    pip uninstall -y trulens_eval
-    pip install trulens_eval
+    pip uninstall -y trulens
+    pip install trulens
     ```
 """
 
@@ -561,7 +561,7 @@ class OptionalImports(object):
         self.imp = builtins.__import__
 
     def __import__(self, name, globals=None, locals=None, fromlist=(), level=0):
-        # Check if this import call is coming from an import in trulens_eval as
+        # Check if this import call is coming from an import in trulens as
         # otherwise we don't want to intercept the error as some modules rely on
         # import failures for various things. HACK012: we have to step back a
         # frame or two here to check where the original import came from. We
@@ -644,7 +644,7 @@ class OptionalImports(object):
         # TODO: Better handle nested contexts. For now we don't override import
         # and just let the already-overridden one do its thing.
 
-        if 'trulens_eval' in str(builtins.__import__):
+        if 'trulens' in str(builtins.__import__):
             logger.debug(
                 'Nested optional imports context used. This context will be ignored.'
             )

@@ -706,7 +706,7 @@ class WithClassInfo(pydantic.BaseModel):
 
         Note:
             This process uses extra information stored in the jsonized object
-            and handled by [WithClassInfo][trulens_eval.utils.pyschema.WithClassInfo].
+            and handled by [WithClassInfo][trulens.core.utils.pyschema.WithClassInfo].
         """
 
         return super().model_validate(*args, **kwargs)

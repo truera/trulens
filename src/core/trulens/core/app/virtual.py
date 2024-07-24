@@ -21,7 +21,7 @@ information relevant for feedback evaluation.
     }
     # Converting the dictionary to a VirtualApp instance
     from trulens.core import Select
-    from trulens.core.tru_virtual import VirtualApp
+    from trulens.core.app import VirtualApp
 
     virtual_app = VirtualApp(virtual_app)
     virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -52,7 +52,7 @@ be provided.
 !!! example "Adding Records for a Context Retrieval Component"
 
     ```python
-    from trulens.core.tru_virtual import VirtualRecord
+    from trulens.core import VirtualRecord
 
     # Selector for the context retrieval component's `get_context` call
     context_call = retriever_component.get_context
@@ -147,7 +147,7 @@ apps.
 !!! example "Integrating Feedback Functions into TruVirtual"
 
     ```python
-    from trulens.core.tru_virtual import TruVirtual
+    from trulens.core import TruVirtual
 
     # Setting up the virtual recorder
     virtual_recorder = TruVirtual(
@@ -183,7 +183,7 @@ about the components of an LLM app.
     }
 
     from trulens.core.schema.feedback import Select
-    from trulens.core.tru_virtual import VirtualApp
+    from trulens.core.app import VirtualApp
 
     virtual_app = VirtualApp(virtual_app)
     virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -207,9 +207,8 @@ from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, Optional, Sequence, Union
 
 from pydantic import Field
-from trulens.core import app as mod_app
+from trulens.core.app import App
 from trulens.core.instruments import Instrument
-from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
@@ -265,7 +264,7 @@ class VirtualApp(dict):
 
 
 virtual_module = Module(
-    package_name='trulens_eval', module_name='trulens_eval.tru_virtual'
+    package_name='trulens', module_name='trulens.core.app.virtual'
 )
 """Module to represent the module of virtual apps.
 
@@ -304,7 +303,7 @@ class VirtualRecord(mod_record_schema.Record):
     """Virtual records for virtual apps.
 
     Many arguments are filled in by default values if not provided. See
-    [Record][trulens_eval.schema.record.Record] for all arguments. Listing here is
+    [Record][trulens.core.schema.record.Record] for all arguments. Listing here is
     only for those which are required for this method or filled with default values.
 
     Args:
@@ -319,17 +318,17 @@ class VirtualRecord(mod_record_schema.Record):
             is extended to make sure it is not of duration zero.
 
     Call values are dictionaries containing arguments to
-    [RecordAppCall][trulens_eval.schema.record.RecordAppCall] constructor. Values
+    [RecordAppCall][trulens.core.schema.record.RecordAppCall] constructor. Values
     can also be lists of the same. This happens in non-virtual apps when the
     same method is recorded making multiple calls in a single app
     invocation. The following defaults are used if not provided.
 
     | PARAMETER | TYPE |DEFAULT |
     | --- | ---| --- |
-    | `stack` | [List][typing.List][[RecordAppCallMethod][trulens_eval.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens_eval.tru_virtual.virtual_object], method name derived from the last element of the selector of this call. |
-    | `args` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
-    | `rets` | [JSON][trulens_eval.utils.json.JSON] | `[]` |
-    | `perf` | [Perf][trulens_eval.schema.base.Perf] | Time spanning the processing of this virtual call. |
+    | `stack` | [List][typing.List][[RecordAppCallMethod][trulens.core.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens.core.app.virtual.virtual_object], method name derived from the last element of the selector of this call. |
+    | `args` | [JSON][trulens.utils.json.JSON] | `[]` |
+    | `rets` | [JSON][trulens.utils.json.JSON] | `[]` |
+    | `perf` | [Perf][trulens.schema.base.Perf] | Time spanning the processing of this virtual call. |
     | `pid` | [int][] | `0` |
     | `tid` | [int][] | `0` |
     """
@@ -437,18 +436,18 @@ class VirtualRecord(mod_record_schema.Record):
         super().__init__(calls=record_calls, **kwargs)
 
 
-class TruVirtual(mod_app.App):
+class TruVirtual(App):
     """Recorder for virtual apps.
 
     Virtual apps are data only in that they cannot be executed but for whom
     previously-computed results can be added using
-    [add_record][trulens_eval.tru_virtual.TruVirtual]. The
-    [VirtualRecord][trulens_eval.tru_virtual.VirtualRecord] class may be useful
+    [add_record][trulens.core.app.virtual.TruVirtual]. The
+    [VirtualRecord][trulens.core.app.virtual.VirtualRecord] class may be useful
     for creating records for this. Fields used by non-virtual apps can be
     specified here, notably:
 
-    See [App][trulens_eval.app.App] and
-    [AppDefinition][trulens_eval.schema.app.AppDefinition] for constructor
+    See [App][trulens.core.app.App] and
+    [AppDefinition][trulens.core.schema.app.AppDefinition] for constructor
     arguments.
 
     # The `app` field.
@@ -515,7 +514,7 @@ class TruVirtual(mod_app.App):
             else:
                 raise ValueError(
                     'Unknown type for `app`. '
-                    'Either dict or `trulens_eval.tru_virtual.VirtualApp` expected.'
+                    'Either dict or `trulens.core.app.virtual.VirtualApp` expected.'
                 )
 
         if kwargs.get('selector_nocheck') is False or kwargs.get(

@@ -34,7 +34,7 @@ class DatabaseVersionException(Exception):
 
         return cls(
             'Database schema is ahead of the expected revision. '
-            'Please update to a later release of `trulens_eval`.',
+            'Please update to a later release of `trulens`.',
             cls.Reason.AHEAD
         )
 

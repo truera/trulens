@@ -46,9 +46,9 @@ print(os.environ)
 
 - *.env* -- Set them in a .env file in the same folder as the example notebook or one of
   its parent folders. An example of a .env file is found in
-  `trulens_eval/trulens_eval/env.example` .
+  `trulens/trulens/env.example` .
 
-- *Endpoint class* For some keys, set them as arguments to trulens_eval endpoint class that
+- *Endpoint class* For some keys, set them as arguments to trulens endpoint class that
   manages the endpoint. For example, with `openai`, do this ahead of the
   `check_keys` check:
 
@@ -57,7 +57,7 @@ from trulens.external.provider.endpoint import OpenAIEndpoint
 openai_endpoint = OpenAIEndpoint(api_key="something")
 ```
 
-- *Provider class* For some keys, set them as arguments to trulens_eval feedback
+- *Provider class* For some keys, set them as arguments to trulens feedback
   collection ("provider") class that makes use of the relevant endpoint. For
   example, with `openai`, do this ahead of the `check_keys` check:
 
@@ -244,7 +244,7 @@ def _check_key(
   - in a variable {k} prior to this check,
   - in your variable environment,
   - in a .env file in {Path.cwd()} or its parents,
-  - explicitly passed to function `check_or_set_keys` of `trulens_eval.keys`,
+  - explicitly passed to function `check_or_set_keys` of `trulens.utils.keys`,
   - passed to the endpoint or feedback collection constructor that needs it (`trulens.external.provider.endpoint.OpenAIEndpoint`, etc.), or
   - set in api utility class that expects it (i.e. `OpenAI(api_key=)`, etc.).
 
@@ -294,7 +294,7 @@ def _collect_keys(*args: Tuple[str], **kwargs: Dict[str,
 
     - Using vars defined in a .env file in current folder or one of its parents.
 
-    - With initialization of trulens_eval Endpoint class that handles a 3rd party api.
+    - With initialization of trulens Endpoint class that handles a 3rd party api.
     """
 
     ret = dict()

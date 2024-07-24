@@ -1,5 +1,5 @@
 # NOTE: Try not to put anything new here. Prompts should go into
-# trulens_eval.feedback.v2.feedback unless they are related to computing
+# trulens.external.v2.feedback unless they are related to computing
 # feedback reasons which can stay here for now as there is no good place for
 # those yet.
 

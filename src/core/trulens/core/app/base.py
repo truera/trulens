@@ -16,8 +16,8 @@ from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
                     TypeVar, Union)
 
 import pydantic
-from trulens.core import app as mod_app
-from trulens.core.database.base import DB
+from trulens.core import tru as mod_tru
+from trulens.core.database import base as mod_db
 import trulens.core.feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
 from trulens.core.schema import app as mod_app_schema
@@ -25,7 +25,6 @@ from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.core.tru import Tru
 from trulens.utils import pyschema
 from trulens.utils.asynchro import CallableMaybeAwaitable
 from trulens.utils.asynchro import desync
@@ -135,13 +134,13 @@ class ComponentView(ABC):
     @staticmethod
     def innermost_base(
         bases: Optional[Sequence[Class]] = None,
-        among_modules=set(['langchain', 'llama_index', 'trulens_eval'])
+        among_modules=set(['langchain', 'llama_index', 'trulens'])
     ) -> Optional[str]:
         """
         Given a sequence of classes, return the first one which comes from one
         of the `among_modules`. You can use this to determine where ultimately
         the encoded class comes from in terms of langchain, llama_index, or
-        trulens_eval even in cases they extend each other's classes. Returns
+        trulens even in cases they extend each other's classes. Returns
         None if no module from `among_modules` is named in `bases`.
         """
         if bases is None:
@@ -196,7 +195,7 @@ class TrulensComponent(ComponentView):
 
     @staticmethod
     def class_is(cls: Class) -> bool:
-        if ComponentView.innermost_base(cls.bases) == 'trulens_eval':
+        if ComponentView.innermost_base(cls.bases) == 'trulens':
             return True
 
         #if any(base.module.module_name.startswith("trulens.") for base in cls.bases):
@@ -320,7 +319,7 @@ class RecordingContext():
     """Manager of the creation of records from record calls.
 
     An instance of this class is produced when using an
-    [App][trulens_eval.app.App] as a context mananger, i.e.:
+    [App][trulens.core.app.App] as a context mananger, i.e.:
 
     Example:
         ```python
@@ -347,7 +346,7 @@ class RecordingContext():
     - Combinations of the above.
     """
 
-    def __init__(self, app: mod_app.App, record_metadata: JSON = None):
+    def __init__(self, app: App, record_metadata: JSON = None):
         self.calls: Dict[mod_types_schema.CallID,
                          mod_record_schema.RecordAppCall] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
@@ -454,7 +453,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     - [TruChain][trulens.tru_chain.TruChain] for _LangChain_ apps.
     - [TruRails][trulens.tru_rails.TruRails] for _NeMo Guardrails_
         apps.
-    - [TruVirtual][trulens.tru_virtual.TruVirtual] for recording
+    - [TruVirtual][trulens.core.app.virtual.TruVirtual] for recording
         information about invocations of apps without access to those apps.
     - [TruCustomApp][trulens.tru_custom_app.TruCustomApp] for custom
         apps. These need to be decorated to have appropriate data recorded.
@@ -472,16 +471,16 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     )
     """Feedback functions to evaluate on each record."""
 
-    tru: Optional[Tru] = pydantic.Field(
+    tru: Optional[mod_tru.Tru] = pydantic.Field(
         default=None, exclude=True
     )
     """Workspace manager.
 
-    If this is not povided, a singleton [Tru][trulens_eval.tru.Tru] will be made
+    If this is not povided, a singleton [Tru][trulens.core.tru.Tru] will be made
     (if not already) and used.
     """
 
-    db: Optional[DB] = pydantic.Field(
+    db: Optional[mod_db.DB] = pydantic.Field(
         default=None, exclude=True
     )
     """Database interface.
@@ -953,7 +952,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
 
-        See [WithInstrumentCallbacks.get_methods_for_func][trulens_eval.instruments.WithInstrumentCallbacks.get_methods_for_func].
+        See [WithInstrumentCallbacks.get_methods_for_func][trulens.core.instruments.WithInstrumentCallbacks.get_methods_for_func].
         """
 
         for _id, funcs in self.instrumented_methods.items():
@@ -1067,7 +1066,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
         """Called at the start of record creation.
 
         See
-        [WithInstrumentCallbacks.on_new_record][trulens_eval.instruments.WithInstrumentCallbacks.on_new_record].
+        [WithInstrumentCallbacks.on_new_record][trulens.core.instruments.WithInstrumentCallbacks.on_new_record].
         """
         ctx = self.recording_contexts.get(contextvars.Token.MISSING)
 
@@ -1090,7 +1089,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
     ) -> mod_record_schema.Record:
         """Called by instrumented methods if they use _new_record to construct a record call list.
 
-        See [WithInstrumentCallbacks.on_add_record][trulens_eval.instruments.WithInstrumentCallbacks.on_add_record].
+        See [WithInstrumentCallbacks.on_add_record][trulens.core.instruments.WithInstrumentCallbacks.on_add_record].
         """
 
         def build_record(
@@ -1186,7 +1185,7 @@ class App(mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks,
                 """
 Function %s has not been instrumented. This may be ok if it will call a function
 that has been instrumented exactly once. Otherwise unexpected results may
-follow. You can use `AddInstruments.method` of `trulens_eval.instruments` before
+follow. You can use `AddInstruments.method` of `trulens.core.instruments` before
 you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 `print_instrumented` may be used to see methods that have been instrumented.
 """, func, class_name(self), callable_name(func), class_name(self)
@@ -1320,7 +1319,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Callback used to add feedback results to the database once they are
         done.
 
-        See [_handle_record][trulens_eval.app.App._handle_record].
+        See [_handle_record][trulens.core.app.App._handle_record].
         """
 
         if isinstance(future_or_result, Future):
@@ -1419,7 +1418,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         The record is a guess of what an actual record might look like but will
         be missing information that can only be determined after a call is made.
 
-        All args are [Record][trulens_eval.schema.record.Record] fields except these:
+        All args are [Record][trulens.core.schema.record.Record] fields except these:
 
             - `record_id` is generated using the default id naming schema.
             - `app_id` is taken from this recorder.

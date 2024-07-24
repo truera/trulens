@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 How to make a db migrations:
 
 1. Create a compatibility DB (checkout the last pypi rc branch https://github.com/truera/trulens/tree/releases/rc-trulens-eval-X.x.x/):
-  In trulens/trulens_eval/tests/docs_notebooks/notebooks_to_test
+  In trulens/tests/docs_notebooks/notebooks_to_test
   remove any local dbs
     * rm rf default.sqlite
   run below notebooks (Making sure you also run with the same X.x.x version trulens-eval)
@@ -33,7 +33,7 @@ How to make a db migrations:
     * Add any other notebooks you think may have possible breaking changes
   replace the last compatible db with this new db file
     * See the last COMPAT_VERSION: compatible version in leftmost below: migration_versions
-    * mv default.sqlite trulens/trulens_eval/release_dbs/COMPAT_VERSION/default.sqlite
+    * mv default.sqlite trulens/release_dbs/COMPAT_VERSION/default.sqlite
 
 2. Do Migration coding
   * Update __init__.py with the new version

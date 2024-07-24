@@ -17,9 +17,9 @@ from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
 import humanize
 import pandas
 from tqdm.auto import tqdm
-from trulens.core.database import sqlalchemy
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
+from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.feedback import base_feedback
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
@@ -60,28 +60,28 @@ class Tru(python.SingletonPerName):
     referred to by `database_url`.
 
     Supported App Types:
-        [TruChain][trulens_eval.tru_chain.TruChain]: Langchain
+        [TruChain][trulens.langchain.TruChain]: Langchain
             apps.
 
-        [TruLlama][trulens_eval.tru_llama.TruLlama]: Llama Index
+        [TruLlama][trulens.llamaindex.TruLlama]: Llama Index
             apps.
 
-        [TruRails][trulens_eval.tru_rails.TruRails]: NeMo Guardrails apps.
+        [TruRails][trulens.nemo.TruRails]: NeMo Guardrails apps.
 
-        [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp]:
+        [TruBasicApp][trulens.core.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
 
-        [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp]:
+        [TruCustomApp][trulens.core.TruCustomApp]:
             Custom apps containing custom structures and methods. Requres annotation
             of methods to instrument.
 
-        [TruVirtual][trulens_eval.tru_virtual.TruVirtual]: Virtual
+        [TruVirtual][trulens.core.TruVirtual]: Virtual
             apps that do not have a real app to instrument but have a virtual            structure and can log existing captured data as if they were trulens
             records.
 
     Args:
         database: Database to use. If not provided, an
-            [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] database
+            [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] database
             will be initialized based on the other arguments.
 
         database_url: Database URL. Defaults to a local SQLite
@@ -94,7 +94,7 @@ class Tru(python.SingletonPerName):
 
             **Deprecated**: Use `database_url` instead.
 
-        database_prefix: Prefix for table names for trulens_eval to use.
+        database_prefix: Prefix for table names for trulens to use.
             May be useful in some databases hosting other apps.
 
         database_redact_keys: Whether to redact secret keys in data to be
@@ -110,9 +110,9 @@ class Tru(python.SingletonPerName):
     failure.
 
     See also:
-        [start_evaluator][trulens_eval.tru.Tru.start_evaluator]
+        [start_evaluator][trulens.core.tru.Tru.start_evaluator]
 
-        [DEFERRED][trulens_eval.schema.feedback.FeedbackMode.DEFERRED]
+        [DEFERRED][trulens.core.schema.feedback.FeedbackMode.DEFERRED]
     """
 
     RETRY_FAILED_SECONDS: float = 5 * 60.0
@@ -190,12 +190,12 @@ class Tru(python.SingletonPerName):
         if database is not None:
             if not isinstance(database, DB):
                 raise ValueError(
-                    '`database` must be a `trulens_eval.database.base.DB` instance.'
+                    '`database` must be a `trulens.core.database.base.DB` instance.'
                 )
 
             self.db = database
         else:
-            self.db = sqlalchemy.SQLAlchemyDB.from_tru_args(**database_args)
+            self.db = SQLAlchemyDB.from_tru_args(**database_args)
 
         if database_check_revision:
             try:
@@ -206,14 +206,14 @@ class Tru(python.SingletonPerName):
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict
-    ) -> trulens_eval.tru_chain.TruChain:
+    ) -> trulens.langchain.TruChain:
         """Create a langchain app recorder with database managed by self.
 
         Args:
             chain: The langchain chain defining the app to be instrumented.
 
             **kwargs: Additional keyword arguments to pass to the
-                [TruChain][trulens_eval.tru_chain.TruChain].
+                [TruChain][trulens.langchain.TruChain].
         """
 
         from trulens.core.tru_chain import TruChain
@@ -224,7 +224,7 @@ class Tru(python.SingletonPerName):
         self, engine: Union[llama_index.indices.query.base.BaseQueryEngine,
                             llama_index.chat_engine.types.BaseChatEngine],
         **kwargs: dict
-    ) -> trulens_eval.tru_llama.TruLlama:
+    ) -> trulens.llamaindex.TruLlama:
         """Create a llama-index app recorder with database managed by self.
 
         Args:
@@ -232,7 +232,7 @@ class Tru(python.SingletonPerName):
                 the app to be instrumented.
 
             **kwargs: Additional keyword arguments to pass to
-                [TruLlama][trulens_eval.tru_llama.TruLlama].
+                [TruLlama][trulens.llamaindex.TruLlama].
         """
 
         from trulens.core.tru_llama import TruLlama
@@ -241,7 +241,7 @@ class Tru(python.SingletonPerName):
 
     def Basic(
         self, text_to_text: Callable[[str], str], **kwargs: dict
-    ) -> trulens_eval.tru_basic_app.TruBasicApp:
+    ) -> trulens.core.TruBasicApp:
         """Create a basic app recorder with database managed by self.
 
         Args:
@@ -250,53 +250,53 @@ class Tru(python.SingletonPerName):
                 this function.
 
             **kwargs: Additional keyword arguments to pass to
-                [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp].
+                [TruBasicApp][trulens.core.TruBasicApp].
         """
 
-        from trulens.core.tru_basic_app import TruBasicApp
+        from trulens.core import TruBasicApp
 
         return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
 
     def Custom(
         self, app: Any, **kwargs: dict
-    ) -> trulens_eval.tru_custom_app.TruCustomApp:
+    ) -> trulens.core.TruCustomApp:
         """Create a custom app recorder with database managed by self.
 
         Args:
             app: The app to be instrumented. This can be any python object.
 
             **kwargs: Additional keyword arguments to pass to
-                [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp].
+                [TruCustomApp][trulens.core.TruCustomApp].
         """
 
-        from trulens.core.tru_custom_app import TruCustomApp
+        from trulens.core import TruCustomApp
 
         return TruCustomApp(tru=self, app=app, **kwargs)
 
     def Virtual(
-        self, app: Union[trulens_eval.tru_virtual.VirtualApp, Dict],
+        self, app: Union[trulens.core.app.virtual.VirtualApp, Dict],
         **kwargs: dict
-    ) -> trulens_eval.tru_virtual.TruVirtual:
+    ) -> trulens.core.app.virtual.TruVirtual:
         """Create a virtual app recorder with database managed by self.
 
         Args:
             app: The app to be instrumented. If not a
-                [VirtualApp][trulens_eval.tru_virtual.VirtualApp], it is passed
-                to [VirtualApp][trulens_eval.tru_virtual.VirtualApp] constructor
+                [VirtualApp][trulens.core.app.virtual.VirtualApp], it is passed
+                to [VirtualApp][trulens.core.app.virtual.VirtualApp] constructor
                 to create it.
 
             **kwargs: Additional keyword arguments to pass to
-                [TruVirtual][trulens_eval.tru_virtual.TruVirtual].
+                [TruVirtual][trulens.core.app.virtual.TruVirtual].
         """
 
-        from trulens.core.tru_virtual import TruVirtual
+        from trulens.core import TruVirtual
 
         return TruVirtual(tru=self, app=app, **kwargs)
 
     def reset_database(self):
         """Reset the database. Clears all tables.
 
-        See [DB.reset_database][trulens_eval.database.base.DB.reset_database].
+        See [DB.reset_database][trulens.core.database.base.DB.reset_database].
         """
 
         if isinstance(self.db, OpaqueWrapper):
@@ -313,14 +313,14 @@ class Tru(python.SingletonPerName):
         """Migrates the database.
 
         This should be run whenever there are breaking changes in a database
-        created with an older version of _trulens_eval_.
+        created with an older version of _trulens_.
 
         Args:
             **kwargs: Keyword arguments to pass to
-                [migrate_database][trulens_eval.database.base.DB.migrate_database]
+                [migrate_database][trulens.core.database.base.DB.migrate_database]
                 of the current database.
 
-        See [DB.migrate_database][trulens_eval.database.base.DB.migrate_database].
+        See [DB.migrate_database][trulens.core.database.base.DB.migrate_database].
         """
 
         if isinstance(self.db, OpaqueWrapper):
@@ -343,7 +343,7 @@ class Tru(python.SingletonPerName):
         Args:
             record: The record to add.
 
-            **kwargs: [Record][trulens_eval.schema.record.Record] fields to add to the
+            **kwargs: [Record][trulens.core.schema.record.Record] fields to add to the
                 given record or a new record if no `record` provided.
 
         Returns:
@@ -473,15 +473,15 @@ class Tru(python.SingletonPerName):
 
         Yields:
             One result for each element of `feedback_functions` of
-                [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] if `wait`
+                [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
                 is enabled (default) or [Future][concurrent.futures.Future] of
-                [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] if `wait`
+                [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
                 is disabled.
         """
 
         if not isinstance(record, mod_record_schema.Record):
             raise ValueError(
-                '`record` must be a `trulens_eval.schema.record.Record` instance.'
+                '`record` must be a `trulens.core.schema.record.Record` instance.'
             )
 
         if not isinstance(feedback_functions, Sequence):
@@ -490,12 +490,12 @@ class Tru(python.SingletonPerName):
         if not all(isinstance(ffunc, base_feedback.Feedback)
                    for ffunc in feedback_functions):
             raise ValueError(
-                '`feedback_functions` must be a sequence of `trulens_eval.feedback.feedback.Feedback` instances.'
+                '`feedback_functions` must be a sequence of `trulens.core.Feedback` instances.'
             )
 
         if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
             raise ValueError(
-                '`app` must be a `trulens_eval.schema.app.AppDefinition` instance.'
+                '`app` must be a `trulens.core.schema.app.AppDefinition` instance.'
             )
 
         if not isinstance(wait, bool):
@@ -569,14 +569,14 @@ class Tru(python.SingletonPerName):
             feedback_result_or_future: If a [Future][concurrent.futures.Future]
                 is given, call will wait for the result before adding it to the
                 database. If `kwargs` are given and a
-                [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] is also
+                [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] is also
                 given, the `kwargs` will be used to update the
-                [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] otherwise a
+                [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] otherwise a
                 new one will be created with `kwargs` as arguments to its
                 constructor.
 
             **kwargs: Fields to add to the given feedback result or to create a
-                new [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] with.
+                new [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] with.
 
         Returns:
             A unique result identifier [str][].
@@ -620,7 +620,7 @@ class Tru(python.SingletonPerName):
         """Add multiple feedback results to the database and return their unique ids.
 
         Args:
-            feedback_results: An iterable with each iteration being a [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] or
+            feedback_results: An iterable with each iteration being a [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] or
                 [Future][concurrent.futures.Future] of the same. Each given future will be waited.
 
         Returns:
@@ -644,7 +644,7 @@ class Tru(python.SingletonPerName):
     ) -> serial.JSONized[mod_app_schema.AppDefinition]:
         """Look up an app from the database.
 
-        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens_eval.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
+        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
 
         Example:
             ```python
@@ -654,7 +654,7 @@ class Tru(python.SingletonPerName):
             ```
 
         Warning:
-            Do not rely on deserializing into [App][trulens_eval.app.App] as
+            Do not rely on deserializing into [App][trulens.core.app.App] as
             its implementations feature attributes not meant to be deserialized.
 
         Args:
@@ -673,7 +673,7 @@ class Tru(python.SingletonPerName):
             A list of JSON-ized version of all apps in the database.
 
         Warning:
-            Same Deserialization caveats as [get_app][trulens_eval.tru.Tru.get_app].
+            Same Deserialization caveats as [get_app][trulens.core.tru.Tru.get_app].
         """
 
         return self.db.get_apps()
@@ -775,13 +775,13 @@ class Tru(python.SingletonPerName):
                 evaluator.
 
         Relevant constants:
-            [RETRY_RUNNING_SECONDS][trulens_eval.tru.Tru.RETRY_RUNNING_SECONDS]
+            [RETRY_RUNNING_SECONDS][trulens.core.tru.Tru.RETRY_RUNNING_SECONDS]
 
-            [RETRY_FAILED_SECONDS][trulens_eval.tru.Tru.RETRY_FAILED_SECONDS]
+            [RETRY_FAILED_SECONDS][trulens.core.tru.Tru.RETRY_FAILED_SECONDS]
 
-            [DEFERRED_NUM_RUNS][trulens_eval.tru.Tru.DEFERRED_NUM_RUNS]
+            [DEFERRED_NUM_RUNS][trulens.core.tru.Tru.DEFERRED_NUM_RUNS]
 
-            [MAX_THREADS][trulens_eval.utils.threading.TP.MAX_THREADS]
+            [MAX_THREADS][trulens.core.utils.threading.TP.MAX_THREADS]
         """
 
         assert not fork, 'Fork mode not yet implemented.'

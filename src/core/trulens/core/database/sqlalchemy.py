@@ -17,7 +17,6 @@ import sqlalchemy as sa
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
-from trulens.core import app as mod_app
 from trulens.core.database import base as mod_db
 from trulens.core.database import orm as mod_orm
 from trulens.core.database.base import DB
@@ -55,13 +54,13 @@ class SnowflakeImpl(DefaultImpl):
 class SQLAlchemyDB(DB):
     """Database implemented using sqlalchemy.
 
-    See abstract class [DB][trulens_eval.database.base.DB] for method reference.
+    See abstract class [DB][trulens.core.database.base.DB] for method reference.
     """
 
     table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
     """The prefix to use for all table names.
 
-    [DB][trulens_eval.database.base.DB] interface requirement.
+    [DB][trulens.core.database.base.DB] interface requirement.
     """
 
     engine_params: dict = Field(default_factory=dict)
@@ -83,7 +82,7 @@ class SQLAlchemyDB(DB):
     Container of all the ORM classes for this database.
 
     This should be set to a subclass of
-    [ORM][trulens_eval.database.orm.ORM] upon initialization.
+    [ORM][trulens.core.database.orm.ORM] upon initialization.
     """
 
     def __init__(
@@ -121,7 +120,7 @@ class SQLAlchemyDB(DB):
         database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
         **kwargs: Dict[str, Any]
     ) -> SQLAlchemyDB:
-        """Process database-related configuration provided to the [Tru][trulens_eval.tru.Tru] class to
+        """Process database-related configuration provided to the [Tru][trulens.core.tru.Tru] class to
         create a database.
 
         Emits warnings if appropriate.
@@ -203,7 +202,7 @@ class SQLAlchemyDB(DB):
 
     def check_db_revision(self):
         """See
-        [DB.check_db_revision][trulens_eval.database.base.DB.check_db_revision]."""
+        [DB.check_db_revision][trulens.core.database.base.DB.check_db_revision]."""
 
         if self.engine is None:
             raise ValueError('Database engine not initialized.')
@@ -211,7 +210,7 @@ class SQLAlchemyDB(DB):
         alembic_check_db_revision(self.engine, self.table_prefix)
 
     def migrate_database(self, prior_prefix: Optional[str] = None):
-        """See [DB.migrate_database][trulens_eval.database.base.DB.migrate_database]."""
+        """See [DB.migrate_database][trulens.core.database.base.DB.migrate_database]."""
 
         if self.engine is None:
             raise ValueError('Database engine not initialized.')
@@ -257,7 +256,7 @@ class SQLAlchemyDB(DB):
                 return
 
             elif e.reason == DatabaseVersionException.Reason.AHEAD:
-                # Rethrow the ahead message suggesting to upgrade trulens_eval.
+                # Rethrow the ahead message suggesting to upgrade trulens.
                 raise e
 
             elif e.reason == DatabaseVersionException.Reason.RECONFIGURED:
@@ -295,7 +294,7 @@ class SQLAlchemyDB(DB):
                 raise e
 
     def reset_database(self):
-        """See [DB.reset_database][trulens_eval.database.base.DB.reset_database]."""
+        """See [DB.reset_database][trulens.core.database.base.DB.reset_database]."""
 
         #meta = MetaData()
         meta = self.orm.metadata  #
@@ -307,7 +306,7 @@ class SQLAlchemyDB(DB):
     def insert_record(
         self, record: mod_record_schema.Record
     ) -> mod_types_schema.RecordID:
-        """See [DB.insert_record][trulens_eval.database.base.DB.insert_record]."""
+        """See [DB.insert_record][trulens.core.database.base.DB.insert_record]."""
         # TODO: thread safety
 
         _rec = self.orm.Record.parse(record, redact_keys=self.redact_keys)
@@ -324,8 +323,8 @@ class SQLAlchemyDB(DB):
 
     def get_app(
         self, app_id: mod_types_schema.AppID
-    ) -> Optional[JSONized[mod_app.App]]:
-        """See [DB.get_app][trulens_eval.database.base.DB.get_app]."""
+    ) -> Optional[JSONized]:
+        """See [DB.get_app][trulens.core.database.base.DB.get_app]."""
 
         with self.session.begin() as session:
             if _app := session.query(self.orm.AppDefinition
@@ -333,7 +332,7 @@ class SQLAlchemyDB(DB):
                 return json.loads(_app.app_json)
 
     def get_apps(self) -> Iterable[JSON]:
-        """See [DB.get_apps][trulens_eval.database.base.DB.get_apps]."""
+        """See [DB.get_apps][trulens.core.database.base.DB.get_apps]."""
 
         with self.session.begin() as session:
             for _app in session.query(self.orm.AppDefinition):
@@ -342,7 +341,7 @@ class SQLAlchemyDB(DB):
     def insert_app(
         self, app: mod_app_schema.AppDefinition
     ) -> mod_types_schema.AppID:
-        """See [DB.insert_app][trulens_eval.database.base.DB.insert_app]."""
+        """See [DB.insert_app][trulens.core.database.base.DB.insert_app]."""
 
         # TODO: thread safety
 
@@ -380,7 +379,7 @@ class SQLAlchemyDB(DB):
     def insert_feedback_definition(
         self, feedback_definition: mod_feedback_schema.FeedbackDefinition
     ) -> mod_types_schema.FeedbackDefinitionID:
-        """See [DB.insert_feedback_definition][trulens_eval.database.base.DB.insert_feedback_definition]."""
+        """See [DB.insert_feedback_definition][trulens.core.database.base.DB.insert_feedback_definition]."""
 
         # TODO: thread safety
 
@@ -407,7 +406,7 @@ class SQLAlchemyDB(DB):
         feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
                                         ] = None
     ) -> pd.DataFrame:
-        """See [DB.get_feedback_defs][trulens_eval.database.base.DB.get_feedback_defs]."""
+        """See [DB.get_feedback_defs][trulens.core.database.base.DB.get_feedback_defs]."""
 
         with self.session.begin() as session:
             q = sa.select(self.orm.FeedbackDefinition)
@@ -425,7 +424,7 @@ class SQLAlchemyDB(DB):
     def insert_feedback(
         self, feedback_result: mod_feedback_schema.FeedbackResult
     ) -> mod_types_schema.FeedbackResultID:
-        """See [DB.insert_feedback][trulens_eval.database.base.DB.insert_feedback]."""
+        """See [DB.insert_feedback][trulens.core.database.base.DB.insert_feedback]."""
 
         # TODO: thread safety
 
@@ -528,7 +527,7 @@ class SQLAlchemyDB(DB):
         limit: Optional[int] = None,
         shuffle: bool = False
     ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
-        """See [DB.get_feedback_count_by_status][trulens_eval.database.base.DB.get_feedback_count_by_status]."""
+        """See [DB.get_feedback_count_by_status][trulens.core.database.base.DB.get_feedback_count_by_status]."""
 
         with self.session.begin() as session:
             q = self._feedback_query(
@@ -557,7 +556,7 @@ class SQLAlchemyDB(DB):
         limit: Optional[int] = None,
         shuffle: Optional[bool] = False
     ) -> pd.DataFrame:
-        """See [DB.get_feedback][trulens_eval.database.base.DB.get_feedback]."""
+        """See [DB.get_feedback][trulens.core.database.base.DB.get_feedback]."""
 
         with self.session.begin() as session:
             q = self._feedback_query(**locals_except('self', 'session'))
@@ -572,7 +571,7 @@ class SQLAlchemyDB(DB):
         offset: Optional[int] = None,
         limit: Optional[int] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
+        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
 
         # TODO: Add pagination to this method. Currently the joinedload in
         # select below disables lazy loading of records which will be a problem

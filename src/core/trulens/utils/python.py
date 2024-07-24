@@ -339,7 +339,7 @@ def caller_frame(offset=0) -> 'frame':
 
 def caller_frameinfo(
     offset: int = 0,
-    skip_module: Optional[str] = 'trulens_eval'
+    skip_module: Optional[str] = 'trulens'
 ) -> Optional[inspect.FrameInfo]:
     """
     Get the caller's (of this function) frameinfo. See
@@ -348,7 +348,7 @@ def caller_frameinfo(
     Args:
         offset: The number of frames to skip. Default is 0.
 
-        skip_module: Skip frames from the given module. Default is "trulens_eval".
+        skip_module: Skip frames from the given module. Default is "trulens".
     """
 
     for finfo in inspect.stack()[offset + 1:]:
@@ -365,7 +365,7 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence['frame']:
     A task factory that annotates created tasks with stacks of their parents.
 
     All of such annotated stacks can be retrieved with
-    [stack_with_tasks][trulens_eval.utils.python.stack_with_tasks] as one merged
+    [stack_with_tasks][trulens.core.utils.python.stack_with_tasks] as one merged
     stack.
     """
 
@@ -508,7 +508,7 @@ def get_all_local_in_call_stack(
             in its locals.
 
     This method works across threads as long as they are started using
-    [TP][trulens_eval.utils.threading.TP].
+    [TP][trulens.core.utils.threading.TP].
     """
 
     frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
@@ -591,7 +591,7 @@ class OpaqueWrapper(Generic[T]):
     """Wrap an object preventing all access.
 
     Any access except to
-    [unwrap][trulens_eval.utils.python.OpaqueWrapper.unwrap] will result in an
+    [unwrap][trulens.core.utils.python.OpaqueWrapper.unwrap] will result in an
     exception with the given message.
 
     Args:

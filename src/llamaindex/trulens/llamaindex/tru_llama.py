@@ -9,7 +9,7 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from pydantic import Field
-from trulens.core import app as mod_app
+from trulens.core.app import base as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.langchain.tru_chain import \
@@ -291,8 +291,8 @@ class TruLlama(mod_app.App):
     Args:
         app: A LlamaIndex application.
 
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
-            and [AppDefinition][trulens_eval.schema.app.AppDefinition].
+        **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
+            and [AppDefinition][trulens.core.schema.app.AppDefinition].
     """
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 

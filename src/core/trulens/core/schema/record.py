@@ -42,11 +42,11 @@ class RecordAppCall(serial.SerialModel):
     """Unique identifier for this call.
 
     This is shared across different instances of
-    [RecordAppCall][trulens_eval.schema.record.RecordAppCall] if they refer to
+    [RecordAppCall][trulens.core.schema.record.RecordAppCall] if they refer to
     the same python method call. This may happen if multiple recorders capture
     the call in which case they will each have a different
-    [RecordAppCall][trulens_eval.schema.record.RecordAppCall] but the
-    [call_id][trulens_eval.schema.record.RecordAppCall.call_id] will be the
+    [RecordAppCall][trulens.core.schema.record.RecordAppCall] but the
+    [call_id][trulens.core.schema.record.RecordAppCall.call_id] will be the
     same.
     """
 
@@ -177,7 +177,7 @@ class Record(serial.SerialModel, Hashable):
         Args:
             feedback_timeout: Timeout in seconds for each feedback function. If
                 not given, will use the default timeout
-                `trulens_eval.utils.threading.TP.DEBUG_TIMEOUT`.
+                `trulens.core.utils.threading.TP.DEBUG_TIMEOUT`.
 
         Returns:
             A mapping of feedback functions to their results.
@@ -208,11 +208,11 @@ class Record(serial.SerialModel, Hashable):
         the app that created this record.
 
         This uses the paths stored in each
-        [RecordAppCall][trulens_eval.schema.record.RecordAppCall] which are paths into
+        [RecordAppCall][trulens.core.schema.record.RecordAppCall] which are paths into
         the app.
 
         Note: We cannot create a validated
-        [AppDefinition][trulens_eval.schema.app.AppDefinition] class (or subclass)
+        [AppDefinition][trulens.core.schema.app.AppDefinition] class (or subclass)
         object here as the layout of records differ in these ways:
 
         - Records do not include anything that is not an instrumented method

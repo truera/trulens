@@ -55,7 +55,7 @@ CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]
 """Function or coroutine function.
 
 May be checked with
-[is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].
+[is_really_coroutinefunction][trulens.core.utils.python.is_really_coroutinefunction].
 """
 
 CallableAwaitable = Callable[[A], Awaitable[B]]
@@ -66,7 +66,7 @@ ThunkMaybeAwaitable = Union[mod_python_utils.Thunk[T],
 """Thunk or coroutine thunk.
 
 May be checked with
-[is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].
+[is_really_coroutinefunction][trulens.core.utils.python.is_really_coroutinefunction].
 """
 
 

@@ -2,7 +2,7 @@
 # Instrumentation
 
 This module contains the core of the app instrumentation scheme employed by
-trulens_eval to track and record apps. These details should not be relevant for
+trulens to track and record apps. These details should not be relevant for
 typical use cases.
 """
 
@@ -54,7 +54,7 @@ class WithInstrumentCallbacks:
     """Abstract definition of callbacks invoked by Instrument during
     instrumentation or when instrumented methods are called.
 
-    Needs to be mixed into [App][trulens_eval.app.App].
+    Needs to be mixed into [App][trulens.core.app.App].
     """
 
     # Called during instrumentation.
@@ -221,9 +221,9 @@ class Instrument(object):
         """Default instrumentation configuration.
 
         Additional components are included in subclasses of
-        [Instrument][trulens_eval.instruments.Instrument]."""
+        [Instrument][trulens.core.instruments.Instrument]."""
 
-        MODULES = {'trulens_eval.'}
+        MODULES = {'trulens.'}
         """Modules (by full name prefix) to instrument."""
 
         CLASSES = set([mod_feedback.Feedback])

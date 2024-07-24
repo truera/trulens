@@ -19,7 +19,7 @@ def is_legacy_sqlite(engine: Engine) -> bool:
     """Check if DB is an existing file-based SQLite created with the legacy
     `LocalSQLite` implementation.
 
-    This database was removed since trulens_eval 0.29.0 .
+    This database was removed since trulens 0.29.0 .
     """
 
     inspector = sql_inspect(engine)

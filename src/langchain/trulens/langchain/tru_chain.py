@@ -10,7 +10,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
-from trulens.core import app as mod_app
+from trulens.core.app import base as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema.feedback import Select
@@ -205,8 +205,8 @@ class TruChain(mod_app.App):
     Args:
         app: A LangChain application.
 
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
-            and [AppDefinition][trulens_eval.schema.app.AppDefinition].
+        **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
+            and [AppDefinition][trulens.core.schema.app.AppDefinition].
     """
 
     app: Any  # Chain

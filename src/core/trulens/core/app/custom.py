@@ -11,7 +11,7 @@ This wrapper is the most flexible option for instrumenting an application, and c
     ### `custom_app.py`
 
     ```python
-    from trulens.core.tru_custom_app import instrument
+    from trulens.core.app.custom import instrument
     from custom_retriever import CustomRetriever
 
 
@@ -34,7 +34,7 @@ This wrapper is the most flexible option for instrumenting an application, and c
     ### `custom_retriever.py`
 
     ```python
-    from trulens.core.tru_custom_app import instrument
+    from trulens.core.app.custom import instrument
 
     class CustomRetriever:
         # NOTE: No restriction on this class either.
@@ -58,7 +58,7 @@ The owner classes of any decorated method is then viewed as an app component. In
     ### `example.py`
 
     ```python
-    from custom_app import CustomApp from trulens.core.tru_custom_app
+    from custom_app import CustomApp from trulens.core.app.custom
     import TruCustomApp
 
     custom_app = CustomApp()
@@ -87,7 +87,7 @@ is via:
 ```python
 # custom_app.py`:
 
-from trulens.core.tru_custom_app import instrument
+from trulens.core.app.custom import instrument
 from somepackage.from custom_retriever import CustomRetriever
 
 instrument.method(CustomRetriever, "retrieve_chunks")
@@ -195,7 +195,7 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
-from trulens.core import app as mod_app
+from trulens.core.app import App
 from trulens.core.instruments import Instrument
 from trulens.core.instruments import instrument as base_instrument
 from trulens.utils.pyschema import Class
@@ -215,7 +215,7 @@ pp = PrettyPrinter()
 PLACEHOLDER = '__tru_placeholder'
 
 
-class TruCustomApp(mod_app.App):
+class TruCustomApp(App):
     """
     This recorder is the most flexible option for instrumenting an application,
     and can be used to instrument any custom python class.
@@ -325,8 +325,8 @@ class TruCustomApp(mod_app.App):
     Args:
         app: Any class.
 
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
-            and [AppDefinition][trulens_eval.schema.app.AppDefinition]
+        **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
+            and [AppDefinition][trulens.core.schema.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)

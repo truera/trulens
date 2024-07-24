@@ -10,8 +10,8 @@ serialized into json. Most are extended with non-serialized fields in other file
 
 | Serializable       | Non-serializable        |
 | ------------------ | ----------------------- |
-| [AppDefinition][trulens_eval.schema.app.AppDefinition] | [App][trulens_eval.app.App], Tru{Chain, Llama, ...} |
-| [FeedbackDefinition][trulens_eval.schema.feedback.FeedbackDefinition] | [Feedback][trulens_eval.feedback.feedback.Feedback] |
+| [AppDefinition][trulens.core.schema.app.AppDefinition] | [App][trulens.core.app.App], Tru{Chain, Llama, ...} |
+| [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition] | [Feedback][trulens.core.Feedback] |
 
 `AppDefinition.app` is the JSON-ized version of a wrapped app while `App.app` is the
 actual wrapped app. We can thus inspect the contents of a wrapped app without
@@ -25,8 +25,8 @@ from trulens.core.schema.app import AppDefinition
 from trulens.core.schema.feedback import FeedbackDefinition
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackResult
-from trulens.core.schema.feedback import Select
 from trulens.core.schema.record import Record
+from trulens.core.schema.select import Select
 
 __all__ = [
     'AppDefinition',

@@ -41,7 +41,7 @@ from langchain.schema import Generation
 from langchain.schema import LLMResult
 
 with OptionalImports(messages=REQUIREMENT_OPENAI) as opt:
-    # This is also required for running openai endpoints in trulens_eval:
+    # This is also required for running openai endpoints in trulens:
     import openai as oai
 
     from langchain.callbacks.openai_info import OpenAICallbackHandler

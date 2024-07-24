@@ -90,7 +90,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     class EndpointSetup():
         """Class for storing supported endpoint information.
 
-        See [track_all_costs][trulens_eval.feedback.provider.endpoint.base.Endpoint.track_all_costs]
+        See [track_all_costs][trulens.external.provider.endpoint.base.Endpoint.track_all_costs]
         for usage.
         """
         arg_flag: str
@@ -100,27 +100,27 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     ENDPOINT_SETUPS: ClassVar[List[EndpointSetup]] = [
         EndpointSetup(
             arg_flag='with_openai',
-            module_name='trulens_eval.feedback.provider.endpoint.openai',
+            module_name='trulens.external.provider.endpoint.openai',
             class_name='OpenAIEndpoint'
         ),
         EndpointSetup(
             arg_flag='with_hugs',
-            module_name='trulens_eval.feedback.provider.endpoint.hugs',
+            module_name='trulens.external.provider.endpoint.hugs',
             class_name='HuggingfaceEndpoint'
         ),
         EndpointSetup(
             arg_flag='with_litellm',
-            module_name='trulens_eval.feedback.provider.endpoint.litellm',
+            module_name='trulens.external.provider.endpoint.litellm',
             class_name='LiteLLMEndpoint'
         ),
         EndpointSetup(
             arg_flag='with_bedrock',
-            module_name='trulens_eval.feedback.provider.endpoint.bedrock',
+            module_name='trulens.external.provider.endpoint.bedrock',
             class_name='BedrockEndpoint'
         ),
         EndpointSetup(
             arg_flag='with_cortex',
-            module_name='trulens_eval.feedback.provider.endpoint.cortex',
+            module_name='trulens.external.provider.endpoint.cortex',
             class_name='CortexEndpoint'
         )
     ]
@@ -472,7 +472,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     logger.debug(
                         'Could not initialize endpoint %s. '
                         'Possibly missing key(s). '
-                        'trulens_eval will not track costs/usage of this endpoint. %s',
+                        'trulens will not track costs/usage of this endpoint. %s',
                         cls.__name__,
                         e,
                     )

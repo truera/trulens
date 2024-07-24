@@ -76,7 +76,7 @@ The components of this specifications are:
   - `NeMo.select_context()` -- outputs the selector for the retrieved context
     from the app's internal `search_relevant_chunks` method.
 
-For ease of switching between frameworks, the select_context shortcut is also available from the trulens_eval.app.App.
+For ease of switching between frameworks, the select_context shortcut is also available from the trulens.core.app.App.
 
 ```python
 from trulens.core.app import App
@@ -162,7 +162,7 @@ feedback_implementation1 = provider.somemethod
 feedback_implementation2 = somefunction
 ```
 
-For provided feedback functions, `somepackage` is `trulens_eval.feedback` and
+For provided feedback functions, `somepackage` is `trulens.external` and
 `someproviderclass` is `OpenAI` or one of the other `Provider` subclasses.
 Custom feedback functions likewise need to be importable functions or methods of
 a provider subclass that can be imported. Critically, functions or classes

@@ -21,7 +21,6 @@ from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 import trulens.core.feedback.base_endpoint as mod_base_endpoint
-import trulens.core.feedback.base_provider as mod_base_provider
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
@@ -106,7 +105,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
     """Feedback function container.
 
     Typical usage is to specify a feedback implementation function from a
-    [Provider][trulens_eval.feedback.provider.Provider] and the mapping of
+    [Provider][trulens.external.provider.Provider] and the mapping of
     selectors describing how to construct the arguments to the implementation:
 
     Example:
@@ -126,7 +125,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
     """Implementation callable.
 
     A serialized version is stored at
-    [FeedbackDefinition.implementation][trulens_eval.schema.feedback.FeedbackDefinition.implementation].
+    [FeedbackDefinition.implementation][trulens.core.schema.feedback.FeedbackDefinition.implementation].
     """
 
     agg: Optional[AggCallable] = pydantic.Field(None, exclude=True)
@@ -134,7 +133,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
     result.
 
     A serialized version is stored at
-    [FeedbackDefinition.aggregator][trulens_eval.schema.feedback.FeedbackDefinition.aggregator].
+    [FeedbackDefinition.aggregator][trulens.core.schema.feedback.FeedbackDefinition.aggregator].
     """
 
     def __init__(
@@ -316,7 +315,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         """Evaluates feedback functions that were specified to be deferred.
 
         Returns a list of tuples with the DB row containing the Feedback and
-        initial [FeedbackResult][trulens_eval.schema.feedback.FeedbackResult] as
+        initial [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] as
         well as the Future which will contain the actual result.
 
         Args:
@@ -422,7 +421,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         specify the method of producing combinations of values in such cases.
 
         Returns a new Feedback object with the given aggregation function and/or
-        the given [combination mode][trulens_eval.schema.feedback.FeedbackCombinations].
+        the given [combination mode][trulens.core.schema.feedback.FeedbackCombinations].
         """
 
         if func is None and combinations is None:
@@ -590,7 +589,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             record: The record that the feedback will run on. This can be a
                 mostly empty record for checking ahead of producing one. The
                 utility method
-                [App.dummy_record][trulens_eval.app.App.dummy_record] is built
+                [App.dummy_record][trulens.core.app.App.dummy_record] is built
                 for this prupose.
 
             source_data: Additional data to select from when extracting feedback
@@ -608,7 +607,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             ValueError: If a selector is invalid and warning is not set.
         """
 
-        from trulens.core.app import App
+        from trulens.core.app.base import App
 
         if source_data is None:
             source_data = {}
@@ -1146,9 +1145,9 @@ Feedback function signature:
         the values that will be sent as arguments to the implementation as
         specified by `self.selectors`. Additional data to select from can be
         provided in `source_data`. All args are optional. If a
-        [Record][trulens_eval.schema.record.Record] is specified, its calls are
+        [Record][trulens.core.schema.record.Record] is specified, its calls are
         laid out as app (see
-        [layout_calls_as_app][trulens_eval.schema.record.Record.layout_calls_as_app]).
+        [layout_calls_as_app][trulens.core.schema.record.Record.layout_calls_as_app]).
         """
 
         return self._extract_selection(

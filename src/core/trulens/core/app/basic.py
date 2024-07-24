@@ -10,7 +10,7 @@ from pprint import PrettyPrinter
 from typing import Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
-from trulens.core import app as mod_app
+from trulens.core.app import App
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.utils.pyschema import Class
@@ -64,7 +64,7 @@ class TruBasicCallableInstrument(Instrument):
         )
 
 
-class TruBasicApp(mod_app.App):
+class TruBasicApp(App):
     """Instantiates a Basic app that makes little assumptions.
 
     Assumes input text and output text.
@@ -98,8 +98,8 @@ class TruBasicApp(mod_app.App):
         app: A TruWrapperApp instance. If not provided, `text_to_text` must
             be provided.
 
-        **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
-            and [AppDefinition][trulens_eval.schema.app.AppDefinition]
+        **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
+            and [AppDefinition][trulens.core.schema.app.AppDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)

@@ -6,11 +6,10 @@ import datetime
 from enum import Enum
 import logging
 from pprint import pformat
-from typing import (Any, ClassVar, Dict, Hashable, List, Optional, Tuple,
-                    TypeVar, Union)
+from typing import (Any, ClassVar, Dict, Hashable, List, Optional, TypeVar,
+                    Union)
 
 import pydantic
-from trulens.core import app as mod_app
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.utils import pyschema
@@ -23,146 +22,11 @@ T = TypeVar('T')
 logger = logging.getLogger(__name__)
 
 
-class Select:
-    """
-    Utilities for creating selectors using Lens and aliases/shortcuts.
-    """
-
-    # TODEP
-    Query = serial.Lens
-    """Selector type."""
-
-    Tru: serial.Lens = Query()
-    """Selector for the tru wrapper (TruLlama, TruChain, etc.)."""
-
-    Record: Query = Query().__record__
-    """Selector for the record."""
-
-    App: Query = Query().__app__
-    """Selector for the app."""
-
-    RecordInput: Query = Record.main_input
-    """Selector for the main app input."""
-
-    RecordOutput: Query = Record.main_output
-    """Selector for the main app output."""
-
-    RecordCalls: Query = Record.app  # type: ignore
-    """Selector for the calls made by the wrapped app.
-
-    Layed out by path into components.
-    """
-
-    RecordCall: Query = Record.calls[-1]
-    """Selector for the first called method (last to return)."""
-
-    RecordArgs: Query = RecordCall.args
-    """Selector for the whole set of inputs/arguments to the first called / last method call."""
-
-    RecordRets: Query = RecordCall.rets
-    """Selector for the whole output of the first called / last returned method call."""
-
-    @staticmethod
-    def path_and_method(select: Select.Query) -> Tuple[Select.Query, str]:
-        """
-        If `select` names in method as the last attribute, extract the method name
-        and the selector without the final method name.
-        """
-
-        if len(select.path) == 0:
-            raise ValueError(
-                'Given selector is empty so does not name a method.'
-            )
-
-        firsts = select.path[:-1]
-        last = select.path[-1]
-
-        if not isinstance(last, serial.StepItemOrAttribute):
-            raise ValueError(
-                'Last part of selector is not an attribute so does not name a method.'
-            )
-
-        method_name = last.get_item_or_attribute()
-        path = Select.Query(path=firsts)
-
-        return path, method_name
-
-    @staticmethod
-    def dequalify(select: Select.Query) -> Select.Query:
-        """If the given selector qualifies record or app, remove that qualification."""
-
-        if len(select.path) == 0:
-            return select
-
-        if select.path[0] == Select.Record.path[0] or \
-            select.path[0] == Select.App.path[0]:
-            return Select.Query(path=select.path[1:])
-
-        return select
-
-    @staticmethod
-    def context(app: Optional[Any] = None) -> serial.Lens:
-        return mod_app.App.select_context(app)
-
-    @staticmethod
-    def for_record(query: Select.Query) -> Query:
-        return Select.Query(path=Select.Record.path + query.path)
-
-    @staticmethod
-    def for_app(query: Select.Query) -> Query:
-        return Select.Query(path=Select.App.path + query.path)
-
-    @staticmethod
-    def render_for_dashboard(query: Select.Query) -> str:
-        """Render the given query for use in dashboard to help user specify feedback functions."""
-
-        if len(query) == 0:
-            return 'Select.Query()'
-
-        ret = ''
-        rest = None
-
-        if query.path[0:2] == Select.RecordInput.path:
-            ret = 'Select.RecordInput'
-            rest = query.path[2:]
-        elif query.path[0:2] == Select.RecordOutput.path:
-            ret = 'Select.RecordOutput'
-            rest = query.path[2:]
-
-        elif query.path[0:4] == Select.RecordArgs.path:
-            ret = 'Select.RecordArgs'
-            rest = query.path[4:]
-        elif query.path[0:4] == Select.RecordRets.path:
-            ret = 'Select.RecordRets'
-            rest = query.path[4:]
-
-        elif query.path[0:2] == Select.RecordCalls.path:
-            ret = 'Select.RecordCalls'
-            rest = query.path[2:]
-
-        elif query.path[0:3] == Select.RecordCall.path:
-            ret = 'Select.RecordCall'
-            rest = query.path[3:]
-
-        elif query.path[0] == Select.Record.path[0]:
-            ret = 'Select.Record'
-            rest = query.path[1:]
-        elif query.path[0] == Select.App.path[0]:
-            ret = 'Select.App'
-            rest = query.path[1:]
-        else:
-            rest = query.path
-
-        for step in rest:
-            ret += repr(step)
-
-        return f'{ret}'
-
 
 class FeedbackMode(str, Enum):
     """Mode of feedback evaluation.
 
-    Specify this using the `feedback_mode` to [App][trulens_eval.app.App] constructors.
+    Specify this using the `feedback_mode` to [App][trulens.core.app.App] constructors.
     """
 
     NONE = 'none'
@@ -216,21 +80,21 @@ class FeedbackOnMissingParameters(str, Enum):
     """Raise an error if a parameter is missing.
 
     The result status will be set to
-    [FAILED][trulens_eval.schema.feedback.FeedbackResultStatus.FAILED].
+    [FAILED][trulens.core.schema.feedback.FeedbackResultStatus.FAILED].
     """
 
     WARN = 'warn'
     """Warn if a parameter is missing.
 
     The result status will be set to
-    [SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
+    [SKIPPED][trulens.core.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
 
     IGNORE = 'ignore'
     """Do nothing.
 
     No warning or error message will be shown. The result status will be set to
-    [SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
+    [SKIPPED][trulens.core.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
 
 
@@ -265,7 +129,7 @@ class FeedbackCall(serial.SerialModel):
 
 
 class FeedbackResult(serial.SerialModel):
-    """Feedback results for a single [Feedback][trulens_eval.feedback.feedback.Feedback] instance.
+    """Feedback results for a single [Feedback][trulens.core.Feedback] instance.
 
     This might involve multiple feedback function calls. Typically you should
     not be constructing these objects yourself except for the cases where you'd
@@ -277,7 +141,7 @@ class FeedbackResult(serial.SerialModel):
         record_id (str): Record over which the feedback was evaluated.
 
         feedback_definition_id (str): The id of the
-            [FeedbackDefinition][trulens_eval.schema.feedback.FeedbackDefinition] which
+            [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition] which
             was evaluated to get this result.
 
         last_ts (datetime.datetime): Last timestamp involved in the evaluation.
@@ -366,9 +230,9 @@ class FeedbackCombinations(str, Enum):
     Note that this applies only to cases where selectors pick out more than one
     thing for feedback function arguments. This option is used for the field
     `combinations` of
-    [FeedbackDefinition][trulens_eval.schema.feedback.FeedbackDefinition] and can be
+    [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition] and can be
     specified with
-    [Feedback.aggregate][trulens_eval.feedback.feedback.Feedback.aggregate].
+    [Feedback.aggregate][trulens.core.Feedback.aggregate].
     """
 
     ZIP = 'zip'
@@ -388,7 +252,7 @@ class FeedbackCombinations(str, Enum):
     fewest items as per python [zip][zip] (strict mode is not used).
 
     Note that selectors can use
-    [Lens][trulens_eval.utils.serial.Lens] `collect()` to name a single (list)
+    [Lens][trulens.core.utils.serial.Lens] `collect()` to name a single (list)
     value instead of multiple values.
     """
 
@@ -408,7 +272,7 @@ class FeedbackCombinations(str, Enum):
     See [itertools.product][itertools.product] for more.
 
     Note that selectors can use
-    [Lens][trulens_eval.utils.serial.Lens] `collect()` to name a single (list)
+    [Lens][trulens.core.utils.serial.Lens] `collect()` to name a single (list)
     value instead of multiple values.
     """
 
@@ -417,7 +281,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     """Serialized parts of a feedback function.
 
     The non-serialized parts are in the
-    [Feedback][trulens_eval.feedback.feedback.Feedback] class.
+    [Feedback][trulens.core.Feedback] class.
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -441,14 +305,14 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
     Can use this to evaluate conditionally on presence of some calls, for
     example. Feedbacks skipped this way will have a status of
-    [FeedbackResultStatus.SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
+    [FeedbackResultStatus.SKIPPED][trulens.core.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
 
     if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR
     """How to handle missing parameters in feedback function calls."""
 
     selectors: Dict[str, serial.Lens]
-    """Selectors; pointers into [Records][trulens_eval.schema.record.Record] of where
+    """Selectors; pointers into [Records][trulens.core.schema.record.Record] of where
     to get arguments for `imp`."""
 
     supplied_name: Optional[str] = None
