@@ -4,7 +4,7 @@ TruLens provides a broad set of capabilities for evaluating and tracking applica
 
 ## TruLens Dashboard
 
-To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by `tru.run_dashboard()`, and will run from a database url you specify with `Tru()`.
+To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by [tru.run_dashboard][trulens_eval.tru.Tru.run_dashboard], and will run from a database url you specify with  [Tru()][trulens_eval.tru.Tru].
 
 !!! example "Launch the TruLens dashboard"
 
@@ -26,8 +26,6 @@ By default, the dashboard will find and run on an unused port number. You can al
 
     If you are running in Google Colab, `run_dashboard()` will output a tunnel website and IP address that can be entered into the tunnel website.
 
-Read more about `run_dashboard` in the [API Reference](https://www.trulens.org/trulens_eval/api/tru/#trulens_eval.tru.Tru.run_dashboard).
-
 It can also be run in the CLI with the command below:
 
 !!! example "Lanch the TruLens dashboard in the CLI"
@@ -40,7 +38,7 @@ It can also be run in the CLI with the command below:
 
 In addition to the complete dashboard, several of the dashboard components can be used on their own and added to existing _Streamlit_ dashboards.
 
-_Streamlit_ is an easy way to create python scripts into shareable web applications, and has become a popular way to interact with generative AI technology. Several _TruLens_ UI components are now accessible for adding to Streamlit dashboards.
+_Streamlit_ is an easy way to create python scripts into shareable web applications, and has become a popular way to interact with generative AI technology. Several _TruLens_ UI components are now accessible for adding to Streamlit dashboards using the _TruLens_ [Streamlit module][trulens_eval.streamlit].
 
 Consider the below `app.py` which consists of a simple RAG application that is already logged and evaluated with _TruLens_. Notice in particular, that we are getting both the application's `response` and `record`.
 
@@ -71,7 +69,7 @@ Consider the below `app.py` which consists of a simple RAG application that is a
 
     ```
 
-With the `record` in hand, we can easily add TruLens components to display the evaluation results of the provided record using the `trulens_feedback` from the _TruLens_ streamlit module. This will display the _TruLens_ feedback result clickable pills as the feedback is available.
+With the `record` in hand, we can easily add TruLens components to display the evaluation results of the provided record using the `trulens_feedback`. This will display the _TruLens_ feedback result clickable pills as the feedback is available.
 
 !!! example "Display feedback results"
 
@@ -104,5 +102,3 @@ Last, we can also display the TruLens leaderboard using the `trulens_leaderboard
     ```
 
 In combination, the streamlit components allow you to make evaluation front-and-center in your app. This is particularly useful for developer playground use cases, or to ensure users of app reliability.
-
-Read more in the [Streamlit Module API Reference](https://www.trulens.org/trulens_eval/api/streamlit/).
