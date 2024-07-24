@@ -1281,17 +1281,12 @@ class LLMProvider(Provider):
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
         def evaluate_hypothesis(index, hypothesis):
-            print("hypothesis", hypothesis)
             abstention_score = evaluate_abstention(hypothesis)
-            print("abstention_score", abstention_score)
             if abstention_score > 0.5:
-                print("Abstention detected")
                 answerability_score = evaluate_answerability(question, source)
                 if answerability_score > 0.5:
-                    print("answerable abstention detected")
                     return index, 0.0, {"reason": "Answerable abstention"}
                 else:
-                    print("unanswerable abstention detected")
                     return index, 1.0, {"reason": "Unanswerable abstention"}
             else:
                 user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
