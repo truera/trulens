@@ -35,7 +35,7 @@ virtual_app = dict(
     template="information about the template I used in my app",
     debug="all of these fields are completely optional"
 )
-from trulens import Select
+from trulens.core import Select
 from trulens.tru_virtual import VirtualApp
 
 virtual_app = VirtualApp(virtual_app) # can start with the prior dictionary
@@ -45,7 +45,7 @@ virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
 When setting up the virtual app, you should also include any components that you would like to evaluate in the virtual app. This can be done using the `Select` class. Using selectors here lets use reuse the setup you use to define feedback functions. Below you can see how to set up a virtual app with a retriever component, which will be used later in the example for feedback evaluation.
 
 ```python
-from trulens import Select
+from trulens.core import Select
 retriever_component = Select.RecordCalls.retriever
 virtual_app[retriever_component] = "this is the retriever component"
 ```
