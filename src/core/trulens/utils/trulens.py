@@ -1,5 +1,5 @@
 """
-Utilities for app components provided as part of the trulens_eval package.
+Utilities for app components provided as part of the trulens package.
 Currently organizes all such components as "Other".
 """
 
@@ -7,12 +7,12 @@ import time
 from typing import Type
 
 import pandas as pd
-from trulens.core import app
+from trulens.core.app import base
 from trulens.core.schema.record import Record
 from trulens.utils.pyschema import Class
 
 
-class Other(app.Other, app.TrulensComponent):
+class Other(base.Other, base.TrulensComponent):
     pass
 
 
@@ -20,7 +20,7 @@ class Other(app.Other, app.TrulensComponent):
 COMPONENT_VIEWS = [Other]
 
 
-def constructor_of_class(cls: Class) -> Type[app.TrulensComponent]:
+def constructor_of_class(cls: Class) -> Type[base.TrulensComponent]:
     for view in COMPONENT_VIEWS:
         if view.class_is(cls):
             return view
@@ -28,7 +28,7 @@ def constructor_of_class(cls: Class) -> Type[app.TrulensComponent]:
     raise TypeError(f'Unknown trulens component type with class {cls}')
 
 
-def component_of_json(json: dict) -> app.TrulensComponent:
+def component_of_json(json: dict) -> base.TrulensComponent:
     cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)

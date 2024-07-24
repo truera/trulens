@@ -35,8 +35,7 @@ virtual_app = dict(
     template="information about the template I used in my app",
     debug="all of these fields are completely optional"
 )
-from trulens.core import Select
-from trulens.tru_virtual import VirtualApp
+from trulens.core import Select, VirtualApp
 
 virtual_app = VirtualApp(virtual_app) # can start with the prior dictionary
 virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -59,7 +58,7 @@ The parameters you'll use with `VirtualRecord` are the same as those for `Record
 In the example below, we add two records. Each record includes the inputs and outputs for a context retrieval component. Remember, you only need to provide the information that you want to track or evaluate. The selectors are references to methods that can be selected for feedback, as we'll demonstrate below.
 
 ```python
-from trulens.tru_virtual import VirtualRecord
+from trulens.core.app.virtual import VirtualRecord
 
 # The selector for a presumed context retrieval component's call to
 # `get_context`. The names are arbitrary but may be useful for readability on
@@ -153,7 +152,7 @@ f_context_relevance = (
 Then, the feedback functions can be passed to `TruVirtual` to construct the `recorder`. Most of the fields that other non-virtual apps take can also be specified here.
 
 ```python
-from trulens.tru_virtual import TruVirtual
+from trulens.core.app.virtual import TruVirtual
 
 virtual_recorder = TruVirtual(
     app_id="a virtual app",
@@ -181,7 +180,7 @@ virtual_app = dict(
 )
 
 from trulens.core.schema import Select
-from trulens.tru_virtual import VirtualApp
+from trulens.core.app import VirtualApp
 
 virtual_app = VirtualApp(virtual_app)
 ```

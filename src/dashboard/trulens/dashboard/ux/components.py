@@ -4,10 +4,10 @@ from typing import Dict, List
 
 import pandas as pd
 import streamlit as st
-from trulens.core.app import ComponentView
-from trulens.core.schema.feedback import Select
+from trulens.core.app.base import ComponentView
 from trulens.core.schema.record import Record
 from trulens.core.schema.record import RecordAppCall
+from trulens.core.schema.select import Select
 from trulens.core.schema.types import Metadata
 from trulens.utils.containers import is_empty
 from trulens.utils.json import jsonify

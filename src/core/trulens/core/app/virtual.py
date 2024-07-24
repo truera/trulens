@@ -182,7 +182,7 @@ about the components of an LLM app.
         'debug': 'optional debugging information'
     }
 
-    from trulens.core.schema.feedback import Select
+    from trulens.core import Select
     from trulens.core.app import VirtualApp
 
     virtual_app = VirtualApp(virtual_app)

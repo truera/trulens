@@ -13,7 +13,7 @@ from pydantic import Field
 from trulens.core.app import base as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
-from trulens.core.schema.feedback import Select
+from trulens.core.schema.select import Select
 from trulens.langchain.guardrails import WithFeedbackFilterDocuments
 from trulens.utils.containers import dict_set_with_multikey
 from trulens.utils.imports import OptionalImports

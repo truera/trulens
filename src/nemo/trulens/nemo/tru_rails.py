@@ -11,7 +11,7 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 from langchain_core.language_models.base import BaseLanguageModel
 from pydantic import Field
-from trulens.core import app as mod_app
+from trulens.core.app import base as mod_app
 from trulens.core.feedback import base_feedback
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument

@@ -13,13 +13,6 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.9.7 || >3.9.7,<4.0"
-# trulens-core = "^0.33.0"
-# trulens-external = "^0.33.0"
-# trulens-dashboard = "^0.33.0"
-# trulens-langchain = "^0.33.0"
-# trulens-llamaindex = "^0.33.0"
-# trulens-nemo = "^0.33.0"
-# trulens-testing = "^0.33.0"
 trulens-core = { path = "src/core", develop = true }
 trulens-external = { path = "src/external", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }

@@ -8,7 +8,7 @@ various llama_index classes and example classes:
 
 from typing import Type
 
-from trulens.core import app
+from trulens.core.app import base
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LLAMA
 from trulens.utils.pyschema import Class
@@ -19,7 +19,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
 opt.assert_installed(llama_index)
 
 
-class Prompt(app.Prompt, app.LlamaIndexComponent):
+class Prompt(base.Prompt, base.LlamaIndexComponent):
 
     @property
     def template(self) -> str:
@@ -35,7 +35,7 @@ class Prompt(app.Prompt, app.LlamaIndexComponent):
         )
 
 
-class Agent(app.Agent, app.LlamaIndexComponent):
+class Agent(base.Agent, base.LlamaIndexComponent):
 
     @property
     def agent_name(self) -> str:
@@ -51,7 +51,7 @@ class Agent(app.Agent, app.LlamaIndexComponent):
         )
 
 
-class Tool(app.Tool, app.LlamaIndexComponent):
+class Tool(base.Tool, base.LlamaIndexComponent):
 
     @property
     def tool_name(self) -> str:
@@ -70,7 +70,7 @@ class Tool(app.Tool, app.LlamaIndexComponent):
         )
 
 
-class LLM(app.LLM, app.LlamaIndexComponent):
+class LLM(base.LLM, base.LlamaIndexComponent):
 
     @property
     def model_name(self) -> str:
@@ -86,7 +86,7 @@ class LLM(app.LLM, app.LlamaIndexComponent):
         )
 
 
-class Other(app.Other, app.LlamaIndexComponent):
+class Other(base.Other, base.LlamaIndexComponent):
     pass
 
 
@@ -94,7 +94,7 @@ class Other(app.Other, app.LlamaIndexComponent):
 COMPONENT_VIEWS = [Agent, Tool, Prompt, LLM, Other]
 
 
-def constructor_of_class(cls: Class) -> Type[app.LlamaIndexComponent]:
+def constructor_of_class(cls: Class) -> Type[base.LlamaIndexComponent]:
     for view in COMPONENT_VIEWS:
         if view.class_is(cls):
             return view
@@ -102,7 +102,7 @@ def constructor_of_class(cls: Class) -> Type[app.LlamaIndexComponent]:
     raise TypeError(f'Unknown llama_index component type with class {cls}')
 
 
-def component_of_json(json: dict) -> app.LlamaIndexComponent:
+def component_of_json(json: dict) -> base.LlamaIndexComponent:
     cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)

@@ -4,7 +4,7 @@ various langchain classes and example classes:
 """
 from typing import Type
 
-from trulens.core import app
+from trulens.core.app import base
 from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens.utils.pyschema import Class
@@ -14,7 +14,7 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     import langchain
 
 
-class Prompt(app.Prompt, app.LangChainComponent):
+class Prompt(base.Prompt, base.LangChainComponent):
 
     @property
     def template(self) -> str:
@@ -34,7 +34,7 @@ class Prompt(app.Prompt, app.LangChainComponent):
         )  # langchain >= 0.230
 
 
-class LLM(app.LLM, app.LangChainComponent):
+class LLM(base.LLM, base.LangChainComponent):
 
     @property
     def model_name(self) -> str:
@@ -50,7 +50,7 @@ class LLM(app.LLM, app.LangChainComponent):
         )
 
 
-class Other(app.Other, app.LangChainComponent):
+class Other(base.Other, base.LangChainComponent):
     pass
 
 
@@ -58,7 +58,7 @@ class Other(app.Other, app.LangChainComponent):
 COMPONENT_VIEWS = [Prompt, LLM, Other]
 
 
-def constructor_of_class(cls: Class) -> Type[app.LangChainComponent]:
+def constructor_of_class(cls: Class) -> Type[base.LangChainComponent]:
     for view in COMPONENT_VIEWS:
         if view.class_is(cls):
             return view
@@ -66,7 +66,7 @@ def constructor_of_class(cls: Class) -> Type[app.LangChainComponent]:
     raise TypeError(f'Unknown llama_index component type with class {cls}')
 
 
-def component_of_json(json: JSON) -> app.LangChainComponent:
+def component_of_json(json: JSON) -> base.LangChainComponent:
     cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)
