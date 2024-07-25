@@ -1,6 +1,3 @@
-import json
-import os
-
 from dotenv import load_dotenv
 from langchain_openai import OpenAI
 import streamlit as st

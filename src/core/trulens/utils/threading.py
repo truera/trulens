@@ -51,7 +51,6 @@ class Thread(fThread):
 
 
 # HACK007: Attempt to force other users of Thread to use our version instead.
-import threading
 
 threading.Thread = Thread
 

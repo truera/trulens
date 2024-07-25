@@ -163,6 +163,4 @@ class TruBasicApp(App):
         self._throw_dep_message(method="call", is_async=False, with_record=True)
 
 
-import trulens  # for App class annotations
-
 TruBasicApp.model_rebuild()

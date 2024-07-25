@@ -245,7 +245,7 @@ def answer_message(client, body: dict, logger):
     channel = body["event"]["channel"]
 
     if "thread_ts" in body["event"]:
-        client.chat_postMessage(channel=channel, thread_ts=ts, text=f"Looking...")
+        client.chat_postMessage(channel=channel, thread_ts=ts, text="Looking...")
 
         convo_id = body["event"]["thread_ts"]
 
@@ -277,7 +277,7 @@ def answer_message(client, body: dict, logger):
             app = get_or_make_app(convo_id)
 
             client.chat_postMessage(
-                channel=channel, thread_ts=ts, text=f"Hi. Let me check that for you..."
+                channel=channel, thread_ts=ts, text="Hi. Let me check that for you..."
             )
 
     res, res_sources = get_answer(app, message)

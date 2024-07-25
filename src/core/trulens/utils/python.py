@@ -545,7 +545,7 @@ def get_all_local_in_call_stack(
         if func(f.f_code):
             logger.debug(f"Looking via {func.__name__}; found {f}")
             if skip is not None and f == skip:
-                logger.debug(f"Skipping.")
+                logger.debug("Skipping.")
                 continue
 
             locs = f.f_locals

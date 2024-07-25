@@ -147,7 +147,7 @@ class SelectorValue(HasTraits):
 
                         ret_html += "</div>"
 
-                except Exception as e:
+                except Exception:
                     self.w_listing.layout.border = "1px solid red"
                     return
 

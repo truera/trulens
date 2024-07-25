@@ -121,7 +121,6 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
 
         try:
             # If have nest_asyncio, can run in current thread.
-            import nest_asyncio
 
             return loop.run_until_complete(awaitable)
         except:
@@ -129,7 +128,6 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
 
         try:
             # If have nest_asyncio, can run in current thread.
-            import nest_asyncio
 
             return loop.run_until_complete(awaitable)
         except:

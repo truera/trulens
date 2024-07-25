@@ -111,7 +111,7 @@ stmetricdelta_hidearrow = """
 valid_directions = ["HIGHER_IS_BETTER", "LOWER_IS_BETTER"]
 
 cellstyle_jscode = {
-    k: f"""function(params) {{
+    k: """function(params) {
         let v = parseFloat(params.value);
         """
     + "\n".join(

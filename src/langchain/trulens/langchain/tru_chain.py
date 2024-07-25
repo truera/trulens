@@ -247,7 +247,7 @@ class TruChain(mod_app.App):
                 if isinstance(comp, BaseRetriever):
                     retrievers.append((lens, comp))
 
-            except Exception as e:
+            except Exception:
                 pass
 
         if len(retrievers) == 0:
@@ -399,7 +399,5 @@ class TruChain(mod_app.App):
     async def _acall(self, *args, **kwargs) -> None:
         self._throw_dep_message(method="_acall", is_async=True, with_record=False)
 
-
-import trulens  # for App class annotations
 
 TruChain.model_rebuild()

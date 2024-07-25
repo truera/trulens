@@ -12,7 +12,7 @@ from trulens.utils.pyschema import Class
 from trulens.utils.serial import JSON
 
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
-    import langchain
+    pass
 
 
 class Prompt(base.Prompt, base.LangChainComponent):

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def _convert_message(message: Dict) -> BaseMessage:
     """Convert a message to a LangChain BaseMessage."""
-    if not "role" in message or message["role"] == "user":
+    if "role" not in message or message["role"] == "user":
         return HumanMessage(content=message["content"])
     return AIMessage(content=message["content"])
 

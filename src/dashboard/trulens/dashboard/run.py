@@ -284,7 +284,7 @@ def stop_dashboard(force: bool = False) -> None:
                     ):
                         print(f"killing {p}")
                         p.kill()
-                except Exception as e:
+                except Exception:
                     continue
 
     else:

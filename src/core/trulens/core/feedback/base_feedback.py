@@ -949,7 +949,7 @@ Feedback function signature:
             exc_tb = (
                 traceback.format_exc().encode("utf-8", errors="replace").decode("utf-8")
             )
-            logger.warning(f"Feedback Function exception caught: %s", exc_tb)
+            logger.warning("Feedback Function exception caught: %s", exc_tb)
             feedback_result.update(
                 error=exc_tb, status=mod_feedback_schema.FeedbackResultStatus.FAILED
             )

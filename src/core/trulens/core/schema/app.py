@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, ClassVar, Optional, Sequence, Type
+from typing import Any, Callable, ClassVar, Optional, Sequence
 
 import dill
 import humanize

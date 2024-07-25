@@ -574,7 +574,7 @@ class Huggingface(HuggingfaceBase):
                 url=HUGS_PII_DETECTION_API_URL, payload=payload
             )
         # TODO: Make error handling more granular so it's not swallowed.
-        except Exception as e:
+        except Exception:
             logger.debug("No PII was found")
             hf_response = [
                 {

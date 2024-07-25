@@ -54,8 +54,8 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
         if "Tru()" in cell["source"]:
             cell["source"] = (
                 cell["source"]
-                + f"\nfrom trulens.core import Tru\ntru=Tru()\ntru.migrate_database()\n"
-                + f"\nfrom trulens.core.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n"
+                + "\nfrom trulens.core import Tru\ntru=Tru()\ntru.migrate_database()\n"
+                + "\nfrom trulens.core.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.db)\n"
             )
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 
@@ -72,7 +72,7 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
             "timeout": 600,
             "kernel_name": "trulens-llm",
             "code_to_run_before_each_cell": [
-                f"import os",
+                "import os",
                 f"os.environ['OPENAI_API_KEY']='{OPENAI_API_KEY}'",
                 f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
             ],

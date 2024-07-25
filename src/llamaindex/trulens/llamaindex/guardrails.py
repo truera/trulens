@@ -1,5 +1,4 @@
 from concurrent.futures import as_completed
-from concurrent.futures import wait
 from typing import List
 
 from trulens.core.feedback import Feedback
@@ -9,7 +8,6 @@ from trulens.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     import llama_index
-    from llama_index.core.indices.vector_store.base import VectorStoreIndex
     from llama_index.core.query_engine.retriever_query_engine import (
         RetrieverQueryEngine,
     )

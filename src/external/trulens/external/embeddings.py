@@ -9,7 +9,7 @@ from trulens.utils.pyschema import WithClassInfo
 from trulens.utils.serial import SerialModel
 
 with OptionalImports(messages=REQUIREMENT_SKLEARN):
-    import sklearn
+    pass
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.legacy import ServiceContext

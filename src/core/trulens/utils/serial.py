@@ -270,7 +270,7 @@ class Collect(Step):
         raise NotImplementedError()
 
     def __repr__(self):
-        return f".collect()"
+        return ".collect()"
 
 
 class StepItemOrAttribute(Step):
@@ -723,7 +723,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             # exp = parse(f"PLACEHOLDER.{s}", mode="eval")
             exp = parse(s, mode="eval")
 
-        except SyntaxError as e:
+        except SyntaxError:
             raise ParseException(s, None)
 
         if not isinstance(exp, ast.Expression):

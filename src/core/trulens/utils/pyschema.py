@@ -288,7 +288,7 @@ def _safe_init_sig(cls):
 
     try:
         return inspect.signature(cls)
-    except Exception as e:
+    except Exception:
         return builtin_init_sig
 
 
@@ -325,7 +325,6 @@ class Obj(SerialModel):
             # Constructor arguments for some common types.
             if isinstance(obj, pydantic.BaseModel):
                 # NOTE: avoids circular import:
-                from trulens.utils.json import jsonify
 
                 init_args = ()
                 init_kwargs = obj.model_dump()
@@ -397,7 +396,7 @@ class Obj(SerialModel):
                 bindings = self.init_bindings.load(sig, extra_kwargs=extra_kwargs)
 
             except Exception as e:
-                msg = f"Error binding constructor args for object:\n"
+                msg = "Error binding constructor args for object:\n"
                 msg += str(e) + "\n"
                 msg += f"\tobj={self}\n"
                 msg += f"\targs={self.init_bindings.args}\n"
@@ -637,7 +636,7 @@ class WithClassInfo(pydantic.BaseModel):
                     subcls = Class.model_validate(val[CLASS_INFO]).load()
 
                     val = subcls.model_validate(val)
-            except Exception as e:
+            except Exception:
                 pass
 
             validated[k] = val

@@ -230,4 +230,4 @@ class BedrockEndpoint(Endpoint):
                 )
 
         else:
-            logger.warning(f"Unhandled wrapped call to %s.", func.__name__)
+            logger.warning("Unhandled wrapped call to %s.", func.__name__)

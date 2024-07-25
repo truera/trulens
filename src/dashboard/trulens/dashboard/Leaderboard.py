@@ -9,7 +9,6 @@ from millify import millify
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 from trulens.core import Tru
-from trulens.core.database import base as mod_db
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.dashboard.streamlit_utils import init_from_args
 from trulens.dashboard.ux import styles

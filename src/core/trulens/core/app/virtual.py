@@ -558,6 +558,4 @@ class TruVirtual(App):
         return record
 
 
-import trulens  # for App class annotations
-
 TruVirtual.model_rebuild()

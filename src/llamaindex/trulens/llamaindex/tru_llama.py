@@ -103,7 +103,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.indices.base import BaseIndex
         from llama_index.indices.prompt_helper import PromptHelper
         from llama_index.indices.query.schema import QueryBundle
-        from llama_index.indices.service_context import ServiceContext
         from llama_index.llm_predictor import LLMPredictor
         from llama_index.llm_predictor.base import BaseLLMPredictor
         from llama_index.llm_predictor.base import LLMMetadata
@@ -111,7 +110,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.memory import BaseMemory
         from llama_index.node_parser.interface import NodeParser
         from llama_index.postprocessor.types import BaseNodePostprocessor
-        from llama_index.prompts.base import Prompt
         from llama_index.question_gen.types import BaseQuestionGenerator
         from llama_index.response.schema import Response
         from llama_index.response.schema import StreamingResponse
@@ -504,7 +502,5 @@ class TruLlama(mod_app.App):
     async def astream_chat_with_record(self, *args, **kwargs) -> None:
         self._throw_dep_message(method="astream_chat", is_async=True, with_record=True)
 
-
-import trulens  # for App class annotations
 
 TruLlama.model_rebuild()

@@ -52,7 +52,6 @@ from trulens.utils.python import callable_name
 from trulens.utils.python import class_name
 from trulens.utils.python import Future  # can take type args with python < 3.9
 from trulens.utils.python import id_str
-from trulens.utils.python import Queue  # can take type args with python < 3.9
 from trulens.utils.python import safe_hasattr
 from trulens.utils.python import T
 from trulens.utils.serial import all_objects
@@ -1295,7 +1294,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         app_callable = f"""app.{method}"""
         if iscall:
-            app_callable = f"app"
+            app_callable = "app"
 
         raise AttributeError(
             f"""
