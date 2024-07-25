@@ -5,8 +5,8 @@ from typing import Callable, List, Mapping, Optional, Sequence, Union
 
 from trulens.core.app import base as mod_app
 from trulens.core.instruments import Instrument
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_NOTEBOOK
+from trulens.utils.imports import OptionalImports
 from trulens.utils.json import JSON_BASES
 from trulens.utils.json import jsonify_for_ui
 from trulens.utils.serial import Lens
@@ -75,7 +75,10 @@ class SelectorValue(HasTraits):
     obj = traitlets.Any()
 
     def __init__(
-        self, selector: Selector, stdout_display: widgets.Output, instrument: Instrument
+        self,
+        selector: Selector,
+        stdout_display: widgets.Output,
+        instrument: Instrument,
     ):
         self.selector = selector
         self.obj = None
@@ -83,7 +86,9 @@ class SelectorValue(HasTraits):
         self.stdout_display = stdout_display
 
         self.w_listing = widgets.HTML(layout=debug_style)
-        self.w = widgets.VBox([self.selector.w, self.w_listing], layout=debug_style)
+        self.w = widgets.VBox(
+            [self.selector.w, self.w_listing], layout=debug_style
+        )
 
         self.selector.observe(self.update_selector, "jpath")
         self.observe(self.update_obj, "obj")
@@ -129,17 +134,13 @@ class SelectorValue(HasTraits):
                         elif isinstance(inner_obj, Mapping):
                             ret_html += "<ul>"
                             for key, val in inner_obj.items():
-                                ret_html += (
-                                    f"<li>{key} = {str(val)[0:VALUE_MAX_CHARS]}</li>"
-                                )
+                                ret_html += f"<li>{key} = {str(val)[0:VALUE_MAX_CHARS]}</li>"
                             ret_html += "</ul>"
 
                         elif isinstance(inner_obj, Sequence):
                             ret_html += "<ul>"
                             for i, val in enumerate(inner_obj):
-                                ret_html += (
-                                    f"<li>[{i}] = {str(val)[0:VALUE_MAX_CHARS]}</li>"
-                                )
+                                ret_html += f"<li>[{i}] = {str(val)[0:VALUE_MAX_CHARS]}</li>"
                             ret_html += "</ul>"
 
                         else:
@@ -170,7 +171,8 @@ class RecordWidget:
 
         self.human_or_input = widgets.HBox([human_or_input], layout=debug_style)
         self.w_human = widgets.HBox(
-            [widgets.HTML("<b>human:</b>"), self.human_or_input], layout=debug_style
+            [widgets.HTML("<b>human:</b>"), self.human_or_input],
+            layout=debug_style,
         )
         self.d_comp = widgets.HTML(layout=debug_style)
         self.d_extras = widgets.VBox(layout=debug_style)
@@ -256,7 +258,9 @@ class AppUI(traitlets.HasTraits):
         )
 
         self.display_top = widgets.VBox([], layout=debug_style)
-        self.display_side = widgets.VBox([], layout={"width": "50%", **debug_style})
+        self.display_side = widgets.VBox(
+            [], layout={"width": "50%", **debug_style}
+        )
 
         self.display_stdout = widgets.Output()
 
@@ -289,10 +293,12 @@ class AppUI(traitlets.HasTraits):
         self.display_bottom = widgets.VBox(
             [
                 widgets.HBox(
-                    [self.main_input_button, self.main_input], layout=debug_style
+                    [self.main_input_button, self.main_input],
+                    layout=debug_style,
                 ),
                 widgets.HBox(
-                    [self.app_selector_button, self.app_selector], layout=debug_style
+                    [self.app_selector_button, self.app_selector],
+                    layout=debug_style,
                 ),
                 widgets.HBox(
                     [self.record_selector_button, self.record_selector],
@@ -375,7 +381,8 @@ class AppUI(traitlets.HasTraits):
     def _add_record_selector(self, selector: Union[Lens, str]):
         with self.display_stdout:
             sel = Selector(
-                select=selector, make_on_delete=self.make_on_delete_record_selector
+                select=selector,
+                make_on_delete=self.make_on_delete_record_selector,
             )
 
         self.record_selections.append(sel)
@@ -412,7 +419,9 @@ class AppUI(traitlets.HasTraits):
 
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-                    loop.run_until_complete(asyncio.Task(run_in_main_loop(comp)))
+                    loop.run_until_complete(
+                        asyncio.Task(run_in_main_loop(comp))
+                    )
 
                 t = Thread(target=run_in_thread, args=(comp,))
                 t.start()

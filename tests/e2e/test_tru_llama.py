@@ -37,7 +37,7 @@ class TestLlamaIndex(JSONTestCase):
     def test_query_engine_async(self):
         # Check that the instrumented async aquery method produces the same result as the query method.
 
-        from trulens.llamaindex import TruLlama
+        from trulens.ext.instrument.llamaindex import TruLlama
 
         query_engine = self.index.as_query_engine()
 
@@ -83,12 +83,14 @@ class TestLlamaIndex(JSONTestCase):
         # Check that the instrumented query method produces the same result
         # regardless of streaming option.
 
-        from trulens.llamaindex import TruLlama
+        from trulens.ext.instrument.llamaindex import TruLlama
 
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
         with tru_query_engine_recorder as recording:
-            llm_response = query_engine.query("What did the author do growing up?")
+            llm_response = query_engine.query(
+                "What did the author do growing up?"
+            )
         record = recording.get()
 
         query_engine = self.index.as_query_engine(streaming=True)
@@ -124,7 +126,7 @@ class TestLlamaIndex(JSONTestCase):
     async def test_chat_engine_async(self):
         # Check that the instrumented async achat method produces the same result as the chat method.
 
-        from trulens.llamaindex import TruLlama
+        from trulens.ext.instrument.llamaindex import TruLlama
 
         chat_engine = self.index.as_chat_engine()
         tru_chat_engine_recorder = TruLlama(chat_engine)
@@ -137,7 +139,9 @@ class TestLlamaIndex(JSONTestCase):
         chat_engine = self.index.as_chat_engine()
         tru_chat_engine_recorder = TruLlama(chat_engine)
         with tru_chat_engine_recorder as recording:
-            llm_response_sync = chat_engine.chat("What did the author do growing up?")
+            llm_response_sync = chat_engine.chat(
+                "What did the author do growing up?"
+            )
         record_sync = recording.records[0]
 
         self.assertJSONEqual(

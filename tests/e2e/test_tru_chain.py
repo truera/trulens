@@ -5,6 +5,12 @@ Tests for TruChain. Some of the tests are outdated.
 import unittest
 from unittest import main
 
+from langchain.callbacks import AsyncIteratorCallbackHandler
+from langchain.chains import LLMChain
+from langchain.llms.openai import OpenAI
+from langchain.memory import ConversationSummaryBufferMemory
+from langchain.prompts import PromptTemplate
+from langchain.schema.messages import HumanMessage
 from trulens.core import Tru
 from trulens.core.feedback.base_endpoint import Endpoint
 from trulens.core.schema.feedback import FeedbackMode
@@ -12,12 +18,6 @@ from trulens.core.schema.record import Record
 from trulens.utils.asynchro import sync
 from trulens.utils.keys import check_keys
 
-from langchain.callbacks import AsyncIteratorCallbackHandler
-from langchain.chains import LLMChain
-from langchain.llms.openai import OpenAI
-from langchain.memory import ConversationSummaryBufferMemory
-from langchain.prompts import PromptTemplate
-from langchain.schema.messages import HumanMessage
 from tests.unit.test import JSONTestCase
 from tests.unit.test import optional_test
 
@@ -35,7 +35,10 @@ class TestTruChain(JSONTestCase):
 
     def setUp(self):
         check_keys(
-            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
+            "OPENAI_API_KEY",
+            "HUGGINGFACE_API_KEY",
+            "PINECONE_API_KEY",
+            "PINECONE_ENV",
         )
 
     @optional_test
@@ -48,14 +51,14 @@ class TestTruChain(JSONTestCase):
         )
         llm = OpenAI(temperature=0.0, streaming=False, cache=False)
 
-        chain1 = LLMChain(llm=llm, prompt=prompt)
+        LLMChain(llm=llm, prompt=prompt)
 
         memory = ConversationSummaryBufferMemory(
             memory_key="chat_history",
             input_key="question",
             llm=llm,  # same llm now appears in a different spot
         )
-        chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
+        LLMChain(llm=llm, prompt=prompt, memory=memory)
 
     def _create_basic_chain(self, app_id: str = None):
         from langchain_openai import ChatOpenAI
@@ -72,7 +75,9 @@ class TestTruChain(JSONTestCase):
 
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
-        tc = tru.Chain(chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP)
+        tc = tru.Chain(
+            chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP
+        )
 
         return tc
 
@@ -223,7 +228,9 @@ class TestTruChain(JSONTestCase):
         llm = ChatOpenAI(temperature=0.0)
         chain = LLMChain(llm=llm, prompt=prompt)
         tc = tru.Chain(chain)
-        sync_res, sync_record = tc.with_record(tc.app, inputs=dict(question=message))
+        sync_res, sync_record = tc.with_record(
+            tc.app, inputs=dict(question=message)
+        )
 
         # Get async results.
         llm = ChatOpenAI(temperature=0.0)
@@ -271,7 +278,9 @@ class TestTruChain(JSONTestCase):
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
-        llm = ChatOpenAI(temperature=0.0, streaming=True, callbacks=[async_callback])
+        llm = ChatOpenAI(
+            temperature=0.0, streaming=True, callbacks=[async_callback]
+        )
         agent = LLMChain(llm=llm, prompt=prompt)
         agent_recorder = tru.Chain(agent)  # , feedbacks=[f_lang_match])
 

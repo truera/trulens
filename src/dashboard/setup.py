@@ -23,7 +23,9 @@ def build_record_viewer():
     print("running npm i")
     os.system("npm i --prefix trulens/dashboard/react_components/record_viewer")
     print("running npm run build")
-    os.system("npm run --prefix trulens/dashboard/react_components/record_viewer build")
+    os.system(
+        "npm run --prefix trulens/dashboard/react_components/record_viewer build"
+    )
 
 
 class BuildJavascript(build):

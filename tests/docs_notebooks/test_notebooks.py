@@ -2,8 +2,8 @@ import os
 from os import listdir
 import shutil
 from typing import Sequence
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import read
@@ -47,7 +47,8 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
             code_to_run_before_each_cell=code_to_run_before_each_cell,
         )
         shutil.copyfile(
-            f"./release_dbs/{db_compat_version}/default.sqlite", "./default.sqlite"
+            f"./release_dbs/{db_compat_version}/default.sqlite",
+            "./default.sqlite",
         )
 
     def preprocess_cell(self, cell, resources, index, **kwargs):
@@ -79,10 +80,14 @@ def get_unit_test_for_filename(filename, db_compat_version=None):
         }
         if db_compat_version is not None:
             notebook_preprocessor = DBMigrationPreprocessor
-            notebook_preprocessor_kwargs["db_compat_version"] = db_compat_version
+            notebook_preprocessor_kwargs["db_compat_version"] = (
+                db_compat_version
+            )
         with open(f"./tests/docs_notebooks/notebooks_to_test/{filename}") as f:
             nb = read(f, as_version=4)
-            notebook_preprocessor(**notebook_preprocessor_kwargs).preprocess(nb, {})
+            notebook_preprocessor(**notebook_preprocessor_kwargs).preprocess(
+                nb, {}
+            )
 
     return test
 
@@ -126,7 +131,9 @@ for filename in listdir("./tests/docs_notebooks/notebooks_to_test/"):
                 setattr(
                     DocsNotebookTests,
                     f"test_db_backwards_compat_{test_version_str}_{filename.split('.ipynb')[0]}",
-                    get_unit_test_for_filename(filename, db_compat_version=version),
+                    get_unit_test_for_filename(
+                        filename, db_compat_version=version
+                    ),
                 )
 
 if __name__ == "__main__":

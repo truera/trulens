@@ -1,10 +1,10 @@
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, TypeVar, Union
 
 import numpy as np
 from pydantic import PrivateAttr
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LLAMA
 from trulens.utils.imports import REQUIREMENT_SKLEARN
+from trulens.utils.imports import OptionalImports
 from trulens.utils.pyschema import WithClassInfo
 from trulens.utils.serial import SerialModel
 
@@ -14,13 +14,15 @@ with OptionalImports(messages=REQUIREMENT_SKLEARN):
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.legacy import ServiceContext
 
+Embedder = TypeVar("Embedder", bound="Embedder")
+
 
 class Embeddings(WithClassInfo, SerialModel):
     """Embedding related feedback function implementations."""
 
-    _embed_model: "Embedder" = PrivateAttr()
+    _embed_model: Embedder = PrivateAttr()
 
-    def __init__(self, embed_model: "Embedder" = None):
+    def __init__(self, embed_model: Embedder = None):
         """Instantiates embeddings for feedback functions.
         ```
         f_embed = feedback.Embeddings(embed_model=embed_model)
@@ -74,16 +76,24 @@ class Embeddings(WithClassInfo, SerialModel):
         """
         import sklearn
 
-        query_embed = np.asarray(self._embed_model.get_query_embedding(query)).reshape(
+        query_embed = np.asarray(
+            self._embed_model.get_query_embedding(query)
+        ).reshape(
             1, -1
         )  # sklearn expects 2d array (first dimension number of samples)
         document_embed = np.asarray(
             self._embed_model.get_text_embedding(document)
-        ).reshape(1, -1)  # sklearn expects 2d array (first dimension number of samples)
+        ).reshape(
+            1, -1
+        )  # sklearn expects 2d array (first dimension number of samples)
 
-        return sklearn.metrics.pairwise.cosine_distances(query_embed, document_embed)[
+        return sklearn.metrics.pairwise.cosine_distances(
+            query_embed, document_embed
+        )[
             0
-        ][0]  # final results will be dimensions (sample query x sample doc) === (1,1)
+        ][
+            0
+        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
 
     def manhattan_distance(
         self, query: str, document: str
@@ -125,16 +135,22 @@ class Embeddings(WithClassInfo, SerialModel):
         """
         import sklearn
 
-        query_embed = np.asarray(self._embed_model.get_query_embedding(query)).reshape(
+        query_embed = np.asarray(
+            self._embed_model.get_query_embedding(query)
+        ).reshape(
             1, -1
         )  # sklearn expects 2d array (first dimension number of samples)
         document_embed = np.asarray(
             self._embed_model.get_text_embedding(document)
-        ).reshape(1, -1)  # sklearn expects 2d array (first dimension number of samples)
+        ).reshape(
+            1, -1
+        )  # sklearn expects 2d array (first dimension number of samples)
 
         return sklearn.metrics.pairwise.manhattan_distances(
             query_embed, document_embed
-        )[0][
+        )[
+            0
+        ][
             0
         ]  # final results will be dimensions (sample query x sample doc) === (1,1)
 
@@ -178,15 +194,21 @@ class Embeddings(WithClassInfo, SerialModel):
         """
         import sklearn
 
-        query_embed = np.asarray(self._embed_model.get_query_embedding(query)).reshape(
+        query_embed = np.asarray(
+            self._embed_model.get_query_embedding(query)
+        ).reshape(
             1, -1
         )  # sklearn expects 2d array (first dimension number of samples)
         document_embed = np.asarray(
             self._embed_model.get_text_embedding(document)
-        ).reshape(1, -1)  # sklearn expects 2d array (first dimension number of samples)
+        ).reshape(
+            1, -1
+        )  # sklearn expects 2d array (first dimension number of samples)
 
         return sklearn.metrics.pairwise.euclidean_distances(
             query_embed, document_embed
-        )[0][
+        )[
+            0
+        ][
             0
         ]  # final results will be dimensions (sample query x sample doc) === (1,1)

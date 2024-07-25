@@ -3,8 +3,8 @@
 """
 
 from inspect import BoundArguments
-from inspect import signature
 from inspect import Signature
+from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Callable, ClassVar, Dict, Optional
@@ -108,7 +108,9 @@ class TruBasicApp(App):
     """The app to be instrumented."""
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruWrapperApp._call)
+        default_factory=lambda: FunctionOrMethod.of_callable(
+            TruWrapperApp._call
+        )
     )
     """The root callable to be instrumented.
 

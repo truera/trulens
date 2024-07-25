@@ -2,9 +2,6 @@ import asyncio
 import json
 import math
 
-# https://github.com/jerryjliu/llama_index/issues/7244:
-asyncio.set_event_loop(asyncio.new_event_loop())
-
 from millify import millify
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
@@ -16,6 +13,9 @@ from trulens.dashboard.ux.components import draw_metadata
 from trulens.dashboard.ux.page_config import set_page_config
 from trulens.dashboard.ux.styles import CATEGORY
 
+# https://github.com/jerryjliu/llama_index/issues/7244:
+asyncio.set_event_loop(asyncio.new_event_loop())
+
 if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
     init_from_args()
@@ -26,9 +26,7 @@ def leaderboard():
 
     set_page_config(page_title="Leaderboard")
 
-    tru = (
-        Tru()
-    )  # get singletone whether this file was imported or executed from command line.
+    tru = Tru()  # get singletone whether this file was imported or executed from command line.
 
     lms = tru.db
 
@@ -100,7 +98,11 @@ def leaderboard():
         col4.metric(
             "Total Tokens",
             millify(
-                sum(tokens for tokens in app_df.total_tokens if tokens is not None),
+                sum(
+                    tokens
+                    for tokens in app_df.total_tokens
+                    if tokens is not None
+                ),
                 precision=2,
             ),
         )
@@ -117,7 +119,9 @@ def leaderboard():
 
             if "distance" in col_name:
                 feedback_cols[i].metric(
-                    label=col_name, value=f"{round(mean, 2)}", delta_color="normal"
+                    label=col_name,
+                    value=f"{round(mean, 2)}",
+                    delta_color="normal",
                 )
             else:
                 cat = CATEGORY.of_score(mean, higher_is_better=higher_is_better)
@@ -127,7 +131,9 @@ def leaderboard():
                     delta=f"{cat.icon} {cat.adjective}",
                     delta_color=(
                         "normal"
-                        if cat.compare(mean, CATEGORY.PASS[cat.direction].threshold)
+                        if cat.compare(
+                            mean, CATEGORY.PASS[cat.direction].threshold
+                        )
                         else "inverse"
                     ),
                 )

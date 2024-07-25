@@ -79,10 +79,10 @@ class OpenAIProvider(Provider):
         self.models = set(Hate, HateThreatening)
 
     def classify(self, model: ClassificationModel, *args, **kwargs) -> int:
-        prompt = ""
+        _prompt = ""
 
         if isinstance(model, WithPrompt):
-            prompt = model.prompt
+            _prompt = model.prompt
         else:
             raise ValueError(
                 "Cannot classify for model {model} without at least a prompt."
@@ -92,4 +92,4 @@ class OpenAIProvider(Provider):
             # add few shots
             pass
 
-        pass
+        return

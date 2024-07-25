@@ -14,16 +14,16 @@ from trulens.core.app import base as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema.select import Select
-from trulens.langchain.guardrails import WithFeedbackFilterDocuments
+from trulens.ext.instrument.langchain import WithFeedbackFilterDocuments
 from trulens.utils.containers import dict_set_with_multikey
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens.utils.imports import OptionalImports
 from trulens.utils.json import jsonify
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import FunctionOrMethod
 from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import all_queries
 from trulens.utils.serial import Lens
+from trulens.utils.serial import all_queries
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +41,9 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     from langchain.agents.agent import BaseSingleActionAgent
     from langchain.chains.base import Chain
     from langchain.llms.base import BaseLLM
-    from langchain.load.serializable import (
-        Serializable,
-    )  # this seems to be work in progress over at langchain
+    from langchain.load.serializable import Serializable
+
+    # this seems to be work in progress over at langchain
     from langchain.memory.chat_memory import BaseChatMemory
     from langchain.prompts.base import BasePromptTemplate
     from langchain.retrievers.multi_query import MultiQueryRetriever
@@ -105,7 +105,10 @@ class LangChainInstrument(Instrument):
                 # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # the prompt calls might be too small to be interesting
-                ("plan", "aplan"): (BaseSingleActionAgent, BaseMultiActionAgent),
+                ("plan", "aplan"): (
+                    BaseSingleActionAgent,
+                    BaseMultiActionAgent,
+                ),
                 ("_arun", "_run"): BaseTool,
             },
         )
@@ -185,7 +188,7 @@ class TruChain(mod_app.App):
     !!! example "Using the `TruChain` recorder"
 
         ```python
-        from trulens.langchain import TruChain
+        from trulens.ext.instrument.langchain import TruChain
 
         # Wrap application
         tru_recorder = TruChain(
@@ -261,7 +264,10 @@ class TruChain(mod_app.App):
                     "Found more than one `BaseRetriever` in app:\n\t"
                     + (
                         "\n\t".join(
-                            map(lambda lr: f"{type(lr[1])} at {lr[0]}", retrievers)
+                            map(
+                                lambda lr: f"{type(lr[1])} at {lr[0]}",
+                                retrievers,
+                            )
                         )
                     )
                 )
@@ -378,7 +384,9 @@ class TruChain(mod_app.App):
         DEPRECATED: Run the chain call method and also return a record metadata object.
         """
 
-        self._throw_dep_message(method="__call__", is_async=False, with_record=True)
+        self._throw_dep_message(
+            method="__call__", is_async=False, with_record=True
+        )
 
     # TOREMOVE
     # Mimics Chain
@@ -387,17 +395,23 @@ class TruChain(mod_app.App):
         DEPRECATED: Wrapped call to self.app._call with instrumentation. If you
         need to get the record, use `call_with_record` instead.
         """
-        self._throw_dep_message(method="__call__", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="__call__", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # Chain requirement
     def _call(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="_call", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="_call", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="_acall", is_async=True, with_record=False)
+        self._throw_dep_message(
+            method="_acall", is_async=True, with_record=False
+        )
 
 
 TruChain.model_rebuild()

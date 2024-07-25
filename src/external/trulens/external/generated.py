@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 class ParseError(Exception):
     """Error parsing LLM-generated text."""
 
-    def __init__(self, expected: str, text: str, pattern: Optional[re.Pattern] = None):
+    def __init__(
+        self, expected: str, text: str, pattern: Optional[re.Pattern] = None
+    ):
         super().__init__(
             f"Tried to find {expected}"
             + (f" using pattern {pattern.pattern}" if pattern else "")
@@ -71,7 +73,9 @@ def re_0_10_rating(s: str) -> int:
     vals = set()
     for match in matches:
         try:
-            vals.add(validate_rating(float(match)))  # Handle float numbers as well
+            vals.add(
+                validate_rating(float(match))
+            )  # Handle float numbers as well
         except ValueError:
             pass
 
@@ -79,7 +83,9 @@ def re_0_10_rating(s: str) -> int:
         raise ParseError("0-10 rating", s)
 
     if len(vals) > 1:
-        logger.warning("Multiple valid rating values found in the string: %s", s)
+        logger.warning(
+            "Multiple valid rating values found in the string: %s", s
+        )
 
     # Min to handle cases like "The rating is 8 out of 10."
     return min(vals)

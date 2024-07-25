@@ -3,8 +3,8 @@ Tests for serial.py:Lens class.
 """
 
 from pprint import PrettyPrinter
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 from munch import Munch
 from trulens.utils.serial import GetAttribute
@@ -37,7 +37,8 @@ class TestLens(TestCase):
         # GetIndex
         with self.subTest("GetIndex"):
             self.assertEqual(
-                Lens().of_string("outerkey.seqkey[2]"), Lens().outerkey.seqkey[2]
+                Lens().of_string("outerkey.seqkey[2]"),
+                Lens().outerkey.seqkey[2],
             )
 
         # GetSlice
@@ -50,7 +51,8 @@ class TestLens(TestCase):
         # GetIndices
         with self.subTest("GetIndices"):
             self.assertEqual(
-                Lens().of_string("outerkey.seqkey[1,3]"), Lens().outerkey.seqkey[1, 3]
+                Lens().of_string("outerkey.seqkey[1,3]"),
+                Lens().outerkey.seqkey[1, 3],
             )
 
         # GetItems
@@ -83,11 +85,15 @@ class TestLens(TestCase):
 
         # GetItemOrAttribute
         with self.subTest("GetItemOrAttribute"):
-            self.assertEqual(Lens().outerkey.intkey.get_sole_item(self.obj1), 42)
+            self.assertEqual(
+                Lens().outerkey.intkey.get_sole_item(self.obj1), 42
+            )
 
         # GetIndex
         with self.subTest("GetIndex"):
-            self.assertEqual(Lens().outerkey.seqkey[2].get_sole_item(self.obj1), 3)
+            self.assertEqual(
+                Lens().outerkey.seqkey[2].get_sole_item(self.obj1), 3
+            )
 
         # GetSlice
         with self.subTest("GetSlice"):
@@ -97,7 +103,9 @@ class TestLens(TestCase):
 
         # GetIndices
         with self.subTest("GetIndices"):
-            self.assertEqual(list(Lens().outerkey.seqkey[1, 3].get(self.obj1)), [2, 4])
+            self.assertEqual(
+                list(Lens().outerkey.seqkey[1, 3].get(self.obj1)), [2, 4]
+            )
 
         # GetItems
         with self.subTest("GetItems"):
@@ -110,7 +118,9 @@ class TestLens(TestCase):
         with self.subTest("Collect"):
             self.assertEqual(
                 # note we are not manually collecting from the generator here, collect does it for us
-                Lens()["outerstr", "outerint"].collect().get_sole_item(self.obj1),
+                Lens()["outerstr", "outerint"]
+                .collect()
+                .get_sole_item(self.obj1),
                 ["lalala", 0xDEADBEEF],
             )
 
@@ -161,7 +171,10 @@ class TestLens(TestCase):
             )
             obj1 = Lens()["outerkey"].seqkey[1, 3].set(self.obj1, 24)
             self.assertEqual(
-                [obj1["outerkey"].seqkey[1], obj1["outerkey"].seqkey[3]],  # NOTE1
+                [
+                    obj1["outerkey"].seqkey[1],
+                    obj1["outerkey"].seqkey[3],
+                ],  # NOTE1
                 [24, 24],
             )
 
@@ -171,7 +184,9 @@ class TestLens(TestCase):
                 [self.obj1["outerstr"], self.obj1["outerint"]],  # NOTE1
                 ["lalala", 0xDEADBEEF],
             )
-            obj1 = Lens()["outerstr", "outerint"].set(self.obj1, "still not hello 420")
+            obj1 = Lens()["outerstr", "outerint"].set(
+                self.obj1, "still not hello 420"
+            )
             self.assertEqual(
                 [obj1["outerstr"], obj1["outerint"]],  # NOTE1
                 ["still not hello 420", "still not hello 420"],

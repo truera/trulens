@@ -7,8 +7,8 @@ various secrets configured. See `setUp` below.
 
 import os
 from pprint import PrettyPrinter
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 from trulens.core.feedback.base_endpoint import Endpoint
 from trulens.utils.keys import check_keys
@@ -45,11 +45,15 @@ class TestEndpoints(TestCase):
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
         """Cost checks for endpoints whose providers implement LLMProvider."""
 
-        _, cost = Endpoint.track_all_costs_tally(provider.sentiment, text="This rocks!")
+        _, cost = Endpoint.track_all_costs_tally(
+            provider.sentiment, text="This rocks!"
+        )
 
         self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
         self.assertEqual(
-            cost.n_successful_requests, 1, "Expected exactly one successful request."
+            cost.n_successful_requests,
+            1,
+            "Expected exactly one successful request.",
         )
         self.assertEqual(
             cost.n_classes, 0, "Expected zero classes for LLM-based endpoints."
@@ -60,9 +64,13 @@ class TestEndpoints(TestCase):
             "Expected zero chunks when not using streaming mode.",
         )
         self.assertGreater(cost.n_tokens, 0, "Expected non-zero tokens.")
-        self.assertGreater(cost.n_prompt_tokens, 0, "Expected non-zero prompt tokens.")
         self.assertGreater(
-            cost.n_completion_tokens, 0.0, "Expected non-zero completion tokens."
+            cost.n_prompt_tokens, 0, "Expected non-zero prompt tokens."
+        )
+        self.assertGreater(
+            cost.n_completion_tokens,
+            0.0,
+            "Expected non-zero completion tokens.",
         )
 
         if with_cost:
@@ -82,7 +90,9 @@ class TestEndpoints(TestCase):
 
         self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
         self.assertEqual(
-            cost.n_successful_requests, 1, "Expected exactly one successful request."
+            cost.n_successful_requests,
+            1,
+            "Expected exactly one successful request.",
         )
         self.assertEqual(
             cost.n_classes,
@@ -95,12 +105,16 @@ class TestEndpoints(TestCase):
             "Expected zero chunks for classification endpoints.",
         )
         self.assertEqual(cost.n_tokens, 0, "Expected zero tokens.")
-        self.assertEqual(cost.n_prompt_tokens, 0, "Expected zero prompt tokens.")
+        self.assertEqual(
+            cost.n_prompt_tokens, 0, "Expected zero prompt tokens."
+        )
         self.assertEqual(
             cost.n_completion_tokens, 0.0, "Expected zero completion tokens."
         )
 
-        self.assertEqual(cost.cost, 0.0, "Expected zero cost for huggingface endpoint.")
+        self.assertEqual(
+            cost.cost, 0.0, "Expected zero cost for huggingface endpoint."
+        )
 
     @optional_test
     def test_openai(self):
@@ -164,7 +178,9 @@ class TestEndpoints(TestCase):
 
         provider = LiteLLM(
             f"azure/{os.environ['AZURE_OPENAI_DEPLOYMENT_NAME']}",
-            completion_kwargs=dict(api_base=os.environ["AZURE_OPENAI_ENDPOINT"]),
+            completion_kwargs=dict(
+                api_base=os.environ["AZURE_OPENAI_ENDPOINT"]
+            ),
         )
 
         self._test_llm_provider_endpoint(provider)

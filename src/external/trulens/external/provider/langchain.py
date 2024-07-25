@@ -1,14 +1,13 @@
 import logging
 from typing import Dict, Optional, Sequence, Union
 
+from langchain.chat_models.base import BaseChatModel
+from langchain.llms.base import BaseLLM
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
 from trulens.external.provider import LLMProvider
 from trulens.external.provider.endpoint import LangchainEndpoint
-
-from langchain.chat_models.base import BaseChatModel
-from langchain.llms.base import BaseLLM
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,9 @@ class Langchain(LLMProvider):
     ):
         self_kwargs = dict(kwargs)
         self_kwargs["model_engine"] = model_engine or type(chain).__name__
-        self_kwargs["endpoint"] = LangchainEndpoint(*args, chain=chain, **kwargs)
+        self_kwargs["endpoint"] = LangchainEndpoint(
+            *args, chain=chain, **kwargs
+        )
 
         super().__init__(**self_kwargs)
 
@@ -65,7 +66,9 @@ class Langchain(LLMProvider):
 
         elif messages is not None:
             messages = [_convert_message(message) for message in messages]
-            predict = self.endpoint.chain.predict_messages(messages, **kwargs).content
+            predict = self.endpoint.chain.predict_messages(
+                messages, **kwargs
+            ).content
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")

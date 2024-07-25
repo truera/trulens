@@ -5,8 +5,8 @@ from typing import ClassVar, Dict, Optional, Sequence
 
 from trulens.external.provider import LLMProvider
 from trulens.external.provider.endpoint.cortex import CortexEndpoint
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_CORTEX
+from trulens.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_CORTEX) as opt:
     import snowflake
@@ -31,7 +31,9 @@ class Cortex(LLMProvider):
     endpoint: CortexEndpoint
     snowflake_conn: SnowflakeConnection
 
-    def __init__(self, model_engine: Optional[str] = None, *args, **kwargs: Dict):
+    def __init__(
+        self, model_engine: Optional[str] = None, *args, **kwargs: Dict
+    ):
         self_kwargs = dict(kwargs)
 
         self_kwargs["model_engine"] = (
@@ -51,7 +53,10 @@ class Cortex(LLMProvider):
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(
-        self, model: str, temperature: float, messages: Optional[Sequence[Dict]] = None
+        self,
+        model: str,
+        temperature: float,
+        messages: Optional[Sequence[Dict]] = None,
     ):
         # Ensure messages are formatted as a JSON array string
         if messages is None:
@@ -73,7 +78,8 @@ class Cortex(LLMProvider):
         cursor = self.snowflake_conn.cursor()
         try:
             cursor.execute(
-                completion_input_str, (model, messages_json_str, options_json_str)
+                completion_input_str,
+                (model, messages_json_str, options_json_str),
             )
             result = cursor.fetchall()
         finally:

@@ -13,6 +13,12 @@ from typing import Optional
 from trulens.core import Tru
 from trulens.utils import notebook_utils
 from trulens.utils.imports import static_resource
+from typing_extensions import Annotated
+from typing_extensions import Doc
+
+DASHBOARD_START_TIMEOUT: Annotated[
+    int, Doc("Seconds to wait for dashboard to start")
+] = 30
 
 
 def find_unused_port() -> int:
@@ -126,7 +132,11 @@ def run_dashboard(
     ]
 
     proc = subprocess.Popen(
-        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, **env_opts
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        **env_opts,
     )
 
     started = threading.Event()
@@ -151,7 +161,9 @@ def run_dashboard(
                 line = pipe.readline()
                 if "url" in line:
                     started.set()
-                    line = "Go to this url and submit the ip given here. " + line
+                    line = (
+                        "Go to this url and submit the ip given here. " + line
+                    )
 
                 if out is not None:
                     out.append_stdout(line)
@@ -212,10 +224,12 @@ def run_dashboard(
             print("Dashboard closed.")
 
     Tru.dashboard_listener_stdout = Thread(
-        target=listen_to_dashboard, args=(proc, proc.stdout, out_stdout, started)
+        target=listen_to_dashboard,
+        args=(proc, proc.stdout, out_stdout, started),
     )
     Tru.dashboard_listener_stderr = Thread(
-        target=listen_to_dashboard, args=(proc, proc.stderr, out_stderr, started)
+        target=listen_to_dashboard,
+        args=(proc, proc.stderr, out_stderr, started),
     )
 
     # Purposely block main process from ending and wait for dashboard.
@@ -265,7 +279,9 @@ def stop_dashboard(force: bool = False) -> None:
 
         else:
             if sys.platform.startswith("win"):
-                raise RuntimeError("Force stop option is not supported on windows.")
+                raise RuntimeError(
+                    "Force stop option is not supported on windows."
+                )
 
             print("Force stopping dashboard ...")
             import os

@@ -26,11 +26,14 @@ if config.config_file_name is not None:
 
 # Get `sqlalchemy.url` from the environment.
 if config.get_main_option("sqlalchemy.url", None) is None:
-    config.set_main_option("sqlalchemy.url", os.environ.get("SQLALCHEMY_URL", ""))
+    config.set_main_option(
+        "sqlalchemy.url", os.environ.get("SQLALCHEMY_URL", "")
+    )
 
 # Get `trulens.table_prefix` from the environment.
 prefix = (
-    config.get_main_option("trulens.table_prefix") or mod_db.DEFAULT_DATABASE_PREFIX
+    config.get_main_option("trulens.table_prefix")
+    or mod_db.DEFAULT_DATABASE_PREFIX
 )
 
 orm = make_orm_for_prefix(table_prefix=prefix)

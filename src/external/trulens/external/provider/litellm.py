@@ -4,8 +4,8 @@ from typing import ClassVar, Dict, Optional, Sequence
 import pydantic
 from trulens.core.feedback import Endpoint
 from trulens.external.provider import LLMProvider
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LITELLM
+from trulens.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_LITELLM) as opt:
     import litellm
@@ -89,7 +89,9 @@ provider = LiteLLM(
             litellm_provider=litellm_provider, **kwargs
         )
 
-        super().__init__(**self_kwargs)  # need to include pydantic.BaseModel.__init__
+        super().__init__(
+            **self_kwargs
+        )  # need to include pydantic.BaseModel.__init__
 
     def _create_chat_completion(
         self,
@@ -105,7 +107,9 @@ provider = LiteLLM(
             completion_args["messages"] = messages
 
         elif prompt is not None:
-            completion_args["messages"] = [{"role": "system", "content": prompt}]
+            completion_args["messages"] = [
+                {"role": "system", "content": prompt}
+            ]
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")

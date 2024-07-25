@@ -2,8 +2,8 @@ from concurrent.futures import as_completed
 from typing import List
 
 from trulens.core.feedback import Feedback
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LLAMA
+from trulens.utils.imports import OptionalImports
 from trulens.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
@@ -96,8 +96,11 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
                     raise ValueError(
                         "Guardrails can only be used with feedback functions that return a float."
                     )
-                if (self.feedback.higher_is_better and result > self.threshold) or (
-                    not self.feedback.higher_is_better and result < self.threshold
+                if (
+                    self.feedback.higher_is_better and result > self.threshold
+                ) or (
+                    not self.feedback.higher_is_better
+                    and result < self.threshold
                 ):
                     filtered.append(node)
 

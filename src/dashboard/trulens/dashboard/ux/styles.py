@@ -46,8 +46,9 @@ class CATEGORY:
         "FAIL": dict(color="#ffaaaa", icon="🛑"),
     }
 
-    for category_name in ResultCategoryType._member_names_:
-        locals()[category_name] = defaultdict(dict)
+    PASS: defaultdict = defaultdict(dict)
+    FAIL: defaultdict = defaultdict(dict)
+    WARNING: defaultdict = defaultdict(dict)
 
     for direction in directions:
         a = sorted(
@@ -70,7 +71,11 @@ class CATEGORY:
             )
 
     UNKNOWN = Category(
-        name="unknown", adjective="unknown", threshold=np.nan, color="#aaaaaa", icon="?"
+        name="unknown",
+        adjective="unknown",
+        threshold=np.nan,
+        color="#aaaaaa",
+        icon="?",
     )
 
     # order matters here because `of_score` returns the first best category
@@ -78,7 +83,9 @@ class CATEGORY:
 
     @staticmethod
     def of_score(score: float, higher_is_better: bool = True) -> Category:
-        direction_key = "HIGHER_IS_BETTER" if higher_is_better else "LOWER_IS_BETTER"
+        direction_key = (
+            "HIGHER_IS_BETTER" if higher_is_better else "LOWER_IS_BETTER"
+        )
 
         for cat in map(operator.itemgetter(direction_key), CATEGORY.ALL):
             if cat.compare(score, cat.threshold):

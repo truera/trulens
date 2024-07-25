@@ -30,7 +30,9 @@ def upgrade(config) -> None:
     )
     op.create_table(
         prefix + "feedback_defs",
-        sa.Column("feedback_definition_id", sa.VARCHAR(length=256), nullable=False),
+        sa.Column(
+            "feedback_definition_id", sa.VARCHAR(length=256), nullable=False
+        ),
         sa.Column("feedback_json", sa.Text(), nullable=False),
         sa.PrimaryKeyConstraint("feedback_definition_id"),
     )
@@ -38,7 +40,9 @@ def upgrade(config) -> None:
         prefix + "feedbacks",
         sa.Column("feedback_result_id", sa.VARCHAR(length=256), nullable=False),
         sa.Column("record_id", sa.VARCHAR(length=256), nullable=False),
-        sa.Column("feedback_definition_id", sa.VARCHAR(length=256), nullable=True),
+        sa.Column(
+            "feedback_definition_id", sa.VARCHAR(length=256), nullable=True
+        ),
         sa.Column("last_ts", sa.Float(), nullable=False),
         sa.Column("status", sa.Text(), nullable=False),
         sa.Column("error", sa.Text(), nullable=True),

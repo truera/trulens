@@ -1,13 +1,12 @@
 from abc import abstractmethod
 from typing import ClassVar, List, Optional
 
+from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
+from langchain.prompts import PromptTemplate
 import pydantic
 from trulens.external.generated import re_0_10_rating
 from trulens.utils.python import safe_hasattr
 from trulens.utils.text import make_retab
-
-from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
-from langchain.prompts import PromptTemplate
 
 
 # Level 1 abstraction
@@ -30,7 +29,9 @@ class Feedback(pydantic.BaseModel):
 
         ret = typ.__name__ + "\n"
 
-        fields = list(f for f in cls.model_fields if f not in ["examples", "prompt"])
+        fields = list(
+            f for f in cls.model_fields if f not in ["examples", "prompt"]
+        )
 
         onetab = make_retab("   ")
         twotab = make_retab("      ")
@@ -561,7 +562,9 @@ class COTExplained(Feedback):
 
             # TODO: things related to extracting score and reasons
 
-            def extract_cot_explanation_of_response(self, response: str, normalize=10):
+            def extract_cot_explanation_of_response(
+                self, response: str, normalize=10
+            ):
                 if "Supporting Evidence" in response:
                     score = 0
                     for line in response.split("\n"):

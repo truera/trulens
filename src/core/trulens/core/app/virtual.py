@@ -218,8 +218,8 @@ from trulens.utils.pyschema import FunctionOrMethod
 from trulens.utils.pyschema import Method
 from trulens.utils.pyschema import Module
 from trulens.utils.pyschema import Obj
-from trulens.utils.serial import GetItemOrAttribute
 from trulens.utils.serial import JSON
+from trulens.utils.serial import GetItemOrAttribute
 
 logger = logging.getLogger(__name__)
 
@@ -233,7 +233,9 @@ class VirtualApp(dict):
     under `VirtualApp.root`
     """
 
-    def __setitem__(self, __name: Union[str, serial.Lens], __value: Any) -> None:
+    def __setitem__(
+        self, __name: Union[str, serial.Lens], __value: Any
+    ) -> None:
         """
         Allow setitem to work on Lenses instead of just strings. Uses `Lens.set`
         if a lens is given.
@@ -263,7 +265,9 @@ class VirtualApp(dict):
         pass
 
 
-virtual_module = Module(package_name="trulens", module_name="trulens.core.app.virtual")
+virtual_module = Module(
+    package_name="trulens", module_name="trulens.core.app.virtual"
+)
 """Module to represent the module of virtual apps.
 
 Virtual apps will record this as their module.
@@ -356,14 +360,18 @@ class VirtualRecord(mod_record_schema.Record):
                 substart_time = datetime.datetime.now()
 
                 if "stack" not in call:
-                    path, method_name = mod_feedback_schema.Select.path_and_method(
-                        mod_feedback_schema.Select.dequalify(lens)
+                    path, method_name = (
+                        mod_feedback_schema.Select.path_and_method(
+                            mod_feedback_schema.Select.dequalify(lens)
+                        )
                     )
                     method = virtual_method_call.replace(name=method_name)
 
                     call["stack"] = [
                         root_call,
-                        mod_record_schema.RecordAppCallMethod(path=path, method=method),
+                        mod_record_schema.RecordAppCallMethod(
+                            path=path, method=method
+                        ),
                     ]
 
                 if "args" not in call:
@@ -495,7 +503,9 @@ class TruVirtual(App):
     creating virtual records.
     """
 
-    def __init__(self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: dict):
+    def __init__(
+        self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: dict
+    ):
         """Virtual app for logging existing app results."""
 
         if app is None:

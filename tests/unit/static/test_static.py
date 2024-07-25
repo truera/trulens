@@ -6,9 +6,10 @@ issues that occur from merely importing trulens.
 from pathlib import Path
 import pkgutil
 import sys
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
+import trulens
 from trulens.core.instruments import Instrument
 from trulens.utils.imports import Dummy
 
@@ -75,7 +76,9 @@ def get_all_modules(path: Path, startswith=None):
             for submod in get_all_modules(path / modinfo.name, startswith=None):
                 submodqualname = modinfo.name + "." + submod
 
-                if startswith is not None and not submodqualname.startswith(startswith):
+                if startswith is not None and not submodqualname.startswith(
+                    startswith
+                ):
                     continue
 
                 ret.append(modinfo.name + "." + submod)
@@ -85,7 +88,7 @@ def get_all_modules(path: Path, startswith=None):
 
 # Get all modules inside trulens_eval:
 all_trulens_mods = get_all_modules(
-    Path(trulens_eval.__file__).parent.parent, startswith="trulens_eval"
+    Path(trulens.__file__).parent.parent, startswith="trulens_eval"
 )
 
 # Things which should not be imported at all.
@@ -97,8 +100,8 @@ if sys.version_info >= (3, 12):
     not_mods.extend(
         [
             "snowflake",
-            "trulens_eval.feedback.provider.cortex",
-            "trulens_eval.feedback.provider.endpoint.cortex",
+            "trulens.external.provider.cortex",
+            "trulens.external.provider.endpoint.cortex",
         ]
     )
 
@@ -171,7 +174,7 @@ class TestStatic(TestCase):
     def test_instrumentation_llama_index(self):
         """Check that the llama_index instrumentation is up to date."""
 
-        from trulens.llamaindex import LlamaInstrument
+        from trulens.ext.instrument.llamaindex import LlamaInstrument
 
         self._test_instrumentation(LlamaInstrument())
 

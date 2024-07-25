@@ -296,7 +296,8 @@ def _serialization_asserts(db) -> None:
                 """)
         columns = c.fetchall()
         for col_idx, col in tqdm(
-            enumerate(columns), desc=f"Validating clean migration of table {table}"
+            enumerate(columns),
+            desc=f"Validating clean migration of table {table}",
         ):
             col_name_idx = 1
             col_name = col[col_name_idx]
@@ -337,7 +338,9 @@ def _serialization_asserts(db) -> None:
                                 test_json
                             )
                         elif col_name == "app_json":
-                            mod_app_schema.AppDefinition.model_validate(test_json)
+                            mod_app_schema.AppDefinition.model_validate(
+                                test_json
+                            )
                         else:
                             # If this happens, trulens needs to add a migration
 
@@ -373,7 +376,8 @@ def migrate(db) -> None:
     global saved_db_locations
 
     saved_db_file = (
-        original_db_file.parent / f"{original_db_file.name}_saved_{uuid.uuid1()}"
+        original_db_file.parent
+        / f"{original_db_file.name}_saved_{uuid.uuid1()}"
     )
     saved_db_locations[original_db_file] = saved_db_file
     shutil.copy(original_db_file, saved_db_file)

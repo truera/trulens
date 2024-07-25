@@ -166,7 +166,9 @@ class Module(SerialModel):
             return Module(package_name=None, module_name=module_name)
 
     def load(self) -> ModuleType:
-        return importlib.import_module(self.module_name, package=self.package_name)
+        return importlib.import_module(
+            self.module_name, package=self.package_name
+        )
 
 
 class Class(SerialModel):
@@ -205,7 +207,7 @@ class Class(SerialModel):
 
     def _check_importable(self):
         try:
-            cls = self.load()
+            self.load()
         except Exception as e:
             print(e)
             raise ImportError(
@@ -227,7 +229,9 @@ class Class(SerialModel):
         )
 
         if loadable:
-            if "<locals>" in repr(cls):  # TODO: figure out a better way to check this
+            if "<locals>" in repr(
+                cls
+            ):  # TODO: figure out a better way to check this
                 raise ImportError(f"Class {cls} is not globally importable.")
 
             ret._check_importable()
@@ -235,7 +239,9 @@ class Class(SerialModel):
         return ret
 
     @staticmethod
-    def of_object(obj: object, with_bases: bool = False, loadable: bool = False):
+    def of_object(
+        obj: object, with_bases: bool = False, loadable: bool = False
+    ):
         return Class.of_class(
             cls=obj.__class__, with_bases=with_bases, loadable=loadable
         )
@@ -261,7 +267,10 @@ class Class(SerialModel):
         ), "Cannot do subclass check without bases. Serialize me with `Class.of_class(with_bases=True ...)`."
 
         for base in bases:
-            if base.name == class_name and base.module.module_name == module_name:
+            if (
+                base.name == class_name
+                and base.module.module_name == module_name
+            ):
                 return True
 
         return False
@@ -373,7 +382,9 @@ class Obj(SerialModel):
 
     def load(self) -> object:
         if self.init_bindings is None:
-            raise RuntimeError("Cannot load object unless `init_bindings` is set.")
+            raise RuntimeError(
+                "Cannot load object unless `init_bindings` is set."
+            )
 
         cls = self.cls.load()
 
@@ -393,7 +404,9 @@ class Obj(SerialModel):
                 extra_kwargs = {}
 
             try:
-                bindings = self.init_bindings.load(sig, extra_kwargs=extra_kwargs)
+                bindings = self.init_bindings.load(
+                    sig, extra_kwargs=extra_kwargs
+                )
 
             except Exception as e:
                 msg = "Error binding constructor args for object:\n"
@@ -437,7 +450,9 @@ class Bindings(SerialModel):
 
         # self._handle_providers_load()
 
-        return sig.bind(*(self.args + extra_args), **self.kwargs, **extra_kwargs)
+        return sig.bind(
+            *(self.args + extra_args), **self.kwargs, **extra_kwargs
+        )
 
 
 class FunctionOrMethod(SerialModel):
@@ -543,7 +558,9 @@ class Function(FunctionOrMethod):
         loadable: bool = False,
     ) -> "Function":  # actually: class
         if module is None:
-            module = Module.of_module_name(object_module(func), loadable=loadable)
+            module = Module.of_module_name(
+                object_module(func), loadable=loadable
+            )
 
         if cls is not None:
             cls = Class.of_class(cls, loadable=loadable)

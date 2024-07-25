@@ -227,9 +227,7 @@ def generate_meetingbank_comprehensiveness_benchmark(
                 section_data = item_info.get(section)
                 if section_data and "transcripts" in section_data:
                     for transcript in section_data["transcripts"]:
-                        speaker_text = (
-                            f"speaker {transcript['speaker']}: {transcript['text']}\n"
-                        )
+                        speaker_text = f"speaker {transcript['speaker']}: {transcript['text']}\n"
                         meeting_minutes += speaker_text
         return meeting_minutes
 
@@ -251,9 +249,9 @@ def generate_meetingbank_comprehensiveness_benchmark(
                 / (max_informativeness_score - min_informativeness_score)
                 for score in details["informativeness"]
             ]
-            avg_informativeness_score = sum(normalized_informativeness_scores) / len(
+            avg_informativeness_score = sum(
                 normalized_informativeness_scores
-            )
+            ) / len(normalized_informativeness_scores)
 
             # [1, 3, 5] -> [0, 0.5, 1]
             yield {
@@ -288,7 +286,9 @@ def generate_ms_marco_context_relevance_benchmark(file_path):
                 "query_id": row["query_id"],
                 "query": row["query"],
                 "passage": passage_text,
-                "is_selected": row["passages"]["is_selected"][i],  # Binary relevance
+                "is_selected": row["passages"]["is_selected"][
+                    i
+                ],  # Binary relevance
                 "relevant_idx": row["passages"]["is_selected"].index(
                     1
                 ),  # Index of the relevant passage

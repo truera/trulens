@@ -6,8 +6,8 @@ from typing import Any, Callable, ClassVar, Optional
 import pydantic
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LITELLM
+from trulens.utils.imports import OptionalImports
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,8 @@ class LiteLLMCallback(EndpointCallback):
                 setattr(
                     self.cost,
                     cost_field,
-                    getattr(self.cost, cost_field, 0) + usage.get(litellm_field, 0),
+                    getattr(self.cost, cost_field, 0)
+                    + usage.get(litellm_field, 0),
                 )
 
         if self.endpoint.litellm_provider not in ["openai"]:

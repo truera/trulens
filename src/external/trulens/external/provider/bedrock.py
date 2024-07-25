@@ -4,8 +4,8 @@ from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 from trulens.external.generated import re_0_10_rating
 from trulens.external.provider import LLMProvider
 from trulens.external.provider.endpoint import BedrockEndpoint
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_BEDROCK
+from trulens.utils.imports import OptionalImports
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,9 @@ class Bedrock(LLMProvider):
 
         self_kwargs["endpoint"] = BedrockEndpoint(*args, **kwargs)
 
-        super().__init__(**self_kwargs)  # need to include pydantic.BaseModel.__init__
+        super().__init__(
+            **self_kwargs
+        )  # need to include pydantic.BaseModel.__init__
 
     # LLMProvider requirement
     def _create_chat_completion(
@@ -75,7 +77,10 @@ class Bedrock(LLMProvider):
 
         if messages:
             messages_str = " ".join(
-                [f"{message['role']}: {message['content']}" for message in messages]
+                [
+                    f"{message['role']}: {message['content']}"
+                    for message in messages
+                ]
             )
         elif prompt:
             messages_str = prompt
@@ -105,11 +110,21 @@ class Bedrock(LLMProvider):
             )
         elif self.model_id.startswith("cohere"):
             body = json.dumps(
-                {"prompt": messages_str, "temperature": 0, "p": 1, "max_tokens": 4095}
+                {
+                    "prompt": messages_str,
+                    "temperature": 0,
+                    "p": 1,
+                    "max_tokens": 4095,
+                }
             )
         elif self.model_id.startswith("ai21"):
             body = json.dumps(
-                {"prompt": messages_str, "temperature": 0, "topP": 1, "maxTokens": 8191}
+                {
+                    "prompt": messages_str,
+                    "temperature": 0,
+                    "topP": 1,
+                    "maxTokens": 8191,
+                }
             )
 
         elif self.model_id.startswith("mistral"):
@@ -148,24 +163,28 @@ class Bedrock(LLMProvider):
         )
 
         if self.model_id.startswith("amazon"):
-            response_body = json.loads(response.get("body").read()).get("results")[0][
-                "outputText"
-            ]
+            response_body = json.loads(response.get("body").read()).get(
+                "results"
+            )[0]["outputText"]
 
         if self.model_id.startswith("anthropic"):
-            response_body = json.loads(response.get("body").read()).get("completion")
+            response_body = json.loads(response.get("body").read()).get(
+                "completion"
+            )
 
         if self.model_id.startswith("cohere"):
-            response_body = json.loads(response.get("body").read()).get("generations")[
-                0
-            ]["text"]
+            response_body = json.loads(response.get("body").read()).get(
+                "generations"
+            )[0]["text"]
 
         if self.model_id.startswith("mistral"):
-            response_body = json.loads(response.get("body").read()).get("output")[0][
-                "text"
-            ]
+            response_body = json.loads(response.get("body").read()).get(
+                "output"
+            )[0]["text"]
         if self.model_id.startswith("meta"):
-            response_body = json.loads(response.get("body").read()).get("generation")
+            response_body = json.loads(response.get("body").read()).get(
+                "generation"
+            )
         if self.model_id.startswith("ai21"):
             response_body = (
                 json.loads(response.get("body").read())

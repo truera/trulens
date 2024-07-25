@@ -6,8 +6,8 @@ from trulens.core.feedback import Endpoint
 from trulens.external.provider import LLMProvider
 from trulens.external.provider.endpoint import OpenAIClient
 from trulens.external.provider.endpoint import OpenAIEndpoint
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.imports import OptionalImports
 from trulens.utils.pace import Pace
 from trulens.utils.pyschema import CLASS_INFO
 
@@ -72,9 +72,13 @@ class OpenAI(LLMProvider):
         self_kwargs.update(**kwargs)
         self_kwargs["model_engine"] = model_engine
 
-        self_kwargs["endpoint"] = OpenAIEndpoint(*args, pace=pace, rpm=rpm, **kwargs)
+        self_kwargs["endpoint"] = OpenAIEndpoint(
+            *args, pace=pace, rpm=rpm, **kwargs
+        )
 
-        super().__init__(**self_kwargs)  # need to include pydantic.BaseModel.__init__
+        super().__init__(
+            **self_kwargs
+        )  # need to include pydantic.BaseModel.__init__
 
     # LLMProvider requirement
     def _create_chat_completion(
@@ -400,7 +404,10 @@ class AzureOpenAI(OpenAI):
     deployment_name: str = pydantic.Field(alias="model_engine")
 
     def __init__(
-        self, deployment_name: str, endpoint: Optional[Endpoint] = None, **kwargs: dict
+        self,
+        deployment_name: str,
+        endpoint: Optional[Endpoint] = None,
+        **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it

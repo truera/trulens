@@ -2,9 +2,6 @@ import asyncio
 import json
 import pprint as pp
 
-# https://github.com/jerryjliu/llama_index/issues/7244:
-asyncio.set_event_loop(asyncio.new_event_loop())
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -15,9 +12,9 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_pills import pills
 from trulens.core import Tru
+from trulens.core.app.base import LLM
 from trulens.core.app.base import Agent
 from trulens.core.app.base import ComponentView
-from trulens.core.app.base import LLM
 from trulens.core.app.base import Other
 from trulens.core.app.base import Prompt
 from trulens.core.app.base import Tool
@@ -35,6 +32,9 @@ from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import cellstyle_jscode
 from trulens.utils.json import jsonify_for_ui
 from trulens.utils.serial import Lens
+
+# https://github.com/jerryjliu/llama_index/issues/7244:
+asyncio.set_event_loop(asyncio.new_event_loop())
 
 set_page_config(page_title="Evaluations")
 st.title("Evaluations")
@@ -101,7 +101,9 @@ def render_component(
             st.json(jsonify_for_ui(component.json))
 
 
-def render_record_metrics(app_df: pd.DataFrame, selected_rows: pd.DataFrame) -> None:
+def render_record_metrics(
+    app_df: pd.DataFrame, selected_rows: pd.DataFrame
+) -> None:
     """Render record level metrics (e.g. total tokens, cost, latency) compared
     to the average when appropriate."""
 
@@ -240,7 +242,9 @@ else:
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
             if "distance" in feedback_col:
-                gb.configure_column(feedback_col, hide=feedback_col.endswith("_calls"))
+                gb.configure_column(
+                    feedback_col, hide=feedback_col.endswith("_calls")
+                )
             else:
                 # cell highlight depending on feedback direction
                 cellstyle = JsCode(
@@ -305,7 +309,11 @@ else:
                 st.write("No feedback details")
             else:
                 feedback_with_valid_results = sorted(
-                    list(filter(lambda fcol: row[fcol] != None, feedback_cols))
+                    list(
+                        filter(
+                            lambda fcol: row[fcol] is not None, feedback_cols
+                        )
+                    )
                 )
 
                 def get_icon(feedback_name):
@@ -319,7 +327,9 @@ else:
                     return cat.icon
 
                 icons = list(
-                    map(lambda fcol: get_icon(fcol), feedback_with_valid_results)
+                    map(
+                        lambda fcol: get_icon(fcol), feedback_with_valid_results
+                    )
                 )
 
                 selected_fcol = None
@@ -377,9 +387,9 @@ else:
                         df["meta"] = pd.Series(
                             [call[i]["meta"] for i in range(len(call))]
                         )
-                        df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(
-                            columns="meta"
-                        )
+                        df = df.join(
+                            df.meta.apply(lambda m: pd.Series(m))
+                        ).drop(columns="meta")
 
                         st.dataframe(
                             df.style.apply(highlight, axis=1).format(
@@ -390,10 +400,12 @@ else:
                     else:
                         st.text("No feedback details.")
 
-                if selected_fcol != None:
+                if selected_fcol is not None:
                     try:
                         if MULTI_CALL_NAME_DELIMITER in selected_fcol:
-                            fcol = selected_fcol.split(MULTI_CALL_NAME_DELIMITER)[0]
+                            fcol = selected_fcol.split(
+                                MULTI_CALL_NAME_DELIMITER
+                            )[0]
                         feedback_calls = row[f"{selected_fcol}_calls"]
                         display_feedback_call(feedback_calls, selected_fcol)
                     except Exception:
@@ -417,7 +429,14 @@ else:
                         if ind < len(feedback):
                             # Generate histogram
                             fig, ax = plt.subplots()
-                            bins = [0, 0.2, 0.4, 0.6, 0.8, 1.0]  # Quintile buckets
+                            bins = [
+                                0,
+                                0.2,
+                                0.4,
+                                0.6,
+                                0.8,
+                                1.0,
+                            ]  # Quintile buckets
                             ax.hist(
                                 app_df[feedback[ind]],
                                 bins=bins,

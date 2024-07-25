@@ -141,7 +141,9 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_feedback_defs(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
     ) -> pd.DataFrame:
         """Retrieve feedback definitions from the database.
 
@@ -177,7 +179,9 @@ class DB(SerialModel, abc.ABC):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
         status: Optional[
             Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]
         ] = None,
@@ -218,7 +222,9 @@ class DB(SerialModel, abc.ABC):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
         status: Optional[
             Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]
         ] = None,

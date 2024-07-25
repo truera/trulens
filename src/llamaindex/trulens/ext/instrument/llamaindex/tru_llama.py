@@ -12,15 +12,15 @@ from pydantic import Field
 from trulens.core.app import base as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
-from trulens.langchain.tru_chain import (
-    LangChainInstrument,
-)  # TODO: Do we need to depend on this?
+from trulens.ext.instrument.langchain import LangChainInstrument
+
+# TODO: Do we need to depend on this?
 from trulens.utils.containers import dict_set_with_multikey
-from trulens.utils.imports import Dummy
-from trulens.utils.imports import get_package_version
-from trulens.utils.imports import OptionalImports
-from trulens.utils.imports import parse_version
 from trulens.utils.imports import REQUIREMENT_LLAMA
+from trulens.utils.imports import Dummy
+from trulens.utils.imports import OptionalImports
+from trulens.utils.imports import get_package_version
+from trulens.utils.imports import parse_version
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import FunctionOrMethod
 from trulens.utils.python import EmptyType
@@ -58,7 +58,9 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.core.base.response.schema import StreamingResponse
         from llama_index.core.chat_engine.types import AgentChatResponse
         from llama_index.core.chat_engine.types import BaseChatEngine
-        from llama_index.core.chat_engine.types import StreamingAgentChatResponse
+        from llama_index.core.chat_engine.types import (
+            StreamingAgentChatResponse,
+        )
         from llama_index.core.indices.base import BaseIndex
         from llama_index.core.indices.prompt_helper import PromptHelper
         from llama_index.core.memory.types import BaseMemory
@@ -80,7 +82,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         # These exist in the bridge but not here so define placeholders.
         RetrieverComponent = EmptyType
 
-        from trulens.llamaindex.guardrails import WithFeedbackFilterNodes
+        from trulens.ext.instrument.llamaindex import WithFeedbackFilterNodes
 
     else:
         # Otherwise llama_index is installed but is old so we have to use older imports.
@@ -120,7 +122,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.tools.types import BaseTool
         from llama_index.tools.types import ToolMetadata
         from llama_index.vector_stores.types import VectorStore
-        from trulens.llamaindex.llama import WithFeedbackFilterNodes
+        from trulens.ext.instrument.llamaindex import WithFeedbackFilterNodes
 
 # Need to `from ... import ...` for the below as referring to some of these
 # later in this file by full path does not work due to lack of intermediate
@@ -274,7 +276,7 @@ class TruLlama(mod_app.App):
     !!! example "Using the `TruLlama` recorder"
 
         ```python
-        from trulens.llamaindex import TruLlama
+        from trulens.ext.instrument.llamaindex import TruLlama
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruLlama(query_engine,
             app_id='LlamaIndex_App1',
@@ -307,7 +309,9 @@ class TruLlama(mod_app.App):
         default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
     )
 
-    def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict):
+    def __init__(
+        self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict
+    ):
         # TruLlama specific:
         kwargs["app"] = app
         kwargs["root_class"] = Class.of_object(app)  # TODO: make class property
@@ -445,42 +449,58 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     def chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="chat", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="chat", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     async def achat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="achat", is_async=True, with_record=False)
+        self._throw_dep_message(
+            method="achat", is_async=True, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     def stream_chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="stream_chat", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="stream_chat", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     async def astream_chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="astream_chat", is_async=True, with_record=False)
+        self._throw_dep_message(
+            method="astream_chat", is_async=True, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.indices.query.base.BaseQueryEngine
     def query(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="query", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="query", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.indices.query.base.BaseQueryEngine
     async def aquery(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="aquery", is_async=True, with_record=False)
+        self._throw_dep_message(
+            method="aquery", is_async=True, with_record=False
+        )
 
     # TOREMOVE
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
     def query_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="query", is_async=False, with_record=True)
+        self._throw_dep_message(
+            method="query", is_async=False, with_record=True
+        )
 
     # TOREMOVE
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
     async def aquery_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="aquery", is_async=True, with_record=True)
+        self._throw_dep_message(
+            method="aquery", is_async=True, with_record=True
+        )
 
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
@@ -495,12 +515,16 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
     def stream_chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="stream", is_async=False, with_record=True)
+        self._throw_dep_message(
+            method="stream", is_async=False, with_record=True
+        )
 
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
     async def astream_chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="astream_chat", is_async=True, with_record=True)
+        self._throw_dep_message(
+            method="astream_chat", is_async=True, with_record=True
+        )
 
 
 TruLlama.model_rebuild()

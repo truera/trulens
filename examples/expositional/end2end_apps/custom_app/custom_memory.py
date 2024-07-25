@@ -17,5 +17,6 @@ class CustomMemory:
             time.sleep(self.delay)
 
         self.messages.append(
-            data + f" and I'm keeping around {sys.getsizeof(self.temporary)} bytes"
+            data
+            + f" and I'm keeping around {sys.getsizeof(self.temporary)} bytes"
         )

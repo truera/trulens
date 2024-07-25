@@ -2,8 +2,8 @@ from concurrent.futures import as_completed
 from typing import List
 
 from trulens.core.feedback import Feedback
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens.utils.imports import OptionalImports
 from trulens.utils.serial import model_dump
 from trulens.utils.threading import ThreadPoolExecutor
 
@@ -30,7 +30,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
     !!! example "Using TruLens guardrail context filters with Langchain"
 
         ```python
-        from trulens.langchain.guardrails import WithFeedbackFilterDocuments
+        from trulens.ext.instrument.langchain import WithFeedbackFilterDocuments
 
         # note: feedback function used for guardrail must only return a score, not also reasons
         feedback = Feedback(provider.context_relevance).on_input().on(context)
@@ -52,11 +52,15 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
     """
 
     def __init__(self, feedback: Feedback, threshold: float, *args, **kwargs):
-        super().__init__(*args, feedback=feedback, threshold=threshold, **kwargs)
+        super().__init__(
+            *args, feedback=feedback, threshold=threshold, **kwargs
+        )
 
     # Signature must match
     # langchain.schema.retriever.BaseRetriever._get_relevant_documents .
-    def _get_relevant_documents(self, query: str, *, run_manager) -> List[Document]:
+    def _get_relevant_documents(
+        self, query: str, *, run_manager
+    ) -> List[Document]:
         """
         An internal method to accomplish three tasks:
 
@@ -78,7 +82,9 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         # Evaluate the filter on each, in parallel.
         with ThreadPoolExecutor(max_workers=max(1, len(docs))) as ex:
             future_to_doc = {
-                ex.submit(lambda doc=doc: self.feedback(query, doc.page_content)): doc
+                ex.submit(
+                    lambda doc=doc: self.feedback(query, doc.page_content)
+                ): doc
                 for doc in docs
             }
             filtered = []
@@ -89,8 +95,11 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
                     raise ValueError(
                         "Guardrails can only be used with feedback functions that return a float."
                     )
-                if (self.feedback.higher_is_better and result > self.threshold) or (
-                    not self.feedback.higher_is_better and result < self.threshold
+                if (
+                    self.feedback.higher_is_better and result > self.threshold
+                ) or (
+                    not self.feedback.higher_is_better
+                    and result < self.threshold
                 ):
                     filtered.append(doc)
 

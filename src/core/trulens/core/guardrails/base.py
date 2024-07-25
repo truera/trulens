@@ -30,7 +30,9 @@ class context_filter:
         ```
     """
 
-    def __init__(self, feedback: Feedback, threshold: float, keyword_for_prompt: str):
+    def __init__(
+        self, feedback: Feedback, threshold: float, keyword_for_prompt: str
+    ):
         self.feedback = feedback
         self.threshold = threshold
         self.keyword_for_prompt = keyword_for_prompt
@@ -55,8 +57,12 @@ class context_filter:
                         raise ValueError(
                             "Guardrails can only be used with feedback functions that return a float."
                         )
-                    if (self.feedback.higher_is_better and result > self.threshold) or (
-                        not self.feedback.higher_is_better and result < self.threshold
+                    if (
+                        self.feedback.higher_is_better
+                        and result > self.threshold
+                    ) or (
+                        not self.feedback.higher_is_better
+                        and result < self.threshold
                     ):
                         filtered.append(context)
                 return filtered

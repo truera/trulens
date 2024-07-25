@@ -1,19 +1,19 @@
 import asyncio
 from typing import Optional
 
+import streamlit as st
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.tru import Tru
-from trulens.dashoard.streamlit_utils import init_from_args
-from trulens.dashoard.ux.apps import ChatRecord
+from trulens.dashboard.streamlit_utils import init_from_args
+from trulens.dashboard.ux.apps import ChatRecord
 from trulens.utils.json import jsonify_for_ui
 from trulens.utils.serial import JSON
 from trulens.utils.serial import Lens
+from ux.page_config import set_page_config
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
-import streamlit as st
-from ux.page_config import set_page_config
 
 if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
@@ -188,7 +188,9 @@ def draw_rec(record_idx: int, rec: ChatRecord, skip_human: bool = False):
     if record_json is not None:
         # st.write(f"TODO link to {record_json['record_id']}.")
 
-        for selector_idx, selector in enumerate(st.session_state.selectors_record):
+        for selector_idx, selector in enumerate(
+            st.session_state.selectors_record
+        ):
             draw_selector(
                 type="record",
                 selector_idx=selector_idx,
@@ -237,7 +239,9 @@ def select_app(app_json: JSON):
     Select the app to start a session with by its JSON.
     """
 
-    tru_app = mod_app_schema.AppDefinition.new_session(app_definition_json=app_json)
+    tru_app = mod_app_schema.AppDefinition.new_session(
+        app_definition_json=app_json
+    )
 
     st.session_state.records = [ChatRecord(app_json=app_json, app=tru_app)]
 

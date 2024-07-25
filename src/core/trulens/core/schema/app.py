@@ -148,7 +148,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                 )
 
     @staticmethod
-    def continue_session(app_definition_json: serial.JSON, app: Any) -> AppDefinition:
+    def continue_session(
+        app_definition_json: serial.JSON, app: Any
+    ) -> AppDefinition:
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
         """Instantiate the given `app` with the given state
         `app_definition_json`.
@@ -174,7 +176,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def new_session(
-        app_definition_json: serial.JSON, initial_app_loader: Optional[Callable] = None
+        app_definition_json: serial.JSON,
+        initial_app_loader: Optional[Callable] = None,
     ) -> AppDefinition:
         """Create an app instance at the start of a session.
 
@@ -248,6 +251,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         # Unsure if the check below is needed. Sometimes we have an `app.App`` but
         # it is considered an `AppDefinition` and is thus using this definition
         # of `dict` instead of the one in `app.App`.
+        from trulens.core.app import App
 
         if isinstance(self, App):
             return jsonify(self, instrument=self.instrument)

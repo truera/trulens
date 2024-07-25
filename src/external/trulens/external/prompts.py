@@ -84,7 +84,9 @@ LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT = v2.Maliciousness.system_prompt.template
 
 LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT = v2.Helpfulness.system_prompt.template
 
-LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT = v2.Controversiality.system_prompt.template
+LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT = (
+    v2.Controversiality.system_prompt.template
+)
 
 LANGCHAIN_MISOGYNY_SYSTEM_PROMPT = v2.Misogyny.system_prompt.template
 

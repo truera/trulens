@@ -16,10 +16,10 @@ from trulens.core.feedback import base_feedback
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.langchain.tru_chain import LangChainInstrument
+from trulens.ext.instrument.langchain import LangChainInstrument
 from trulens.utils.containers import dict_set_with_multikey
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_RAILS
+from trulens.utils.imports import OptionalImports
 from trulens.utils.json import jsonify
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import FunctionOrMethod
@@ -35,11 +35,10 @@ with OptionalImports(messages=REQUIREMENT_RAILS) as opt:
     from nemoguardrails import LLMRails
     from nemoguardrails import RailsConfig
     from nemoguardrails.actions.action_dispatcher import ActionDispatcher
-    from nemoguardrails.actions.actions import action
     from nemoguardrails.actions.actions import ActionResult
+    from nemoguardrails.actions.actions import action
     from nemoguardrails.actions.llm.generation import LLMGenerationActions
     from nemoguardrails.kb.kb import KnowledgeBase
-    from nemoguardrails.rails.llm.llmrails import LLMRails
 
 opt.assert_installed(nemoguardrails)
 
@@ -137,8 +136,12 @@ class FeedbackActions:
                     f"Invalid feedback function: {feedback_instance}; "
                     f"expected a Feedback class instance."
                 )
-            print(f"registered feedback function under name {feedback_instance.name}")
-            registered_feedback_functions[feedback_instance.name] = base_feedback
+            print(
+                f"registered feedback function under name {feedback_instance.name}"
+            )
+            registered_feedback_functions[feedback_instance.name] = (
+                base_feedback
+            )
 
     @staticmethod
     def action_of_feedback(
@@ -165,7 +168,9 @@ class FeedbackActions:
         @action(name=feedback_instance.name)
         async def run_feedback(*args, **kwargs):
             if verbose:
-                print(f"Running feedback function {feedback_instance.name} with:")
+                print(
+                    f"Running feedback function {feedback_instance.name} with:"
+                )
                 print(f"  args = {args}")
                 print(f"  kwargs = {kwargs}")
 
@@ -271,7 +276,9 @@ class FeedbackActions:
             )
 
         selectors = {
-            argname: (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
+            argname: (
+                Lens.of_string(arglens) if isinstance(arglens, str) else arglens
+            )
             for argname, arglens in selectors.items()
         }
 
@@ -286,7 +293,11 @@ class FeedbackActions:
             for argname, lens in feedback_function.selectors.items():
                 print(f"  {argname} = ", end=None)
                 # use pretty print for the potentially big thing here:
-                print(retab(tab="    ", s=pformat(lens.get_sole_item(source_data))))
+                print(
+                    retab(
+                        tab="    ", s=pformat(lens.get_sole_item(source_data))
+                    )
+                )
 
         context_updates = {}
 

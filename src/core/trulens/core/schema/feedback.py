@@ -6,7 +6,16 @@ import datetime
 from enum import Enum
 import logging
 from pprint import pformat
-from typing import Any, ClassVar, Dict, Hashable, List, Optional, TypeVar, Union
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Hashable,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 import pydantic
 from trulens.core.schema import base as mod_base_schema
@@ -167,15 +176,21 @@ class FeedbackResult(serial.SerialModel):
 
     # The `Feedback` / `FeedbackDefinition` which was evaluated to get this
     # result.
-    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None
+    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = (
+        None
+    )
 
     # Last timestamp involved in the evaluation.
-    last_ts: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
+    last_ts: datetime.datetime = pydantic.Field(
+        default_factory=datetime.datetime.now
+    )
 
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
     """For deferred feedback evaluation, the status of the evaluation."""
 
-    cost: mod_base_schema.Cost = pydantic.Field(default_factory=mod_base_schema.Cost)
+    cost: mod_base_schema.Cost = pydantic.Field(
+        default_factory=mod_base_schema.Cost
+    )
 
     # Given name of the feedback.
     name: str
@@ -316,8 +331,12 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
     def __init__(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = None,
-        implementation: Optional[Union[pyschema.Function, pyschema.Method]] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
+        implementation: Optional[
+            Union[pyschema.Function, pyschema.Method]
+        ] = None,
         aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
         if_exists: Optional[serial.Lens] = None,
         if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,

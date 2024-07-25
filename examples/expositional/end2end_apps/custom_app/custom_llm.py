@@ -19,4 +19,8 @@ class CustomLLM:
 
         temporary = [0x42] * self.alloc
 
-        return "herp " + prompt[::-1] + f" derp and {sys.getsizeof(temporary)} bytes"
+        return (
+            "herp "
+            + prompt[::-1]
+            + f" derp and {sys.getsizeof(temporary)} bytes"
+        )
