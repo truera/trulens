@@ -54,7 +54,9 @@ def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
         # This does not exist in 3.8
         from importlib.abc import Traversable
 
-        _trulens_resources: Traversable = resources.files(f"trulens.{namespace}")
+        _trulens_resources: Traversable = resources.files(
+            f"trulens.{namespace}"
+        )
         with resources.as_file(_trulens_resources / filepath) as _path:
             return _path
     else:
@@ -189,13 +191,19 @@ def check_imports(ignore_version_mismatch: bool = False):
                 ) from e
 
         if dist.version not in req.specifier:
-            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(req=req, dist=dist)
+            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(
+                req=req, dist=dist
+            )
 
             if is_optional:
-                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(req=req)
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(
+                    req=req
+                )
 
             else:
-                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(req=req)
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(
+                    req=req
+                )
 
             message += MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP.format(req=req)
 
@@ -326,7 +334,9 @@ REQUIREMENT_SKLEARN = format_import_errors(
     "scikit-learn", purpose="using embedding vector distances"
 )
 
-REQUIREMENT_LITELLM = format_import_errors(["litellm"], purpose="using LiteLLM models")
+REQUIREMENT_LITELLM = format_import_errors(
+    ["litellm"], purpose="using LiteLLM models"
+)
 
 REQUIREMENT_BEDROCK = format_import_errors(
     ["boto3", "botocore"], purpose="using Bedrock models"
@@ -349,7 +359,9 @@ REQUIREMENT_BERT_SCORE = format_import_errors(
     "bert-score", purpose="measuring BERT Score"
 )
 
-REQUIREMENT_EVALUATE = format_import_errors("evaluate", purpose="using certain metrics")
+REQUIREMENT_EVALUATE = format_import_errors(
+    "evaluate", purpose="using certain metrics"
+)
 
 REQUIREMENT_NOTEBOOK = format_import_errors(
     ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
@@ -388,7 +400,11 @@ class Dummy(type, object):
         return str(self)
 
     def __new__(cls, name, *args, **kwargs):
-        if len(args) >= 2 and isinstance(args[1], dict) and "__classcell__" in args[1]:
+        if (
+            len(args) >= 2
+            and isinstance(args[1], dict)
+            and "__classcell__" in args[1]
+        ):
             # Used as type, for subclassing for example.
 
             return type.__new__(cls, name, args[0], args[1])
@@ -661,7 +677,9 @@ class OptionalImports(object):
                 # Don't add more to the message if it already includes our instructions.
                 raise exc_value
 
-            raise ModuleNotFoundError(self.messages.module_not_found) from exc_value
+            raise ModuleNotFoundError(
+                self.messages.module_not_found
+            ) from exc_value
 
         elif isinstance(exc_value, ImportError):
             if exc_value.msg.startswith(self.messages.import_error):

@@ -33,7 +33,9 @@ B = TypeVar("B")
 class BlockingSet(set, Generic[T]):
     """A set with max size that has blocking peek/get/add ."""
 
-    def __init__(self, items: Optional[Iterable[T]] = None, max_size: int = 1024):
+    def __init__(
+        self, items: Optional[Iterable[T]] = None, max_size: int = 1024
+    ):
         if items is not None:
             items = list(items)
         else:

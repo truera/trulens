@@ -27,13 +27,17 @@ class TestFeedbackEval(TestCase):
     def test_skipeval(self):
         """Test the SkipEval capability."""
 
-        f = Feedback(imp=skip_if_odd).on(val=Select.RecordCalls.somemethod.args.num[:])
+        f = Feedback(imp=skip_if_odd).on(
+            val=Select.RecordCalls.somemethod.args.num[:]
+        )
 
         # Create source data that looks like real source data for a record
         # collected from a real app. Store some integers in a place that
         # corresponds to app call to `somemethod`, keyword argument `num`.
         source_data = {
-            "__record__": {"app": {"somemethod": {"args": {"num": [1, 2, 3, 4, 5, 6]}}}}
+            "__record__": {
+                "app": {"somemethod": {"args": {"num": [1, 2, 3, 4, 5, 6]}}}
+            }
         }
 
         res = f.run(source_data=source_data)
@@ -53,7 +57,9 @@ class TestFeedbackEval(TestCase):
     def test_skipeval_all(self):
         """Test the SkipEval capability for when all evals are skipped"""
 
-        f = Feedback(imp=skip_if_odd).on(val=Select.RecordCalls.somemethod.args.num[:])
+        f = Feedback(imp=skip_if_odd).on(
+            val=Select.RecordCalls.somemethod.args.num[:]
+        )
 
         # Create source data that looks like real source data for a record
         # collected from a real app. Store some integers in a place that
@@ -66,7 +72,9 @@ class TestFeedbackEval(TestCase):
 
         self.assertIsInstance(res.result, float)
 
-        self.assertIs(res.result, np.nan)  # NOTE: cannot use assertEqual for nans.
+        self.assertIs(
+            res.result, np.nan
+        )  # NOTE: cannot use assertEqual for nans.
         # Result should be nan if all evals were skipped.
 
         self.assertEqual(res.status, FeedbackResultStatus.DONE)
@@ -164,7 +172,7 @@ class TestFeedbackConstructors(TestCase):
 
                 # This should fail:
                 with self.assertRaises(Exception):
-                    fds = Feedback.model_validate(fs)
+                    Feedback.model_validate(fs)
 
                 # OK to use with App as long as not deferred mode:
                 TruBasicApp(

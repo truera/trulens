@@ -105,7 +105,10 @@ class LangChainInstrument(Instrument):
                 # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # the prompt calls might be too small to be interesting
-                ("plan", "aplan"): (BaseSingleActionAgent, BaseMultiActionAgent),
+                ("plan", "aplan"): (
+                    BaseSingleActionAgent,
+                    BaseMultiActionAgent,
+                ),
                 ("_arun", "_run"): BaseTool,
             },
         )
@@ -247,7 +250,7 @@ class TruChain(mod_app.App):
                 if isinstance(comp, BaseRetriever):
                     retrievers.append((lens, comp))
 
-            except Exception as e:
+            except Exception:
                 pass
 
         if len(retrievers) == 0:
@@ -261,7 +264,10 @@ class TruChain(mod_app.App):
                     "Found more than one `BaseRetriever` in app:\n\t"
                     + (
                         "\n\t".join(
-                            map(lambda lr: f"{type(lr[1])} at {lr[0]}", retrievers)
+                            map(
+                                lambda lr: f"{type(lr[1])} at {lr[0]}",
+                                retrievers,
+                            )
                         )
                     )
                 )
@@ -378,7 +384,9 @@ class TruChain(mod_app.App):
         DEPRECATED: Run the chain call method and also return a record metadata object.
         """
 
-        self._throw_dep_message(method="__call__", is_async=False, with_record=True)
+        self._throw_dep_message(
+            method="__call__", is_async=False, with_record=True
+        )
 
     # TOREMOVE
     # Mimics Chain
@@ -387,19 +395,23 @@ class TruChain(mod_app.App):
         DEPRECATED: Wrapped call to self.app._call with instrumentation. If you
         need to get the record, use `call_with_record` instead.
         """
-        self._throw_dep_message(method="__call__", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="__call__", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # Chain requirement
     def _call(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="_call", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="_call", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # Optional Chain requirement
     async def _acall(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="_acall", is_async=True, with_record=False)
+        self._throw_dep_message(
+            method="_acall", is_async=True, with_record=False
+        )
 
-
-import trulens  # for App class annotations
 
 TruChain.model_rebuild()

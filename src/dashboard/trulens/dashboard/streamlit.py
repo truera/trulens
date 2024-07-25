@@ -16,7 +16,6 @@ from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata
 from trulens.utils.json import json_str_of_obj
 
-
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
@@ -106,7 +105,11 @@ def trulens_leaderboard(app_ids: List[str] = None):
         col4.metric(
             "Total Tokens",
             millify(
-                sum(tokens for tokens in app_df.total_tokens if tokens is not None),
+                sum(
+                    tokens
+                    for tokens in app_df.total_tokens
+                    if tokens is not None
+                ),
                 precision=2,
             ),
         )
@@ -123,10 +126,14 @@ def trulens_leaderboard(app_ids: List[str] = None):
 
             if "distance" in col_name:
                 feedback_cols[i].metric(
-                    label=col_name, value=f"{round(mean, 2)}", delta_color="normal"
+                    label=col_name,
+                    value=f"{round(mean, 2)}",
+                    delta_color="normal",
                 )
             else:
-                cat = styles.CATEGORY.of_score(mean, higher_is_better=higher_is_better)
+                cat = styles.CATEGORY.of_score(
+                    mean, higher_is_better=higher_is_better
+                )
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
@@ -195,7 +202,9 @@ def trulens_feedback(record: Record):
 
     if selected_feedback is not None:
         st.dataframe(
-            display.get_feedback_result(record, feedback_name=selected_feedback),
+            display.get_feedback_result(
+                record, feedback_name=selected_feedback
+            ),
             use_container_width=True,
             hide_index=True,
         )

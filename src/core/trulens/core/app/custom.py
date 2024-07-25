@@ -476,7 +476,7 @@ class TruCustomApp(App):
                     try:
                         next(full_path.get(json))
 
-                    except Exception as e:
+                    except Exception:
                         logger.warning(
                             f"App has no component owner of instrumented method {m} at path {full_path}. "
                             f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
@@ -537,7 +537,5 @@ class instrument(base_instrument):
         # after init.
         TruCustomApp.functions_to_instrument.add(getattr(cls, name))
 
-
-import trulens  # for App class annotations
 
 TruCustomApp.model_rebuild()

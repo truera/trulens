@@ -23,9 +23,9 @@ def optional_test(testmethodorclass):
     optional packages have been installed.
     """
 
-    return unittest.skipIf(not os.environ.get(OPTIONAL_ENV_VAR), "optional test")(
-        testmethodorclass
-    )
+    return unittest.skipIf(
+        not os.environ.get(OPTIONAL_ENV_VAR), "optional test"
+    )(testmethodorclass)
 
 
 def requiredonly_test(testmethodorclass):
@@ -35,9 +35,9 @@ def requiredonly_test(testmethodorclass):
     specifically when optional imports are not installed.
     """
 
-    return unittest.skipIf(os.environ.get(OPTIONAL_ENV_VAR), "not an optional test")(
-        testmethodorclass
-    )
+    return unittest.skipIf(
+        os.environ.get(OPTIONAL_ENV_VAR), "not an optional test"
+    )(testmethodorclass)
 
 
 def module_installed(module: str) -> bool:

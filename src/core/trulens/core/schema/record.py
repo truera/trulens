@@ -109,7 +109,9 @@ class Record(serial.SerialModel, Hashable):
     perf: Optional[mod_base_schema.Perf] = None
     """Performance information."""
 
-    ts: datetime.datetime = pydantic.Field(default_factory=datetime.datetime.now)
+    ts: datetime.datetime = pydantic.Field(
+        default_factory=datetime.datetime.now
+    )
     """Timestamp of last update.
 
     This is usually set whenever a record is changed in any way."""
@@ -151,12 +153,14 @@ class Record(serial.SerialModel, Hashable):
     `FeedbackMode.DEFERRED`.
     """
 
-    feedback_results: Optional[List[Future[mod_feedback_schema.FeedbackResult]]] = (
-        pydantic.Field(None, exclude=True)
-    )
+    feedback_results: Optional[
+        List[Future[mod_feedback_schema.FeedbackResult]]
+    ] = pydantic.Field(None, exclude=True)
     """Only the futures part of the above for backwards compatibility."""
 
-    def __init__(self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs):
+    def __init__(
+        self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs
+    ):
         super().__init__(record_id="temporary", **kwargs)
 
         if record_id is None:
@@ -170,7 +174,8 @@ class Record(serial.SerialModel, Hashable):
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
     ) -> Dict[
-        mod_feedback_schema.FeedbackDefinition, mod_feedback_schema.FeedbackResult
+        mod_feedback_schema.FeedbackDefinition,
+        mod_feedback_schema.FeedbackResult,
     ]:
         """Wait for feedback results to finish.
 
@@ -197,7 +202,8 @@ class Record(serial.SerialModel, Hashable):
                 ret[feedback_def] = feedback_result
             except TimeoutError:
                 logger.error(
-                    "Timeout waiting for feedback result for %s.", feedback_def.name
+                    "Timeout waiting for feedback result for %s.",
+                    feedback_def.name,
                 )
 
         return ret
@@ -229,7 +235,9 @@ class Record(serial.SerialModel, Hashable):
 
             # Adds another attribute to path, from method name:
             path = frame_info.path._append(
-                serial.GetItemOrAttribute(item_or_attribute=frame_info.method.name)
+                serial.GetItemOrAttribute(
+                    item_or_attribute=frame_info.method.name
+                )
             )
 
             if path.exists(obj=ret):

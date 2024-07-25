@@ -1,8 +1,6 @@
 import sys
 import time
 
-from trulens.core.app.custom import instrument
-
 
 class CustomRetriever:
     def __init__(self, delay: float = 0.015, alloc: int = 1024 * 1024):

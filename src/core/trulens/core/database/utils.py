@@ -100,7 +100,9 @@ def check_db_revision(
     if prior_prefix is not None:
         # Check if tables using the old/empty prefix exist.
         if prior_prefix + "alembic_version" in version_tables:
-            raise DatabaseVersionException.reconfigured(prior_prefix=prior_prefix)
+            raise DatabaseVersionException.reconfigured(
+                prior_prefix=prior_prefix
+            )
     else:
         # Check if the new/expected version table exists.
 
@@ -119,7 +121,9 @@ def check_db_revision(
 
                 # Guess prior prefix as the single one with version table name.
                 raise DatabaseVersionException.reconfigured(
-                    prior_prefix=version_tables[0].replace("alembic_version", "")
+                    prior_prefix=version_tables[0].replace(
+                        "alembic_version", ""
+                    )
                 )
 
     if is_legacy_sqlite(engine):
@@ -144,7 +148,9 @@ def check_db_revision(
         raise DatabaseVersionException.ahead()
 
     else:
-        raise NotImplementedError(f"Cannot handle database revisions: {revisions}")
+        raise NotImplementedError(
+            f"Cannot handle database revisions: {revisions}"
+        )
 
 
 def coerce_ts(ts: Union[datetime, str, int, float]) -> datetime:
@@ -209,7 +215,8 @@ def copy_database(
         with src.engine.begin() as src_conn:
             with tgt.engine.begin() as tgt_conn:
                 df = pd.read_sql(
-                    f"SELECT * FROM {source_table_class.__tablename__}", src_conn
+                    f"SELECT * FROM {source_table_class.__tablename__}",
+                    src_conn,
                 )
                 df.to_sql(
                     target_table_class.__tablename__,

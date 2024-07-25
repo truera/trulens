@@ -12,7 +12,7 @@ from trulens.utils.pyschema import Class
 from trulens.utils.serial import JSON
 
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
-    import langchain
+    pass
 
 
 class Prompt(base.Prompt, base.LangChainComponent):
@@ -26,7 +26,8 @@ class Prompt(base.Prompt, base.LangChainComponent):
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
-            module_name="langchain.prompts.base", class_name="BasePromptTemplate"
+            module_name="langchain.prompts.base",
+            class_name="BasePromptTemplate",
         ) or cls.noserio_issubclass(
             module_name="langchain.schema.prompt_template",
             class_name="BasePromptTemplate",

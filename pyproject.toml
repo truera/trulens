@@ -27,6 +27,7 @@ yapf = "^0.40.2"
 isort = "^5.13.2"
 pre-commit = "^3.7.1"
 toml = "^0.10.2"
+ruff = "^0.5.4"
 
 
 [tool.poetry.group.tests.dependencies]
@@ -66,3 +67,11 @@ dedent_closing_brackets = true
 split_before_first_argument = true
 split_complex_comprehension = true
 column_limit = 80
+
+[tool.ruff]
+line-length = 80
+indent-width = 4
+
+
+[tool.ruff.lint]
+ignore = ["E731"]

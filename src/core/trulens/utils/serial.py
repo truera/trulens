@@ -114,7 +114,9 @@ class SerialModel(pydantic.BaseModel):
     help serialization mostly.
     """
 
-    formatted_objects: ClassVar[ContextVar[Set[int]]] = ContextVar("formatted_objects")
+    formatted_objects: ClassVar[ContextVar[Set[int]]] = ContextVar(
+        "formatted_objects"
+    )
 
     def __rich_repr__(self) -> rich.repr.Result:
         """Requirement for pretty printing using the rich package."""
@@ -235,7 +237,9 @@ class Step(pydantic.BaseModel, Hashable):
             if a in ATTRIBUTE_TYPE_MAP:
                 return ATTRIBUTE_TYPE_MAP[a](**obj)
 
-        raise RuntimeError(f"Do not know how to interpret {obj} as a `Lens` `Step`.")
+        raise RuntimeError(
+            f"Do not know how to interpret {obj} as a `Lens` `Step`."
+        )
 
     # @abc.abstractmethod # NOTE1
     def get(self, obj: Any) -> Iterable[Any]:
@@ -270,7 +274,7 @@ class Collect(Step):
         raise NotImplementedError()
 
     def __repr__(self):
-        return f".collect()"
+        return ".collect()"
 
 
 class StepItemOrAttribute(Step):
@@ -295,7 +299,9 @@ class GetAttribute(StepItemOrAttribute):
         if hasattr(obj, self.attribute):
             yield getattr(obj, self.attribute)
         else:
-            raise ValueError(f"Object {obj} does not have attribute: {self.attribute}")
+            raise ValueError(
+                f"Object {obj} does not have attribute: {self.attribute}"
+            )
 
     # Step requirement
     def set(self, obj: Any, val: Any) -> Any:
@@ -444,7 +450,9 @@ class GetItemOrAttribute(StepItemOrAttribute):
             if self.item_or_attribute in obj:
                 yield obj[self.item_or_attribute]
             else:
-                raise KeyError(f"Key not in dictionary: {self.item_or_attribute}")
+                raise KeyError(
+                    f"Key not in dictionary: {self.item_or_attribute}"
+                )
         else:
             if hasattr(obj, self.item_or_attribute):
                 yield getattr(obj, self.item_or_attribute)
@@ -485,9 +493,9 @@ class GetSlice(Step):
     # Step requirement
     def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
-            lower, upper, step = slice(self.start, self.stop, self.step).indices(
-                len(obj)
-            )
+            lower, upper, step = slice(
+                self.start, self.stop, self.step
+            ).indices(len(obj))
             for i in range(lower, upper, step):
                 yield obj[i]
         else:
@@ -500,7 +508,9 @@ class GetSlice(Step):
 
         assert isinstance(obj, Sequence), "Sequence expected."
 
-        lower, upper, step = slice(self.start, self.stop, self.step).indices(len(obj))
+        lower, upper, step = slice(self.start, self.stop, self.step).indices(
+            len(obj)
+        )
 
         # copy
         obj = list(obj)
@@ -512,7 +522,10 @@ class GetSlice(Step):
 
     def __repr__(self):
         pieces = ":".join(
-            ["" if p is None else str(p) for p in (self.start, self.stop, self.step)]
+            [
+                "" if p is None else str(p)
+                for p in (self.start, self.stop, self.step)
+            ]
         )
         if pieces == "::":
             pieces = ":"
@@ -723,7 +736,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             # exp = parse(f"PLACEHOLDER.{s}", mode="eval")
             exp = parse(s, mode="eval")
 
-        except SyntaxError as e:
+        except SyntaxError:
             raise ParseException(s, None)
 
         if not isinstance(exp, ast.Expression):
@@ -789,7 +802,9 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                         of_index(v) for v in (sub.lower, sub.upper, sub.step)
                     )
 
-                    if not all(e is None or isinstance(e, GetIndex) for e in vals):
+                    if not all(
+                        e is None or isinstance(e, GetIndex) for e in vals
+                    ):
                         raise ParseException(s, exp)
 
                     vals_indices: Tuple[Union[None, int], ...] = tuple(
@@ -841,11 +856,15 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                 else:
                     if all(isinstance(el.value, int) for el in exp.elts):
                         path.append(
-                            GetIndices(indices=tuple(el.value for el in exp.elts))
+                            GetIndices(
+                                indices=tuple(el.value for el in exp.elts)
+                            )
                         )
 
                     elif all(isinstance(el.value, str) for el in exp.elts):
-                        path.append(GetItems(items=tuple(el.value for el in exp.elts)))
+                        path.append(
+                            GetItems(items=tuple(el.value for el in exp.elts))
+                        )
 
                     else:
                         raise ParseException(s, exp)
@@ -866,7 +885,9 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                     path.append(Collect())
 
                 else:
-                    raise TypeError(f"`{funcname}` is not a handled call for paths.")
+                    raise TypeError(
+                        f"`{funcname}` is not a handled call for paths."
+                    )
 
                 if len(exp.args) + len(exp.keywords) != 0:
                     logger.warning(f"args/kwargs for `{funcname}` are ignored")
@@ -903,7 +924,9 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         return Lens(path=self.path + other.path)
 
     def is_immediate_prefix_of(self, other: "Lens"):
-        return self.is_prefix_of(other) and len(self.path) + 1 == len(other.path)
+        return self.is_prefix_of(other) and len(self.path) + 1 == len(
+            other.path
+        )
 
     def is_prefix_of(self, other: "Lens"):
         p = self.path

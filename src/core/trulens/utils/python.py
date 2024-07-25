@@ -12,7 +12,7 @@ import logging
 from pprint import PrettyPrinter
 import queue
 import sys
-from types import ModuleType
+from types import ModuleType, FrameType
 import typing
 from typing import (
     Any,
@@ -138,7 +138,9 @@ def callable_name(c: Callable):
     """Get the name of the given callable."""
 
     if not isinstance(c, Callable):
-        raise ValueError(f"Expected a callable. Got {class_name(type(c))} instead.")
+        raise ValueError(
+            f"Expected a callable. Got {class_name(type(c))} instead."
+        )
 
     if safe_hasattr(c, "__name__"):
         return c.__name__
@@ -172,7 +174,9 @@ def is_really_coroutinefunction(func) -> bool:
     if inspect.iscoroutinefunction(func):
         return True
 
-    if hasattr(func, "__wrapped__") and inspect.iscoroutinefunction(func.__wrapped__):
+    if hasattr(func, "__wrapped__") and inspect.iscoroutinefunction(
+        func.__wrapped__
+    ):
         return True
 
     return False
@@ -296,7 +300,10 @@ def for_all_methods(decorator, _except: Optional[List[str]] = None):
     """
 
     def decorate(cls):
-        for attr_name, attr in cls.__dict__.items():  # does not include classmethods
+        for (
+            attr_name,
+            attr,
+        ) in cls.__dict__.items():  # does not include classmethods
             if not inspect.isfunction(attr):
                 continue  # skips non-method attributes
 
@@ -335,7 +342,7 @@ def run_before(callback: Callable):
 STACK = "__tru_stack"
 
 
-def caller_frame(offset=0) -> "frame":
+def caller_frame(offset=0) -> FrameType:
     """
     Get the caller's (of this function) frame. See
     https://docs.python.org/3/reference/datamodel.html#frame-objects .
@@ -366,7 +373,7 @@ def caller_frameinfo(
     return None
 
 
-def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence["frame"]:
+def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence[FrameType]:
     """
     A task factory that annotates created tasks with stacks of their parents.
 
@@ -407,7 +414,7 @@ def tru_new_event_loop():
 asyncio.new_event_loop = tru_new_event_loop
 
 
-def get_task_stack(task: asyncio.Task) -> Sequence["frame"]:
+def get_task_stack(task: asyncio.Task) -> Sequence[FrameType]:
     """
     Get the annotated stack (if available) on the given task.
     """
@@ -418,7 +425,9 @@ def get_task_stack(task: asyncio.Task) -> Sequence["frame"]:
         return task.get_stack()[::-1]
 
 
-def merge_stacks(s1: Sequence["frame"], s2: Sequence["frame"]) -> Sequence["frame"]:
+def merge_stacks(
+    s1: Sequence[FrameType], s2: Sequence[FrameType]
+) -> Sequence[FrameType]:
     """
     Assuming `s1` is a subset of `s2`, combine the two stacks in presumed call
     order.
@@ -437,13 +446,13 @@ def merge_stacks(s1: Sequence["frame"], s2: Sequence["frame"]) -> Sequence["fram
                 ret.append(s2[0])
                 s2 = s2[1:]
 
-        except:
+        except Exception:
             pass
 
     return ret
 
 
-def stack_with_tasks() -> Sequence["frame"]:
+def stack_with_tasks() -> Sequence[FrameType]:
     """
     Get the current stack (not including this function) with frames reaching
     across Tasks.
@@ -456,7 +465,7 @@ def stack_with_tasks() -> Sequence["frame"]:
 
         return merge_stacks(ret, task_stack)
 
-    except:
+    except Exception:
         return ret
 
 
@@ -471,7 +480,7 @@ def _future_target_wrapper(stack, context, func, *args, **kwargs):
     # TODO: See if threading.stack_size([size]) can be used instead.
 
     # Keep this for looking up via get_first_local_in_call_stack .
-    pre_start_stack = stack
+    pre_start_stack = stack  # noqa: F841
 
     for var, value in context.items():
         var.set(value)
@@ -545,7 +554,7 @@ def get_all_local_in_call_stack(
         if func(f.f_code):
             logger.debug(f"Looking via {func.__name__}; found {f}")
             if skip is not None and f == skip:
-                logger.debug(f"Skipping.")
+                logger.debug("Skipping.")
                 continue
 
             locs = f.f_locals
@@ -580,7 +589,11 @@ def get_first_local_in_call_stack(
 
     try:
         return next(
-            iter(get_all_local_in_call_stack(key, func, offset=offset + 1, skip=skip))
+            iter(
+                get_all_local_in_call_stack(
+                    key, func, offset=offset + 1, skip=skip
+                )
+            )
         )
     except StopIteration:
         logger.debug("no frames found")
@@ -771,10 +784,15 @@ class SingletonPerName(Generic[T]):
         if k in SingletonPerName._instances:
             SingletonPerName._instances[k].warning()
         else:
-            raise RuntimeError(f"Instance of singleton type/name {k} does not exist.")
+            raise RuntimeError(
+                f"Instance of singleton type/name {k} does not exist."
+            )
 
     def __new__(
-        cls: Type[SingletonPerName[T]], *args, name: Optional[str] = None, **kwargs
+        cls: Type[SingletonPerName[T]],
+        *args,
+        name: Optional[str] = None,
+        **kwargs,
     ) -> SingletonPerName[T]:
         """
         Create the singleton instance if it doesn't already exist and return it.

@@ -59,7 +59,9 @@ class Select:
         """
 
         if len(select.path) == 0:
-            raise ValueError("Given selector is empty so does not name a method.")
+            raise ValueError(
+                "Given selector is empty so does not name a method."
+            )
 
         firsts = select.path[:-1]
         last = select.path[-1]

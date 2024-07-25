@@ -52,7 +52,8 @@ class LiteLLMCallback(EndpointCallback):
                 setattr(
                     self.cost,
                     cost_field,
-                    getattr(self.cost, cost_field, 0) + usage.get(litellm_field, 0),
+                    getattr(self.cost, cost_field, 0)
+                    + usage.get(litellm_field, 0),
                 )
 
         if self.endpoint.litellm_provider not in ["openai"]:

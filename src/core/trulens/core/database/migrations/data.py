@@ -92,7 +92,9 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                             # Do not check Nullables
                             if db_json_str is not None:
                                 # Test deserialization
-                                test_json = json.loads(getattr(db_record, attr_name))
+                                test_json = json.loads(
+                                    getattr(db_record, attr_name)
+                                )
 
                                 # special implementation checks for serialized classes
                                 if "implementation" in test_json:
@@ -106,13 +108,21 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                         pass
 
                                 if attr_name == "record_json":
-                                    mod_record_schema.Record.model_validate(test_json)
+                                    mod_record_schema.Record.model_validate(
+                                        test_json
+                                    )
                                 elif attr_name == "cost_json":
-                                    mod_base_schema.Cost.model_validate(test_json)
+                                    mod_base_schema.Cost.model_validate(
+                                        test_json
+                                    )
                                 elif attr_name == "perf_json":
-                                    mod_base_schema.Perf.model_validate(test_json)
+                                    mod_base_schema.Perf.model_validate(
+                                        test_json
+                                    )
                                 elif attr_name == "calls_json":
-                                    for record_app_call_json in test_json["calls"]:
+                                    for record_app_call_json in test_json[
+                                        "calls"
+                                    ]:
                                         mod_feedback_schema.FeedbackCall.model_validate(
                                             record_app_call_json
                                         )

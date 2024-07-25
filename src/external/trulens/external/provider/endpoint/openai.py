@@ -221,7 +221,9 @@ class OpenAIEndpoint(Endpoint):
     def __init__(
         self,
         name: str = "openai",
-        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI, OpenAIClient]] = None,
+        client: Optional[
+            Union[oai.OpenAI, oai.AzureOpenAI, OpenAIClient]
+        ] = None,
         rpm: Optional[int] = None,
         pace: Optional[Pace] = None,
         **kwargs: dict,
@@ -230,7 +232,8 @@ class OpenAIEndpoint(Endpoint):
             # Already created with SingletonPerName mechanism
             if len(kwargs) != 0:
                 logger.warning(
-                    "OpenAIClient singleton already made, ignoring arguments %s", kwargs
+                    "OpenAIClient singleton already made, ignoring arguments %s",
+                    kwargs,
                 )
                 self.warning()  # issue info about where the singleton was originally created
             return

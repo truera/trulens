@@ -24,7 +24,9 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.memory import ConversationSummaryBufferMemory
 
-check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV")
+check_keys(
+    "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
+)
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
@@ -113,7 +115,9 @@ def get_or_make_app(
 
     # Embedding needed for Pinecone vector db.
     embedding = OpenAIEmbeddings(model="text-embedding-ada-002")  # 1536 dims
-    docsearch = Pinecone.from_existing_index(index_name="llmdemo", embedding=embedding)
+    docsearch = Pinecone.from_existing_index(
+        index_name="llmdemo", embedding=embedding
+    )
 
     retriever = docsearch.as_retriever()
 
@@ -128,7 +132,10 @@ def get_or_make_app(
 
     # Conversation memory.
     memory = ConversationSummaryBufferMemory(
-        max_token_limit=650, llm=llm, memory_key="chat_history", output_key="answer"
+        max_token_limit=650,
+        llm=llm,
+        memory_key="chat_history",
+        output_key="answer",
     )
 
     # Conversational app puts it all together.
@@ -181,7 +188,9 @@ def get_or_make_app(
         )
 
         # "\t" important here:
-        app.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
+        app.combine_docs_chain.document_prompt.template = (
+            "\tContext: {page_content}"
+        )
 
     # Trulens instrumentation.
     tc = tru.Chain(
@@ -245,7 +254,9 @@ def answer_message(client, body: dict, logger):
     channel = body["event"]["channel"]
 
     if "thread_ts" in body["event"]:
-        client.chat_postMessage(channel=channel, thread_ts=ts, text=f"Looking...")
+        client.chat_postMessage(
+            channel=channel, thread_ts=ts, text="Looking..."
+        )
 
         convo_id = body["event"]["thread_ts"]
 
@@ -277,7 +288,9 @@ def answer_message(client, body: dict, logger):
             app = get_or_make_app(convo_id)
 
             client.chat_postMessage(
-                channel=channel, thread_ts=ts, text=f"Hi. Let me check that for you..."
+                channel=channel,
+                thread_ts=ts,
+                text="Hi. Let me check that for you...",
             )
 
     res, res_sources = get_answer(app, message)
@@ -288,7 +301,10 @@ def answer_message(client, body: dict, logger):
         text=str(res) + "\n" + str(res_sources),
         blocks=[
             dict(type="section", text=dict(type="mrkdwn", text=str(res))),
-            dict(type="context", elements=[dict(type="mrkdwn", text=str(res_sources))]),
+            dict(
+                type="context",
+                elements=[dict(type="mrkdwn", text=str(res_sources))],
+            ),
         ],
     )
 

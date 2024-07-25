@@ -175,7 +175,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     )
     """Pacing instance to maintain a desired rpm."""
 
-    global_callback: EndpointCallback = Field(exclude=True)  # of type _callback_class
+    global_callback: EndpointCallback = Field(
+        exclude=True
+    )  # of type _callback_class
     """Track costs not run inside "track_cost" here.
 
     Also note that Endpoints are singletons (one for each unique name argument)
@@ -339,7 +341,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
         if safe_hasattr(mod, method_name):
             logger.debug(
-                "Instrumenting %s.%s for %s", module_name(mod), method_name, self.name
+                "Instrumenting %s.%s for %s",
+                module_name(mod),
+                method_name,
+                self.name,
             )
             func = getattr(mod, method_name)
             w = self.wrap_function(func)
@@ -351,7 +356,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     def _instrument_class(self, cls, method_name: str) -> None:
         if safe_hasattr(cls, method_name):
             logger.debug(
-                "Instrumenting %s.%s for %s", class_name(cls), method_name, self.name
+                "Instrumenting %s.%s for %s",
+                class_name(cls),
+                method_name,
+                self.name,
             )
             func = getattr(cls, method_name)
             w = self.wrap_function(func)
@@ -370,7 +378,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
             print(
                 wrapped_thing
-                if wrapped_thing != object
+                if wrapped_thing is not object
                 else "unknown dynamically generated class(es)"
             )
             for original, _, endpoint in wrappers:
@@ -403,9 +411,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 produced_func = func(*args, **kwargs)
 
                 if wrapped_method_filter(produced_func):
-                    logger.debug("Instrumenting %s", callable_name(produced_func))
+                    logger.debug(
+                        "Instrumenting %s", callable_name(produced_func)
+                    )
 
-                    instrumented_produced_func = self.wrap_function(produced_func)
+                    instrumented_produced_func = self.wrap_function(
+                        produced_func
+                    )
                     Endpoint.instrumented_methods[object].append(
                         (produced_func, instrumented_produced_func, type(self))
                     )
@@ -413,7 +425,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 else:
                     return produced_func
 
-            Endpoint.instrumented_methods[cls].append((func, metawrap, type(self)))
+            Endpoint.instrumented_methods[cls].append(
+                (func, metawrap, type(self))
+            )
 
             setattr(cls, wrapper_method_name, metawrap)
 
@@ -424,12 +438,17 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         already_instrumented = safe_getattr(mod, INSTRUMENT)
 
         if method_name in already_instrumented:
-            logger.debug("module %s already instrumented for %s", mod, method_name)
+            logger.debug(
+                "module %s already instrumented for %s", mod, method_name
+            )
             return
 
         for m in dir(mod):
             logger.debug(
-                "instrumenting module %s member %s for method %s", mod, m, method_name
+                "instrumenting module %s member %s for method %s",
+                mod,
+                m,
+                method_name,
             )
             if safe_hasattr(mod, m):
                 obj = safe_getattr(mod, m)
@@ -481,7 +500,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         e,
                     )
 
-        return Endpoint._track_costs(__func, *args, with_endpoints=endpoints, **kwargs)
+        return Endpoint._track_costs(
+            __func, *args, with_endpoints=endpoints, **kwargs
+        )
 
     @staticmethod
     def track_all_costs_tally(
@@ -583,7 +604,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         return result, callbacks
 
     def track_cost(
-        self, __func: mod_asynchro_utils.CallableMaybeAwaitable[T], *args, **kwargs
+        self,
+        __func: mod_asynchro_utils.CallableMaybeAwaitable[T],
+        *args,
+        **kwargs,
     ) -> Tuple[T, EndpointCallback]:
         """
         Tally only the usage performed within the execution of the given thunk.
@@ -690,7 +714,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # callback tracking the tally. See Endpoint._track_costs for
             # definition.
             endpoints: Dict[
-                Type[EndpointCallback], Sequence[Tuple[Endpoint, EndpointCallback]]
+                Type[EndpointCallback],
+                Sequence[Tuple[Endpoint, EndpointCallback]],
             ] = get_first_local_in_call_stack(
                 key="endpoints", func=self.__find_tracker, offset=0
             )
@@ -816,7 +841,9 @@ class DummyEndpoint(Endpoint):
     ) -> None:
         """Dummy handler does nothing."""
 
-    def post(self, url: str, payload: JSON, timeout: Optional[float] = None) -> Any:
+    def post(
+        self, url: str, payload: JSON, timeout: Optional[float] = None
+    ) -> Any:
         """Pretend to make a classification request similar to huggingface API.
 
         Simulates overloaded, model loading, frozen, error as configured:
@@ -876,8 +903,14 @@ class DummyEndpoint(Endpoint):
 
             j = [
                 [
-                    {"label": "LABEL_1", "score": 0.6034979224205017 + random.random()},
-                    {"label": "LABEL_2", "score": 0.2648237645626068 + random.random()},
+                    {
+                        "label": "LABEL_1",
+                        "score": 0.6034979224205017 + random.random(),
+                    },
+                    {
+                        "label": "LABEL_2",
+                        "score": 0.2648237645626068 + random.random(),
+                    },
                     {
                         "label": "LABEL_0",
                         "score": 0.13167837262153625 + random.random(),
@@ -902,7 +935,9 @@ class DummyEndpoint(Endpoint):
         if isinstance(j, Dict) and "error" in j:
             error = j["error"]
             if error == "overloaded":
-                logger.warning("Waiting for overloaded API before trying again.")
+                logger.warning(
+                    "Waiting for overloaded API before trying again."
+                )
                 sleep(10)
                 return self.post(url, payload)
 

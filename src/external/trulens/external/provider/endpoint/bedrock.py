@@ -107,12 +107,16 @@ class BedrockCallback(EndpointCallback):
 
                     headers = metadata.get("HTTPHeaders")
                     if headers is not None:
-                        output_tokens = headers.get("x-amzn-bedrock-output-token-count")
+                        output_tokens = headers.get(
+                            "x-amzn-bedrock-output-token-count"
+                        )
                         if output_tokens is not None:
                             self.cost.n_completion_tokens += int(output_tokens)
                             self.cost.n_tokens += int(output_tokens)
 
-                        input_tokens = headers.get("x-amzn-bedrock-input-token-count")
+                        input_tokens = headers.get(
+                            "x-amzn-bedrock-input-token-count"
+                        )
                         if input_tokens is not None:
                             self.cost.n_prompt_tokens += int(input_tokens)
                             self.cost.n_tokens += int(input_tokens)
@@ -155,7 +159,11 @@ class BedrockEndpoint(Endpoint):
         return f"BedrockEndpoint(region_name={self.region_name})"
 
     def __init__(
-        self, *args, name: str = "bedrock", region_name: str = "us-east-1", **kwargs
+        self,
+        *args,
+        name: str = "bedrock",
+        region_name: str = "us-east-1",
+        **kwargs,
     ):
         # SingletonPerName behaviour but only if client not provided.
         if hasattr(self, "region_name") and "client" not in kwargs:
@@ -198,7 +206,9 @@ class BedrockEndpoint(Endpoint):
         else:
             # This one will be instrumented by our hacks onto _create_api_method above:
 
-            self.client = boto3.client(service_name="bedrock-runtime", **client_kwargs)
+            self.client = boto3.client(
+                service_name="bedrock-runtime", **client_kwargs
+            )
 
     def handle_wrapped_call(
         self,
@@ -230,4 +240,4 @@ class BedrockEndpoint(Endpoint):
                 )
 
         else:
-            logger.warning(f"Unhandled wrapped call to %s.", func.__name__)
+            logger.warning("Unhandled wrapped call to %s.", func.__name__)

@@ -14,7 +14,12 @@ log = logging.getLogger(__name__)
 
 
 def score_passages(
-    df, feedback_func_name, feedback_func, backoff_time=0.5, n=5, temperature=0.0
+    df,
+    feedback_func_name,
+    feedback_func,
+    backoff_time=0.5,
+    n=5,
+    temperature=0.0,
 ):
     grouped = df.groupby("query_id")
     scores = []

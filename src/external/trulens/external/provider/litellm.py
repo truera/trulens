@@ -89,7 +89,9 @@ provider = LiteLLM(
             litellm_provider=litellm_provider, **kwargs
         )
 
-        super().__init__(**self_kwargs)  # need to include pydantic.BaseModel.__init__
+        super().__init__(
+            **self_kwargs
+        )  # need to include pydantic.BaseModel.__init__
 
     def _create_chat_completion(
         self,
@@ -105,7 +107,9 @@ provider = LiteLLM(
             completion_args["messages"] = messages
 
         elif prompt is not None:
-            completion_args["messages"] = [{"role": "system", "content": prompt}]
+            completion_args["messages"] = [
+                {"role": "system", "content": prompt}
+            ]
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")

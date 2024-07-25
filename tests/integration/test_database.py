@@ -64,7 +64,9 @@ class TestDBSpecifications(TestCase):
 
                     # Check that we have the correct table names.
                     with db.engine.begin() as conn:
-                        df = pd.read_sql("SELECT * FROM test_alembic_version", conn)
+                        df = pd.read_sql(
+                            "SELECT * FROM test_alembic_version", conn
+                        )
                         print(df)
 
     def test_copy(self):
@@ -75,11 +77,15 @@ class TestDBSpecifications(TestCase):
 
         for source_db_type in db_types:
             with self.subTest(msg=f"source prefix for {source_db_type}"):
-                with clean_db(source_db_type, table_prefix="test_prior_") as db_prior:
+                with clean_db(
+                    source_db_type, table_prefix="test_prior_"
+                ) as db_prior:
                     _populate_data(db_prior)
 
                     for target_db_type in db_types:
-                        with self.subTest(msg=f"target prefix for {target_db_type}"):
+                        with self.subTest(
+                            msg=f"target prefix for {target_db_type}"
+                        ):
                             with clean_db(
                                 target_db_type, table_prefix="test_post_"
                             ) as db_post:
@@ -133,7 +139,9 @@ class TestDBSpecifications(TestCase):
                     _test_db_consistency(self, db_prior)
 
                     # Migrate the database.
-                    with clean_db(db_type, table_prefix="test_post_") as db_post:
+                    with clean_db(
+                        db_type, table_prefix="test_post_"
+                    ) as db_post:
                         db_post.migrate_database(prior_prefix="test_prior_")
 
                         # Check that we have the correct table names.
@@ -187,10 +195,12 @@ class TestDbV2Migration(TestCase):
 
         We expect a warning and exception."""
 
-        for folder in (Path(__file__).parent.parent.parent / "release_dbs").iterdir():
+        for folder in (
+            Path(__file__).parent.parent.parent / "release_dbs"
+        ).iterdir():
             _dbfile = folder / "default.sqlite"
 
-            if not "infty" in str(folder):
+            if "infty" not in str(folder):
                 # Future/unknown dbs have "infty" in their folder name.
                 continue
 
@@ -210,13 +220,17 @@ class TestDbV2Migration(TestCase):
         with self.assertRaises(DatabaseVersionException) as e:
             db.migrate_database()
 
-        self.assertEqual(e.exception.reason, DatabaseVersionException.Reason.AHEAD)
+        self.assertEqual(
+            e.exception.reason, DatabaseVersionException.Reason.AHEAD
+        )
 
         # Trying to use it anyway should also produce the exception.
         with self.assertRaises(DatabaseVersionException) as e:
             db.get_records_and_feedback()
 
-        self.assertEqual(e.exception.reason, DatabaseVersionException.Reason.AHEAD)
+        self.assertEqual(
+            e.exception.reason, DatabaseVersionException.Reason.AHEAD
+        )
 
     def test_migrate_legacy_legacy_sqlite_file(self):
         """Migration from non-latest lagecy db files all the way to v2 database.
@@ -224,7 +238,9 @@ class TestDbV2Migration(TestCase):
         This involves migrating the legacy dbs to the latest legacy first.
         """
 
-        for folder in (Path(__file__).parent.parent.parent / "release_dbs").iterdir():
+        for folder in (
+            Path(__file__).parent.parent.parent / "release_dbs"
+        ).iterdir():
             _dbfile = folder / "default.sqlite"
 
             if "infty" in str(folder):
@@ -303,7 +319,9 @@ def clean_db(alias: str, **kwargs: Dict[str, Any]) -> Iterator[SQLAlchemyDB]:
 
 
 def assert_revision(
-    engine: Engine, expected: Union[None, str], status: Literal["in_sync", "behind"]
+    engine: Engine,
+    expected: Union[None, str],
+    status: Literal["in_sync", "behind"],
 ):
     """Asserts that the version of the database `engine` is `expected` and
     has the `status` flag set."""
@@ -366,7 +384,9 @@ def debug_dump(db: SQLAlchemyDB):
         ress = session.query(db.orm.FeedbackResult).all()
         for res in ress:
             print(
-                "    feedback_result", res.feedback_result_id, res.feedback_definition
+                "    feedback_result",
+                res.feedback_result_id,
+                res.feedback_definition,
             )
 
 
@@ -383,7 +403,9 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
         session.delete(session.query(db.orm.AppDefinition).one())
 
         # records are deleted in cascade
-        test.assertEqual(session.query(db.orm.Record).all(), [], "Expected no records.")
+        test.assertEqual(
+            session.query(db.orm.Record).all(), [], "Expected no records."
+        )
 
         # feedbacks results are deleted in cascade
         test.assertEqual(
@@ -406,7 +428,9 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
     with db.session.begin() as session:
         test.assertEqual(
-            len(session.query(db.orm.Record).all()), 1, "Expected exactly one record."
+            len(session.query(db.orm.Record).all()),
+            1,
+            "Expected exactly one record.",
         )
 
         test.assertEqual(
@@ -427,7 +451,9 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
         # apps are preserved
         test.assertEqual(
-            len(session.query(db.orm.AppDefinition).all()), 1, "Expected an app."
+            len(session.query(db.orm.AppDefinition).all()),
+            1,
+            "Expected an app.",
         )
 
         # feedback defs are preserved. Note that this requires us to use the
@@ -441,7 +467,9 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
 def _populate_data(db: DB):
     tru = Tru()
-    tru.db = db  # because of the singleton behavior, db must be changed manually
+    tru.db = (
+        db  # because of the singleton behavior, db must be changed manually
+    )
 
     fb = Feedback(
         imp=MockFeedback().length,

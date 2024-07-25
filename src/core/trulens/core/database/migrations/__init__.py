@@ -24,7 +24,9 @@ def alembic_config(
     db_url = str(engine.url).replace("%", "%%")  # Escape any '%' in db_url
     config = Config(os.path.join(alembic_dir, "alembic.ini"))
     config.set_main_option("script_location", alembic_dir)
-    config.set_main_option("calling_context", "PYTHON")  # skips CLI-specific setup
+    config.set_main_option(
+        "calling_context", "PYTHON"
+    )  # skips CLI-specific setup
     config.set_main_option("sqlalchemy.url", db_url)
     config.set_main_option("trulens.table_prefix", prefix)
     config.attributes["engine"] = engine
@@ -33,14 +35,18 @@ def alembic_config(
 
 
 def upgrade_db(
-    engine: Engine, revision: str = "head", prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine,
+    revision: str = "head",
+    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
 ):
     with alembic_config(engine, prefix=prefix) as config:
         command.upgrade(config, revision)
 
 
 def downgrade_db(
-    engine: Engine, revision: str = "base", prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine,
+    revision: str = "base",
+    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
 ):
     with alembic_config(engine, prefix=prefix) as config:
         command.downgrade(config, revision)
@@ -68,7 +74,9 @@ def get_revision_history(
             reversed(
                 [
                     rev.revision
-                    for rev in scripts.iterate_revisions(lower="base", upper="head")
+                    for rev in scripts.iterate_revisions(
+                        lower="base", upper="head"
+                    )
                 ]
             )
         )

@@ -58,7 +58,9 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.core.base.response.schema import StreamingResponse
         from llama_index.core.chat_engine.types import AgentChatResponse
         from llama_index.core.chat_engine.types import BaseChatEngine
-        from llama_index.core.chat_engine.types import StreamingAgentChatResponse
+        from llama_index.core.chat_engine.types import (
+            StreamingAgentChatResponse,
+        )
         from llama_index.core.indices.base import BaseIndex
         from llama_index.core.indices.prompt_helper import PromptHelper
         from llama_index.core.memory.types import BaseMemory
@@ -103,7 +105,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.indices.base import BaseIndex
         from llama_index.indices.prompt_helper import PromptHelper
         from llama_index.indices.query.schema import QueryBundle
-        from llama_index.indices.service_context import ServiceContext
         from llama_index.llm_predictor import LLMPredictor
         from llama_index.llm_predictor.base import BaseLLMPredictor
         from llama_index.llm_predictor.base import LLMMetadata
@@ -111,7 +112,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.memory import BaseMemory
         from llama_index.node_parser.interface import NodeParser
         from llama_index.postprocessor.types import BaseNodePostprocessor
-        from llama_index.prompts.base import Prompt
         from llama_index.question_gen.types import BaseQuestionGenerator
         from llama_index.response.schema import Response
         from llama_index.response.schema import StreamingResponse
@@ -309,7 +309,9 @@ class TruLlama(mod_app.App):
         default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
     )
 
-    def __init__(self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict):
+    def __init__(
+        self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict
+    ):
         # TruLlama specific:
         kwargs["app"] = app
         kwargs["root_class"] = Class.of_object(app)  # TODO: make class property
@@ -447,42 +449,58 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     def chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="chat", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="chat", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     async def achat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="achat", is_async=True, with_record=False)
+        self._throw_dep_message(
+            method="achat", is_async=True, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     def stream_chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="stream_chat", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="stream_chat", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     async def astream_chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="astream_chat", is_async=True, with_record=False)
+        self._throw_dep_message(
+            method="astream_chat", is_async=True, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.indices.query.base.BaseQueryEngine
     def query(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="query", is_async=False, with_record=False)
+        self._throw_dep_message(
+            method="query", is_async=False, with_record=False
+        )
 
     # TOREMOVE
     # llama_index.indices.query.base.BaseQueryEngine
     async def aquery(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="aquery", is_async=True, with_record=False)
+        self._throw_dep_message(
+            method="aquery", is_async=True, with_record=False
+        )
 
     # TOREMOVE
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
     def query_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="query", is_async=False, with_record=True)
+        self._throw_dep_message(
+            method="query", is_async=False, with_record=True
+        )
 
     # TOREMOVE
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
     async def aquery_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="aquery", is_async=True, with_record=True)
+        self._throw_dep_message(
+            method="aquery", is_async=True, with_record=True
+        )
 
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
@@ -497,14 +515,16 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
     def stream_chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="stream", is_async=False, with_record=True)
+        self._throw_dep_message(
+            method="stream", is_async=False, with_record=True
+        )
 
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
     async def astream_chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="astream_chat", is_async=True, with_record=True)
+        self._throw_dep_message(
+            method="astream_chat", is_async=True, with_record=True
+        )
 
-
-import trulens  # for App class annotations
 
 TruLlama.model_rebuild()

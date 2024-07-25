@@ -16,42 +16,42 @@ def set_page_config(page_title="TruLens"):
     st.logo(str(logo), link="https://www.trulens.org/")
 
     st.markdown(
-        f"""
+        """
         <style>
-            [data-testid="stSidebarNav"] {{
+            [data-testid="stSidebarNav"] {
                 background-repeat: no-repeat;
                 background-size: 300px auto;
                 background-position: 20px 20px;
                 height: calc(100vh - 80px);
-            }}
-            [data-testid="stSidebarNav"]::before {{
+            }
+            [data-testid="stSidebarNav"]::before {
                 margin-left: 20px;
                 margin-top: 20px;
                 font-size: 30px;
                 position: relative;
                 top: 100px;
-            }}
+            }
 
             /* For user feedback button and version text */
-            [data-testid="stSidebarUserContent"] {{
+            [data-testid="stSidebarUserContent"] {
                 padding-bottom: 1rem;
-            }}
+            }
 
-            [data-testid="stSidebarUserContent"] [data-testid="column"] {{
+            [data-testid="stSidebarUserContent"] [data-testid="column"] {
                 align-content: center;
-            }}
+            }
 
-            [data-testid="stSidebarUserContent"] [data-testid="stText"] {{
+            [data-testid="stSidebarUserContent"] [data-testid="stText"] {
                 color: #aaaaaa;
                 font-size: 9pt;
-            }}
+            }
 
             /* For list items in st.dataframe */
-            #portal .clip-region .boe-bubble {{
+            #portal .clip-region .boe-bubble {
                 height: auto;
                 border-radius: 4px;
                 padding: 8px;
-            }}
+            }
         </style>
         """,
         unsafe_allow_html=True,

@@ -34,7 +34,9 @@ else:
     # build directory:
     parent_dir = os.path.dirname(os.path.abspath(__file__))
     build_dir = os.path.join(parent_dir, "dist")
-    _record_viewer = components.declare_component("record_viewer", path=build_dir)
+    _record_viewer = components.declare_component(
+        "record_viewer", path=build_dir
+    )
 
 
 # Create a wrapper function for the component. This is an optional

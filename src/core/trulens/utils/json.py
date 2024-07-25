@@ -8,7 +8,7 @@ import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Any, Dict, Optional, Sequence, Set, TypeVar
+from typing import Any, Dict, Optional, Sequence, Set, TypeVar, TYPE_CHECKING
 
 from merkle_json import MerkleJson
 import pydantic
@@ -30,6 +30,10 @@ from trulens.utils.serial import JSON_BASES
 from trulens.utils.serial import Lens
 from trulens.utils.serial import SerialBytes
 from trulens.utils.serial import SerialModel
+
+if TYPE_CHECKING:
+    from trulens.core.instruments import Instrument
+
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -67,13 +71,16 @@ def obj_id_of_obj(obj: dict, prefix="obj"):
     return f"{prefix}_hash_{mj.hash(obj)}"
 
 
-def json_str_of_obj(obj: Any, *args, redact_keys: bool = False, **kwargs) -> str:
+def json_str_of_obj(
+    obj: Any, *args, redact_keys: bool = False, **kwargs
+) -> str:
     """
     Encode the given json object as a string.
     """
 
     return json.dumps(
-        jsonify(obj, *args, redact_keys=redact_keys, **kwargs), default=json_default
+        jsonify(obj, *args, redact_keys=redact_keys, **kwargs),
+        default=json_default,
     )
 
 
@@ -87,7 +94,7 @@ def json_default(obj: Any) -> str:
     try:
         return pydantic.v1.json.pydantic_encoder(obj)
 
-    except:
+    except Exception:
         # Otherwise give up and indicate a non-serialization.
         return noserio(obj)
 
@@ -107,7 +114,7 @@ def jsonify_for_ui(*args, **kwargs):
 def jsonify(
     obj: Any,
     dicted: Optional[Dict[int, JSON]] = None,
-    instrument: Optional["Instrument"] = None,
+    instrument: Optional[Instrument] = None,
     skip_specials: bool = False,
     redact_keys: bool = False,
     include_excluded: bool = True,
@@ -247,7 +254,9 @@ def jsonify(
     elif isinstance(obj, Dict):
         forward_value = {}
         new_dicted[id(obj)] = forward_value
-        forward_value.update({k: recur(v) for k, v in obj.items() if recur_key(k)})
+        forward_value.update(
+            {k: recur(v) for k, v in obj.items() if recur_key(k)}
+        )
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -306,7 +315,8 @@ def jsonify(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
-                if (not skip_excluded or not v.field_info.exclude) and recur_key(k)
+                if (not skip_excluded or not v.field_info.exclude)
+                and recur_key(k)
             }
         )
 
@@ -375,7 +385,10 @@ def jsonify(
         not skip_specials
         and isinstance(content, dict)
         and not isinstance(obj, dict)
-        and (instrument.to_instrument_object(obj) or isinstance(obj, WithClassInfo))
+        and (
+            instrument.to_instrument_object(obj)
+            or isinstance(obj, WithClassInfo)
+        )
     ):
         content[CLASS_INFO] = Class.of_class(
             cls=obj.__class__, with_bases=True

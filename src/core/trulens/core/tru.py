@@ -11,11 +11,22 @@ from pprint import PrettyPrinter
 import threading
 from threading import Thread
 from time import sleep
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import humanize
 import pandas
 from tqdm.auto import tqdm
+import trulens
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
@@ -29,16 +40,10 @@ from trulens.utils import serial
 from trulens.utils import threading as tru_threading
 from trulens.utils.python import Future  # code style exception
 from trulens.utils.python import OpaqueWrapper
-from typing_extensions import Annotated
-from typing_extensions import Doc
 
 pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
-
-DASHBOARD_START_TIMEOUT: Annotated[
-    int, Doc("Seconds to wait for dashboard to start")
-] = 30
 
 
 def humanize_seconds(seconds: float):
@@ -179,7 +184,10 @@ class Tru(python.SingletonPerName):
         if python.safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
-            if sum((1 if v is not None else 0 for v in database_args.values())) > 0:
+            if (
+                sum((1 if v is not None else 0 for v in database_args.values()))
+                > 0
+            ):
                 logger.warning(
                     "Tru was already initialized. "
                     "Cannot change database configuration after initialization."
@@ -205,61 +213,61 @@ class Tru(python.SingletonPerName):
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
 
-    def Chain(
-        self, chain: langchain.chains.base.Chain, **kwargs: dict
-    ) -> trulens.langchain.TruChain:
-        """Create a langchain app recorder with database managed by self.
+    # def Chain(
+    #     self, chain: langchain.chains.base.Chain, **kwargs: dict
+    # ) -> trulens.langchain.TruChain:
+    #     """Create a langchain app recorder with database managed by self.
 
-        Args:
-            chain: The langchain chain defining the app to be instrumented.
+    #     Args:
+    #         chain: The langchain chain defining the app to be instrumented.
 
-            **kwargs: Additional keyword arguments to pass to the
-                [TruChain][trulens.langchain.TruChain].
-        """
+    #         **kwargs: Additional keyword arguments to pass to the
+    #             [TruChain][trulens.langchain.TruChain].
+    #     """
 
-        from trulens.core.tru_chain import TruChain
+    #     from trulens.core.tru_chain import TruChain
 
-        return TruChain(tru=self, app=chain, **kwargs)
+    #     return TruChain(tru=self, app=chain, **kwargs)
 
-    def Llama(
-        self,
-        engine: Union[
-            llama_index.indices.query.base.BaseQueryEngine,
-            llama_index.chat_engine.types.BaseChatEngine,
-        ],
-        **kwargs: dict,
-    ) -> trulens.llamaindex.TruLlama:
-        """Create a llama-index app recorder with database managed by self.
+    # def Llama(
+    #     self,
+    #     engine: Union[
+    #         llama_index.indices.query.base.BaseQueryEngine,
+    #         llama_index.chat_engine.types.BaseChatEngine,
+    #     ],
+    #     **kwargs: dict,
+    # ) -> trulens.llamaindex.TruLlama:
+    #     """Create a llama-index app recorder with database managed by self.
 
-        Args:
-            engine: The llama-index engine defining
-                the app to be instrumented.
+    #     Args:
+    #         engine: The llama-index engine defining
+    #             the app to be instrumented.
 
-            **kwargs: Additional keyword arguments to pass to
-                [TruLlama][trulens.llamaindex.TruLlama].
-        """
+    #         **kwargs: Additional keyword arguments to pass to
+    #             [TruLlama][trulens.llamaindex.TruLlama].
+    #     """
 
-        from trulens.core.tru_llama import TruLlama
+    #     from trulens.core.tru_llama import TruLlama
 
-        return TruLlama(tru=self, app=engine, **kwargs)
+    #     return TruLlama(tru=self, app=engine, **kwargs)
 
-    def Basic(
-        self, text_to_text: Callable[[str], str], **kwargs: dict
-    ) -> trulens.core.TruBasicApp:
-        """Create a basic app recorder with database managed by self.
+    # def Basic(
+    #     self, text_to_text: Callable[[str], str], **kwargs: dict
+    # ) -> trulens.core.TruBasicApp:
+    #     """Create a basic app recorder with database managed by self.
 
-        Args:
-            text_to_text: A function that takes a string and returns a string.
-                The wrapped app's functionality is expected to be entirely in
-                this function.
+    #     Args:
+    #         text_to_text: A function that takes a string and returns a string.
+    #             The wrapped app's functionality is expected to be entirely in
+    #             this function.
 
-            **kwargs: Additional keyword arguments to pass to
-                [TruBasicApp][trulens.core.TruBasicApp].
-        """
+    #         **kwargs: Additional keyword arguments to pass to
+    #             [TruBasicApp][trulens.core.TruBasicApp].
+    #     """
 
-        from trulens.core import TruBasicApp
+    #     from trulens.core import TruBasicApp
 
-        return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
+    #     return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
 
     def Custom(self, app: Any, **kwargs: dict) -> trulens.core.TruCustomApp:
         """Create a custom app recorder with database managed by self.
@@ -276,7 +284,9 @@ class Tru(python.SingletonPerName):
         return TruCustomApp(tru=self, app=app, **kwargs)
 
     def Virtual(
-        self, app: Union[trulens.core.app.virtual.VirtualApp, Dict], **kwargs: dict
+        self,
+        app: Union[trulens.core.app.virtual.VirtualApp, Dict],
+        **kwargs: dict,
     ) -> trulens.core.app.virtual.TruVirtual:
         """Create a virtual app recorder with database managed by self.
 
@@ -378,7 +388,9 @@ class Tru(python.SingletonPerName):
             ]
         ] = None,
     ) -> List[
-        Tuple[base_feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]
+        Tuple[
+            base_feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]
+        ]
     ]:
         """Schedules to run the given feedback functions.
 
@@ -415,10 +427,14 @@ class Tru(python.SingletonPerName):
                 )
 
         else:
-            assert app_id == app.app_id, "Record was produced by a different app."
+            assert (
+                app_id == app.app_id
+            ), "Record was produced by a different app."
 
             if self.db.get_app(app_id=app.app_id) is None:
-                logger.warning(f"App {app_id} was not present in database. Adding it.")
+                logger.warning(
+                    f"App {app_id} was not present in database. Adding it."
+                )
                 self.add_app(app=app)
 
         feedbacks_and_futures = []
@@ -495,7 +511,8 @@ class Tru(python.SingletonPerName):
             raise ValueError("`feedback_functions` must be a sequence.")
 
         if not all(
-            isinstance(ffunc, base_feedback.Feedback) for ffunc in feedback_functions
+            isinstance(ffunc, base_feedback.Feedback)
+            for ffunc in feedback_functions
         ):
             raise ValueError(
                 "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
@@ -537,7 +554,9 @@ class Tru(python.SingletonPerName):
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(self, app: mod_app_schema.AppDefinition) -> mod_types_schema.AppID:
+    def add_app(
+        self, app: mod_app_schema.AppDefinition
+    ) -> mod_types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -596,14 +615,14 @@ class Tru(python.SingletonPerName):
                 # If result already present, set status to done.
                 kwargs["status"] = mod_feedback_schema.FeedbackResultStatus.DONE
 
-            feedback_result_or_future = mod_feedback_schema.FeedbackResult(**kwargs)
+            feedback_result_or_future = mod_feedback_schema.FeedbackResult(
+                **kwargs
+            )
 
         else:
             if isinstance(feedback_result_or_future, Future):
                 futures.wait([feedback_result_or_future])
-                feedback_result_or_future: mod_feedback_schema.FeedbackResult = (
-                    feedback_result_or_future.result()
-                )
+                feedback_result_or_future: mod_feedback_schema.FeedbackResult = feedback_result_or_future.result()
 
             elif isinstance(
                 feedback_result_or_future, mod_feedback_schema.FeedbackResult
@@ -616,7 +635,9 @@ class Tru(python.SingletonPerName):
 
             feedback_result_or_future.update(**kwargs)
 
-        return self.db.insert_feedback(feedback_result=feedback_result_or_future)
+        return self.db.insert_feedback(
+            feedback_result=feedback_result_or_future
+        )
 
     def add_feedbacks(
         self,
@@ -626,7 +647,7 @@ class Tru(python.SingletonPerName):
                 Future[mod_feedback_schema.FeedbackResult],
             ]
         ],
-    ) -> List[schema.FeedbackResultID]:
+    ) -> List[mod_types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
 
         Args:
@@ -642,7 +663,9 @@ class Tru(python.SingletonPerName):
 
         for feedback_result_or_future in feedback_results:
             ids.append(
-                self.add_feedback(feedback_result_or_future=feedback_result_or_future)
+                self.add_feedback(
+                    feedback_result_or_future=feedback_result_or_future
+                )
             )
 
         return ids
@@ -765,7 +788,10 @@ class Tru(python.SingletonPerName):
             )
 
     def start_evaluator(
-        self, restart: bool = False, fork: bool = False, disable_tqdm: bool = False
+        self,
+        restart: bool = False,
+        fork: bool = False,
+        disable_tqdm: bool = False,
     ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread or process.
@@ -799,7 +825,9 @@ class Tru(python.SingletonPerName):
             if restart:
                 self.stop_evaluator()
             else:
-                raise RuntimeError("Evaluator is already running in this process.")
+                raise RuntimeError(
+                    "Evaluator is already running in this process."
+                )
 
         if not fork:
             self._evaluator_stop = threading.Event()
@@ -807,7 +835,10 @@ class Tru(python.SingletonPerName):
         def runloop():
             assert self._evaluator_stop is not None
 
-            print(f"Will keep max of " f"{self.DEFERRED_NUM_RUNS} feedback(s) running.")
+            print(
+                f"Will keep max of "
+                f"{self.DEFERRED_NUM_RUNS} feedback(s) running."
+            )
             print(
                 f"Tasks are spread among max of "
                 f"{tru_threading.TP.MAX_THREADS} thread(s)."
@@ -828,7 +859,8 @@ class Tru(python.SingletonPerName):
             # predictions initially after restarting the process.
             queue_stats = self.db.get_feedback_count_by_status()
             queue_done = (
-                queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE) or 0
+                queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE)
+                or 0
             )
             queue_total = sum(queue_stats.values())
 
@@ -839,7 +871,9 @@ class Tru(python.SingletonPerName):
                 initial=queue_done,
                 unit="feedbacks",
                 total=queue_total,
-                postfix={status.name: count for status, count in queue_stats.items()},
+                postfix={
+                    status.name: count for status, count in queue_stats.items()
+                },
                 disable=disable_tqdm,
             )
 
@@ -850,7 +884,10 @@ class Tru(python.SingletonPerName):
 
             # Show what is being waited for right now.
             tqdm_waiting = tqdm(
-                desc="Waiting for Runs", initial=0, unit="runs", disable=disable_tqdm
+                desc="Waiting for Runs",
+                initial=0,
+                unit="runs",
+                disable=disable_tqdm,
             )
 
             runs_stats = defaultdict(int)
@@ -863,7 +900,10 @@ class Tru(python.SingletonPerName):
                 if len(futures_map) < self.DEFERRED_NUM_RUNS:
                     # Get some new evals to run if some already completed by now.
                     new_futures: List[
-                        Tuple[pandas.Series, Future[mod_feedback_schema.FeedbackResult]]
+                        Tuple[
+                            pandas.Series,
+                            Future[mod_feedback_schema.FeedbackResult],
+                        ]
                     ] = base_feedback.Feedback.evaluate_deferred(
                         tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
@@ -900,7 +940,9 @@ class Tru(python.SingletonPerName):
                     futures_copy = list(futures_map.keys())
 
                     try:
-                        for fut in futures.as_completed(futures_copy, timeout=10):
+                        for fut in futures.as_completed(
+                            futures_copy, timeout=10
+                        ):
                             del futures_map[fut]
 
                             tqdm_waiting.update(-1)
@@ -918,14 +960,20 @@ class Tru(python.SingletonPerName):
 
                 queue_stats = self.db.get_feedback_count_by_status()
                 queue_done = (
-                    queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE) or 0
+                    queue_stats.get(
+                        mod_feedback_schema.FeedbackResultStatus.DONE
+                    )
+                    or 0
                 )
                 queue_total = sum(queue_stats.values())
 
                 tqdm_status.n = queue_done
                 tqdm_status.total = queue_total
                 tqdm_status.set_postfix(
-                    {status.name: count for status, count in queue_stats.items()}
+                    {
+                        status.name: count
+                        for status, count in queue_stats.items()
+                    }
                 )
 
                 # Check if any of the running futures should be stopped.

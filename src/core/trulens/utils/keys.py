@@ -163,7 +163,9 @@ def should_redact_value(v: Union[Any, str]) -> bool:
     return isinstance(v, str) and v in values_to_redact
 
 
-def redact_value(v: Union[str, Any], k: Optional[str] = None) -> Union[str, Any]:
+def redact_value(
+    v: Union[str, Any], k: Optional[str] = None
+) -> Union[str, Any]:
     """
     Determine whether the given value `v` should be redacted and redact it if
     so. If its key `k` (in a dict/json-like) is given, uses the key name to
@@ -221,7 +223,9 @@ class ApiKeyError(RuntimeError):
         self.msg = msg
 
 
-def _check_key(k: str, v: str = None, silent: bool = False, warn: bool = False) -> bool:
+def _check_key(
+    k: str, v: str = None, silent: bool = False, warn: bool = False
+) -> bool:
     """
     Check that the given `k` is an env var with a value that indicates a valid
     api key or secret.  If `v` is provided, checks that instead. If value
@@ -269,13 +273,17 @@ def _relative_path(path: Path, relative_to: Path) -> str:
 
     while True:
         try:
-            return "".join(["../"] * parents) + str(path.relative_to(relative_to))
+            return "".join(["../"] * parents) + str(
+                path.relative_to(relative_to)
+            )
         except Exception:
             parents += 1
             relative_to = relative_to.parent
 
 
-def _collect_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> Dict[str, str]:
+def _collect_keys(
+    *args: Tuple[str], **kwargs: Dict[str, str]
+) -> Dict[str, str]:
     """
     Collect values for keys from all of the currently supported sources. This includes:
 
@@ -310,7 +318,9 @@ def _collect_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> Dict[str, str]
         # Explicit.
         temp_v = kwargs.get(k)
         if _value_is_set(temp_v):
-            valid_sources[temp_v].append(f"explicit value to `check_or_set_keys`")
+            valid_sources[temp_v].append(
+                "explicit value to `check_or_set_keys`"
+            )
             valid_values.add(temp_v)
 
         # .env vars.
@@ -323,19 +333,21 @@ def _collect_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> Dict[str, str]
         # Globals of caller.
         temp_v = globs.get(k)
         if _value_is_set(temp_v):
-            valid_sources[temp_v].append(f"python variable")
+            valid_sources[temp_v].append("python variable")
             valid_values.add(temp_v)
 
         if len(valid_values) == 0:
             ret[k] = None
 
         elif len(valid_values) > 1:
-            warning = f"More than one different value for key {k} has been found:\n\t"
+            warning = (
+                f"More than one different value for key {k} has been found:\n\t"
+            )
             warning += "\n\t".join(
                 f"""value ending in {v[-1]} in {' and '.join(valid_sources[v])}"""
                 for v in valid_values
             )
-            warning += f"\nUsing one arbitrarily."
+            warning += "\nUsing one arbitrarily."
             logger.warning(warning)
 
             ret[k] = list(valid_values)[0]

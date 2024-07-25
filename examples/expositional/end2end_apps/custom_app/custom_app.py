@@ -6,7 +6,9 @@ from trulens.core.app.custom import instrument
 from trulens.utils.threading import ThreadPoolExecutor
 
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
-from examples.expositional.end2end_apps.custom_app.custom_memory import CustomMemory
+from examples.expositional.end2end_apps.custom_app.custom_memory import (
+    CustomMemory,
+)
 from examples.expositional.end2end_apps.custom_app.custom_retriever import (
     CustomRetriever,
 )
@@ -22,7 +24,9 @@ class CustomTemplate:
     @instrument
     def fill(self, question, answer):
         return (
-            self.template[:].replace("{question}", question).replace("{answer}", answer)
+            self.template[:]
+            .replace("{question}", question)
+            .replace("{answer}", answer)
         )
 
 

@@ -1,8 +1,4 @@
-import time
-
-import pandas as pd
 from trulens.core.schema.feedback import FeedbackDefinition
-from trulens.core.schema.record import Record
 from trulens.dashboard.ux.styles import CATEGORY
 
 

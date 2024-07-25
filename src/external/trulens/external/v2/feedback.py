@@ -30,7 +30,9 @@ class Feedback(pydantic.BaseModel):
 
         ret = typ.__name__ + "\n"
 
-        fields = list(f for f in cls.model_fields if f not in ["examples", "prompt"])
+        fields = list(
+            f for f in cls.model_fields if f not in ["examples", "prompt"]
+        )
 
         onetab = make_retab("   ")
         twotab = make_retab("      ")
@@ -561,7 +563,9 @@ class COTExplained(Feedback):
 
             # TODO: things related to extracting score and reasons
 
-            def extract_cot_explanation_of_response(self, response: str, normalize=10):
+            def extract_cot_explanation_of_response(
+                self, response: str, normalize=10
+            ):
                 if "Supporting Evidence" in response:
                     score = 0
                     for line in response.split("\n"):

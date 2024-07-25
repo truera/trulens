@@ -88,7 +88,9 @@ class TestLlamaIndex(JSONTestCase):
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
         with tru_query_engine_recorder as recording:
-            llm_response = query_engine.query("What did the author do growing up?")
+            llm_response = query_engine.query(
+                "What did the author do growing up?"
+            )
         record = recording.get()
 
         query_engine = self.index.as_query_engine(streaming=True)
@@ -137,7 +139,9 @@ class TestLlamaIndex(JSONTestCase):
         chat_engine = self.index.as_chat_engine()
         tru_chat_engine_recorder = TruLlama(chat_engine)
         with tru_chat_engine_recorder as recording:
-            llm_response_sync = chat_engine.chat("What did the author do growing up?")
+            llm_response_sync = chat_engine.chat(
+                "What did the author do growing up?"
+            )
         record_sync = recording.records[0]
 
         self.assertJSONEqual(

@@ -52,7 +52,6 @@ from trulens.utils.python import callable_name
 from trulens.utils.python import class_name
 from trulens.utils.python import Future  # can take type args with python < 3.9
 from trulens.utils.python import id_str
-from trulens.utils.python import Queue  # can take type args with python < 3.9
 from trulens.utils.python import safe_hasattr
 from trulens.utils.python import T
 from trulens.utils.serial import all_objects
@@ -312,7 +311,9 @@ class CustomComponent(ComponentView):
         return CustomComponent.component_of_json(json)
 
 
-def instrumented_component_views(obj: object) -> Iterable[Tuple[Lens, ComponentView]]:
+def instrumented_component_views(
+    obj: object,
+) -> Iterable[Tuple[Lens, ComponentView]]:
     """
     Iterate over contents of `obj` that are annotated with the CLASS_INFO
     attribute/key. Returns triples with the accessor/selector, the Class object
@@ -359,7 +360,9 @@ class RecordingContext:
     """
 
     def __init__(self, app: App, record_metadata: JSON = None):
-        self.calls: Dict[mod_types_schema.CallID, mod_record_schema.RecordAppCall] = {}
+        self.calls: Dict[
+            mod_types_schema.CallID, mod_record_schema.RecordAppCall
+        ] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
 
         Storing as a map as we want to override calls with the same id which may
@@ -457,7 +460,9 @@ class RecordingContext:
 
 
 class App(
-    mod_app_schema.AppDefinition, mod_instruments.WithInstrumentCallbacks, Hashable
+    mod_app_schema.AppDefinition,
+    mod_instruments.WithInstrumentCallbacks,
+    Hashable,
 ):
     """Base app recorder type.
 
@@ -514,8 +519,8 @@ class App(
     included in the json representation of this app.
     """
 
-    recording_contexts: contextvars.ContextVar[RecordingContext] = pydantic.Field(
-        None, exclude=True
+    recording_contexts: contextvars.ContextVar[RecordingContext] = (
+        pydantic.Field(None, exclude=True)
     )
     """Sequnces of records produced by the this class used as a context manager
     are stored in a RecordingContext.
@@ -529,14 +534,14 @@ class App(
     """Mapping of instrumented methods (by id(.) of owner object and the
     function) to their path in this app."""
 
-    records_with_pending_feedback_results: BlockingSet[mod_record_schema.Record] = (
-        pydantic.Field(exclude=True, default_factory=BlockingSet)
-    )
+    records_with_pending_feedback_results: BlockingSet[
+        mod_record_schema.Record
+    ] = pydantic.Field(exclude=True, default_factory=BlockingSet)
     """Records produced by this app which might have yet to finish
     feedback runs."""
 
-    manage_pending_feedback_results_thread: Optional[threading.Thread] = pydantic.Field(
-        exclude=True, default=None
+    manage_pending_feedback_results_thread: Optional[threading.Thread] = (
+        pydantic.Field(exclude=True, default=None)
     )
     """Thread for manager of pending feedback results queue.
 
@@ -558,7 +563,7 @@ class App(
 
     def __init__(
         self,
-        tru: Optional[Tru] = None,
+        tru: Optional[mod_tru.Tru] = None,
         feedbacks: Optional[Iterable[mod_feedback.Feedback]] = None,
         **kwargs,
     ):
@@ -570,7 +575,9 @@ class App(
         # for us:
         kwargs["tru"] = tru
         kwargs["feedbacks"] = feedbacks
-        kwargs["recording_contexts"] = contextvars.ContextVar("recording_contexts")
+        kwargs["recording_contexts"] = contextvars.ContextVar(
+            "recording_contexts"
+        )
 
         super().__init__(**kwargs)
 
@@ -584,7 +591,10 @@ class App(
         else:
             pass
 
-        if self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD:
+        if (
+            self.feedback_mode
+            == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+        ):
             self._start_manage_pending_feedback_results()
 
         self._tru_post_init()
@@ -732,7 +742,9 @@ class App(
 
         else:
             if len(self.feedbacks) > 0:
-                raise ValueError("Feedback logging requires `tru` to be specified.")
+                raise ValueError(
+                    "Feedback logging requires `tru` to be specified."
+                )
 
         if self.feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
             for f in self.feedbacks:
@@ -803,7 +815,9 @@ class App(
             choices = getattr(value, "choices", None)
             if choices is not None:
                 # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
-                return [self._extract_content(choice.message) for choice in choices]
+                return [
+                    self._extract_content(choice.message) for choice in choices
+                ]
 
             # Recursively extract content from nested pydantic models
             return {
@@ -822,7 +836,9 @@ class App(
 
             # Recursively extract content from nested dictionaries
             return {
-                k: self._extract_content(v) if isinstance(v, (dict, list)) else v
+                k: self._extract_content(v)
+                if isinstance(v, (dict, list))
+                else v
                 for k, v in value.items()
             }
 
@@ -853,7 +869,9 @@ class App(
 
         while not isinstance(focus, JSON_BASES) and len(focus) == 1:
             focus = focus[0]
-            focus = self._extract_content(focus, content_keys=["content", "input"])
+            focus = self._extract_content(
+                focus, content_keys=["content", "input"]
+            )
 
             if not isinstance(focus, Sequence):
                 logger.warning("Focus %s is not a sequence.", focus)
@@ -883,7 +901,9 @@ class App(
         if isinstance(focus, JSON_BASES):
             return str(focus)
 
-        logger.warning("Could not determine main input/output of %s.", str(all_args))
+        logger.warning(
+            "Could not determine main input/output of %s.", str(all_args)
+        )
 
         return "Could not determine main input from " + str(all_args)
 
@@ -1043,12 +1063,18 @@ class App(
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
-        return json_str_of_obj(self, *args, instrument=self.instrument, **kwargs)
+        return json_str_of_obj(
+            self, *args, instrument=self.instrument, **kwargs
+        )
 
     def model_dump(self, *args, redact_keys: bool = False, **kwargs):
         # Same problem as in json.
         return jsonify(
-            self, instrument=self.instrument, redact_keys=redact_keys, *args, **kwargs
+            self,
+            instrument=self.instrument,
+            redact_keys=redact_keys,
+            *args,
+            **kwargs,
         )
 
     # For use as a context manager.
@@ -1092,8 +1118,8 @@ class App(
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: Perf,
-        cost: Cost,
+        perf: mod_base_schema.Perf,
+        cost: mod_base_schema.Cost,
         existing_record: Optional[mod_record_schema.Record] = None,
     ) -> mod_record_schema.Record:
         """Called by instrumented methods if they use _new_record to construct a record call list.
@@ -1133,7 +1159,9 @@ class App(
             return existing_record
 
         # Finishing record needs to be done in a thread lock, done there:
-        record = ctx.finish_record(build_record, existing_record=existing_record)
+        record = ctx.finish_record(
+            build_record, existing_record=existing_record
+        )
 
         if error is not None:
             # May block on DB.
@@ -1151,7 +1179,10 @@ class App(
         if record.feedback_and_future_results is None:
             return record
 
-        if self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD:
+        if (
+            self.feedback_mode
+            == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+        ):
             # Add the record to ones with pending feedback.
 
             self.records_with_pending_feedback_results.add(record)
@@ -1202,7 +1233,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 class_name(self),
             )
 
-    async def awith_(self, func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
+    async def awith_(
+        self, func: CallableMaybeAwaitable[A, T], *args, **kwargs
+    ) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
         recording, producing `func` results. The record of the computation is
@@ -1234,7 +1267,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         return res
 
     def with_record(
-        self, func: Callable[[A], T], *args, record_metadata: JSON = None, **kwargs
+        self,
+        func: Callable[[A], T],
+        *args,
+        record_metadata: JSON = None,
+        **kwargs,
     ) -> Tuple[T, mod_record_schema.Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
@@ -1289,13 +1326,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         old_method = f"""{method}{"_with_record" if with_record else ""}"""
         if iscall:
             old_method = f"""call{"_with_record" if with_record else ""}"""
-        new_method = (
-            f"""{"a" if is_async else ""}with_{"record" if with_record else ""}"""
-        )
+        new_method = f"""{"a" if is_async else ""}with_{"record" if with_record else ""}"""
 
         app_callable = f"""app.{method}"""
         if iscall:
-            app_callable = f"app"
+            app_callable = "app"
 
         raise AttributeError(
             f"""
@@ -1343,7 +1378,12 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         record: mod_record_schema.Record,
         feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
     ) -> Optional[
-        List[Tuple[mod_feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]]
+        List[
+            Tuple[
+                mod_feedback.Feedback,
+                Future[mod_feedback_schema.FeedbackResult],
+            ]
+        ]
     ]:
         """
         Write out record-related info to database if set and schedule feedback
@@ -1357,8 +1397,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if self.tru is None or self.feedback_mode is None:
             return None
 
-        self.tru: Tru
-        self.db: DB
+        self.tru: mod_tru.Tru
+        self.db: mod_db.DB
 
         # Need to add record to db before evaluating feedback functions.
         record_id = self.tru.add_record(record=record)
@@ -1491,7 +1531,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         for q, c in instrumented_component_views(self.model_dump()):
             # Add the chain indicator so the resulting paths can be specified
             # for feedback selectors.
-            q = Lens(path=(GetItemOrAttribute(item_or_attribute="__app__"),) + q.path)
+            q = Lens(
+                path=(GetItemOrAttribute(item_or_attribute="__app__"),) + q.path
+            )
             yield q, c
 
     def print_instrumented(self) -> None:

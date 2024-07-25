@@ -25,7 +25,10 @@ class TestTru(TestCase):
 
     def setUp(self):
         check_keys(
-            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
+            "OPENAI_API_KEY",
+            "HUGGINGFACE_API_KEY",
+            "PINECONE_API_KEY",
+            "PINECONE_ENV",
         )
 
     def test_init(self):
@@ -79,7 +82,9 @@ class TestTru(TestCase):
                             if url is not None:
                                 self.assertTrue(Path("default_url.db").exists())
                             elif file is not None:
-                                self.assertTrue(Path("default_file.db").exists())
+                                self.assertTrue(
+                                    Path("default_file.db").exists()
+                                )
                             else:
                                 self.assertTrue(Path("default.sqlite").exists())
 
@@ -87,7 +92,9 @@ class TestTru(TestCase):
                         # cannot change the arguments in next test.
 
     def _create_custom(self):
-        from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
+        from examples.expositional.end2end_apps.custom_app.custom_app import (
+            CustomApp,
+        )
 
         return CustomApp()
 
@@ -279,13 +286,16 @@ class TestTru(TestCase):
         tru_app = TruCustomApp(app)
 
         with tru_app as recording:
-            response = app.respond_to_query("hello")
+            app.respond_to_query("hello")
 
         record = recording.get()
 
         feedback_results = list(
             tru.run_feedback_functions(
-                record=record, feedback_functions=feedbacks, app=tru_app, wait=True
+                record=record,
+                feedback_functions=feedbacks,
+                app=tru_app,
+                wait=True,
             )
         )
 
@@ -332,7 +342,7 @@ class TestTru(TestCase):
         tru_app = TruCustomApp(app)
 
         with tru_app as recording:
-            response = app.respond_to_query("hello")
+            app.respond_to_query("hello")
 
         record = recording.get()
 
@@ -340,7 +350,10 @@ class TestTru(TestCase):
 
         future_feedback_results = list(
             tru.run_feedback_functions(
-                record=record, feedback_functions=feedbacks, app=tru_app, wait=False
+                record=record,
+                feedback_functions=feedbacks,
+                app=tru_app,
+                wait=False,
             )
         )
 

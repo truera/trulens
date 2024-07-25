@@ -108,7 +108,9 @@ class TruBasicApp(App):
     """The app to be instrumented."""
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruWrapperApp._call)
+        default_factory=lambda: FunctionOrMethod.of_callable(
+            TruWrapperApp._call
+        )
     )
     """The root callable to be instrumented.
 
@@ -162,7 +164,5 @@ class TruBasicApp(App):
     def call_with_record(self, *args, **kwargs) -> None:
         self._throw_dep_message(method="call", is_async=False, with_record=True)
 
-
-import trulens  # for App class annotations
 
 TruBasicApp.model_rebuild()

@@ -39,7 +39,6 @@ with OptionalImports(messages=REQUIREMENT_RAILS) as opt:
     from nemoguardrails.actions.actions import ActionResult
     from nemoguardrails.actions.llm.generation import LLMGenerationActions
     from nemoguardrails.kb.kb import KnowledgeBase
-    from nemoguardrails.rails.llm.llmrails import LLMRails
 
 opt.assert_installed(nemoguardrails)
 
@@ -137,8 +136,12 @@ class FeedbackActions:
                     f"Invalid feedback function: {feedback_instance}; "
                     f"expected a Feedback class instance."
                 )
-            print(f"registered feedback function under name {feedback_instance.name}")
-            registered_feedback_functions[feedback_instance.name] = base_feedback
+            print(
+                f"registered feedback function under name {feedback_instance.name}"
+            )
+            registered_feedback_functions[feedback_instance.name] = (
+                base_feedback
+            )
 
     @staticmethod
     def action_of_feedback(
@@ -165,7 +168,9 @@ class FeedbackActions:
         @action(name=feedback_instance.name)
         async def run_feedback(*args, **kwargs):
             if verbose:
-                print(f"Running feedback function {feedback_instance.name} with:")
+                print(
+                    f"Running feedback function {feedback_instance.name} with:"
+                )
                 print(f"  args = {args}")
                 print(f"  kwargs = {kwargs}")
 
@@ -271,7 +276,9 @@ class FeedbackActions:
             )
 
         selectors = {
-            argname: (Lens.of_string(arglens) if isinstance(arglens, str) else arglens)
+            argname: (
+                Lens.of_string(arglens) if isinstance(arglens, str) else arglens
+            )
             for argname, arglens in selectors.items()
         }
 
@@ -286,7 +293,11 @@ class FeedbackActions:
             for argname, lens in feedback_function.selectors.items():
                 print(f"  {argname} = ", end=None)
                 # use pretty print for the potentially big thing here:
-                print(retab(tab="    ", s=pformat(lens.get_sole_item(source_data))))
+                print(
+                    retab(
+                        tab="    ", s=pformat(lens.get_sole_item(source_data))
+                    )
+                )
 
         context_updates = {}
 
@@ -444,7 +455,5 @@ class TruRails(mod_app.App):
         else:
             raise AttributeError(f"TruRails has no attribute named {name}")
 
-
-import trulens  # for App class annotations
 
 TruRails.model_rebuild()

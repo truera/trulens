@@ -44,7 +44,9 @@ class LLMProvider(Provider):
         # TODO: why was self_kwargs required here independently of kwargs?
         self_kwargs = dict(kwargs)
 
-        super().__init__(**self_kwargs)  # need to include pydantic.BaseModel.__init__
+        super().__init__(
+            **self_kwargs
+        )  # need to include pydantic.BaseModel.__init__
 
     # @abstractmethod
     def _create_chat_completion(
@@ -146,7 +148,9 @@ class LLMProvider(Provider):
 
                 for line in response.split("\n"):
                     if "Criteria:" in line:
-                        criteria_lines.append(line.split("Criteria:", 1)[1].strip())
+                        criteria_lines.append(
+                            line.split("Criteria:", 1)[1].strip()
+                        )
                         collecting_criteria = True
                         collecting_evidence = False
                     elif "Supporting Evidence:" in line:
@@ -167,7 +171,9 @@ class LLMProvider(Provider):
                             collecting_evidence = False
 
                 criteria = "\n".join(criteria_lines).strip()
-                supporting_evidence = "\n".join(supporting_evidence_lines).strip()
+                supporting_evidence = "\n".join(
+                    supporting_evidence_lines
+                ).strip()
             reasons = {
                 "reason": (
                     f"{'Criteria: ' + str(criteria)}\n"
@@ -179,7 +185,8 @@ class LLMProvider(Provider):
         else:
             score = mod_generated_utils.re_0_10_rating(response) / normalize
             warnings.warn(
-                "No supporting evidence provided. Returning score only.", UserWarning
+                "No supporting evidence provided. Returning score only.",
+                UserWarning,
             )
             return score, {}
 
@@ -215,7 +222,9 @@ class LLMProvider(Provider):
         return self.generate_score(
             system_prompt=prompts.CONTEXT_RELEVANCE_SYSTEM,
             user_prompt=str.format(
-                prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
+                prompts.CONTEXT_RELEVANCE_USER,
+                question=question,
+                context=context,
             ),
             temperature=temperature,
         )
@@ -253,7 +262,9 @@ class LLMProvider(Provider):
         user_prompt = str.format(
             prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
         )
-        user_prompt = user_prompt.replace("RELEVANCE:", prompts.COT_REASONS_TEMPLATE)
+        user_prompt = user_prompt.replace(
+            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+        )
 
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
@@ -325,7 +336,9 @@ class LLMProvider(Provider):
         user_prompt = str.format(
             prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
         )
-        user_prompt = user_prompt.replace("RELEVANCE:", prompts.COT_REASONS_TEMPLATE)
+        user_prompt = user_prompt.replace(
+            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+        )
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def sentiment(self, text: str) -> float:
@@ -369,7 +382,9 @@ class LLMProvider(Provider):
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
         system_prompt = prompts.SENTIMENT_SYSTEM
-        user_prompt = prompts.SENTIMENT_USER + text + prompts.COT_REASONS_TEMPLATE
+        user_prompt = (
+            prompts.SENTIMENT_USER + text + prompts.COT_REASONS_TEMPLATE
+        )
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def model_agreement(self, prompt: str, response: str) -> float:
@@ -398,8 +413,12 @@ class LLMProvider(Provider):
             "Use `GroundTruthAgreement(ground_truth)` instead.",
             DeprecationWarning,
         )
-        chat_response = self._create_chat_completion(prompt=prompts.CORRECT_SYSTEM)
-        agreement_txt = self._get_answer_agreement(prompt, response, chat_response)
+        chat_response = self._create_chat_completion(
+            prompt=prompts.CORRECT_SYSTEM
+        )
+        agreement_txt = self._get_answer_agreement(
+            prompt, response, chat_response
+        )
         return mod_generated_utils.re_0_10_rating(agreement_txt) / 10.0
 
     def _langchain_evaluate(self, text: str, criteria: str) -> float:
@@ -441,7 +460,8 @@ class LLMProvider(Provider):
         """
 
         system_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM, criteria=criteria
+            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
+            criteria=criteria,
         )
         user_prompt = str.format(
             prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
@@ -730,7 +750,9 @@ class LLMProvider(Provider):
             text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
         )
 
-    def controversiality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def controversiality_with_cot_reasons(
+        self, text: str
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the controversiality of some text. Prompt credit to Langchain
@@ -902,7 +924,8 @@ class LLMProvider(Provider):
 
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response)) + response,
+            prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response))
+            + response,
         )
 
     def _generate_key_points(self, source: str):
@@ -922,7 +945,9 @@ class LLMProvider(Provider):
             + str.format(prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source)
         )
 
-    def _assess_key_point_inclusion(self, key_points: str, summary: str) -> List:
+    def _assess_key_point_inclusion(
+        self, key_points: str, summary: str
+    ) -> List:
         """
         Splits key points by newlines and assesses if each one is included in the summary.
 
@@ -1047,7 +1072,9 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a string containing the reasons for the evaluation.
         """
-        system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT + prompts.COT_REASONS_TEMPLATE
+        system_prompt = (
+            prompts.STEREOTYPES_SYSTEM_PROMPT + prompts.COT_REASONS_TEMPLATE
+        )
         user_prompt = str.format(
             prompts.STEREOTYPES_USER_PROMPT, prompt=prompt, response=response
         )
@@ -1095,7 +1122,9 @@ class LLMProvider(Provider):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
             )
-            score, reason = self.generate_score_and_reasons(system_prompt, user_prompt)
+            score, reason = self.generate_score_and_reasons(
+                system_prompt, user_prompt
+            )
             return index, score, reason
 
         results = []
@@ -1114,11 +1143,15 @@ class LLMProvider(Provider):
         for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
             reason_str = (
-                reason["reason"] if "reason" in reason else "reason not generated"
+                reason["reason"]
+                if "reason" in reason
+                else "reason not generated"
             )
             reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
 
         # Calculate the average groundedness score from the scores dictionary
-        average_groundedness_score = float(np.mean(list(groundedness_scores.values())))
+        average_groundedness_score = float(
+            np.mean(list(groundedness_scores.values()))
+        )
 
         return average_groundedness_score, {"reasons": reasons_str}

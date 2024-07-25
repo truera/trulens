@@ -86,11 +86,13 @@ def draw_call(call: RecordAppCall) -> None:
     top = call.stack[-1]
 
     path = Select.for_record(
-        top.path._append(step=GetItemOrAttribute(item_or_attribute=top.method.name))
+        top.path._append(
+            step=GetItemOrAttribute(item_or_attribute=top.method.name)
+        )
     )
 
     with st.expander(
-        label=f"Call "
+        label="Call "
         + render_call_frame(top, path=path)
         + " "
         + render_selector_markdown(path)
@@ -135,19 +137,24 @@ def draw_calls(record: Record, index: int) -> None:
 def draw_prompt_info(query: Lens, component: ComponentView) -> None:
     prompt_details_json = jsonify(component.json, skip_specials=True)
 
-    st.caption(f"Prompt details")
+    st.caption("Prompt details")
 
     path = Select.for_app(query)
 
     prompt_types = {
         k: v
         for k, v in prompt_details_json.items()
-        if (v is not None) and not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
+        if (v is not None)
+        and not is_empty(v)
+        and not is_noserio(v)
+        and k != CLASS_INFO
     }
 
     for key, value in prompt_types.items():
         with st.expander(
-            key.capitalize() + " " + render_selector_markdown(getattr(path, key)),
+            key.capitalize()
+            + " "
+            + render_selector_markdown(getattr(path, key)),
             expanded=True,
         ):
             if isinstance(value, (Dict, List)):
@@ -162,14 +169,17 @@ def draw_prompt_info(query: Lens, component: ComponentView) -> None:
 def draw_llm_info(query: Lens, component: ComponentView) -> None:
     llm_details_json = component.json
 
-    st.subheader(f"*LLM Details*")
+    st.subheader("*LLM Details*")
     # path_str = str(query)
     # st.text(path_str[:-4])
 
     llm_kv = {
         k: v
         for k, v in llm_details_json.items()
-        if (v is not None) and not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
+        if (v is not None)
+        and not is_empty(v)
+        and not is_noserio(v)
+        and k != CLASS_INFO
     }
     # CSS to inject contained in a string
     hide_table_row_index = """
@@ -199,7 +209,8 @@ def draw_llm_info(query: Lens, component: ComponentView) -> None:
                 lambda x: pd.Series(x) if isinstance(x, dict) else pd.Series()
             )
             new_columns.columns = [
-                f"{key} {render_selector_markdown(path)}" for key in new_columns.columns
+                f"{key} {render_selector_markdown(path)}"
+                for key in new_columns.columns
             ]
 
             # Remove extra zeros after the decimal point
@@ -226,19 +237,24 @@ def draw_agent_info(query: Lens, component: ComponentView) -> None:
     # TODO: dedup
     prompt_details_json = jsonify(component.json, skip_specials=True)
 
-    st.subheader(f"*Agent Details*")
+    st.subheader("*Agent Details*")
 
     path = Select.for_app(query)
 
     prompt_types = {
         k: v
         for k, v in prompt_details_json.items()
-        if (v is not None) and not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
+        if (v is not None)
+        and not is_empty(v)
+        and not is_noserio(v)
+        and k != CLASS_INFO
     }
 
     for key, value in prompt_types.items():
         with st.expander(
-            key.capitalize() + " " + render_selector_markdown(getattr(path, key)),
+            key.capitalize()
+            + " "
+            + render_selector_markdown(getattr(path, key)),
             expanded=True,
         ):
             if isinstance(value, (Dict, List)):
@@ -255,19 +271,24 @@ def draw_tool_info(query: Lens, component: ComponentView) -> None:
     # TODO: dedup
     prompt_details_json = jsonify(component.json, skip_specials=True)
 
-    st.subheader(f"*Tool Details*")
+    st.subheader("*Tool Details*")
 
     path = Select.for_app(query)
 
     prompt_types = {
         k: v
         for k, v in prompt_details_json.items()
-        if (v is not None) and not is_empty(v) and not is_noserio(v) and k != CLASS_INFO
+        if (v is not None)
+        and not is_empty(v)
+        and not is_noserio(v)
+        and k != CLASS_INFO
     }
 
     for key, value in prompt_types.items():
         with st.expander(
-            key.capitalize() + " " + render_selector_markdown(getattr(path, key)),
+            key.capitalize()
+            + " "
+            + render_selector_markdown(getattr(path, key)),
             expanded=True,
         ):
             if isinstance(value, (Dict, List)):

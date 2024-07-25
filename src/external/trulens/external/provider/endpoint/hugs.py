@@ -1,15 +1,13 @@
 import inspect
 import json
-from typing import Callable, Dict, Hashable, Optional
+from typing import Callable, Optional
 
 import requests
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
 from trulens.utils.keys import _check_key
 from trulens.utils.keys import get_huggingface_headers
-from trulens.utils.pyschema import WithClassInfo
 from trulens.utils.python import safe_hasattr
-from trulens.utils.python import SingletonPerName
 
 
 class HuggingfaceCallback(EndpointCallback):

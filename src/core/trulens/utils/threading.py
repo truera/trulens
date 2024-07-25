@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
 import contextvars
@@ -34,7 +35,13 @@ class Thread(fThread):
     tracked."""
 
     def __init__(
-        self, name=None, group=None, target=None, args=(), kwargs={}, daemon=None
+        self,
+        name=None,
+        group=None,
+        target=None,
+        args=(),
+        kwargs={},
+        daemon=None,
     ):
         present_stack = stack()
         present_context = contextvars.copy_context()
@@ -51,7 +58,6 @@ class Thread(fThread):
 
 
 # HACK007: Attempt to force other users of Thread to use our version instead.
-import threading
 
 threading.Thread = Thread
 
@@ -70,23 +76,27 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         present_stack = stack()
         present_context = contextvars.copy_context()
         return super().submit(
-            _future_target_wrapper, present_stack, present_context, fn, *args, **kwargs
+            _future_target_wrapper,
+            present_stack,
+            present_context,
+            fn,
+            *args,
+            **kwargs,
         )
 
 
 # HACK002: Attempt to make other users of ThreadPoolExecutor use our version
 # instead. TODO: this may be redundant with the thread override above.
-import concurrent
 
-concurrent.futures.ThreadPoolExecutor = ThreadPoolExecutor
-concurrent.futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
+futures.ThreadPoolExecutor = ThreadPoolExecutor
+futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 
 # HACK003: Hack to try to make langchain use our ThreadPoolExecutor as the above doesn't
 # seem to do the trick.
 try:
-    import langchain_core
+    from langchain_core.runnables import config as lc_config
 
-    langchain_core.runnables.config.ThreadPoolExecutor = ThreadPoolExecutor
+    lc_config.ThreadPoolExecutor = ThreadPoolExecutor
 
     # Newer langchain_core uses ContextThreadPoolExecutor extending
     # ThreadPoolExecutor. We cannot reliable override
@@ -139,7 +149,11 @@ class TP(SingletonPerName):  # "thread processing"
         self.failed_tasks = 0
 
     def _run_with_timeout(
-        self, func: Callable[[A], T], *args, timeout: Optional[float] = None, **kwargs
+        self,
+        func: Callable[[A], T],
+        *args,
+        timeout: Optional[float] = None,
+        **kwargs,
     ) -> T:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
@@ -165,7 +179,11 @@ class TP(SingletonPerName):  # "thread processing"
             raise e
 
     def submit(
-        self, func: Callable[[A], T], *args, timeout: Optional[float] = None, **kwargs
+        self,
+        func: Callable[[A], T],
+        *args,
+        timeout: Optional[float] = None,
+        **kwargs,
     ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
@@ -179,7 +197,11 @@ class TP(SingletonPerName):  # "thread processing"
         return self._submit(func, *args, timeout=timeout, **kwargs)
 
     def _submit(
-        self, func: Callable[[A], T], *args, timeout: Optional[float] = None, **kwargs
+        self,
+        func: Callable[[A], T],
+        *args,
+        timeout: Optional[float] = None,
+        **kwargs,
     ) -> Future[T]:
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT

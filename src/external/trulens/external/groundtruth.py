@@ -89,7 +89,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ground_truth = FunctionOrMethod.model_validate(ground_truth)
             ground_truth_imp = ground_truth.load()
         else:
-            raise RuntimeError(f"Unhandled ground_truth type: {type(ground_truth)}.")
+            raise RuntimeError(
+                f"Unhandled ground_truth type: {type(ground_truth)}."
+            )
 
         super().__init__(
             ground_truth=ground_truth,
@@ -199,7 +201,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         expected_score = self._find_score(prompt, response)
         if expected_score:
             ret = abs(float(score) - expected_score)
-            expected_score = "{:.2f}".format(expected_score).rstrip("0").rstrip(".")
+            expected_score = (
+                "{:.2f}".format(expected_score).rstrip("0").rstrip(".")
+            )
         else:
             ret = np.nan
         return ret, {"expected score": expected_score}
@@ -240,7 +244,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             self.bert_scorer = BERTScorer(lang="en", rescale_with_baseline=True)
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
-            bert_score = self.bert_scorer.score([response], [ground_truth_response])
+            bert_score = self.bert_scorer.score(
+                [response], [ground_truth_response]
+            )
             ret = (
                 bert_score[0].item(),
                 dict(ground_truth_response=ground_truth_response),
@@ -288,7 +294,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             bleu_score = bleu.compute(
                 predictions=[response], references=[ground_truth_response]
             )
-            ret = bleu_score["bleu"], dict(ground_truth_response=ground_truth_response)
+            ret = (
+                bleu_score["bleu"],
+                dict(ground_truth_response=ground_truth_response),
+            )
         else:
             ret = np.nan
 
