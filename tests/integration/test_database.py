@@ -31,6 +31,7 @@ from unittest import main
 
 import pandas as pd
 from sqlalchemy import Engine
+from trulens.core import Feedback
 from trulens.core import Tru
 from trulens.core import TruBasicApp
 from trulens.core.database.base import DB
@@ -42,7 +43,6 @@ from trulens.core.database.migrations import upgrade_db
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.database.utils import copy_database
 from trulens.core.database.utils import is_legacy_sqlite
-from trulens.core.feedback import Feedback
 from trulens.core.feedback import Provider
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import Select

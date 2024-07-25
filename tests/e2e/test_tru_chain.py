@@ -12,7 +12,7 @@ from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
 from trulens.core import Tru
-from trulens.core.feedback.base_endpoint import Endpoint
+from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.record import Record
 from trulens.utils.asynchro import sync
