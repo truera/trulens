@@ -12,7 +12,8 @@ import logging
 from pprint import PrettyPrinter
 import queue
 import sys
-from types import ModuleType, FrameType
+from types import FrameType
+from types import ModuleType
 import typing
 from typing import (
     Any,

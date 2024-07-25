@@ -4,8 +4,8 @@ from typing import ClassVar, Dict, Optional, Sequence
 import pydantic
 from trulens.core.feedback import Endpoint
 from trulens.external.provider import LLMProvider
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LITELLM
+from trulens.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_LITELLM) as opt:
     import litellm

@@ -2,11 +2,11 @@ from trulens.external.provider.hugs import Huggingface
 from trulens.external.provider.hugs import HuggingfaceLocal
 from trulens.external.provider.langchain import Langchain
 from trulens.external.provider.llm_provider import LLMProvider
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_BEDROCK
 from trulens.utils.imports import REQUIREMENT_CORTEX
 from trulens.utils.imports import REQUIREMENT_LITELLM
 from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_LITELLM):
     from trulens.external.provider.litellm import LiteLLM

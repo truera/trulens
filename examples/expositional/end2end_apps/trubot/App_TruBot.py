@@ -2,6 +2,9 @@ import os
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
+from langchain.chains import ConversationalRetrievalChain
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.memory import ConversationSummaryBufferMemory
 from langchain_community.callbacks import get_openai_callback
 from langchain_community.llms import OpenAI
 from langchain_community.vectorstores import Pinecone
@@ -10,14 +13,10 @@ import pinecone
 import streamlit as st
 from trulens.core import Select
 from trulens.core.feedback import Feedback
+from trulens.ext.instrument.langchain import TruChain
 from trulens.external import Huggingface
 from trulens.external import OpenAI
-from trulens.langchain import TruChain
 from trulens.utils.keys import check_keys
-
-from langchain.chains import ConversationalRetrievalChain
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.memory import ConversationSummaryBufferMemory
 
 check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
 

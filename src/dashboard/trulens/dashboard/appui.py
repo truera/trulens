@@ -5,8 +5,8 @@ from typing import Callable, List, Mapping, Optional, Sequence, Union
 
 from trulens.core.app import base as mod_app
 from trulens.core.instruments import Instrument
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_NOTEBOOK
+from trulens.utils.imports import OptionalImports
 from trulens.utils.json import JSON_BASES
 from trulens.utils.json import jsonify_for_ui
 from trulens.utils.serial import Lens

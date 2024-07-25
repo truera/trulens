@@ -71,7 +71,18 @@ column_limit = 80
 [tool.ruff]
 line-length = 80
 indent-width = 4
-
+include = ["src/*.py", "tests/*.py", "tests/*.ipynb", "examples/*.py", "examples/*.ipynb"]
+extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
 ignore = ["E731"]
+extend-select = ["I"]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+force-sort-within-sections = true
+single-line-exclusions = ["typing"]
+known-first-party = ["src"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

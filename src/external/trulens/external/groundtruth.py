@@ -5,10 +5,10 @@ import numpy as np
 import pydantic
 from trulens.core.feedback.base_provider import Provider
 from trulens.external.generated import re_0_10_rating
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_BERT_SCORE
 from trulens.utils.imports import REQUIREMENT_EVALUATE
 from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.imports import OptionalImports
 from trulens.utils.pyschema import FunctionOrMethod
 from trulens.utils.pyschema import WithClassInfo
 from trulens.utils.serial import SerialModel

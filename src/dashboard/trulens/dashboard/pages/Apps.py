@@ -1,6 +1,7 @@
 import asyncio
 from typing import Optional
 
+import streamlit as st
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.tru import Tru
@@ -9,8 +10,6 @@ from trulens.dashboard.ux.apps import ChatRecord
 from trulens.utils.json import jsonify_for_ui
 from trulens.utils.serial import JSON
 from trulens.utils.serial import Lens
-
-import streamlit as st
 from ux.page_config import set_page_config
 
 # https://github.com/jerryjliu/llama_index/issues/7244:

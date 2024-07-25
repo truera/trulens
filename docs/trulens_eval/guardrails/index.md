@@ -43,7 +43,7 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
     === "with _Langchain_"
 
         ```python
-        from trulens.langchain.guardrails import WithFeedbackFilterDocuments
+        from trulens.ext.instrument.langchain import WithFeedbackFilterDocuments
 
         feedback = Feedback(provider.context_relevance)
 

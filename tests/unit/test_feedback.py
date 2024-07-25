@@ -2,8 +2,8 @@
 Tests for Feedback class.
 """
 
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 import numpy as np
 from trulens.core import Feedback
@@ -13,10 +13,10 @@ from trulens.core.schema.feedback import FeedbackResultStatus
 from trulens.core.schema.select import Select
 
 # Get the "globally importable" feedback implementations.
-from tests.unit.feedbacks import custom_feedback_function
 from tests.unit.feedbacks import CustomClassNoArgs
 from tests.unit.feedbacks import CustomClassWithArgs
 from tests.unit.feedbacks import CustomProvider
+from tests.unit.feedbacks import custom_feedback_function
 from tests.unit.feedbacks import make_nonglobal_feedbacks
 from tests.unit.feedbacks import skip_if_odd
 

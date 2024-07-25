@@ -29,8 +29,10 @@ import requests
 from trulens.core.schema.base import Cost
 from trulens.utils import asynchro as mod_asynchro_utils
 from trulens.utils import pace as mod_pace
-from trulens.utils.pyschema import safe_getattr
 from trulens.utils.pyschema import WithClassInfo
+from trulens.utils.pyschema import safe_getattr
+from trulens.utils.python import SingletonPerName
+from trulens.utils.python import Thunk
 from trulens.utils.python import callable_name
 from trulens.utils.python import class_name
 from trulens.utils.python import get_first_local_in_call_stack
@@ -38,8 +40,6 @@ from trulens.utils.python import is_really_coroutinefunction
 from trulens.utils.python import locals_except
 from trulens.utils.python import module_name
 from trulens.utils.python import safe_hasattr
-from trulens.utils.python import SingletonPerName
-from trulens.utils.python import Thunk
 from trulens.utils.python import wrap_awaitable
 from trulens.utils.serial import JSON
 from trulens.utils.serial import SerialModel

@@ -7,8 +7,8 @@ from typing import Any, Callable, ClassVar, Optional
 
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_CORTEX
+from trulens.utils.imports import OptionalImports
 
 logger = logging.getLogger(__name__)
 

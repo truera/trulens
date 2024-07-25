@@ -1,10 +1,10 @@
-from typing import List
 from concurrent.futures import as_completed
+from typing import List
 
-from trulens.utils.serial import model_dump
 from trulens.core.feedback import Feedback
 from trulens.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens.utils.imports import OptionalImports
+from trulens.utils.serial import model_dump
 from trulens.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):

@@ -2,11 +2,10 @@ import inspect
 import logging
 from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback.base_endpoint import EndpointCallback
-
 from langchain.chat_models.base import BaseChatModel
 from langchain.llms.base import BaseLLM
+from trulens.core.feedback import Endpoint
+from trulens.core.feedback.base_endpoint import EndpointCallback
 
 logger = logging.getLogger(__name__)
 

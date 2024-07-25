@@ -6,8 +6,8 @@ issues that occur from merely importing trulens.
 from pathlib import Path
 import pkgutil
 import sys
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 import trulens
 from trulens.core.instruments import Instrument
@@ -174,7 +174,7 @@ class TestStatic(TestCase):
     def test_instrumentation_llama_index(self):
         """Check that the llama_index instrumentation is up to date."""
 
-        from trulens.llamaindex import LlamaInstrument
+        from trulens.ext.instrument.llamaindex import LlamaInstrument
 
         self._test_instrumentation(LlamaInstrument())
 

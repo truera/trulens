@@ -15,19 +15,17 @@ import os
 from pathlib import Path
 import sys
 
-# from langchain.chat_models import ChatOpenAI # Deprecated
-from langchain_openai import ChatOpenAI
-import streamlit as st
-
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
 
-
+# from langchain.chat_models import ChatOpenAI # Deprecated
+from langchain_openai import ChatOpenAI
+import streamlit as st
 from trulens.core import Tru
 from trulens.dashboard import run_dashboard
-from trulens.langchain import TruChain
+from trulens.ext.instrument.langchain import TruChain
 
 dev_path = str(Path(__file__).resolve().parent.parent)
 sys.path.insert(0, dev_path)

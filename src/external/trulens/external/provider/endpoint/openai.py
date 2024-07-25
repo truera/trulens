@@ -25,26 +25,24 @@ import logging
 import pprint
 from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
 
+from langchain.schema import Generation
+from langchain.schema import LLMResult
 import pydantic
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.imports import OptionalImports
 from trulens.utils.pace import Pace
-from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import CLASS_INFO
+from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import safe_getattr
 from trulens.utils.python import safe_hasattr
 from trulens.utils.serial import SerialModel
 
-from langchain.schema import Generation
-from langchain.schema import LLMResult
-
 with OptionalImports(messages=REQUIREMENT_OPENAI) as opt:
     # This is also required for running openai endpoints in trulens:
-    import openai as oai
-
     from langchain.callbacks.openai_info import OpenAICallbackHandler
+    import openai as oai
 
 # check that oai is not a dummy, also the langchain component required for handling openai endpoint
 opt.assert_installed(mods=[oai, OpenAICallbackHandler])

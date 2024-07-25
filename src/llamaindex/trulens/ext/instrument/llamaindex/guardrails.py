@@ -1,5 +1,5 @@
-from typing import List
 from concurrent.futures import as_completed
+from typing import List
 
 from trulens.core.feedback import Feedback
 from trulens.utils.imports import REQUIREMENT_LLAMA
@@ -8,11 +8,11 @@ from trulens.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     import llama_index
-    from llama_index.schema import NodeWithScore
-    from llama_index.indices.query.schema import QueryBundle
     from llama_index.core.query_engine.retriever_query_engine import (
         RetrieverQueryEngine,
     )
+    from llama_index.indices.query.schema import QueryBundle
+    from llama_index.schema import NodeWithScore
 
 OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
 

@@ -5,8 +5,8 @@ Tests for Feedback providers.
 from pprint import PrettyPrinter
 from typing import Callable, Dict, List, Tuple
 import unittest
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 from trulens.external.provider import Huggingface
 from trulens.external.provider import LLMProvider

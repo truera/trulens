@@ -2,6 +2,7 @@ import asyncio
 import json
 import math
 from typing import List
+
 from millify import millify
 from pydantic import BaseModel
 import streamlit as st

@@ -46,20 +46,20 @@ from trulens.utils.asynchro import sync
 from trulens.utils.containers import BlockingSet
 from trulens.utils.json import json_str_of_obj
 from trulens.utils.json import jsonify
-from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import CLASS_INFO
+from trulens.utils.pyschema import Class
+from trulens.utils.python import Future  # can take type args with python < 3.9
+from trulens.utils.python import T
 from trulens.utils.python import callable_name
 from trulens.utils.python import class_name
-from trulens.utils.python import Future  # can take type args with python < 3.9
 from trulens.utils.python import id_str
 from trulens.utils.python import safe_hasattr
-from trulens.utils.python import T
-from trulens.utils.serial import all_objects
-from trulens.utils.serial import GetItemOrAttribute
 from trulens.utils.serial import JSON
 from trulens.utils.serial import JSON_BASES
 from trulens.utils.serial import JSON_BASES_T
+from trulens.utils.serial import GetItemOrAttribute
 from trulens.utils.serial import Lens
+from trulens.utils.serial import all_objects
 
 logger = logging.getLogger(__name__)
 
@@ -678,17 +678,17 @@ class App(
         # Checking by module name so we don't have to try to import either
         # langchain or llama_index beforehand.
         if type(app).__module__.startswith("langchain"):
-            from trulens.langchain import TruChain
+            from trulens.ext.instrument.langchain import TruChain
 
             return TruChain.select_context(app)
 
         if type(app).__module__.startswith("llama_index"):
-            from trulens.llamaindex import TruLlama
+            from trulens.ext.instrument.llamaindex import TruLlama
 
             return TruLlama.select_context(app)
 
         elif type(app).__module__.startswith("nemoguardrails"):
-            from trulens.nemo import TruRails
+            from trulens.ext.instrument.nemo import TruRails
 
             return TruRails.select_context(app)
 

@@ -12,9 +12,9 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_pills import pills
 from trulens.core import Tru
+from trulens.core.app.base import LLM
 from trulens.core.app.base import Agent
 from trulens.core.app.base import ComponentView
-from trulens.core.app.base import LLM
 from trulens.core.app.base import Other
 from trulens.core.app.base import Prompt
 from trulens.core.app.base import Tool

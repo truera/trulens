@@ -3,8 +3,8 @@ Tests for serial.py:Lens class.
 """
 
 from pprint import PrettyPrinter
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 from munch import Munch
 from trulens.utils.serial import GetAttribute

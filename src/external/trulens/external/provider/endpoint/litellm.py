@@ -6,8 +6,8 @@ from typing import Any, Callable, ClassVar, Optional
 import pydantic
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LITELLM
+from trulens.utils.imports import OptionalImports
 
 logger = logging.getLogger(__name__)
 

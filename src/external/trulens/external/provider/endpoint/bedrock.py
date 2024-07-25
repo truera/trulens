@@ -7,8 +7,8 @@ import pydantic
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
 from trulens.core.feedback.base_endpoint import INSTRUMENT
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_BEDROCK
+from trulens.utils.imports import OptionalImports
 from trulens.utils.python import safe_hasattr
 
 with OptionalImports(messages=REQUIREMENT_BEDROCK) as opt:

@@ -6,8 +6,8 @@ from trulens.core.feedback import Endpoint
 from trulens.external.provider import LLMProvider
 from trulens.external.provider.endpoint import OpenAIClient
 from trulens.external.provider.endpoint import OpenAIEndpoint
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.imports import OptionalImports
 from trulens.utils.pace import Pace
 from trulens.utils.pyschema import CLASS_INFO
 

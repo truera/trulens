@@ -26,8 +26,8 @@ from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterator, Literal, Union
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 import pandas as pd
 from sqlalchemy import Engine

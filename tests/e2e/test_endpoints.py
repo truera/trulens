@@ -7,8 +7,8 @@ various secrets configured. See `setUp` below.
 
 import os
 from pprint import PrettyPrinter
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 from trulens.core.feedback.base_endpoint import Endpoint
 from trulens.utils.keys import check_keys

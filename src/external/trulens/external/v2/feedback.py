@@ -1,13 +1,12 @@
 from abc import abstractmethod
 from typing import ClassVar, List, Optional
 
+from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
+from langchain.prompts import PromptTemplate
 import pydantic
 from trulens.external.generated import re_0_10_rating
 from trulens.utils.python import safe_hasattr
 from trulens.utils.text import make_retab
-
-from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
-from langchain.prompts import PromptTemplate
 
 
 # Level 1 abstraction

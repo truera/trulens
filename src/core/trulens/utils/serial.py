@@ -35,8 +35,8 @@ from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
 from pydantic import GetCoreSchemaHandler
-from pydantic_core import core_schema
 from pydantic_core import CoreSchema
+from pydantic_core import core_schema
 import rich
 from trulens.utils.containers import iterable_peek
 from trulens.utils.python import class_name

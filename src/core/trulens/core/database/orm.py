@@ -5,12 +5,12 @@ import functools
 from sqlite3 import Connection as SQLite3Connection
 from typing import ClassVar, Dict, Generic, Type, TypeVar
 
+from sqlalchemy import VARCHAR
 from sqlalchemy import Column
 from sqlalchemy import Engine
-from sqlalchemy import event
 from sqlalchemy import Float
 from sqlalchemy import Text
-from sqlalchemy import VARCHAR
+from sqlalchemy import event
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import configure_mappers

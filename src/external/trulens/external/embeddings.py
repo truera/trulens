@@ -1,10 +1,10 @@
-from typing import Dict, Tuple, Union, TypeVar
+from typing import Dict, Tuple, TypeVar, Union
 
 import numpy as np
 from pydantic import PrivateAttr
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LLAMA
 from trulens.utils.imports import REQUIREMENT_SKLEARN
+from trulens.utils.imports import OptionalImports
 from trulens.utils.pyschema import WithClassInfo
 from trulens.utils.serial import SerialModel
 

@@ -5,6 +5,12 @@ Tests for TruChain. Some of the tests are outdated.
 import unittest
 from unittest import main
 
+from langchain.callbacks import AsyncIteratorCallbackHandler
+from langchain.chains import LLMChain
+from langchain.llms.openai import OpenAI
+from langchain.memory import ConversationSummaryBufferMemory
+from langchain.prompts import PromptTemplate
+from langchain.schema.messages import HumanMessage
 from trulens.core import Tru
 from trulens.core.feedback.base_endpoint import Endpoint
 from trulens.core.schema.feedback import FeedbackMode
@@ -12,12 +18,6 @@ from trulens.core.schema.record import Record
 from trulens.utils.asynchro import sync
 from trulens.utils.keys import check_keys
 
-from langchain.callbacks import AsyncIteratorCallbackHandler
-from langchain.chains import LLMChain
-from langchain.llms.openai import OpenAI
-from langchain.memory import ConversationSummaryBufferMemory
-from langchain.prompts import PromptTemplate
-from langchain.schema.messages import HumanMessage
 from tests.unit.test import JSONTestCase
 from tests.unit.test import optional_test
 

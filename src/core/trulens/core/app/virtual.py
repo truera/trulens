@@ -218,8 +218,8 @@ from trulens.utils.pyschema import FunctionOrMethod
 from trulens.utils.pyschema import Method
 from trulens.utils.pyschema import Module
 from trulens.utils.pyschema import Obj
-from trulens.utils.serial import GetItemOrAttribute
 from trulens.utils.serial import JSON
+from trulens.utils.serial import GetItemOrAttribute
 
 logger = logging.getLogger(__name__)
 

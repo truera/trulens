@@ -3,8 +3,8 @@
 """
 
 from inspect import BoundArguments
-from inspect import signature
 from inspect import Signature
+from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Callable, ClassVar, Dict, Optional

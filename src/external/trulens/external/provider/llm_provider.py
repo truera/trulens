@@ -1,5 +1,5 @@
-from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed
 import logging
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 import warnings

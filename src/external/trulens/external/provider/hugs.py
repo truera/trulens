@@ -1,17 +1,17 @@
 from abc import abstractmethod
 from concurrent.futures import wait
-import logging
 import functools
 from inspect import signature
+import logging
 from typing import (
     Any,
     Dict,
-    get_args,
-    get_origin,
     List,
     Optional,
     Tuple,
     Union,
+    get_args,
+    get_origin,
 )
 
 import nltk
@@ -27,7 +27,6 @@ from trulens.external.provider.endpoint import HuggingfaceEndpoint
 from trulens.utils.python import Future
 from trulens.utils.python import locals_except
 from trulens.utils.threading import ThreadPoolExecutor
-
 
 logger = logging.getLogger(__name__)
 

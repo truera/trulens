@@ -5,8 +5,8 @@ from typing import ClassVar, Dict, Optional, Sequence
 
 from trulens.external.provider import LLMProvider
 from trulens.external.provider.endpoint.cortex import CortexEndpoint
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_CORTEX
+from trulens.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_CORTEX) as opt:
     import snowflake

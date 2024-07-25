@@ -2,29 +2,29 @@
 # LlamaIndex instrumentation.
 """
 
-from pprint import PrettyPrinter
-from typing import Any, Dict, Union, Callable, ClassVar, Optional
-from inspect import Signature
 from inspect import BoundArguments
+from inspect import Signature
 import logging
+from pprint import PrettyPrinter
+from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from pydantic import Field
 from trulens.core.app import base as mod_app
-from trulens.utils.python import EmptyType
-from trulens.utils.serial import Lens
-from trulens.utils.imports import REQUIREMENT_LLAMA
-from trulens.utils.imports import Dummy
-from trulens.utils.imports import OptionalImports
-from trulens.utils.imports import parse_version
-from trulens.utils.imports import get_package_version
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import FunctionOrMethod
-from trulens.core.instruments import Instrument
 from trulens.core.instruments import ClassFilter
+from trulens.core.instruments import Instrument
+from trulens.ext.instrument.langchain import LangChainInstrument
 
 # TODO: Do we need to depend on this?
 from trulens.utils.containers import dict_set_with_multikey
-from trulens.ext.instrument.langchain import LangChainInstrument
+from trulens.utils.imports import REQUIREMENT_LLAMA
+from trulens.utils.imports import Dummy
+from trulens.utils.imports import OptionalImports
+from trulens.utils.imports import get_package_version
+from trulens.utils.imports import parse_version
+from trulens.utils.pyschema import Class
+from trulens.utils.pyschema import FunctionOrMethod
+from trulens.utils.python import EmptyType
+from trulens.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -49,35 +49,35 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
             legacy = True
 
     if not legacy:
-        from llama_index.core.schema import QueryBundle
-        from llama_index.core.schema import BaseComponent
-        from llama_index.core.retrievers import BaseRetriever
-        from llama_index.core.tools.types import BaseTool
-        from llama_index.core.tools.types import ToolMetadata
-        from llama_index.core.tools.types import AsyncBaseTool
-        from llama_index.core.indices.base import BaseIndex
-        from llama_index.core.memory.types import BaseMemory
+        from llama_index.core.base.base_query_engine import BaseQueryEngine
+        from llama_index.core.base.base_query_engine import QueryEngineComponent
+        from llama_index.core.base.embeddings.base import BaseEmbedding
         from llama_index.core.base.llms.base import BaseLLM
         from llama_index.core.base.llms.types import LLMMetadata
-        from llama_index.legacy.llm_predictor import LLMPredictor
-        from llama_index.core.chat_engine.types import BaseChatEngine
+        from llama_index.core.base.response.schema import Response
+        from llama_index.core.base.response.schema import StreamingResponse
         from llama_index.core.chat_engine.types import AgentChatResponse
+        from llama_index.core.chat_engine.types import BaseChatEngine
         from llama_index.core.chat_engine.types import (
             StreamingAgentChatResponse,
         )
-        from llama_index.core.question_gen.types import BaseQuestionGenerator
-        from llama_index.core.postprocessor.types import BaseNodePostprocessor
-        from llama_index.core.vector_stores.types import VectorStore
-        from llama_index.core.base.embeddings.base import BaseEmbedding
-        from llama_index.core.base.response.schema import Response
-        from llama_index.core.base.response.schema import StreamingResponse
-        from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
+        from llama_index.core.indices.base import BaseIndex
         from llama_index.core.indices.prompt_helper import PromptHelper
+        from llama_index.core.memory.types import BaseMemory
         from llama_index.core.node_parser.interface import NodeParser
-        from llama_index.core.response_synthesizers import Refine
+        from llama_index.core.postprocessor.types import BaseNodePostprocessor
+        from llama_index.core.question_gen.types import BaseQuestionGenerator
         from llama_index.core.response_synthesizers import BaseSynthesizer
-        from llama_index.core.base.base_query_engine import BaseQueryEngine
-        from llama_index.core.base.base_query_engine import QueryEngineComponent
+        from llama_index.core.response_synthesizers import Refine
+        from llama_index.core.retrievers import BaseRetriever
+        from llama_index.core.schema import BaseComponent
+        from llama_index.core.schema import QueryBundle
+        from llama_index.core.tools.types import AsyncBaseTool
+        from llama_index.core.tools.types import BaseTool
+        from llama_index.core.tools.types import ToolMetadata
+        from llama_index.core.vector_stores.types import VectorStore
+        from llama_index.legacy.llm_predictor import LLMPredictor
+        from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
 
         # These exist in the bridge but not here so define placeholders.
         RetrieverComponent = EmptyType
@@ -94,35 +94,35 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
                 version,
             )
 
-        from llama_index.memory import BaseMemory
-        from llama_index.schema import BaseComponent
-        from llama_index.llms.base import BaseLLM
-        from llama_index.tools.types import BaseTool
-        from llama_index.tools.types import ToolMetadata
-        from llama_index.tools.types import AsyncBaseTool
-        from llama_index.indices.base import BaseIndex
-        from llama_index.llm_predictor import LLMPredictor
-        from llama_index.embeddings.base import BaseEmbedding
-        from llama_index.response.schema import Response
-        from llama_index.response.schema import StreamingResponse
-        from llama_index.chat_engine.types import BaseChatEngine
         from llama_index.chat_engine.types import AgentChatResponse
+        from llama_index.chat_engine.types import BaseChatEngine
         from llama_index.chat_engine.types import StreamingAgentChatResponse
-        from llama_index.llm_predictor.base import LLMMetadata
-        from llama_index.llm_predictor.base import BaseLLMPredictor
-        from llama_index.question_gen.types import BaseQuestionGenerator
-        from llama_index.core.base_retriever import BaseRetriever
-        from llama_index.core.base_retriever import RetrieverComponent
-        from llama_index.postprocessor.types import BaseNodePostprocessor
-        from llama_index.vector_stores.types import VectorStore
-        from llama_index.indices.query.schema import QueryBundle
-        from llama_index.indices.prompt_helper import PromptHelper
-        from llama_index.node_parser.interface import NodeParser
-        from trulens.ext.instrument.llamaindex import WithFeedbackFilterNodes
         from llama_index.core.base_query_engine import BaseQueryEngine
         from llama_index.core.base_query_engine import QueryEngineComponent
+        from llama_index.core.base_retriever import BaseRetriever
+        from llama_index.core.base_retriever import RetrieverComponent
+        from llama_index.embeddings.base import BaseEmbedding
+        from llama_index.indices.base import BaseIndex
+        from llama_index.indices.prompt_helper import PromptHelper
+        from llama_index.indices.query.schema import QueryBundle
+        from llama_index.llm_predictor import LLMPredictor
+        from llama_index.llm_predictor.base import BaseLLMPredictor
+        from llama_index.llm_predictor.base import LLMMetadata
+        from llama_index.llms.base import BaseLLM
+        from llama_index.memory import BaseMemory
+        from llama_index.node_parser.interface import NodeParser
+        from llama_index.postprocessor.types import BaseNodePostprocessor
+        from llama_index.question_gen.types import BaseQuestionGenerator
+        from llama_index.response.schema import Response
+        from llama_index.response.schema import StreamingResponse
         from llama_index.response_synthesizers.base import BaseSynthesizer
         from llama_index.response_synthesizers.refine import Refine
+        from llama_index.schema import BaseComponent
+        from llama_index.tools.types import AsyncBaseTool
+        from llama_index.tools.types import BaseTool
+        from llama_index.tools.types import ToolMetadata
+        from llama_index.vector_stores.types import VectorStore
+        from trulens.ext.instrument.llamaindex import WithFeedbackFilterNodes
 
 # Need to `from ... import ...` for the below as referring to some of these
 # later in this file by full path does not work due to lack of intermediate

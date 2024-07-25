@@ -9,12 +9,12 @@ import sys
 import threading
 from threading import Thread
 from typing import Optional
-from typing_extensions import Annotated
-from typing_extensions import Doc
 
 from trulens.core import Tru
 from trulens.utils import notebook_utils
 from trulens.utils.imports import static_resource
+from typing_extensions import Annotated
+from typing_extensions import Doc
 
 DASHBOARD_START_TIMEOUT: Annotated[
     int, Doc("Seconds to wait for dashboard to start")

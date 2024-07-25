@@ -1,10 +1,10 @@
 from trulens.external.provider.endpoint.hugs import HuggingfaceEndpoint
 from trulens.external.provider.endpoint.langchain import LangchainEndpoint
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_BEDROCK
 from trulens.utils.imports import REQUIREMENT_CORTEX
 from trulens.utils.imports import REQUIREMENT_LITELLM
 from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_LITELLM):
     from trulens.external.provider.endpoint.litellm import LiteLLMEndpoint

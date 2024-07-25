@@ -3,6 +3,9 @@ import os
 from pprint import PrettyPrinter
 from typing import Dict, Set, Tuple
 
+from langchain.chains import ConversationalRetrievalChain
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.memory import ConversationSummaryBufferMemory
 from langchain_community.llms import OpenAI
 from langchain_community.vectorstores import Pinecone
 import numpy as np
@@ -14,15 +17,11 @@ from trulens.core import Feedback
 from trulens.core import Select
 from trulens.core import Tru
 from trulens.core.schema.feedback import FeedbackMode
-from trulens.langchain import TruChain
-from trulens.langchain.guardrails import WithFeedbackFilterDocuments
+from trulens.ext.instrument.langchain import TruChain
+from trulens.ext.instrument.langchain import WithFeedbackFilterDocuments
 from trulens.utils.keys import check_keys
 from turlens.external import Huggingface
 from turlens.external import OpenAI as fOpenAI
-
-from langchain.chains import ConversationalRetrievalChain
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.memory import ConversationSummaryBufferMemory
 
 check_keys(
     "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"

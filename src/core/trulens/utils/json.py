@@ -8,22 +8,22 @@ import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Any, Dict, Optional, Sequence, Set, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
 import pydantic
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.imports import OptionalImports
 from trulens.utils.keys import redact_value
 from trulens.utils.pyschema import CIRCLE
-from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import CLASS_INFO
-from trulens.utils.pyschema import clean_attributes
 from trulens.utils.pyschema import ERROR
 from trulens.utils.pyschema import NOSERIO
+from trulens.utils.pyschema import Class
+from trulens.utils.pyschema import WithClassInfo
+from trulens.utils.pyschema import clean_attributes
 from trulens.utils.pyschema import noserio
 from trulens.utils.pyschema import safe_getattr
-from trulens.utils.pyschema import WithClassInfo
 from trulens.utils.python import safe_hasattr
 from trulens.utils.serial import JSON
 from trulens.utils.serial import JSON_BASES

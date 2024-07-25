@@ -2,7 +2,6 @@ import asyncio
 import json
 import math
 
-
 from millify import millify
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page

@@ -10,6 +10,7 @@ import logging
 from pprint import pformat
 import traceback
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -19,7 +20,6 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
-    TYPE_CHECKING,
 )
 import warnings
 

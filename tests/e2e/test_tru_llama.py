@@ -37,7 +37,7 @@ class TestLlamaIndex(JSONTestCase):
     def test_query_engine_async(self):
         # Check that the instrumented async aquery method produces the same result as the query method.
 
-        from trulens.llamaindex import TruLlama
+        from trulens.ext.instrument.llamaindex import TruLlama
 
         query_engine = self.index.as_query_engine()
 
@@ -83,7 +83,7 @@ class TestLlamaIndex(JSONTestCase):
         # Check that the instrumented query method produces the same result
         # regardless of streaming option.
 
-        from trulens.llamaindex import TruLlama
+        from trulens.ext.instrument.llamaindex import TruLlama
 
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
@@ -126,7 +126,7 @@ class TestLlamaIndex(JSONTestCase):
     async def test_chat_engine_async(self):
         # Check that the instrumented async achat method produces the same result as the chat method.
 
-        from trulens.llamaindex import TruLlama
+        from trulens.ext.instrument.llamaindex import TruLlama
 
         chat_engine = self.index.as_chat_engine()
         tru_chat_engine_recorder = TruLlama(chat_engine)

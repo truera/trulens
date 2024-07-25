@@ -19,6 +19,7 @@ import os
 import threading as th
 import traceback
 from typing import (
+    TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
@@ -30,7 +31,6 @@ from typing import (
     Tuple,
     Type,
     Union,
-    TYPE_CHECKING,
 )
 import weakref
 
@@ -44,8 +44,8 @@ from trulens.utils import python
 from trulens.utils.containers import dict_merge_with
 from trulens.utils.imports import Dummy
 from trulens.utils.json import jsonify
-from trulens.utils.pyschema import clean_attributes
 from trulens.utils.pyschema import Method
+from trulens.utils.pyschema import clean_attributes
 from trulens.utils.pyschema import safe_getattr
 from trulens.utils.python import callable_name
 from trulens.utils.python import caller_frame
