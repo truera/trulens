@@ -15,6 +15,9 @@ python = "^3.9"
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
+
+
+[tool.poetry.group.metaeval.dependencies]
 trulens-testing = { path = "src/testing", develop = true }
 
 
