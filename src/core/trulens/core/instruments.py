@@ -35,7 +35,7 @@ from typing import (
 import weakref
 
 import pydantic
-from trulens.core import Feedback as mod_feedback
+from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import record as mod_record_schema
@@ -241,10 +241,10 @@ class Instrument(object):
         MODULES = {"trulens."}
         """Modules (by full name prefix) to instrument."""
 
-        CLASSES = set([mod_feedback.Feedback])
+        CLASSES = set([Feedback])
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": mod_feedback.Feedback}
+        METHODS: Dict[str, ClassFilter] = {"__call__": Feedback}
         """Methods to instrument.
 
         Methods matching name have to pass the filter to be instrumented.

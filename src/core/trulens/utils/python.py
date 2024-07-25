@@ -710,8 +710,6 @@ def wrap_generator(
 
 # Class utilities
 
-T = TypeVar("T")
-
 
 @dataclasses.dataclass
 class SingletonInfo(Generic[T]):
@@ -817,7 +815,7 @@ class SingletonPerName(Generic[T]):
         else:
             info = SingletonPerName._instances[k]
 
-        obj: cls = info.val
+        obj: Type[cls] = info.val
 
         return obj
 

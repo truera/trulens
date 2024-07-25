@@ -4,12 +4,10 @@
 This top-level import includes everything to get started.
 """
 
-import importlib.metadata
-
-from trulens.core import Feedback
 from trulens.core.app import TruBasicApp
 from trulens.core.app import TruCustomApp
 from trulens.core.app import TruVirtual
+from trulens.core.feedback import Feedback
 from trulens.core.feedback import Provider
 from trulens.core.schema import FeedbackMode
 from trulens.core.schema import Select
@@ -17,8 +15,6 @@ from trulens.core.tru import Tru
 from trulens.utils.imports import check_imports
 
 check_imports()
-
-__version__ = importlib.metadata.version(__package__ or __name__)
 
 __all__ = [
     "Tru",  # main interface

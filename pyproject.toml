@@ -1,3 +1,7 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "trulens"
 version = "0.33.0"
@@ -6,50 +10,18 @@ authors = ["Truera Inc <all@truera.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [
-    {from = "_trulens", include = "trulens"}
+  {from = "_trulens", include = "trulens"}
 ]
-
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens-core = { path = "src/core", develop = true }
-trulens-feedback = { path = "src/feedback", develop = true }
-trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
-
-
-[tool.poetry.group.metaeval.dependencies]
-trulens-testing = { path = "src/testing", develop = true }
-
-
-[tool.poetry.group.instruments.dependencies]
-trulens-instrument-langchain = { path = "src/instrument/langchain", develop = true, python = "<3.13" }
-trulens-instrument-llamaindex = { path = "src/instrument/llamaindex", develop = true }
-trulens-instrument-nemo = { path = "src/instrument/nemo", develop = true, python = "<3.12" }
-
-
-[tool.poetry.group.providers.dependencies]
-trulens-provider-bedrock = { path = "src/provider/bedrock", develop = true }
-trulens-provider-langchain = { path = "src/provider/langchain", develop = true }
-trulens-provider-cortex = { path = "src/provider/cortex", develop = true, python = "<3.12" }
-trulens-provider-huggingface = { path = "src/provider/huggingface", develop = true }
-trulens-provider-huggingface-local = { path = "src/provider/huggingface-local", develop = true }
-trulens-provider-openai = { path = "src/provider/openai", develop = true }
-trulens-provider-litellm = { path = "src/provider/litellm", develop = true }
-
+trulens-core = {path = "src/core", develop = true}
+trulens-feedback = {path = "src/feedback", develop = true}
+trulens-dashboard = {path = "src/dashboard", develop = true, python = "!=3.9.7"}
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
 ruff = "^0.5.5"
-
-
-[tool.poetry.group.tests.dependencies]
-pytest = "^8.3.1"
-nbconvert = "^7.16.4"
-nbformat = "^5.10.4"
-pytest-subtests = "^0.13.1"
-pytest-azurepipelines = "^1.0.5"
-ruff = "^0.5.5"
-
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6.0"
@@ -67,17 +39,34 @@ jupyter-contrib-nbextensions = "^0.7.0"
 notebook = "^7.2.1"
 black = "^24.4.2"
 
+[tool.poetry.group.instruments.dependencies]
+trulens-instrument-langchain = {path = "src/instrument/langchain", develop = true, python = "<3.13"}
+trulens-instrument-llamaindex = {path = "src/instrument/llamaindex", develop = true}
+trulens-instrument-nemo = {path = "src/instrument/nemo", develop = true, python = "<3.12"}
 
+[tool.poetry.group.metaeval.dependencies]
+trulens-testing = {path = "src/testing", develop = true}
 
 [tool.poetry.group.notebooks.dependencies]
 jupyter = "^1.0.0"
 ipywidgets = "^8.1.3"
 
+[tool.poetry.group.providers.dependencies]
+trulens-provider-bedrock = {path = "src/provider/bedrock", develop = true}
+trulens-provider-langchain = {path = "src/provider/langchain", develop = true}
+trulens-provider-cortex = {path = "src/provider/cortex", develop = true, python = "<3.12"}
+trulens-provider-huggingface = {path = "src/provider/huggingface", develop = true}
+trulens-provider-huggingface-local = {path = "src/provider/huggingface-local", develop = true}
+trulens-provider-openai = {path = "src/provider/openai", develop = true}
+trulens-provider-litellm = {path = "src/provider/litellm", develop = true}
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
+[tool.poetry.group.tests.dependencies]
+pytest = "^8.3.1"
+nbconvert = "^7.16.4"
+nbformat = "^5.10.4"
+pytest-subtests = "^0.13.1"
+pytest-azurepipelines = "^1.0.5"
+ruff = "^0.5.5"
 
 [tool.ruff]
 line-length = 80
@@ -85,18 +74,15 @@ include = ["src/*.py", "tests/*.py", "tests/*.ipynb", "examples/*.py", "examples
 extend-include = ["*.ipynb"]
 extend-exclude = ["examples/expositional/*", "examples/experimental/*"]
 
-
 [tool.ruff.lint]
 ignore = ["E731"]
 extend-select = ["I"]
-
 
 [tool.ruff.lint.isort]
 force-single-line = true
 force-sort-within-sections = true
 single-line-exclusions = ["typing"]
 known-first-party = ["src"]
-
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

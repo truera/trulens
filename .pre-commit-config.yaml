@@ -4,22 +4,27 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: check-added-large-files
+      - id: check-toml
       - id: check-yaml
+      - id: detect-private-key
       - id: debug-statements
       - id: check-merge-conflict
       - id: end-of-file-fixer
--   repo: https://github.com/fastai/nbdev
-    rev: 2.3.25
-    hooks:
-      - id: nbdev_clean
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.5.4
+    rev: v0.5.5
     hooks:
-      # Run the linter.
       # - id: ruff
       #   types_or: [ python, pyi, jupyter ]
       #   args: [ --fix ]
-      # Run the formatter.
       - id: ruff-format
         types_or: [ python, pyi, jupyter ]
+-   repo: https://github.com/srstevenson/nb-clean
+    rev: 3.3.0
+    hooks:
+      - id: nb-clean
+        args: [--remove-empty-cells]
+-   repo: https://github.com/pappasam/toml-sort
+    rev: v0.23.1
+    hooks:
+      - id: toml-sort-fix
+        exclude: ".*poetry.lock"

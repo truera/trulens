@@ -1,55 +1,53 @@
+[build-system]
+requires = ["setuptools"] # Using setuptools & setup.py to build react components
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "trulens-dashboard"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
-    {name = "Truera Inc", email = "all@truera.com"}
+  {name = "Truera Inc", email = "all@truera.com"}
 ]
 readme = "README.md"
 license = {text = "MIT License"}
 requires-python = ">=3.9,!=3.9.7,<4.0"
 dependencies = [
-    "trulens-core >= 0.33.0",
-    "millify >= 0.1.1",
-    "humanize >= 4.6.0",
-    "streamlit >= 1.33.0",
-    "streamlit-aggrid == 0.3.4",
-    "streamlit-extras >= 0.4.0",
-    "streamlit-pills >= 0.3.0",
-    "rich >= 13.6.0",
+  "trulens-core >= 0.33.0",
+  "millify >= 0.1.1",
+  "humanize >= 4.6.0",
+  "streamlit >= 1.33.0",
+  "streamlit-aggrid == 0.3.4",
+  "streamlit-extras >= 0.4.0",
+  "streamlit-pills >= 0.3.0",
+  "rich >= 13.6.0"
 ]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-    "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: MIT License"
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License"
 ]
-
 
 [project.optional-dependencies]
 dev = [
-    "build >= 1.2.1",
-]
-
-
-[tool.setuptools.packages.find]
-include = [
-    "trulens",
-    "trulens.dashboard",
-    "trulens.dashboard.*",
-]
-namespaces = true
-
-[tool.setuptools.package-data]
-trulens = [
-    'dashboard',
-    'dashboard/react_components/**/*',
-    'dashboard/react_components/*/dist/*'
+  "build >= 1.2.1"
 ]
 
 [tool.setuptools.exclude-package-data]
 trulens = ['dashboard/react_components/*/node_modules/*']
 
-[build-system]
-requires = ["setuptools"] # Using setuptools & setup.py to build react components
-build-backend = "setuptools.build_meta"
+[tool.setuptools.package-data]
+trulens = [
+  'dashboard',
+  'dashboard/react_components/**/*',
+  'dashboard/react_components/*/dist/*'
+]
+
+[tool.setuptools.packages.find]
+include = [
+  "trulens",
+  "trulens.dashboard",
+  "trulens.dashboard.*"
+]
+namespaces = true
