@@ -49,7 +49,7 @@ jobs:
 
       - bash: |
           set -e
-          poetry config settings.virtualenvs.create false
+          poetry config virtualenvs.create false
           poetry install --sync --verbose
         displayName: Install Packages
 

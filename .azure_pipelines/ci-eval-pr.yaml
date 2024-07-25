@@ -53,7 +53,7 @@ jobs:
 
       - bash: |
           set -e
-          poetry config settings.virtualenvs.create false
+          poetry config virtualenvs.create false
           poetry install --only main --sync --verbose
         displayName: Install Required Packages
 
