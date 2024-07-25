@@ -39,7 +39,7 @@ trulens-provider-litellm = { path = "src/provider/litellm", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
-ruff = "^0.5.4"
+ruff = "^0.5.5"
 
 
 [tool.poetry.group.tests.dependencies]
@@ -48,6 +48,7 @@ nbconvert = "^7.16.4"
 nbformat = "^5.10.4"
 pytest-subtests = "^0.13.1"
 pytest-azurepipelines = "^1.0.5"
+ruff = "^0.5.5"
 
 
 [tool.poetry.group.docs.dependencies]

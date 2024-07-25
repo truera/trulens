@@ -54,20 +54,19 @@ jobs:
       - bash: |
           set -e
           poetry config virtualenvs.create false
-          poetry install --only main --sync --verbose
+          poetry install --only main,tests --sync --verbose
         displayName: Install Required Packages
 
       - bash: |
           set -e
           echo $(which python)
-          echo $(pyenv which python)
           ruff format --diff
         condition: eq(variables['python-version'], 3.12) # only run format check with latest python version
         displayName: Format Diffs
 
       - bash: |
           set -e
-          python -m pytest --test-run-title="Required $(python-version) unit tests" $(tests-folder)
+          pytest --test-run-title="Required $(python-version) unit tests" $(tests-folder)
         displayName: Unit Tests with Required Packages
 
       - bash: |
@@ -79,7 +78,7 @@ jobs:
 
       - bash: |
           set -e
-          python -m pytest  --test-run-title="Optional $(python-version) unit tests" $(tests-folder)
+          pytest --test-run-title="Optional $(python-version) unit tests" $(tests-folder)
         env:
           # enables optional tests, see tests/unit/test.py
           TEST_OPTIONAL: true

@@ -62,7 +62,7 @@ jobs:
         displayName: Format Diffs
 
       - bash: |
-          python -m pytest tests/e2e
+          pytest tests/e2e
         displayName: Run e2e tests
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
@@ -72,7 +72,7 @@ jobs:
           HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
 
       - bash: |
-          python -m pytest tests/docs_notebooks
+          pytest tests/docs_notebooks
         displayName: Run notebook tests
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
