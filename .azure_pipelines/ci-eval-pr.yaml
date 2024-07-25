@@ -41,12 +41,12 @@ jobs:
       - checkout: self
         clean: true
 
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '$(python-version)'
+
       - bash: |
-          # Install pyenv and poetry
-          curl https://pyenv.run | bash
-          export PATH="$HOME/.pyenv/bin:$PATH"
-          pyenv install $(python-version)
-          pyenv local $(python-version)
+          # Install poetry
           curl -sSL https://install.python-poetry.org | python3 -
 
           # Show python version

@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         latest:
-          pythonVersion: "3.11"
+          python-version: 3.11
           condaEnvFileSuffix: "trulens-llm"
 
 
@@ -35,8 +35,12 @@ jobs:
       - checkout: self
         clean: true
 
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '$(python-version)'
+
       - bash: |
-          # Install pyenv and poetry
+          # Install poetry
           curl https://pyenv.run | bash
           export PATH="$HOME/.pyenv/bin:$PATH"
           pyenv install $(python-version)
