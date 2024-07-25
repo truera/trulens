@@ -20,8 +20,8 @@ from trulens.core.schema.feedback import FeedbackMode
 from trulens.ext.instrument.langchain import TruChain
 from trulens.ext.instrument.langchain import WithFeedbackFilterDocuments
 from trulens.utils.keys import check_keys
-from turlens.external import Huggingface
-from turlens.external import OpenAI as fOpenAI
+from trulens.ext.provider.huggingface import Huggingface
+from trulens.ext.provider.openai import OpenAI as fOpenAI
 
 check_keys(
     "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"

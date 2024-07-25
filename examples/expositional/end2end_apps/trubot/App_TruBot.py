@@ -12,10 +12,10 @@ import numpy as np
 import pinecone
 import streamlit as st
 from trulens.core import Select
-from trulens.core.feedback import Feedback
+from trulens.core import Feedback
 from trulens.ext.instrument.langchain import TruChain
-from trulens.external import Huggingface
-from trulens.external import OpenAI
+from trulens.ext.provider.huggingface import Huggingface
+from trulens.ext.provider.openai import OpenAI
 from trulens.utils.keys import check_keys
 
 check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
