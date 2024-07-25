@@ -27,10 +27,10 @@ import humanize
 import pandas
 from tqdm.auto import tqdm
 import trulens
+from trulens.core import feedback
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
-from trulens.core.feedback import feedback
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
@@ -65,13 +65,13 @@ class Tru(python.SingletonPerName):
     referred to by `database_url`.
 
     Supported App Types:
-        [TruChain][trulens.langchain.TruChain]: Langchain
+        [TruChain][trulens.ext.instrument.langchain.TruChain]: Langchain
             apps.
 
-        [TruLlama][trulens.llamaindex.TruLlama]: Llama Index
+        [TruLlama][trulens.ext.instrument.llamaindex.TruLlama]: Llama Index
             apps.
 
-        [TruRails][trulens.nemo.TruRails]: NeMo Guardrails apps.
+        [TruRails][trulens.ext.instrument.nemo.TruRails]: NeMo Guardrails apps.
 
         [TruBasicApp][trulens.core.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
@@ -215,14 +215,14 @@ class Tru(python.SingletonPerName):
 
     # def Chain(
     #     self, chain: langchain.chains.base.Chain, **kwargs: dict
-    # ) -> trulens.langchain.TruChain:
+    # ) -> trulens.ext.instrument.langchain.TruChain:
     #     """Create a langchain app recorder with database managed by self.
 
     #     Args:
     #         chain: The langchain chain defining the app to be instrumented.
 
     #         **kwargs: Additional keyword arguments to pass to the
-    #             [TruChain][trulens.langchain.TruChain].
+    #             [TruChain][trulens.ext.instrument.langchain.TruChain].
     #     """
 
     #     from trulens.ext.instrument.langchain import TruChain
@@ -236,7 +236,7 @@ class Tru(python.SingletonPerName):
     #         llama_index.chat_engine.types.BaseChatEngine,
     #     ],
     #     **kwargs: dict,
-    # ) -> trulens.llamaindex.TruLlama:
+    # ) -> trulens.ext.instrument.llamaindex.TruLlama:
     #     """Create a llama-index app recorder with database managed by self.
 
     #     Args:
@@ -244,7 +244,7 @@ class Tru(python.SingletonPerName):
     #             the app to be instrumented.
 
     #         **kwargs: Additional keyword arguments to pass to
-    #             [TruLlama][trulens.llamaindex.TruLlama].
+    #             [TruLlama][trulens.ext.instrument.llamaindex.TruLlama].
     #     """
 
     #     from trulens.ext.instrument.llamaindex import TruLlama

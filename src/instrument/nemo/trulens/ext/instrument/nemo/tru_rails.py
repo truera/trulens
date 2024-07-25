@@ -18,8 +18,8 @@ from nemoguardrails.actions.actions import action
 from nemoguardrails.actions.llm.generation import LLMGenerationActions
 from nemoguardrails.kb.kb import KnowledgeBase
 from pydantic import Field
+from trulens.core import feedback
 from trulens.core.app import base as mod_app
-from trulens.core.feedback import feedback
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema import feedback as mod_feedback_schema

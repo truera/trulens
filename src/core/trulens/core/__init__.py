@@ -6,10 +6,10 @@ This top-level import includes everything to get started.
 
 import importlib.metadata
 
+from trulens.core import Feedback
 from trulens.core.app import TruBasicApp
 from trulens.core.app import TruCustomApp
 from trulens.core.app import TruVirtual
-from trulens.core.feedback import Feedback
 from trulens.core.feedback import Provider
 from trulens.core.schema import FeedbackMode
 from trulens.core.schema import Select

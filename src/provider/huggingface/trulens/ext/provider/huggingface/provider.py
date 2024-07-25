@@ -198,7 +198,7 @@ class HuggingfaceBase(Provider):
         !!! example
 
             ```
-            from trulens.core.feedback import Feedback
+            from trulens.core import Feedback
             from trulens.ext.provider.huggingface import Huggingface
 
             huggingface_provider = Huggingface()

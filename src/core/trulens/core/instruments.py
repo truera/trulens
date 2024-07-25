@@ -35,8 +35,8 @@ from typing import (
 import weakref
 
 import pydantic
+from trulens.core import Feedback as mod_feedback
 from trulens.core.feedback import endpoint as mod_endpoint
-from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema

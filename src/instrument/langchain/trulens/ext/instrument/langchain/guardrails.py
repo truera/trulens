@@ -1,7 +1,7 @@
 from concurrent.futures import as_completed
 from typing import List
 
-from trulens.core.feedback import Feedback
+from trulens.core import Feedback
 from trulens.utils.serial import model_dump
 from trulens.utils.threading import ThreadPoolExecutor
 
