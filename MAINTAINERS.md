@@ -1,4 +1,4 @@
-The current maintainers of _TruLens-Eval_ are:
+The current maintainers of _TruLens_ are:
 
 | Name | Employer | Github Name |
 | ---- | -------- | ---------------- |

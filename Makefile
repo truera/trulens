@@ -74,14 +74,14 @@ test-envs: \
 	.conda/py-req-3.8 .conda/py-req-3.9 .conda/py-req-3.10 .conda/py-req-3.11 .conda/py-req-3.12 \
 	.conda/py-opt-3.8 .conda/py-opt-3.9 .conda/py-opt-3.10 .conda/py-opt-3.11 .conda/py-opt-3.12
 
-# Create a conda env for a particular python version with trulens-eval and just
+# Create a conda env for a particular python version with trulens and just
 # the required packages.
 .conda/py-req-%:
 	conda create -p .conda/py-req-$* python=$* -y
 	$(CONDA_ACTIVATE) .conda/py-req-$*; \
 		pip install -r trulens_eval/requirements.txt
 
-# Create a conda env for a particular python version with trulens-eval and
+# Create a conda env for a particular python version with trulens and
 # the required and optional packages.
 .conda/py-opt-%:
 	conda create -p .conda/py-opt-$* python=$* -y
