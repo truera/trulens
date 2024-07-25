@@ -28,7 +28,6 @@ jobs:
       matrix:
         latest:
           python-version: 3.11
-          condaEnvFileSuffix: "trulens-llm"
 
 
     steps:
@@ -41,11 +40,9 @@ jobs:
 
       - bash: |
           # Install poetry
-          curl https://pyenv.run | bash
-          export PATH="$HOME/.pyenv/bin:$PATH"
-          pyenv install $(python-version)
-          pyenv local $(python-version)
           curl -sSL https://install.python-poetry.org | python3 -
+          # Disable virtualenv creation
+          poetry config settings.virtualenvs.create false
 
           # Show python version
           which python
@@ -66,7 +63,6 @@ jobs:
         displayName: Format Diffs
 
       - bash: |
-          source activate $(condaEnvFileSuffix)
           python -m pytest tests/e2e
         displayName: Run e2e tests
         env:
@@ -77,7 +73,6 @@ jobs:
           HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
 
       - bash: |
-          source activate $(condaEnvFileSuffix)
           python -m pytest tests/docs_notebooks
         displayName: Run notebook tests
         env:

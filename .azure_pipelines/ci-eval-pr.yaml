@@ -24,9 +24,6 @@ jobs:
         default: # name is important
           python-version: 3.12
           tests-folder: tests/unit
-        py308-static:
-          python-version: 3.8
-          tests-folder: tests/unit/static
         py309-static:
           python-version: 3.9
           tests-folder: tests/unit/static
@@ -48,6 +45,9 @@ jobs:
       - bash: |
           # Install poetry
           curl -sSL https://install.python-poetry.org | python3 -
+
+          # Disable virtualenv creation
+          poetry config settings.virtualenvs.create false
 
           # Show python version
           which python
