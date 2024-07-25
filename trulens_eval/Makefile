@@ -8,64 +8,11 @@ CONDA := $(CONDA_ACTIVATE) $(CONDA_ENV)
 
 PYENV:=PYTHONPATH=$(PWD)
 
-# Make targets useful for developing TruLens.
-# How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
-
-
 # Makes all commands for each target to execute in a single shell. If this is
 # not set, conda env setup must be executed with each command that needs to be
-# run in a conda env.
+# run in a conda env. See
+# https://www.gnu.org/software/make/manual/html_node/One-Shell.html .
 .ONESHELL:
-
-# Create the conda env for building website, docs, formatting, etc.
-.conda/docs:
-	conda create python=3.12 --yes --prefix=.conda/docs
-	$(CONDA) .conda/docs
-	pip install -r trulens_eval/trulens_eval/requirements.txt
-	pip install -r trulens_eval/trulens_eval/requirements.optional.txt
-	pip install -r requirements.docs.txt
-	pip install -r requirements.dev.txt
-
-# Run the code formatter.
-format: .conda/docs
-	$(CONDA) .conda/docs
-	bash format.sh
-
-# Start a jupyer lab instance.
-lab:
-	$(CONDA) .conda/docs
-	jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
-
-# Serve the documentation website.
-serve: .conda/docs
-	$(CONDA) .conda/docs
-	mkdocs serve -a 127.0.0.1:8000
-
-# Serve the documentation website.
-serve-debug: .conda/docs
-	$(CONDA) .conda/docs
-	mkdocs serve -a 127.0.0.1:8000 --verbose
-
-# The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
-# break references.
-serve-dirty: .conda/docs
-	$(CONDA) .conda/docs
-	mkdocs serve --dirty -a 127.0.0.1:8000
-
-# Build the documentation website.
-site: .conda/docs $(shell find docs -type f) mkdocs.yml
-	$(CONDA) .conda/docs
-	mkdocs build --clean
-	rm -Rf site/overrides
-
-upload: .conda/docs $(shell find docs -type f) mkdocs.yml
-	$(CONDA) .conda/docs
-	mkdocs gh-deploy
-
-# Check that links in the documentation are valid. Requires the lychee tool.
-linkcheck: site
-	lychee "site/**/*.html"
-
 
 # Create conda enviornments with all of the supported python versions. The "req"
 # ones with just the required packages and the "opt" ones with also the optional
@@ -78,20 +25,21 @@ test-envs: \
 # the required packages.
 .conda/py-req-%:
 	conda create -p .conda/py-req-$* python=$* -y
-	$(CONDA_ACTIVATE) .conda/py-req-$*; \
-		pip install -r trulens_eval/requirements.txt
+	$(CONDA_ACTIVATE) .conda/py-req-$*
+	pip install -r trulens_eval/requirements.txt
 
 # Create a conda env for a particular python version with trulens-eval and
 # the required and optional packages.
 .conda/py-opt-%:
 	conda create -p .conda/py-opt-$* python=$* -y
-	$(CONDA_ACTIVATE) .conda/py-opt-$*; \
-		pip install -r trulens_eval/requirements.txt; \
-		pip install -r trulens_eval/requirements.optional.txt
+	$(CONDA_ACTIVATE) .conda/py-opt-$*
+	pip install -r trulens_eval/requirements.txt
+	pip install -r trulens_eval/requirements.optional.txt
 
 # Start the trubot slack app.
 trubot:
-	$(CONDA); ($(PYENV) python -u examples/trubot/trubot.py)
+	$(CONDA)
+	$(PYENV) python -u examples/trubot/trubot.py
 
 # Run a test with the optional flag set, meaning @optional_test decorated tests
 # are run.
@@ -100,100 +48,120 @@ test-%-optional:
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
 test-unit:
-	$(CONDA); python -m unittest discover tests.unit
+	$(CONDA)
+	python -m unittest discover tests.unit
 
 test-lens:
-	$(CONDA); python -m unittest tests.unit.test_lens
+	$(CONDA)
+	python -m unittest tests.unit.test_lens
 
 test-feedback:
-	$(CONDA); python -m unittest tests.unit.test_feedback
+	$(CONDA)
+	python -m unittest tests.unit.test_feedback
 
 test-tru-basic-app:
-	$(CONDA); python -m unittest tests.unit.test_tru_basic_app
+	$(CONDA)
+	python -m unittest tests.unit.test_tru_basic_app
 
 test-tru-custom:
-	$(CONDA); python -m unittest tests.unit.test_tru_custom
+	$(CONDA)
+	python -m unittest tests.unit.test_tru_custom
 
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
 # the latest (supported) python version.
 test-static:
-	$(CONDA); python -m unittest tests.unit.static.test_static
+	$(CONDA)
+	python -m unittest tests.unit.static.test_static
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
 test-e2e:
-	$(CONDA); python -m unittest discover tests.e2e
+	$(CONDA)
+	python -m unittest discover tests.e2e
 
 test-tru:
-	$(CONDA); python -m unittest tests.e2e.test_tru
+	$(CONDA)
+	python -m unittest tests.e2e.test_tru
 
 test-tru-chain:
-	$(CONDA); python -m unittest tests.e2e.test_tru_chain
+	$(CONDA)
+	python -m unittest tests.e2e.test_tru_chain
 
 test-tru-llama:
-	$(CONDA); python -m unittest tests.e2e.test_tru_llama
+	$(CONDA)
+	python -m unittest tests.e2e.test_tru_llama
 
 test-providers:
-	$(CONDA); python -m unittest tests.e2e.test_providers
+	$(CONDA)
+	python -m unittest tests.e2e.test_providers
 
 test-endpoints:
-	$(CONDA); python -m unittest tests.e2e.test_endpoints
+	$(CONDA)
+	python -m unittest tests.e2e.test_endpoints
 
 # Database integration tests for various database types supported by sqlaclhemy.
 # While those don't use costly endpoints, they may be more computation intensive.
 test-database:
-	$(CONDA); pip install psycopg2-binary pymysql cryptography
+	$(CONDA)
+	pip install psycopg2-binary pymysql cryptography
 	docker compose --file docker/test-database.yaml up --quiet-pull --detach --wait --wait-timeout 30
-	$(CONDA); python -m unittest discover tests.integration.test_database
+	python -m unittest discover tests.integration.test_database
 	docker compose --file docker/test-database.yaml down
 
 # These tests all operate on local file databases and don't require docker.
 test-database-specification:
-	$(CONDA); python -m unittest discover tests.integration.test_database -k TestDBSpecifications
+	$(CONDA)
+	python -m unittest discover tests.integration.test_database -k TestDBSpecifications
 
 # The next 3 database migration/versioning tests:
 test-database-versioning: test-database-v2migration test-database-legacy-migration test-database-future
 
 # Test migrating a latest legacy sqlite database to sqlalchemy database.
 test-database-v2migration:
-	$(CONDA); python -m unittest \
-		tests.integration.test_database.TestDbV2Migration.test_migrate_legacy_sqlite_file
+	$(CONDA)
+	python -m unittest tests.integration.test_database.TestDbV2Migration.test_migrate_legacy_sqlite_file
 
 # Test migrating non-latest legacy databases to sqlaclhemy database.
 test-database-legacy-migration:
-	$(CONDA); python -m unittest \
-		tests.integration.test_database.TestDbV2Migration.test_migrate_legacy_legacy_sqlite_file
+	$(CONDA)
+	python -m unittest tests.integration.test_database.TestDbV2Migration.test_migrate_legacy_legacy_sqlite_file
 
 # Test handling of a db that is newer than expected.
 test-database-future:
-	$(CONDA); python -m unittest \
-		tests.integration.test_database.TestDbV2Migration.test_future_db
+	$(CONDA)
+	python -m unittest tests.integration.test_database.TestDbV2Migration.test_future_db
 
 # Run the code formatter and imports organizer.
 format:
-	$(CONDA); cd ..; bash format.sh --eval
+	$(CONDA)
+	cd ..
+	bash format.sh --eval
 
 # Start a jupyter lab server locally with the token being set to "deadbeef".
 lab:
-	$(CONDA); jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
+	$(CONDA)
+	jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 example_app:
-	$(CONDA); $(PYENV) streamlit run trulens_eval/Example_Application.py
+	$(CONDA)
+	$(PYENV) streamlit run trulens_eval/Example_Application.py
 
 example_trubot:
-	$(CONDA); $(PYENV) streamlit run trulens_eval/Example_TruBot.py
+	$(CONDA)
+	$(PYENV) streamlit run trulens_eval/Example_TruBot.py
 
 # Start the dashboard.
 leaderboard:
-	$(CONDA); $(PYENV) streamlit run trulens_eval/Leaderboard.py
+	$(CONDA)
+	$(PYENV) streamlit run trulens_eval/Leaderboard.py
 
 # Rebuild the react components.
 react:
-	$(CONDA); \
-		npm i --prefix trulens_eval/react_components/record_viewer; \
-		npm run --prefix trulens_eval/react_components/record_viewer build
+	$(CONDA)
+	npm i --prefix trulens_eval/react_components/record_viewer
+	npm run --prefix trulens_eval/react_components/record_viewer build
 
 # Release Steps:
 
