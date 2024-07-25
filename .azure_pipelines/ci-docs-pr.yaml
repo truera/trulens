@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         latest:
-          python-version: "3.12"
+          python-version: "3.11"
 
     steps:
       - checkout: self
