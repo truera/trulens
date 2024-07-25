@@ -1,10 +1,10 @@
-from concurrent.futures import as_completed
 from typing import List
+from concurrent.futures import as_completed
 
-from trulens.core.feedback import Feedback
-from trulens.utils.imports import OptionalImports
-from trulens.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens.utils.serial import model_dump
+from trulens.core.feedback import Feedback
+from trulens.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens.utils.imports import OptionalImports
 from trulens.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
@@ -30,7 +30,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
     !!! example "Using TruLens guardrail context filters with Langchain"
 
         ```python
-        from trulens.langchain.guardrails import WithFeedbackFilterDocuments
+        from trulens.ext.instrument.langchain import WithFeedbackFilterDocuments
 
         # note: feedback function used for guardrail must only return a score, not also reasons
         feedback = Feedback(provider.context_relevance).on_input().on(context)

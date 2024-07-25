@@ -6,10 +6,10 @@ various langchain classes and example classes:
 from typing import Type
 
 from trulens.core.app import base
-from trulens.utils.imports import OptionalImports
-from trulens.utils.imports import REQUIREMENT_LANGCHAIN
-from trulens.utils.pyschema import Class
 from trulens.utils.serial import JSON
+from trulens.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens.utils.imports import OptionalImports
+from trulens.utils.pyschema import Class
 
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     pass

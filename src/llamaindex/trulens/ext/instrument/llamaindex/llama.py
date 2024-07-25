@@ -9,8 +9,8 @@ various llama_index classes and example classes:
 from typing import Type
 
 from trulens.core.app import base
-from trulens.utils.imports import OptionalImports
 from trulens.utils.imports import REQUIREMENT_LLAMA
+from trulens.utils.imports import OptionalImports
 from trulens.utils.pyschema import Class
 
 with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:

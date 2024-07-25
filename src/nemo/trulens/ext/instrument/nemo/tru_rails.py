@@ -2,31 +2,31 @@
 NeMo Guardrails instrumentation and monitoring.
 """
 
-import inspect
-from inspect import BoundArguments
-from inspect import Signature
-import logging
 from pprint import pformat
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Callable, ClassVar, Optional
+import inspect
+from inspect import Signature
+from inspect import BoundArguments
+import logging
 
-from langchain_core.language_models.base import BaseLanguageModel
 from pydantic import Field
 from trulens.core.app import base as mod_app
-from trulens.core.feedback import base_feedback
-from trulens.core.instruments import ClassFilter
-from trulens.core.instruments import Instrument
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.langchain.tru_chain import LangChainInstrument
-from trulens.utils.containers import dict_set_with_multikey
-from trulens.utils.imports import OptionalImports
-from trulens.utils.imports import REQUIREMENT_RAILS
 from trulens.utils.json import jsonify
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import FunctionOrMethod
+from trulens.utils.text import retab
+from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.utils.python import safe_hasattr
 from trulens.utils.serial import JSON
 from trulens.utils.serial import Lens
-from trulens.utils.text import retab
+from trulens.core.feedback import base_feedback
+from trulens.utils.imports import REQUIREMENT_RAILS
+from trulens.utils.imports import OptionalImports
+from trulens.utils.pyschema import Class
+from trulens.utils.pyschema import FunctionOrMethod
+from trulens.core.instruments import Instrument
+from trulens.core.instruments import ClassFilter
+from trulens.utils.containers import dict_set_with_multikey
+from trulens.ext.instrument.langchain import LangChainInstrument
+from langchain_core.language_models.base import BaseLanguageModel
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +34,11 @@ with OptionalImports(messages=REQUIREMENT_RAILS) as opt:
     import nemoguardrails
     from nemoguardrails import LLMRails
     from nemoguardrails import RailsConfig
-    from nemoguardrails.actions.action_dispatcher import ActionDispatcher
-    from nemoguardrails.actions.actions import action
-    from nemoguardrails.actions.actions import ActionResult
-    from nemoguardrails.actions.llm.generation import LLMGenerationActions
     from nemoguardrails.kb.kb import KnowledgeBase
+    from nemoguardrails.actions.actions import ActionResult
+    from nemoguardrails.actions.actions import action
+    from nemoguardrails.actions.llm.generation import LLMGenerationActions
+    from nemoguardrails.actions.action_dispatcher import ActionDispatcher
 
 opt.assert_installed(nemoguardrails)
 

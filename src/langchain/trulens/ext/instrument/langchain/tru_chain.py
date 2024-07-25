@@ -2,28 +2,28 @@
 # LangChain app instrumentation.
 """
 
-from inspect import BoundArguments
-from inspect import Signature
-import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, Optional
+from typing import Any, Dict, Callable, ClassVar, Optional
+from inspect import Signature
+from inspect import BoundArguments
+import logging
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 from trulens.core.app import base as mod_app
-from trulens.core.instruments import ClassFilter
-from trulens.core.instruments import Instrument
-from trulens.core.schema.select import Select
-from trulens.langchain.guardrails import WithFeedbackFilterDocuments
-from trulens.utils.containers import dict_set_with_multikey
-from trulens.utils.imports import OptionalImports
-from trulens.utils.imports import REQUIREMENT_LANGCHAIN
 from trulens.utils.json import jsonify
+from trulens.utils.python import safe_hasattr
+from trulens.utils.serial import Lens
+from trulens.utils.serial import all_queries
+from trulens.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens.utils.imports import OptionalImports
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import FunctionOrMethod
-from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import all_queries
-from trulens.utils.serial import Lens
+from trulens.core.instruments import Instrument
+from trulens.core.instruments import ClassFilter
+from trulens.utils.containers import dict_set_with_multikey
+from trulens.core.schema.select import Select
+from trulens.ext.instrument.langchain import WithFeedbackFilterDocuments
 
 logger = logging.getLogger(__name__)
 
@@ -34,26 +34,26 @@ with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
     # import langchain
 
     # from langchain.schema.language_model import BaseLanguageModel
-    from langchain_core.language_models.base import BaseLanguageModel
     from langchain_core.runnables.base import RunnableSerializable
+    from langchain_core.language_models.base import BaseLanguageModel
 
-    from langchain.agents.agent import BaseMultiActionAgent
-    from langchain.agents.agent import BaseSingleActionAgent
-    from langchain.chains.base import Chain
-    from langchain.llms.base import BaseLLM
-    from langchain.load.serializable import (
-        Serializable,
-    )  # this seems to be work in progress over at langchain
-    from langchain.memory.chat_memory import BaseChatMemory
-    from langchain.prompts.base import BasePromptTemplate
-    from langchain.retrievers.multi_query import MultiQueryRetriever
-    from langchain.schema import BaseChatMessageHistory  # subclass of above
     from langchain.schema import BaseMemory  # no methods instrumented
     from langchain.schema import BaseRetriever
-    from langchain.schema.document import Document
+    from langchain.schema import BaseChatMessageHistory  # subclass of above
+    from langchain.llms.base import BaseLLM
 
     # langchain.adapters.openai.ChatCompletion, # no bases
     from langchain.tools.base import BaseTool
+    from langchain.chains.base import Chain
+    from langchain.agents.agent import BaseMultiActionAgent
+    from langchain.agents.agent import BaseSingleActionAgent
+    from langchain.prompts.base import BasePromptTemplate
+    from langchain.schema.document import Document
+    from langchain.load.serializable import Serializable
+
+    # this seems to be work in progress over at langchain
+    from langchain.memory.chat_memory import BaseChatMemory
+    from langchain.retrievers.multi_query import MultiQueryRetriever
 
 
 class LangChainInstrument(Instrument):
@@ -188,7 +188,7 @@ class TruChain(mod_app.App):
     !!! example "Using the `TruChain` recorder"
 
         ```python
-        from trulens.langchain import TruChain
+        from trulens.ext.instrument.langchain import TruChain
 
         # Wrap application
         tru_recorder = TruChain(
