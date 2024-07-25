@@ -174,7 +174,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         return ret
 
-    def mae(self, prompt: str, response: str, score: float) -> float:
+    def absolute_error(self, prompt: str, response: str, score: float) -> float:
         """
         Method to look up the numeric expected score from a golden set and take the differnce.
 
@@ -192,7 +192,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set)
 
-            f_groundtruth = Feedback(ground_truth.mae).on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
+            f_groundtruth = Feedback(ground_truth.absolute_error.on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
             ```
 
         """
