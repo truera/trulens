@@ -41,8 +41,6 @@ jobs:
       - bash: |
           # Install poetry
           curl -sSL https://install.python-poetry.org | python3 -
-          # Disable virtualenv creation
-          poetry config settings.virtualenvs.create false
 
           # Show python version
           which python
@@ -51,6 +49,7 @@ jobs:
 
       - bash: |
           set -e
+          poetry config settings.virtualenvs.create false
           poetry install --sync --verbose
         displayName: Install Packages
 
