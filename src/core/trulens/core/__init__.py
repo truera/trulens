@@ -9,10 +9,10 @@ import importlib.metadata
 from trulens.core.app import TruBasicApp
 from trulens.core.app import TruCustomApp
 from trulens.core.app import TruVirtual
-from trulens.core.feedback.base_feedback import Feedback
-from trulens.core.feedback.base_provider import Provider
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.schema.select import Select
+from trulens.core.feedback import Feedback
+from trulens.core.feedback import Provider
+from trulens.core.schema import FeedbackMode
+from trulens.core.schema import Select
 from trulens.core.tru import Tru
 from trulens.utils.imports import check_imports
 

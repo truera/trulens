@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "trulens-instrument-nemo"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = ["Truera Inc <all@truera.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "trulens" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License"
+]
+
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+trulens-core = {path = "../../core"}
+trulens-instrument-langchain = {path = "../langchain", python = "<3.13"}
+pydantic = "^2"
+nemoguardrails = "^0.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -30,7 +30,7 @@ import trulens
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
-from trulens.core.feedback import base_feedback
+from trulens.core.feedback import feedback
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
@@ -225,7 +225,7 @@ class Tru(python.SingletonPerName):
     #             [TruChain][trulens.langchain.TruChain].
     #     """
 
-    #     from trulens.core.tru_chain import TruChain
+    #     from trulens.ext.instrument.langchain import TruChain
 
     #     return TruChain(tru=self, app=chain, **kwargs)
 
@@ -247,7 +247,7 @@ class Tru(python.SingletonPerName):
     #             [TruLlama][trulens.llamaindex.TruLlama].
     #     """
 
-    #     from trulens.core.tru_llama import TruLlama
+    #     from trulens.ext.instrument.llamaindex import TruLlama
 
     #     return TruLlama(tru=self, app=engine, **kwargs)
 
@@ -374,7 +374,7 @@ class Tru(python.SingletonPerName):
     def _submit_feedback_functions(
         self,
         record: mod_record_schema.Record,
-        feedback_functions: Sequence[base_feedback.Feedback],
+        feedback_functions: Sequence[feedback.Feedback],
         app: Optional[mod_app_schema.AppDefinition] = None,
         on_done: Optional[
             Callable[
@@ -388,9 +388,7 @@ class Tru(python.SingletonPerName):
             ]
         ] = None,
     ) -> List[
-        Tuple[
-            base_feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]
-        ]
+        Tuple[feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]
     ]:
         """Schedules to run the given feedback functions.
 
@@ -472,7 +470,7 @@ class Tru(python.SingletonPerName):
     def run_feedback_functions(
         self,
         record: mod_record_schema.Record,
-        feedback_functions: Sequence[base_feedback.Feedback],
+        feedback_functions: Sequence[feedback.Feedback],
         app: Optional[mod_app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
@@ -511,8 +509,7 @@ class Tru(python.SingletonPerName):
             raise ValueError("`feedback_functions` must be a sequence.")
 
         if not all(
-            isinstance(ffunc, base_feedback.Feedback)
-            for ffunc in feedback_functions
+            isinstance(ffunc, feedback.Feedback) for ffunc in feedback_functions
         ):
             raise ValueError(
                 "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
@@ -527,7 +524,7 @@ class Tru(python.SingletonPerName):
             raise ValueError("`wait` must be a bool.")
 
         future_feedback_map: Dict[
-            Future[mod_feedback_schema.FeedbackResult], base_feedback.Feedback
+            Future[mod_feedback_schema.FeedbackResult], feedback.Feedback
         ] = {
             p[1]: p[0]
             for p in self._submit_feedback_functions(
@@ -904,7 +901,7 @@ class Tru(python.SingletonPerName):
                             pandas.Series,
                             Future[mod_feedback_schema.FeedbackResult],
                         ]
-                    ] = base_feedback.Feedback.evaluate_deferred(
+                    ] = feedback.Feedback.evaluate_deferred(
                         tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,

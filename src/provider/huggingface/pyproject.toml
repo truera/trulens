@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "trulens-provider-huggingface"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = ["Truera Inc <all@truera.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "trulens" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License"
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.9"
+trulens-core = {path = "../../core"}
+trulens-feedback = {path = "../../feedback"}
+requests = "^2.31.0"
+tqdm = "^4.66.1"
+numpy = "^1.23.5"
+nltk = "^3.8.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

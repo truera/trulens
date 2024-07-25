@@ -127,7 +127,7 @@ in the same manner as with non-virtual applications, using the newly added
 !!! example "Developing Feedback Functions"
 
     ```python
-    from trulens.external.provider import OpenAI
+    from trulens.ext.provider.openai import OpenAI
     from trulens.core.feedback.feedback import Feedback
 
     # Initializing the feedback provider
