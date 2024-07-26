@@ -7,7 +7,7 @@ removed in a future release.
 import warnings
 warnings.warn(
     "The `trulens_eval` module is deprecated. "
-    "Use `trulens.core` from the `trulens-core` package instead.", 
+    "See TODOLINK on migrating to the `trulens` packages.",
     DeprecationWarning,
     stacklevel=2
 )

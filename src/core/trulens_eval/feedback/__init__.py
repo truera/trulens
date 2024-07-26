@@ -7,7 +7,7 @@ removed in a future release.
 import warnings
 warnings.warn(
     "The `trulens_eval.feedback` module is deprecated. "
-    "Use `trulens.feedback` from the `trulens-feedback` package instead.",
+    "See TODOLINK on migrating to the `trulens` packages.",
     DeprecationWarning,
     stacklevel=2
 )
