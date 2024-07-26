@@ -9,7 +9,7 @@ from typing import Type
 import pandas as pd
 from trulens.core.app import base
 from trulens.core.schema.record import Record
-from trulens.utils.pyschema import Class
+from trulens.core.utils.pyschema import Class
 
 
 class Other(base.Other, base.TrulensComponent):

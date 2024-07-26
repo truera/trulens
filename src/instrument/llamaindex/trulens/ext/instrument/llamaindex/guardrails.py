@@ -7,7 +7,7 @@ from llama_index.core.query_engine.retriever_query_engine import (
 )
 from llama_index.core.schema import NodeWithScore
 from trulens.core import Feedback
-from trulens.utils.threading import ThreadPoolExecutor
+from trulens.core.utils.threading import ThreadPoolExecutor
 
 
 class WithFeedbackFilterNodes(RetrieverQueryEngine):

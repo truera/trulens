@@ -35,11 +35,11 @@ from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.utils import python
-from trulens.utils import serial
-from trulens.utils import threading as tru_threading
-from trulens.utils.python import Future  # code style exception
-from trulens.utils.python import OpaqueWrapper
+from trulens.core.utils import python
+from trulens.core.utils import serial
+from trulens.core.utils import threading as tru_threading
+from trulens.core.utils.python import Future  # code style exception
+from trulens.core.utils.python import OpaqueWrapper
 
 pp = PrettyPrinter()
 

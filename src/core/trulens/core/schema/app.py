@@ -10,10 +10,10 @@ import humanize
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.utils import pyschema
-from trulens.utils import serial
-from trulens.utils.json import jsonify
-from trulens.utils.json import obj_id_of_obj
+from trulens.core.utils import pyschema
+from trulens.core.utils import serial
+from trulens.core.utils.json import jsonify
+from trulens.core.utils.json import obj_id_of_obj
 
 logger = logging.getLogger(__name__)
 

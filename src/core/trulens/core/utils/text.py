@@ -5,7 +5,7 @@ Utilities for user-facing text generation.
 import logging
 import sys
 
-from trulens.utils.python import safe_hasattr
+from trulens.core.utils.python import safe_hasattr
 
 logger = logging.getLogger(__name__)
 

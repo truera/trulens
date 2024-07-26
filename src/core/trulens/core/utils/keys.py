@@ -6,7 +6,7 @@
 To check whether appropriate api keys have been set:
 
 ```python
-from trulens.utils.keys import check_keys
+from trulens.core.utils.keys import check_keys
 
 check_keys(
     "OPENAI_API_KEY",
@@ -17,7 +17,7 @@ check_keys(
 Alternatively you can set using `check_or_set_keys`:
 
 ```python
-from trulens.utils.keys import check_or_set_keys
+from trulens.core.utils.keys import check_or_set_keys
 
 check_or_set_keys(
     OPENAI_API_KEY="to fill in",
@@ -96,12 +96,12 @@ import logging
 import os
 from pathlib import Path
 import re
-from typing import Any, Dict, Optional, Set, Tuple, Union
+from typing import Any, Dict, Optional, Set, Tuple, Union, Iterable
 
 import dotenv
-from trulens.utils.python import caller_frame
-from trulens.utils.text import UNICODE_CHECK
-from trulens.utils.text import UNICODE_STOP
+from trulens.core.utils.python import caller_frame
+from trulens.core.utils.text import UNICODE_CHECK
+from trulens.core.utils.text import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
 
@@ -216,15 +216,27 @@ def _value_is_set(v: str) -> bool:
     return not (v is None or v in TEMPLATE_VALUES or v == "")
 
 
-class ApiKeyError(RuntimeError):
-    def __init__(self, *args, key: str, msg: str = ""):
-        super().__init__(msg, *args)
+class BaseKeyError(RuntimeError):
+    def __init__(self, *args: Iterable[Any]):
+        super().__init__(*args)
+
+
+class ApiKeyError(BaseKeyError):
+    def __init__(self, *args: Iterable[Any], key: str):
+        super().__init__(*args)
         self.key = key
-        self.msg = msg
+
+
+class MissingKeyError(BaseKeyError):
+    def __init__(self, *args: Iterable[Any], missing_keys: Iterable[str]):
+        if not args:
+            args = (f"Missing key(s): {', '.join(missing_keys)}",)
+        super().__init__(*args)
+        self.missing_keys = missing_keys
 
 
 def _check_key(
-    k: str, v: str = None, silent: bool = False, warn: bool = False
+    k: str, v: Optional[str] = None, silent: bool = False, warn: bool = False
 ) -> bool:
     """
     Check that the given `k` is an env var with a value that indicates a valid
@@ -237,13 +249,13 @@ def _check_key(
 
     v = v or os.environ.get(k)
 
-    if not _value_is_set(v):
+    if not v or not _value_is_set(v):
         msg = f"""Key {k} needs to be set; please provide it in one of these ways:
 
   - in a variable {k} prior to this check,
   - in your variable environment,
   - in a .env file in {Path.cwd()} or its parents,
-  - explicitly passed to function `check_or_set_keys` of `trulens.utils.keys`,
+  - explicitly passed to function `check_or_set_keys` of `trulens.core.utils.keys`,
   - passed to the endpoint or feedback collection constructor that needs it (`trulens.external.provider.endpoint.OpenAIEndpoint`, etc.), or
   - set in api utility class that expects it (i.e. `OpenAI(api_key=)`, etc.).
 
@@ -257,7 +269,7 @@ For the last two options, the name of the argument may differ from {k} (i.e. `Op
             if warn:
                 return False
             else:
-                raise ApiKeyError(key=k, msg=msg)
+                raise ApiKeyError(msg, key=k)
 
     return True
 
@@ -281,9 +293,7 @@ def _relative_path(path: Path, relative_to: Path) -> str:
             relative_to = relative_to.parent
 
 
-def _collect_keys(
-    *args: Tuple[str], **kwargs: Dict[str, str]
-) -> Dict[str, str]:
+def _collect_keys(*args: str, **kwargs: Dict[str, str]) -> Dict[str, str]:
     """
     Collect values for keys from all of the currently supported sources. This includes:
 
@@ -311,13 +321,13 @@ def _collect_keys(
         # Env vars. NOTE: Endpoint classes copy over relevant keys from 3rd party
         # classes (or provided explicitly to them) to var env.
         temp_v = os.environ.get(k)
-        if _value_is_set(temp_v):
+        if temp_v and _value_is_set(temp_v):
             valid_sources[temp_v].append("environment")
             valid_values.add(temp_v)
 
         # Explicit.
         temp_v = kwargs.get(k)
-        if _value_is_set(temp_v):
+        if temp_v and _value_is_set(temp_v):
             valid_sources[temp_v].append(
                 "explicit value to `check_or_set_keys`"
             )
@@ -326,13 +336,13 @@ def _collect_keys(
         # .env vars.
         if config is not None:
             temp_v = config.get(k)
-            if _value_is_set(temp_v):
+            if temp_v and _value_is_set(temp_v):
                 valid_sources[temp_v].append(f".env file at {config_file}")
                 valid_values.add(temp_v)
 
         # Globals of caller.
         temp_v = globs.get(k)
-        if _value_is_set(temp_v):
+        if temp_v and _value_is_set(temp_v):
             valid_sources[temp_v].append("python variable")
             valid_values.add(temp_v)
 
@@ -370,7 +380,7 @@ def _collect_keys(
     return ret
 
 
-def check_keys(*keys: Tuple[str]) -> None:
+def check_keys(*keys: str) -> None:
     """
     Check that all keys named in `*args` are set as env vars. Will fail with a
     message on how to set missing key if one is missing. If all are provided
@@ -378,7 +388,7 @@ def check_keys(*keys: Tuple[str]) -> None:
     we should expect them subsequently. Example:
 
     ```python
-    from trulens.utils.keys import check_keys
+    from trulens.core.utils.keys import check_keys
 
     check_keys(
         "OPENAI_API_KEY",
@@ -388,16 +398,21 @@ def check_keys(*keys: Tuple[str]) -> None:
     """
 
     kvals = _collect_keys(*keys)
+    missing_keys = []
     for k in keys:
         v = kvals.get(k)
         _check_key(k, v=v)
+        if v is not None:
+            # Put value in redaction list.
+            values_to_redact.add(v)
+            os.environ[k] = v
+        else:
+            missing_keys.append(k)
+    if missing_keys:
+        raise MissingKeyError(missing_keys=missing_keys)
 
-        # Put value in redaction list.
-        values_to_redact.add(v)
-        os.environ[k] = v
 
-
-def check_or_set_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> None:
+def check_or_set_keys(*args: str, **kwargs: Dict[str, str]) -> None:
     """
     Check various sources of api configuration values like secret keys and set
     env variables for each of them. We use env variables as the canonical
@@ -405,7 +420,7 @@ def check_or_set_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> None:
     also be specified explicitly to this method. Example:
 
     ```python
-    from trulens.utils.keys import check_or_set_keys
+    from trulens.core.utils.keys import check_or_set_keys
 
     check_or_set_keys(
         OPENAI_API_KEY="to fill in",
@@ -418,5 +433,6 @@ def check_or_set_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> None:
     for k in list(args) + list(kwargs.keys()):
         v = kvals.get(k)
         _check_key(k, v=v)
-        values_to_redact.add(v)
-        os.environ[k] = v
+        if v:
+            values_to_redact.add(v)
+            os.environ[k] = v

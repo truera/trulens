@@ -16,7 +16,7 @@ from trulens.core import Feedback
 from trulens.ext.instrument.langchain import TruChain
 from trulens.ext.provider.huggingface import Huggingface
 from trulens.ext.provider.openai import OpenAI as fOpenAI
-from trulens.utils.keys import check_keys
+from trulens.core.utils.keys import check_keys
 
 check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
 

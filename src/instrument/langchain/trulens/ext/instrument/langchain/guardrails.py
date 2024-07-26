@@ -2,8 +2,8 @@ from concurrent.futures import as_completed
 from typing import List
 
 from trulens.core import Feedback
-from trulens.utils.serial import model_dump
-from trulens.utils.threading import ThreadPoolExecutor
+from trulens.core.utils.serial import model_dump
+from trulens.core.utils.threading import ThreadPoolExecutor
 
 from langchain.schema import Document
 from langchain.vectorstores.base import VectorStoreRetriever

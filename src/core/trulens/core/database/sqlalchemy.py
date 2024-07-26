@@ -46,15 +46,15 @@ from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.utils import text
-from trulens.utils.pyschema import Class
-from trulens.utils.python import locals_except
-from trulens.utils.serial import JSON
-from trulens.utils.serial import JSONized
-from trulens.utils.text import UNICODE_CHECK
-from trulens.utils.text import UNICODE_CLOCK
-from trulens.utils.text import UNICODE_HOURGLASS
-from trulens.utils.text import UNICODE_STOP
+from trulens.core.utils import text
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.python import locals_except
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.serial import JSONized
+from trulens.core.utils.text import UNICODE_CHECK
+from trulens.core.utils.text import UNICODE_CLOCK
+from trulens.core.utils.text import UNICODE_HOURGLASS
+from trulens.core.utils.text import UNICODE_STOP
 
 logger = logging.getLogger(__name__)
 

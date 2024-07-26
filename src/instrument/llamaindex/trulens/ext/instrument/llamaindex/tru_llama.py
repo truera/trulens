@@ -16,14 +16,14 @@ from trulens.core.instruments import Instrument
 from trulens.ext.instrument.langchain import LangChainInstrument
 
 # TODO: Do we need to depend on this?
-from trulens.utils.containers import dict_set_with_multikey
-from trulens.utils.imports import Dummy
-from trulens.utils.imports import get_package_version
-from trulens.utils.imports import parse_version
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import FunctionOrMethod
-from trulens.utils.python import EmptyType
-from trulens.utils.serial import Lens
+from trulens.core.utils.containers import dict_set_with_multikey
+from trulens.core.utils.imports import Dummy
+from trulens.core.utils.imports import get_package_version
+from trulens.core.utils.imports import parse_version
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core.utils.python import EmptyType
+from trulens.core.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 

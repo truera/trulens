@@ -750,7 +750,7 @@ class SingletonInfo(Generic[T]):
                 "Singleton instance of type %s already created at:\n%s\n"
                 "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
                 f"""  ```python
-  from trulens.utils.python import SingletonPerName
+  from trulens.core.utils.python import SingletonPerName
   SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
   ```
             """

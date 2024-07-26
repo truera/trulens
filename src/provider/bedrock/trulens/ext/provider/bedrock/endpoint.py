@@ -9,7 +9,7 @@ import pydantic
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
 from trulens.core.feedback.endpoint import INSTRUMENT
-from trulens.utils.python import safe_hasattr
+from trulens.core.utils.python import safe_hasattr
 
 logger = logging.getLogger(__name__)
 

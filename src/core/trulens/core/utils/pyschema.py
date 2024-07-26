@@ -26,13 +26,13 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 import warnings
 
 import pydantic
-from trulens.utils.constants import CLASS_INFO
-from trulens.utils.constants import ERROR
-from trulens.utils.constants import NOSERIO
-from trulens.utils.python import safe_hasattr
-from trulens.utils.python import safe_issubclass
-from trulens.utils.serial import JSON
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.constants import CLASS_INFO
+from trulens.core.utils.constants import ERROR
+from trulens.core.utils.constants import NOSERIO
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.python import safe_issubclass
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()

@@ -14,12 +14,12 @@ import threading
 from threading import Thread as fThread
 from typing import Callable, Optional, TypeVar
 
-from trulens.utils.python import Future
-from trulens.utils.python import SingletonPerName
-from trulens.utils.python import T
-from trulens.utils.python import _future_target_wrapper
-from trulens.utils.python import code_line
-from trulens.utils.python import safe_hasattr
+from trulens.core.utils.python import Future
+from trulens.core.utils.python import SingletonPerName
+from trulens.core.utils.python import T
+from trulens.core.utils.python import _future_target_wrapper
+from trulens.core.utils.python import code_line
+from trulens.core.utils.python import safe_hasattr
 
 logger = logging.getLogger(__name__)
 

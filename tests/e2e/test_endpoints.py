@@ -11,7 +11,7 @@ from unittest import TestCase
 from unittest import main
 
 from trulens.core.feedback import Endpoint
-from trulens.utils.keys import check_keys
+from trulens.core.utils.keys import check_keys
 
 from tests.unit.test import optional_test
 

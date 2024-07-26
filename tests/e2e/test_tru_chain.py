@@ -15,8 +15,8 @@ from trulens.core import Tru
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.record import Record
-from trulens.utils.asynchro import sync
-from trulens.utils.keys import check_keys
+from trulens.core.utils.asynchro import sync
+from trulens.core.utils.keys import check_keys
 
 from tests.unit.test import JSONTestCase
 from tests.unit.test import optional_test

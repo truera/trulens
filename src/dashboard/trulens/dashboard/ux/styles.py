@@ -4,7 +4,7 @@ import operator
 from typing import Callable, List, NamedTuple, Optional
 
 import numpy as np
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.serial import SerialModel
 
 
 class ResultCategoryType(Enum):

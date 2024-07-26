@@ -2,11 +2,11 @@ from typing import Dict, Tuple, TypeVar, Union
 
 import numpy as np
 from pydantic import PrivateAttr
-from trulens.utils.imports import REQUIREMENT_LLAMA
-from trulens.utils.imports import REQUIREMENT_SKLEARN
-from trulens.utils.imports import OptionalImports
-from trulens.utils.pyschema import WithClassInfo
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.imports import REQUIREMENT_LLAMA
+from trulens.core.utils.imports import REQUIREMENT_SKLEARN
+from trulens.core.utils.imports import OptionalImports
+from trulens.core.utils.pyschema import WithClassInfo
+from trulens.core.utils.serial import SerialModel
 
 with OptionalImports(messages=REQUIREMENT_SKLEARN):
     pass

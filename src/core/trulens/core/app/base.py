@@ -40,27 +40,29 @@ from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.utils import pyschema
-from trulens.utils.asynchro import CallableMaybeAwaitable
-from trulens.utils.asynchro import desync
-from trulens.utils.asynchro import sync
-from trulens.utils.constants import CLASS_INFO
-from trulens.utils.containers import BlockingSet
-from trulens.utils.json import json_str_of_obj
-from trulens.utils.json import jsonify
-from trulens.utils.pyschema import Class
-from trulens.utils.python import Future  # can take type args with python < 3.9
-from trulens.utils.python import T
-from trulens.utils.python import callable_name
-from trulens.utils.python import class_name
-from trulens.utils.python import id_str
-from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import JSON
-from trulens.utils.serial import JSON_BASES
-from trulens.utils.serial import JSON_BASES_T
-from trulens.utils.serial import GetItemOrAttribute
-from trulens.utils.serial import Lens
-from trulens.utils.serial import all_objects
+from trulens.core.utils import pyschema
+from trulens.core.utils.asynchro import CallableMaybeAwaitable
+from trulens.core.utils.asynchro import desync
+from trulens.core.utils.asynchro import sync
+from trulens.core.utils.constants import CLASS_INFO
+from trulens.core.utils.containers import BlockingSet
+from trulens.core.utils.json import json_str_of_obj
+from trulens.core.utils.json import jsonify
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.python import (
+    Future,
+)  # can take type args with python < 3.9
+from trulens.core.utils.python import T
+from trulens.core.utils.python import callable_name
+from trulens.core.utils.python import class_name
+from trulens.core.utils.python import id_str
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.serial import JSON_BASES
+from trulens.core.utils.serial import JSON_BASES_T
+from trulens.core.utils.serial import GetItemOrAttribute
+from trulens.core.utils.serial import Lens
+from trulens.core.utils.serial import all_objects
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +198,7 @@ class TrulensComponent(ComponentView):
 
     @staticmethod
     def of_json(json: JSON) -> "TrulensComponent":
-        from trulens.utils.trulens import component_of_json
+        from trulens.core.utils.trulens import component_of_json
 
         return component_of_json(json)
 

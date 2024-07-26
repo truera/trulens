@@ -32,12 +32,12 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
-from trulens.utils.constants import CLASS_INFO
-from trulens.utils.pace import Pace
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import safe_getattr
-from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.constants import CLASS_INFO
+from trulens.core.utils.pace import Pace
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.pyschema import safe_getattr
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.serial import SerialModel
 
 import openai as oai
 

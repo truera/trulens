@@ -20,13 +20,13 @@ from trulens.core.schema.select import Select
 from trulens.ext.instrument.langchain.guardrails import (
     WithFeedbackFilterDocuments,
 )
-from trulens.utils.containers import dict_set_with_multikey
-from trulens.utils.json import jsonify
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import FunctionOrMethod
-from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import Lens
-from trulens.utils.serial import all_queries
+from trulens.core.utils.containers import dict_set_with_multikey
+from trulens.core.utils.json import jsonify
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.serial import Lens
+from trulens.core.utils.serial import all_queries
 
 from langchain.agents.agent import BaseMultiActionAgent
 from langchain.agents.agent import BaseSingleActionAgent

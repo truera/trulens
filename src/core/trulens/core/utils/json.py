@@ -15,23 +15,23 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic.v1.json import ENCODERS_BY_TYPE
 from pydantic.v1.json import pydantic_encoder
-from trulens.utils.constants import ALL_SPECIAL_KEYS
-from trulens.utils.constants import CIRCLE
-from trulens.utils.constants import CLASS_INFO
-from trulens.utils.imports import REQUIREMENT_OPENAI
-from trulens.utils.imports import OptionalImports
-from trulens.utils.keys import redact_value
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import WithClassInfo
-from trulens.utils.pyschema import clean_attributes
-from trulens.utils.pyschema import noserio
-from trulens.utils.pyschema import safe_getattr
-from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import JSON
-from trulens.utils.serial import JSON_BASES
-from trulens.utils.serial import Lens
-from trulens.utils.serial import SerialBytes
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.constants import ALL_SPECIAL_KEYS
+from trulens.core.utils.constants import CIRCLE
+from trulens.core.utils.constants import CLASS_INFO
+from trulens.core.utils.imports import REQUIREMENT_OPENAI
+from trulens.core.utils.imports import OptionalImports
+from trulens.core.utils.keys import redact_value
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.pyschema import WithClassInfo
+from trulens.core.utils.pyschema import clean_attributes
+from trulens.core.utils.pyschema import noserio
+from trulens.core.utils.pyschema import safe_getattr
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.serial import JSON_BASES
+from trulens.core.utils.serial import Lens
+from trulens.core.utils.serial import SerialBytes
+from trulens.core.utils.serial import SerialModel
 
 if TYPE_CHECKING:
     from trulens.core.instruments import Instrument

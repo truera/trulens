@@ -24,14 +24,14 @@ from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.ext.instrument.langchain import LangChainInstrument
-from trulens.utils.containers import dict_set_with_multikey
-from trulens.utils.json import jsonify
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import FunctionOrMethod
-from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import JSON
-from trulens.utils.serial import Lens
-from trulens.utils.text import retab
+from trulens.core.utils.containers import dict_set_with_multikey
+from trulens.core.utils.json import jsonify
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.serial import Lens
+from trulens.core.utils.text import retab
 
 logger = logging.getLogger(__name__)
 

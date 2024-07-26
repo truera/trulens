@@ -11,10 +11,10 @@ from trulens.core.schema.feedback import FeedbackDefinition
 from trulens.core.schema.feedback import FeedbackResult
 from trulens.core.schema.feedback import FeedbackResultStatus
 from trulens.core.schema.record import Record
-from trulens.utils.json import json_str_of_obj
-from trulens.utils.serial import JSON
-from trulens.utils.serial import JSONized
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.json import json_str_of_obj
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.serial import JSONized
+from trulens.core.utils.serial import SerialModel
 
 mj = MerkleJson()
 NoneType = type(None)

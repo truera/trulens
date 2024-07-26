@@ -40,8 +40,8 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic_core import CoreSchema
 from pydantic_core import core_schema
 import rich.repr
-from trulens.utils.containers import iterable_peek
-from trulens.utils.python import class_name
+from trulens.core.utils.containers import iterable_peek
+from trulens.core.utils.python import class_name
 
 logger = logging.getLogger(__name__)
 mj = MerkleJson()
@@ -559,13 +559,13 @@ class SerialModel(pydantic.BaseModel):
 
     def model_dump_json(self, **kwargs):
         # TODO: Import at top-level and resolve circular import.
-        from trulens.utils.json import json_str_of_obj
+        from trulens.core.utils.json import json_str_of_obj
 
         return json_str_of_obj(self, **kwargs)
 
     def model_dump(self, **kwargs):
         # TODO: Import at top-level and resolve circular import.
-        from trulens.utils.json import jsonify
+        from trulens.core.utils.json import jsonify
 
         return jsonify(self, **kwargs)
 

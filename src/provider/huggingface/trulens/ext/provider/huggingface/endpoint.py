@@ -5,9 +5,9 @@ from typing import Callable, Optional
 import requests
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
-from trulens.utils.keys import _check_key
-from trulens.utils.keys import get_huggingface_headers
-from trulens.utils.python import safe_hasattr
+from trulens.core.utils.keys import _check_key
+from trulens.core.utils.keys import get_huggingface_headers
+from trulens.core.utils.python import safe_hasattr
 
 
 class HuggingfaceCallback(EndpointCallback):

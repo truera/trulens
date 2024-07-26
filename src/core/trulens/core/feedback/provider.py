@@ -2,8 +2,8 @@ import logging
 from typing import ClassVar, Optional
 
 import trulens.core.feedback.endpoint as mod_endpoint
-from trulens.utils.pyschema import WithClassInfo
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.pyschema import WithClassInfo
+from trulens.core.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 

@@ -34,8 +34,8 @@ from threading import current_thread
 from typing import Awaitable, Callable, TypeVar, Union
 
 import nest_asyncio
-from trulens.utils import python as mod_python_utils
-from trulens.utils import threading as mod_threading_utils
+from trulens.core.utils import python as mod_python_utils
+from trulens.core.utils import threading as mod_threading_utils
 
 nest_asyncio.apply()
 

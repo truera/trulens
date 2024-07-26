@@ -36,12 +36,12 @@ from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.utils import json as mod_json_utils
-from trulens.utils import pyschema as mod_pyschema
-from trulens.utils import python as mod_python_utils
-from trulens.utils import serial as mod_serial_utils
-from trulens.utils import text as mod_text_utils
-from trulens.utils import threading as mod_threading_utils
+from trulens.core.utils import json as mod_json_utils
+from trulens.core.utils import pyschema as mod_pyschema
+from trulens.core.utils import python as mod_python_utils
+from trulens.core.utils import serial as mod_serial_utils
+from trulens.core.utils import text as mod_text_utils
+from trulens.core.utils import threading as mod_threading_utils
 
 if TYPE_CHECKING:
     from trulens.core import Tru

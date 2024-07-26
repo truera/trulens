@@ -6,8 +6,8 @@ from trulens.core.feedback import Endpoint
 from trulens.ext.provider.openai.endpoint import OpenAIClient
 from trulens.ext.provider.openai.endpoint import OpenAIEndpoint
 from trulens.feedback import LLMProvider
-from trulens.utils.constants import CLASS_INFO
-from trulens.utils.pace import Pace
+from trulens.core.utils.constants import CLASS_INFO
+from trulens.core.utils.pace import Pace
 
 import openai as oai
 

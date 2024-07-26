@@ -23,9 +23,9 @@ from trulens.core.feedback import Provider
 from trulens.core.feedback.endpoint import DummyEndpoint
 from trulens.ext.provider.huggingface.endpoint import HuggingfaceEndpoint
 from trulens.feedback import prompts
-from trulens.utils.python import Future
-from trulens.utils.python import locals_except
-from trulens.utils.threading import ThreadPoolExecutor
+from trulens.core.utils.python import Future
+from trulens.core.utils.python import locals_except
+from trulens.core.utils.threading import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 

@@ -13,7 +13,7 @@ from trulens.core import Tru
 from trulens.core import TruCustomApp
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.ext.provider.huggingface.provider import Dummy
-from trulens.utils.keys import check_keys
+from trulens.core.utils.keys import check_keys
 
 from tests.unit.test import optional_test
 

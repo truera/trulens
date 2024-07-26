@@ -1,7 +1,7 @@
 import streamlit as st
 from trulens.core import __package__
 from trulens.core import __version__
-from trulens.utils.imports import static_resource
+from trulens.core.utils.imports import static_resource
 
 
 def set_page_config(page_title="TruLens"):

@@ -8,8 +8,8 @@ from trulens.feedback.v2.feedback import HateThreatening
 from trulens.feedback.v2.feedback import Model
 from trulens.feedback.v2.feedback import WithExamples
 from trulens.feedback.v2.feedback import WithPrompt
-from trulens.utils.pyschema import WithClassInfo
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.pyschema import WithClassInfo
+from trulens.core.utils.serial import SerialModel
 
 # Level 4 feedback abstraction
 

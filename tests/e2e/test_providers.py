@@ -11,7 +11,7 @@ from unittest import main
 from trulens.ext.provider.huggingface import Huggingface
 from trulens.ext.provider.openai import OpenAI
 from trulens.feedback import LLMProvider
-from trulens.utils.keys import check_keys
+from trulens.core.utils.keys import check_keys
 
 from tests.unit.test import optional_test
 

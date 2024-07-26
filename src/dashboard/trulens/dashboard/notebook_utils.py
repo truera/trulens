@@ -1,8 +1,8 @@
 import inspect
 
-from trulens.utils.imports import REQUIREMENT_NOTEBOOK
-from trulens.utils.imports import Dummy
-from trulens.utils.imports import OptionalImports
+from trulens.core.utils.imports import REQUIREMENT_NOTEBOOK
+from trulens.core.utils.imports import Dummy
+from trulens.core.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
     from IPython import get_ipython

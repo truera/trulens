@@ -1,7 +1,7 @@
 from concurrent.futures import as_completed
 
 from trulens.core import Feedback
-from trulens.utils.threading import ThreadPoolExecutor
+from trulens.core.utils.threading import ThreadPoolExecutor
 
 
 class context_filter:

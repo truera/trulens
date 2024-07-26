@@ -30,8 +30,8 @@ from trulens.dashboard.ux.components import render_selector_markdown
 from trulens.dashboard.ux.page_config import set_page_config
 from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import cellstyle_jscode
-from trulens.utils.json import jsonify_for_ui
-from trulens.utils.serial import Lens
+from trulens.core.utils.json import jsonify_for_ui
+from trulens.core.utils.serial import Lens
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())

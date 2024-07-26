@@ -11,7 +11,7 @@ from unittest import main
 
 import trulens
 from trulens.core.instruments import Instrument
-from trulens.utils.imports import Dummy
+from trulens.core.utils.imports import Dummy
 
 from tests.unit.test import module_installed
 from tests.unit.test import optional_test
