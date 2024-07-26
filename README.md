@@ -10,18 +10,9 @@
 
 ![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
 
-TruLens provides a set of tools for developing and monitoring neural nets,
-including large language models. This includes both tools for evaluation of LLMs
-and LLM-based applications with _TruLens-Eval_ and deep learning explainability
-with _TruLens-Explain_. _TruLens-Eval_ and _TruLens-Explain_ are housed in
-separate packages and can be used independently.
-
-
-## About
-
-**Don't just vibe-check your LLM app!** Systematically evaluate and track your
+**Don't just vibe-check your llm app!** Systematically evaluate and track your
 LLM experiments with TruLens. As you develop your app including prompts, models,
-retrievers, knowledge sources and more, *TruLens* is the tool you need to
+retreivers, knowledge sources and more, *TruLens* is the tool you need to
 understand its performance.
 
 Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help
@@ -29,10 +20,10 @@ you to identify failure modes & systematically iterate to improve your
 application.
 
 Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/),
-[The RAG Triad](https://www.trulens.org/trulens_eval/getting_started/core_concepts/rag_triad/),
-and [Honest, Harmless and Helpful Evals](https://www.trulens.org/trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals/).
+[The RAG Triad](https://www.trulens.org/trulens/getting_started/core_concepts/rag_triad/),
+and [Honest, Harmless and Helpful Evals](https://www.trulens.org/trulens/getting_started/core_concepts/honest_harmless_helpful_evals/).
 
-## TruLens in the Development Workflow
+## TruLens in the development workflow
 
 Build your first prototype then connect instrumentation and logging with
 TruLens. Decide what feedbacks you need, and specify them with TruLens to run
@@ -44,7 +35,7 @@ Diagram](https://www.trulens.org/assets/images/TruLens_Architecture.png)
 
 ## Installation and Setup
 
-Install the trulens-eval pip package from PyPI.
+Install the trulens pip package from PyPI.
 
 ```bash
     pip install trulens
@@ -56,7 +47,7 @@ Walk through how to instrument and evaluate a RAG built from scratch with
 TruLens.
 
 [![Open In
-Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/quickstart/quickstart.ipynb)
+Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/quickstart.ipynb)
 
 ### 💡 Contributing & Community
 
