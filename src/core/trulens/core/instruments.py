@@ -41,24 +41,24 @@ from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.utils import python
-from trulens.utils.containers import dict_merge_with
-from trulens.utils.imports import Dummy
-from trulens.utils.json import jsonify
-from trulens.utils.pyschema import Method
-from trulens.utils.pyschema import clean_attributes
-from trulens.utils.pyschema import safe_getattr
-from trulens.utils.python import callable_name
-from trulens.utils.python import caller_frame
-from trulens.utils.python import class_name
-from trulens.utils.python import get_first_local_in_call_stack
-from trulens.utils.python import id_str
-from trulens.utils.python import is_really_coroutinefunction
-from trulens.utils.python import safe_hasattr
-from trulens.utils.python import safe_signature
-from trulens.utils.python import wrap_awaitable
-from trulens.utils.serial import Lens
-from trulens.utils.text import retab
+from trulens.core.utils import python
+from trulens.core.utils.containers import dict_merge_with
+from trulens.core.utils.imports import Dummy
+from trulens.core.utils.json import jsonify
+from trulens.core.utils.pyschema import Method
+from trulens.core.utils.pyschema import clean_attributes
+from trulens.core.utils.pyschema import safe_getattr
+from trulens.core.utils.python import callable_name
+from trulens.core.utils.python import caller_frame
+from trulens.core.utils.python import class_name
+from trulens.core.utils.python import get_first_local_in_call_stack
+from trulens.core.utils.python import id_str
+from trulens.core.utils.python import is_really_coroutinefunction
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.python import safe_signature
+from trulens.core.utils.python import wrap_awaitable
+from trulens.core.utils.serial import Lens
+from trulens.core.utils.text import retab
 
 if TYPE_CHECKING:
     from trulens.core.app.base import RecordingContext

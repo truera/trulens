@@ -25,7 +25,7 @@ from langchain_openai import ChatOpenAI
 import streamlit as st
 from trulens.core import Tru
 from trulens.dashboard import run_dashboard
-from trulens.ext.instrument.langchain import TruChain
+from trulens.instrument.langchain import TruChain
 
 dev_path = str(Path(__file__).resolve().parent.parent)
 sys.path.insert(0, dev_path)

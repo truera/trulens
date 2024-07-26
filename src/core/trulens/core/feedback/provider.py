@@ -2,8 +2,8 @@ import logging
 from typing import ClassVar, Optional
 
 import trulens.core.feedback.endpoint as mod_endpoint
-from trulens.utils.pyschema import WithClassInfo
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.pyschema import WithClassInfo
+from trulens.core.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class Provider(WithClassInfo, SerialModel):
     !!! example
 
         ```python
-        from trulens.ext.provider.huggingface import Huggingface
+        from trulens.providers.huggingface import Huggingface
         huggingface_provider = Huggingface()
         huggingface_provider.language_match(prompt, response)
         ```
@@ -53,7 +53,7 @@ class Provider(WithClassInfo, SerialModel):
     !!! example
 
         ```python
-        from trulens.ext.provider.openai import OpenAI
+        from trulens.providers.openai import OpenAI
         provider = OpenAI(model_engine="gpt-3.5-turbo")
         provider.relevance(prompt, response)
         ```

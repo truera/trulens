@@ -1,3 +1,3 @@
 # Guardrails with Langchain
 
-::: src.instrument.langchain.trulens.ext.instrument.langchain.guardrails
+::: src.instrument.langchain.trulens.instrument.langchain.guardrails

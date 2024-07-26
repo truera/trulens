@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Tuple, TypeVar
 
-from trulens.utils import serial
+from trulens.core.utils import serial
 
 T = TypeVar("T")
 

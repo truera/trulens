@@ -6,7 +6,7 @@ import datetime
 from typing import Optional
 
 import pydantic
-from trulens.utils.serial import SerialModel
+from trulens.core.utils.serial import SerialModel
 
 MAX_DILL_SIZE: int = 1024 * 1024  # 1MB
 """Max size in bytes of pickled objects."""

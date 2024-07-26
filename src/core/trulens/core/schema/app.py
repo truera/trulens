@@ -9,11 +9,12 @@ import dill
 import humanize
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import select as mod_select_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.utils import pyschema
-from trulens.utils import serial
-from trulens.utils.json import jsonify
-from trulens.utils.json import obj_id_of_obj
+from trulens.core.utils import pyschema
+from trulens.core.utils import serial
+from trulens.core.utils.json import jsonify
+from trulens.core.utils.json import obj_id_of_obj
 
 logger = logging.getLogger(__name__)
 
@@ -263,7 +264,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         """Get the path to the main app's call inputs."""
 
         return getattr(
-            mod_feedback_schema.Select.RecordCalls,
+            mod_select_schema.Select.RecordCalls,
             cls.root_callable.default_factory().name,
         ).args
 
@@ -272,7 +273,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         """Get the path to the main app's call outputs."""
 
         return getattr(
-            mod_feedback_schema.Select.RecordCalls,
+            mod_select_schema.Select.RecordCalls,
             cls.root_callable.default_factory().name,
         ).rets
 

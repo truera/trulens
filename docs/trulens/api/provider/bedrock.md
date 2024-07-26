@@ -9,4 +9,4 @@ All feedback functions listed in the base [LLMProvider
 class][trulens_eval.feedback.provider.base.LLMProvider] can be run with AWS
 Bedrock.
 
-::: src.provider.bedrock.trulens.ext.provider.bedrock.provider.Bedrock
+::: src.provider.bedrock.trulens.provider.bedrock.provider.Bedrock

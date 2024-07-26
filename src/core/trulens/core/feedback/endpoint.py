@@ -27,23 +27,23 @@ from typing import (
 from pydantic import Field
 import requests
 from trulens.core.schema.base import Cost
-from trulens.utils import asynchro as mod_asynchro_utils
-from trulens.utils import pace as mod_pace
-from trulens.utils.pyschema import WithClassInfo
-from trulens.utils.pyschema import safe_getattr
-from trulens.utils.python import SingletonPerName
-from trulens.utils.python import Thunk
-from trulens.utils.python import callable_name
-from trulens.utils.python import class_name
-from trulens.utils.python import get_first_local_in_call_stack
-from trulens.utils.python import is_really_coroutinefunction
-from trulens.utils.python import locals_except
-from trulens.utils.python import module_name
-from trulens.utils.python import safe_hasattr
-from trulens.utils.python import wrap_awaitable
-from trulens.utils.serial import JSON
-from trulens.utils.serial import SerialModel
-from trulens.utils.threading import DEFAULT_NETWORK_TIMEOUT
+from trulens.core.utils import asynchro as mod_asynchro_utils
+from trulens.core.utils import pace as mod_pace
+from trulens.core.utils.pyschema import WithClassInfo
+from trulens.core.utils.pyschema import safe_getattr
+from trulens.core.utils.python import SingletonPerName
+from trulens.core.utils.python import Thunk
+from trulens.core.utils.python import callable_name
+from trulens.core.utils.python import class_name
+from trulens.core.utils.python import get_first_local_in_call_stack
+from trulens.core.utils.python import is_really_coroutinefunction
+from trulens.core.utils.python import locals_except
+from trulens.core.utils.python import module_name
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.python import wrap_awaitable
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.serial import SerialModel
+from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
 logger = logging.getLogger(__name__)
 

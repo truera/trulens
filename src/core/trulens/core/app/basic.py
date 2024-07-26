@@ -13,8 +13,8 @@ from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import FunctionOrMethod
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.pyschema import FunctionOrMethod
 
 logger = logging.getLogger(__name__)
 

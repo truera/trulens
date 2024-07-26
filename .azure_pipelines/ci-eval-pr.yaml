@@ -47,8 +47,7 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
 
           # Show python version
-          which python
-          python --version
+          echo "Using $(python --version) ($(which python))"
         displayName: Env Setup
 
       - bash: |
@@ -66,7 +65,7 @@ jobs:
 
       - bash: |
           set -e
-          pytest --test-run-title="Required $(python-version) unit tests" $(tests-folder)
+          pytest --rootdir=$(tests-folder) --test-run-title="Required $(python-version) unit tests" .
         displayName: Unit Tests with Required Packages
 
       - bash: |
@@ -78,7 +77,7 @@ jobs:
 
       - bash: |
           set -e
-          pytest --test-run-title="Optional $(python-version) unit tests" $(tests-folder)
+          pytest --rootdir=$(tests-folder) --test-run-title="Optional $(python-version) unit tests" .
         env:
           # enables optional tests, see tests/unit/test.py
           TEST_OPTIONAL: true

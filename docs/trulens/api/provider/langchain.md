@@ -9,4 +9,4 @@ class][trulens_eval.feedback.provider.base.LLMProvider] can be run with the _Lan
 
     _LangChain_ provider cannot be used in `deferred` mode due to inconsistent serialization capabilities of _LangChain_ apps.
 
-::: src.provider.langchain.trulens.ext.provider.langchain.provider.Langchain
+::: src.provider.langchain.trulens.provider.langchain.provider.Langchain

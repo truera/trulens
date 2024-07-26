@@ -5,9 +5,9 @@ from string import Formatter
 from typing import ClassVar, Dict, List, Optional, Tuple, Union
 
 import pydantic
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.text import make_retab
 from trulens.feedback.generated import re_0_10_rating
-from trulens.utils.python import safe_hasattr
-from trulens.utils.text import make_retab
 
 
 # Level 1 abstraction

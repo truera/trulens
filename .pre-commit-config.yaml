@@ -28,3 +28,33 @@ repos:
     hooks:
       - id: toml-sort-fix
         exclude: ".*poetry.lock"
+-   repo: https://github.com/python-poetry/poetry
+    rev: 1.8.3
+    hooks:
+      - id: poetry-check
+      - id: poetry-check
+        args: [-C src/core]
+      - id: poetry-check
+        args: [-C src/benchmark]
+      - id: poetry-check
+        args: [-C src/feedback]
+      - id: poetry-check
+        args: [-C src/instrument/langchain]
+      - id: poetry-check
+        args: [-C src/instrument/llamaindex]
+      - id: poetry-check
+        args: [-C src/instrument/nemo]
+      - id: poetry-check
+        args: [-C src/providers/bedrock]
+      - id: poetry-check
+        args: [-C src/providers/cortex]
+      - id: poetry-check
+        args: [-C src/providers/huggingface]
+      - id: poetry-check
+        args: [-C src/providers/huggingface-local]
+      - id: poetry-check
+        args: [-C src/providers/langchain]
+      - id: poetry-check
+        args: [-C src/providers/litellm]
+      - id: poetry-check
+        args: [-C src/providers/openai]

@@ -6,7 +6,7 @@ import logging
 import re
 from typing import Optional
 
-from trulens.utils.text import retab
+from trulens.core.utils.text import retab
 
 logger = logging.getLogger(__name__)
 

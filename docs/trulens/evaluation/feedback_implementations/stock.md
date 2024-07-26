@@ -4,9 +4,9 @@
 
 ### 🤗 Huggingface
 
-API Reference: [Huggingface][src.provider.huggingface.trulens.ext.provider.huggingface.provider.Huggingface].
+API Reference: [Huggingface][src.provider.huggingface.trulens.provider.huggingface.provider.Huggingface].
 
-::: src.provider.huggingface.trulens.ext.provider.huggingface.provider.Huggingface
+::: src.provider.huggingface.trulens.provider.huggingface.provider.Huggingface
     options:
         heading_level: 4
         show_bases: false
@@ -31,9 +31,9 @@ API Reference: [Huggingface][src.provider.huggingface.trulens.ext.provider.huggi
 
 ### OpenAI
 
-API Reference: [OpenAI][src.provider.openai.trulens.ext.provider.openai.provider.OpenAI].
+API Reference: [OpenAI][src.provider.openai.trulens.provider.openai.provider.OpenAI].
 
-::: src.provider.openai.trulens.ext.provider.openai.provider.OpenAI
+::: src.provider.openai.trulens.provider.openai.provider.OpenAI
     options:
         heading_level: 4
         show_bases: false

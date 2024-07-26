@@ -15,7 +15,7 @@ in `__init__.py`:
 
 ```python
 with OptionalImports(messages=REQUIREMENT_INSTRUMENT_LLAMA):
-    from trulens.ext.instrument.llamaindex import TruLlama
+    from trulens.instrument.llamaindex import TruLlama
 ```
 
 This makes it so that `TruLlama` gets defined subsequently even if the import

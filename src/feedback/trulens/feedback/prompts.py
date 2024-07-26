@@ -26,23 +26,23 @@ SOURCE: {premise}
 STATEMENT: {hypothesis}
 """
 
-LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt.template
-LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt.template
+LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt
+LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt
 
-LLM_ANSWERABILITY_SYSTEM = v2.Answerability.system_prompt.template
-LLM_ANSWERABILITY_USER = v2.Answerability.user_prompt.template
+LLM_ANSWERABILITY_SYSTEM = v2.Answerability.system_prompt
+LLM_ANSWERABILITY_USER = v2.Answerability.user_prompt
 
-LLM_ABSTENTION_SYSTEM = v2.Abstention.system_prompt.template
-LLM_ABSTENTION_USER = v2.Abstention.user_prompt.template
+LLM_ABSTENTION_SYSTEM = v2.Abstention.system_prompt
+LLM_ABSTENTION_USER = v2.Abstention.user_prompt
 
-CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt.template
+CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt
 context_relevance_VERB_2S_TOP1 = (
-    v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
+    v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt
 )
-CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt.template
+CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt
 
-ANSWER_RELEVANCE_SYSTEM = v2.PromptResponseRelevance.system_prompt.template
-ANSWER_RELEVANCE_USER = v2.PromptResponseRelevance.user_prompt.template
+ANSWER_RELEVANCE_SYSTEM = v2.PromptResponseRelevance.system_prompt
+ANSWER_RELEVANCE_USER = v2.PromptResponseRelevance.user_prompt
 
 SYSTEM_FIND_SUPPORTING = """
 You are a summarizer that can only answer 'Nothing Found' or return exact sentences from this excerpt:
@@ -55,8 +55,8 @@ I'm looking for related information to a statement from your excerpt. If nothing
 Respond with all sentences, unchanged from the excerpt, that are directly related to this statement: {response}
 """
 
-SENTIMENT_SYSTEM = v2.Sentiment.system_prompt.template
-SENTIMENT_USER = v2.Sentiment.user_prompt.template
+SENTIMENT_SYSTEM = v2.Sentiment.system_prompt
+SENTIMENT_USER = v2.Sentiment.user_prompt
 
 CORRECT_SYSTEM = """
 You are a fact bot and you answer with verifiable facts
@@ -78,27 +78,25 @@ On a NEW LINE, give the integer score and nothing more.
 
 REMOVE_Y_N = " If so, respond Y. If not, respond N."
 
-LANGCHAIN_CONCISENESS_SYSTEM_PROMPT = v2.Conciseness.system_prompt.template
+LANGCHAIN_CONCISENESS_SYSTEM_PROMPT = v2.Conciseness.system_prompt
 
-LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT = v2.Correctness.system_prompt.template
+LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT = v2.Correctness.system_prompt
 
-LANGCHAIN_COHERENCE_SYSTEM_PROMPT = v2.Coherence.system_prompt.template
+LANGCHAIN_COHERENCE_SYSTEM_PROMPT = v2.Coherence.system_prompt
 
-LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT = v2.Harmfulness.system_prompt.template
+LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT = v2.Harmfulness.system_prompt
 
-LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT = v2.Maliciousness.system_prompt.template
+LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT = v2.Maliciousness.system_prompt
 
-LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT = v2.Helpfulness.system_prompt.template
+LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT = v2.Helpfulness.system_prompt
 
-LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT = (
-    v2.Controversiality.system_prompt.template
-)
+LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT = v2.Controversiality.system_prompt
 
-LANGCHAIN_MISOGYNY_SYSTEM_PROMPT = v2.Misogyny.system_prompt.template
+LANGCHAIN_MISOGYNY_SYSTEM_PROMPT = v2.Misogyny.system_prompt
 
-LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT = v2.Criminality.system_prompt.template
+LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT = v2.Criminality.system_prompt
 
-LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT = v2.Insensitivity.system_prompt.template
+LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT = v2.Insensitivity.system_prompt
 
 LANGCHAIN_PROMPT_TEMPLATE_SYSTEM = """
 CRITERIA:
@@ -115,8 +113,8 @@ LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM = (
     LANGCHAIN_PROMPT_TEMPLATE_SYSTEM + COT_REASONS_TEMPLATE
 )
 
-STEREOTYPES_SYSTEM_PROMPT = v2.Stereotypes.system_prompt.template
-STEREOTYPES_USER_PROMPT = v2.Stereotypes.user_prompt.template
+STEREOTYPES_SYSTEM_PROMPT = v2.Stereotypes.system_prompt
+STEREOTYPES_USER_PROMPT = v2.Stereotypes.user_prompt
 
 GENERATE_KEY_POINTS_SYSTEM_PROMPT = """
 INSTRUCTIONS:

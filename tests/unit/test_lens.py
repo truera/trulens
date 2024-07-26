@@ -7,9 +7,9 @@ from unittest import TestCase
 from unittest import main
 
 from munch import Munch
-from trulens.utils.serial import GetAttribute
-from trulens.utils.serial import GetItem
-from trulens.utils.serial import Lens
+from trulens.core.utils.serial import GetAttribute
+from trulens.core.utils.serial import GetItem
+from trulens.core.utils.serial import Lens
 
 pp = PrettyPrinter()
 

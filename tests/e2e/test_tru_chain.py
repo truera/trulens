@@ -15,8 +15,9 @@ from trulens.core import Tru
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.record import Record
-from trulens.utils.asynchro import sync
-from trulens.utils.keys import check_keys
+from trulens.core.utils.asynchro import sync
+from trulens.core.utils.keys import check_keys
+from trulens.instrument.langchain import TruChain
 
 from tests.unit.test import JSONTestCase
 from tests.unit.test import optional_test
@@ -227,7 +228,7 @@ class TestTruChain(JSONTestCase):
         # Get sync results.
         llm = ChatOpenAI(temperature=0.0)
         chain = LLMChain(llm=llm, prompt=prompt)
-        tc = tru.Chain(chain)
+        tc = TruChain(chain)
         sync_res, sync_record = tc.with_record(
             tc.app, inputs=dict(question=message)
         )
@@ -235,7 +236,7 @@ class TestTruChain(JSONTestCase):
         # Get async results.
         llm = ChatOpenAI(temperature=0.0)
         chain = LLMChain(llm=llm, prompt=prompt)
-        tc = tru.Chain(chain)
+        tc = TruChain(chain)
         async_res, async_record = sync(
             tc.awith_record,
             tc.app.acall,

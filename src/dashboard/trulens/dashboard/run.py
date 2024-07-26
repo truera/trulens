@@ -11,9 +11,9 @@ from threading import Thread
 from typing import Optional
 
 from trulens.core import Tru
+from trulens.core.utils.imports import static_resource
 from trulens.dashboard.notebook_utils import is_notebook
 from trulens.dashboard.notebook_utils import setup_widget_stdout_stderr
-from trulens.utils.imports import static_resource
 from typing_extensions import Annotated
 from typing_extensions import Doc
 

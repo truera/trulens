@@ -3,7 +3,7 @@ from concurrent.futures import wait
 import time
 
 from trulens.core.app.custom import instrument
-from trulens.utils.threading import ThreadPoolExecutor
+from trulens.core.utils.threading import ThreadPoolExecutor
 
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
 from examples.expositional.end2end_apps.custom_app.custom_memory import (

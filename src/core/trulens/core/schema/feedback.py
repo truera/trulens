@@ -20,10 +20,10 @@ from typing import (
 import pydantic
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.utils import pyschema
-from trulens.utils import serial
-from trulens.utils.json import obj_id_of_obj
-from trulens.utils.text import retab
+from trulens.core.utils import pyschema
+from trulens.core.utils import serial
+from trulens.core.utils.json import obj_id_of_obj
+from trulens.core.utils.text import retab
 
 T = TypeVar("T")
 

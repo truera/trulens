@@ -21,7 +21,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens-utils = "0.33.0"
 numpy = "^1.23.5"
 munch = "^3.0.0"
 dill = "^0.3.7"
@@ -32,6 +31,3 @@ pydantic = "^2"
 merkle-json = "^1.0.0"
 sqlalchemy = "^2.0.19"
 alembic = "^1.11.2"
-
-[tool.poetry.group.dev.dependencies]
-trulens-utils = {path = "../utils", develop = true}

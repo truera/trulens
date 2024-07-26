@@ -198,12 +198,12 @@ from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
 from trulens.core.instruments import instrument as base_instrument
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import Function
-from trulens.utils.pyschema import FunctionOrMethod
-from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import Lens
-from trulens.utils.text import UNICODE_CHECK
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.pyschema import Function
+from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.serial import Lens
+from trulens.core.utils.text import UNICODE_CHECK
 
 logger = logging.getLogger(__name__)
 

@@ -9,9 +9,9 @@ import sys
 from unittest import TestCase
 from unittest import main
 
-import trulens
+import trulens.core
 from trulens.core.instruments import Instrument
-from trulens.utils.imports import Dummy
+from trulens.core.utils.imports import Dummy
 
 from tests.unit.test import module_installed
 from tests.unit.test import optional_test
@@ -88,22 +88,16 @@ def get_all_modules(path: Path, startswith=None):
 
 # Get all modules inside trulens_eval:
 all_trulens_mods = get_all_modules(
-    Path(trulens.__file__).parent.parent, startswith="trulens_eval"
+    Path(trulens.core.__file__).parent.parent, startswith="trulens"
 )
 
 # Things which should not be imported at all.
 not_mods = [
-    "trulens_eval.database.migrations.env"  # can only be executed by alembic
+    "trulens.core.database.migrations.env"  # can only be executed by alembic
 ]
 
 if sys.version_info >= (3, 12):
-    not_mods.extend(
-        [
-            "snowflake",
-            "trulens.external.provider.cortex",
-            "trulens.external.provider.endpoint.cortex",
-        ]
-    )
+    not_mods.extend(["snowflake", "trulens.providers.cortex"])
 
 # Importing any of these should be ok regardless of optional packages. These are
 # all modules not mentioned in optional modules above.
@@ -166,15 +160,15 @@ class TestStatic(TestCase):
     def test_instrumentation_langchain(self):
         """Check that the langchain instrumentation is up to date."""
 
-        from trulens.ext.instrument.langchain import LangChainInstrument
+        from trulens.instrument.langchain import LangChainInstrument
 
         self._test_instrumentation(LangChainInstrument())
 
     @optional_test
-    def test_instrumentation_llama_index(self):
+    def test_instrumentation_llama_index(self) -> None:
         """Check that the llama_index instrumentation is up to date."""
 
-        from trulens.ext.instrument.llamaindex import LlamaInstrument
+        from trulens.instrument.llamaindex import LlamaInstrument
 
         self._test_instrumentation(LlamaInstrument())
 
@@ -182,12 +176,12 @@ class TestStatic(TestCase):
     def test_instrumentation_nemo(self):
         """Check that the nemo guardrails instrumentation is up to date."""
 
-        from trulens.ext.instrument.nemo import RailsInstrument
+        from trulens.instrument.nemo import RailsInstrument
 
         self._test_instrumentation(RailsInstrument())
 
     @requiredonly_test
-    def test_import_optional_fail(self):
+    def test_import_optional_fail(self) -> None:
         """
         Check that directly importing a module that depends on an optional
         package throws an import error. This test should happen only if optional

@@ -127,7 +127,7 @@ in the same manner as with non-virtual applications, using the newly added
 !!! example "Developing Feedback Functions"
 
     ```python
-    from trulens.ext.provider.openai import OpenAI
+    from trulens.providers.openai import OpenAI
     from trulens.core.feedback.feedback import Feedback
 
     # Initializing the feedback provider
@@ -212,14 +212,15 @@ from trulens.core.instruments import Instrument
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
-from trulens.utils import serial
-from trulens.utils.pyschema import Class
-from trulens.utils.pyschema import FunctionOrMethod
-from trulens.utils.pyschema import Method
-from trulens.utils.pyschema import Module
-from trulens.utils.pyschema import Obj
-from trulens.utils.serial import JSON
-from trulens.utils.serial import GetItemOrAttribute
+from trulens.core.schema import select as mod_select_schema
+from trulens.core.utils import serial
+from trulens.core.utils.pyschema import Class
+from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core.utils.pyschema import Method
+from trulens.core.utils.pyschema import Module
+from trulens.core.utils.pyschema import Obj
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.serial import GetItemOrAttribute
 
 logger = logging.getLogger(__name__)
 
@@ -245,7 +246,7 @@ class VirtualApp(dict):
             return super().__setitem__(__name, __value)
 
         # Chop off __app__ or __record__ prefix if there.
-        __name = mod_feedback_schema.Select.dequalify(__name)
+        __name = mod_select_schema.Select.dequalify(__name)
 
         # Chop off "app" prefix if there.
         if (
@@ -328,8 +329,8 @@ class VirtualRecord(mod_record_schema.Record):
     | PARAMETER | TYPE |DEFAULT |
     | --- | ---| --- |
     | `stack` | [List][typing.List][[RecordAppCallMethod][trulens.core.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens.core.app.virtual.virtual_object], method name derived from the last element of the selector of this call. |
-    | `args` | [JSON][trulens.utils.json.JSON] | `[]` |
-    | `rets` | [JSON][trulens.utils.json.JSON] | `[]` |
+    | `args` | [JSON][trulens.core.utils.json.JSON] | `[]` |
+    | `rets` | [JSON][trulens.core.utils.json.JSON] | `[]` |
     | `perf` | [Perf][trulens.schema.base.Perf] | Time spanning the processing of this virtual call. |
     | `pid` | [int][] | `0` |
     | `tid` | [int][] | `0` |
@@ -361,8 +362,8 @@ class VirtualRecord(mod_record_schema.Record):
 
                 if "stack" not in call:
                     path, method_name = (
-                        mod_feedback_schema.Select.path_and_method(
-                            mod_feedback_schema.Select.dequalify(lens)
+                        mod_select_schema.Select.path_and_method(
+                            mod_select_schema.Select.dequalify(lens)
                         )
                     )
                     method = virtual_method_call.replace(name=method_name)

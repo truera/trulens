@@ -1,3 +1,3 @@
 # OpenAI Endpoint
 
-::: src.provider.openai.trulens.ext.provider.openai.endpoint
+::: src.provider.openai.trulens.provider.openai.endpoint
