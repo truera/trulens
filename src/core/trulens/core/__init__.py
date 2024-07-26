@@ -12,7 +12,6 @@ from trulens.core.feedback import Provider
 from trulens.core.schema import FeedbackMode
 from trulens.core.schema import Select
 from trulens.core.tru import Tru
-from trulens.utils.imports import check_imports
 
 __all__ = [
     "Tru",  # main interface
