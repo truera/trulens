@@ -114,8 +114,14 @@ plugins:
               - "^__call__$" # and __call__ methods
 
           paths:
-            - trulens_explain
-            - trulens
+#            - trulens_explain
+            - trulens_eval/src/core
+            - trulens_eval/src/dashboard
+            - trulens_eval/src/feedback
+            - trulens_eval/src/instrument
+            - trulens_eval/src/provider
+            - trulens_eval/src/testing
+            - trulens_eval/src/utils
           #selection:
 
   - redirects:
