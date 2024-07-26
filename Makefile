@@ -2,11 +2,6 @@
 # How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
 
 SHELL := /bin/bash
-CONDA_ENV := py312
-CONDA_ACTIVATE := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
-CONDA := $(CONDA_ACTIVATE) $(CONDA_ENV)
-
-PYENV:=PYTHONPATH=$(PWD)
 
 # Make targets useful for developing TruLens.
 # How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
@@ -17,198 +12,152 @@ PYENV:=PYTHONPATH=$(PWD)
 # run in a conda env.
 .ONESHELL:
 
-# Create the conda env for building website, docs, formatting, etc.
-.conda/docs:
-	conda create python=3.12 --yes --prefix=.conda/docs
-	$(CONDA) .conda/docs
-	pip install -r trulens_eval/trulens_eval/requirements.txt
-	pip install -r trulens_eval/trulens_eval/requirements.optional.txt
-	pip install -r requirements.docs.txt
-	pip install -r requirements.dev.txt
+# Create the poetry env for building website, docs, formatting, etc.
+.env/create:
+	poetry install --sync
 
 # Run the code formatter.
-format: .conda/docs
-	$(CONDA) .conda/docs
-	bash format.sh
+lint: .env/create
+	ruff check --fix
+
+format: .env/create
+	ruff format
 
 # Start a jupyer lab instance.
 lab:
-	$(CONDA) .conda/docs
-	jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
+	poetry run jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 # Serve the documentation website.
-serve: .conda/docs
-	$(CONDA) .conda/docs
-	mkdocs serve -a 127.0.0.1:8000
+serve: .env/create
+	poetry run mkdocs serve -a 127.0.0.1:8000
 
 # Serve the documentation website.
-serve-debug: .conda/docs
-	$(CONDA) .conda/docs
-	mkdocs serve -a 127.0.0.1:8000 --verbose
+serve-debug: .env/create
+	poetry run mkdocs serve -a 127.0.0.1:8000 --verbose
 
 # The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
 # break references.
-serve-dirty: .conda/docs
-	$(CONDA) .conda/docs
-	mkdocs serve --dirty -a 127.0.0.1:8000
+serve-dirty: .env/create
+	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
 # Build the documentation website.
-site: .conda/docs $(shell find docs -type f) mkdocs.yml
-	$(CONDA) .conda/docs
-	mkdocs build --clean
+site: .env/create $(shell find docs -type f) mkdocs.yml
+	poetry run mkdocs build --clean
 	rm -Rf site/overrides
 
-upload: .conda/docs $(shell find docs -type f) mkdocs.yml
-	$(CONDA) .conda/docs
-	mkdocs gh-deploy
+upload-docs: .env/create $(shell find docs -type f) mkdocs.yml
+	poetry run mkdocs gh-deploy
 
 # Check that links in the documentation are valid. Requires the lychee tool.
 linkcheck: site
 	lychee "site/**/*.html"
 
-
-# Create conda enviornments with all of the supported python versions. The "req"
-# ones with just the required packages and the "opt" ones with also the optional
-# packages.
-test-envs: \
-	.conda/py-req-3.8 .conda/py-req-3.9 .conda/py-req-3.10 .conda/py-req-3.11 .conda/py-req-3.12 \
-	.conda/py-opt-3.8 .conda/py-opt-3.9 .conda/py-opt-3.10 .conda/py-opt-3.11 .conda/py-opt-3.12
-
-# Create a conda env for a particular python version with trulens and just
-# the required packages.
-.conda/py-req-%:
-	conda create -p .conda/py-req-$* python=$* -y
-	$(CONDA_ACTIVATE) .conda/py-req-$*; \
-		pip install -r trulens_eval/requirements.txt
-
-# Create a conda env for a particular python version with trulens and
-# the required and optional packages.
-.conda/py-opt-%:
-	conda create -p .conda/py-opt-$* python=$* -y
-	$(CONDA_ACTIVATE) .conda/py-opt-$*; \
-		pip install -r trulens_eval/requirements.txt; \
-		pip install -r trulens_eval/requirements.optional.txt
-
 # Start the trubot slack app.
 trubot:
-	$(CONDA); ($(PYENV) python -u examples/trubot/trubot.py)
+	poetry run python -u examples/trubot/trubot.py)
 
 # Run a test with the optional flag set, meaning @optional_test decorated tests
 # are run.
-test-%-optional:
-	TEST_OPTIONAL=1 make test-$*
+required-env:
+	poetry install --only main,tests --verbose
+
+optional-env:
+	poetry install --sync --verbose
+
+# Generic target to run any test with given environment
+test-%: required-env
+	make test-$*
+
+test-%-optional: optional-env
+	make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
 test-unit:
-	$(CONDA); python -m unittest discover tests.unit
+	poetry run pytest --rootdir=tests/unit .
 
 test-lens:
-	$(CONDA); python -m unittest tests.unit.test_lens
+	poetry run pytest --rootdir=tests/unit/test_lens .
 
 test-feedback:
-	$(CONDA); python -m unittest tests.unit.test_feedback
+	poetry run pytest --rootdir=tests/unit/test_feedback .
 
 test-tru-basic-app:
-	$(CONDA); python -m unittest tests.unit.test_tru_basic_app
+	poetry run pytest --rootdir=tests/unit/test_tru_basic_app .
 
 test-tru-custom:
-	$(CONDA); python -m unittest tests.unit.test_tru_custom
+	poetry run pytest --rootdir=tests/unit/test_tru_custom .
 
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
 # the latest (supported) python version.
 test-static:
-	$(CONDA); python -m unittest tests.unit.static.test_static
+	poetry run pytest --rootdir=tests/unit/static/test_static .
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
 test-e2e:
-	$(CONDA); python -m unittest discover tests.e2e
+	poetry run pytest --rootdir=tests/e2e .
 
 test-tru:
-	$(CONDA); python -m unittest tests.e2e.test_tru
+	poetry run pytest --rootdir=tests/e2e/test_tru .
 
 test-tru-chain:
-	$(CONDA); python -m unittest tests.e2e.test_tru_chain
+	poetry run pytest --rootdir=tests/e2e/test_tru_chain .
 
 test-tru-llama:
-	$(CONDA); python -m unittest tests.e2e.test_tru_llama
+	poetry run pytest --rootdir=tests/e2e/test_tru_llama .
 
 test-providers:
-	$(CONDA); python -m unittest tests.e2e.test_providers
+	poetry run pytest --rootdir=tests/e2e/test_providers .
 
 test-endpoints:
-	$(CONDA); python -m unittest tests.e2e.test_endpoints
+	poetry run pytest --rootdir=tests/e2e/test_endpoints .
 
-# Database integration tests for various database types supported by sqlaclhemy.
+# Database integration tests for various database types supported by sqlalchemy.
 # While those don't use costly endpoints, they may be more computation intensive.
-test-database:
-	$(CONDA); pip install psycopg2-binary pymysql cryptography
+
+.env/create/db:
+	poetry install --only main,tests,db-tests --sync --verbose
+
+test-database: .env/create/db
 	docker compose --file docker/test-database.yaml up --quiet-pull --detach --wait --wait-timeout 30
-	$(CONDA); python -m unittest discover tests.integration.test_database
+	poetry run pytest tests/integration/test_database.py
 	docker compose --file docker/test-database.yaml down
 
 # These tests all operate on local file databases and don't require docker.
-test-database-specification:
-	$(CONDA); python -m unittest discover tests.integration.test_database -k TestDBSpecifications
+test-database-specification: .env/create/db
+	poetry run pytest tests/integration/test_database.py::TestDBSpecifications
 
 # The next 3 database migration/versioning tests:
 test-database-versioning: test-database-v2migration test-database-legacy-migration test-database-future
 
 # Test migrating a latest legacy sqlite database to sqlalchemy database.
-test-database-v2migration:
-	$(CONDA); python -m unittest \
-		tests.integration.test_database.TestDbV2Migration.test_migrate_legacy_sqlite_file
+test-database-v2migration: .env/create/db
+	poetry run pytest tests/integration/test_database.py::TestDbV2Migration::test_migrate_legacy_sqlite_file
 
 # Test migrating non-latest legacy databases to sqlaclhemy database.
-test-database-legacy-migration:
-	$(CONDA); python -m unittest \
-		tests.integration.test_database.TestDbV2Migration.test_migrate_legacy_legacy_sqlite_file
+test-database-legacy-migration: .env/create/db
+	poetry run pytest tests/integration/test_database.py::TestDbV2Migration::test_migrate_legacy_legacy_sqlite_file
 
 # Test handling of a db that is newer than expected.
-test-database-future:
-	$(CONDA); python -m unittest \
-		tests.integration.test_database.TestDbV2Migration.test_future_db
-
-# Run the code formatter and imports organizer.
-format:
-	$(CONDA); cd ..; bash format.sh --eval
-
-# Start a jupyter lab server locally with the token being set to "deadbeef".
-lab:
-	$(CONDA); jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
-
-example_app:
-	$(CONDA); $(PYENV) streamlit run trulens_eval/Example_Application.py
-
-example_trubot:
-	$(CONDA); $(PYENV) streamlit run trulens_eval/Example_TruBot.py
-
-# Start the dashboard.
-leaderboard:
-	$(CONDA); $(PYENV) streamlit run trulens_eval/Leaderboard.py
-
-# Rebuild the react components.
-react:
-	$(CONDA); \
-		npm i --prefix trulens_eval/react_components/record_viewer; \
-		npm run --prefix trulens_eval/react_components/record_viewer build
+test-database-future: .env/create/db
+	poetry run pytest tests/integration/test_database.py::TestDbV2Migration::test_future_db
 
 # Release Steps:
 
-# Step: Clean repo:
+## Step: Clean repo:
 clean:
 	git clean -fxd
 
-# Step: Packages trulens into .whl file
+## Step: Packages trulens into .whl file
 build:
-	python setup.py bdist_wheel
+	poetry build
 
-# Step: Uploads .whl file to PyPI, run make with:
+## Step: Uploads .whl file to PyPI, run make with:
 # https://portal.azure.com/#@truera.com/asset/Microsoft_Azure_KeyVault/Secret/https://trulenspypi.vault.azure.net/secrets/trulens-pypi-api-token/abe0d9a3a5aa470e84c12335c9c04c72
 
-# TOKEN=... make upload
+## TOKEN=... make upload
 upload:
 	twine upload -u __token__ -p $(TOKEN) dist/*.whl
 
