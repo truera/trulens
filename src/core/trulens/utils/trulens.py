@@ -25,7 +25,7 @@ def constructor_of_class(cls_obj: Class) -> Type[base.TrulensComponent]:
         if view.class_is(cls_obj):
             return view
 
-    raise TypeError(f"Unknown trulens component type with class {cls}")
+    raise TypeError(f"Unknown trulens component type with class {cls_obj}")
 
 
 def component_of_json(json: dict) -> base.TrulensComponent:
