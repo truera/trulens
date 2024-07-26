@@ -6,11 +6,25 @@ various langchain classes and example classes:
 from typing import Type
 
 from trulens.core.app import base
+from trulens.core.app.base import ComponentView
 from trulens.utils.pyschema import Class
 from trulens.utils.serial import JSON
 
 
-class Prompt(base.Prompt, base.LangChainComponent):
+class LangChainComponent(ComponentView):
+    @staticmethod
+    def class_is(cls_obj: Class) -> bool:
+        if ComponentView.innermost_base(cls_obj.bases) == "langchain":
+            return True
+
+        return False
+
+    @staticmethod
+    def of_json(json: JSON) -> "LangChainComponent":
+        return component_of_json(json)
+
+
+class Prompt(base.Prompt, LangChainComponent):
     @property
     def template(self) -> str:
         return self.json["template"]
@@ -19,17 +33,17 @@ class Prompt(base.Prompt, base.LangChainComponent):
         return super().unsorted_parameters(skip=set(["template"]))
 
     @staticmethod
-    def class_is(cls: Class) -> bool:
-        return cls.noserio_issubclass(
+    def class_is(cls_obj: Class) -> bool:
+        return cls_obj.noserio_issubclass(
             module_name="langchain.prompts.base",
             class_name="BasePromptTemplate",
-        ) or cls.noserio_issubclass(
+        ) or cls_obj.noserio_issubclass(
             module_name="langchain.schema.prompt_template",
             class_name="BasePromptTemplate",
         )  # langchain >= 0.230
 
 
-class LLM(base.LLM, base.LangChainComponent):
+class LLM(base.LLM, LangChainComponent):
     @property
     def model_name(self) -> str:
         return self.json["model_name"]
@@ -38,13 +52,13 @@ class LLM(base.LLM, base.LangChainComponent):
         return super().unsorted_parameters(skip=set(["model_name"]))
 
     @staticmethod
-    def class_is(cls: Class) -> bool:
-        return cls.noserio_issubclass(
+    def class_is(cls_obj: Class) -> bool:
+        return cls_obj.noserio_issubclass(
             module_name="langchain.llms.base", class_name="BaseLLM"
         )
 
 
-class Other(base.Other, base.LangChainComponent):
+class Other(base.Other, LangChainComponent):
     pass
 
 
@@ -52,15 +66,15 @@ class Other(base.Other, base.LangChainComponent):
 COMPONENT_VIEWS = [Prompt, LLM, Other]
 
 
-def constructor_of_class(cls: Class) -> Type[base.LangChainComponent]:
+def constructor_of_class(cls_obj: Class) -> Type[LangChainComponent]:
     for view in COMPONENT_VIEWS:
-        if view.class_is(cls):
+        if view.class_is(cls_obj):
             return view
 
-    raise TypeError(f"Unknown llama_index component type with class {cls}")
+    raise TypeError(f"Unknown llama_index component type with class {cls_obj}")
 
 
-def component_of_json(json: JSON) -> base.LangChainComponent:
+def component_of_json(json: JSON) -> LangChainComponent:
     cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)

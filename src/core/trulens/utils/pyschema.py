@@ -28,6 +28,7 @@ import warnings
 import pydantic
 from trulens.utils.python import safe_hasattr
 from trulens.utils.python import safe_issubclass
+from trulens.utils.serial import JSON
 from trulens.utils.serial import SerialModel
 
 logger = logging.getLogger(__name__)
@@ -247,7 +248,7 @@ class Class(SerialModel):
         )
 
     @staticmethod
-    def of_class_info(json: dict):
+    def of_class_info(json: JSON):
         assert CLASS_INFO in json, "Class info not in json."
         return Class.model_validate(json[CLASS_INFO])
 

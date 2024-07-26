@@ -1,11 +1,11 @@
 from concurrent.futures import as_completed
 from typing import List
 
+from llama_index.core.indices.query.schema import QueryBundle
 from llama_index.core.query_engine.retriever_query_engine import (
     RetrieverQueryEngine,
 )
-from llama_index.indices.query.schema import QueryBundle
-from llama_index.schema import NodeWithScore
+from llama_index.core.schema import NodeWithScore
 from trulens.core import Feedback
 from trulens.utils.threading import ThreadPoolExecutor
 

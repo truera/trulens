@@ -9,10 +9,25 @@ various llama_index classes and example classes:
 from typing import Type
 
 from trulens.core.app import base
+from trulens.core.app.base import ComponentView
 from trulens.utils.pyschema import Class
+from trulens.utils.serial import JSON
 
 
-class Prompt(base.Prompt, base.LlamaIndexComponent):
+class LlamaIndexComponent(ComponentView):
+    @staticmethod
+    def class_is(cls_obj: Class) -> bool:
+        if ComponentView.innermost_base(cls_obj.bases) == "llama_index":
+            return True
+
+        return False
+
+    @staticmethod
+    def of_json(json: JSON) -> "LlamaIndexComponent":
+        return component_of_json(json)
+
+
+class Prompt(base.Prompt, LlamaIndexComponent):
     @property
     def template(self) -> str:
         return self.json["template"]
@@ -21,13 +36,13 @@ class Prompt(base.Prompt, base.LlamaIndexComponent):
         return super().unsorted_parameters(skip=set(["template"]))
 
     @staticmethod
-    def class_is(cls: Class) -> bool:
-        return cls.noserio_issubclass(
+    def class_is(cls_obj: Class) -> bool:
+        return cls_obj.noserio_issubclass(
             module_name="llama_index.prompts.base", class_name="Prompt"
         )
 
 
-class Agent(base.Agent, base.LlamaIndexComponent):
+class Agent(base.Agent, LlamaIndexComponent):
     @property
     def agent_name(self) -> str:
         return "agent name not supported in llama_index"
@@ -36,13 +51,13 @@ class Agent(base.Agent, base.LlamaIndexComponent):
         return super().unsorted_parameters(skip=set())
 
     @staticmethod
-    def class_is(cls: Class) -> bool:
-        return cls.noserio_issubclass(
+    def class_is(cls_obj: Class) -> bool:
+        return cls_obj.noserio_issubclass(
             module_name="llama_index.agent.types", class_name="BaseAgent"
         )
 
 
-class Tool(base.Tool, base.LlamaIndexComponent):
+class Tool(base.Tool, LlamaIndexComponent):
     @property
     def tool_name(self) -> str:
         if "metadata" in self.json:
@@ -54,13 +69,13 @@ class Tool(base.Tool, base.LlamaIndexComponent):
         return super().unsorted_parameters(skip=set(["model"]))
 
     @staticmethod
-    def class_is(cls: Class) -> bool:
-        return cls.noserio_issubclass(
+    def class_is(cls_obj: Class) -> bool:
+        return cls_obj.noserio_issubclass(
             module_name="llama_index.tools.types", class_name="BaseTool"
         )
 
 
-class LLM(base.LLM, base.LlamaIndexComponent):
+class LLM(base.LLM, LlamaIndexComponent):
     @property
     def model_name(self) -> str:
         return self.json["model"]
@@ -69,13 +84,13 @@ class LLM(base.LLM, base.LlamaIndexComponent):
         return super().unsorted_parameters(skip=set(["model"]))
 
     @staticmethod
-    def class_is(cls: Class) -> bool:
-        return cls.noserio_issubclass(
+    def class_is(cls_obj: Class) -> bool:
+        return cls_obj.noserio_issubclass(
             module_name="llama_index.llms.base", class_name="LLM"
         )
 
 
-class Other(base.Other, base.LlamaIndexComponent):
+class Other(base.Other, LlamaIndexComponent):
     pass
 
 
@@ -83,15 +98,15 @@ class Other(base.Other, base.LlamaIndexComponent):
 COMPONENT_VIEWS = [Agent, Tool, Prompt, LLM, Other]
 
 
-def constructor_of_class(cls: Class) -> Type[base.LlamaIndexComponent]:
+def constructor_of_class(cls_obj: Class) -> Type[LlamaIndexComponent]:
     for view in COMPONENT_VIEWS:
-        if view.class_is(cls):
+        if view.class_is(cls_obj):
             return view
 
-    raise TypeError(f"Unknown llama_index component type with class {cls}")
+    raise TypeError(f"Unknown llama_index component type with class {cls_obj}")
 
 
-def component_of_json(json: dict) -> base.LlamaIndexComponent:
+def component_of_json(json: JSON) -> LlamaIndexComponent:
     cls = Class.of_class_info(json)
 
     view = constructor_of_class(cls)

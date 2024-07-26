@@ -20,9 +20,9 @@ class Other(base.Other, base.TrulensComponent):
 COMPONENT_VIEWS = [Other]
 
 
-def constructor_of_class(cls: Class) -> Type[base.TrulensComponent]:
+def constructor_of_class(cls_obj: Class) -> Type[base.TrulensComponent]:
     for view in COMPONENT_VIEWS:
-        if view.class_is(cls):
+        if view.class_is(cls_obj):
             return view
 
     raise TypeError(f"Unknown trulens component type with class {cls}")

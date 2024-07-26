@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from abc import ABCMeta
 from abc import abstractmethod
 import contextvars
 import datetime
@@ -89,8 +90,22 @@ manager as in this example:
 ```
 """
 
+_component_impls: Dict[str, Type[ComponentView]] = {}
 
-class ComponentView(ABC):
+
+class ComponentViewMeta(ABCMeta):
+    def __init__(
+        cls,
+        classname: str,
+        bases: Tuple[Type[ComponentView]],
+        dict_: Dict[str, Any],
+    ):
+        newtype = type.__init__(cls, classname, bases, dict_)
+        _component_impls[classname] = cls  # type: ignore[assignment]
+        return newtype
+
+
+class ComponentView(ABC, metaclass=ComponentViewMeta):
     """
     Views of common app component types for sorting them and displaying them in
     some unified manner in the UI. Operates on components serialized into json
@@ -107,24 +122,17 @@ class ComponentView(ABC):
         Sort the given json into the appropriate component view type.
         """
 
-        cls = Class.of_class_info(json)
+        cls_obj = Class.of_class_info(json)
+        for name, view in _component_impls.items():
+            # NOTE: includes prompt, llm, tool, agent, memory, other which may be overriden
+            if view.class_is(cls_obj):
+                return view.of_json(json)
 
-        if LangChainComponent.class_is(cls):
-            return LangChainComponent.of_json(json)
-        elif LlamaIndexComponent.class_is(cls):
-            return LlamaIndexComponent.of_json(json)
-        elif TrulensComponent.class_is(cls):
-            return TrulensComponent.of_json(json)
-        elif CustomComponent.class_is(cls):
-            return CustomComponent.of_json(json)
-        else:
-            # TODO: custom class
-
-            raise TypeError(f"Unhandled component type with class {cls}")
+        raise TypeError(f"Unhandled component type with class {cls_obj}")
 
     @staticmethod
     @abstractmethod
-    def class_is(cls: Class) -> bool:
+    def class_is(cls_obj: Class) -> bool:
         """
         Determine whether the given class representation `cls` is of the type to
         be viewed as this component type.
@@ -171,44 +179,14 @@ class ComponentView(ABC):
         return None
 
 
-class LangChainComponent(ComponentView):
-    @staticmethod
-    def class_is(cls: Class) -> bool:
-        if ComponentView.innermost_base(cls.bases) == "langchain":
-            return True
-
-        return False
-
-    @staticmethod
-    def of_json(json: JSON) -> "LangChainComponent":
-        from trulens.utils.langchain import component_of_json
-
-        return component_of_json(json)
-
-
-class LlamaIndexComponent(ComponentView):
-    @staticmethod
-    def class_is(cls: Class) -> bool:
-        if ComponentView.innermost_base(cls.bases) == "llama_index":
-            return True
-
-        return False
-
-    @staticmethod
-    def of_json(json: JSON) -> "LlamaIndexComponent":
-        from trulens.utils.llama import component_of_json
-
-        return component_of_json(json)
-
-
 class TrulensComponent(ComponentView):
     """
     Components provided in trulens.
     """
 
     @staticmethod
-    def class_is(cls: Class) -> bool:
-        if ComponentView.innermost_base(cls.bases) == "trulens":
+    def class_is(cls_obj: Class) -> bool:
+        if ComponentView.innermost_base(cls_obj.bases) == "trulens":
             return True
 
         # if any(base.module.module_name.startswith("trulens.") for base in cls.bases):
@@ -280,18 +258,18 @@ class CustomComponent(ComponentView):
         # "Custom" catch-all.
 
         @staticmethod
-        def class_is(cls: Class) -> bool:
+        def class_is(cls_obj: Class) -> bool:
             return True
 
     COMPONENT_VIEWS = [Custom]
 
     @staticmethod
-    def constructor_of_class(cls: Class) -> Type["CustomComponent"]:
+    def constructor_of_class(cls_obj: Class) -> Type["CustomComponent"]:
         for view in CustomComponent.COMPONENT_VIEWS:
-            if view.class_is(cls):
+            if view.class_is(cls_obj):
                 return view
 
-        raise TypeError(f"Unknown custom component type with class {cls}")
+        raise TypeError(f"Unknown custom component type with class {cls_obj}")
 
     @staticmethod
     def component_of_json(json: JSON) -> "CustomComponent":
@@ -302,7 +280,7 @@ class CustomComponent(ComponentView):
         return view(json)
 
     @staticmethod
-    def class_is(cls: Class) -> bool:
+    def class_is(cls_obj: Class) -> bool:
         # Assumes this is the last check done.
         return True
 
