@@ -22,7 +22,7 @@ from trulens.core import feedback
 from trulens.core.app import base as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import Select
 from trulens.core.utils.containers import dict_set_with_multikey
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.pyschema import Class
@@ -36,7 +36,7 @@ from trulens.instrument.langchain import LangChainInstrument
 logger = logging.getLogger(__name__)
 
 
-class RailsActionSelect(mod_feedback_schema.Select):
+class RailsActionSelect(Select):
     """Selector shorthands for _NeMo Guardrails_ apps when used for evaluating
     feedback in actions.
 
@@ -432,9 +432,7 @@ class TruRails(mod_app.App):
         """
         Get the path to the context in the query output.
         """
-        return mod_feedback_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[
-            :
-        ].body
+        return Select.RecordCalls.kb.search_relevant_chunks.rets[:].body
 
     def __getattr__(self, name):
         if name == "__name__":

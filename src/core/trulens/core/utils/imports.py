@@ -70,13 +70,13 @@ def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
 
 
 required_packages: Dict[str, requirements.Requirement] = requirements_of_file(
-    static_resource("utils", "requirements.txt")
+    static_resource("core.utils", "requirements.txt")
 )
 """Mapping of required package names to the requirement object with info
 about that requirement including version constraints."""
 
 optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(
-    static_resource("utils", "requirements.optional.txt")
+    static_resource("core.utils", "requirements.optional.txt")
 )
 """Mapping of optional package names to the requirement object with info
 about that requirement including version constraints."""

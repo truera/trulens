@@ -212,6 +212,7 @@ from trulens.core.instruments import Instrument
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import select as mod_select_schema
 from trulens.core.utils import serial
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.pyschema import FunctionOrMethod
@@ -245,7 +246,7 @@ class VirtualApp(dict):
             return super().__setitem__(__name, __value)
 
         # Chop off __app__ or __record__ prefix if there.
-        __name = mod_feedback_schema.Select.dequalify(__name)
+        __name = mod_select_schema.Select.dequalify(__name)
 
         # Chop off "app" prefix if there.
         if (
@@ -361,8 +362,8 @@ class VirtualRecord(mod_record_schema.Record):
 
                 if "stack" not in call:
                     path, method_name = (
-                        mod_feedback_schema.Select.path_and_method(
-                            mod_feedback_schema.Select.dequalify(lens)
+                        mod_select_schema.Select.path_and_method(
+                            mod_select_schema.Select.dequalify(lens)
                         )
                     )
                     method = virtual_method_call.replace(name=method_name)

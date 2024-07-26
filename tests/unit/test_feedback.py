@@ -24,7 +24,7 @@ from tests.unit.feedbacks import skip_if_odd
 class TestFeedbackEval(TestCase):
     """Tests for feedback function evaluation."""
 
-    def test_skipeval(self):
+    def test_skipeval(self) -> None:
         """Test the SkipEval capability."""
 
         f = Feedback(imp=skip_if_odd).on(
@@ -54,7 +54,7 @@ class TestFeedbackEval(TestCase):
         self.assertEqual(res.status, FeedbackResultStatus.DONE)
         # Status should be DONE.
 
-    def test_skipeval_all(self):
+    def test_skipeval_all(self) -> None:
         """Test the SkipEval capability for when all evals are skipped"""
 
         f = Feedback(imp=skip_if_odd).on(
@@ -84,11 +84,11 @@ class TestFeedbackEval(TestCase):
 class TestFeedbackConstructors(TestCase):
     """Test for feedback function serialization/deserialization."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.app = TruBasicApp(text_to_text=lambda t: f"returning {t}")
         _, self.record = self.app.with_record(self.app.app, t="hello")
 
-    def test_global_feedback_functions(self):
+    def test_global_feedback_functions(self) -> None:
         # NOTE: currently static methods and class methods are not supported
 
         for imp, target in [
@@ -121,7 +121,7 @@ class TestFeedbackConstructors(TestCase):
 
                 self.assertEqual(res.result, target)
 
-    def test_global_unsupported(self):
+    def test_global_unsupported(self) -> None:
         # Each of these should fail when trying to serialize/deserialize.
 
         for imp, target in [
@@ -141,7 +141,7 @@ class TestFeedbackConstructors(TestCase):
                 with self.assertRaises(Exception):
                     Feedback.model_validate(f.model_dump())
 
-    def test_nonglobal_feedback_functions(self):
+    def test_nonglobal_feedback_functions(self) -> None:
         # Set up the same feedback functions as in feedback.py but locally here.
         # This makes them non-globally-importable.
 

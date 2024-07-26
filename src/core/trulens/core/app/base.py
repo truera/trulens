@@ -35,6 +35,7 @@ from trulens.core import tru as mod_tru
 from trulens.core.database import base as mod_db
 import trulens.core.feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
+from trulens.core.schema import Select
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
@@ -566,7 +567,7 @@ class App(
 
         if self.instrument is not None:
             self.instrument.instrument_object(
-                obj=self.app, query=mod_feedback_schema.Select.Query().app
+                obj=self.app, query=Select.Query().app
             )
         else:
             pass
@@ -1530,8 +1531,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         return "\n".join(
             f"Object at 0x{obj:x}:\n\t"
             + "\n\t".join(
-                f"{m} with path {mod_feedback_schema.Select.App + path}"
-                for m, path in p.items()
+                f"{m} with path {Select.App + path}" for m, path in p.items()
             )
             for obj, p in self.instrumented_methods.items()
         )
