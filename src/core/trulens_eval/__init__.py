@@ -33,53 +33,53 @@ from trulens.core.app import virtual as mod_tru_virtual
 from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.feedback import provider as mod_provider
 from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.utils import imports as mod_imports_utils
-from trulens.utils import threading as mod_threading_utils
+from trulens.core.utils import imports as mod_imports_utils
+from trulens.core.utils import threading as mod_threading_utils
 
 # Optional provider types.
 
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_PROVIDER_LITELLM):
-    from trulens.ext.feedback.provider.litellm.provider import LiteLLM
+    from trulens.providers.litellm.provider import LiteLLM
 
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_PROVIDER_BEDROCK):
-    from trulens.ext.feedback.provider.bedrock.provider import Bedrock
+    from trulens.providers.bedrock.provider import Bedrock
 
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_PROVIDER_OPENAI):
-    from trulens.ext.feedback.provider.openai.provider import AzureOpenAI
-    from trulens.ext.feedback.provider.openai.provider import OpenAI
+    from trulens.providers.openai.provider import AzureOpenAI
+    from trulens.providers.openai.provider import OpenAI
 
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE):
-    from trulens.ext.provider.huggingface.provider import Huggingface
+    from trulens.providers.huggingface.provider import Huggingface
 
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL):
-    from trulens.ext.provider.huggingfacelocal.provider import HuggingfaceLocal
+    from trulens.providers.huggingfacelocal.provider import HuggingfaceLocal
 
 with mod_imports_utils.OptionalImports(
     messages=mod_imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN):
-    from trulens.ext.provider.langchain.provider import Langchain
+    from trulens.providers.langchain.provider import Langchain
 
 # the dependency snowflake-snowpark-python not yet supported in 3.12
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_PROVIDER_CORTEX):
-    from trulens.ext.feedback.provider.cortex.provider import Cortex
+    from trulens.providers.cortex.provider import Cortex
 
 # Optional app types.
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN):
-    from trulens.ext.instrument.langchain.tru_chain import TruChain
+    from trulens.instrument.langchain.tru_chain import TruChain
 
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_INSTRUMENT_LLAMA):
-    from trulens.ext.instrument.llama.tru_llama import TruLlama
+    from trulens.instrument.llama.tru_llama import TruLlama
 
 with mod_imports_utils.OptionalImports(
         messages=mod_imports_utils.REQUIREMENT_INSTRUMENT_NEMO):
-    from trulens.ext.instrument.nemo.tru_rails import TruRails
+    from trulens.instrument.nemo.tru_rails import TruRails
 
 
 Tru = mod_tru.Tru
