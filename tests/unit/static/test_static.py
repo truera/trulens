@@ -166,7 +166,7 @@ class TestStatic(TestCase):
     def test_instrumentation_langchain(self):
         """Check that the langchain instrumentation is up to date."""
 
-        from trulens.ext.instrument.langchain import LangChainInstrument
+        from trulens.instrument.langchain import LangChainInstrument
 
         self._test_instrumentation(LangChainInstrument())
 
@@ -174,7 +174,7 @@ class TestStatic(TestCase):
     def test_instrumentation_llama_index(self):
         """Check that the llama_index instrumentation is up to date."""
 
-        from trulens.ext.instrument.llamaindex import LlamaInstrument
+        from trulens.instrument.llamaindex import LlamaInstrument
 
         self._test_instrumentation(LlamaInstrument())
 
@@ -182,7 +182,7 @@ class TestStatic(TestCase):
     def test_instrumentation_nemo(self):
         """Check that the nemo guardrails instrumentation is up to date."""
 
-        from trulens.ext.instrument.nemo import RailsInstrument
+        from trulens.instrument.nemo import RailsInstrument
 
         self._test_instrumentation(RailsInstrument())
 

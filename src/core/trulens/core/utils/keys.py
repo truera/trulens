@@ -53,7 +53,7 @@ print(os.environ)
   `check_keys` check:
 
 ```python
-from trulens.ext.provider.openai import OpenAIEndpoint
+from trulens.providers.openai import OpenAIEndpoint
 openai_endpoint = OpenAIEndpoint(api_key="something")
 ```
 
@@ -62,7 +62,7 @@ openai_endpoint = OpenAIEndpoint(api_key="something")
   example, with `openai`, do this ahead of the `check_keys` check:
 
 ```python
-from trulens.ext.provider.openai import OpenAI
+from trulens.providers.openai import OpenAI
 openai_feedbacks = OpenAI(api_key="something")
 ```
 

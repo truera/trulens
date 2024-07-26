@@ -84,7 +84,7 @@ For example:
 ```python
 response = my_llm_app(query)
 
-from trulens.ext.instrument.langchain import TruChain
+from trulens.instrument.langchain import TruChain
 tru_recorder = TruChain(
     my_llm_app,
     app_id='Chain1_ChatApplication')

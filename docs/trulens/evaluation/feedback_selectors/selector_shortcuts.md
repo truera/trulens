@@ -41,7 +41,7 @@ Some wrappers include additional shorthands:
   Usage:
 
   ```python
-  from trulens.ext.instrument.llamaindex import TruLlama
+  from trulens.instrument.llamaindex import TruLlama
   source_nodes = TruLlama.select_source_nodes(query_engine)
   ```
 
@@ -51,7 +51,7 @@ Some wrappers include additional shorthands:
   Usage:
 
   ```python
-  from trulens.ext.instrument.llamaindex import TruLlama
+  from trulens.instrument.llamaindex import TruLlama
   context = TruLlama.select_context(query_engine)
   ```
 
@@ -63,7 +63,7 @@ Some wrappers include additional shorthands:
   Usage:
 
   ```python
-  from trulens.ext.instrument.langchain import TruChain
+  from trulens.instrument.langchain import TruChain
   context = TruChain.select_context(retriever_chain)
   ```
 

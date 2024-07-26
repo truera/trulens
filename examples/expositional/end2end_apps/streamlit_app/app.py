@@ -4,8 +4,8 @@ import streamlit as st
 from trulens.core import Feedback
 from trulens.core import Tru
 import trulens.dashboard.streamlit as trulens_st
-from trulens.ext.instrument.langchain import TruChain
-from trulens.ext.provider.openai import OpenAI as fOpenAI
+from trulens.instrument.langchain import TruChain
+from trulens.providers.openai import OpenAI as fOpenAI
 
 load_dotenv()
 

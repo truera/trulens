@@ -4702,8 +4702,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
+    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -7322,7 +7322,6 @@ psutil = "^5.9.8"
 pydantic = "^2"
 sqlalchemy = "^2.0.19"
 tqdm = "^4.66.1"
-trulens-utils = "0.33.0"
 typing_extensions = "^4.9.0"
 
 [package.source]
@@ -7379,7 +7378,7 @@ name = "trulens-instrument-langchain"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
-python-versions = ">=3.9,<3.13"
+python-versions = "^3.9,<3.13"
 files = []
 develop = true
 
@@ -7417,7 +7416,7 @@ name = "trulens-instrument-nemo"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
-python-versions = ">=3.9,<3.12"
+python-versions = "^3.9,<3.12"
 files = []
 develop = true
 
@@ -7448,14 +7447,14 @@ trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
-url = "src/provider/bedrock"
+url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-provider-cortex"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
-python-versions = ">=3.9,<3.12"
+python-versions = "^3.9,<3.12"
 files = []
 develop = true
 
@@ -7467,7 +7466,7 @@ trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
-url = "src/provider/cortex"
+url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-provider-huggingface"
@@ -7488,7 +7487,7 @@ trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
-url = "src/provider/huggingface"
+url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-provider-huggingface-local"
@@ -7507,7 +7506,7 @@ trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
-url = "src/provider/huggingface-local"
+url = "src/providers/huggingface-local"
 
 [[package]]
 name = "trulens-provider-langchain"
@@ -7525,7 +7524,7 @@ trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
-url = "src/provider/langchain"
+url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-provider-litellm"
@@ -7543,7 +7542,7 @@ trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
-url = "src/provider/litellm"
+url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-provider-openai"
@@ -7555,34 +7554,14 @@ files = []
 develop = true
 
 [package.dependencies]
-langchain_openai = "^0.0.5"
-openai = "^1.1.1"
+langchain-openai = "^0.0.5"
+openai = "^1.37.1"
 trulens-core = "^0.33.0"
 trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
-url = "src/provider/openai"
-
-[[package]]
-name = "trulens-utils"
-version = "0.33.0"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "^3.9"
-files = []
-develop = true
-
-[package.dependencies]
-merkle-json = ">=1.0.0"
-munch = ">=3.0.0"
-nest-asyncio = ">=1.5.8"
-pydantic = "^2"
-python-dotenv = ">=1.0.0"
-
-[package.source]
-type = "directory"
-url = "src/utils"
+url = "src/providers/openai"
 
 [[package]]
 name = "typer"
@@ -8301,4 +8280,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "df5c5ee3b821d12982928aeb9d3a4ada0e6a42679a1f0c35c881fd6ab568fb0a"
+content-hash = "70b375a61cf7a8b32ddc5b75bdf3fe7eb5a06781b2ddac113f84611984e3e08b"

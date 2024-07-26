@@ -8,8 +8,8 @@ import unittest
 from unittest import TestCase
 from unittest import main
 
-from trulens.ext.provider.huggingface import Huggingface
-from trulens.ext.provider.openai import OpenAI
+from trulens.providers.huggingface import Huggingface
+from trulens.providers.openai import OpenAI
 from trulens.feedback import LLMProvider
 from trulens.core.utils.keys import check_keys
 
@@ -550,7 +550,7 @@ class TestProviders(TestCase):
         Check that OpenAI moderation feedback functions produce a value in the
         0-1 range only. Only checks each feedback function once.
         """
-        from trulens.ext.provider.openai import OpenAI
+        from trulens.providers.openai import OpenAI
 
         o = OpenAI()
 
@@ -576,7 +576,7 @@ class TestProviders(TestCase):
         produce criteria and supporting evidence. Only checks each feedback function
         once for each model.
         """
-        from trulens.ext.provider.openai import OpenAI
+        from trulens.providers.openai import OpenAI
 
         models = ["gpt-3.5-turbo"]
         provider_models = [
@@ -686,7 +686,7 @@ class TestProviders(TestCase):
         Check that OpenAI moderation feedback functions produce reasonable
         values.
         """
-        from trulens.ext.provider.openai import OpenAI
+        from trulens.providers.openai import OpenAI
 
         o = OpenAI()
 
@@ -702,7 +702,7 @@ class TestProviders(TestCase):
         """
         Check that LLMProvider feedback functions produce reasonable values.
         """
-        from trulens.ext.provider.openai import OpenAI
+        from trulens.providers.openai import OpenAI
 
         provider_models = [
             (OpenAI(model_engine=model), model)
@@ -758,7 +758,7 @@ class TestProviders(TestCase):
         Only checks each feedback function once.
         """
 
-        from trulens.ext.provider.huggingface import Huggingface
+        from trulens.providers.huggingface import Huggingface
 
         h = Huggingface()
 
@@ -822,7 +822,7 @@ class TestProviders(TestCase):
         Check that Huggingface moderation feedback functions produce reasonable
         values.
         """
-        from trulens.ext.provider.huggingface import Huggingface
+        from trulens.providers.huggingface import Huggingface
 
         h = Huggingface()
 
@@ -867,7 +867,7 @@ class TestProviders(TestCase):
         Check that LangChain feedback functions produce values within the expected range
         and adhere to the expected format.
         """
-        from trulens.ext.provider.langchain import LangChain
+        from trulens.providers.langchain import LangChain
 
         lc = LangChain()
 

@@ -9,4 +9,4 @@ class][trulens_eval.feedback.provider.base.LLMProvider] can be run with the Azur
 
     _Azure OpenAI_ does not support the _OpenAI_ moderation endpoint.
 
-::: src.provider.openai.trulens.ext.provider.openai.provider.AzureOpenAI
+::: src.provider.openai.trulens.provider.openai.provider.AzureOpenAI

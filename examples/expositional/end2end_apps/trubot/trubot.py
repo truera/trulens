@@ -17,11 +17,11 @@ from trulens.core import Feedback
 from trulens.core import Select
 from trulens.core import Tru
 from trulens.core.schema.feedback import FeedbackMode
-from trulens.ext.instrument.langchain import TruChain
-from trulens.ext.instrument.langchain import WithFeedbackFilterDocuments
+from trulens.instrument.langchain import TruChain
+from trulens.instrument.langchain import WithFeedbackFilterDocuments
 from trulens.core.utils.keys import check_keys
-from trulens.ext.provider.huggingface import Huggingface
-from trulens.ext.provider.openai import OpenAI as fOpenAI
+from trulens.providers.huggingface import Huggingface
+from trulens.providers.openai import OpenAI as fOpenAI
 
 check_keys(
     "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"

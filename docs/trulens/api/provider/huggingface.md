@@ -1,3 +1,3 @@
 # 🤗 Huggingface Provider
 
-::: src.provider.huggingface.trulens.ext.provider.huggingface.provider.Huggingface
+::: src.provider.huggingface.trulens.provider.huggingface.provider.Huggingface

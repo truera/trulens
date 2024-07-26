@@ -1,3 +1,3 @@
 # Guardrails with Llama-Index
 
-::: src.instrument.llamaindex.trulens.ext.instrument.llamaindex.guardrails
+::: src.instrument.llamaindex.trulens.instrument.llamaindex.guardrails

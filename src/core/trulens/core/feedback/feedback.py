@@ -123,7 +123,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
     Example:
         ```python
         from trulens.core import Feedback
-        from trulens.ext.provider.huggingface import Huggingface
+        from trulens.providers.huggingface import Huggingface
         hugs = Huggingface()
 
         # Create a feedback function from a provider:

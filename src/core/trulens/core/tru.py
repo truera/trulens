@@ -65,13 +65,13 @@ class Tru(python.SingletonPerName):
     referred to by `database_url`.
 
     Supported App Types:
-        [TruChain][trulens.ext.instrument.langchain.TruChain]: Langchain
+        [TruChain][trulens.instrument.langchain.TruChain]: Langchain
             apps.
 
-        [TruLlama][trulens.ext.instrument.llamaindex.TruLlama]: Llama Index
+        [TruLlama][trulens.instrument.llamaindex.TruLlama]: Llama Index
             apps.
 
-        [TruRails][trulens.ext.instrument.nemo.TruRails]: NeMo Guardrails apps.
+        [TruRails][trulens.instrument.nemo.TruRails]: NeMo Guardrails apps.
 
         [TruBasicApp][trulens.core.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
@@ -215,17 +215,17 @@ class Tru(python.SingletonPerName):
 
     # def Chain(
     #     self, chain: langchain.chains.base.Chain, **kwargs: dict
-    # ) -> trulens.ext.instrument.langchain.TruChain:
+    # ) -> trulens.instrument.langchain.TruChain:
     #     """Create a langchain app recorder with database managed by self.
 
     #     Args:
     #         chain: The langchain chain defining the app to be instrumented.
 
     #         **kwargs: Additional keyword arguments to pass to the
-    #             [TruChain][trulens.ext.instrument.langchain.TruChain].
+    #             [TruChain][trulens.instrument.langchain.TruChain].
     #     """
 
-    #     from trulens.ext.instrument.langchain import TruChain
+    #     from trulens.instrument.langchain import TruChain
 
     #     return TruChain(tru=self, app=chain, **kwargs)
 
@@ -236,7 +236,7 @@ class Tru(python.SingletonPerName):
     #         llama_index.chat_engine.types.BaseChatEngine,
     #     ],
     #     **kwargs: dict,
-    # ) -> trulens.ext.instrument.llamaindex.TruLlama:
+    # ) -> trulens.instrument.llamaindex.TruLlama:
     #     """Create a llama-index app recorder with database managed by self.
 
     #     Args:
@@ -244,10 +244,10 @@ class Tru(python.SingletonPerName):
     #             the app to be instrumented.
 
     #         **kwargs: Additional keyword arguments to pass to
-    #             [TruLlama][trulens.ext.instrument.llamaindex.TruLlama].
+    #             [TruLlama][trulens.instrument.llamaindex.TruLlama].
     #     """
 
-    #     from trulens.ext.instrument.llamaindex import TruLlama
+    #     from trulens.instrument.llamaindex import TruLlama
 
     #     return TruLlama(tru=self, app=engine, **kwargs)
 

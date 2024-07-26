@@ -14,7 +14,7 @@ from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
 
 with OptionalImports(messages=REQUIREMENT_OPENAI):
-    from trulens.ext.provider.openai import OpenAI
+    from trulens.providers.openai import OpenAI
 
 with OptionalImports(messages=REQUIREMENT_BERT_SCORE):
     from bert_score import BERTScorer

@@ -658,17 +658,17 @@ class App(
         # Checking by module name so we don't have to try to import either
         # langchain or llama_index beforehand.
         if type(app).__module__.startswith("langchain"):
-            from trulens.ext.instrument.langchain import TruChain
+            from trulens.instrument.langchain import TruChain
 
             return TruChain.select_context(app)
 
         if type(app).__module__.startswith("llama_index"):
-            from trulens.ext.instrument.llamaindex import TruLlama
+            from trulens.instrument.llamaindex import TruLlama
 
             return TruLlama.select_context(app)
 
         elif type(app).__module__.startswith("nemoguardrails"):
-            from trulens.ext.instrument.nemo import TruRails
+            from trulens.instrument.nemo import TruRails
 
             return TruRails.select_context(app)
 
