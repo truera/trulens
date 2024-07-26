@@ -9,6 +9,7 @@ from typing import (
     Any,
     ClassVar,
     Dict,
+    Generator,
     Iterable,
     List,
     Optional,
@@ -787,8 +788,8 @@ class AppsExtractor:
 
     def get_df_and_cols(
         self,
-        apps: Optional[List["mod_orm.AppDefinition"]] = None,
-        records: Optional[List["mod_orm.Record"]] = None,
+        apps: Optional[List["mod_orm.ORM.AppDefinition"]] = None,
+        records: Optional[List["mod_orm.ORM.Record"]] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Produces a records dataframe which joins in information from apps and
         feedback results.
@@ -824,8 +825,8 @@ class AppsExtractor:
 
     def extract_apps(
         self,
-        apps: Iterable["mod_orm.AppDefinition"],
-        records: Optional[List["mod_orm.Record"]] = None,
+        apps: Iterable["mod_orm.ORM.AppDefinition"],
+        records: Optional[List["mod_orm.ORM.Record"]] = None,
     ) -> Iterable[pd.DataFrame]:
         """
         Creates record rows with app information.
@@ -880,7 +881,7 @@ class AppsExtractor:
                 print(f"Error details: {e}")
 
     def extract_records(
-        self, records: Iterable["mod_orm.Record"]
+        self, records: Iterable["mod_orm.ORM.Record"]
     ) -> Iterable[pd.Series]:
         for _rec in records:
             calls = defaultdict(list)
@@ -933,7 +934,9 @@ class AppsExtractor:
 
 
 def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
-    def _flatten(_nested):
+    def _flatten(
+        _nested: Iterable[Iterable[Any]],
+    ) -> Generator[Any, None, None]:
         for iterable in _nested:
             for element in iterable:
                 yield element

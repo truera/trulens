@@ -45,7 +45,7 @@ ERROR = "__tru_property_error"
 NOSERIO = "__tru_non_serialized_object"
 
 
-def is_noserio(obj):
+def is_noserio(obj: Any) -> bool:
     """
     Determines whether the given json object represents some non-serializable
     object. See `noserio`.
@@ -53,7 +53,7 @@ def is_noserio(obj):
     return isinstance(obj, dict) and NOSERIO in obj
 
 
-def noserio(obj, **extra: Dict) -> dict:
+def noserio(obj: Any, **extra: Dict) -> Dict:
     """
     Create a json structure to represent a non-serializable object. Any
     additional keyword arguments are included.

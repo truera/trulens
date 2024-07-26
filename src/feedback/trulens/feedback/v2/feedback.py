@@ -627,7 +627,7 @@ class COTExplained(Feedback):
         pass
 
     @classmethod
-    def of_feedback(cls, feedback: WithPrompt) -> "FeedbackWithExplanation":
+    def of_feedback(cls, feedback: WithPrompt) -> WithPrompt:
         # Create the cot explained version of a feedback that is based on a prompt.
         system_prompt = feedback.prompt
 

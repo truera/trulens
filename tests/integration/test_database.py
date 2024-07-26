@@ -51,7 +51,7 @@ from trulens.core.schema.feedback import Select
 class TestDBSpecifications(TestCase):
     """Tests for database options."""
 
-    def test_prefix(self):
+    def test_prefix(self) -> None:
         """Test that the table prefix is correctly used to name tables in the database."""
 
         db_types = ["sqlite_file"]  # , "postgres", "mysql", "sqlite_memory"
@@ -69,7 +69,7 @@ class TestDBSpecifications(TestCase):
                         )
                         print(df)
 
-    def test_copy(self):
+    def test_copy(self) -> None:
         """Test copying of databases via [copy_database][trulens_eval.database.utils.copy_database]."""
 
         db_types = ["sqlite_file"]  # , "postgres", "mysql", "sqlite_memory"
@@ -127,7 +127,7 @@ class TestDBSpecifications(TestCase):
                                             f"Expected exactly one {orm_class}.",
                                         )
 
-    def test_migrate_prefix(self):
+    def test_migrate_prefix(self) -> None:
         """Test that database migration works across different prefixes."""
 
         db_types = ["sqlite_file"]  # , "postgres", "mysql", "sqlite_memory"
@@ -159,37 +159,37 @@ class TestDbV2Migration(TestCase):
     various kinds.
     """
 
-    def test_db_migration_sqlite_file(self):
+    def test_db_migration_sqlite_file(self) -> None:
         """Test migration from legacy sqlite db to sqlite db."""
         with clean_db("sqlite_file") as db:
             _test_db_migration(db)
 
-    def test_db_migration_postgres(self):
+    def test_db_migration_postgres(self) -> None:
         """Test migration from legacy sqlite db to postgres db."""
         with clean_db("postgres") as db:
             _test_db_migration(db)
 
-    def test_db_migration_mysql(self):
+    def test_db_migration_mysql(self) -> None:
         """Test migration from legacy sqlite db to mysql db."""
         with clean_db("mysql") as db:
             _test_db_migration(db)
 
-    def test_db_consistency_sqlite_file(self):
+    def test_db_consistency_sqlite_file(self) -> None:
         """Test database consistency after migration to sqlite."""
         with clean_db("sqlite_file") as db:
             _test_db_consistency(self, db)
 
-    def test_db_consistency_postgres(self):
+    def test_db_consistency_postgres(self) -> None:
         """Test database consistency after migration to postgres."""
         with clean_db("postgres") as db:
             _test_db_consistency(self, db)
 
-    def test_db_consistency_mysql(self):
+    def test_db_consistency_mysql(self) -> None:
         """Test database consistency after migration to mysql."""
         with clean_db("mysql") as db:
             _test_db_consistency(self, db)
 
-    def test_future_db(self):
+    def test_future_db(self) -> None:
         """Check handling of database that is newer than the current
         trulens_eval's db version.
 
@@ -211,7 +211,7 @@ class TestDbV2Migration(TestCase):
 
                     self._test_future_db(dbfile=dbfile)
 
-    def _test_future_db(self, dbfile: Path = None):
+    def _test_future_db(self, dbfile: Path = None) -> None:
         db = SQLAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
         self.assertFalse(is_legacy_sqlite(db.engine))
 
@@ -232,7 +232,7 @@ class TestDbV2Migration(TestCase):
             e.exception.reason, DatabaseVersionException.Reason.AHEAD
         )
 
-    def test_migrate_legacy_legacy_sqlite_file(self):
+    def test_migrate_legacy_legacy_sqlite_file(self) -> None:
         """Migration from non-latest lagecy db files all the way to v2 database.
 
         This involves migrating the legacy dbs to the latest legacy first.
@@ -255,7 +255,9 @@ class TestDbV2Migration(TestCase):
 
                     self._test_migrate_legacy_legacy_sqlite_file(dbfile=dbfile)
 
-    def _test_migrate_legacy_legacy_sqlite_file(self, dbfile: Path = None):
+    def _test_migrate_legacy_legacy_sqlite_file(
+        self, dbfile: Path = None
+    ) -> None:
         # run migration
         db = SQLAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
         self.assertTrue(is_legacy_sqlite(db.engine))

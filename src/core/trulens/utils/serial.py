@@ -10,6 +10,7 @@ from __future__ import annotations
 import ast
 from ast import dump
 from ast import parse
+import base64
 from contextvars import ContextVar
 from copy import copy
 import logging
@@ -35,10 +36,12 @@ from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
 from pydantic import GetCoreSchemaHandler
+from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic_core import CoreSchema
 from pydantic_core import core_schema
-import rich
+import rich.repr
 from trulens.utils.containers import iterable_peek
+from trulens.utils.json import json_str_of_obj
 from trulens.utils.python import class_name
 
 logger = logging.getLogger(__name__)
@@ -94,7 +97,7 @@ class JSONized(dict, Generic[T]):  # really JSON_STRICT
 mj = MerkleJson()
 
 
-def model_dump(obj: Union[pydantic.BaseModel, pydantic.v1.BaseModel]) -> dict:
+def model_dump(obj: Union[pydantic.BaseModel, v1BaseModel]) -> dict:
     """
     Return the dict/model_dump of the given pydantic instance regardless of it
     being v2 or v1.
@@ -102,7 +105,7 @@ def model_dump(obj: Union[pydantic.BaseModel, pydantic.v1.BaseModel]) -> dict:
 
     if isinstance(obj, pydantic.BaseModel):
         return obj.model_dump()
-    elif isinstance(obj, pydantic.v1.BaseModel):
+    elif isinstance(obj, v1BaseModel):
         return obj.dict()
     else:
         raise ValueError("Not a pydantic.BaseModel.")
@@ -151,8 +154,6 @@ class SerialModel(pydantic.BaseModel):
             SerialModel.formatted_objects.reset(tok)
 
     def model_dump_json(self, **kwargs):
-        from trulens.utils.json import json_str_of_obj
-
         return json_str_of_obj(self, **kwargs)
 
     def model_dump(self, **kwargs):
@@ -163,13 +164,13 @@ class SerialModel(pydantic.BaseModel):
     # NOTE(piotrm): regaring model_validate: custom deserialization is done in
     # WithClassInfo class but only for classes that mix it in.
 
-    def update(self, **d):
+    def update(self, **d: Dict[Any, Any]) -> SerialModel:
         for k, v in d.items():
             setattr(self, k, v)
 
         return self
 
-    def replace(self, **d):
+    def replace(self, **d: Dict[Any, Any]) -> SerialModel:
         copy = self.model_copy()
         copy.update(**d)
         return copy
@@ -180,8 +181,6 @@ class SerialBytes(pydantic.BaseModel):
     data: bytes
 
     def dict(self):
-        import base64
-
         encoded = base64.b64encode(self.data)
         return dict(data=encoded)
 
@@ -190,8 +189,6 @@ class SerialBytes(pydantic.BaseModel):
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
-        import base64
-
         if isinstance(obj, Dict):
             encoded = obj["data"]
             if isinstance(encoded, str):
@@ -287,11 +284,11 @@ class GetAttribute(StepItemOrAttribute):
     attribute: str
 
     # Hashable requirement.
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.attribute)
 
     # StepItemOrAttribute requirement
-    def get_item_or_attribute(self):
+    def get_item_or_attribute(self) -> str:
         return self.attribute
 
     # Step requirement
@@ -319,7 +316,7 @@ class GetAttribute(StepItemOrAttribute):
             setattr(obj, self.attribute, val)
             return obj
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f".{self.attribute}"
 
 
@@ -327,7 +324,7 @@ class GetIndex(Step):
     index: int
 
     # Hashable requirement
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.index)
 
     # Step requirement
@@ -357,7 +354,7 @@ class GetIndex(Step):
         obj[self.index] = val
         return obj
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"[{self.index}]"
 
 
@@ -365,11 +362,11 @@ class GetItem(StepItemOrAttribute):
     item: str
 
     # Hashable requirement
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.item)
 
     # StepItemOrAttribute requirement
-    def get_item_or_attribute(self):
+    def get_item_or_attribute(self) -> str:
         return self.item
 
     # Step requirement
@@ -395,7 +392,7 @@ class GetItem(StepItemOrAttribute):
         obj[self.item] = val
         return obj
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"[{repr(self.item)}]"
 
 
@@ -411,11 +408,11 @@ class GetItemOrAttribute(StepItemOrAttribute):
     item_or_attribute: str  # distinct from "item" for deserialization
 
     # Hashable requirement
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.item_or_attribute)
 
     # StepItemOrAttribute requirement
-    def get_item_or_attribute(self):
+    def get_item_or_attribute(self) -> str:
         return self.item_or_attribute
 
     # Step requirement
@@ -477,7 +474,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
 
         return obj
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f".{self.item_or_attribute}"
 
 
@@ -487,7 +484,7 @@ class GetSlice(Step):
     step: Optional[int]
 
     # Hashable requirement
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.start, self.stop, self.step))
 
     # Step requirement
@@ -520,7 +517,7 @@ class GetSlice(Step):
 
         return obj
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         pieces = ":".join(
             [
                 "" if p is None else str(p)
@@ -537,7 +534,7 @@ class GetIndices(Step):
     indices: Tuple[int, ...]
 
     # Hashable requirement
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.indices)
 
     def __init__(self, indices: Iterable[int]):
@@ -570,7 +567,7 @@ class GetIndices(Step):
 
         return obj
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"[{','.join(map(str, self.indices))}]"
 
 
@@ -578,7 +575,7 @@ class GetItems(Step):
     items: Tuple[str, ...]
 
     # Hashable requirement
-    def __hash__(self):
+    def __hash__(self) -> str:
         return hash(self.items)
 
     def __init__(self, items: Iterable[str]):
@@ -607,7 +604,7 @@ class GetItems(Step):
 
         return obj
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "[" + (",".join(f"'{i}'" for i in self.items)) + "]"
 
 
@@ -616,7 +613,7 @@ class ParseException(Exception):
         self.exp_string = exp_string
         self.exp_ast = exp_ast
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f'Failed to parse expression `{self.exp_string}` as a `Lens`.'
             f"\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
