@@ -158,61 +158,6 @@ dependencies get installed and hopefully corrected:
 """
 
 
-class VersionConflict(Exception):
-    """Exception to raise when a version conflict is found in a required package."""
-
-
-def check_imports(ignore_version_mismatch: bool = False):
-    """Check required and optional package versions.
-
-    Args:
-        ignore_version_mismatch: If set, will not raise an error if a
-            version mismatch is found in a required package. Regardless of
-            this setting, mismatch in an optional package is a warning.
-
-    Raises:
-        VersionConflict: If a version mismatch is found in a required package
-            and `ignore_version_mismatch` is not set.
-    """
-
-    for n, req in all_packages.items():
-        is_optional = n in optional_packages
-
-        try:
-            dist = metadata.distribution(req.name)
-
-        except metadata.PackageNotFoundError as e:
-            if is_optional:
-                logger.debug(MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
-
-            else:
-                raise ModuleNotFoundError(
-                    MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND.format(req=req)
-                ) from e
-
-        if dist.version not in req.specifier:
-            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(
-                req=req, dist=dist
-            )
-
-            if is_optional:
-                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(
-                    req=req
-                )
-
-            else:
-                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(
-                    req=req
-                )
-
-            message += MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP.format(req=req)
-
-            if (not is_optional) and (not ignore_version_mismatch):
-                raise VersionConflict(message)
-
-            logger.debug(message)
-
-
 def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
     """
     Pin the requirement to the version assuming it is lower bounded by a
@@ -316,43 +261,12 @@ REQUIREMENT_LLAMA = format_import_errors(
     "llama-index", purpose="instrumenting LlamaIndex apps"
 )
 
-REQUIREMENT_LANGCHAIN = format_import_errors(
-    "langchain", purpose="instrumenting LangChain apps"
-)
-
-REQUIREMENT_RAILS = format_import_errors(
-    "nemoguardrails", purpose="instrumenting NeMo Guardrails apps"
-)
-
-REQUIREMENT_PINECONE = format_import_errors(
-    # package name is "pinecone-client" but module is "pinecone"
-    ["pinecone-client", "langchain_community"],
-    purpose="running TruBot",
-)
-
 REQUIREMENT_SKLEARN = format_import_errors(
     "scikit-learn", purpose="using embedding vector distances"
 )
 
-REQUIREMENT_LITELLM = format_import_errors(
-    ["litellm"], purpose="using LiteLLM models"
-)
-
-REQUIREMENT_BEDROCK = format_import_errors(
-    ["boto3", "botocore"], purpose="using Bedrock models"
-)
-
 REQUIREMENT_OPENAI = format_import_errors(
     ["openai", "langchain_community"], purpose="using OpenAI models"
-)
-
-REQUIREMENT_CORTEX = format_import_errors(
-    ["snowflake-snowpark-python", "snowflake-connector-python"],
-    purpose="using Snowflake Cortex serverless LLM functions",
-)
-
-REQUIREMENT_GROUNDEDNESS = format_import_errors(
-    "nltk", purpose="using some groundedness feedback functions"
 )
 
 REQUIREMENT_BERT_SCORE = format_import_errors(

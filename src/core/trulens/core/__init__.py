@@ -14,8 +14,6 @@ from trulens.core.schema import Select
 from trulens.core.tru import Tru
 from trulens.utils.imports import check_imports
 
-check_imports()
-
 __all__ = [
     "Tru",  # main interface
     # app types

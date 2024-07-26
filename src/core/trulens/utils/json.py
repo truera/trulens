@@ -10,11 +10,11 @@ from pathlib import Path
 from pprint import PrettyPrinter
 from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Set, TypeVar
 
+import httpx
 from merkle_json import MerkleJson
+from openai import Timeout
 import pydantic
 from pydantic.v1.json import ENCODERS_BY_TYPE
-from trulens.utils.imports import REQUIREMENT_OPENAI
-from trulens.utils.imports import OptionalImports
 from trulens.utils.keys import redact_value
 from trulens.utils.pyschema import CIRCLE
 from trulens.utils.pyschema import CLASS_INFO
@@ -36,6 +36,20 @@ if TYPE_CHECKING:
     from trulens.core.instruments import Instrument
 
 
+def encode_httpx_url(obj: httpx.URL):
+    return str(obj)
+
+
+ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
+
+
+def encode_openai_timeout(obj: Timeout):
+    return obj.as_dict()
+
+
+ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
+
+
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
@@ -44,23 +58,6 @@ T = TypeVar("T")
 mj = MerkleJson()
 
 # Add encoders for some types that pydantic cannot handle but we need.
-
-with OptionalImports(messages=REQUIREMENT_OPENAI):
-    # httpx.URL needed for openai client.
-    import httpx
-
-    # Another thing we need for openai client.
-    from openai import Timeout
-
-    def encode_httpx_url(obj: httpx.URL):
-        return str(obj)
-
-    ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
-
-    def encode_openai_timeout(obj: Timeout):
-        return obj.as_dict()
-
-    ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
 
 
 def obj_id_of_obj(obj: dict, prefix="obj"):

@@ -7,7 +7,7 @@ name = "trulens-dashboard"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
-  {name = "Truera Inc", email = "all@truera.com"}
+  {name = "Truera Inc", email = "all@truera.com"},
 ]
 readme = "README.md"
 license = {text = "MIT License"}
@@ -20,18 +20,20 @@ dependencies = [
   "streamlit-aggrid == 0.3.4",
   "streamlit-extras >= 0.4.0",
   "streamlit-pills >= 0.3.0",
-  "rich >= 13.6.0"
+  "rich >= 13.6.0",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
   "Development Status :: 3 - Alpha",
-  "License :: OSI Approved :: MIT License"
+  "License :: OSI Approved :: MIT License",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "build >= 1.2.1"
+  "build >= 1.2.1",
+  "ipython >= 7.25.0",
+  "ipywidgets >= 8.1.3",
 ]
 
 [tool.setuptools.exclude-package-data]
@@ -41,13 +43,13 @@ trulens = ['dashboard/react_components/*/node_modules/*']
 trulens = [
   'dashboard',
   'dashboard/react_components/**/*',
-  'dashboard/react_components/*/dist/*'
+  'dashboard/react_components/*/dist/*',
 ]
 
 [tool.setuptools.packages.find]
 include = [
   "trulens",
   "trulens.dashboard",
-  "trulens.dashboard.*"
+  "trulens.dashboard.*",
 ]
 namespaces = true

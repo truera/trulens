@@ -10,13 +10,13 @@ authors = ["Truera Inc <all@truera.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [
-  {include = "trulens"}
+  {include = "trulens"},
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
   "Development Status :: 3 - Alpha",
-  "License :: OSI Approved :: MIT License"
+  "License :: OSI Approved :: MIT License",
 ]
 
 [tool.poetry.dependencies]

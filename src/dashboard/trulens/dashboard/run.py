@@ -11,7 +11,8 @@ from threading import Thread
 from typing import Optional
 
 from trulens.core import Tru
-from trulens.utils import notebook_utils
+from trulens.dashboard.notebook_utils import is_notebook
+from trulens.dashboard.notebook_utils import setup_widget_stdout_stderr
 from trulens.utils.imports import static_resource
 from typing_extensions import Annotated
 from typing_extensions import Doc
@@ -141,8 +142,8 @@ def run_dashboard(
 
     started = threading.Event()
     tunnel_started = threading.Event()
-    if notebook_utils.is_notebook():
-        out_stdout, out_stderr = notebook_utils.setup_widget_stdout_stderr()
+    if is_notebook():
+        out_stdout, out_stderr = setup_widget_stdout_stderr()
     else:
         out_stdout = None
         out_stderr = None

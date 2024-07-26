@@ -2,7 +2,7 @@ import os
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-from langchain.chains import ConversationalRetrievalChain
+from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain_community.callbacks import get_openai_callback
@@ -15,7 +15,7 @@ from trulens.core import Select
 from trulens.core import Feedback
 from trulens.ext.instrument.langchain import TruChain
 from trulens.ext.provider.huggingface import Huggingface
-from trulens.ext.provider.openai import OpenAI
+from trulens.ext.provider.openai import OpenAI as fOpenAI
 from trulens.utils.keys import check_keys
 
 check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
@@ -36,7 +36,7 @@ pinecone.init(
 identity = lambda h: h
 
 hugs = Huggingface()
-openai = OpenAI()
+openai = fOpenAI()
 
 f_lang_match = Feedback(hugs.language_match).on(
     text1=Select.RecordInput, text2=Select.RecordOutput
