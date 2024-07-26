@@ -277,13 +277,6 @@ nav:
         - ✨ Migration: trulens/api/database/migration.md
         - 🧪 SQLAlchemy: trulens/api/database/sqlalchemy.md
       - Streamlit: trulens/api/streamlit.md
-      - Utils:
-          # - trulens/api/utils/index.md
-          - trulens/api/utils/python.md
-          - trulens/api/utils/serial.md
-          - trulens/api/utils/json.md
-          - trulens/api/utils/frameworks.md
-          - trulens/api/utils/utils.md
   - 🤝 Contributing:
       - trulens/contributing/index.md
       - 🧭 Design: trulens/contributing/design.md
@@ -291,7 +284,7 @@ nav:
       - 💣 Tech Debt: trulens/contributing/techdebt.md
       - ⛅ Optional Pckages: trulens/contributing/optional.md
       - ✨ Database Migration: trulens/contributing/migration.md
-      
+
 #  - Resources:
 #    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
 
