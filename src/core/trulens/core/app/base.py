@@ -49,9 +49,9 @@ from trulens.core.utils.containers import BlockingSet
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.pyschema import Class
-from trulens.core.utils.python import (
-    Future,
-)  # can take type args with python < 3.9
+from trulens.core.utils.python import Future
+
+# can take type args with python < 3.9
 from trulens.core.utils.python import T
 from trulens.core.utils.python import callable_name
 from trulens.core.utils.python import class_name

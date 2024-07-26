@@ -3,8 +3,8 @@ from typing import Dict, Optional
 
 import numpy as np
 from trulens.core import Feedback
-from trulens.feedback import LLMProvider
 from trulens.core.utils import serial as mod_serial_utils
+from trulens.feedback import LLMProvider
 
 logger = logging.getLogger(__name__)
 

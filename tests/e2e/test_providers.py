@@ -8,10 +8,10 @@ import unittest
 from unittest import TestCase
 from unittest import main
 
+from trulens.core.utils.keys import check_keys
+from trulens.feedback import LLMProvider
 from trulens.providers.huggingface import Huggingface
 from trulens.providers.openai import OpenAI
-from trulens.feedback import LLMProvider
-from trulens.core.utils.keys import check_keys
 
 from tests.unit.test import optional_test
 

@@ -17,9 +17,6 @@ from trulens.core.app import base as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema.select import Select
-from trulens.instrument.langchain.guardrails import (
-    WithFeedbackFilterDocuments,
-)
 from trulens.core.utils.containers import dict_set_with_multikey
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.pyschema import Class
@@ -27,6 +24,7 @@ from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.serial import all_queries
+from trulens.instrument.langchain.guardrails import WithFeedbackFilterDocuments
 
 from langchain.agents.agent import BaseMultiActionAgent
 from langchain.agents.agent import BaseSingleActionAgent

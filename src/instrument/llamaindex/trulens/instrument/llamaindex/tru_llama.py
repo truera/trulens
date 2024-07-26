@@ -13,7 +13,6 @@ from pydantic import Field
 from trulens.core.app import base as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
-from trulens.instrument.langchain import LangChainInstrument
 
 # TODO: Do we need to depend on this?
 from trulens.core.utils.containers import dict_set_with_multikey
@@ -24,6 +23,7 @@ from trulens.core.utils.pyschema import Class
 from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.python import EmptyType
 from trulens.core.utils.serial import Lens
+from trulens.instrument.langchain import LangChainInstrument
 
 logger = logging.getLogger(__name__)
 

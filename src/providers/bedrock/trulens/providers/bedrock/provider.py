@@ -1,9 +1,9 @@
 import logging
 from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 
-from trulens.providers.bedrock.endpoint import BedrockEndpoint
 from trulens.feedback import LLMProvider
 from trulens.feedback.generated import re_0_10_rating
+from trulens.providers.bedrock.endpoint import BedrockEndpoint
 
 logger = logging.getLogger(__name__)
 

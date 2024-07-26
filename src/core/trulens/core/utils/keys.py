@@ -96,7 +96,7 @@ import logging
 import os
 from pathlib import Path
 import re
-from typing import Any, Dict, Optional, Set, Tuple, Union, Iterable
+from typing import Any, Dict, Iterable, Optional, Set, Tuple, Union
 
 import dotenv
 from trulens.core.utils.python import caller_frame

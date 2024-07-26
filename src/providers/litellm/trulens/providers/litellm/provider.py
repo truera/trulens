@@ -3,8 +3,8 @@ from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
 from trulens.core.feedback import Endpoint
-from trulens.providers.litellm.endpoint import LiteLLMEndpoint
 from trulens.feedback import LLMProvider
+from trulens.providers.litellm.endpoint import LiteLLMEndpoint
 
 from litellm import completion
 

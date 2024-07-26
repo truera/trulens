@@ -11,11 +11,11 @@ from trulens.core import Tru
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
+from trulens.core.utils.json import json_str_of_obj
 from trulens.dashboard import display
 from trulens.dashboard.react_components.record_viewer import record_viewer
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata
-from trulens.core.utils.json import json_str_of_obj
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())

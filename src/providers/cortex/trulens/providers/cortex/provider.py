@@ -5,8 +5,8 @@ from typing import ClassVar, Dict, Optional, Sequence
 import snowflake
 import snowflake.connector
 from snowflake.connector import SnowflakeConnection
-from trulens.providers.cortex.endpoint import CortexEndpoint
 from trulens.feedback import LLMProvider
+from trulens.providers.cortex.endpoint import CortexEndpoint
 
 
 class Cortex(LLMProvider):
