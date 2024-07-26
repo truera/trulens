@@ -11,7 +11,7 @@ from typing import Type
 from trulens.core.app import base
 from trulens.core.app.base import ComponentView
 from trulens.utils.pyschema import Class
-from trulens.utils.serial import JSON
+from trulens.utils.serial_types import JSON
 
 
 class LlamaIndexComponent(ComponentView):

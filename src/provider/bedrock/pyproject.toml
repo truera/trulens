@@ -21,7 +21,11 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = "^0.33.0"
+trulens-feedback = "^0.33.0"
 boto3 = "^1.33.6"
 botocore = "^1.33.6"
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = {path = "../../core", develop = true}
+trulens-feedback = {path = "../../feedback", develop = true}

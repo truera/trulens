@@ -41,8 +41,8 @@ from trulens.utils.python import locals_except
 from trulens.utils.python import module_name
 from trulens.utils.python import safe_hasattr
 from trulens.utils.python import wrap_awaitable
-from trulens.utils.serial import JSON
 from trulens.utils.serial import SerialModel
+from trulens.utils.serial_types import JSON
 from trulens.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
 logger = logging.getLogger(__name__)

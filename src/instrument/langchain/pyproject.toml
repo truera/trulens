@@ -21,10 +21,13 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
-trulens-core = {path = "../../core"}
+trulens-core = "^0.33.0"
 langchain-core = "^0.1.6"
 typing-inspect = "^0.8.0"
 pydantic = "^2"
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = {path = "../../core"}
 
 [tool.poetry.group.nemoguardrails.dependencies]
 nemoguardrails = "^0.9.0"

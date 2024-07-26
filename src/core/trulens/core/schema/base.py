@@ -6,13 +6,13 @@ import datetime
 from typing import Optional
 
 import pydantic
-from trulens.utils import serial
+from trulens.utils.serial import SerialModel
 
 MAX_DILL_SIZE: int = 1024 * 1024  # 1MB
 """Max size in bytes of pickled objects."""
 
 
-class Cost(serial.SerialModel, pydantic.BaseModel):
+class Cost(SerialModel, pydantic.BaseModel):
     """Costs associated with some call or set of calls."""
 
     n_requests: int = 0
@@ -54,7 +54,7 @@ class Cost(serial.SerialModel, pydantic.BaseModel):
         return self.__add__(other)
 
 
-class Perf(serial.SerialModel, pydantic.BaseModel):
+class Perf(SerialModel, pydantic.BaseModel):
     """Performance information.
 
     Presently only the start and end times, and thus latency.

@@ -4,7 +4,7 @@ from typing import ClassVar, Optional
 
 import pydantic
 from trulens.core.app import base as mod_app
-from trulens.utils.serial import JSON
+from trulens.utils.serial_types import JSON
 
 
 class ChatRecord(pydantic.BaseModel):

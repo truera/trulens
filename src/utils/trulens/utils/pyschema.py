@@ -26,23 +26,16 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 import warnings
 
 import pydantic
+from trulens.utils.constants import CLASS_INFO
+from trulens.utils.constants import ERROR
+from trulens.utils.constants import NOSERIO
 from trulens.utils.python import safe_hasattr
 from trulens.utils.python import safe_issubclass
-from trulens.utils.serial import JSON
 from trulens.utils.serial import SerialModel
+from trulens.utils.serial_types import JSON
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
-
-# Field/key name used to indicate a circular reference in dictified objects.
-CIRCLE = "__tru_circular_reference"
-
-# Field/key name used to indicate an exception in property retrieval (properties
-# execute code in property.fget).
-ERROR = "__tru_property_error"
-
-# Key for indicating non-serialized objects in json dumps.
-NOSERIO = "__tru_non_serialized_object"
 
 
 def is_noserio(obj: Any) -> bool:
@@ -585,10 +578,6 @@ class Function(FunctionOrMethod):
                     "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
                     "If you defined a function in a notebook, it will not be importable."
                 )
-
-
-# Key of structure where class information is stored.
-CLASS_INFO = "tru_class_info"
 
 
 class WithClassInfo(pydantic.BaseModel):

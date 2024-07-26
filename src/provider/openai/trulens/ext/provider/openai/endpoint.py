@@ -29,10 +29,11 @@ from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
 import pydantic
+from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
+from trulens.utils.constants import CLASS_INFO
 from trulens.utils.pace import Pace
-from trulens.utils.pyschema import CLASS_INFO
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import safe_getattr
 from trulens.utils.python import safe_hasattr
@@ -318,7 +319,7 @@ class OpenAIEndpoint(Endpoint):
 
             if isinstance(response.usage, pydantic.BaseModel):
                 usage = response.usage.model_dump()
-            elif isinstance(response.usage, pydantic.v1.BaseModel):
+            elif isinstance(response.usage, v1BaseModel):
                 usage = response.usage.dict()
             elif isinstance(response.usage, Dict):
                 usage = response.usage

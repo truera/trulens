@@ -35,6 +35,7 @@ from typing import (
 import weakref
 
 import pydantic
+from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.schema import base as mod_base_schema
@@ -819,7 +820,7 @@ class Instrument(object):
                 # include:
                 attrs = obj.model_fields.keys()
 
-            if isinstance(obj, pydantic.v1.BaseModel):
+            if isinstance(obj, v1BaseModel):
                 attrs = obj.__fields__.keys()
 
             elif dataclasses.is_dataclass(type(obj)):

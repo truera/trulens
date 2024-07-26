@@ -3,7 +3,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "trulens-provider-huggingface"
+name = "trulens-utils"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = ["Truera Inc <all@truera.com>"]
@@ -21,13 +21,15 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens-core = "^0.33.0"
-trulens-feedback = "^0.33.0"
-requests = "^2.31.0"
-tqdm = "^4.66.1"
-numpy = "^1.23.5"
-nltk = "^3.8.1"
+munch = "^3.0.0"
+pydantic = "^2"
+merkle-json = "^1.0.0"
+nest-asyncio = "^1.5.8"
+python-dotenv = "^1.0.0"
 
-[tool.poetry.group.dev.dependencies]
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+[tool.poetry.group.optional]
+optional = true
+
+[tool.poetry.group.optional.dependencies]
+openai = "^1.37.1"
+httpx = "^0.27.0"

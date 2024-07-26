@@ -44,10 +44,10 @@ from trulens.utils import pyschema
 from trulens.utils.asynchro import CallableMaybeAwaitable
 from trulens.utils.asynchro import desync
 from trulens.utils.asynchro import sync
+from trulens.utils.constants import CLASS_INFO
 from trulens.utils.containers import BlockingSet
 from trulens.utils.json import json_str_of_obj
 from trulens.utils.json import jsonify
-from trulens.utils.pyschema import CLASS_INFO
 from trulens.utils.pyschema import Class
 from trulens.utils.python import Future  # can take type args with python < 3.9
 from trulens.utils.python import T
@@ -55,12 +55,12 @@ from trulens.utils.python import callable_name
 from trulens.utils.python import class_name
 from trulens.utils.python import id_str
 from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import JSON
-from trulens.utils.serial import JSON_BASES
-from trulens.utils.serial import JSON_BASES_T
-from trulens.utils.serial import GetItemOrAttribute
 from trulens.utils.serial import Lens
 from trulens.utils.serial import all_objects
+from trulens.utils.serial_types import JSON
+from trulens.utils.serial_types import JSON_BASES
+from trulens.utils.serial_types import JSON_BASES_T
+from trulens.utils.serial_types import GetItemOrAttribute
 
 logger = logging.getLogger(__name__)
 

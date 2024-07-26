@@ -21,6 +21,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
+trulens-utils = "0.33.0"
 numpy = "^1.23.5"
 munch = "^3.0.0"
 dill = "^0.3.7"
@@ -31,12 +32,6 @@ pydantic = "^2"
 merkle-json = "^1.0.0"
 sqlalchemy = "^2.0.19"
 alembic = "^1.11.2"
-nest-asyncio = "^1.5.8"
-python-dotenv = "^1.0.0"
 
-[tool.poetry.group.optional]
-optional = true
-
-[tool.poetry.group.optional.dependencies]
-openai = "^1.37.1"
-httpx = "^0.27.0"
+[tool.poetry.group.dev.dependencies]
+trulens-utils = {path = "../utils", develop = true}

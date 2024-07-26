@@ -12,25 +12,26 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
 import pydantic
+from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic.v1.json import ENCODERS_BY_TYPE
+from pydantic.v1.json import pydantic_encoder
+from trulens.utils.constants import ALL_SPECIAL_KEYS
+from trulens.utils.constants import CIRCLE
+from trulens.utils.constants import CLASS_INFO
 from trulens.utils.imports import REQUIREMENT_OPENAI
 from trulens.utils.imports import OptionalImports
 from trulens.utils.keys import redact_value
-from trulens.utils.pyschema import CIRCLE
-from trulens.utils.pyschema import CLASS_INFO
-from trulens.utils.pyschema import ERROR
-from trulens.utils.pyschema import NOSERIO
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import WithClassInfo
 from trulens.utils.pyschema import clean_attributes
 from trulens.utils.pyschema import noserio
 from trulens.utils.pyschema import safe_getattr
 from trulens.utils.python import safe_hasattr
-from trulens.utils.serial import JSON
-from trulens.utils.serial import JSON_BASES
 from trulens.utils.serial import Lens
 from trulens.utils.serial import SerialBytes
 from trulens.utils.serial import SerialModel
+from trulens.utils.serial_types import JSON
+from trulens.utils.serial_types import JSON_BASES
 
 if TYPE_CHECKING:
     from trulens.core.instruments import Instrument
@@ -89,14 +90,11 @@ def json_default(obj: Any) -> str:
     # Try the encoders included with pydantic first (should handle things like
     # Datetime, and our additional encoders above):
     try:
-        return pydantic.v1.json.pydantic_encoder(obj)
+        return pydantic_encoder(obj)
 
     except Exception:
         # Otherwise give up and indicate a non-serialization.
         return noserio(obj)
-
-
-ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
 
 
 def jsonify_for_ui(*args, **kwargs):
@@ -301,7 +299,7 @@ def jsonify(
 
         content = forward_value
 
-    elif isinstance(obj, pydantic.v1.BaseModel):
+    elif isinstance(obj, v1BaseModel):
         # TODO: DEDUP with pydantic.BaseModel case
 
         # Not even trying to use pydantic.dict here.
@@ -393,7 +391,6 @@ def jsonify(
 
     if not isinstance(obj, Lens) and safe_hasattr(obj, "jsonify_extra"):
         # Problem with Lens and similar objects: they always say they have every attribute.
-
         content = obj.jsonify_extra(content)
 
     return content

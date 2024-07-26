@@ -7194,13 +7194,13 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "transformers"
-version = "4.43.2"
+version = "4.43.3"
 description = "State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "transformers-4.43.2-py3-none-any.whl", hash = "sha256:283c8b47cf38640c5c0caea60be0dfa948669fa48e9739b03717cbf5e8b20f11"},
-    {file = "transformers-4.43.2.tar.gz", hash = "sha256:99dbbdeef9d451cdbc1c5316dce3af3dd5bb56b6cda5d0c564253e8fa7ccaf02"},
+    {file = "transformers-4.43.3-py3-none-any.whl", hash = "sha256:6552beada5d826c25ff9b79139d237ab9050c6ea96b73d7fd2f8a8ba23ee76a4"},
+    {file = "transformers-4.43.3.tar.gz", hash = "sha256:820c5b192bb1bf47250802901a8f0bf581e06b8fded89179d4ef08a1e903ee1c"},
 ]
 
 [package.dependencies]
@@ -7301,13 +7301,12 @@ alembic = "^1.11.2"
 dill = "^0.3.7"
 merkle-json = "^1.0.0"
 munch = "^3.0.0"
-nest-asyncio = "^1.5.8"
 numpy = "^1.23.5"
 psutil = "^5.9.8"
 pydantic = "^2"
-python-dotenv = "^1.0.0"
 sqlalchemy = "^2.0.19"
 tqdm = "^4.66.1"
+trulens-utils = "0.33.0"
 typing_extensions = "^4.9.0"
 
 [package.source]
@@ -7334,7 +7333,7 @@ streamlit-pills = ">=0.3.0"
 trulens-core = ">=0.33.0"
 
 [package.extras]
-dev = ["build (>=1.2.1)"]
+dev = ["build (>=1.2.1)", "ipython (>=7.25.0)", "ipywidgets (>=8.1.3)"]
 
 [package.source]
 type = "directory"
@@ -7371,7 +7370,7 @@ develop = true
 [package.dependencies]
 langchain-core = "^0.1.6"
 pydantic = "^2"
-trulens-core = {path = "../../core"}
+trulens-core = "^0.33.0"
 typing-inspect = "^0.8.0"
 
 [package.source]
@@ -7390,8 +7389,8 @@ develop = true
 [package.dependencies]
 llama-index = "^0.10.57"
 pydantic = "^2"
-trulens-core = {path = "../../core"}
-trulens-instrument-langchain = {path = "../langchain", markers = "python_version < \"3.13\""}
+trulens-core = "^0.33.0"
+trulens-instrument-langchain = {version = "^0.33.0", markers = "python_version < \"3.13\""}
 
 [package.source]
 type = "directory"
@@ -7409,8 +7408,8 @@ develop = true
 [package.dependencies]
 nemoguardrails = "^0.7.1"
 pydantic = "^2"
-trulens-core = {path = "../../core"}
-trulens-instrument-langchain = {path = "../langchain", markers = "python_version < \"3.13\""}
+trulens-core = "^0.33.0"
+trulens-instrument-langchain = {version = "^0.33.0", markers = "python_version < \"3.13\""}
 
 [package.source]
 type = "directory"
@@ -7428,8 +7427,8 @@ develop = true
 [package.dependencies]
 boto3 = "^1.33.6"
 botocore = "^1.33.6"
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = "^0.33.0"
+trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
@@ -7447,8 +7446,8 @@ develop = true
 [package.dependencies]
 snowflake-connector-python = "^3.11.0"
 snowflake-snowpark-python = "^1.18.0"
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = "^0.33.0"
+trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
@@ -7468,8 +7467,8 @@ nltk = "^3.8.1"
 numpy = "^1.23.5"
 requests = "^2.31.0"
 tqdm = "^4.66.1"
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = "^0.33.0"
+trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
@@ -7487,8 +7486,8 @@ develop = true
 [package.dependencies]
 torch = "^2.1.2"
 transformers = "^4.38.1"
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = "^0.33.0"
+trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
@@ -7505,8 +7504,8 @@ develop = true
 
 [package.dependencies]
 langchain-core = "^0.1.6"
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = "^0.33.0"
+trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
@@ -7523,8 +7522,8 @@ develop = true
 
 [package.dependencies]
 litellm = "^1.25.2"
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = "^0.33.0"
+trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
@@ -7542,8 +7541,8 @@ develop = true
 [package.dependencies]
 langchain_openai = "^0.0.5"
 openai = "^1.1.1"
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = "^0.33.0"
+trulens-feedback = "^0.33.0"
 
 [package.source]
 type = "directory"
@@ -7558,9 +7557,32 @@ python-versions = "^3.9"
 files = []
 develop = true
 
+[package.dependencies]
+trulens-core = "0.33.0"
+
 [package.source]
 type = "directory"
 url = "src/testing"
+
+[[package]]
+name = "trulens-utils"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9"
+files = []
+develop = true
+
+[package.dependencies]
+merkle-json = "^1.0.0"
+munch = "^3.0.0"
+nest-asyncio = "^1.5.8"
+pydantic = "^2"
+python-dotenv = "^1.0.0"
+
+[package.source]
+type = "directory"
+url = "src/utils"
 
 [[package]]
 name = "typer"
@@ -8279,4 +8301,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "9403e03475a4e1356aa2283303f7195f8ae93e576384a68c7984e28ebe2706de"
+content-hash = "49311d9a1a85e5a21750fc5c49202fe18749ad04691a9dbca7b9de729628960f"

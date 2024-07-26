@@ -6,10 +6,10 @@ from typing import Dict, Sequence
 import unittest
 from unittest import TestCase
 
-import pydantic
 from pydantic import BaseModel
-from trulens.utils.serial import JSON_BASES
+from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.utils.serial import Lens
+from trulens.utils.serial_types import JSON_BASES
 
 # Env var that were to evaluate to true indicates that optional tests are to be
 # run.
@@ -109,7 +109,7 @@ class JSONTestCase(TestCase):
 
                 recur(getattr(j1, f), getattr(j2, f), path[f])
 
-        elif isinstance(j1, pydantic.v1.BaseModel):
+        elif isinstance(j1, v1BaseModel):
             for f in j1.__fields__:
                 if f in skips:
                     continue

@@ -45,6 +45,7 @@ notebook = "^7.2.1"
 black = "^24.4.2"
 
 [tool.poetry.group.instruments.dependencies]
+trulens-utils = {path = "src/utils", develop = true}
 trulens-instrument-langchain = {path = "src/instrument/langchain", develop = true, python = "<3.13"}
 trulens-instrument-llamaindex = {path = "src/instrument/llamaindex", develop = true}
 trulens-instrument-nemo = {path = "src/instrument/nemo", develop = true, python = "<3.12"}

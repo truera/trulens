@@ -21,7 +21,11 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = "^0.33.0"
+trulens-feedback = "^0.33.0"
 snowflake-connector-python = "^3.11.0"
 snowflake-snowpark-python = "^1.18.0"
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = {path = "../../core"}
+trulens-feedback = {path = "../../feedback"}

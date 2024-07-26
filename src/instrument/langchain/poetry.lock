@@ -1483,12 +1483,12 @@ files = [
 
 [[package]]
 name = "nemoguardrails"
-version = "0.9.1"
+version = "0.9.1.1"
 description = "NeMo Guardrails is an open-source toolkit for easily adding programmagle guardrails to LLM-based conversational systems."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "nemoguardrails-0.9.1-py3-none-any.whl", hash = "sha256:24ad92fec0b90e5c5500aa0f808d69756e514530f1d95a6192e2482b44ca52b2"},
+    {file = "nemoguardrails-0.9.1.1-py3-none-any.whl", hash = "sha256:2d6aed9c7ecec9434b3018ffbbfc863b1c51141bd2086443361b9ea73cd1ac03"},
 ]
 
 [package.dependencies]
@@ -2515,18 +2515,30 @@ alembic = "^1.11.2"
 dill = "^0.3.7"
 merkle-json = "^1.0.0"
 munch = "^3.0.0"
-nest-asyncio = "^1.5.8"
 numpy = "^1.23.5"
 psutil = "^5.9.8"
 pydantic = "^2"
-python-dotenv = "^1.0.0"
 sqlalchemy = "^2.0.19"
 tqdm = "^4.66.1"
+trulens-utils = "0.33.0"
 typing_extensions = "^4.9.0"
 
 [package.source]
 type = "directory"
 url = "../../core"
+
+[[package]]
+name = "trulens-utils"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "*"
+files = []
+develop = true
+
+[package.source]
+type = "directory"
+url = "../../utils"
 
 [[package]]
 name = "typer"
@@ -3001,4 +3013,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "752f54b4826f2ccd845ae2163eb70b7366e71d067a244e1d50700266da920ad8"
+content-hash = "ee390eedca0337483e955637ba4abb22602d4919524fa1cf3eec92f9cb1a1b62"
