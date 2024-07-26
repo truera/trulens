@@ -14,7 +14,7 @@ packages that may not be installed. The basic form of such imports can be seen
 in `__init__.py`:
 
 ```python
-with OptionalImports(messages=REQUIREMENT_LLAMA):
+with OptionalImports(messages=REQUIREMENT_INSTRUMENT_LLAMA):
     from trulens.ext.instrument.llamaindex import TruLlama
 ```
 
@@ -37,7 +37,7 @@ will get that message immediately instead of upon use due to this line inside
 `tru_llama.py`:
 
 ```python
-OptionalImports(messages=REQUIREMENT_LLAMA).assert_installed(llama_index)
+OptionalImports(messages=REQUIREMENT_INSTRUMENT_LLAMA).assert_installed(llama_index)
 ```
 
 This checks that the optional import system did not return a replacement for
@@ -48,7 +48,7 @@ If used in conjunction, the optional imports context manager and
 `OptionalImports` instance which is returned by the context manager entrace:
 
 ```python
-with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
+with OptionalImports(messages=REQUIREMENT_INSTRUMENT_LLAMA) as opt:
     import llama_index
     ...
 

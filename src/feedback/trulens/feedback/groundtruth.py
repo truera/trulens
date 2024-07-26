@@ -7,13 +7,13 @@ from trulens.core.feedback.provider import Provider
 from trulens.feedback.generated import re_0_10_rating
 from trulens.utils.imports import REQUIREMENT_BERT_SCORE
 from trulens.utils.imports import REQUIREMENT_EVALUATE
-from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.imports import REQUIREMENT_PROVIDER_OPENAI
 from trulens.utils.imports import OptionalImports
 from trulens.utils.pyschema import FunctionOrMethod
 from trulens.utils.pyschema import WithClassInfo
 from trulens.utils.serial import SerialModel
 
-with OptionalImports(messages=REQUIREMENT_OPENAI):
+with OptionalImports(messages=REQUIREMENT_PROVIDER_OPENAI):
     from trulens.ext.provider.openai import OpenAI
 
 with OptionalImports(messages=REQUIREMENT_BERT_SCORE):

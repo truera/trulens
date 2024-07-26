@@ -2,7 +2,7 @@ from typing import Dict, Tuple, TypeVar, Union
 
 import numpy as np
 from pydantic import PrivateAttr
-from trulens.utils.imports import REQUIREMENT_LLAMA
+from trulens.utils.imports import REQUIREMENT_INSTRUMENT_LLAMA
 from trulens.utils.imports import REQUIREMENT_SKLEARN
 from trulens.utils.imports import OptionalImports
 from trulens.utils.pyschema import WithClassInfo
@@ -11,7 +11,7 @@ from trulens.utils.serial import SerialModel
 with OptionalImports(messages=REQUIREMENT_SKLEARN):
     pass
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
+with OptionalImports(messages=REQUIREMENT_INSTRUMENT_LLAMA):
     from llama_index.legacy import ServiceContext
 
 Embedder = TypeVar("Embedder", bound="Embedder")

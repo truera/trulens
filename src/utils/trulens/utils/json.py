@@ -18,7 +18,7 @@ from pydantic.v1.json import pydantic_encoder
 from trulens.utils.constants import ALL_SPECIAL_KEYS
 from trulens.utils.constants import CIRCLE
 from trulens.utils.constants import CLASS_INFO
-from trulens.utils.imports import REQUIREMENT_OPENAI
+from trulens.utils.imports import REQUIREMENT_PROVIDER_OPENAI
 from trulens.utils.imports import OptionalImports
 from trulens.utils.keys import redact_value
 from trulens.utils.pyschema import Class
@@ -36,7 +36,7 @@ from trulens.utils.serial import SerialModel
 if TYPE_CHECKING:
     from trulens.core.instruments import Instrument
 
-with OptionalImports(messages=REQUIREMENT_OPENAI):
+with OptionalImports(messages=REQUIREMENT_PROVIDER_OPENAI):
     # httpx.URL and Timeout needed for openai client.
     import httpx
     from openai import Timeout

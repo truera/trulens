@@ -256,17 +256,54 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
 
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
-
-REQUIREMENT_LLAMA = format_import_errors(
-    "llama-index", purpose="instrumenting LlamaIndex apps"
+# Optional sub-packages:
+REQUIREMENT_FEEDBACK = format_import_errors(
+    "trulens-feedback", purpose="evaluating feedback functions"
 )
 
+# Optional app types:
+REQUIREMENT_INSTRUMENT_LLAMA = format_import_errors(
+    "trulens-instrument-llama", purpose="instrumenting LlamaIndex apps"
+)
+
+REQUIREMENT_INSTRUMENT_LANGCHAIN = format_import_errors(
+    "trulens-instrument-langchain", purpose="instrumenting LangChain apps"
+)
+
+REQUIREMENT_INSTRUMENT_NEMO = format_import_errors(
+    "trulens-instrument-nemo", purpose="instrumenting NeMo Guardrails apps"
+)
+
+# Optional provider types:
+
+REQUIREMENT_PROVIDER_BEDROCK = format_import_errors(
+    "trulens-provider-bedrock", purpose="evaluating feedback using Bedrock"
+)
+REQUIREMENT_PROVIDER_CORTEX = format_import_errors(
+    "trulens-provider-cortex", purpose="evaluating feedback using Cortex"
+)
+
+REQUIREMENT_PROVIDER_HUGGINGFACE = format_import_errors(
+    "trulens-provider-huggingface", purpose="evaluating feedback using Huggingface"
+)
+
+REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL = format_import_errors(
+    "trulens-provider-huggingface-local", purpose="evaluating feedback using local Huggingface"
+)
+REQUIREMENT_PROVIDER_LANGCHAIN = format_import_errors(
+    "trulens-provider-langchain", purpose="evaluating feedback using LangChain"
+)
+REQUIREMENT_PROVIDER_LITELLM = format_import_errors(
+    'trulens-provider-litellm', purpose="evaluating feedback using LiteLLM"
+)
+
+REQUIREMENT_PROVIDER_OPENAI = format_import_errors(
+    "trulens-provider-openai", purpose="evaluating feedback using OpenAI"
+)
+
+# Other optionals:
 REQUIREMENT_SKLEARN = format_import_errors(
     "scikit-learn", purpose="using embedding vector distances"
-)
-
-REQUIREMENT_OPENAI = format_import_errors(
-    ["openai", "langchain_community"], purpose="using OpenAI models"
 )
 
 REQUIREMENT_BERT_SCORE = format_import_errors(
