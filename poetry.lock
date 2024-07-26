@@ -4702,8 +4702,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
-    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
     {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -7288,6 +7288,22 @@ tests = ["autopep8", "flake8", "isort", "llnl-hatchet", "numpy", "pytest", "scip
 tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
+name = "trulens-benchmark"
+version = "0.33.0"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9"
+files = []
+develop = true
+
+[package.dependencies]
+trulens-core = "0.33.0"
+
+[package.source]
+type = "directory"
+url = "src/benchmark"
+
+[[package]]
 name = "trulens-core"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -7549,22 +7565,6 @@ type = "directory"
 url = "src/provider/openai"
 
 [[package]]
-name = "trulens-testing"
-version = "0.33.0"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "^3.9"
-files = []
-develop = true
-
-[package.dependencies]
-trulens-core = "0.33.0"
-
-[package.source]
-type = "directory"
-url = "src/testing"
-
-[[package]]
 name = "trulens-utils"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -7574,11 +7574,11 @@ files = []
 develop = true
 
 [package.dependencies]
-merkle-json = "^1.0.0"
-munch = "^3.0.0"
-nest-asyncio = "^1.5.8"
+merkle-json = ">=1.0.0"
+munch = ">=3.0.0"
+nest-asyncio = ">=1.5.8"
 pydantic = "^2"
-python-dotenv = "^1.0.0"
+python-dotenv = ">=1.0.0"
 
 [package.source]
 type = "directory"
@@ -8301,4 +8301,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "49311d9a1a85e5a21750fc5c49202fe18749ad04691a9dbca7b9de729628960f"
+content-hash = "df5c5ee3b821d12982928aeb9d3a4ada0e6a42679a1f0c35c881fd6ab568fb0a"
