@@ -49,8 +49,8 @@ from trulens.core.schema import types as mod_types_schema
 from trulens.utils import text
 from trulens.utils.pyschema import Class
 from trulens.utils.python import locals_except
-from trulens.utils.serial_types import JSON
-from trulens.utils.serial_types import JSONized
+from trulens.utils.serial import JSON
+from trulens.utils.serial import JSONized
 from trulens.utils.text import UNICODE_CHECK
 from trulens.utils.text import UNICODE_CLOCK
 from trulens.utils.text import UNICODE_HOURGLASS

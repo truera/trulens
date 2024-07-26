@@ -27,11 +27,11 @@ from trulens.utils.pyschema import clean_attributes
 from trulens.utils.pyschema import noserio
 from trulens.utils.pyschema import safe_getattr
 from trulens.utils.python import safe_hasattr
+from trulens.utils.serial import JSON
+from trulens.utils.serial import JSON_BASES
 from trulens.utils.serial import Lens
 from trulens.utils.serial import SerialBytes
 from trulens.utils.serial import SerialModel
-from trulens.utils.serial_types import JSON
-from trulens.utils.serial_types import JSON_BASES
 
 if TYPE_CHECKING:
     from trulens.core.instruments import Instrument

@@ -8,8 +8,8 @@ from unittest import TestCase
 
 from pydantic import BaseModel
 from pydantic.v1 import BaseModel as v1BaseModel
+from trulens.utils.serial import JSON_BASES
 from trulens.utils.serial import Lens
-from trulens.utils.serial_types import JSON_BASES
 
 # Env var that were to evaluate to true indicates that optional tests are to be
 # run.

@@ -29,8 +29,8 @@ from trulens.utils.json import jsonify
 from trulens.utils.pyschema import Class
 from trulens.utils.pyschema import FunctionOrMethod
 from trulens.utils.python import safe_hasattr
+from trulens.utils.serial import JSON
 from trulens.utils.serial import Lens
-from trulens.utils.serial_types import JSON
 from trulens.utils.text import retab
 
 logger = logging.getLogger(__name__)

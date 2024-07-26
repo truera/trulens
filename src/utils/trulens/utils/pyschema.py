@@ -31,8 +31,8 @@ from trulens.utils.constants import ERROR
 from trulens.utils.constants import NOSERIO
 from trulens.utils.python import safe_hasattr
 from trulens.utils.python import safe_issubclass
+from trulens.utils.serial import JSON
 from trulens.utils.serial import SerialModel
-from trulens.utils.serial_types import JSON
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()

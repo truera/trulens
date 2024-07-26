@@ -15,8 +15,8 @@ from trulens.utils.json import jsonify
 from trulens.utils.keys import REDACTED_VALUE
 from trulens.utils.keys import should_redact_key
 from trulens.utils.pyschema import is_noserio
+from trulens.utils.serial import GetItemOrAttribute
 from trulens.utils.serial import Lens
-from trulens.utils.serial_types import GetItemOrAttribute
 
 
 def write_or_json(st, obj):

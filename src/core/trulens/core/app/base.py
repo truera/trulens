@@ -55,12 +55,12 @@ from trulens.utils.python import callable_name
 from trulens.utils.python import class_name
 from trulens.utils.python import id_str
 from trulens.utils.python import safe_hasattr
+from trulens.utils.serial import JSON
+from trulens.utils.serial import JSON_BASES
+from trulens.utils.serial import JSON_BASES_T
+from trulens.utils.serial import GetItemOrAttribute
 from trulens.utils.serial import Lens
 from trulens.utils.serial import all_objects
-from trulens.utils.serial_types import JSON
-from trulens.utils.serial_types import JSON_BASES
-from trulens.utils.serial_types import JSON_BASES_T
-from trulens.utils.serial_types import GetItemOrAttribute
 
 logger = logging.getLogger(__name__)
 
