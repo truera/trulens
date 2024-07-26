@@ -4,7 +4,7 @@ from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pydantic
 from trulens.core.feedback.provider import Provider
-from trulens.external.generated import re_0_10_rating
+from trulens.feedback.generated import re_0_10_rating
 from trulens.utils.imports import REQUIREMENT_BERT_SCORE
 from trulens.utils.imports import REQUIREMENT_EVALUATE
 from trulens.utils.imports import REQUIREMENT_OPENAI

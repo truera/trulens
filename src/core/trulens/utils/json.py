@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
 import pydantic
+from pydantic.v1.json import ENCODERS_BY_TYPE
 from trulens.utils.imports import REQUIREMENT_OPENAI
 from trulens.utils.imports import OptionalImports
 from trulens.utils.keys import redact_value
@@ -54,12 +55,12 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
     def encode_httpx_url(obj: httpx.URL):
         return str(obj)
 
-    pydantic.v1.json.ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
+    ENCODERS_BY_TYPE[httpx.URL] = encode_httpx_url
 
     def encode_openai_timeout(obj: Timeout):
         return obj.as_dict()
 
-    pydantic.v1.json.ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
+    ENCODERS_BY_TYPE[Timeout] = encode_openai_timeout
 
 
 def obj_id_of_obj(obj: dict, prefix="obj"):
@@ -228,8 +229,8 @@ def jsonify(
     if isinstance(obj, Path):
         return str(obj)
 
-    if type(obj) in pydantic.v1.json.ENCODERS_BY_TYPE:
-        return pydantic.v1.json.ENCODERS_BY_TYPE[type(obj)](obj)
+    if type(obj) in ENCODERS_BY_TYPE:
+        return ENCODERS_BY_TYPE[type(obj)](obj)
 
     # TODO: should we include duplicates? If so, dicted needs to be adjusted.
     new_dicted = dict(dicted)
