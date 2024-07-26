@@ -58,9 +58,9 @@ API Reference: [OpenAI][src.provider.openai.trulens.ext.provider.openai.provider
 
 ## Generation-based: LLMProvider
 
-API Reference: [LLMProvider][src.feedback.llm_provider.LLMProvider].
+API Reference: [LLMProvider][src.feedback.trulens.feedback.llm_provider.LLMProvider].
 
-::: src.feedback.llm_provider.LLMProvider
+::: src.feedback.trulens.feedback.llm_provider.LLMProvider
     options:
         heading_level: 4
         show_bases: false
@@ -85,9 +85,9 @@ API Reference: [LLMProvider][src.feedback.llm_provider.LLMProvider].
 
 ## Embedding-based
 
-API Reference: [Embeddings][src.feedback.llm_provider.LLMProvider].
+API Reference: [Embeddings][src.feedback.trulens.feedback.embeddings].
 
-::: src.feedback.llm_provider.LLMProvider
+::: src.feedback.trulens.feedback.embeddings
     options:
         heading_level: 4
         show_bases: false
@@ -114,9 +114,9 @@ API Reference: [Embeddings][src.feedback.llm_provider.LLMProvider].
 
 ### Ground Truth Agreement
 
-API Reference: [GroundTruthAgreement][src.feedback.groundtruth.GroundTruthAgreement]
+API Reference: [GroundTruthAgreement][src.feedback.trulens.feedback.groundtruth]
 
-::: src.feedback.groundtruth.GroundTruthAgreement
+::: src.feedback.trulens.feedback.groundtruth
     options:
         heading_level: 4
         show_bases: false

@@ -4,8 +4,8 @@
 
 ::: src.provider.openai.trulens.ext.provider.openai.provider.OpenAI
 
-::: src.feedback.llm_provider
+::: src.feedback.trulens.feedback.llm_provider
 
-::: src.feedback.groundtruth 
+::: src.feedback.trulens.feedback.groundtruth
 
-::: src.feedback.embeddings
+::: src.feedback.trulens.feedback.embeddings

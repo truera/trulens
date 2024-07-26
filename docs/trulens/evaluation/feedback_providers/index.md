@@ -1,7 +1,7 @@
 # Feedback Providers
 
 TruLens constructs feedback functions by combining more general models, known as
-the [**_feedback provider_**][trulens_eval.feedback.provider.base.Provider], and
+the [**_feedback provider_**][src.core.trulens.core.feedback.provider], and
 [**_feedback implementation_**](../feedback_implementations/index.md) made up of
 carefully constructed prompts and custom logic tailored to perform a particular
 evaluation task.
@@ -16,32 +16,30 @@ functions based capabilities of the constituent providers.
 
 Some feedback functions rely on classification typically tailor made for task, unlike LLM models.
 
-- [Huggingface provider][trulens_eval.feedback.provider.hugs.Huggingface]
-  containing a variety of feedback functions.
-- [OpenAI provider][trulens_eval.feedback.provider.openai.OpenAI] (and
+- [Huggingface provider][src.provider.huggingface.trulens.ext.provider.huggingface.provider.Huggingface]
+  containing a variety of classification-based feedback functions runnable on the remote Huggingface API.
+  - [Huggingface provider][src.provider.huggingface-local.trulens.ext.provider.huggingfacelocal.provider.Huggingface]
+  containing a variety of classification-based feedback functions runnable locally.
+- [OpenAI provider][src.provider.openai.trulens.ext.provider.openai.provider.OpenAI] (and
   subclasses) features moderation feedback functions.
 
 ## Generation-based Providers
 
 Providers which use large language models for feedback evaluation:
 
-- [OpenAI provider][trulens_eval.feedback.provider.openai.OpenAI] or
-  [AzureOpenAI provider][trulens_eval.feedback.provider.openai.AzureOpenAI]
-- [Bedrock provider][trulens_eval.feedback.provider.bedrock.Bedrock]
-- [LiteLLM provider][trulens_eval.feedback.provider.litellm.LiteLLM]
-- [_LangChain_ provider][trulens_eval.feedback.provider.langchain.Langchain]
+- [OpenAI provider][src.provider.openai.trulens.ext.provider.openai.provider.OpenAI] or
+  [AzureOpenAI provider][src.provider.openai.trulens.ext.provider.openai.provider.AzureOpenAI]
+- [Bedrock provider][src.provider.bedrock.trulens.ext.provider.bedrock.provider.Bedrock]
+- [LiteLLM provider][src.provider.litellm.trulens.ext.provider.litellm.provider.LiteLLM]
+- [_LangChain_ provider][src.provider.langchain.trulens.ext.provider.langchain.provider.Langchain]
 
 Feedback functions in common across these providers are in their abstract class
-[LLMProvider][trulens_eval.feedback.provider.base.LLMProvider].
+[LLMProvider][src.feedback.trulens.feedback.llm_provider.LLMProvider].
 
 ## Embedding-based Providers
 
-- [Embeddings][trulens_eval.feedback.embeddings.Embeddings]
+- [Embeddings][src.feedback.trulens.feedback.embeddings.Embeddings]
 
 ## Provider Combinations
 
-- Groundedness has been moved to the [LLMProvider
-  class][trulens_eval.feedback.provider.base.LLMProvider] as the method
-  [groundedness_measure_with_cot_reasons][trulens_eval.feedback.provider.base.LLMProvider.groundedness_measure_with_cot_reasons].
-
-- [Groundtruth][trulens_eval.feedback.groundtruth.GroundTruthAgreement]
+- [Groundtruth][src.feedback.trulens.feedback.groundtruth.GroundTruthAgreement]
