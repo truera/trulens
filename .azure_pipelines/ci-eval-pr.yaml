@@ -53,7 +53,7 @@ jobs:
       - bash: |
           set -e
           poetry config virtualenvs.create false
-          poetry install --only main,tests --sync --verbose
+          poetry install --only core,tests --sync --verbose
         displayName: Install Required Packages
 
       - bash: |
@@ -65,7 +65,7 @@ jobs:
 
       - bash: |
           set -e
-          pytest --rootdir=$(tests-folder) --test-run-title="Required $(python-version) unit tests" .
+          poetry run pytest --rootdir=$(tests-folder) --test-run-title="Required $(python-version) unit tests" .
         displayName: Unit Tests with Required Packages
 
       - bash: |
@@ -77,7 +77,7 @@ jobs:
 
       - bash: |
           set -e
-          pytest --rootdir=$(tests-folder) --test-run-title="Optional $(python-version) unit tests" .
+          poetry run pytest --rootdir=$(tests-folder) --test-run-title="Optional $(python-version) unit tests" .
         env:
           # enables optional tests, see tests/unit/test.py
           TEST_OPTIONAL: true

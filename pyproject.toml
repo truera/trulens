@@ -28,6 +28,11 @@ trulens-dashboard = {version = "0.33.0", python = "!=3.9.7"}
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = {path = "src/benchmark", develop = true}
 
+[tool.poetry.group.core.dependencies]
+trulens-core = {path = "src/core", develop = true}
+trulens-feedback = {path = "src/feedback", develop = true}
+trulens-dashboard = {path = "src/dashboard", develop = true, python = "!=3.9.7"}
+
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
 ruff = "^0.5.5"
@@ -58,11 +63,6 @@ trulens-instrument-nemo = {path = "src/instrument/nemo", develop = true, python 
 jupyter = "^1.0.0"
 ipywidgets = "^8.1.3"
 
-[tool.poetry.group.pkg.dependencies]
-trulens-core = {path = "src/core", develop = true}
-trulens-feedback = {path = "src/feedback", develop = true}
-trulens-dashboard = {path = "src/dashboard", develop = true, python = "!=3.9.7"}
-
 [tool.poetry.group.providers.dependencies]
 trulens-provider-bedrock = {path = "src/providers/bedrock", develop = true}
 trulens-provider-langchain = {path = "src/providers/langchain", develop = true}
@@ -79,6 +79,11 @@ nbformat = "^5.10.4"
 pytest-subtests = "^0.13.1"
 pytest-azurepipelines = "^1.0.5"
 ruff = "^0.5.5"
+
+[tool.pytest.ini_options]
+testpaths = [
+  "tests",
+]
 
 [tool.ruff]
 line-length = 80

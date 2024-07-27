@@ -2474,12 +2474,13 @@ alembic = "^1.11.2"
 dill = "^0.3.7"
 merkle-json = "^1.0.0"
 munch = "^3.0.0"
+nest-asyncio = "^1.5.8"
 numpy = "^1.23.5"
 psutil = "^5.9.8"
 pydantic = "^2"
+python-dotenv = "^1.0.0"
 sqlalchemy = "^2.0.19"
 tqdm = "^4.66.1"
-trulens-utils = "0.33.0"
 typing_extensions = "^4.9.0"
 
 [package.source]
@@ -2491,7 +2492,7 @@ name = "trulens-instrument-langchain"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
-python-versions = ">=3.9,<3.13"
+python-versions = "^3.9,<3.13"
 files = []
 develop = false
 
@@ -2504,19 +2505,6 @@ typing-inspect = "^0.8.0"
 [package.source]
 type = "directory"
 url = "../langchain"
-
-[[package]]
-name = "trulens-utils"
-version = "0.33.0"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "*"
-files = []
-develop = true
-
-[package.source]
-type = "directory"
-url = "../../utils"
 
 [[package]]
 name = "typer"
@@ -2979,5 +2967,5 @@ multidict = ">=4.0"
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.9,<3.12"
-content-hash = "c1620704cb40a0ef29e79084f40e607ace65752353350b8c73db06c713cf6ece"
+python-versions = "^3.9,<3.12"
+content-hash = "08b2d481ad5fc69d0b3530a499ee2b5b6f0e91c847309c10b9f9bbc805187df4"

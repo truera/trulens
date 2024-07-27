@@ -12,7 +12,7 @@ with OptionalImports(messages=REQUIREMENT_SKLEARN):
     pass
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
-    from llama_index.legacy import ServiceContext
+    from llama_index.core.service_context import ServiceContext
 
 Embedder = TypeVar("Embedder", bound="Embedder")
 

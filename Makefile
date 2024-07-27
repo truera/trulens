@@ -16,6 +16,22 @@ SHELL := /bin/bash
 .env/create:
 	poetry install --sync
 
+poetry-lock:
+	poetry lock -C src/core
+	poetry lock -C src/feedback
+	poetry lock -C src/benchmark
+	poetry lock -C src/instrument/langchain
+	poetry lock -C src/instrument/llamaindex
+	poetry lock -C src/instrument/nemo
+	poetry lock -C src/providers/bedrock
+	poetry lock -C src/providers/cortex
+	poetry lock -C src/providers/huggingface
+	poetry lock -C src/providers/huggingface-local
+	poetry lock -C src/providers/langchain
+	poetry lock -C src/providers/litellm
+	poetry lock -C src/providers/openai
+	poetry lock -C .
+
 # Run the code formatter.
 lint: .env/create
 	ruff check --fix
@@ -54,18 +70,18 @@ linkcheck: site
 
 # Start the trubot slack app.
 trubot:
-	poetry run python -u examples/trubot/trubot.py)
+	poetry run python -u examples/trubot/trubot.py
 
 # Run a test with the optional flag set, meaning @optional_test decorated tests
 # are run.
 required-env:
-	poetry install --only main,tests --verbose
+	poetry install --only core,tests --sync
 
 optional-env:
 	poetry install --sync --verbose
 
 # Generic target to run any test with given environment
-test-%: required-env
+test-%-required: required-env
 	make test-$*
 
 test-%-optional: optional-env
@@ -73,76 +89,28 @@ test-%-optional: optional-env
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
 test-unit:
-	poetry run pytest --rootdir=tests/unit .
-
-test-lens:
-	poetry run pytest --rootdir=tests/unit/test_lens .
-
-test-feedback:
-	poetry run pytest --rootdir=tests/unit/test_feedback .
-
-test-tru-basic-app:
-	poetry run pytest --rootdir=tests/unit/test_tru_basic_app .
-
-test-tru-custom:
-	poetry run pytest --rootdir=tests/unit/test_tru_custom .
-
-# Run the static unit tests only, those in the static subfolder. They are run
-# for every tested python version while those outside of static are run only for
-# the latest (supported) python version.
-test-static:
-	poetry run pytest --rootdir=tests/unit/static/test_static .
+	poetry run pytest --rootdir=. tests/unit/*
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
 test-e2e:
-	poetry run pytest --rootdir=tests/e2e .
-
-test-tru:
-	poetry run pytest --rootdir=tests/e2e/test_tru .
-
-test-tru-chain:
-	poetry run pytest --rootdir=tests/e2e/test_tru_chain .
-
-test-tru-llama:
-	poetry run pytest --rootdir=tests/e2e/test_tru_llama .
-
-test-providers:
-	poetry run pytest --rootdir=tests/e2e/test_providers .
-
-test-endpoints:
-	poetry run pytest --rootdir=tests/e2e/test_endpoints .
+	poetry run pytest --rootdir=. tests/e2e
 
 # Database integration tests for various database types supported by sqlalchemy.
 # While those don't use costly endpoints, they may be more computation intensive.
 
 .env/create/db:
-	poetry install --only main,tests,db-tests --sync --verbose
+	poetry install --only core,tests,db-tests --sync --verbose
 
 test-database: .env/create/db
 	docker compose --file docker/test-database.yaml up --quiet-pull --detach --wait --wait-timeout 30
-	poetry run pytest tests/integration/test_database.py
+	poetry run pytest --rootdir=. tests/integration/test_database.py
 	docker compose --file docker/test-database.yaml down
 
 # These tests all operate on local file databases and don't require docker.
 test-database-specification: .env/create/db
-	poetry run pytest tests/integration/test_database.py::TestDBSpecifications
-
-# The next 3 database migration/versioning tests:
-test-database-versioning: test-database-v2migration test-database-legacy-migration test-database-future
-
-# Test migrating a latest legacy sqlite database to sqlalchemy database.
-test-database-v2migration: .env/create/db
-	poetry run pytest tests/integration/test_database.py::TestDbV2Migration::test_migrate_legacy_sqlite_file
-
-# Test migrating non-latest legacy databases to sqlaclhemy database.
-test-database-legacy-migration: .env/create/db
-	poetry run pytest tests/integration/test_database.py::TestDbV2Migration::test_migrate_legacy_legacy_sqlite_file
-
-# Test handling of a db that is newer than expected.
-test-database-future: .env/create/db
-	poetry run pytest tests/integration/test_database.py::TestDbV2Migration::test_future_db
+	poetry run pytest --rootdir=. tests/integration/test_database.py::TestDBSpecifications
 
 # Release Steps:
 

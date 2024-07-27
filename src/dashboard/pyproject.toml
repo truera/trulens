@@ -48,8 +48,5 @@ trulens = [
 
 [tool.setuptools.packages.find]
 include = [
-  "trulens",
   "trulens.dashboard",
-  "trulens.dashboard.*",
 ]
-namespaces = true
