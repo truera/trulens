@@ -283,7 +283,7 @@ def _serialization_asserts(db) -> None:
         db (DB): the db object
     """
     global saved_db_locations
-    conn, c = db._connect()
+    _, c = db._connect()
     SAVED_DB_FILE_LOC = saved_db_locations[db.filename]
     validation_fail_advice = (
         f"Please open a ticket on trulens github page including details on the old and new trulens versions. "

@@ -94,6 +94,7 @@ extend-include = ["*.ipynb"]
 extend-exclude = ["examples/expositional/*", "examples/experimental/*"]
 
 [tool.ruff.lint]
+preview = true
 ignore = ["E731"]
 extend-select = ["I", "E303"]
 

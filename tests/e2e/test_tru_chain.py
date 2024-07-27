@@ -125,7 +125,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, feedbacks = Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = Tru().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -161,14 +161,14 @@ class TestTruChain(JSONTestCase):
             result = await chain.llm._agenerate(messages=[msg])
             return result
 
-        res1, costs1 = Endpoint.track_all_costs(lambda: sync(test1))
+        res1, _ = Endpoint.track_all_costs(lambda: sync(test1))
 
         async def test2():
             # Creates a task internally via asyncio.gather:
             result = await chain.acall(inputs=dict(question="hello there"))
             return result
 
-        res2, costs2 = Endpoint.track_all_costs(lambda: sync(test2))
+        res2, _ = Endpoint.track_all_costs(lambda: sync(test2))
 
         # Results are not the same as they involve different prompts but should
         # not be empty at least:

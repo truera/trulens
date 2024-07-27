@@ -326,7 +326,7 @@ class TestTru(TestCase):
         tru.add_feedbacks(feedback_results)
 
         # Check that results were added to db.
-        df, returned_feedback_names = tru.get_records_and_feedback(
+        _, returned_feedback_names = tru.get_records_and_feedback(
             app_ids=[tru_app.app_id]
         )
 
@@ -395,7 +395,7 @@ class TestTru(TestCase):
         tru.add_feedbacks(feedback_results)
 
         # Check that results were added to db.
-        df, returned_feedback_names = tru.get_records_and_feedback(
+        _, returned_feedback_names = tru.get_records_and_feedback(
             app_ids=[tru_app.app_id]
         )
 

@@ -46,6 +46,7 @@ jobs:
           # Show python version
           echo "Using $(python --version) ($(which python))"
           poetry config virtualenvs.create false
+          poetry install
         displayName: Env Setup
 
       - bash: |

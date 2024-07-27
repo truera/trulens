@@ -51,7 +51,7 @@ class TestLlamaIndex(JSONTestCase):
 
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
-        llm_response_sync, record_sync = tru_query_engine_recorder.with_record(
+        _, record_sync = tru_query_engine_recorder.with_record(
             query_engine.query, "What did the author do growing up?"
         )
 
