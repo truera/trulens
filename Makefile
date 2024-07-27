@@ -80,10 +80,18 @@ required-env:
 optional-env:
 	poetry install --sync --verbose
 
-# Generic target to run any test with given environment
+coverage:
+	ALLOW_OPTIONAL_ENV_VAR=true pytest --rootdir=. tests/* --cov src --cov-report html
+
+# Runs required tests
 test-%-required: required-env
 	make test-$*
 
+# Runs required tests, but allows optional dependencies to be installed.
+test-%-allow-optional: required-env
+	ALLOW_OPTIONAL_ENV_VAR=true make test-$*
+
+# Requires the full optional environment to be set up.
 test-%-optional: optional-env
 	TEST_OPTIONAL=true make test-$*
 
