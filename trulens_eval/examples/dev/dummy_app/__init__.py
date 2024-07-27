@@ -47,7 +47,7 @@ various behaviours:
   controlled by the [DummyAgent][examples.dev.dummy_app.agent.DummyAgent] class
   `use_app` flag.
 
-- Use of __TruLens-Eval_ to record the invocation of the above nested model.
+- Use of _TruLens-Eval_ to record the invocation of the above nested model.
   This is controlled by the
   [DummyAgent][examples.dev.dummy_app.agent.DummyAgent] class `use_recorder`
   flag.

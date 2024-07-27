@@ -34,7 +34,7 @@ class TestDummy(JSONTestCase):
         ta = TruCustomApp(ca, app_id="customapp")
 
         with ta as recorder:
-            res = ca.respond_to_query(f"hello")
+            res = ca.respond_to_query("hello")
 
         rec = recorder.get()
 

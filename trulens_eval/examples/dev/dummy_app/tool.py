@@ -6,20 +6,11 @@ from examples.dev.dummy_app.dummy import Dummy
 from trulens_eval.tru_custom_app import instrument
 from trulens_eval.utils.python import superstack
 
-# Collect a few string methods to use as "tools".
-str_maps = []
-
-for name in dir(str):
-    func = getattr(str, name)
-
-    if isinstance(func, Callable):
-        try:
-            ret = func("test me")
-            if isinstance(ret, str):
-                str_maps.append(func)
-
-        except Exception:
-            pass
+# A few string->string functions to use as "tools".
+str_maps = [
+    str.capitalize, str.casefold, str.lower, str.lstrip, str.rstrip, str.strip,
+    str.swapcase, str.title, str.upper
+]
 
 
 class DummyTool(Dummy):
@@ -63,7 +54,7 @@ class DummyTool(Dummy):
 
 
 class DummyStackTool(DummyTool):
-    """A tool that returns a rendering of the call stack when it is invokved."""
+    """A tool that returns a rendering of the call stack when it is invoked."""
 
     last_stack = None
     """The last stack that was rendered.
@@ -78,10 +69,17 @@ class DummyStackTool(DummyTool):
         """Save the call stack for later rendering or inspection in the recorded
         trace."""
 
-        DummyStackTool.last_stack = list(superstack())
+        # Save a copy of the live stack here which makes it available for the
+        # developer to check later. Note that it overwrites any previously saved
+        # stack. This is here because we cannot serialize everything about a
+        # stack to include in the return of this method but at the same time
+        # want to be able to take a look at those things which we didn't
+        # serialize.
+        current_stack = list(superstack())
+        DummyStackTool.last_stack = current_stack
 
         ret = "<table>\n"
-        for frame in DummyStackTool.last_stack:
+        for frame in current_stack:
             fmod = inspect.getmodule(frame)
             if fmod is None:
                 continue
@@ -99,7 +97,7 @@ class DummyStackTool(DummyTool):
             </tr>
             """
 
-            # Don't include bytecode as it it has non-deterministic addresses which mess with
+            # Don't include bytecode as it has non-deterministic addresses which mess with
             # golden test comparsion.
             # bytecode = dis.Bytecode(frame.f_code)
             # <td><pre><code>{bytecode.dis()}</code></pre></td>

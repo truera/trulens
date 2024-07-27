@@ -46,10 +46,6 @@ class DummyAgent(Dummy):
         self.description = description or "Custom Agent"
         self.app = app
 
-        # TODO: This agent is meant to use a tru recorded internally but doing
-        # so is presently broken in tracing. Renable this and the recording in
-        # invoke once fixed.
-
         if self.use_app:
             self.tru_app = TruCustomApp(self.app, app_id=description)
 

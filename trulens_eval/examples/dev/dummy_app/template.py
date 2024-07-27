@@ -11,7 +11,7 @@ class DummyTemplate(Dummy):
     """Dummy template class that fills a question and context into a template
     that has placeholders for these."""
 
-    def __init__(self, template, **kwargs):
+    def __init__(self, template: str, **kwargs):
         super().__init__(**kwargs)
 
         self.template = template
@@ -26,6 +26,6 @@ class DummyTemplate(Dummy):
             context: The context to fill in.
         """
 
-        return self.template[:] \
+        return self.template \
             .replace("{question}", question) \
             .replace("{context}", context)

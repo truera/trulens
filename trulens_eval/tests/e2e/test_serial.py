@@ -70,18 +70,16 @@ class TestSerial(JSONTestCase):
         with self.subTest("app serialization"):
             self.assertGoldenJSONEqual(
                 actual=ta.model_dump(),
-                golden_filename="customapp.json",
-                skips=set([])
+                golden_filename="customapp.json"
             )
 
         with ta as recorder:
-            res = ca.respond_to_query(f"hello")
+            res = ca.respond_to_query("hello")
 
         with self.subTest("app result serialization"):
             self.assertGoldenJSONEqual(
                 actual=res,
-                golden_filename="customapp_result.json",
-                skips=set([])
+                golden_filename="customapp_result.json"
             )
 
         record = recorder.get()

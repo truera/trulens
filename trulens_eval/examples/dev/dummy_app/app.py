@@ -40,7 +40,7 @@ class DummyApp(Dummy):
 
         - A few tools of type
           [DummyTool][examples.dev.dummy_app.tool.DummyTool]. The first tool is
-          one that records the call stack when it gets invokved
+          one that records the call stack when it gets invoked
           ([DummyStackTool][examples.dev.dummy_app.tool.DummyStackTool]). Each
           of the following ones (is random string->string method that is applied
           to retrieved chunks.
@@ -81,6 +81,8 @@ class DummyApp(Dummy):
 
         super().__init__(**kwargs)
 
+        assert num_tools >= 1, "Need at least one tool."
+
         comp_kwargs = defaultdict(dict, comp_kwargs if comp_kwargs else {})
 
         self.use_parallel = use_parallel
@@ -92,10 +94,9 @@ class DummyApp(Dummy):
         self.llm = DummyLLM(**kwargs, **comp_kwargs[DummyLLM])
 
         self.template = DummyTemplate(
-            """Please answer the following question given the context.
-QUESTION: {question}
-CONTEXT: {context}
-""", **kwargs, **comp_kwargs[DummyTemplate]
+            "Please answer the following question given the context.\n"
+            "QUESTION: {question}\n"
+            "CONTEXT: {context}\n", **kwargs, **comp_kwargs[DummyTemplate]
         )
 
         # Put some tools into the app and make sure the first is the one that
@@ -108,8 +109,9 @@ CONTEXT: {context}
 
         self.agents = [
             DummyAgent(
+                # Recursivly includes app, set num_agents to 0 to prevent infinite loop:
                 app=DummyApp(num_agents=0),
-                description=f"ensamble agent {i}",
+                description=f"ensemble agent {i}",
                 **kwargs,
                 **comp_kwargs[DummyAgent]
             ) for i in range(num_agents)
@@ -118,8 +120,6 @@ CONTEXT: {context}
         self.reranker = DummyReranker(**kwargs, **comp_kwargs[DummyReranker])
 
         self.dummy_allocate()
-
-        # Tasks ?
 
     @instrument
     def process_chunk_by_tool(
@@ -164,9 +164,10 @@ CONTEXT: {context}
 
         chunks = self.retriever.retrieve_chunks(query)
 
-        chunks = self.reranker.rerank(
-            query_text=query, chunks=chunks, chunk_scores=None
-        ) if self.reranker else chunks
+        if self.reranker:
+            chunks = self.reranker.rerank(
+                query_text=query, chunks=chunks, chunk_scores=None
+            )
 
         if self.use_parallel:
             # Creates a few threads to process chunks in parallel to test apps
@@ -202,9 +203,10 @@ CONTEXT: {context}
 
         chunks = await self.retriever.aretrieve_chunks(query)
 
-        chunks = await self.reranker.arerank(
-            query_text=query, chunks=chunks, chunk_scores=None
-        ) if self.reranker else chunks
+        if self.reranker:
+            chunks = await self.reranker.arerank(
+                query_text=query, chunks=chunks, chunk_scores=None
+            )
 
         if self.use_parallel:
             # TODO: how to make this deterministic for testing against golden
@@ -243,16 +245,14 @@ CONTEXT: {context}
         for agent in self.agents:
             agent.invoke(query)
 
-        # Get rerankined, process chunks.
+        # Get reranking, process chunks.
         chunks = self.get_context(query)
 
         # Do some remembering.
         self.memory.remember(query)
 
         # Do some generation.
-        summary = self.llm.generate(
-            ",".join(filter(lambda c: len(c) < 128, chunks))
-        )
+        summary = self.llm.generate(",".join(chunks))
 
         # Do some templating.
         answer_prompt = self.template.fill(question=query, context=summary)
