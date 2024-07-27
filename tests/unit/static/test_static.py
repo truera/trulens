@@ -47,7 +47,7 @@ optional_mods = dict(
 
 # snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
 if sys.version_info < (3, 12):
-    optional_mods["nemoguardrails"] = (["trulens.instrument.nemo.tru_rails"],)
+    optional_mods["nemoguardrails"] = ["trulens.instrument.nemo"]
     optional_mods["snowflake"] = [
         "trulens.providers.cortex.provider",
         "trulens.providers.cortex.endpoint",
