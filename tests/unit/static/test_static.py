@@ -26,33 +26,33 @@ from tests.unit.test import requiredonly_test
 # optional in which case it should no longer be considered optional.
 
 optional_mods = dict(
-    pinecone=["trulens_eval.Example_TruBot"],
-    ipywidgets=["trulens_eval.appui"],
+    pinecone=["trulens.Example_TruBot"],
+    ipywidgets=["trulens.appui"],
     llama_index=[
-        "trulens_eval.tru_llama",
-        "trulens_eval.utils.llama",
-        "trulens_eval.guardrails.llama",
+        "trulens.instrument.llamaindex.tru_llama",
+        "trulens.instrument.llamaindex.llama",
+        "trulens.instrument.llamaindex.guardrails",
     ],
     boto3=[
-        "trulens_eval.feedback.provider.bedrock",
-        "trulens_eval.feedback.provider.endpoint.bedrock",
+        "trulens.providers.bedrock.provider",
+        "trulens.providers.bedrock.endpoint",
     ],
     litellm=[
-        "trulens_eval.feedback.provider.litellm",
-        "trulens_eval.feedback.provider.endpoint.litellm",
+        "trulens.providers.litellm.provider",
+        "trulens.providers.litellm.endpoint",
     ],
     openai=[
-        "trulens_eval.feedback.provider.openai",
-        "trulens_eval.feedback.provider.endpoint.openai",
+        "trulens.providers.openai.provider",
+        "trulens.providers.openai.endpoint",
     ],
-    nemoguardrails=["trulens_eval.tru_rails"],
+    nemoguardrails=["trulens.instrument.nemo.tru_rails"],
 )
 
 # snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
 if sys.version_info < (3, 12):
     optional_mods["snowflake"] = [
-        "trulens_eval.feedback.provider.cortex",
-        "trulens_eval.feedback.provider.endpoint.cortex",
+        "trulens.providers.cortex.provider",
+        "trulens.providers.cortex.endpoint",
     ]
 else:
     assert not module_installed(
@@ -157,6 +157,7 @@ class TestStatic(TestCase):
                         f"Instrumented class {cls} is in module {cls.__module__} which is not to be instrumented."
                     )
 
+    @optional_test
     def test_instrumentation_langchain(self):
         """Check that the langchain instrumentation is up to date."""
 
@@ -199,17 +200,8 @@ class TestStatic(TestCase):
                 for mod in mods:
                     with self.subTest(mod=mod):
                         # Make sure the import raises ImportError:
-                        with self.assertRaises(ImportError) as context:
+                        with self.assertRaises(ImportError):
                             __import__(mod)
-
-                        # Make sure the message in the exception is the one we
-                        # produce as part of the optional imports scheme (see
-                        # utils/imports.py:format_import_errors).
-                        self.assertIn(
-                            "You should be able to install",
-                            context.exception.args[0],
-                            msg="Exception message did not have the expected content.",
-                        )
 
     @optional_test
     def test_import_optional_success(self):

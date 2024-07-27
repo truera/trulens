@@ -5,6 +5,7 @@ line. Hopefully this wraps automatically.
 """
 
 import builtins
+from inspect import cleandoc
 from dataclasses import dataclass
 from importlib import metadata
 from importlib import resources
@@ -221,16 +222,16 @@ def format_import_errors(
     it_them = "it" if len(packages) == 1 else "them"
     this_these = "this" if len(packages) == 1 else "these"
 
-    msg = f"""
+    msg = cleandoc(f"""
 {','.join(packages)} {pack_s} {is_are} required for {purpose}.
 You should be able to install {it_them} with pip:
 
     ```bash
     pip install {' '.join(map(lambda a: f'"{a}"', requirements))}
     ```
-"""
+""")
 
-    msg_pinned = f"""
+    msg_pinned = cleandoc(f"""
 You have {packs} installed but we could not import the required
 components. There may be a version incompatibility. Please try installing {this_these}
 exact {pack_s} with pip:
@@ -244,7 +245,7 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
     ```bash
     pip uninstall -y '{' '.join(packages)}'
     ```
-"""
+""")
 
     if isinstance(throw, Exception):
         print(msg)

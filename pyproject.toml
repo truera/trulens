@@ -28,11 +28,6 @@ trulens-dashboard = {version = "0.33.0", python = "!=3.9.7"}
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = {path = "src/benchmark", develop = true}
 
-[tool.poetry.group.core.dependencies]
-trulens-core = {path = "src/core", develop = true}
-trulens-feedback = {path = "src/feedback", develop = true}
-trulens-dashboard = {path = "src/dashboard", develop = true, python = "!=3.9.7"}
-
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
 ruff = "^0.5.5"
@@ -72,6 +67,11 @@ trulens-provider-huggingface-local = {path = "src/providers/huggingface-local", 
 trulens-provider-openai = {path = "src/providers/openai", develop = true}
 trulens-provider-litellm = {path = "src/providers/litellm", develop = true}
 
+[tool.poetry.group.required.dependencies]
+trulens-core = {path = "src/core", develop = true}
+trulens-feedback = {path = "src/feedback", develop = true}
+trulens-dashboard = {path = "src/dashboard", develop = true, python = "!=3.9.7"}
+
 [tool.poetry.group.tests.dependencies]
 pytest = "^8.3.1"
 nbconvert = "^7.16.4"
@@ -79,6 +79,7 @@ nbformat = "^5.10.4"
 pytest-subtests = "^0.13.1"
 pytest-azurepipelines = "^1.0.5"
 ruff = "^0.5.5"
+pre-commit = "^3.7.1"
 
 [tool.pytest.ini_options]
 testpaths = [

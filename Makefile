@@ -75,7 +75,7 @@ trubot:
 # Run a test with the optional flag set, meaning @optional_test decorated tests
 # are run.
 required-env:
-	poetry install --only core,tests --sync
+	poetry install --only required,tests --sync
 
 optional-env:
 	poetry install --sync --verbose
@@ -101,7 +101,7 @@ test-e2e:
 # While those don't use costly endpoints, they may be more computation intensive.
 
 .env/create/db:
-	poetry install --only core,tests,db-tests --sync --verbose
+	poetry install --only required,tests,db-tests --sync --verbose
 
 test-database: .env/create/db
 	docker compose --file docker/test-database.yaml up --quiet-pull --detach --wait --wait-timeout 30
