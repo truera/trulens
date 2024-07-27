@@ -27,7 +27,7 @@ from tests.unit.utils import requiredonly_test
 
 optional_mods = dict(
     pinecone=["trulens.Example_TruBot"],
-    ipywidgets=["trulens.appui"],
+    ipywidgets=["trulens.dashboard.appui"],
     llama_index=[
         "trulens.instrument.llamaindex.tru_llama",
         "trulens.instrument.llamaindex.llama",

@@ -5,11 +5,11 @@ line. Hopefully this wraps automatically.
 """
 
 import builtins
-from inspect import cleandoc
 from dataclasses import dataclass
 from importlib import metadata
 from importlib import resources
 import inspect
+from inspect import cleandoc
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
