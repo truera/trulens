@@ -19,8 +19,8 @@ from trulens.core.utils.asynchro import sync
 from trulens.core.utils.keys import check_keys
 from trulens.instrument.langchain import TruChain
 
-from tests.unit.test import JSONTestCase
-from tests.unit.test import optional_test
+from tests.unit.utils import JSONTestCase
+from tests.unit.utils import optional_test
 
 
 class TestTruChain(JSONTestCase):

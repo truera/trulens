@@ -9,7 +9,7 @@ from trulens.core import TruBasicApp
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.utils.keys import check_keys
 
-from tests.unit.test import JSONTestCase
+from tests.unit.utils import JSONTestCase
 
 check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 

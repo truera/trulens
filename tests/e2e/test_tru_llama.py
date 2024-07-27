@@ -8,8 +8,8 @@ from unittest import main
 from trulens.core.utils.asynchro import sync
 from trulens.core.utils.keys import check_keys
 
-from tests.unit.test import JSONTestCase
-from tests.unit.test import optional_test
+from tests.unit.utils import JSONTestCase
+from tests.unit.utils import optional_test
 
 
 # All tests require optional packages.

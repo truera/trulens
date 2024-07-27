@@ -8,7 +8,7 @@ from trulens.core import Tru
 from trulens.core import TruCustomApp
 
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
-from tests.unit.test import JSONTestCase
+from tests.unit.utils import JSONTestCase
 
 
 class TestTruCustomApp(JSONTestCase):

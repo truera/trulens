@@ -15,7 +15,7 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.utils.keys import check_keys
 from trulens.providers.huggingface.provider import Dummy
 
-from tests.unit.test import optional_test
+from tests.unit.utils import optional_test
 
 
 class TestTru(TestCase):

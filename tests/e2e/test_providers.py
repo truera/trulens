@@ -13,7 +13,7 @@ from trulens.feedback import LLMProvider
 from trulens.providers.huggingface import Huggingface
 from trulens.providers.openai import OpenAI
 
-from tests.unit.test import optional_test
+from tests.unit.utils import optional_test
 
 pp = PrettyPrinter()
 
