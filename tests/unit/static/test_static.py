@@ -26,7 +26,6 @@ from tests.unit.utils import requiredonly_test
 # optional in which case it should no longer be considered optional.
 
 optional_mods = dict(
-    ipywidgets=["trulens.dashboard.appui"],
     llama_index=[
         "trulens.instrument.llamaindex.tru_llama",
         "trulens.instrument.llamaindex.llama",
