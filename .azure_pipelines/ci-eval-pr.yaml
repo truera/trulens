@@ -5,13 +5,10 @@ trigger: none
 
 pr:
   # Run this pipeline for any PR that wishes to push to main that changes code
-  # inside trulens_eval folder.
+  # inside trulens folder.
   branches:
     include:
       - main
-  paths:
-    include:
-      - trulens_eval
 
 jobs:
   - job: PRBranchProtect # name seems to be important but cannot figure out why
