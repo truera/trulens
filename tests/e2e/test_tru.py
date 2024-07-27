@@ -107,16 +107,15 @@ class TestTru(TestCase):
     def _create_chain(self):
         # Note that while langchain is required, openai is not so tests using
         # this app are optional.
-
-        from langchain.chains import LLMChain
-        from langchain.llms.openai import OpenAI
         from langchain.prompts import PromptTemplate
+        from langchain.schema import StrOutputParser
+        from langchain_openai import OpenAI
 
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
         llm = OpenAI(temperature=0.0, streaming=False, cache=False)
-        chain = LLMChain(llm=llm, prompt=prompt)
+        chain = prompt | llm | StrOutputParser()
         return chain
 
     def _create_feedback_functions(self):
@@ -169,21 +168,22 @@ class TestTru(TestCase):
         packages.
         """
         tru = Tru()
+        from trulens.core import TruBasicApp
 
         with self.subTest(type="TruBasicApp"):
             app = self._create_basic()
 
             with self.subTest(argname=None):
-                tru.Basic(app)
+                TruBasicApp(app)
 
             with self.subTest(argname="text_to_text"):
-                tru.Basic(text_to_text=app)
+                TruBasicApp(text_to_text=app)
 
             # Not specifying callable should be an error.
             with self.assertRaises(Exception):
-                tru.Basic()
+                TruBasicApp()
             with self.assertRaises(Exception):
-                tru.Basic(None)
+                TruBasicApp(None)
 
             # Specifying custom basic app using any of these other argument
             # names should be an error.
@@ -192,7 +192,7 @@ class TestTru(TestCase):
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
-                        tru.Basic(**{arg: app})
+                        TruBasicApp(**{arg: app})
 
         with self.subTest(type="TruCustomApp"):
             app = self._create_custom()
@@ -218,26 +218,26 @@ class TestTru(TestCase):
             tru.Virtual(None)
 
     @optional_test
-    def test_optional_constructors(self):
+    def test_langchain_constructors(self):
         """
-        Test Tru class utility aliases that require optional packages.
+        Test TruChain class that require optional packages.
         """
-        tru = Tru()
+        from trulens.instrument.langchain import TruChain
 
         with self.subTest(type="TruChain"):
             app = self._create_chain()
 
             with self.subTest(argname=None):
-                tru.Chain(app)
+                TruChain(app)
 
-            with self.subTest(argname="chain"):
-                tru.Chain(chain=app)
+            with self.subTest(argname="app"):
+                TruChain(app=app)
 
             # Not specifying chain should be an error.
             with self.assertRaises(Exception):
-                tru.Chain()
+                TruChain()
             with self.assertRaises(Exception):
-                tru.Chain(None)
+                TruChain(None)
 
             # Specifying the chain using any of these other argument names
             # should be an error.
@@ -245,21 +245,28 @@ class TestTru(TestCase):
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
-                        tru.Chain(**{arg: app})
+                        TruChain(**{arg: app})
+
+    @optional_test
+    def test_llamaindex_constructors(self):
+        """
+        Test TruLlama class that require optional packages.
+        """
+        from trulens.instrument.llamaindex import TruLlama
 
         with self.subTest(type="TruLlama"):
             app = self._create_llama()
 
-            tru.Llama(app)
+            TruLlama(app)
 
-            tru.Llama(engine=app)
+            TruLlama(app=app)
 
             # Not specifying an engine should be an error.
             with self.assertRaises(Exception):
-                tru.Llama()
+                TruLlama()
 
             with self.assertRaises(Exception):
-                tru.Llama(None)
+                TruLlama(None)
 
             # Specifying engine using any of these other argument names
             # should be an error.
@@ -267,7 +274,7 @@ class TestTru(TestCase):
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
-                        tru.Llama(**{arg: app})
+                        TruLlama(**{arg: app})
 
     def test_run_feedback_functions_wait(self):
         """

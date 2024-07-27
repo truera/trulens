@@ -192,8 +192,8 @@ def get_or_make_app(
         )
 
     # Trulens instrumentation.
-    tc = tru.Chain(
-        chain=app,
+    tc = TruChain(
+        app=app,
         app_id=app_id,
         feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance],
         feedback_mode=feedback_mode,

@@ -1,14 +1,13 @@
 import logging
 from typing import Dict, Optional, Sequence, Union
 
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.language_models.llms import BaseLLM
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
 from trulens.feedback import LLMProvider
 from trulens.providers.langchain.endpoint import LangchainEndpoint
-
-from langchain.chat_models.base import BaseChatModel
-from langchain.llms.base import BaseLLM
 
 logger = logging.getLogger(__name__)
 

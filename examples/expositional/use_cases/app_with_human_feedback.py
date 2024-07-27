@@ -15,15 +15,16 @@ import os
 from pathlib import Path
 import sys
 
-from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
+from langchain.schema import StrOutputParser
 
 # from langchain.chat_models import ChatOpenAI # Deprecated
 from langchain_openai import ChatOpenAI
 import streamlit as st
 from trulens.core import Tru
+from trulens.instrument.langchain import TruChain
 from trulens.dashboard import run_dashboard
 from trulens.instrument.langchain import TruChain
 
@@ -48,8 +49,7 @@ def setup_chain():
     chat_prompt_template = ChatPromptTemplate.from_messages([full_prompt])
 
     chat = ChatOpenAI(model_name=model_name, temperature=0.9)
-
-    chain = LLMChain(llm=chat, prompt=chat_prompt_template)
+    chain = chat_prompt_template | chat | StrOutputParser()
 
     tc = TruChain(chain, app_id="Streamlit App")
     tru.add_app(app=tc)

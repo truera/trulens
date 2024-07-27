@@ -45,13 +45,8 @@ jobs:
 
           # Show python version
           echo "Using $(python --version) ($(which python))"
-        displayName: Env Setup
-
-      - bash: |
-          set -e
           poetry config virtualenvs.create false
-          poetry install --only required,tests --sync --verbose
-        displayName: Install Required Packages
+        displayName: Env Setup
 
       - bash: |
           set -e
@@ -62,19 +57,12 @@ jobs:
 
       - bash: |
           set -e
-          poetry run pytest --rootdir=. --test-run-title="Required $(python-version) unit tests" $(tests-folder)
+          make test-unit-required
         displayName: Unit Tests with Required Packages
 
       - bash: |
           set -e
-          poetry install --sync --verbose
-          python --version
-          pip --version
-        displayName: Install Optional Packages
-
-      - bash: |
-          set -e
-          poetry run pytest --rootdir=. --test-run-title="Optional $(python-version) unit tests" $(tests-folder)
+          make test-unit-optional
         env:
           # enables optional tests, see tests/unit/test.py
           TEST_OPTIONAL: true

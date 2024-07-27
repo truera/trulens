@@ -2,15 +2,15 @@
 Tests for TruChain. Some of the tests are outdated.
 """
 
+from typing import Optional
 import unittest
 from unittest import main
 
 from langchain.callbacks import AsyncIteratorCallbackHandler
-from langchain.chains import LLMChain
-from langchain.llms.openai import OpenAI
-from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
+from langchain_core.output_parsers import StrOutputParser
+from langchain_openai.chat_models.base import ChatOpenAI
 from trulens.core import Tru
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.schema.feedback import FeedbackMode
@@ -42,43 +42,19 @@ class TestTruChain(JSONTestCase):
             "PINECONE_ENV",
         )
 
-    @optional_test
-    def test_multiple_instruments(self):
-        # Multiple wrapped apps use the same components. Make sure paths are
-        # correctly tracked.
-
-        prompt = PromptTemplate.from_template(
-            """Honestly answer this question: {question}."""
-        )
-        llm = OpenAI(temperature=0.0, streaming=False, cache=False)
-
-        LLMChain(llm=llm, prompt=prompt)
-
-        memory = ConversationSummaryBufferMemory(
-            memory_key="chat_history",
-            input_key="question",
-            llm=llm,  # same llm now appears in a different spot
-        )
-        LLMChain(llm=llm, prompt=prompt, memory=memory)
-
-    def _create_basic_chain(self, app_id: str = None):
-        from langchain_openai import ChatOpenAI
-
+    def _create_basic_chain(self, app_id: Optional[str] = None):
         # Create simple QA chain.
-        tru = Tru()
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
 
         # Get sync results.
         llm = ChatOpenAI(temperature=0.0)
-        chain = LLMChain(llm=llm, prompt=prompt)
+        chain = prompt | llm | StrOutputParser()
 
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
-        tc = tru.Chain(
-            chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP
-        )
+        tc = TruChain(chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP)
 
         return tc
 
@@ -88,6 +64,7 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
+        tru = Tru()
         tc = self._create_basic_chain(app_id="metaplain")
 
         message = "What is 1+2?"
@@ -99,7 +76,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = tru.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -107,8 +84,8 @@ class TestTruChain(JSONTestCase):
         # Check updating the record metadata in the db.
         new_meta = "this is new meta"
         rec.meta = new_meta
-        Tru().update_record(rec)
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        tru.update_record(rec)
+        recs, _ = tru.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
@@ -118,15 +95,15 @@ class TestTruChain(JSONTestCase):
         # Record with no meta:
         _, rec = tc.with_record(tc.app, message)
         self.assertEqual(rec.meta, None)
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = tru.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, None)
 
         # Update it to add meta:
         rec.meta = new_meta
-        Tru().update_record(rec)
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        tru.update_record(rec)
+        recs, _ = tru.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, new_meta)
@@ -171,15 +148,13 @@ class TestTruChain(JSONTestCase):
 
         # TODO: move to a different test file as TruChain is not involved.
 
-        from langchain_openai import ChatOpenAI
-
         msg = HumanMessage(content="Hello there")
 
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
         llm = ChatOpenAI(temperature=0.0, streaming=False, cache=False)
-        chain = LLMChain(llm=llm, prompt=prompt)
+        chain = prompt | llm | StrOutputParser()
 
         async def test1():
             # Does not create a task:
@@ -218,7 +193,6 @@ class TestTruChain(JSONTestCase):
         from langchain_openai import ChatOpenAI
 
         # Create simple QA chain.
-        tru = Tru()
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
         )
@@ -227,7 +201,7 @@ class TestTruChain(JSONTestCase):
 
         # Get sync results.
         llm = ChatOpenAI(temperature=0.0)
-        chain = LLMChain(llm=llm, prompt=prompt)
+        chain = prompt | llm | StrOutputParser()
         tc = TruChain(chain)
         sync_res, sync_record = tc.with_record(
             tc.app, inputs=dict(question=message)
@@ -235,7 +209,7 @@ class TestTruChain(JSONTestCase):
 
         # Get async results.
         llm = ChatOpenAI(temperature=0.0)
-        chain = LLMChain(llm=llm, prompt=prompt)
+        chain = prompt | llm | StrOutputParser()
         tc = TruChain(chain)
         async_res, async_record = sync(
             tc.awith_record,
@@ -271,7 +245,6 @@ class TestTruChain(JSONTestCase):
 
         from langchain_openai import ChatOpenAI
 
-        tru = Tru()
         # hugs = feedback.Huggingface()
         # f_lang_match = Feedback(hugs.language_match).on_input_output()
 
@@ -282,8 +255,8 @@ class TestTruChain(JSONTestCase):
         llm = ChatOpenAI(
             temperature=0.0, streaming=True, callbacks=[async_callback]
         )
-        agent = LLMChain(llm=llm, prompt=prompt)
-        agent_recorder = tru.Chain(agent)  # , feedbacks=[f_lang_match])
+        agent = prompt | llm | StrOutputParser()
+        agent_recorder = TruChain(agent)  # , feedbacks=[f_lang_match])
 
         message = "What is 1+2? Explain your answer."
         with agent_recorder as recording:

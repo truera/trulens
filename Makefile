@@ -85,7 +85,7 @@ test-%-required: required-env
 	make test-$*
 
 test-%-optional: optional-env
-	make test-$*
+	TEST_OPTIONAL=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
 test-unit:

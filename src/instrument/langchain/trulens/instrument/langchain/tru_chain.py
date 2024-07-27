@@ -9,6 +9,7 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional
 
 from langchain_core.language_models.base import BaseLanguageModel
+from langchain_core.language_models.llms import BaseLLM
 from langchain_core.runnables.base import RunnableSerializable
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
@@ -29,7 +30,6 @@ from trulens.instrument.langchain.guardrails import WithFeedbackFilterDocuments
 from langchain.agents.agent import BaseMultiActionAgent
 from langchain.agents.agent import BaseSingleActionAgent
 from langchain.chains.base import Chain
-from langchain.llms.base import BaseLLM
 from langchain.load.serializable import Serializable
 
 # this seems to be work in progress over at langchain

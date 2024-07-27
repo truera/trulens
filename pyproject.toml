@@ -94,7 +94,7 @@ extend-exclude = ["examples/expositional/*", "examples/experimental/*"]
 
 [tool.ruff.lint]
 ignore = ["E731"]
-extend-select = ["I"]
+extend-select = ["I", "E303"]
 
 [tool.ruff.lint.isort]
 force-single-line = true

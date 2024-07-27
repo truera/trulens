@@ -2,7 +2,7 @@ from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
 import os
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence
 import unittest
 from unittest import TestCase
 
@@ -50,7 +50,12 @@ def module_installed(module: str) -> bool:
 
 class JSONTestCase(TestCase):
     def assertJSONEqual(
-        self, j1, j2, path: Lens = None, skips=None, numeric_places: int = 7
+        self,
+        j1,
+        j2,
+        path: Optional[Lens] = None,
+        skips=None,
+        numeric_places: int = 7,
     ) -> None:
         skips = skips or set([])
         path = path or Lens()

@@ -720,13 +720,6 @@ class SingletonInfo(Generic[T]):
     val: T
     """The singleton instance."""
 
-    name: str
-    """The name of the singleton instance.
-
-    This is used for the SingletonPerName mechanism to have a seperate singleton
-    for each unique name (and class).
-    """
-
     cls: Type[T]
     """The class of the singleton instance."""
 
@@ -734,6 +727,13 @@ class SingletonInfo(Generic[T]):
     """The frame where the singleton was created.
 
     This is used for showing "already created" warnings.
+    """
+
+    name: Optional[str] = None
+    """The name of the singleton instance.
+
+    This is used for the SingletonPerName mechanism to have a separate singleton
+    for each unique name (and class).
     """
 
     def __init__(self, name: str, val: Any):
@@ -760,15 +760,15 @@ class SingletonInfo(Generic[T]):
         )
 
 
-class SingletonPerName(Generic[T]):
+class SingletonPerName:
     """
     Class for creating singleton instances except there being one instance max,
     there is one max per different `name` argument. If `name` is never given,
-    reverts to normal singleton behaviour.
+    reverts to normal singleton behavior.
     """
 
     # Hold singleton instances here.
-    _instances: Dict[Hashable, SingletonInfo[SingletonPerName[T]]] = {}
+    _instances: Dict[Hashable, SingletonInfo[SingletonPerName]] = {}
 
     # Need some way to look up the name of the singleton instance. Cannot attach
     # a new attribute to instance since some metaclasses don't allow this (like
@@ -788,11 +788,11 @@ class SingletonPerName(Generic[T]):
             )
 
     def __new__(
-        cls: Type[SingletonPerName[T]],
+        cls: Type[SingletonPerName],
         *args,
         name: Optional[str] = None,
         **kwargs,
-    ) -> SingletonPerName[T]:
+    ) -> SingletonPerName:
         """
         Create the singleton instance if it doesn't already exist and return it.
         """
@@ -810,17 +810,18 @@ class SingletonPerName(Generic[T]):
             instance = super().__new__(cls)
 
             SingletonPerName._id_to_name_map[id(instance)] = name
-            info = SingletonInfo(name=name, val=instance)
+            info: SingletonInfo = SingletonInfo(name=name, val=instance)
             SingletonPerName._instances[k] = info
         else:
             info = SingletonPerName._instances[k]
-
-        obj: Type[cls] = info.val
-
+        obj = info.val
+        assert isinstance(obj, cls)
         return obj
 
     @staticmethod
-    def delete_singleton_by_name(name: str, cls: Type[SingletonPerName] = None):
+    def delete_singleton_by_name(
+        name: str, cls: Optional[Type[SingletonPerName]] = None
+    ):
         """
         Delete the singleton instance with the given name.
 

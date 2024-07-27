@@ -149,6 +149,9 @@ class Tru(python.SingletonPerName):
     _evaluator_stop: Optional[threading.Event] = None
     """Event for stopping the deferred evaluator which runs in another thread."""
 
+    def __new__(cls, *args, **kwargs) -> Tru:
+        return super().__new__(cls, *args, **kwargs)
+
     def __init__(
         self,
         database: Optional[DB] = None,
