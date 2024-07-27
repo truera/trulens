@@ -4769,8 +4769,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
+    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -5333,13 +5333,13 @@ tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
 
 [[package]]
 name = "pymdown-extensions"
-version = "10.8.1"
+version = "10.9"
 description = "Extension pack for Python Markdown."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pymdown_extensions-10.8.1-py3-none-any.whl", hash = "sha256:f938326115884f48c6059c67377c46cf631c733ef3629b6eed1349989d1b30cb"},
-    {file = "pymdown_extensions-10.8.1.tar.gz", hash = "sha256:3ab1db5c9e21728dabf75192d71471f8e50f216627e9a1fa9535ecb0231b9940"},
+    {file = "pymdown_extensions-10.9-py3-none-any.whl", hash = "sha256:d323f7e90d83c86113ee78f3fe62fc9dee5f56b54d912660703ea1816fed5626"},
+    {file = "pymdown_extensions-10.9.tar.gz", hash = "sha256:6ff740bcd99ec4172a938970d42b96128bdc9d4b9bcad72494f29921dc69b753"},
 ]
 
 [package.dependencies]
@@ -7426,16 +7426,18 @@ develop = true
 
 [package.dependencies]
 humanize = ">=4.6.0"
+ipywidgets = ">=8.1.3"
 millify = ">=0.1.1"
 rich = ">=13.6.0"
 streamlit = ">=1.33.0"
 streamlit-aggrid = "0.3.4"
 streamlit-extras = ">=0.4.0"
 streamlit-pills = ">=0.3.0"
+traitlets = ">=5.0.5"
 trulens-core = ">=0.33.0"
 
 [package.extras]
-dev = ["build (>=1.2.1)", "ipython (>=7.25.0)", "ipywidgets (>=8.1.3)"]
+dev = ["build (>=1.2.1)", "ipython (>=7.25.0)"]
 
 [package.source]
 type = "directory"
@@ -7470,7 +7472,7 @@ files = []
 develop = true
 
 [package.dependencies]
-langchain-core = "^0.1.6"
+langchain = "^0.1.6"
 pydantic = "^2"
 trulens-core = "^0.33.0"
 typing-inspect = "^0.8.0"
@@ -7605,7 +7607,7 @@ files = []
 develop = true
 
 [package.dependencies]
-langchain-core = "^0.1.6"
+langchain = "^0.1.6"
 trulens-core = "^0.33.0"
 trulens-feedback = "^0.33.0"
 
