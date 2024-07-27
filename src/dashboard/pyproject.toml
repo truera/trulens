@@ -21,6 +21,8 @@ dependencies = [
   "streamlit-extras >= 0.4.0",
   "streamlit-pills >= 0.3.0",
   "rich >= 13.6.0",
+  "traitlets >= 5.0.5",
+  "ipywidgets >= 8.1.3",
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -33,7 +35,6 @@ classifiers = [
 dev = [
   "build >= 1.2.1",
   "ipython >= 7.25.0",
-  "ipywidgets >= 8.1.3",
 ]
 
 [tool.setuptools.exclude-package-data]
