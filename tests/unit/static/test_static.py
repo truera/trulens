@@ -177,7 +177,7 @@ class TestStatic(TestCase):
         self._test_instrumentation(LlamaInstrument())
 
     @skipIf(
-        sys.version_info < (3, 12), "nemo is not yet supported in Python 3.12"
+        sys.version_info >= (3, 12), "nemo is not yet supported in Python 3.12"
     )
     @optional_test
     def test_instrumentation_nemo(self):
