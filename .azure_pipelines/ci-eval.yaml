@@ -6,10 +6,6 @@ pr:
   branches:
     include:
       - releases/*
-  paths:
-    include:
-      - trulens_eval
-      - docs/trulens_eval/*.ipynb
 
 # schedules:
 #  - cron: "0 0 * * *"
@@ -43,26 +39,20 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
 
           # Show python version
-          which python
-          python --version
+          echo "Using $(python --version) ($(which python))"
+          poetry config virtualenvs.create false
+          poetry install --only tests --sync
         displayName: Env Setup
 
       - bash: |
           set -e
-          poetry config virtualenvs.create false
-          poetry install --sync --verbose
-        displayName: Install Packages
-
-      - bash: |
-          set -e
           echo $(which python)
-          echo $(pyenv which python)
           ruff format --diff
         condition: eq(variables['python-version'], 3.12) # only run format check with latest python version
         displayName: Format Diffs
 
       - bash: |
-          poetry run pytest --rootdir=. tests/e2e/*
+          make test-e2e-optional
         displayName: Run e2e tests
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
@@ -72,7 +62,7 @@ jobs:
           HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
 
       - bash: |
-          poetry run pytest --rootdir=. tests/docs_notebooks/*
+          make test-notebook-optional
         displayName: Run notebook tests
         env:
           OPENAI_API_KEY: $(OPENAI_API_KEY)

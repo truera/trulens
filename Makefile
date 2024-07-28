@@ -103,7 +103,12 @@ test-unit:
 # are part of only the less frequently run release tests.
 
 test-e2e:
-	poetry run pytest --rootdir=. tests/e2e
+	poetry run pytest --rootdir=. tests/e2e/*
+
+# Runs the notebook test
+test-notebook:
+	poetry run pytest --rootdir=. tests/docs_notebooks/*
+
 
 # Database integration tests for various database types supported by sqlalchemy.
 # While those don't use costly endpoints, they may be more computation intensive.
