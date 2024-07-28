@@ -8,6 +8,8 @@ import pkgutil
 import sys
 from unittest import TestCase
 from unittest import main
+from unittest import skipIf
+
 
 import trulens.core
 from trulens.core.instruments import Instrument
@@ -174,10 +176,12 @@ class TestStatic(TestCase):
 
         self._test_instrumentation(LlamaInstrument())
 
+    @skipIf(
+        sys.version_info < (3, 12), "nemo is not yet supported in Python 3.12"
+    )
     @optional_test
     def test_instrumentation_nemo(self):
         """Check that the nemo guardrails instrumentation is up to date."""
-
         from trulens.instrument.nemo import RailsInstrument
 
         self._test_instrumentation(RailsInstrument())
