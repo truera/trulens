@@ -59,7 +59,7 @@ Install the trulens-eval pip package from PyPI.
 pip install trulens-eval
 ```
 
-#### Installing from Github
+#### Installing from GitHub
 
 To install the latest version from this repository, you can use pip in the following manner:
 
@@ -129,7 +129,7 @@ conda install matplotlib        # For visualizations.
 pip install trulens
 ```
 
-#### Installing from Github
+#### Installing from GitHub
 
 To install the latest version from this repository, you can use pip in the following manner:
 
