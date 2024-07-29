@@ -1,16 +1,20 @@
 [build-system]
-requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
 
 [tool.poetry]
 name = "trulens-instrument-llamaindex"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
-authors = ["Truera Inc <all@truera.com>"]
+authors = [
+  "Truera Inc <all@truera.com>",
+]
 license = "MIT"
 readme = "README.md"
 packages = [
-  {include = "trulens"},
+  { include = "trulens" },
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -22,10 +26,10 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9"
 trulens-core = "^0.33.0"
-trulens-instrument-langchain = {version = "^0.33.0", python = "<3.13"}
+trulens-instrument-langchain = { version = "^0.33.0", python = "<3.13" }
 pydantic = "^2"
 llama-index = "^0.10.57"
 
 [tool.poetry.group.dev.dependencies]
-trulens-core = {path = "../../core"}
-trulens-instrument-langchain = {path = "../langchain", python = "<3.13"}
+trulens-core = { path = "../../core" }
+trulens-instrument-langchain = { path = "../langchain", python = "<3.13" }

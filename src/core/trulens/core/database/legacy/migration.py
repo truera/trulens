@@ -189,6 +189,9 @@ def _get_compatibility_version(version: str) -> str:
                 # The m_version from m_version_str is larger than this version
                 # check the next m_version.
                 break
+    raise VersionException(
+        f"Could not find a compatibility version for version {version}"
+    )
 
 
 def _migration_checker(db, warn: bool = False) -> None:

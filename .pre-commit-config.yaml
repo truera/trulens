@@ -23,11 +23,10 @@ repos:
     hooks:
       - id: nb-clean
         args: [--remove-empty-cells]
--   repo: https://github.com/pappasam/toml-sort
-    rev: v0.23.1
+-   repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "2.0.4"
     hooks:
-      - id: toml-sort-fix
-        exclude: ".*poetry.lock"
+      - id: pyproject-fmt
 -   repo: https://github.com/python-poetry/poetry
     rev: 1.8.3
     hooks:

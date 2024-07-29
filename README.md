@@ -52,7 +52,7 @@ Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.
 ### 💡 Contributing & Community
 
 Interested in contributing? See our [contributing
-guide](https://www.trulens.org/trulens_eval/contributing/) for more details.
+guide](https://www.trulens.org/trulens/contributing/) for more details.
 
 The best way to support TruLens is to give us a ⭐ on
 [GitHub](https://www.github.com/truera/trulens) and join our [slack
