@@ -1,12 +1,13 @@
 import json
 import pathlib
 import threading
-from typing import Dict, Any
+from typing import Any, Dict
 
 from conversation_manager import ConversationManager
-from feedback import get_feedbacks
-from feedback import f_context_relevance, f_small_local_models_context_relevance
 from feedback import AVAILABLE_PROVIDERS
+from feedback import f_context_relevance
+from feedback import f_small_local_models_context_relevance
+from feedback import get_feedbacks
 from llm import AVAILABLE_FEEDBACK_FUNCTION_FILTERS
 from llm import PROVIDER_MODELS
 from llm import StreamGenerator
@@ -135,7 +136,9 @@ def login():
 
 def get_tru_app_id(
     model: str, temperature: float, top_p: float, max_new_tokens: int,
-    use_rag: bool, retriever: str, retrieval_filter: float, filter_feedback_function: str, provider: str) -> str:
+    use_rag: bool, retriever: str, retrieval_filter: float,
+    filter_feedback_function: str, provider: str
+) -> str:
     # Args are hashed for cache'(' lookup
     ret = f"app-dev-{model.lower()}"
     if use_rag:
@@ -143,12 +146,14 @@ def get_tru_app_id(
     ret += f"-provider-{provider}-temp-{temperature}-topp-{top_p}-maxtokens-{max_new_tokens}"
     return ret
 
+
 @st.cache_resource
 def get_trulens_app(app_id: str, metadata: dict[str, Any]):
     feedbacks = get_feedbacks(metadata['provider'], metadata['use_rag'])
     return TruCustomApp(
         generator, app_id=app_id, metadata=metadata, feedbacks=feedbacks
     )
+
 
 def configure_model(
     *, container, model_config: ModelConfig, key: str, full_width: bool = True
@@ -179,9 +184,14 @@ def configure_model(
         "use_rag":
             st.session_state.get(USE_RAG_KEY, model_config.use_rag),
         "retrieval_filter":
-            st.session_state.get(RETRIEVAL_FILTER_KEY, model_config.retrieval_filter),
+            st.session_state.get(
+                RETRIEVAL_FILTER_KEY, model_config.retrieval_filter
+            ),
         "filter_feedback_function":
-            st.session_state.get(FILTER_FEEDBACK_FUNCTION_KEY, model_config.filter_feedback_function),
+            st.session_state.get(
+                FILTER_FEEDBACK_FUNCTION_KEY,
+                model_config.filter_feedback_function
+            ),
         "retriever":
             st.session_state.get(RETRIEVER_KEY, model_config.retriever),
         "retrieval_filter":
@@ -200,20 +210,30 @@ def configure_model(
         st.session_state[USE_RAG_KEY] = model_config.use_rag
         st.session_state[RETRIEVER_KEY] = model_config.retriever
         st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
-        st.session_state[FILTER_FEEDBACK_FUNCTION_KEY] = model_config.filter_feedback_function
+        st.session_state[FILTER_FEEDBACK_FUNCTION_KEY
+                        ] = model_config.filter_feedback_function
         st.session_state[PROVIDER_KEY] = model_config.provider
         metadata = {
-            "model": st.session_state[MODEL_KEY],
-            "temperature": st.session_state[TEMPERATURE_KEY],
-            "top_p": st.session_state[TOP_P_KEY],
-            "max_new_tokens": st.session_state[MAX_NEW_TOKENS_KEY],
-            "use_rag": st.session_state[USE_RAG_KEY],
-            "retriever": st.session_state[RETRIEVER_KEY],
-            "retrieval_filter": st.session_state[RETRIEVAL_FILTER_KEY],
-            "filter_feedback_function": st.session_state[FILTER_FEEDBACK_FUNCTION_KEY],
-            "provider": st.session_state[PROVIDER_KEY],
+            "model":
+                st.session_state[MODEL_KEY],
+            "temperature":
+                st.session_state[TEMPERATURE_KEY],
+            "top_p":
+                st.session_state[TOP_P_KEY],
+            "max_new_tokens":
+                st.session_state[MAX_NEW_TOKENS_KEY],
+            "use_rag":
+                st.session_state[USE_RAG_KEY],
+            "retriever":
+                st.session_state[RETRIEVER_KEY],
+            "retrieval_filter":
+                st.session_state[RETRIEVAL_FILTER_KEY],
+            "filter_feedback_function":
+                st.session_state[FILTER_FEEDBACK_FUNCTION_KEY],
+            "provider":
+                st.session_state[PROVIDER_KEY],
         }
-        
+
     with container:
         with st.popover(f"Configure :blue[{st.session_state[MODEL_KEY]}]",
                         use_container_width=full_width):
@@ -260,8 +280,7 @@ def configure_model(
                     label="Temperature:",
                     key=TEMPERATURE_KEY,
                 )
-                if model_config.temperature != st.session_state[TEMPERATURE_KEY
-                                                               ]:
+                if model_config.temperature != st.session_state[TEMPERATURE_KEY]:
                     st.session_state[TEMPERATURE_KEY] = model_config.temperature
 
             with right2:
@@ -299,29 +318,34 @@ def configure_model(
                         label="Select retriever:",
                         options=AVAILABLE_RETRIEVERS,
                         key=RETRIEVER_KEY,
-                        )
+                    )
                     if model_config.retriever != st.session_state[RETRIEVER_KEY]:
                         st.session_state[RETRIEVER_KEY] = model_config.retriever
 
                     model_config.retrieval_filter = st.slider(
-                            min_value=0.0,
-                            max_value=1.0,
-                            step=0.1,
-                            label="Context Relevance Filter for Retrieval",
-                            key=RETRIEVAL_FILTER_KEY
-                        )
-
-                    if model_config.retrieval_filter != st.session_state[RETRIEVAL_FILTER_KEY]:
-                        st.session_state[RETRIEVAL_FILTER_KEY] = model_config.retrieval_filter
-
-                    model_config.filter_feedback_function = st.selectbox(
-                    label="Select Feedback Function for Filter:",
-                    options=AVAILABLE_FEEDBACK_FUNCTION_FILTERS.keys(),
-                    key=FILTER_FEEDBACK_FUNCTION_KEY,
+                        min_value=0.0,
+                        max_value=1.0,
+                        step=0.1,
+                        label="Context Relevance Filter for Retrieval",
+                        key=RETRIEVAL_FILTER_KEY
                     )
 
-                    if model_config.filter_feedback_function != st.session_state[FILTER_FEEDBACK_FUNCTION_KEY]:
-                        st.session_state[FILTER_FEEDBACK_FUNCTION_KEY] = model_config.filter_feedback_function
+                    if model_config.retrieval_filter != st.session_state[
+                            RETRIEVAL_FILTER_KEY]:
+                        st.session_state[RETRIEVAL_FILTER_KEY
+                                        ] = model_config.retrieval_filter
+
+                    model_config.filter_feedback_function = st.selectbox(
+                        label="Select Feedback Function for Filter:",
+                        options=AVAILABLE_FEEDBACK_FUNCTION_FILTERS.keys(),
+                        key=FILTER_FEEDBACK_FUNCTION_KEY,
+                    )
+
+                    if model_config.filter_feedback_function != st.session_state[
+                            FILTER_FEEDBACK_FUNCTION_KEY]:
+                        st.session_state[
+                            FILTER_FEEDBACK_FUNCTION_KEY
+                        ] = model_config.filter_feedback_function
 
     app_id = get_tru_app_id(**metadata)
     app = get_trulens_app(app_id, metadata)
