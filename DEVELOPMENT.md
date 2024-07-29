@@ -80,7 +80,7 @@ make test-unit-optional
 
 ### Get Coverage Report
 
-Tests come in two flavors: required and optional
+Uses the `pytest-cov` plugin to generate a coverage report (`coverage.xml` & `htmlcov/index.html`)
 
 ```bash
 make coverage
