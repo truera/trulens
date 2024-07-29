@@ -10,7 +10,6 @@ from unittest import TestCase
 from unittest import main
 from unittest import skipIf
 
-
 import trulens.core
 from trulens.core.instruments import Instrument
 from trulens.core.utils.imports import Dummy

@@ -89,9 +89,18 @@ testpaths = [
 
 [tool.ruff]
 line-length = 80
-include = ["src/*.py", "tests/*.py", "tests/*.ipynb", "examples/*.py", "examples/*.ipynb"]
-extend-include = ["*.ipynb"]
-extend-exclude = ["examples/expositional/*", "examples/experimental/*"]
+include = [
+  "src/*.py",
+  "tests/*.py",
+  "tests/*.ipynb",
+  "examples/*.py",
+  "examples/*.ipynb",
+]
+extend-exclude = [
+  "*.ipynb",
+  "examples/expositional/*",
+  "examples/experimental/*",
+]
 
 [tool.ruff.lint]
 preview = true
