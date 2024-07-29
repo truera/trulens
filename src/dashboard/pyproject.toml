@@ -54,5 +54,6 @@ trulens = [
 
 [tool.setuptools.packages.find]
 include = [
+  "trulens",
   "trulens.dashboard",
 ]

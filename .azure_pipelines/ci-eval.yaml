@@ -47,7 +47,7 @@ jobs:
       - bash: |
           set -e
           echo $(which python)
-          ruff format --diff
+          make run-precommit
         condition: eq(variables['python-version'], 3.12) # only run format check with latest python version
         displayName: Format Diffs
 
