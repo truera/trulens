@@ -776,14 +776,9 @@ def get_definitions(path: Path, startswith: Optional[str] = None) -> Iterable[Tu
         value of the member.
     """
 
-    rets = set()
-
     for modname in get_modules(path, startswith=startswith):
 
         for qualname, val in get_defined_members(modname):
-            if qualname in rets:
-                continue
 
-            rets.add(qualname)
             yield (modname, qualname, val)
 
