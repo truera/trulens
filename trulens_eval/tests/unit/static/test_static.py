@@ -63,7 +63,6 @@ optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 # Every module not mentioned above should be importable without any optional
 # packages.
 
-
 # Get all modules inside trulens_eval:
 all_trulens_mods = get_modules(
     Path(trulens_eval.__file__).parent.parent, startswith="trulens_eval"

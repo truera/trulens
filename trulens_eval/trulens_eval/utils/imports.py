@@ -716,6 +716,7 @@ def get_modules(path: Path, startswith: Optional[str] = None) -> Iterable[str]:
 
                 yield modinfo.name + "." + submod
 
+
 def get_defined_members(modname: str) -> Iterable[Tuple[str, Any]]:
     """Get all members defined in the given module, i.e. members that are not
     aliases with definitions somewhere else.
@@ -756,7 +757,10 @@ def get_defined_members(modname: str) -> Iterable[Tuple[str, Any]]:
         yield (qualname, val)
 
 
-def get_definitions(path: Path, startswith: Optional[str] = None) -> Iterable[Tuple[str, str, Any]]:
+def get_definitions(
+    path: Path,
+    startswith: Optional[str] = None
+) -> Iterable[Tuple[str, str, Any]]:
     """Get all definitions in the given path whose modules start with the given
     prefix.
     
@@ -781,4 +785,3 @@ def get_definitions(path: Path, startswith: Optional[str] = None) -> Iterable[Tu
         for qualname, val in get_defined_members(modname):
 
             yield (modname, qualname, val)
-
