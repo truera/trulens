@@ -11,14 +11,12 @@ import logging
 from pprint import PrettyPrinter
 import threading
 from threading import Lock
-from typing import (
-    Any, Awaitable, Callable, ClassVar, Dict, Hashable, Iterable, List,
-    Optional, Sequence, Set, Tuple, Type, TypeVar, Union
-)
+from typing import (Any, Awaitable, Callable, ClassVar, Dict, Hashable,
+                    Iterable, List, Optional, Sequence, Set, Tuple, Type,
+                    TypeVar, Union)
 
 import pydantic
 
-from trulens_eval import app as mod_app
 from trulens_eval import feedback as mod_feedback
 from trulens_eval import instruments as mod_instruments
 from trulens_eval.schema import app as mod_app_schema
