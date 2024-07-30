@@ -178,9 +178,13 @@ class Tru(python.SingletonPerName):
 
         if snowflake_connection_parameters is not None:
             if database is not None:
-                raise ValueError("`database` must be `None` if `snowflake_connection_parameters` is set!")
+                raise ValueError(
+                    "`database` must be `None` if `snowflake_connection_parameters` is set!"
+                )
             if database_url is not None:
-                raise ValueError("`database_url` must be `None` if `snowflake_connection_parameters` is set!")
+                raise ValueError(
+                    "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
+                )
 
             from snowflake.sqlalchemy import URL
 
@@ -189,7 +193,9 @@ class Tru(python.SingletonPerName):
                 user=snowflake_connection_parameters["user"],
                 password=snowflake_connection_parameters["password"],
                 database=snowflake_connection_parameters["database"],
-                warehouse=snowflake_connection_parameters.get("warehouse", None),
+                warehouse=snowflake_connection_parameters.get(
+                    "warehouse", None
+                ),
                 role=snowflake_connection_parameters.get("role", None),
             )
 
