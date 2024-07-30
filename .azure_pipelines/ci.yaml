@@ -90,7 +90,8 @@ jobs:
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
-          echo Using $(yapf --version) isort $(isort --vn)
+
+          pip install -r requirements.dev.txt
           ./format.sh --explain
         displayName: Format Code
       - bash: |
