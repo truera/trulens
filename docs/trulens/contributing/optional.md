@@ -1,8 +1,8 @@
 # ⛅ Optional Packages
 
-Most of the examples included within `trulens_eval` require additional packages
-not installed alongside `trulens_eval`. You may be prompted to install them
-(with pip). The requirements file `trulens_eval/requirements.optional.txt`
+Most of the examples included within `trulens` require additional packages
+not installed alongside `trulens`. You may be prompted to install them
+(with pip). The requirements file `trulens/requirements.optional.txt`
 contains the list of optional packages and their use if you'd like to install
 them all in one go.
 

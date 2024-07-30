@@ -156,7 +156,25 @@ theme:
     repo: fontawesome/brands/github
   custom_dir: docs/overrides/
   palette:
-    scheme: trulens
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: trulens
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
   #font:
   #  text: Source Sans Pro
   favicon: img/favicon.ico
@@ -259,11 +277,11 @@ nav:
       - App:
           - trulens/api/app/index.md
           - TruBasicApp: trulens/api/app/trubasicapp.md
-          - 🦜️🔗 TruChain: trulens/api/app/truchain.md
-          - 🦙 TruLlama: trulens/api/app/trullama.md
           - TruRails: trulens/api/app/trurails.md
           - TruCustom: trulens/api/app/trucustom.md
           - TruVirtual: trulens/api/app/truvirtual.md
+          - 🦜️🔗 TruChain: trulens/api/app/truchain.md
+          - 🦙 TruLlama: trulens/api/app/trullama.md
       - Feedback: trulens/api/feedback.md
       - 💾 Record: trulens/api/record.md
       - Provider:
@@ -280,7 +298,8 @@ nav:
           - Endpoint:
               - trulens/api/endpoint/index.md
               - OpenAI: trulens/api/endpoint/openai.md
-      - 𝄢 Instruments: trulens/api/instruments.md
+      - 𝄢 Instrumentation:
+          - trulens/api/instruments.md
       - 🛡️ Guardrails:
           - trulens/api/guardrails/index.md
           - 🦜️🔗 Langchain Guardrails: trulens/api/guardrails/langchain.md
@@ -289,7 +308,8 @@ nav:
         - trulens/api/database/index.md
         - ✨ Migration: trulens/api/database/migration.md
         - 🧪 SQLAlchemy: trulens/api/database/sqlalchemy.md
-      - Streamlit: trulens/api/streamlit.md
+      - Dashboard:
+        - Streamlit: trulens/api/streamlit.md
   - 🤝 Contributing:
       - trulens/contributing/index.md
       - 🧭 Design: trulens/contributing/design.md

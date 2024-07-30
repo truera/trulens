@@ -3,7 +3,7 @@
 Below is how you can instantiate a [_LangChain_ LLM](https://python.langchain.com/docs/modules/model_io/llms/) as a provider.
 
 All feedback functions listed in the base [LLMProvider
-class][trulens_eval.feedback.provider.base.LLMProvider] can be run with the _LangChain_ Provider.
+class][trulens.feedback.llm_provider.LLMProvider] can be run with the _LangChain_ Provider.
 
 !!! note
 

@@ -15,7 +15,7 @@ measure the performance of **your app, on your data, for your users**.
 
 !!! info "Important Concept"
 
-    TruLens constructs feedback functions by combining more general models, known as the [**_feedback provider_**][trulens_eval.feedback.provider.base.Provider], and [**_feedback implementation_**](../feedback_implementations/index.md) made up of carefully constructed prompts and custom logic tailored to perform a particular evaluation task.
+    TruLens constructs feedback functions by combining more general models, known as the [**_feedback provider_**][trulens.core.feedback.provider.Provider], and [**_feedback implementation_**](../feedback_implementations/index.md) made up of carefully constructed prompts and custom logic tailored to perform a particular evaluation task.
 
 This construction is **composable and extensible**.
 

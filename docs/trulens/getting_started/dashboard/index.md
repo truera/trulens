@@ -4,7 +4,7 @@ TruLens provides a broad set of capabilities for evaluating and tracking applica
 
 ## TruLens Dashboard
 
-To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by [tru.run_dashboard][trulens_eval.tru.Tru.run_dashboard], and will run from a database url you specify with  [Tru()][trulens_eval.tru.Tru].
+To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by [run_dashboard][trulens.dashboard.run_dashboard], and will run from a database url you specify with  [Tru()][trulens.core.Tru].
 
 !!! example "Launch the TruLens dashboard"
 
@@ -38,7 +38,7 @@ It can also be run in the CLI with the command below:
 
 In addition to the complete dashboard, several of the dashboard components can be used on their own and added to existing _Streamlit_ dashboards.
 
-_Streamlit_ is an easy way to create python scripts into shareable web applications, and has become a popular way to interact with generative AI technology. Several _TruLens_ UI components are now accessible for adding to Streamlit dashboards using the _TruLens_ [Streamlit module][trulens_eval.streamlit].
+_Streamlit_ is an easy way to create python scripts into shareable web applications, and has become a popular way to interact with generative AI technology. Several _TruLens_ UI components are now accessible for adding to Streamlit dashboards using the _TruLens_ [Streamlit module][trulens.dashboard.streamlit].
 
 Consider the below `app.py` which consists of a simple RAG application that is already logged and evaluated with _TruLens_. Notice in particular, that we are getting both the application's `response` and `record`.
 
@@ -47,7 +47,7 @@ Consider the below `app.py` which consists of a simple RAG application that is a
     ```python
 
     import streamlit as st
-    from trulens_eval import Tru
+    from trulens.core import Tru
 
     from base import rag # a rag app with a query method
     from base import tru_rag # a rag app wrapped by trulens
@@ -69,34 +69,34 @@ Consider the below `app.py` which consists of a simple RAG application that is a
 
     ```
 
-With the `record` in hand, we can easily add TruLens components to display the evaluation results of the provided record using [trulens_feedback][trulens_eval.streamlit.trulens_feedback]. This will display the _TruLens_ feedback result clickable pills as the feedback is available.
+With the `record` in hand, we can easily add TruLens components to display the evaluation results of the provided record using [trulens_feedback][trulens.dashboard.streamlit.trulens_feedback]. This will display the _TruLens_ feedback result clickable pills as the feedback is available.
 
 !!! example "Display feedback results"
 
     ```python
-    from trulens_eval import streamlit as trulens_st
+    from trulens.dashboard import streamlit as trulens_st
 
     if submitted:
         trulens_st.trulens_feedback(record=record)
     ```
 
-In addition to the feedback results, we can also display the record's trace to help with debugging using [trulens_trace][trulens_eval.streamlit.trulens_trace] from the _TruLens_ streamlit module.
+In addition to the feedback results, we can also display the record's trace to help with debugging using [trulens_trace][trulens.dashboard.streamlit.trulens_trace] from the _TruLens_ streamlit module.
 
 !!! example "Display the trace"
 
     ```python
-    from trulens_eval import streamlit as trulens_st
+    from trulens.dashboard import streamlit as trulens_st
 
     if submitted:
         trulens_st.trulens_trace(record=record)
     ```
 
-Last, we can also display the TruLens leaderboard using [trulens_leaderboard][trulens_eval.streamlit.trulens_leaderboard] from the _TruLens_ streamlit module to understand the aggregate performance across application versions.
+Last, we can also display the TruLens leaderboard using [trulens_leaderboard][trulens.dashboard.streamlit.trulens_leaderboard] from the _TruLens_ streamlit module to understand the aggregate performance across application versions.
 
 !!! example "Display the application leaderboard"
 
     ```python
-    from trulens_eval import streamlit as trulens_st
+    from trulens.dashboard import streamlit as trulens_st
 
     trulens_st.trulens_leaderboard()
     ```

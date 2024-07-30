@@ -1,6 +1,6 @@
 # 💣 Tech Debt
 
-This is a (likely incomplete) list of hacks present in the trulens_eval library.
+This is a (likely incomplete) list of hacks present in the trulens library.
 They are likely a source of debugging problems so ideally they can be
 addressed/removed in time. This document is to serve as a warning in the
 meantime and a resource for hard-to-debug issues when they arise.

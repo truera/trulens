@@ -8,7 +8,7 @@
 
 ## Glossary
 
-General and 🦑_TruLens-Eval_-specific concepts.
+General and 🦑_TruLens_-specific concepts.
 
 - `Agent`. A `Component` of an `Application` or the entirety of an application
   that providers a natural language interface to some set of capabilities
@@ -16,16 +16,16 @@ General and 🦑_TruLens-Eval_-specific concepts.
   while maintaining its state via `Memory`. The user of an agent may be a human, a
   tool, or another agent. See also `Multi Agent System`.
 
-- `Application` or `App`. An "application" that is tracked by 🦑_TruLens-Eval_.
+- `Application` or `App`. An "application" that is tracked by 🦑_TruLens_.
   Abstract definition of this tracking corresponds to
-  [App][trulens_eval.app.App]. We offer special support for _LangChain_ via
-  [TruChain][trulens_eval.tru_chain.TruChain], _LlamaIndex_ via
-  [TruLlama][trulens_eval.tru_llama.TruLlama], and _NeMo Guardrails_ via
-  [TruRails][trulens_eval.tru_rails.TruRails] `Applications` as well as custom
-  apps via [TruBasicApp][trulens_eval.tru_basic_app.TruBasicApp] or
-  [TruCustomApp][trulens_eval.tru_custom_app.TruCustomApp], and apps that
+  [App][trulens.core.app.App]. We offer special support for _LangChain_ via
+  [TruChain][trulens.instrument.langchain.TruChain], _LlamaIndex_ via
+  [TruLlama][trulens.instrument.llamaindex.TruLlama], and _NeMo Guardrails_ via
+  [TruRails][trulens.instrument.nemo.TruRails] `Applications` as well as custom
+  apps via [TruBasicApp][trulens.core.TruBasicApp] or
+  [TruCustomApp][trulens.core.TruCustomApp], and apps that
   already come with `Trace`s via
-  [TruVirtual][trulens_eval.tru_virtual.TruVirtual].
+  [TruVirtual][trulens.core.TruVirtual].
 
 - `Chain`. A _LangChain_ `App`.
 
@@ -60,7 +60,7 @@ General and 🦑_TruLens-Eval_-specific concepts.
 - `Feedback`. See `Evaluation`.
 
 - `Feedback Function`. A method that implements an `Evaluation`. This
-  corresponds to [Feedback][trulens_eval.feedback.feedback.Feedback].
+  corresponds to [Feedback][trulens.core.feedback.feedback.Feedback].
 
 - `Fine-tuning`. The process of training an already pre-trained model on
   additional data. While the initial training of a `Large Language Model` is
@@ -143,7 +143,7 @@ General and 🦑_TruLens-Eval_-specific concepts.
 
 - `Record`. A "record" of the execution of a single execution of an app. Single
   execution means invocation of some top-level app method. Corresponds to
-  [Record][trulens_eval.schema.record.Record]
+  [Record][trulens.core.schema.record.Record]
 
     !!! note
         This will be renamed to `Trace` in the future.
@@ -155,8 +155,8 @@ General and 🦑_TruLens-Eval_-specific concepts.
 
 - `Selector` (🦑_TruLens-Eval_-specific concept). A specification of the source
   of data from a `Trace` to use as inputs to a `Feedback Function`. This
-  corresponds to [Lens][trulens_eval.utils.serial.Lens] and utilities
-  [Select][trulens_eval.schema.feedback.Select].
+  corresponds to [Lens][trulens.core.utils.serial.Lens] and utilities
+  [Select][trulens.core.Select].
 
 - `Shot`, `Zero Shot`, `Few Shot`, `<Quantity>-Shot`. `Zero Shot` describes
   prompts that do not have any examples and only offer a natural language
@@ -168,7 +168,7 @@ General and 🦑_TruLens-Eval_-specific concepts.
   `Instruction Prompts`.
 
 - `Span`. Some unit of work logged as part of a record. Corresponds to current
-  🦑[RecordAppCallMethod][trulens_eval.schema.record.RecordAppCall].
+  🦑[RecordAppCallMethod][trulens.core.schema.record.RecordAppCall].
 
 - `Summarization`. The task of condensing some natural language text into a
   smaller bit of natural language text that preserves the most important parts

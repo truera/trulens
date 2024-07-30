@@ -112,7 +112,7 @@ problematic designs. See [Tech debt index](techdebt.md).
 
 ### ⛅ Optional Packages
 
-Limit the packages installed by default when installing _TruLens-Eval_. For
+Limit the packages installed by default when installing _TruLens_. For
 optional functionality, additional packages can be requested for the user to
 install and their usage is aided by an optional imports scheme. See [Optional
 Packages](optional.md) for details.

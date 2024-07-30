@@ -6,7 +6,7 @@ FMs from leading AI startups and Amazon available via an API, so you can choose
 from a wide range of FMs to find the model that is best suited for your use case
 
 All feedback functions listed in the base [LLMProvider
-class][trulens_eval.feedback.provider.base.LLMProvider] can be run with AWS
+class][trulens.feedback.llm_provider.LLMProvider] can be run with AWS
 Bedrock.
 
 ::: trulens.providers.bedrock.provider.Bedrock

@@ -1174,8 +1174,8 @@ class LLMProvider(Provider):
         !!! example
 
             ```python
-            from trulens_eval import Feedback
-            from trulens_eval.feedback.provider.openai import OpenAI
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
