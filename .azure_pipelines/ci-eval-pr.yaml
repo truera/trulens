@@ -165,5 +165,13 @@ jobs:
           PINECONE_ENV: $(PINECONE_ENV)
           HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
 
+          # some tests log into Snowflake.
+          SNOWFLAKE_ACCOUNT: $(SNOWFLAKE_ACCOUNT)
+          SNOWFLAKE_USER: $(SNOWFLAKE_USER)
+          SNOWFLAKE_USER_PASSWORD: $(SNOWFLAKE_USER_PASSWORD)
+          SNOWFLAKE_DATABASE: $(SNOWFLAKE_DATABASE)
+          SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
+          SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
+
         displayName: Unit tests with optional packages
 
