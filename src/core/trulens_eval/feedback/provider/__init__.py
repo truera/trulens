@@ -4,18 +4,13 @@ Aliases to new locations of various names. This module is deprecated and will be
 removed in a future release.
 """
 
-from trulens_eval import dep_warn
 from trulens.core.utils import deprecation
+from trulens_eval import dep_warn
 
-dep_warn("trulens_eval.feedback")
+dep_warn("trulens_eval.feedback.provider")
 
+from trulens.core.feedback.provider import Provider
 from trulens.core.utils import imports as imports_utils
-
-with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_FEEDBACK):
-    from trulens.feedback.feedback import Feedback
-    from trulens.feedback.embeddings import Embeddings
-    from trulens.feedback.groundtruth import GroundTruthAgreement
 
 with imports_utils.OptionalImports(
         messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM):
@@ -31,6 +26,10 @@ with imports_utils.OptionalImports(
     from trulens.providers.openai.provider import OpenAI
 
 with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX):
+    from trulens.providers.cortex.provider import Cortex
+
+with imports_utils.OptionalImports(
         messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE):
     from trulens.providers.huggingface.provider import Huggingface
 
@@ -42,14 +41,8 @@ with imports_utils.OptionalImports(
         messages=imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN):
     from trulens.providers.langchain.provider import Langchain
 
-with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX):
-    from trulens.providers.cortex.provider import Cortex
-
 __all__ = [
-    "Feedback",
-    "Embeddings",
-    "GroundTruthAgreement",
+    "Provider",
     "OpenAI",
     "AzureOpenAI",
     "Huggingface",
@@ -62,9 +55,7 @@ __all__ = [
 
 # Replace all classes we expose to ones which issue a deprecation warning upon
 # initialization.
-deprecation.moved(
-    globals(),
-    names=__all__,
-    old="trulens_eval.feedback",
-    new="trulens.feedback"
-)
+deprecation.moved(globals(),
+                  names=__all__,
+                  old="trulens_eval.feedback.provider",
+                  new="trulens.providers")

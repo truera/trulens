@@ -1,16 +1,28 @@
-"""Aliases.
+"""Backwards-compatibility Aliases
 
 Aliases to new locations of various names. This module is deprecated and will be
 removed in a future release.
 """
 
 import warnings
-warnings.warn(
-    "The `trulens_eval` module is deprecated. "
-    "See TODOLINK on migrating to the `trulens` packages.",
-    DeprecationWarning,
-    stacklevel=2
-)
+
+MIGRATION_LINK = "https://docs.trulens.org/migration-guide"
+
+def dep_warn(module: str):
+    """Issue a deprecation warning for a backwards-compatibility modules.
+    
+    This is specifically for the trulens_eval -> trulens module renaming and
+    reorganization.
+    """
+
+    warnings.warn(
+        f"The `{module}` module is deprecated. "
+        f"See {MIGRATION_LINK} for instructions on migrating to `trulens.*` modules.",
+        DeprecationWarning,
+        stacklevel=3
+    )
+
+dep_warn("trulens_eval")
 
 # TODO: get this from poetry
 __version_info__ = (0, 33, 0)
@@ -26,6 +38,7 @@ __version__ = '.'.join(map(str, __version_info__))
 
 # check_imports()
 
+from trulens.core.utils import deprecation
 from trulens.core import tru as mod_tru
 from trulens.core.app import basic as mod_tru_basic_app
 from trulens.core.app import custom as mod_tru_custom_app
@@ -33,52 +46,52 @@ from trulens.core.app import virtual as mod_tru_virtual
 from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.feedback import provider as mod_provider
 from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.utils import imports as mod_imports_utils
+from trulens.core.utils import imports as imports_utils
 from trulens.core.utils import threading as mod_threading_utils
 
 # Optional provider types.
 
-with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_PROVIDER_LITELLM):
+with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM):
     from trulens.providers.litellm.provider import LiteLLM
 
-with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_PROVIDER_BEDROCK):
+with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_PROVIDER_BEDROCK):
     from trulens.providers.bedrock.provider import Bedrock
 
-with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_PROVIDER_OPENAI):
+with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_PROVIDER_OPENAI):
     from trulens.providers.openai.provider import AzureOpenAI
     from trulens.providers.openai.provider import OpenAI
 
-with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE):
+with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE):
     from trulens.providers.huggingface.provider import Huggingface
 
-with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL):
+with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL):
     from trulens.providers.huggingfacelocal.provider import HuggingfaceLocal
 
-with mod_imports_utils.OptionalImports(
-    messages=mod_imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN):
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN):
     from trulens.providers.langchain.provider import Langchain
 
 # the dependency snowflake-snowpark-python not yet supported in 3.12
-with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_PROVIDER_CORTEX):
+with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX):
     from trulens.providers.cortex.provider import Cortex
 
 # Optional app types.
-with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN):
+with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN):
     from trulens.instrument.langchain.tru_chain import TruChain
 
-with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_INSTRUMENT_LLAMA):
+with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_INSTRUMENT_LLAMA):
     from trulens.instrument.llama.tru_llama import TruLlama
 
-with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_INSTRUMENT_NEMO):
+with imports_utils.OptionalImports(
+        messages=imports_utils.REQUIREMENT_INSTRUMENT_NEMO):
     from trulens.instrument.nemo.tru_rails import TruRails
 
 
@@ -124,3 +137,13 @@ __all__ = [
     # misc utility
     "TP",
 ]
+
+
+# Replace all classes we expose to ones which issue a deprecation warning upon
+# initialization.
+deprecation.moved(
+    globals(),
+    names=__all__,
+    old="trulens_eval",
+    new="trulens"
+)
